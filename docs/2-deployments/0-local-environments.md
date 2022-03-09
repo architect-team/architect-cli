@@ -4,11 +4,11 @@ title: Local environments
 
 # Local environments
 
-The first thing any developer wants to do when they're creating an app or service is run it locally. Architects open-source CLI was designed specifically to allow developers to write `architect.yml` files and provision the corresponding services on their own machine. Once you've [created an architect.yml file](../1-components/architect-yml.md), you can use the CLI to register the component locally and then deploy with ease.
+The first thing any developer wants to do when they're creating an app or service is run it locally. Architects open-source CLI was designed specifically to allow developers to write `architect.yml` files and provision the corresponding services on their own machine. Once you've [created an architect.yml file](../../components/architect-yml), you can use the CLI to register the component locally and then deploy with ease.
 
 ## Local registration
 
-One of the staple features of Architect, [dependency management](../1-components/4-dependencies.md), requires that components maintain a unique name by which they can be resolved. By default, the CLI will look for components by name in Architects cloud registry, but when developers are working locally they are unlikely to have published their work to the registry.
+One of the staple features of Architect, [dependency management](../../components/dependencies), requires that components maintain a unique name by which they can be resolved. By default, the CLI will look for components by name in Architects cloud registry, but when developers are working locally they are unlikely to have published their work to the registry.
 
 In order to help developers take advantage of dependency management during active development, Architects CLI includes the means of simulating Architects cloud registry right on your personal machine. We've taken inspiration from NPM to instrument a `link` command that will register a path on your local machine as the location for a component. Whenever the component is referenced by name, the CLI will then find it on your machine instead of having to call out to the registry.
 
