@@ -1,7 +1,7 @@
 <!-- docs -->
 
 <p align="center">
-  <a href="https://www.architect.io" target="blank"><img src="https://docs.architect.io/img/logo.svg" width="480" alt="Architect Logo" /></a>
+  <a href="//architect.io" target="blank"><img src="//docs.architect.io/img/logo.svg" width="480" alt="Architect Logo" /></a>
 </p>
 
 <p align="center">
@@ -17,15 +17,15 @@
 
 ---
 
-Architect is the world's first [DevOps-as-a-Service](https://www.architect.io/product) toolset designed to help democratize environment provisioning for engineers. With Architect, anyone can deploy any service, anywhere, for any reason with the push of a button.
+Architect is the world's first [DevOps-as-a-Service](//architect.io/product) toolset designed to help democratize environment provisioning for engineers. With Architect, anyone can deploy any service, anywhere, for any reason with the push of a button.
 
 Our unique approach to continuous delivery is powered by an embedded dependency resolver. By simply asserting your microservice dependenies, Architect is able to build a graph of your application and deploy the entire stack to your favorite cloud provider.
 
 Architect's CLI, which provides the full developer experience needed to create [components](../getting-started/introduction) and operate local [environments](../deployments/local-environments), is fully open-source. The CLI can deploy components locally using docker-compose, enrich the deployments with components found in Architect's Cloud registry, and allows developers to publish their own components to the registry both publicly and privately for free.
 
 ## Requirements
-* [**Docker**](https://docs.docker.com/get-docker/) must be installed
-* [**Node.js** `v12`](https://nodejs.org/en/download/) or higher must be installed
+* [**Docker**](//docs.docker.com/get-docker/) must be installed
+* [**Node.js** `v12`](//nodejs.org/en/download/) or higher must be installed
 
 ## Usage
 
@@ -92,7 +92,7 @@ EXAMPLES
   $ architect autocomplete --refresh-cache
 ```
 
-_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v0.3.0/src/commands/autocomplete/index.ts)_
+_See code: [@oclif/plugin-autocomplete](//github.com/oclif/plugin-autocomplete/blob/v0.3.0/src/commands/autocomplete/index.ts)_
 
 ## `architect components [QUERY]`
 
@@ -116,7 +116,7 @@ ALIASES
   $ architect component:search
 ```
 
-_See code: [src/commands/components/index.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/components/index.ts)_
+_See code: [src/commands/components/index.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/components/index.ts)_
 
 ## `architect components:versions [COMPONENT_NAME]`
 
@@ -135,7 +135,7 @@ ALIASES
   $ architect component:version
 ```
 
-_See code: [src/commands/components/versions.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/components/versions.ts)_
+_See code: [src/commands/components/versions.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/components/versions.ts)_
 
 ## `architect config:get OPTION`
 
@@ -152,7 +152,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/config/get.ts)_
 
 ## `architect config:set OPTION VALUE`
 
@@ -170,7 +170,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/config/set.ts)_
 
 ## `architect config:view`
 
@@ -187,7 +187,7 @@ ALIASES
   $ architect config
 ```
 
-_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/config/view.ts)_
+_See code: [src/commands/config/view.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/config/view.ts)_
 
 ## `architect dev [CONFIGS_OR_COMPONENTS]`
 
@@ -214,7 +214,7 @@ OPTIONS
   --production                     Build and run components without debug blocks
 ```
 
-_See code: [src/commands/dev.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/dev.ts)_
+_See code: [src/commands/dev.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/dev.ts)_
 
 ## `architect deploy [CONFIGS_OR_COMPONENTS]`
 
@@ -251,7 +251,7 @@ OPTIONS
   --production                     Build and run components without debug blocks
 ```
 
-_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/deploy.ts)_
+_See code: [src/commands/deploy.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/deploy.ts)_
 
 ## `architect destroy`
 
@@ -271,7 +271,7 @@ OPTIONS
                                  flows.
 ```
 
-_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/destroy.ts)_
+_See code: [src/commands/destroy.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/destroy.ts)_
 
 ## `architect environments [QUERY]`
 
@@ -297,7 +297,7 @@ ALIASES
   $ architect env:search
 ```
 
-_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/environments/index.ts)_
+_See code: [src/commands/environments/index.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/environments/index.ts)_
 
 ## `architect environments:create [ENVIRONMENT]`
 
@@ -323,7 +323,7 @@ ALIASES
   $ architect env:create
 ```
 
-_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/environments/create.ts)_
+_See code: [src/commands/environments/create.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/environments/create.ts)_
 
 ## `architect environments:destroy [ENVIRONMENT]`
 
@@ -350,7 +350,7 @@ ALIASES
   $ architect environment:deregister
 ```
 
-_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/environments/destroy.ts)_
+_See code: [src/commands/environments/destroy.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/environments/destroy.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -367,7 +367,7 @@ OPTIONS
   --all  see all commands in CLI
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.2.2/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](//github.com/oclif/plugin-help/blob/v3.2.2/src/commands/help.ts)_
 
 ## `architect init`
 
@@ -385,7 +385,7 @@ OPTIONS
   --from-compose=from-compose          [default: /home/runner/work/architect-cli/architect-cli]
 ```
 
-_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/init.ts)_
+_See code: [src/commands/init.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/init.ts)_
 
 ## `architect link [COMPONENTPATH]`
 
@@ -399,7 +399,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/link.ts)_
+_See code: [src/commands/link.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/link.ts)_
 
 ## `architect login`
 
@@ -415,7 +415,7 @@ OPTIONS
   -p, --password=password  Password
 ```
 
-_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/login.ts)_
+_See code: [src/commands/login.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/login.ts)_
 
 ## `architect logout`
 
@@ -429,7 +429,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/logout.ts)_
 
 ## `architect platforms [QUERY]`
 
@@ -453,7 +453,7 @@ ALIASES
   $ architect platforms:search
 ```
 
-_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/platforms/index.ts)_
+_See code: [src/commands/platforms/index.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/platforms/index.ts)_
 
 ## `architect platforms:create [PLATFORM]`
 
@@ -484,7 +484,7 @@ ALIASES
   $ architect platforms:create
 ```
 
-_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/platforms/create.ts)_
+_See code: [src/commands/platforms/create.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/platforms/create.ts)_
 
 ## `architect platforms:destroy [PLATFORM]`
 
@@ -509,7 +509,7 @@ ALIASES
   $ architect platforms:destroy
 ```
 
-_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/platforms/destroy.ts)_
+_See code: [src/commands/platforms/destroy.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/platforms/destroy.ts)_
 
 ## `architect register [COMPONENT]`
 
@@ -534,7 +534,7 @@ ALIASES
   $ architect comp:register
 ```
 
-_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/register.ts)_
+_See code: [src/commands/register.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/register.ts)_
 
 ## `architect task COMPONENT TASK`
 
@@ -559,7 +559,7 @@ ALIASES
   $ architect task:exec
 ```
 
-_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/task.ts)_
+_See code: [src/commands/task.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/task.ts)_
 
 ## `architect unlink [COMPONENTPATHORNAME]`
 
@@ -574,7 +574,7 @@ OPTIONS
   --all       Unlink all components registered locally
 ```
 
-_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/unlink.ts)_
+_See code: [src/commands/unlink.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/unlink.ts)_
 
 ## `architect validate [CONFIGS_OR_COMPONENTS]`
 
@@ -599,7 +599,7 @@ ALIASES
   $ architect validate
 ```
 
-_See code: [src/commands/validate.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/validate.ts)_
+_See code: [src/commands/validate.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/validate.ts)_
 
 ## `architect whoami`
 
@@ -616,5 +616,5 @@ ALIASES
   $ architect whoami
 ```
 
-_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/whoami.ts)_
+_See code: [src/commands/whoami.ts](//github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/whoami.ts)_
 <!-- commandsstop -->

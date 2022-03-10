@@ -39,7 +39,7 @@ The next portion of the command to call attention to is the reference to the com
 
 ### Interface mapping
 
-You may have also noticed the `-i` flag in the command. Much like `docker run` supports [port mapping](https://docs.docker.com/config/containers/container-networking/) so that ports don't conflict with each other, Architect supports interface mapping when deploying components to ensure that interface names from components don't conflict with each other in a shared environment:
+You may have also noticed the `-i` flag in the command. Much like `docker run` supports [port mapping](//docs.docker.com/config/containers/container-networking/) so that ports don't conflict with each other, Architect supports interface mapping when deploying components to ensure that interface names from components don't conflict with each other in a shared environment:
 
 ```
 -i <mapped-name>:<component-interface-name>
