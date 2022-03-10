@@ -221,7 +221,7 @@ export default class Dev extends BaseCommand {
       compose_args.push('-d');
     }
 
-    await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' });
+    await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit', env: { COMPOSE_IGNORE_ORPHANS: 'true' } });
     fs.removeSync(compose_file);
   }
 
