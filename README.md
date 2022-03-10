@@ -1,7 +1,7 @@
 <!-- docs -->
 
 <p align="center">
-  <a href="//architect.io" target="blank"><img src="//docs.architect.io/img/logo.svg" width="480" alt="Architect Logo" /></a>
+  <a href="//architect.io" target="blank"><img src="//architect.io/wp-content/uploads/2022/03/logo.svg" width="480" alt="Architect Logo" /></a>
 </p>
 
 <p align="center">
