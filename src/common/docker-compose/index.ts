@@ -356,7 +356,7 @@ export class DockerComposeUtils {
     if (use_console) {
       process.stdin.setRawMode(true);
     }
-    const cmd = execa('docker', ['--log-level', 'error', 'compose', ...args], execa_opts);
+    const cmd = execa('docker', ['compose', ...args], execa_opts);
     if (use_console) {
       cmd.on('exit', () => {
         process.exit();
