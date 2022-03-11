@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="//architect.io" target="blank"><img src="https://www.architect.io/img/logo.svg" width="320" alt="Architect Logo" /></a>
+  <a href="//architect.io" target="blank"><img src="https://docs.architect.io/img/logo.svg" width="320" alt="Architect Logo" /></a>
 </p>
 
 <p align="center">
@@ -10,7 +10,7 @@
 
 # Task scheduling / cron jobs
 
-In addition to provisioning and updating persistent services, [Architect Components](//docs.architect.io/configuration/architect-yml) can also describe and create tasks that will run on a specified schedule (aka cron jobs).
+In addition to provisioning and updating persistent services, [Architect Components](//docs.architect.io/configuration) can also describe and create tasks that will run on a specified schedule (aka cron jobs).
 
 Just like `services`, `tasks` can take advantage of Architect's embedded service discovery and network security features to automatically connect to peer services without additional configuration. This means that no additional configuration is needed when deploying the component to ensure it can perform its duties.
 

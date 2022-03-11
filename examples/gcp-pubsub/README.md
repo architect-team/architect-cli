@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="//architect.io" target="blank"><img src="https://www.architect.io/img/logo.svg" width="480" alt="Architect Logo" /></a>
+  <a href="//architect.io" target="blank"><img src="https://docs.architect.io/img/logo.svg" width="480" alt="Architect Logo" /></a>
 </p>
 
 <p align="center">

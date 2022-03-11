@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="//architect.io" target="blank"><img src="https://www.architect.io/img/logo.svg" width="320" alt="Architect Logo" /></a>
+  <a href="//architect.io" target="blank"><img src="https://docs.architect.io/img/logo.svg" width="320" alt="Architect Logo" /></a>
 </p>
 
 <p align="center">
@@ -36,7 +36,7 @@ Once the deploy has completed, you can reach your new service by going to http:/
 
 Want to try deploying this to a cloud environment? Architect's got you covered there too! Just click the button below to deploy it to a sample Kubernetes cluster powered by Architect Cloud:
 
-[![Deploy Button](https://www.architect.io/deploy-button.svg)](https://cloud.architect.io/examples/components/database-seeding/deploy?tag=latest&interface=main%3Amain&parameter=AUTO_DDL%3Dmigrate)
+[![Deploy Button](https://docs.architect.io/deploy-button.svg)](https://cloud.architect.io/examples/components/database-seeding/deploy?tag=latest&interface=main%3Amain&parameter=AUTO_DDL%3Dmigrate)
 
 Alternatively, if you're already familiar with Architect and have your own environment registered, you can use the command below instead:
 

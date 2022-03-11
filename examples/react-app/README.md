@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="//architect.io" target="blank"><img src="https://www.architect.io/img/logo.svg" width="320" alt="Architect Logo" /></a>
+  <a href="//architect.io" target="blank"><img src="https://docs.architect.io/img/logo.svg" width="320" alt="Architect Logo" /></a>
 </p>
 
 <p align="center">
@@ -12,9 +12,9 @@
 
 An extremely common, modern application stack includes three services: a frontend webapp, a server-side API, and a database. In this example, you'll learn how that stack can be captured in an Architect component to enable automated deployments, networking, and network security for your application wherever it gets deployed to.
 
-In the `architect.yml` file for this project, we describe all three of these services as deployable runtimes. However, we also leverage Architect's [service discovery](https://www.architect.io/docs/configuration/service-discovery) features to populate environment parameters by reference. This not only allows us to automatically connect the services to each other, but it also allows Architect to build strict network policies to whitelist the traffic between these services. Now we won't have any work ahead of us to promote this stack from local dev all the way through to production readiness!
+In the `architect.yml` file for this project, we describe all three of these services as deployable runtimes. However, we also leverage Architect's [service discovery](//docs.architect.io/components/service-discovery) features to populate environment parameters by reference. This not only allows us to automatically connect the services to each other, but it also allows Architect to build strict network policies to whitelist the traffic between these services. Now we won't have any work ahead of us to promote this stack from local dev all the way through to production readiness!
 
-[Learn more about the architect.yml file](//docs.architect.io/configuration/architect-yml)
+[Learn more about the architect.yml file](//docs.architect.io/configuration)
 
 ## Running locally
 
@@ -38,7 +38,7 @@ Once the deploy has completed, you can reach your new service by going to http:/
 
 Want to try deploying this to a cloud environment? Architect's got you covered there too! Just click the button below to deploy it to a sample Kubernetes cluster powered by Architect Cloud:
 
-[![Deploy Button](https://www.architect.io/deploy-button.svg)](https://cloud.architect.io/examples/components/react-app/deploy?tag=latest&interface=app%3Aapp)
+[![Deploy Button](https://docs.architect.io/deploy-button.svg)](https://cloud.architect.io/examples/components/react-app/deploy?tag=latest&interface=app%3Aapp)
 
 Alternatively, if you're already familiar with Architect and have your own environment registered, you can use the command below instead:
 
