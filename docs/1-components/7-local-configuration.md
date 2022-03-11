@@ -63,7 +63,7 @@ services:
         debug: 9229
 ```
 
-Once the debugger port is exposed, you'll need to attach it to your IDE. Each IDE has different instructions for doing this, but you can see an example using VS Code in the following article: [How to debug a Node.js app in a docker container](https://blog.risingstack.com/how-to-debug-a-node-js-app-in-a-docker-container/).
+Once the debugger port is exposed, you'll need to attach it to your IDE. Each IDE has different instructions for doing this, but you can see an example using VS Code in the following article: [How to debug a Node.js app in a docker container](//blog.risingstack.com/how-to-debug-a-node-js-app-in-a-docker-container/).
 
 ## Persisting data
 

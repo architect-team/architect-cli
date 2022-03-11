@@ -7,9 +7,9 @@ symlinks:
 
 # Introduction
 
-The [cloud-native landscape](https://landscape.cncf.io/) is full of powerful tools, but this landscape is constantly changing and the tools aren't designed for the every day developer. If developers hope to take advantage of modern design patterns, they need a framework designed for them instead of the endless landscape of operator-focused tools being forced upon them.
+The [cloud-native landscape](//landscape.cncf.io/) is full of powerful tools, but this landscape is constantly changing and the tools aren't designed for the every day developer. If developers hope to take advantage of modern design patterns, they need a framework designed for them instead of the endless landscape of operator-focused tools being forced upon them.
 
-Architect is a self-service developer platform for cloud-native applications – enabling continuous delivery, [service discovery](/docs/components/service-discovery), and continuous security all at once. We've taken inspiration from our experiences in big tech and at startups alike to create an simple, developer-focused framework that allows developers to build and extend cloud services like never before.
+Architect is a self-service developer platform for cloud-native applications – enabling continuous delivery, [service discovery](/components/service-discovery), and continuous security all at once. We've taken inspiration from our experiences in big tech and at startups alike to create an simple, developer-focused framework that allows developers to build and extend cloud services like never before.
 
 ## First steps
 
@@ -41,7 +41,7 @@ If you hit a permission issue with writing to node_modules try:
 $ sudo npm install -g @architect-io/cli
 ```
 
-Alternatively, you can download the binary for your system architecture from [Github](https://github.com/architect-team/architect-cli/releases/latest). Just download the appropriate bundle, extract it, and link the included `bin` folder to your user home directory.
+Alternatively, you can download the binary for your system architecture from [Github](//github.com/architect-team/architect-cli/releases/latest). Just download the appropriate bundle, extract it, and link the included `bin` folder to your user home directory.
 
 ## Run a sample component
 
@@ -163,7 +163,7 @@ http://localhost:80/ => gateway
 # begin log stream...
 ```
 
-The command above will transform the component into a fully enriched docker-compose template and then execute it automatically. After a few seconds you should see the each application indicate that its ready for traffic, and at that point you can open http://app.localhost in your browser!
+The command above will transform the component into a fully enriched docker-compose template and then execute it automatically. After a few seconds you should see the each application indicate that its ready for traffic, and at that point you can open http://app.arc.localhost in your browser!
 
 ## Make your own changes
 
@@ -214,4 +214,4 @@ $ architect deploy <my-account>/react-app:latest \
     -i app:app
 ```
 
-Nice work! Now that you've gotten the hang of the deploy flow, you're probably ready to try it out with your own application. Head on over to the [configuration](/docs/configuration) section to learn more about the `architect.yml` file and how to write one of your own:
+Nice work! Now that you've gotten the hang of the deploy flow, you're probably ready to try it out with your own application. Head on over to the [configuration](/components/architect-yml) section to learn more about the `architect.yml` file and how to write one of your own:

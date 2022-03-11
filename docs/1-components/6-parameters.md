@@ -25,4 +25,4 @@ parameters:
 
 To learn more about assigning values for parameters, see the docs on environment configuration:
 
-[https://docs.architect.io/deployments/environment-configuration/](/docs/deployments/environment-configuration/)
+[Environment Configuration](/deployments/environment-configuration)

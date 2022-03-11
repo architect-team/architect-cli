@@ -79,7 +79,7 @@ environment:
 
 ## Local development
 
-When developing your task locally you may want to mount volumes or alter the command that is used in remote environments. Learn more about how to specify with [local configuration](7-local-configuration.md).
+When developing your task locally you may want to mount volumes or alter the command that is used in remote environments. Learn more about how to specify with [local configuration](../local-configuration).
 
 ## Manual execution
 
