@@ -89,3 +89,5 @@ jobs:
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
           npm publish --tag ${PRERELEASE_PREFIX}
+      - name: docs website re-build
+        run: curl -X POST ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
