@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+
+require('reflect-metadata')
+const ReadmeCommand = require('oclif/lib/commands/readme')
+ReadmeCommand.default.run()

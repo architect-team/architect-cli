@@ -56,13 +56,14 @@ jobs:
           node-version: '16'
       - run: npm install
       - run: npm run build
-      - name: Set NPM version
+      - name: Set NPM version and update README
         id: npm-version-bump
         run: |
           echo "::set-output name=version::$(npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false --allow-same-version)"
           git config --global user.name "Github Actions"
           git config --global user.email "bot@architect.io"
-          git add package.json package-lock.json
+          npm run readme
+          git add package.json package-lock.json README.me
           git commit -m "Published CLI ${GITHUB_REF/refs\/tags\//}"
           git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
       - run: npm run pack
