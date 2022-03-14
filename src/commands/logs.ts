@@ -24,7 +24,7 @@ export default class Logs extends Command {
       default: false,
     }),
     since: Flags.string({
-      description: 'Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used. Only works on remote deploys.',
+      description: 'Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used.',
       default: '',
     }),
     raw: Flags.boolean({
