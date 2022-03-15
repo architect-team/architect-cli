@@ -76,6 +76,8 @@ jobs:
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
           npm publish
+      - name: docs website re-build
+        run: curl -X POST ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
   attach_binaries_to_release:
     name: Attach CLI binaries to the release
     runs-on: ubuntu-latest
