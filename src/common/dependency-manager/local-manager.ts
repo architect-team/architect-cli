@@ -13,6 +13,7 @@ export interface ComponentConfigOpts {
   interfaces?: Dictionary<string>;
   map_all_interfaces?: boolean;
   instance_id?: string;
+  bypass_locally_linked_sources?: boolean;
 }
 
 export default class LocalDependencyManager extends DependencyManager {
@@ -66,8 +67,9 @@ export default class LocalDependencyManager extends DependencyManager {
     }
 
     // Load locally linked component config
+    const display_linked_message = !options?.bypass_locally_linked_sources;
     if (linked_component) {
-      if (process.env.TEST !== '1') {
+      if (process.env.TEST !== '1' && display_linked_message) {
         console.log(`Using locally linked ${chalk.blue(linked_component_key)} found at ${chalk.blue(linked_component)}`);
       }
       const component_spec = buildSpecFromPath(linked_component, metadata);

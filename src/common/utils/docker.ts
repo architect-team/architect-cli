@@ -58,8 +58,18 @@ export const buildImage = async (build_path: string, image_tag: string, dockerfi
   return image_tag;
 };
 
+export const tagImage = async (image_ref: string, new_image_ref: string): Promise<void> => {
+  await docker([
+    'tag',
+    image_ref,
+    new_image_ref,
+  ], {
+    stdout: true,
+  });
+};
+
 export const pushImage = async (image_ref: string): Promise<void> => {
-  await docker(['push', image_ref]);
+  await docker(['push', image_ref], { stdout: true });
 };
 
 export const pullImage = async (image_ref: string): Promise<void> => {
