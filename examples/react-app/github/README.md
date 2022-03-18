@@ -50,7 +50,7 @@ Create a new repository. Copy the `backend`, `frontend`, and `terraform` folders
 └── architect.yml
 ```
 
-Some files will need to be updated in order to make sure variables are set correctly. In `architect.yml`, set the name of the component to start with the name of your Architect account such as `my-account/react-app`. In the GitHub workflow, `deploy.yml`, set the `ACCOUNT_NAME` environment variable to the same.
+Some files will need to be updated in order to make sure variables are set correctly. In `architect.yml`, set the name of the component to start with the name of your Architect account such as `my-account/react-app`. In the GitHub workflow, `deploy.yml`, set the `ARCHITECT_ACCOUNT` environment variable to the same.
 
 ## Terraform backend setup
 

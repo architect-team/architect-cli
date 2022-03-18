@@ -38,3 +38,5 @@ interfaces:
   pubsub:
     description: Connects to the GCP pub/sub service
     url: ${{ services.pubsub.interfaces.main.url }}
+    ingress:
+      subdomain: pubsub

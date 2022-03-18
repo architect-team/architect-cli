@@ -15,7 +15,7 @@ env:
   AWS_DEFAULT_REGION: us-east-2
   PLATFORM_NAME: aws-eks
   ENVIRONMENT_NAME: aws-eks
-  ACCOUNT_NAME: examples
+  ARCHITECT_ACCOUNT: examples
 
 jobs:
   terraform_setup:
@@ -70,8 +70,8 @@ jobs:
       - name: Create kubeconfig for platform
         run: aws eks update-kubeconfig --name ${{ needs.terraform_setup.outputs.kubernetes_cluster_name }} --kubeconfig ${{ env.KUBECONFIG_NAME }}
       - name: Create Architect platform
-        run: architect platform:create ${{ env.PLATFORM_NAME }} --type kubernetes -a ${{ env.ACCOUNT_NAME }} --kubeconfig ${{ env.KUBECONFIG_NAME }} --auto-approve || echo "Platform ${{ env.PLATFORM_NAME }} is already created. Skipping..."
+        run: architect platform:create ${{ env.PLATFORM_NAME }} --type kubernetes --kubeconfig ${{ env.KUBECONFIG_NAME }} --auto-approve || echo "Platform ${{ env.PLATFORM_NAME }} is already created. Skipping..."
       - name: Create Architect environment
-        run: architect environment:create ${{ env.ENVIRONMENT_NAME }} --platform ${{ env.PLATFORM_NAME }} -a ${{ env.ACCOUNT_NAME }}  || echo "Platform ${{ env.ENVIRONMENT_NAME }} is already created. Skipping..."
+        run: architect environment:create ${{ env.ENVIRONMENT_NAME }} --platform ${{ env.PLATFORM_NAME }}  || echo "Platform ${{ env.ENVIRONMENT_NAME }} is already created. Skipping..."
       - name: Deploy component
-        run: architect deploy --auto-approve -a ${{ env.ACCOUNT_NAME }} -e ${{ env.ENVIRONMENT_NAME }} ${{ env.ACCOUNT_NAME }}/react-app:${{ env.COMPONENT_TAG }} -p api_db_host=${{ needs.terraform_setup.outputs.aurora_host }} -p db_use_ssl=true -p api_db_name=${{ secrets.POSTGRES_DATABASE }} -p root_db_user=${{ secrets.POSTGRES_USER }} -p root_db_pass=${{ secrets.POSTGRES_PASSWORD }}
+        run: architect deploy --auto-approve -e ${{ env.ENVIRONMENT_NAME }} ${{ env.ARCHITECT_ACCOUNT }}/react-app:${{ env.COMPONENT_TAG }} -p api_db_host=${{ needs.terraform_setup.outputs.aurora_host }} -p db_use_ssl=true -p api_db_name=${{ secrets.POSTGRES_DATABASE }} -p root_db_user=${{ secrets.POSTGRES_USER }} -p root_db_pass=${{ secrets.POSTGRES_PASSWORD }}

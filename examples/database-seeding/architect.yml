@@ -50,3 +50,5 @@ interfaces:
   main:
     description: Exposes the app to upstream traffic
     url: ${{ services.app.interfaces.main.url }}
+    ingress:
+      subdomain: app

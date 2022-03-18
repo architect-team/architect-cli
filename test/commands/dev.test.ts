@@ -437,7 +437,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/values.yml'])
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/secrets.yml'])
     .it('Create a local dev with a basic component and a basic secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -461,7 +461,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/secrets.yml'])
     .it('Create a local dev with a basic component and a basic secrets file using deprecated values flag', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -484,7 +484,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/values.yml'])
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/secrets.yml'])
     .it('Create a local dev with a basic component and a wildcard secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -505,7 +505,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/values.yml'])
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/secrets.yml'])
     .it('Create a local dev with a basic component and a stacked secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -532,7 +532,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/values.yml', '-a', 'examples'])
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/secrets.yml', '-a', 'examples'])
     .it('Create a local dev with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -559,8 +559,8 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/values.yml', '-r', '-a', 'examples'])
-    .it('Create a local recursive dev with a basic component, a dependency, and a values file', ctx => {
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/secrets.yml', '-r', '-a', 'examples'])
+    .it('Create a local recursive dev with a basic component, a dependency, and a secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
       const react_app_ref = resourceRefToNodeRef('react-app.services.app');
@@ -583,7 +583,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-s', './examples/hello-world/values.yml'])
+    .command(['dev', './examples/hello-world/architect.yml', '-s', './examples/hello-world/secrets.yml'])
     .it('Dollar signs are escaped for environment variables in local compose devments', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -659,7 +659,7 @@ describe('local dev environment', function () {
           }
         };
       })
-      .command(['dev', '-s', './examples/hello-world/values.yml', 'hello-world@tenant-1', 'hello-world@tenant-2'])
+      .command(['dev', '-s', './examples/hello-world/secrets.yml', 'hello-world@tenant-1', 'hello-world@tenant-2'])
       .it('Create a local dev with multiple instances of the same component', ctx => {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true;

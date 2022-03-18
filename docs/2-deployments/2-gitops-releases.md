@@ -22,7 +22,7 @@ name: Deploy master
 env:
   ARCHITECT_EMAIL: ${{ secrets.ARCHITECT_EMAIL }} # pass secrets into a job from Github > Settings > Secrets
   ARCHITECT_PASSWORD: ${{ secrets.ARCHITECT_PASSWORD }}
-  ARCHITECT_ACCOUNT: test
+  ARCHITECT_ACCOUNT: <account-name>
   MAINLINE_TAG_NAME: latest
 
 on:
@@ -48,11 +48,7 @@ jobs:
         run: architect register ./architect.yml --tag ${{ env.MAINLINE_TAG_NAME }}
       - name: Deploy to Staging
         run: |
-          architect deploy \
-            --account ${{ env.ARCHITECT_ACCOUNT }} \
-            --environment staging \
-            --auto-approve \
-            examples/my-component:${{ env.MAINLINE_TAG_NAME }} -i interface:interface -p PARAM_A=some_value PARAM_B=another_value
+          architect deploy --environment staging --auto-approve examples/my-component:${{ env.MAINLINE_TAG_NAME }}
 ```
 
 ## Cut releases for production
@@ -100,9 +96,5 @@ jobs:
         run: architect register ./architect.yml --tag ${{ github.event.release.tag_name }}
       - name: Deploy to Production
         run: |
-          architect deploy \
-            --account ${{ env.ARCHITECT_ACCOUNT }} \
-            --environment production \
-            --auto-approve \
-            examples/my-component:${{ github.event.release.tag_name }} -i interface:interface -p PARAM_A=some_value PARAM_B=another_value
+          architect deploy --environment production --auto-approve examples/my-component:${{ github.event.release.tag_name }}
 ```

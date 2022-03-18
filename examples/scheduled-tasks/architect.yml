@@ -21,4 +21,7 @@ services:
       main: 3000
 
 interfaces:
-  api: ${{ services.api.interfaces.main.url }}
+  api:
+    url: ${{ services.api.interfaces.main.url }}
+    ingress:
+      subdomain: api

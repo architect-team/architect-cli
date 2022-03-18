@@ -1,8 +1,8 @@
 ---
-title: Environment configuration
+title: Secrets
 ---
 
-# Environment configuration
+# Secrets
 
 If you've created a component already, you probably saw that components support [parameters](/components/parameters) to allow the runtimes to receive environment-specific configuration. This can be anything ranging from log levels to production database credentials. Whatever it may be, there are a number of ways for these parameter values to be provided, and this document will outline the available methods. We'll assume you have've registered the following two components:
 
@@ -47,9 +47,9 @@ Using the `--parameter` flag is great for specifying values for individual compo
 
 ```yaml
 # secrets.yml
-examples/component:*:
+examples/component:
   secret_key: my-secret-key
-examples/dependency:*:
+examples/dependency:
   username: my-username
   password: my-password
 ```

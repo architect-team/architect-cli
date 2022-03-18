@@ -33,3 +33,5 @@ interfaces:
   frontend:
     description: Exposes the app to upstream traffic
     url: ${{ services.stateless-app.interfaces.http.url }}
+    ingress:
+      subdomain: frontend

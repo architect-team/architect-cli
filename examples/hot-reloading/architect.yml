@@ -25,3 +25,5 @@ interfaces:
   http:
     description: Exposes the API service to upstreams
     url: ${{ services.api.interfaces.main.url }}
+    ingress:
+      subdomain: api

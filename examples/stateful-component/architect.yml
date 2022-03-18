@@ -52,3 +52,5 @@ interfaces:
   frontend:
     description: Exposes the sign in webapp to upstreams
     url: ${{ services.frontend.interfaces.web.url }}
+    ingress:
+      subdomain: frontend

@@ -17,3 +17,5 @@ interfaces:
   hello:
     description: Connects to the hello-world service to return "Hello World!" on-demand
     url: ${{ services.api.interfaces.main.url }}
+    ingress:
+      subdomain: hello
