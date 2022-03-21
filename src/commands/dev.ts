@@ -151,24 +151,22 @@ export default class Dev extends BaseCommand {
     this.log('Once the containers are running they will be accessible via the following urls:');
 
     const exposed_interfaces: string[] = [];
-    const gateway = compose.services['gateway'];
-    if (gateway?.ports?.length && typeof gateway.ports[0] === 'string') {
-      const gateway_port = gateway.ports[0].split(':')[0];
-      for (const [service_name, service] of Object.entries(compose.services)) {
-        if (service.labels?.includes('traefik.enable=true')) {
-          const host_rules = service.labels.filter(label => label.includes('rule=Host'));
-          for (const host_rule of host_rules) {
-            const host = new RegExp(/Host\(`(.*?)`\)/g);
-            const host_match = host.exec(host_rule);
-            if (host_match) {
-              this.log(`${chalk.blue(`http://${host_match[1]}:${gateway_port}/`)} => ${service_name}`);
-              exposed_interfaces.push(`http://${host_match[1]}:${gateway_port}/`);
-            }
+
+    const gateway_port = flags.port;
+    for (const [service_name, service] of Object.entries(compose.services)) {
+      if (service.labels?.includes('traefik.enable=true')) {
+        const host_rules = service.labels.filter(label => label.includes('rule=Host'));
+        for (const host_rule of host_rules) {
+          const host = new RegExp(/Host\(`(.*?)`\)/g);
+          const host_match = host.exec(host_rule);
+          if (host_match) {
+            this.log(`${chalk.blue(`http://${host_match[1]}:${gateway_port}/`)} => ${service_name}`);
+            exposed_interfaces.push(`http://${host_match[1]}:${gateway_port}/`);
           }
         }
       }
-      this.log('');
     }
+    this.log('');
 
     for (const svc_name of Object.keys(compose.services)) {
       for (const port_pair of compose.services[svc_name].ports || []) {
@@ -255,7 +253,7 @@ export default class Dev extends BaseCommand {
       linked_components
     );
 
-    const port_available = await PortUtil.isPortAvailable(flags.port, true);
+    const port_available = await PortUtil.isPortAvailable(flags.port);
     if (!port_available) {
       this.error(`Could not run architect on port ${flags.port}.\nPlease stop an existing process or specify --port to choose a different port.`);
     }

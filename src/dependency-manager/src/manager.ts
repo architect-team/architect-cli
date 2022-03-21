@@ -119,15 +119,16 @@ export default abstract class DependencyManager {
         const subdomain = dep_context.ingresses[interface_name]?.subdomain;
         if (!subdomain) { continue; }
 
-        let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === buildInterfacesRef(dep_component)) as IngressEdge;
+        const gateway_host = external_addr.split(':')[0];
+        const gateway_port = parseInt(external_addr.split(':')[1] || '443');
+        const gateway_ref = GatewayNode.getRef(gateway_port);
+        let ingress_edge = graph.edges.find(edge => edge.from === gateway_ref && edge.to === buildInterfacesRef(dep_component)) as IngressEdge;
         if (!ingress_edge) {
-          const gateway_host = external_addr.split(':')[0];
-          const gateway_port = parseInt(external_addr.split(':')[1] || '443');
           const gateway_node = new GatewayNode(gateway_host, gateway_port);
-          gateway_node.instance_id = 'gateway';
+          gateway_node.instance_id = gateway_node.ref;
           graph.addNode(gateway_node);
 
-          ingress_edge = new IngressEdge('gateway', buildInterfacesRef(dep_component), []);
+          ingress_edge = new IngressEdge(gateway_node.ref, buildInterfacesRef(dep_component), []);
           graph.addEdge(ingress_edge);
         }
 

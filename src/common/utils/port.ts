@@ -1,35 +1,34 @@
-import isWindows from 'is-windows';
 import net from 'net';
 
 const PORT_RANGE = Array.from({ length: 1000 }, (_, k) => k);
 
-// eslint-disable-next-line no-undef
-const _isPortAvailable = async (host: string, port: number, ignore_perm = false) => new Promise((resolve, reject) => {
-  const tester: net.Server = net.createServer()
-    .once('error', (err: any) => {
-      // Edge case for linux: docker has permission to expose on port 80, but the cli does not
-      if (ignore_perm && err.code === 'EACCES') {
-        resolve(undefined);
-      } else {
-        reject(err);
-      }
-    })
-    .once('listening', () => tester.once('close', () => resolve(undefined)).close())
-    .listen(port, host);
-});
-
 export default class PortUtil {
   private static tested_ports = new Set();
 
-  static async isPortAvailable(port: number, ignore_perm = false): Promise<boolean> {
+  static async isPortAvailable(port: number): Promise<boolean> {
+    const promise = new Promise(((resolve, reject) => {
+      const socket = new net.Socket();
+
+      const onError = (err: any) => {
+        socket.destroy();
+        reject(err);
+      };
+
+      socket.setTimeout(5000);
+      socket.once('error', onError);
+      socket.once('timeout', resolve);
+
+      socket.connect(port, '0.0.0.0', () => {
+        socket.end();
+        resolve(true);
+      });
+    }));
+
     try {
-      await Promise.all([
-        _isPortAvailable('0.0.0.0', port, ignore_perm),
-        isWindows() ? _isPortAvailable('::', port) : Promise.resolve(), // Check for windows
-      ]);
-      return true;
-    } catch {
+      await promise;
       return false;
+    } catch {
+      return true;
     }
   }
 
