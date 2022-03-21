@@ -83,6 +83,7 @@ export default class ComponentRegister extends Command {
 
   private async registerComponent(config_path: string, tag: string) {
     const { flags } = await this.parse(ComponentRegister);
+    const start_time = Date.now();
 
     // here we validate spec and config, but only need to send the spec to the API so we don't need the resulting config
     const component_spec = buildSpecFromPath(config_path);
@@ -239,6 +240,8 @@ export default class ComponentRegister extends Command {
     await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
     CliUx.ux.action.stop();
     this.log(chalk.green(`Successfully registered component`));
+
+    console.log("Time: " + (Date.now() - start_time));
   }
 
   private async getBuildArgs(resource_spec: ResourceSpec): Promise<string[]> {

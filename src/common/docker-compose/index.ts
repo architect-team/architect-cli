@@ -101,9 +101,9 @@ export class DockerComposeUtils {
         environment: formatted_environment_variables,
       } as DockerService;
 
-      if (ports.length) {
-        service.ports = ports;
-      }
+      // if (ports.length) {
+      //   service.ports = ports;
+      // }
 
       if (gateway_links.size) {
         service.external_links = [...gateway_links];
