@@ -117,6 +117,7 @@ export default class ComponentRegister extends Command {
       this.app.api,
       this.app.linkedComponents
     );
+    dependency_manager.environment = "prod";
 
     dependency_manager.account = selected_account.name;
 
