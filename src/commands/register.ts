@@ -12,7 +12,7 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import * as Docker from '../common/utils/docker';
-import { ArchitectError, ComponentSlugUtils, ResourceSlugUtils, ResourceSpec, Slugs } from '../dependency-manager/src';
+import { ArchitectError, ComponentSlugUtils, resourceRefToNodeRef, ResourceSlugUtils, ResourceSpec, Slugs } from '../dependency-manager/src';
 import { buildSpecFromPath, dumpToYml } from '../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
@@ -77,10 +77,8 @@ export default class ComponentRegister extends Command {
 
     dependency_manager.account = selected_account.name;
 
-    // TODO:TJ cleanup
-    const tmp_spec = await dependency_manager.loadComponentSpec(component_spec.name);
-
-    const graph = await dependency_manager.getGraph([tmp_spec], undefined, true, false);
+    const loaded_spec = await dependency_manager.loadComponentSpec(component_spec.name);
+    const graph = await dependency_manager.getGraph([loaded_spec], undefined, true, false);
     const compose = await DockerComposeUtils.generate(graph);
 
     const image_mapping: Dictionary<string | undefined> = {};
@@ -97,8 +95,7 @@ export default class ComponentRegister extends Command {
       }
     }
 
-    // TODO:TJ where to write file
-    const project_name = 'register';
+    const project_name = `register.${resourceRefToNodeRef(component_spec.name)}.${tag}`;
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
 
     await DockerComposeUtils.writeCompose(compose_file, yaml.dump(compose));
@@ -122,15 +119,20 @@ export default class ComponentRegister extends Command {
         stdio: 'inherit',
       });
     } catch (err: any) {
+      fs.removeSync(compose_file);
       this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
       this.error(err);
     }
 
     this.log(chalk.blue(`Uploading images ${component_spec.name}:${tag} with Architect Cloud...`));
 
-    await DockerComposeUtils.dockerCompose(['-f', compose_file, 'push'], {
-      stdio: 'inherit',
-    });
+    try {
+      await DockerComposeUtils.dockerCompose(['-f', compose_file, 'push'], {
+        stdio: 'inherit',
+      });
+    } finally {
+      fs.removeSync(compose_file);
+    }
 
     const new_spec = classToClass(component_spec);
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
