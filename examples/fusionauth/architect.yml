@@ -37,6 +37,8 @@ interfaces:
   app:
     description: Exposes the fusionauth app to upstream traffic
     url: ${{ services.fusionauth.interfaces.public.url }}
+    ingress:
+      subdomain: app
 
 services:
   fusionauth-db:

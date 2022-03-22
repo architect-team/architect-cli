@@ -40,4 +40,4 @@ jobs:
       - name: Architect login
         run: architect login -e ${{ secrets.ARCHITECT_EXAMPLES_ACCT_EMAIL }} -p ${{ secrets.ARCHITECT_EXAMPLES_ACCT_PASSWORD }}
       - name: Register component
-        run: architect register ${{ matrix.component_path }} -t latest
+        run: architect register ${{ matrix.component_path }} -a examples -t latest

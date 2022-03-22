@@ -10,6 +10,8 @@ keywords:
 interfaces:
   main:
     url: ${{ services.api.interfaces.main.url }}
+    ingress:
+      subdomain: api
 
 services:
   api:

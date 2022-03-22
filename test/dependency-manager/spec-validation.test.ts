@@ -19,7 +19,7 @@ describe('superset spec validation', function () {
 
     it(`config interpolation works with multiline parameters`, async () => {
       const component_spec = buildSpecFromPath(`test/mocks/superset/architect.yml`);
-      const values_yml = `
+      const secrets_yml = `
         '*':
           param_unset: true
           param_string: |-
@@ -27,10 +27,10 @@ describe('superset spec validation', function () {
               "multiline": "value"
             }`;
 
-      const values_obj = parseSourceYml(values_yml) as any;
+      const secrets_obj = parseSourceYml(secrets_yml) as any;
 
       const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([component_spec], values_obj);
+      const graph = await manager.getGraph([component_spec], secrets_obj);
 
       const db_ref = resourceRefToNodeRef(`${component_spec.name}.services.api-db`);
       const db_node = graph.getNodeByRef(db_ref) as ServiceNode;
@@ -43,22 +43,22 @@ describe('superset spec validation', function () {
 
     it(`config interpolation works with multiline parameters 2`, async () => {
       const component_spec = buildSpecFromPath(`test/mocks/superset/architect.yml`);
-      const values_yml = `
+      const secrets_yml = `
         '*':
           param_unset: true
           param_string: |-
             architect is great
             architect is still great`;
 
-      const values_obj = parseSourceYml(values_yml) as any;
+      const secrets_obj = parseSourceYml(secrets_yml) as any;
 
       const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([component_spec], values_obj);
+      const graph = await manager.getGraph([component_spec], secrets_obj);
 
       const db_ref = resourceRefToNodeRef(`${component_spec.name}.services.api-db`);
       const db_node = graph.getNodeByRef(db_ref) as ServiceNode;
 
-      expect(db_node.config.environment.POSTGRES_USER).to.equal(values_obj['*'].param_string);
+      expect(db_node.config.environment.POSTGRES_USER).to.equal(secrets_obj['*'].param_string);
     });
   });
 });

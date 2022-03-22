@@ -1,6 +1,0 @@
-'architect/gcp-pubsub:latest':
-  gcp_project_id: test
-'examples/subscriber:latest':
-  gcp_project_id: test
-'examples/publisher:latest':
-  gcp_project_id: test

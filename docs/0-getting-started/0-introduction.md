@@ -195,10 +195,10 @@ $ architect login
 
 ## Register a component
 
-Before we can deploy to a cloud environment, we have to register and tag our component with Architects component registry. Components are registered to the account indicated by the name prefix of each component. The component we've been using as an example is called `examples/react-app`, but lets go ahead and change the account prefix before registering. Open up the `architect.yml` file and change the name to something of your choosing. Once that's complete, you can register the component with a single command:
+Before we can deploy to a cloud environment, we have to register and tag our component with Architects component registry. Components are registered to the account indicated by the name prefix of each component. The component we've been using as an example is called `react-app`, but lets go ahead and change the account prefix before registering. Open up the `architect.yml` file and change the name to something of your choosing. Once that's complete, you can register the component with a single command:
 
 ```sh
-$ architect register ./examples/react-app/ --tag latest
+$ architect register ./examples/react-app/ --tag latest --account <account-name>
 ```
 
 The `register` command does three things: 1) build any services with a `build` and replace the field with an `image` field referencing the built artifact, 2) upload any build artifacts to Architect's registry, and 3) register the component itself with Architect. Once complete, you'll see a link to the newly registered component!
@@ -208,10 +208,7 @@ The `register` command does three things: 1) build any services with a `build` a
 Finally, you're ready to deploy! Each Architect account comes pre-registered with an environment named, `example-environment`, that leverages Architect as the hosting provider. Lets go ahead and deploy our component to it (be sure to replace `<my-account>` with the name of the account you registered your component to):
 
 ```sh
-$ architect deploy <my-account>/react-app:latest \
-    --account <account-name> \
-    --environment example-environment \
-    -i app:app
+$ architect deploy <my-account>/react-app:latest --account <account-name> --environment example-environment
 ```
 
 Nice work! Now that you've gotten the hang of the deploy flow, you're probably ready to try it out with your own application. Head on over to the [configuration](/components/architect-yml) section to learn more about the `architect.yml` file and how to write one of your own:

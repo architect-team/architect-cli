@@ -43,7 +43,7 @@ Want to try deploying this to a cloud environment? Architect's got you covered t
 Alternatively, if you're already familiar with Architect and have your own environment registered, you can use the command below instead:
 
 ```sh
-$ architect deploy examples/react-app:latest -a <account-name> -e <environment-name> -i app:app
+$ architect deploy examples/react-app:latest -a <account-name> -e <environment-name>
 ```
 
 ## Advanced deployment example

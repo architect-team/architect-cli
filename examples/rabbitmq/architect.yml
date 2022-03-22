@@ -53,6 +53,10 @@ interfaces:
   app:
     description: Exposes the producer app
     url: ${{ services.producer.interfaces.app.url }}
+    ingress:
+      subdomain: app
   mgmt:
     description: Exposes the management app
     url: ${{ services.message-broker.interfaces.mgmt.url }}
+    ingress:
+      subdomain: admin

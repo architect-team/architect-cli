@@ -1087,7 +1087,7 @@ describe('interpolation spec v1', () => {
     });
   });
 
-  it('dependency interpolation from values.yml', async () => {
+  it('dependency interpolation from secrets.yml', async () => {
     const component_config = `
     name: examples/hello-world
     dependencies:
@@ -1168,7 +1168,7 @@ describe('interpolation spec v1', () => {
     });
     const graph = await manager.getGraph(
       await manager.loadComponentSpecs('examples/hello-world'), {
-      // TODO:269 allow for number types in values.yml?
+      // TODO:269 allow for number types in secrets.yml?
       // @ts-ignore
       '*': { replicas: 1 },
     });
