@@ -21,8 +21,6 @@ services:
       POSTGRES_USER: architect
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: stateful
-    ports:
-      - '50000:5432'
     external_links:
       - gateway:frontend.arc.localhost
     image: postgres:12
@@ -33,8 +31,6 @@ services:
       DB_ADDR: postgresql://stateful-component--api-db:5432/stateful
       DB_USER: architect
       DB_PASS: secret
-    ports:
-      - '50001:8080'
     external_links:
       - gateway:frontend.arc.localhost
     labels:
@@ -45,8 +41,6 @@ services:
   stateful-component--frontend:
     environment:
       API_ADDR: http://stateful-component--stateful-api:8080
-    ports:
-      - '50002:8081'
     external_links:
       - gateway:frontend.arc.localhost
     labels:

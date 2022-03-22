@@ -129,6 +129,10 @@ export default class ComponentRegister extends Command {
       component_specs.push(component_config);
     }
     const graph = await dependency_manager.getGraph(component_specs, component_secrets, true, false);
+    // const service_nodes = graph.nodes.filter((n) => n instanceof ServiceNode) as ServiceNode[];
+    // for (const service_node of service_nodes) {
+    //   service_node.config.interfaces = new Dictionary<>();
+    // }
     const compose = await DockerComposeUtils.generate(graph);
 
     const project_name = 'register';
