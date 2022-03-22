@@ -101,9 +101,9 @@ export class DockerComposeUtils {
         environment: formatted_environment_variables,
       } as DockerService;
 
-      // if (ports.length) {
-      //   service.ports = ports;
-      // }
+      if (ports.length) {
+        service.ports = ports;
+      }
 
       if (gateway_links.size) {
         service.external_links = [...gateway_links];
@@ -443,5 +443,10 @@ export class DockerComposeUtils {
 
   public static buildComposeFilepath(config_dir: string, project_name: string): string {
     return path.join(config_dir, LocalPaths.LOCAL_DEPLOY_PATH, `${project_name}.yml`);
+  }
+
+  public static async writeCompose(compose_file: string, compose: string): Promise<void> {
+    await fs.ensureFile(compose_file);
+    await fs.writeFile(compose_file, compose);
   }
 }

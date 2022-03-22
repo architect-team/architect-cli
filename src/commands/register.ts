@@ -1,22 +1,18 @@
 import { CliUx, Flags } from '@oclif/core';
 import chalk from 'chalk';
-import { classToPlain } from 'class-transformer';
+import { classToClass, classToPlain } from 'class-transformer';
 import * as Diff from 'diff';
 import fs from 'fs-extra';
-import isCi from 'is-ci';
 import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
 import AccountUtils from '../architect/account/account.utils';
 import Command from '../base-command';
-import LocalDependencyManager, { ComponentConfigOpts } from '../common/dependency-manager/local-manager';
+import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
-import MissingContextError from '../common/errors/missing-build-context';
-import DeployUtils from '../common/utils/deploy.utils';
 import * as Docker from '../common/utils/docker';
-import { oras } from '../common/utils/oras';
-import { ArchitectError, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, ResourceSlugUtils, ResourceSpec, ServiceNode, Slugs, TaskNode } from '../dependency-manager/src';
+import { ArchitectError, ComponentSlugUtils, ResourceSlugUtils, ResourceSpec, Slugs } from '../dependency-manager/src';
 import { buildSpecFromPath, dumpToYml } from '../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
@@ -33,12 +29,6 @@ export default class ComponentRegister extends Command {
       description: 'Build arg(s) to pass to docker build',
       multiple: true,
     }),
-    components: Flags.string({
-      char: 'c',
-      description: 'Path to a component to build',
-      multiple: true,
-      hidden: true,
-    }),
     tag: Flags.string({
       char: 't',
       description: 'Tag to give to the new component',
@@ -49,36 +39,20 @@ export default class ComponentRegister extends Command {
   static args = [{
     name: 'component',
     description: 'Path to a component to register',
+    default: './',
   }];
 
   async run(): Promise<void> {
     const { flags, args } = await this.parse(ComponentRegister);
     await Docker.verify();
 
-    const config_paths: Set<string> = new Set();
-
-    if (args.component) {
-      config_paths.add(path.resolve(untildify(args.component)));
-    }
-
-    if (flags.components) {
-      for (let config_path of flags.components) {
-        config_path = path.resolve(untildify(config_path));
-        config_paths.add(config_path);
-      }
-    }
-
-    if (config_paths.size <= 0) {
-      throw new MissingContextError();
-    }
+    const config_path = path.resolve(untildify(args.component));
 
     if (!Slugs.ComponentTagValidator.test(flags.tag)) {
       throw new ArchitectError(Slugs.ComponentTagDescription);
     }
 
-    for (const config_path of config_paths) {
-      await this.registerComponent(config_path, flags.tag);
-    }
+    await this.registerComponent(config_path, flags.tag);
   }
 
   private async registerComponent(config_path: string, tag: string) {
@@ -88,68 +62,52 @@ export default class ComponentRegister extends Command {
     // here we validate spec and config, but only need to send the spec to the API so we don't need the resulting config
     const component_spec = buildSpecFromPath(config_path);
 
-    const new_spec = component_spec;
-
-    if (!new_spec.name) {
+    if (!component_spec.name) {
       throw new Error('Component Config must have a name');
     }
 
-    const { component_account_name, component_name } = ComponentSlugUtils.parse(new_spec.name);
+    const { component_account_name, component_name } = ComponentSlugUtils.parse(component_spec.name);
     const selected_account = await AccountUtils.getAccount(this.app, component_account_name || flags.account);
-
-    const interfaces_map = undefined;
-    const component_secrets = DeployUtils.getComponentSecrets([]);
-
-    const linked_components = this.app.linkedComponents;
-    const component_versions: string[] = [];
-    for (const config_or_component of [config_path]) {
-      let component_version = config_or_component;
-      // Load architect.yml if passed
-      if (!ComponentVersionSlugUtils.Validator.test(config_or_component) && !ComponentSlugUtils.Validator.test(config_or_component)) {
-        const res = buildSpecFromPath(config_or_component);
-        linked_components[res.name] = config_or_component;
-        component_version = res.name;
-      }
-      component_versions.push(component_version);
-    }
 
     const dependency_manager = new LocalDependencyManager(
       this.app.api,
-      this.app.linkedComponents
+      { [component_spec.name]: config_path }
     );
     dependency_manager.environment = "prod";
 
     dependency_manager.account = selected_account.name;
 
-    const component_specs: ComponentSpec[] = [];
-    const component_options: ComponentConfigOpts = { map_all_interfaces: true, interfaces: interfaces_map, bypass_locally_linked_sources: true };
+    // TODO:TJ cleanup
+    const tmp_spec = await dependency_manager.loadComponentSpec(component_spec.name);
 
-    for (const component_version of component_versions) {
-      const component_config = await dependency_manager.loadComponentSpec(component_version, component_options);
-      component_specs.push(component_config);
-    }
-    const graph = await dependency_manager.getGraph(component_specs, component_secrets, true, false);
-    // const service_nodes = graph.nodes.filter((n) => n instanceof ServiceNode) as ServiceNode[];
-    // for (const service_node of service_nodes) {
-    //   service_node.config.interfaces = new Dictionary<>();
-    // }
+    const graph = await dependency_manager.getGraph([tmp_spec], undefined, true, false);
     const compose = await DockerComposeUtils.generate(graph);
 
+    const image_mapping: Dictionary<string | undefined> = {};
+    // Set image name in compose
+    for (const service of Object.values(compose.services)) {
+      if (service.build && !service.image && service.labels) {
+        const ref_label = service.labels.find(label => label.startsWith('architect.ref='));
+        if (!ref_label) { continue; }
+        const ref = ref_label.replace('architect.ref=', '');
+        const { component_account_name, component_name, resource_type, resource_name } = ResourceSlugUtils.parse(ref);
+        const ref_with_account = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, resource_type, resource_name);
+        service.image = `${this.app.config.registry_host}/${ref_with_account}:${tag}`;
+        image_mapping[ref] = service.image;
+      }
+    }
+
+    // TODO:TJ where to write file
     const project_name = 'register';
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
 
-    await fs.ensureFile(compose_file);
-    await fs.writeFile(compose_file, yaml.dump(compose));
+    await DockerComposeUtils.writeCompose(compose_file, yaml.dump(compose));
 
     let build_args: string[] = [];
-    for (const [service_name, service_config] of Object.entries(new_spec.services || {})) {
+    for (const service_config of Object.values(component_spec.services || {})) {
       build_args = build_args.concat((await this.getBuildArgs(service_config)).map(arg => {
         return `${arg}`;
       }));
-      if (isCi) {
-        const ref = ResourceSlugUtils.build(selected_account.name, component_name, service_config instanceof ServiceNode ? 'services' : 'tasks', service_name);
-        await Docker.pullImage(Docker.toCacheImage(`${this.app.config.registry_host}/${ref}:${tag}`));
-      }
     }
     build_args = build_args.filter((value, index, self) => {
       return self.indexOf(value) === index;
@@ -161,49 +119,31 @@ export default class ComponentRegister extends Command {
 
     try {
       await DockerComposeUtils.dockerCompose(['-f', compose_file, 'build', ...build_args], {
-        stdout: process.stdout,
-        stderr: process.stderr,
+        stdio: 'inherit',
       });
     } catch (err: any) {
-      CliUx.ux.action.stop(chalk.red(`Build failed`));
       this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
-      throw new Error(err);
+      this.error(err);
     }
 
-    const images = new Map<string, string>();
-    CliUx.ux.action.start(chalk.blue(`Uploading images ${new_spec.name}:${tag} with Architect Cloud...`));
-    for (const node of graph.nodes) {
-      if (!(node instanceof ServiceNode) && !(node instanceof TaskNode)) {
-        continue;
-      }
-      if (!node.config.build.args && !node.config.build.context && !node.config.build.dockerfile && !node.config.build.target) {
-        continue;
-      }
-      const name_parts = node.ref.split('--');
-      if (name_parts.length != 2) {
-        continue;
-      }
-      const ref = ResourceSlugUtils.build(selected_account.name, component_name, node instanceof ServiceNode ? 'services' : 'tasks', name_parts[1]);
-      const name = `${this.app.config.registry_host}/${ref}:${tag}`;
-      await Docker.tagImage(`docker-compose_${node.ref}`, name);
-      await this.pushImage(name);
-      if (isCi) {
-        await this.pushImage(Docker.toCacheImage(name));
-      }
-      const digest = await this.getDigest(name);
+    this.log(chalk.blue(`Uploading images ${component_spec.name}:${tag} with Architect Cloud...`));
 
-      // we don't need the tag on our image because we use the digest as the key
-      const image_without_tag = Docker.stripTagFromImage(name);
-      images.set(name_parts[1], `${image_without_tag}@${digest}`);
-    }
-    CliUx.ux.action.stop();
+    await DockerComposeUtils.dockerCompose(['-f', compose_file, 'push'], {
+      stdio: 'inherit',
+    });
 
-    if (new_spec.services) {
-      for (const service_name of Object.keys(new_spec.services)) {
-        delete new_spec.services[service_name].debug; // we don't need to compare the debug block for remotely-deployed components
-        if (images.has(service_name)) {
-          new_spec.services[service_name].image = images.get(service_name);
-        }
+    const new_spec = classToClass(component_spec);
+    for (const [service_name, service] of Object.entries(new_spec.services || {})) {
+      delete service.debug; // we don't need to compare the debug block for remotely-deployed components
+
+      const ref = ResourceSlugUtils.build(component_account_name, component_name, 'services', service_name);
+
+      const image = image_mapping[ref];
+      if (image) {
+        const digest = await this.getDigest(image);
+        // we don't need the tag on our image because we use the digest as the key
+        const image_without_tag = Docker.stripTagFromImage(image);
+        service.image = `${image_without_tag}@${digest}`;
       }
     }
 
@@ -263,18 +203,6 @@ export default class ComponentRegister extends Command {
     return Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
   }
 
-  private async pushImage(image: string) {
-    CliUx.ux.action.start(chalk.blue(`Pushing Docker image for ${image}`));
-    try {
-      await Docker.pushImage(image);
-    } catch (err: any) {
-      CliUx.ux.action.stop(chalk.red(`Push failed for image ${image}`));
-      throw new Error(err);
-    }
-    CliUx.ux.action.stop();
-    this.log(chalk.green(`Successfully pushed Docker image for ${image}`));
-  }
-
   private async getDigest(image: string) {
     CliUx.ux.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${image}`));
     const digest = await Docker.getDigest(image).catch(err => {
@@ -284,18 +212,5 @@ export default class ComponentRegister extends Command {
     CliUx.ux.action.stop();
     this.log(chalk.green(`Image verified`));
     return digest;
-  }
-
-  private async pushArtifact(image: string, folder: string) {
-    this.log(chalk.blue(`Pushing artifact for ${image}`));
-    const { stdout } = await oras(['push', image, '.'], { cwd: folder });
-    const digest_match = new RegExp('Digest: (.*)').exec(stdout);
-    if (digest_match) {
-      const digest = digest_match[1];
-      const image_without_tag = Docker.stripTagFromImage(image);
-      return `${image_without_tag}@${digest}`;
-    } else {
-      throw new Error('Unable to get digest');
-    }
   }
 }

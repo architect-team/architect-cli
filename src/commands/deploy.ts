@@ -141,14 +141,6 @@ export default class Deploy extends DeployCommand {
       allowNo: true,
       description: '[default: true] Automatically open urls in the browser for local deployments',
     }),
-    build_parallel: Flags.boolean({
-      description: `${Command.DEPRECATED} Please use --build-parallel.`,
-      hidden: true,
-    }),
-    'build-parallel': Flags.boolean({
-      default: false,
-      description: '[default: false] Build docker images in parallel',
-    }),
   };
 
   static args = [{

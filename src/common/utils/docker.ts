@@ -1,8 +1,5 @@
 import execa, { Options } from 'execa';
 import which from 'which';
-import { Slugs } from '../../dependency-manager/src/spec/utils/slugs';
-
-const CACHE_TAG = 'architect-cache';
 
 export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> => {
   if (process.env.TEST === '1') {
@@ -32,69 +29,10 @@ export const verify = async (): Promise<void> => {
   }
 };
 
-export const toCacheImage = (image_ref: string): string => {
-  return image_ref.replace(new RegExp(`:${Slugs.ComponentTagRegexBase}$`), `:${CACHE_TAG}`);
-};
-
-export const buildImage = async (build_path: string, image_tag: string, dockerfile?: string, build_args: string[] = [], target?: string): Promise<string> => {
-  const dockerfile_args = dockerfile ? ['-f', dockerfile] : [];
-  for (const build_arg of build_args) {
-    dockerfile_args.push('--build-arg');
-    dockerfile_args.push(build_arg);
-  }
-
-  const cache_tag = toCacheImage(image_tag);
-
-  await docker([
-    'build',
-    '--cache-from',
-    cache_tag,
-    '-t', cache_tag,
-    '-t', image_tag,
-    ...dockerfile_args,
-    ...(target ? ['--target', target] : []),
-    build_path,
-  ]);
-  return image_tag;
-};
-
-export const tagImage = async (image_ref: string, new_image_ref: string): Promise<void> => {
-  await docker([
-    'tag',
-    image_ref,
-    new_image_ref,
-  ], {
-    stdout: true,
-  });
-};
-
-export const pushImage = async (image_ref: string): Promise<void> => {
-  await docker(['push', image_ref], { stdout: true });
-};
-
-export const pullImage = async (image_ref: string): Promise<void> => {
-  await docker(['pull', '-q', image_ref], { stdout: false });
-};
-
 export const getDigest = async (image_ref: string): Promise<string> => {
   await docker(['pull', image_ref], { stdout: false });
   const digest = await docker([`inspect`, `--format='{{index .RepoDigests 0}}'`, image_ref], { stdout: false });
   return digest.stdout.split('@')[1].replace('\'', '');
-};
-
-export const imageExists = async (image_ref: string): Promise<any> => {
-  const { stdout } = await docker(['images', '-q', image_ref]);
-  return !!stdout;
-};
-
-export const parseImageLabel = async (image_ref: string, label_name: string): Promise<any> => {
-  const doesImageExist = await imageExists(image_ref);
-  if (!doesImageExist) {
-    await docker(['pull', image_ref]);
-  }
-
-  const { stdout } = await docker(['inspect', image_ref, '--format', `{{ index .Config.Labels "${label_name}"}}`], { stdout: false });
-  return JSON.parse(stdout);
 };
 
 /**
