@@ -11,6 +11,7 @@ import AccountUtils from '../architect/account/account.utils';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
+import DockerComposeTemplate from '../common/docker-compose/template';
 import * as Docker from '../common/utils/docker';
 import { ArchitectError, ComponentSlugUtils, resourceRefToNodeRef, ResourceSlugUtils, ResourceSpec, Slugs } from '../dependency-manager/src';
 import { buildSpecFromPath, dumpToYml } from '../dependency-manager/src/spec/utils/component-builder';
@@ -73,25 +74,34 @@ export default class ComponentRegister extends Command {
       this.app.api,
       { [component_spec.name]: config_path }
     );
-    dependency_manager.environment = "prod";
-
+    dependency_manager.environment = 'production';
     dependency_manager.account = selected_account.name;
 
     const loaded_spec = await dependency_manager.loadComponentSpec(component_spec.name);
-    const graph = await dependency_manager.getGraph([loaded_spec], undefined, true, false);
-    const compose = await DockerComposeUtils.generate(graph);
+    const graph = await dependency_manager.getGraph([loaded_spec], undefined, false, false);
+    const full_compose = await DockerComposeUtils.generate(graph);
 
+    const compose: DockerComposeTemplate = {
+      version: '3',
+      services: {},
+      volumes: {},
+    };
     const image_mapping: Dictionary<string | undefined> = {};
     // Set image name in compose
-    for (const service of Object.values(compose.services)) {
+    for (const [service_name, service] of Object.entries(full_compose.services)) {
       if (service.build && !service.image && service.labels) {
         const ref_label = service.labels.find(label => label.startsWith('architect.ref='));
         if (!ref_label) { continue; }
         const ref = ref_label.replace('architect.ref=', '');
         const { component_account_name, component_name, resource_type, resource_name } = ResourceSlugUtils.parse(ref);
         const ref_with_account = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, resource_type, resource_name);
-        service.image = `${this.app.config.registry_host}/${ref_with_account}:${tag}`;
-        image_mapping[ref] = service.image;
+
+        const image = `${this.app.config.registry_host}/${ref_with_account}:${tag}`;
+        compose.services[service_name] = {
+          build: service.build,
+          image: image,
+        };
+        image_mapping[ref] = image;
       }
     }
 
