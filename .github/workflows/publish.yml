@@ -63,7 +63,7 @@ jobs:
           git config --global user.name "Github Actions"
           git config --global user.email "bot@architect.io"
           npm run readme
-          git add package.json package-lock.json README.me
+          git add package.json package-lock.json README.md
           git commit -m "Published CLI ${GITHUB_REF/refs\/tags\//}"
           git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
       - run: npm run pack
