@@ -4,6 +4,7 @@ import yaml from 'js-yaml';
 import sinon from 'sinon';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import * as Docker from '../../src/common/utils/docker';
+import { ServiceSpec, TaskSpec } from '../../src/dependency-manager/src';
 import { validateSpec } from '../../src/dependency-manager/src/spec/utils/spec-validator';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
@@ -58,6 +59,36 @@ describe('register', function () {
       const getDigest = Docker.getDigest as sinon.SinonStub;
       expect(getDigest.notCalled).to.be.true;
 
+      expect(ctx.stdout).to.contain('Successfully registered component');
+    });
+
+  mockArchitectAuth
+    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
+    )
+    .nock(MOCK_API_HOST, api => api
+      .post(/\/accounts\/.*\/components/, (body) => body)
+      .reply(200, (uri, body: any, cb) => {
+        expect(validateSpec(body.config)).to.have.lengthOf(0);
+        for (const service of Object.values(body.config.services) as ServiceSpec[]) {
+          expect(service.image).not.undefined;
+        }
+        for (const task of Object.values(body.config.tasks) as TaskSpec[]) {
+          expect(task.image).not.undefined;
+        }
+        cb(null, body)
+      })
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/superset/versions/1.0.0`)
+      .reply(200)
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .it('register superset', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 

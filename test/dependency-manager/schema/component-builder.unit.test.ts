@@ -8,14 +8,14 @@ describe('component builder unit test', function () {
     const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset/architect.yml`);
 
     expect(source_path).to.equal(`test/mocks/superset/architect.yml`);
-    expect(source_yml).to.contain('name: tests/superset');
+    expect(source_yml).to.contain('name: superset');
   });
 
   it(`loadSourceYmlFromPathOrReject loads valid directory`, async () => {
     const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset`);
 
     expect(source_path).to.equal(`test${path.sep}mocks${path.sep}superset${path.sep}architect.yml`);
-    expect(source_yml).to.contain('name: tests/superset');
+    expect(source_yml).to.contain('name: superset');
   });
 
   it(`loadSourceYmlFromPathOrReject throws if given invalid directory`, async () => {
@@ -27,7 +27,7 @@ describe('component builder unit test', function () {
 
     const parsed_yml = parseSourceYml(source_yml);
 
-    expect((parsed_yml as any).name).to.equal('tests/superset');
+    expect((parsed_yml as any).name).to.equal('superset');
     expect((parsed_yml as any).parameters.param_unset).to.be.null; // checks and makes sure we're properly parsing empty keys to 'null'
   });
 
@@ -36,7 +36,7 @@ describe('component builder unit test', function () {
 
     const config = buildConfigFromYml(source_yml);
 
-    expect(config.name).to.equal('tests/superset');
+    expect(config.name).to.equal('superset');
     expect(config.metadata.tag).to.equal(Slugs.DEFAULT_TAG);
   });
 

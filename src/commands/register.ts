@@ -158,6 +158,19 @@ export default class ComponentRegister extends Command {
         service.image = `${image_without_tag}@${digest}`;
       }
     }
+    for (const [task_name, task] of Object.entries(new_spec.tasks || {})) {
+      delete task.debug; // we don't need to compare the debug block for remotely-deployed components
+
+      const ref = ResourceSlugUtils.build(component_account_name, component_name, 'tasks', task_name);
+
+      const image = image_mapping[ref];
+      if (image) {
+        const digest = await this.getDigest(image);
+        // we don't need the tag on our image because we use the digest as the key
+        const image_without_tag = Docker.stripTagFromImage(image);
+        task.image = `${image_without_tag}@${digest}`;
+      }
+    }
 
     const config = classToPlain(new_spec);
     delete config.metadata;
@@ -219,7 +232,7 @@ export default class ComponentRegister extends Command {
     CliUx.ux.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${image}`));
     const digest = await Docker.getDigest(image).catch(err => {
       CliUx.ux.action.stop(chalk.red(`Inspect failed`));
-      throw new Error(err);
+      throw err;
     });
     CliUx.ux.action.stop();
     this.log(chalk.green(`Image verified`));
