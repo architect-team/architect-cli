@@ -41,7 +41,7 @@ export const transformVolumeSpec = (key: string, volume: VolumeSpec | string): V
     };
   } else {
     return {
-      host_path: volume,
+      mount_path: volume,
     };
   }
 };

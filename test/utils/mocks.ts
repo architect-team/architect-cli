@@ -1,5 +1,7 @@
 import { test } from '@oclif/test';
 import AuthClient from '../../src/app-config/auth';
+import { DockerComposeUtils } from '../../src/common/docker-compose';
+import * as Docker from '../../src/common/utils/docker';
 
 export const MOCK_API_HOST = 'http://mock.api.localhost';
 
@@ -17,3 +19,6 @@ export const mockArchitectAuth = test
     }
   })
   .stub(AuthClient.prototype, 'refreshToken', () => { })
+  .stub(Docker, 'verify', () => { })
+  .stub(DockerComposeUtils, 'dockerCompose', () => { })
+  .stub(DockerComposeUtils, 'writeCompose', () => { })

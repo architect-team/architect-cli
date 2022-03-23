@@ -61,10 +61,6 @@ export default class Dev extends BaseCommand {
       allowNo: true,
       description: '[default: true] Automatically open urls in the browser for local deployments',
     }),
-    'build-parallel': Flags.boolean({
-      default: false,
-      description: '[default: false] Build docker images in parallel',
-    }),
     port: Flags.integer({
       default: 80,
       description: '[default: 80] Port for the gateway',
@@ -90,10 +86,6 @@ export default class Dev extends BaseCommand {
       char: 'v',
       hidden: true,
       description: `${Command.DEPRECATED} Please use --secrets.`,
-    }),
-    build_parallel: Flags.boolean({
-      description: `${Command.DEPRECATED} Please use --build-parallel.`,
-      hidden: true,
     }),
     detached: Flags.boolean({
       description: 'Run in detached mode',
@@ -137,11 +129,7 @@ export default class Dev extends BaseCommand {
     await fs.writeFile(compose_file, yaml.dump(compose));
     this.log(`Wrote docker-compose file to: ${compose_file}`);
 
-    if (flags['build-parallel']) {
-      await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build', '--parallel'], { stdio: 'inherit' });
-    } else {
-      await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build'], { stdio: 'inherit' });
-    }
+    await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build'], { stdio: 'inherit' });
 
     console.clear();
 
