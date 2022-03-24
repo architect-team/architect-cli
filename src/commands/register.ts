@@ -97,11 +97,16 @@ export default class ComponentRegister extends Command {
         const ref_with_account = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, resource_type, resource_name);
 
         const image = `${this.app.config.registry_host}/${ref_with_account}:${tag}`;
+
+        if (service.build) {
+          delete service.build.args;
+        }
+
         compose.services[service_name] = {
           build: service.build,
           image: image,
         };
-        image_mapping[ref] = image;
+        image_mapping[ref_with_account] = image;
       }
     }
 
@@ -148,8 +153,7 @@ export default class ComponentRegister extends Command {
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
       delete service.debug; // we don't need to compare the debug block for remotely-deployed components
 
-      const ref = ResourceSlugUtils.build(component_account_name, component_name, 'services', service_name);
-
+      const ref = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, 'services', service_name);
       const image = image_mapping[ref];
       if (image) {
         const digest = await this.getDigest(image);
@@ -161,8 +165,7 @@ export default class ComponentRegister extends Command {
     for (const [task_name, task] of Object.entries(new_spec.tasks || {})) {
       delete task.debug; // we don't need to compare the debug block for remotely-deployed components
 
-      const ref = ResourceSlugUtils.build(component_account_name, component_name, 'tasks', task_name);
-
+      const ref = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, 'tasks', task_name);
       const image = image_mapping[ref];
       if (image) {
         const digest = await this.getDigest(image);
