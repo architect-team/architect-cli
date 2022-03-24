@@ -22,7 +22,7 @@ name: Architect Create Preview
 on:
   pull_request:
     branches:
-      - master
+      - main
 
 env:
   ARCHITECT_ACCOUNT: <account-name>
@@ -57,7 +57,7 @@ name: Architect Destroy Preview
 on:
   pull_request:
     branches:
-      - master
+      - main
     types:
       - closed
 
@@ -152,6 +152,12 @@ default:
   before_script:
     - apk add --update npm git
     - apk add yq --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+    # Install docker compose plugin
+    - DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+    - mkdir -p $DOCKER_CONFIG/cli-plugins
+    - curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose
+    - chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
+    # Install architect cli and login
     - npm install -g @architect-io/cli
     - architect login -e $ARCHITECT_EMAIL -p $ARCHITECT_PASSWORD
 

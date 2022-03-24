@@ -28,7 +28,7 @@ env:
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   architect:
@@ -74,7 +74,7 @@ on:
     types:
       - published
     branches:
-      - master
+      - main
     tags:
       - v*.*.*
 
