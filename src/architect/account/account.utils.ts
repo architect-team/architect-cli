@@ -44,6 +44,23 @@ export default class AccountUtils {
       }
     }
 
+    // Checks if the user is logged in; If not logged in, default to LocalAccount
+    const token_json = await app.auth.getPersistedTokenJSON();
+    if (!token_json || token_json.email === 'unknown') {
+      console.log(chalk.yellow('Warning - Login to access remote accounts'));
+      let account: Account;
+      const answers: { account: Account } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'account',
+          message: options?.account_message || 'Select an account',
+          choices: [this.getLocalAccount()],
+        },
+      ]);
+
+      return this.getLocalAccount();
+    }
+
     let account: Account;
     if (account_name) {
       account = (await app.api.get(`/accounts/${account_name}`)).data;
