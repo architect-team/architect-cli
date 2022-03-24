@@ -10,10 +10,10 @@ import untildify from 'untildify';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import { BuildSpec, Dictionary, validateOrRejectSpec } from '../dependency-manager/src';
-import { VolumeSpec } from '../dependency-manager/src/spec/common-spec';
-import { ComponentSpec } from '../dependency-manager/src/spec/component-spec';
-import { ServiceInterfaceSpec, ServiceSpec } from '../dependency-manager/src/spec/service-spec';
+import { BuildSpec, Dictionary, validateOrRejectSpec } from '../';
+import { VolumeSpec } from '../dependency-manager/spec/common-spec';
+import { ComponentSpec } from '../dependency-manager/spec/component-spec';
+import { ServiceInterfaceSpec, ServiceSpec } from '../dependency-manager/spec/service-spec';
 
 interface ComposeConversion {
   local?: any

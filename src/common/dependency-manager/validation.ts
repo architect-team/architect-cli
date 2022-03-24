@@ -1,6 +1,6 @@
 import chalk from 'chalk';
-import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
-import { ValidationError, ValidationErrors } from '../../dependency-manager/src/utils/errors';
+import { Dictionary } from '../../dependency-manager/utils/dictionary';
+import { ValidationError, ValidationErrors } from '../../dependency-manager/utils/errors';
 
 export const prettyValidationErrors = (error: ValidationErrors): void => {
   if (!error.file) {

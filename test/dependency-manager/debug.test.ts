@@ -3,8 +3,8 @@ import { expect } from 'chai';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
+import { resourceRefToNodeRef, ServiceNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 
 describe('debug spec v1', () => {
   it('debug block does apply for local component', async () => {

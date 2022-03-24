@@ -9,7 +9,7 @@ import Environment from '../architect/environment/environment.entity';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
-import { ArchitectError, parseUnknownSlug, ResourceSlugUtils } from '../dependency-manager/src';
+import { ArchitectError, parseUnknownSlug, ResourceSlugUtils } from '../';
 
 export default class Logs extends Command {
   static description = 'Get logs from services both locally and remote';

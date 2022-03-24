@@ -4,7 +4,7 @@ import inquirer from 'inquirer';
 import AccountUtils from '../../architect/account/account.utils';
 import PlatformUtils from '../../architect/platform/platform.utils';
 import Command from '../../base-command';
-import { Slugs } from '../../dependency-manager/src';
+import Slugs from './';
 
 interface CreateEnvironmentDto {
   name: string;

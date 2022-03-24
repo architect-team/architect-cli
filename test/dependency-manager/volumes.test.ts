@@ -2,9 +2,9 @@ import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
 import path from 'path';
+import { resourceRefToNodeRef } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
-import { resourceRefToNodeRef } from '../../src/dependency-manager/src';
 
 describe('volumes spec v1', () => {
 

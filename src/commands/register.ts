@@ -13,9 +13,9 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import * as Docker from '../common/utils/docker';
-import { ArchitectError, ComponentSlugUtils, resourceRefToNodeRef, ResourceSlugUtils, ResourceSpec, Slugs } from '../dependency-manager/src';
-import { buildSpecFromPath, dumpToYml } from '../dependency-manager/src/spec/utils/component-builder';
-import { Dictionary } from '../dependency-manager/src/utils/dictionary';
+import { ArchitectError, ComponentSlugUtils, resourceRefToNodeRef, ResourceSlugUtils, ResourceSpec, Slugs } from '../';
+import { buildSpecFromPath, dumpToYml } from '../dependency-manager/spec/utils/component-builder';
+import { Dictionary } from '../dependency-manager/utils/dictionary';
 
 tmp.setGracefulCleanup();
 

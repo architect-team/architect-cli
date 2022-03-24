@@ -1,4 +1,4 @@
-import { ArchitectError } from '../../dependency-manager/src/utils/errors';
+import { ArchitectError } from '../../dependency-manager/utils/errors';
 
 export default class InvalidConfigOption extends ArchitectError {
   constructor(option: string) {

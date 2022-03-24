@@ -1,6 +1,6 @@
 import { expect } from '@oclif/test';
 import fs from 'fs-extra';
-import { buildConfigFromPath } from '../../src/dependency-manager/src';
+import { buildConfigFromPath } from '../../src';
 
 // This test validates the architect.yml file for each of our example components to ensure that none go out of date
 describe('example component validation', function () {

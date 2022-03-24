@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { Refs } from '../../../src/dependency-manager/src/utils/refs';
+import { Refs } from '../../../src/dependency-manager/utils/refs';
 
 describe('Refs.safeRef', () => {
 

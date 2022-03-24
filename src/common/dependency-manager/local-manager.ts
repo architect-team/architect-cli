@@ -2,12 +2,12 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
-import DependencyManager, { ArchitectContext, ArchitectError, buildSpecFromYml, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, IngressSpec } from '../../dependency-manager/src';
-import DependencyGraph from '../../dependency-manager/src/graph';
-import { buildSpecFromPath } from '../../dependency-manager/src/spec/utils/component-builder';
-import { IF_EXPRESSION_REGEX } from '../../dependency-manager/src/spec/utils/interpolation';
-import { generateIngressesOverrideSpec, overrideSpec } from '../../dependency-manager/src/spec/utils/spec-merge';
-import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
+import DependencyManager, { ArchitectContext, ArchitectError, buildSpecFromYml, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, IngressSpec } from '../../';
+import DependencyGraph from '../../dependency-manager/graph';
+import { buildSpecFromPath } from '../../dependency-manager/spec/utils/component-builder';
+import { IF_EXPRESSION_REGEX } from '../../dependency-manager/spec/utils/interpolation';
+import { generateIngressesOverrideSpec, overrideSpec } from '../../dependency-manager/spec/utils/spec-merge';
+import { Dictionary } from '../../dependency-manager/utils/dictionary';
 
 export interface ComponentConfigOpts {
   interfaces?: Dictionary<string>;

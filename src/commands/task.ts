@@ -5,7 +5,7 @@ import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import * as Docker from '../common/utils/docker';
-import { ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils } from '../dependency-manager/src';
+import { ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils } from '../';
 
 export default class TaskExec extends Command {
   static aliases = ['task:exec'];

@@ -5,6 +5,7 @@ import fs from 'fs-extra';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
 import opener from 'opener';
+import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import { default as BaseCommand, default as Command } from '../base-command';
@@ -14,7 +15,6 @@ import DockerComposeTemplate from '../common/docker-compose/template';
 import DeployUtils from '../common/utils/deploy.utils';
 import * as Docker from '../common/utils/docker';
 import PortUtil from '../common/utils/port';
-import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../dependency-manager/src';
 
 export default class Dev extends BaseCommand {
   async auth_required(): Promise<boolean> {

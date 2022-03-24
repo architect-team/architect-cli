@@ -1,4 +1,4 @@
-import { Dictionary } from '../../dependency-manager/src';
+import { Dictionary } from '../../dependency-manager';
 import Account from '../account/account.entity';
 import Pipeline from '../pipeline/pipeline.entity';
 

@@ -3,7 +3,7 @@ import path from 'path';
 import sinon from 'sinon';
 import { DockerComposeUtils } from '../../src/common/docker-compose/index';
 import * as Docker from '../../src/common/utils/docker';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils } from '../../src/dependency-manager/src';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils } from '../../src/';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('task:exec', async function () {

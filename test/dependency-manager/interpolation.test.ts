@@ -3,14 +3,14 @@ import axios from 'axios';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import path from 'path';
+import { buildInterfacesRef, ecsResourceRefToNodeRef, resourceRefToNodeRef, ServiceNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
-import { buildInterfacesRef, ecsResourceRefToNodeRef, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
-import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
-import OutputEdge from '../../src/dependency-manager/src/graph/edge/output';
-import ComponentNode from '../../src/dependency-manager/src/graph/node/component';
-import { interpolateObjectOrReject } from '../../src/dependency-manager/src/utils/interpolation';
+import IngressEdge from '../../src/dependency-manager/graph/edge/ingress';
+import OutputEdge from '../../src/dependency-manager/graph/edge/output';
+import ComponentNode from '../../src/dependency-manager/graph/node/component';
+import { interpolateObjectOrReject } from '../../src/dependency-manager/utils/interpolation';
 
 describe('interpolation spec v1', () => {
   it('interpolate array', () => {
