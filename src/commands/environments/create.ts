@@ -1,10 +1,10 @@
 import { CliUx, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
+import { Slugs } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
 import PlatformUtils from '../../architect/platform/platform.utils';
 import Command from '../../base-command';
-import Slugs from './';
 
 interface CreateEnvironmentDto {
   name: string;
