@@ -62,6 +62,7 @@ jobs:
   #     - run: npm run build
   #     - run: npm test
   cut_release:
+    runs-on: ubuntu-latest
     steps:
       - run: echo ${{ github.event_name }}
     # if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'pull_request_target'
