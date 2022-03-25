@@ -12,78 +12,80 @@ env:
   NPM_CACHE_NAME: cli-node-modules
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Get npm cache directory
-        id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
-      - uses: actions/cache@v2
-        with:
-          path: ${{ steps.npm-cache.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '14'
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run check-circular
-  test:
-    strategy:
-      matrix:
-        node-version: [12.x, 14.x, 16.x]
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: recursive
-      - name: Get npm cache directory
-        if: runner.os != 'Windows'
-        id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
-      - uses: actions/cache@v2
-        if: runner.os != 'Windows' # Must be a bug on windows because its doing more harm than good. Try to cache/load almost a GB.
-        with:
-          path: ${{ steps.npm-cache.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ matrix.node-version }}
-      - run: npm ci
-      - run: npm run build
-      - run: npm test
+  # lint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Get npm cache directory
+  #       id: npm-cache
+  #       run: |
+  #         echo "::set-output name=dir::$(npm config get cache)"
+  #     - uses: actions/cache@v2
+  #       with:
+  #         path: ${{ steps.npm-cache.outputs.dir }}
+  #         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-node-
+  #     - uses: actions/setup-node@v2
+  #       with:
+  #         node-version: '14'
+  #     - run: npm ci
+  #     - run: npm run lint
+  #     - run: npm run check-circular
+  # test:
+  #   strategy:
+  #     matrix:
+  #       node-version: [12.x, 14.x, 16.x]
+  #       os: [ubuntu-latest, windows-latest, macos-latest]
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: recursive
+  #     - name: Get npm cache directory
+  #       if: runner.os != 'Windows'
+  #       id: npm-cache
+  #       run: |
+  #         echo "::set-output name=dir::$(npm config get cache)"
+  #     - uses: actions/cache@v2
+  #       if: runner.os != 'Windows' # Must be a bug on windows because its doing more harm than good. Try to cache/load almost a GB.
+  #       with:
+  #         path: ${{ steps.npm-cache.outputs.dir }}
+  #         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-node-
+  #     - name: Use Node.js ${{ matrix.node-version }}
+  #       uses: actions/setup-node@v2
+  #       with:
+  #         node-version: ${{ matrix.node-version }}
+  #     - run: npm ci
+  #     - run: npm run build
+  #     - run: npm test
   cut_release:
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'pull_request_target'
-    needs: [lint, test]
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-      - run: npm install
-      - run: npm run build
-      - name: Bump NPM version
-        id: npm-version-bump
-        run: |
-          echo "::set-output name=version::$(npm version prerelease --git-tag-version=false --preid=${PRERELEASE_PREFIX})"
-          git config --global user.name "Github Actions"
-          git config --global user.email "bot@architect.io"
-          git config --global pull.rebase false
-          git add package.json package-lock.json
-          git commit -m "New CLI RC from commit: ${{ github.sha }}"
-          git pull
-          git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-      - name: npm publish (release candidate)
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
-          npm publish --tag ${PRERELEASE_PREFIX}
+      - run: echo github.event_name
+    # if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'pull_request_target'
+    # needs: [lint, test]
+    # runs-on: ubuntu-latest
+    # steps:
+    #   - uses: actions/checkout@v2
+    #   - uses: actions/setup-node@v2
+    #     with:
+    #       node-version: '16'
+    #   - run: npm install
+    #   - run: npm run build
+    #   - name: Bump NPM version
+    #     id: npm-version-bump
+    #     run: |
+    #       echo "::set-output name=version::$(npm version prerelease --git-tag-version=false --preid=${PRERELEASE_PREFIX})"
+    #       git config --global user.name "Github Actions"
+    #       git config --global user.email "bot@architect.io"
+    #       git config --global pull.rebase false
+    #       git add package.json package-lock.json
+    #       git commit -m "New CLI RC from commit: ${{ github.sha }}"
+    #       git pull
+    #       git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+    #   - name: npm publish (release candidate)
+    #     run: |
+    #       echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
+    #       npm publish --tag ${PRERELEASE_PREFIX}
