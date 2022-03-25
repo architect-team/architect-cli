@@ -10,6 +10,10 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import { ArchitectError, Dictionary, parseUnknownSlug } from '../dependency-manager/src';
 
 export default class Exec extends Command {
+  async auth_required(): Promise<boolean> {
+    return false;
+  }
+
   static description = 'Exec into service instances';
   static usage = 'exec [RESOURCE] [FLAGS] -- [COMMAND]';
 
