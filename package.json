@@ -135,7 +135,7 @@
     "build": "rm -rf ./lib && rm -f tsconfig.tsbuildinfo && tsc -b && npm run copy-static",
     "copy-static": "copyfiles -u 1 \"src/static/*.html\" lib",
     "coverage": "nyc --extension .ts npm test",
-    "test": "rm -rf src/dependency-manager/node_modules && mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
+    "test": "mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
     "pack": "oclif pack:tarballs",
     "readme": "./bin/readme"
   },

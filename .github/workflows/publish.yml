@@ -1,4 +1,4 @@
-name: Publish CLI and dependency manager
+name: Publish CLI
 
 on:
   release:
@@ -14,39 +14,9 @@ env:
   NPM_CACHE_NAME: cli-node-modules
 
 jobs:
-  publish_dependency_manager:
-    name: Publish Dependency Manager
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: 'master'
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-      - run: npm install
-        working-directory: ./src/dependency-manager
-      - run: npm run build
-        working-directory: ./src/dependency-manager
-      - name: Set NPM version
-        id: npm-version-bump
-        run: |
-          echo "::set-output name=version::$(npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false --allow-same-version)"
-          git config --global user.name "Github Actions"
-          git config --global user.email "bot@architect.io"
-          git add package.json package-lock.json
-          git commit -m "Published dependency manager ${GITHUB_REF/refs\/tags\//}"
-          git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-        working-directory: ./src/dependency-manager
-      - name: npm publish
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
-          npm publish
-        working-directory: ./src/dependency-manager
   publish_cli:
     name: Publish CLI
     runs-on: ubuntu-latest
-    needs: [publish_dependency_manager]
     steps:
       - uses: actions/checkout@v2
         with:
