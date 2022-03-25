@@ -63,9 +63,9 @@ jobs:
   #     - run: npm test
   cut_release:
     runs-on: ubuntu-latest
-      steps:
-        - run: echo ${{ github.event_name }}
-        - run: echo ${{ github.base_ref }}
+    steps:
+      - run: echo ${{ github.event_name }}
+      - run: echo ${{ github.base_ref }}
     # if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.base_ref == 'refs/heads/master')
     # needs: [lint, test]
     # runs-on: ubuntu-latest
