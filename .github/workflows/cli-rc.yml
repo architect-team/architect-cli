@@ -62,7 +62,7 @@ jobs:
       - run: npm run build
       - run: npm test
   cut_release:
-    if: (github.event_name == 'push' || github.event_name == 'pull_request_target') && github.ref == 'refs/heads/master'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'pull_request_target'
     needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
@@ -70,7 +70,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '16'
-      - run: npm install'releases/**'
+      - run: npm install
       - run: npm run build
       - name: Bump NPM version
         id: npm-version-bump
