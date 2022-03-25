@@ -4,10 +4,11 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
 import path from 'path';
-import IngressEdge, { ComponentSlugUtils, resourceRefToNodeRef, ServiceNode, TaskNode } from '../../src';
+import { ComponentSlugUtils, resourceRefToNodeRef, ServiceNode, TaskNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
+import IngressEdge from '../../src/dependency-manager/graph/edge/ingress';
 
 describe('components spec v1', function () {
   describe('standard components', function () {
