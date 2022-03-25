@@ -47,7 +47,7 @@ export default class AccountUtils {
     // Checks if the user is logged in; If not logged in, default to LocalAccount
     const token_json = await app.auth.getPersistedTokenJSON();
     if (!token_json || token_json.email === 'unknown') {
-      console.log(chalk.yellow('Warning - Login to access remote accounts'));
+      console.log(chalk.yellow('In order to access remote accounts you can login by running `architect login`'));
       let account: Account;
       const answers: { account: Account } = await inquirer.prompt([
         {
