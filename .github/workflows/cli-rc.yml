@@ -1,10 +1,10 @@
 name: CLI - Cut Release Candidate
 
 on:
-  push:
   pull_request_target:
     branches:
       - master
+  push:
 
 env:
   CI: true
