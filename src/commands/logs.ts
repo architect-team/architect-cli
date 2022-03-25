@@ -12,6 +12,10 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import { ArchitectError, parseUnknownSlug, ResourceSlugUtils } from '../';
 
 export default class Logs extends Command {
+  async auth_required(): Promise<boolean> {
+    return false;
+  }
+
   static description = 'Get logs from services both locally and remote';
 
   static flags = {
