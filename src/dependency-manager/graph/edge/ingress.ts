@@ -1,7 +1,7 @@
-import DependencyEdge from '.';
+import { DependencyEdge } from '.';
 import { Dictionary } from '../../utils/dictionary';
 
-export default class IngressEdge extends DependencyEdge {
+export class IngressEdge extends DependencyEdge {
   __type = 'ingress';
 
   consumers_map: Dictionary<Set<string>>;

@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { DependencyState } from '../state';
 
-export default abstract class DependencyEdge {
+export abstract class DependencyEdge {
   abstract __type: string;
 
   from: string;

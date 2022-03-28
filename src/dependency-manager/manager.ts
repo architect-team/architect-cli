@@ -1,12 +1,9 @@
 import { classToPlain, plainToClass, serialize } from 'class-transformer';
 import { isMatch } from 'matcher';
-import { ComponentNode, DependencyNode, GatewayNode, ServiceNode, TaskNode } from '../';
+import { ComponentNode, DependencyNode, GatewayNode, IngressEdge, OutputEdge, ServiceEdge, ServiceNode, TaskNode } from '../';
 import { buildInterfacesRef, buildNodeRef, ComponentConfig } from './config/component-config';
 import { ArchitectContext, ComponentContext, ParameterValue } from './config/component-context';
 import DependencyGraph from './graph';
-import IngressEdge from './graph/edge/ingress';
-import OutputEdge from './graph/edge/output';
-import ServiceEdge from './graph/edge/service';
 import { ComponentSpec } from './spec/component-spec';
 import { transformComponentSpec, transformParameterDefinitionSpec } from './spec/transform/component-transform';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, ResourceType, Slugs } from './spec/utils/slugs';

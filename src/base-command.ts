@@ -1,9 +1,9 @@
 import { Command, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
+import { ValidationErrors } from './';
 import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
-import { ValidationErrors } from './dependency-manager/utils/errors';
 
 const DEPRECATED_LABEL = '[deprecated]';
 

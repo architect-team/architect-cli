@@ -1,5 +1,5 @@
-import DependencyEdge from '.';
+import { DependencyEdge } from '.';
 
-export default class OutputEdge extends DependencyEdge {
+export class OutputEdge extends DependencyEdge {
   __type = 'output';
 }

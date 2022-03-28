@@ -2,14 +2,13 @@ import { expect, test } from '@oclif/test';
 import yaml from 'js-yaml';
 import path from 'path';
 import sinon from 'sinon';
+import { buildSpecFromYml, resourceRefToNodeRef } from '../../src';
 import AppService from '../../src/app-config/service';
 import Dev from '../../src/commands/dev';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import DeployUtils from '../../src/common/utils/deploy.utils';
 import * as Docker from '../../src/common/utils/docker';
-import { resourceRefToNodeRef } from '../../src/dependency-manager/config/component-config';
 import * as ComponentBuilder from '../../src/dependency-manager/spec/utils/component-builder';
-import { buildSpecFromYml } from '../../src/dependency-manager/spec/utils/component-builder';
 import { MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr

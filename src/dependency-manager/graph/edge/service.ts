@@ -1,5 +1,5 @@
-import DependencyEdge from '.';
+import { DependencyEdge } from '.';
 
-export default class ServiceEdge extends DependencyEdge {
+export class ServiceEdge extends DependencyEdge {
   __type = 'service';
 }
