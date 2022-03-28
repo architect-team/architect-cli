@@ -5,7 +5,7 @@ import path from 'path';
 import { URL } from 'url';
 import User from '../architect/user/user.entity';
 import LoginRequiredError from '../common/errors/login-required';
-import { Dictionary } from '../dependency-manager/src/utils/dictionary';
+import { Dictionary } from '../';
 import LocalPaths from '../paths';
 import AuthClient from './auth';
 import AppConfig from './config';

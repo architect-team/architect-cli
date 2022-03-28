@@ -1,5 +1,5 @@
 import { expect } from '@oclif/test';
-import { buildSpecFromYml, ComponentInstanceMetadata, loadSourceYmlFromPathOrReject, transformComponentSpec } from '../../../src/dependency-manager/src';
+import { buildSpecFromYml, ComponentInstanceMetadata, loadSourceYmlFromPathOrReject, transformComponentSpec } from '../../../src';
 
 describe('component transform unit test', function () {
 

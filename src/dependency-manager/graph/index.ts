@@ -1,15 +1,15 @@
 import { Exclude, Type } from 'class-transformer';
-import DependencyEdge from './edge';
-import IngressEdge from './edge/ingress';
-import OutputEdge from './edge/output';
-import ServiceEdge from './edge/service';
+import { DependencyEdge } from './edge';
+import { IngressEdge } from './edge/ingress';
+import { OutputEdge } from './edge/output';
+import { ServiceEdge } from './edge/service';
 import { DependencyNode } from './node';
-import ComponentNode from './node/component';
-import GatewayNode from './node/gateway';
+import { ComponentNode } from './node/component';
+import { GatewayNode } from './node/gateway';
 import { ServiceNode } from './node/service';
 import { TaskNode } from './node/task';
 
-export default class DependencyGraph {
+export class DependencyGraph {
   @Type(() => DependencyNode, {
     discriminator: {
       property: '__type',

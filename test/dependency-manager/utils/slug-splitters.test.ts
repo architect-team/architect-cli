@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, ResourceSlugUtils } from '../../../src/dependency-manager/src/spec/utils/slugs';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, ResourceSlugUtils } from '../../../src/';
 
 describe('slug validators with account', () => {
 

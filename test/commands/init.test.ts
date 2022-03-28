@@ -5,7 +5,7 @@ import mock_fs from 'mock-fs';
 import path from 'path';
 import sinon from 'sinon';
 import { InitCommand } from '../../src/commands/init';
-import { buildConfigFromYml } from '../../src/dependency-manager/src/spec/utils/component-builder';
+import { buildConfigFromYml } from '../../src';
 import { mockArchitectAuth } from '../utils/mocks';
 
 describe('init', function () {

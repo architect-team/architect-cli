@@ -2,12 +2,12 @@ import { Flags } from '@oclif/core';
 import inquirer from 'inquirer';
 import stream from 'stream';
 import WebSocket, { createWebSocketStream } from 'ws';
+import { ArchitectError, Dictionary, parseUnknownSlug } from '../';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
-import { ArchitectError, Dictionary, parseUnknownSlug } from '../dependency-manager/src';
 
 export default class Exec extends Command {
   async auth_required(): Promise<boolean> {

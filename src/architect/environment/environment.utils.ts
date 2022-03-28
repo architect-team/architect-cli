@@ -2,7 +2,7 @@ import { Flags } from '@oclif/core';
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { Dictionary, ResourceSlugUtils, sortOnKeys } from '../../dependency-manager/src';
+import { Dictionary, ResourceSlugUtils, sortOnKeys } from '../../';
 import Account from '../account/account.entity';
 import Environment from './environment.entity';
 

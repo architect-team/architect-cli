@@ -6,7 +6,7 @@ import path from 'path';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import { DockerService } from '../../src/common/docker-compose/template';
-import { ArchitectError, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
+import { ArchitectError, resourceRefToNodeRef, ServiceNode } from '../../src';
 
 describe('interfaces spec v1', () => {
 

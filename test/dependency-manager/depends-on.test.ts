@@ -2,7 +2,7 @@ import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
+import { resourceRefToNodeRef, ServiceNode } from '../../src';
 
 describe('graph depends_on', () => {
 

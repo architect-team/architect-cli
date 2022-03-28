@@ -6,7 +6,7 @@ import path from 'path';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
-import { ecsResourceRefToNodeRef, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
+import { ecsResourceRefToNodeRef, resourceRefToNodeRef, ServiceNode } from '../../src';
 
 describe('external spec v1', () => {
 

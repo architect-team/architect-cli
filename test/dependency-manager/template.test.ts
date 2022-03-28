@@ -1,9 +1,9 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
+import { resourceRefToNodeRef, ServiceNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
-import { ArchitectParser } from '../../src/dependency-manager/src/utils/parser';
+import { ArchitectParser } from '../../src/dependency-manager/utils/parser';
 
 describe('template', () => {
   describe('operations', () => {

@@ -4,11 +4,10 @@ import { deserialize, serialize } from 'class-transformer';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import path from 'path';
+import { DependencyGraph, DependencyNode, ecsResourceRefToNodeRef, ServiceNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import { DockerService } from '../../src/common/docker-compose/template';
-import { DependencyNode, ecsResourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
-import DependencyGraph from '../../src/dependency-manager/src/graph';
 
 describe('sidecar spec v1', () => {
 

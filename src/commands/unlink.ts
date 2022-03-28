@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
-import { buildSpecFromPath } from '../dependency-manager/src';
+import { buildSpecFromPath } from '../';
 
 export default class Unlink extends Command {
   async auth_required(): Promise<boolean> {

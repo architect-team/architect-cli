@@ -2,10 +2,9 @@ import { expect } from 'chai';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import sinon from 'sinon';
+import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import * as Docker from '../../src/common/utils/docker';
-import { ServiceSpec, TaskSpec } from '../../src/dependency-manager/src';
-import { validateSpec } from '../../src/dependency-manager/src/spec/utils/spec-validator';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('register', function () {

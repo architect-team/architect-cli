@@ -6,8 +6,8 @@ import inquirer from 'inquirer';
 import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
+import { ArchitectError } from '../../';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
-import { ArchitectError } from '../../dependency-manager/src';
 
 const SERVICE_ACCOUNT_NAME = 'architect';
 

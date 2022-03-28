@@ -3,9 +3,9 @@ import { expect } from 'chai';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
+import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, Slugs, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, Slugs, ValidationError, ValidationErrors } from '../../src/dependency-manager/src';
-import { ValuesConfig } from '../../src/dependency-manager/src/values/values';
+import { ValuesConfig } from '../../src/dependency-manager/values/values';
 
 describe('validate spec', () => {
 

@@ -7,7 +7,7 @@ import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import Command from '../base-command';
 import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../common/errors/pipeline-errors';
 import DeployUtils from '../common/utils/deploy.utils';
-import { Dictionary } from '../dependency-manager/src/utils/dictionary';
+import { Dictionary } from '../';
 import Dev from "./dev";
 
 export abstract class DeployCommand extends Command {
