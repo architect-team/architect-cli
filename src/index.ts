@@ -35,6 +35,7 @@ export * from './dependency-manager/spec/utils/spec-validator';
 export * from './dependency-manager/utils/dictionary';
 export * from './dependency-manager/utils/errors';
 export * from './dependency-manager/utils/refs';
+export * from './dependency-manager/utils/types';
 
 import DependencyManager from './dependency-manager/manager';
 
