@@ -1,7 +1,6 @@
 name: CLI - Cut Release Candidate
 
-on:
-  push:
+on: push
 
 env:
   CI: true
