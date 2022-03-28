@@ -2,8 +2,7 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
-import DependencyManager, { ArchitectContext, ArchitectError, buildSpecFromPath, buildSpecFromYml, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary, generateIngressesOverrideSpec, IngressSpec, overrideSpec } from '../../';
-import DependencyGraph from '../../dependency-manager/graph';
+import DependencyManager, { ArchitectContext, ArchitectError, buildSpecFromPath, buildSpecFromYml, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, DependencyGraph, Dictionary, generateIngressesOverrideSpec, IngressSpec, overrideSpec } from '../../';
 import { IF_EXPRESSION_REGEX } from '../../dependency-manager/spec/utils/interpolation';
 
 export interface ComponentConfigOpts {

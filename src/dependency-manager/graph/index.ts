@@ -9,7 +9,7 @@ import { GatewayNode } from './node/gateway';
 import { ServiceNode } from './node/service';
 import { TaskNode } from './node/task';
 
-export default class DependencyGraph {
+export class DependencyGraph {
   @Type(() => DependencyNode, {
     discriminator: {
       property: '__type',
