@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
-import { Dictionary } from '../../dependency-manager/utils/dictionary';
+import { Dictionary } from '../../';
 
 export default class DeployUtils {
   private static getExtraEnvironmentVariables(parameters: string[]): Dictionary<string | number | undefined> {

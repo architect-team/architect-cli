@@ -13,6 +13,7 @@ export * from './dependency-manager/graph/edge/output';
 export * from './dependency-manager/graph/edge/service';
 export * from './dependency-manager/graph/node';
 export * from './dependency-manager/graph/node/component';
+export * from './dependency-manager/graph/node/gateway';
 export * from './dependency-manager/graph/node/service';
 export * from './dependency-manager/graph/node/task';
 export * from './dependency-manager/spec/common-spec';

@@ -1,6 +1,6 @@
 import { DependencyNode } from '.';
 
-export default class GatewayNode extends DependencyNode {
+export class GatewayNode extends DependencyNode {
   __type = 'gateway';
 
   host: string;

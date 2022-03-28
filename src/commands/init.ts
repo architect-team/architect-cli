@@ -7,13 +7,10 @@ import inquirer from 'inquirer';
 import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
+import { BuildSpec, ComponentSpec, Dictionary, ServiceInterfaceSpec, ServiceSpec, validateOrRejectSpec, VolumeSpec } from '../';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import { BuildSpec, Dictionary, validateOrRejectSpec } from '../';
-import { VolumeSpec } from '../dependency-manager/spec/common-spec';
-import { ComponentSpec } from '../dependency-manager/spec/component-spec';
-import { ServiceInterfaceSpec, ServiceSpec } from '../dependency-manager/spec/service-spec';
 
 interface ComposeConversion {
   local?: any

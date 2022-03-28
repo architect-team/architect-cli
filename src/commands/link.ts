@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 import path from 'path';
 import untildify from 'untildify';
+import { buildSpecFromPath } from '../';
 import Command from '../base-command';
-import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-builder';
 
 declare const process: NodeJS.Process;
 

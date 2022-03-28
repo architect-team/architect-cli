@@ -6,7 +6,7 @@ import PipelineUtils from '../../architect/pipeline/pipeline.utils';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 import Command from '../../base-command';
 import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.utils';
-import { Dictionary } from '../../dependency-manager/utils/dictionary';
+import { Dictionary } from '../../';
 import { Slugs } from '../../';
 
 export default class PlatformCreate extends Command {

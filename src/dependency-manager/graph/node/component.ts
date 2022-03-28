@@ -3,7 +3,7 @@ import { ComponentNodeConfig } from '../../config/component-config';
 import { ServiceInterfaceConfig } from '../../config/service-config';
 import { Dictionary } from '../../utils/dictionary';
 
-export default class ComponentNode extends DependencyNode {
+export class ComponentNode extends DependencyNode {
   __type = 'interfaces';
 
   ref: string;

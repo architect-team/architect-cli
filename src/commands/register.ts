@@ -7,15 +7,13 @@ import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ResourceSpec, Slugs } from '../';
 import AccountUtils from '../architect/account/account.utils';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import * as Docker from '../common/utils/docker';
-import { ArchitectError, ComponentSlugUtils, resourceRefToNodeRef, ResourceSlugUtils, ResourceSpec, Slugs } from '../';
-import { buildSpecFromPath, dumpToYml } from '../dependency-manager/spec/utils/component-builder';
-import { Dictionary } from '../dependency-manager/utils/dictionary';
 
 tmp.setGracefulCleanup();
 

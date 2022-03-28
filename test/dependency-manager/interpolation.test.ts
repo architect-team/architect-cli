@@ -9,7 +9,7 @@ import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
 import IngressEdge from '../../src/dependency-manager/graph/edge/ingress';
 import OutputEdge from '../../src/dependency-manager/graph/edge/output';
-import ComponentNode from '../../src/dependency-manager/graph/node/component';
+import { ComponentNode } from '../../src/dependency-manager/graph/node/component';
 import { interpolateObjectOrReject } from '../../src/dependency-manager/utils/interpolation';
 
 describe('interpolation spec v1', () => {

@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
-import { Dictionary } from '../dependency-manager/utils/dictionary';
+import { Dictionary } from '../';
 import LocalPaths from '../paths';
 
 export default class AppConfig {
