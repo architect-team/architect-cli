@@ -4,21 +4,25 @@ title: Observability
 # Observability
 Up until now, you have used Architect to develop and deploy your application. However, Architect's role in your development process does not end there. You still need to monitor the system and be able to dive in when a problem occurs. To help facilitate this, Architect provides some helpful commands that will allow you better insights into how your system is doing.
 
-Whether it be a remote deployment using [`architect deploy`](/reference/cli/#architect-deploy-configs_or_components) or a local one using [`architect dev`](http://localhost:8000/reference/cli/#architect-dev-configs_or_components) these commands will give you a deeper insight into your product.
+Whether it be a remote deployment using [`architect deploy`](/reference/cli/#architect-deploy-configs_or_components) or a local one using [`architect dev`](/reference/cli/#architect-dev-configs_or_components) these commands will give you a deeper insight into your product.
 
-We will assume that you have deployed the example react app to a remote environment for the following examples.
+We will assume that you have deployed the example [react app](https://github.com/architect-team/architect-cli/tree/master/examples/react-app) to a remote environment for the following examples.
 ```sh
 $ architect register ./examples/react-app/
 $ Architect deploy react-app
 ```
 
+## Remote vs Local
+The following commands will work on both a remote deployment and a local deployment. The main difference is that a remote deployment is tied to an account where as a local deployment is not. So if you would like to access a remote deployment you would include the `--account` flag. If you do not include the `--account` flag, the Architect CLI will prompt you with a list of both local and remote options.
+
+Don't worry, if you are unsure about what account, environemnt or service you are trying to work with, then just leave them out of the command. The Architect CLI will present you with a list of options and help you find what you are looking for.
+
 ## Logging
 
-As your application runs, it will generally print important information to stdout and stderr as it runs. The log command will allow you to stream those logs from a remote service to your console. For instance, let's say you wanted to see the latest logs for the API of the example react app. You would do the following.
+As your application runs, it will generally print important information to stdout and stderr. The `logs` command will allow you to stream those logs from a remote service to your console. For instance, let's say you wanted to see the latest logs for the API of the example react app. You would do the following.
 ```sh
 $ architect logs -a my_account -e my_environment react-app.services.api
 ```
-*If you are unsure what your account, environment, or service name are, you can leave them blank, and Architect will prompt you will a list of valid options.*
 The output would be
 ```sh
 Logs:
@@ -50,7 +54,7 @@ While this is great for quick one-off commands, sometimes a more interactive app
 ```sh
 $ architect exec -ti -a my_account -e my_environment react-app.services.api -- sh
 ```
-Which would provide us with an interactive terminal.
+Which would provide you with an interactive terminal.
 ```sh
 /usr/src/app #
 ```
