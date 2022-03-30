@@ -3,9 +3,9 @@ name: Publish CLI
 on:
   push:
     branches:
-      - master
+      - main
       - rc
-      - arc
+      - arc-*
 
 env:
   CI: true

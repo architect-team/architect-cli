@@ -1,12 +1,12 @@
 {
   "branches": [
-    "master",
+    "main",
     {
       "name": "rc",
       "prerelease": true
     },
     {
-      "name": "arc",
+      "name": "arc-*",
       "prerelease": true
     }
   ],
