@@ -1,6 +1,10 @@
 import { classToPlain } from 'class-transformer';
 import yaml from 'js-yaml';
-import { BuildSpec, ComponentSpec, Dictionary, ServiceInterfaceSpec, ServiceSpec, VolumeSpec } from '../..';
+import { VolumeSpec } from '../../dependency-manager/spec/common-spec';
+import { ComponentSpec } from '../../dependency-manager/spec/component-spec';
+import { BuildSpec } from '../../dependency-manager/spec/resource-spec';
+import { ServiceInterfaceSpec, ServiceSpec } from '../../dependency-manager/spec/service-spec';
+import { Dictionary } from '../../dependency-manager/utils/dictionary';
 import DockerComposeTemplate from './template';
 
 interface ComposeConversion {

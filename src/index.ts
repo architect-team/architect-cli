@@ -1,4 +1,5 @@
 export { run } from '@oclif/core';
+export * from './common/docker-compose/converter';
 export * from './dependency-manager/config/common-config';
 export * from './dependency-manager/config/component-config';
 export * from './dependency-manager/config/component-context';
@@ -36,7 +37,6 @@ export * from './dependency-manager/utils/dictionary';
 export * from './dependency-manager/utils/errors';
 export * from './dependency-manager/utils/refs';
 export * from './dependency-manager/utils/types';
-export * from './common/docker-compose/converter';
 
 import DependencyManager from './dependency-manager/manager';
 
