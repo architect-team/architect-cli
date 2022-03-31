@@ -36,6 +36,7 @@ export * from './dependency-manager/utils/dictionary';
 export * from './dependency-manager/utils/errors';
 export * from './dependency-manager/utils/refs';
 export * from './dependency-manager/utils/types';
+export * from './common/docker-compose/converter';
 
 import DependencyManager from './dependency-manager/manager';
 

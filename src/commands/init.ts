@@ -9,7 +9,7 @@ import untildify from 'untildify';
 import { validateOrRejectSpec } from '../';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
-import { ComposeConverter } from '../common/docker-compose/init';
+import { ComposeConverter } from '../common/docker-compose/converter';
 
 export abstract class InitCommand extends Command {
   async auth_required(): Promise<boolean> {
