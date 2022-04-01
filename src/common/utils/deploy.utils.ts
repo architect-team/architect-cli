@@ -1,3 +1,4 @@
+import { isNumberString } from 'class-validator';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import { Dictionary } from '../../';
@@ -6,18 +7,14 @@ export default class DeployUtils {
   private static getExtraEnvironmentVariables(parameters: string[]): Dictionary<string | number | undefined> {
     const extra_env_vars: { [s: string]: string | number | undefined } = {};
 
-    for (const [param_name, param_value] of Object.entries(process.env || {})) {
+    for (const [param_name, param_value] of Object.entries(process.env || {})) { // TODO: check
       if (param_name.startsWith('ARC_')) {
-        extra_env_vars[param_name.substring(4)] = param_value;
-        try {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          const parsed = parseFloat(param_value);
-          if (!isNaN(parsed)) {
-            extra_env_vars[param_name.substring(4)] = parsed;
-          }
-          // eslint-disable-next-line no-empty
-        } catch { }
+        const key = param_name.substring(4);
+        let value: string | number | undefined = param_value;
+        if (value && isNumberString(value)) {
+          value = parseFloat(value);
+        }
+        extra_env_vars[key] = value;
       }
     }
 
@@ -26,7 +23,11 @@ export default class DeployUtils {
       if (param_split.length !== 2) {
         throw new Error(`Bad format for parameter ${param}. Please specify in the format --parameter PARAM_NAME=PARAM_VALUE`);
       }
-      extra_env_vars[param_split[0]] = param_split[1];
+      let value: string | number = param_split[1];
+      if (isNumberString(value)) {
+        value = parseFloat(value);
+      }
+      extra_env_vars[param_split[0]] = value;
     }
 
     return extra_env_vars;
