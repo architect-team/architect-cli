@@ -7,7 +7,7 @@ export default class DeployUtils {
   private static getExtraEnvironmentVariables(parameters: string[]): Dictionary<string | number | undefined> {
     const extra_env_vars: { [s: string]: string | number | undefined } = {};
 
-    for (const [param_name, param_value] of Object.entries(process.env || {})) { // TODO: check
+    for (const [param_name, param_value] of Object.entries(process.env || {})) {
       if (param_name.startsWith('ARC_')) {
         const key = param_name.substring(4);
         let value: string | number | undefined = param_value;

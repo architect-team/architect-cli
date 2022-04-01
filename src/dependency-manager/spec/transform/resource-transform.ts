@@ -1,3 +1,4 @@
+import { isNumberString } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { BuildConfig, ResourceConfig } from '../../config/resource-config';
 import { Dictionary } from '../../utils/dictionary';
@@ -21,8 +22,8 @@ export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | 
   return shell_parse(entrypoint.replace(/\$/g, '__arc__')).map(e => `${e}`.replace(/__arc__/g, '$'));
 };
 
-export const transformResourceSpecEnvironment = (environment: Dictionary<EnvironmentSpecValue> | undefined): Dictionary<string | null> => {
-  const output: Dictionary<string> = {};
+export const transformResourceSpecEnvironment = (environment: Dictionary<EnvironmentSpecValue> | undefined): Dictionary<string | number | null> => {
+  const output: Dictionary<string | number> = {};
   for (const [k, v] of Object.entries(environment || {})) {
     if (v === undefined || v === null) {
       continue;
@@ -31,7 +32,11 @@ export const transformResourceSpecEnvironment = (environment: Dictionary<Environ
     if (v instanceof Object) {
       output[k] = JSON.stringify(v);
     } else {
-      output[k] = `${v}`;
+      if (v && isNumberString(v.toString())) {
+        output[k] = parseFloat(v as string);
+      } else {
+        output[k] = `${v}`;
+      }
     }
   }
   return output;

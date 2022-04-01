@@ -255,7 +255,7 @@ describe('sidecar spec v1', () => {
         depends_on: [leaf_api_ref],
         environment: {
           LEAF_HOST: '127.0.0.1',
-          LEAF_PORT: '12345',
+          LEAF_PORT: 12345,
           LEAF_PROTOCOL: 'http',
           LEAF_URL: `http://127.0.0.1:12345`,
           EXTERNAL_INTERFACE: 'http://public.arc.localhost',
@@ -286,7 +286,7 @@ describe('sidecar spec v1', () => {
         depends_on: [leaf_db_ref],
         environment: {
           DB_HOST: '127.0.0.1',
-          DB_PORT: '12345',
+          DB_PORT: 12345,
           DB_PROTOCOL: 'postgres',
           DB_URL: `postgres://127.0.0.1:12345`
         },
@@ -323,7 +323,7 @@ describe('sidecar spec v1', () => {
         depends_on: [other_leaf_db_ref],
         environment: {
           DB_HOST: '127.0.0.1',
-          DB_PORT: '12345',
+          DB_PORT: 12345,
           DB_PROTOCOL: 'postgres',
           DB_URL: `postgres://127.0.0.1:12345`
         },

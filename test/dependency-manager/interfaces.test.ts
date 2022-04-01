@@ -250,7 +250,7 @@ describe('interfaces spec v1', () => {
         depends_on: [leaf_api_ref],
         environment: {
           LEAF_HOST: leaf_api_ref,
-          LEAF_PORT: '8080',
+          LEAF_PORT: 8080,
           LEAF_PROTOCOL: 'http',
           LEAF_URL: `http://${leaf_api_ref}:8080`,
           EXTERNAL_INTERFACE: 'http://public.arc.localhost',
@@ -281,7 +281,7 @@ describe('interfaces spec v1', () => {
         depends_on: [leaf_db_ref],
         environment: {
           DB_HOST: leaf_db_ref,
-          DB_PORT: '5432',
+          DB_PORT: 5432,
           DB_PROTOCOL: 'postgres',
           DB_URL: `postgres://${leaf_db_ref}:5432`
         },
@@ -318,7 +318,7 @@ describe('interfaces spec v1', () => {
         depends_on: [other_leaf_db_ref],
         environment: {
           DB_HOST: other_leaf_db_ref,
-          DB_PORT: '5432',
+          DB_PORT: 5432,
           DB_PROTOCOL: 'postgres',
           DB_URL: `postgres://${other_leaf_db_ref}:5432`
         },

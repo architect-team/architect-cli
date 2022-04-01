@@ -78,7 +78,7 @@ services:
       expect(component_config.services['elasticsearch'].environment['ES_JAVA_OPTS']).eq('-Xmx256m -Xms256m');
       expect(component_config.services['elasticsearch'].environment['ELASTIC_PASSWORD']).eq('changeme');
       expect(component_config.services['elasticsearch'].environment['DISCOVERY_TYPE']).eq('single-node');
-      expect(component_config.services['elasticsearch'].environment['TEST_NUMBER']).eq('3000');
+      expect(component_config.services['elasticsearch'].environment['TEST_NUMBER']).eq(3000);
       expect(component_config.services['logstash'].environment['LS_JAVA_OPTS']).eq('-Xmx256m -Xms256m');
       expect(component_config.services['logstash'].environment['ELASTICSEARCH_URL']).eq('${{ services.elasticsearch.interfaces.main.url }}');
       expect(component_config.services['logstash'].environment['KIBANA_URL']).eq('${{ services.kibana.interfaces.main.url }}');

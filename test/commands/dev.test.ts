@@ -12,7 +12,7 @@ import * as ComponentBuilder from '../../src/dependency-manager/spec/utils/compo
 import { MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = false;
+const print = true;
 
 const account = {
   id: 'test-account-id',
@@ -57,6 +57,8 @@ describe('local dev environment', function () {
       compose_escaped_variable:
         required: false
       api_port:
+      app_replicas:
+        required: false
 
     services:
       api:
@@ -68,6 +70,7 @@ describe('local dev environment', function () {
           another_required_key: \${{ parameters.another_required_key }}
           one_more_required_param: \${{ parameters.one_more_required_param }}
           compose_escaped_variable: \${{ parameters.compose_escaped_variable }}
+          app_replicas: \${{ parameters.app_replicas }}
 
     interfaces:
       hello:
@@ -262,7 +265,7 @@ describe('local dev environment', function () {
         ],
         "environment": {
           "DATABASE_HOST": seed_db_ref,
-          "DATABASE_PORT": "5432",
+          "DATABASE_PORT": 5432,
           "DATABASE_USER": "postgres",
           "DATABASE_PASSWORD": "architect",
           "DATABASE_SCHEMA": "test-db",
@@ -418,10 +421,27 @@ describe('local dev environment', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['dev', './examples/database-seeding/architect.yml', '-p', 'AUTO_DDL=seed', '-p', 'DB_NAME=test-db', '-i', 'app:main'])
-    .it('Create a local dev with a component, parameters, and an interface', ctx => {
+    .it('Create a local deployment with a component, parameters, and an interface', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose);
+    })
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+      return buildSpecFromYml(local_component_config_with_parameters)
+    })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml', '-p', 'app_replicas=2', '-p', 'a_required_key=key', '-p', 'another_required_key=key', '-p', 'one_more_required_param=param', '-p', 'api_port=8080'])
+    .it('Create a local deployment with a component and parameters, including a numeric parameter', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      const hello_world_service = runCompose.firstCall.args[0].services[hello_api_ref] as any;
+      expect(hello_world_service.environment.app_replicas).to.equal(2);
     })
 
   test

@@ -1563,21 +1563,21 @@ describe('interpolation spec v1', () => {
     const app_ref = ecsResourceRefToNodeRef('examples/test.services.app');
     const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(app_node.config.environment).to.deep.eq({
-      API_PORT: '12345',
+      API_PORT: 12345,
       API_ADDR: 'http://127.0.0.1:12345'
     })
 
     const api_ref = ecsResourceRefToNodeRef('examples/test.services.api');
     const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(api_node.config.environment).to.deep.eq({
-      MY_PORT: '8080',
+      MY_PORT: 8080,
       MY_ADDR: 'http://127.0.0.1:8080'
     })
 
     const upstream_ref = ecsResourceRefToNodeRef('examples/upstream.services.app');
     const upstream_node = graph.getNodeByRef(upstream_ref) as ServiceNode;
     expect(upstream_node.config.environment).to.deep.eq({
-      API_PORT: '12345',
+      API_PORT: 12345,
       API_ADDR: 'http://127.0.0.1:12345'
     })
   });

@@ -88,9 +88,17 @@ export class DockerComposeUtils {
       for (const port of node.ports) {
         ports.push(`${available_ports.shift()}:${port}`);
       }
-      const formatted_environment_variables: Dictionary<string | null> = {};
+      const formatted_environment_variables: Dictionary<string |number | null> = {};
       for (const [var_key, var_value] of Object.entries(node.config.environment)) {
-        formatted_environment_variables[var_key] = var_value !== null ? var_value.replace(/\$/g, '$$$') : null; // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
+        let value;
+        if (var_value === null) {
+          value = null;
+        } else if (typeof var_value === 'string') {
+          value = var_value.replace(/\$/g, '$$$'); // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
+        } else {
+          value = var_value;
+        }
+        formatted_environment_variables[var_key] = value;
       }
       const service = {
         environment: formatted_environment_variables,

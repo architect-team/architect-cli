@@ -1,7 +1,7 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
-import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { buildSpecFromPath, parseSourceYml, resourceRefToNodeRef, ServiceNode } from '../../src';
+import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 
 describe('superset spec validation', function () {
 
@@ -36,7 +36,7 @@ describe('superset spec validation', function () {
       const db_node = graph.getNodeByRef(db_ref) as ServiceNode;
 
       expect(db_node.config.environment.POSTGRES_USER).to.equal('{\n  "multiline": "value"\n}')
-      expect(JSON.parse(db_node.config.environment.POSTGRES_USER!)).to.deep.equal({
+      expect(JSON.parse(db_node.config.environment.POSTGRES_USER!.toString())).to.deep.equal({
         'multiline': 'value'
       })
     });

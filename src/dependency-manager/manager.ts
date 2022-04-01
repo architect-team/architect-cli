@@ -690,6 +690,8 @@ export default abstract class DependencyManager {
       }
 
       const component_config = transformComponentSpec(component_spec);
+      // console.log(JSON.stringify(component_spec, null, 2)) // spec looks good here still
+      // console.log(JSON.stringify(component_config, null, 2))
 
       // Add interfaces to ComponentNode of the tree if there are any interfaces defined
       if (Object.keys(component_config.interfaces).length) {
