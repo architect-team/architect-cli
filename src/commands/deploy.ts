@@ -7,7 +7,6 @@ import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import Command from '../base-command';
 import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../common/errors/pipeline-errors';
 import DeployUtils from '../common/utils/deploy.utils';
-import { Dictionary } from '../';
 import Dev from "./dev";
 
 export abstract class DeployCommand extends Command {
@@ -165,35 +164,6 @@ export default class Deploy extends DeployCommand {
     parsed.args.configs_or_components = parsed.argv;
     parsed.flags = DeployUtils.parseFlags(parsed.flags);
     return parsed;
-  }
-
-  getExtraEnvironmentVariables(parameters: string[]): Dictionary<string | number | undefined> {
-    const extra_env_vars: { [s: string]: string | number | undefined } = {};
-
-    for (const [param_name, param_value] of Object.entries(process.env || {})) {
-      if (param_name.startsWith('ARC_')) {
-        extra_env_vars[param_name.substring(4)] = param_value;
-        try {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          const parsed = parseFloat(param_value);
-          if (!isNaN(parsed) && param_value === `${parsed}`) {
-            extra_env_vars[param_name.substring(4)] = parsed;
-          }
-          // eslint-disable-next-line no-empty
-        } catch { }
-      }
-    }
-
-    for (const param of parameters) {
-      const param_split = param.split('=');
-      if (param_split.length !== 2) {
-        throw new Error(`Bad format for parameter ${param}. Please specify in the format --parameter PARAM_NAME=PARAM_VALUE`);
-      }
-      extra_env_vars[param_split[0]] = param_split[1];
-    }
-
-    return extra_env_vars;
   }
 
   protected async runRemote(): Promise<void> {
