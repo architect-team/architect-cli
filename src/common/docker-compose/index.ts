@@ -447,7 +447,7 @@ export class DockerComposeUtils {
     await fs.writeFile(compose_file, compose);
   }
 
-  public static async watchContainersHealth(compose_file: string, environment_name: string) {
+  public static async watchContainersHealth(compose_file: string, environment_name: string): Promise<void> {
     const max_restarts = 3;
     const reset_timer = 60000;
     let continueToRun = true;
@@ -494,7 +494,7 @@ export class DockerComposeUtils {
     return {
       stop: () => {
         continueToRun = false;
-      }
+      },
     };
   }
 }
