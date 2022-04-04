@@ -35,6 +35,10 @@ export const getDigest = async (image_ref: string): Promise<string> => {
   return digest.stdout.split('@')[1].replace('\'', '');
 };
 
+export const restart = async (container_id: string): Promise<void> => {
+  return docker(['restart', container_id]);
+}
+
 /**
  * this method splits the tag off of an image string. this logic is not straightforward as the image string may contain a port.
  *

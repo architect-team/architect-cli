@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
@@ -9,6 +10,7 @@ import untildify from 'untildify';
 import which from 'which';
 import { ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
+import { restart } from '../utils/docker';
 import PortUtil from '../utils/port';
 import DockerComposeTemplate, { DockerService, DockerServiceBuild } from './template';
 
@@ -443,5 +445,56 @@ export class DockerComposeUtils {
   public static async writeCompose(compose_file: string, compose: string): Promise<void> {
     await fs.ensureFile(compose_file);
     await fs.writeFile(compose_file, compose);
+  }
+
+  public static async watchContainersHealth(compose_file: string, environment_name: string) {
+    const max_restarts = 3;
+    const reset_timer = 60000;
+    let continueToRun = true;
+    const service_data_dictionary: Dictionary<{ restarts: number, last_restart_ms: number }> = {};
+    while (continueToRun) {
+      await new Promise(r => setTimeout(r, 5000));
+      const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
+      for (const container_state of container_states) {
+        const id = container_state.ID;
+        const full_service_name = container_state.Service;
+        const service_name = container_state.Service.split('--')[1];
+        const state = container_state.State.toLowerCase();
+        const health = container_state.Health.toLowerCase();
+
+        if (!service_data_dictionary[service_name]) {
+          service_data_dictionary[service_name] = {
+            restarts: 0,
+            last_restart_ms: Date.now(),
+          };
+        }
+
+        const bad_state = state != 'running';
+        const bad_health = health != '' && health != 'healthy';
+
+        if (bad_state || bad_health) {
+          const service_data = service_data_dictionary[service_name];
+
+          if (Date.now() - service_data.last_restart_ms > reset_timer) {
+            service_data.restarts = 0;
+          }
+
+          service_data.restarts++;
+          service_data.last_restart_ms = Date.now();
+          if (service_data.restarts > max_restarts) {
+            throw new Error(`Unable to start service ${service_name}`);
+          }
+          console.log(chalk.red(`ERROR: Service ${service_name} has encountered an error is being restarted.`));
+          console.log(chalk.red(`Retry attempt ${service_data.restarts} of ${max_restarts}`));
+          await restart(id);
+          DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(service_data.last_restart_ms).toISOString()], { stdout: 'inherit' });
+        }
+      }
+    }
+    return {
+      stop: () => {
+        continueToRun = false;
+      }
+    };
   }
 }
