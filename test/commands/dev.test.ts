@@ -417,7 +417,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/database-seeding/architect.yml', '-p', 'AUTO_DDL=seed', '-p', 'DB_NAME=test-db', '-i', 'app:main'])
+    .command(['dev', './examples/database-seeding/architect.yml', '--secret', 'AUTO_DDL=seed', '--secret', 'DB_NAME=test-db', '-i', 'app:main'])
     .it('Create a local dev with a component, secrets, and an interface', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;

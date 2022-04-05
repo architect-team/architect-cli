@@ -58,31 +58,6 @@ describe('remote deploy environment', function () {
   });
 });
 
-describe('remote deploy using a numeric secret on the command line', function () {
-  const remoteDeploy = mockArchitectAuth
-    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`, body => {
-        expect(body.values['*'].app_replicas).to.eq(4);
-        return body;
-      })
-      .reply(200, mock_pipeline))
-    .stdout({ print })
-    .stderr({ print })
-
-  remoteDeploy
-    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest', '-p', 'app_replicas=4'])
-    .it('a numeric secret is passed to the API as a number and not converted to a string', ctx => {
-      expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
-    });
-});
-
 describe('auto-approve flag with underscore style still works', function () {
   const remoteDeploy = mockArchitectAuth
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
@@ -241,5 +216,32 @@ describe('pollPipeline handles failed deployments', () => {
       const expected_error = 'Timeout while polling the pipeline'
       expect((Deploy.prototype.warn as SinonSpy).getCalls().length).to.equal(1);
       expect((Deploy.prototype.warn as SinonSpy).firstCall.args[0]).to.equal(expected_error);
+    });
+});
+
+describe('remote deploy using a numeric secret on the command line', function () {
+  const remoteDeploy = mockArchitectAuth
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
+    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.id}/environments/${environment.name}`)
+      .reply(200, environment))
+    .nock(MOCK_API_HOST, api => api
+      .post(`/environments/${environment.id}/deploy`, body => {
+        expect(body.values['*'].app_replicas).to.eq(4);
+        return body;
+      })
+      .reply(200, mock_pipeline))
+    .stdout({ print })
+    .stderr({ print })
+
+  remoteDeploy
+    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--secret', 'app_replicas=4'])
+    .it('a numeric secret is passed to the API as a number and not converted to a string', ctx => {
+      expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
 });

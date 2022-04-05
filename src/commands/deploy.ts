@@ -98,9 +98,8 @@ export default class Deploy extends DeployCommand {
     }),
     parameter: Flags.string({
       char: 'p',
-      description: 'Component parameters',
+      description: `${Command.DEPRECATED} Please use --secret.`,
       multiple: true,
-      default: [],
     }),
     interface: Flags.string({
       char: 'i',
@@ -111,6 +110,11 @@ export default class Deploy extends DeployCommand {
     secrets: Flags.string({
       char: 's',
       description: 'Path of secrets file',
+    }),
+    secret: Flags.string({
+      description: 'An individual secret key and value in the form SECRET_KEY=SECRET_VALUE',
+      multiple: true,
+      default: [],
     }),
     values: Flags.string({
       char: 'v',
@@ -172,7 +176,7 @@ export default class Deploy extends DeployCommand {
     const components = args.configs_or_components;
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const component_secrets = DeployUtils.getComponentSecrets(flags.parameter, flags.secrets);
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, flags.secrets);
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);

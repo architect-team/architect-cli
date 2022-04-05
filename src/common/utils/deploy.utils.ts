@@ -48,6 +48,7 @@ export default class DeployUtils {
     flags['build-parallel'] = flags.build_parallel ? flags.build_parallel : flags['build-parallel'];
     flags['compose-file'] = flags.compose_file ? flags.compose_file : flags['compose-file'];
     flags['secrets'] = flags.values ? flags.values : flags['secrets'];
+    flags['secret'] = flags['secret'].concat(flags['parameter'] || []);
 
     // If values were provided and secrets were not provided, override the secrets with the values
     if (!flags.secrets && fs.existsSync('./values.yml')) {
@@ -58,9 +59,9 @@ export default class DeployUtils {
     return flags;
   }
 
-  static getComponentSecrets(parameters: string[], secrets?: string): any { // TODO: 404: update
-    const component_secrets = DeployUtils.readSecretsFile(secrets);
-    const extra_secrets = DeployUtils.getExtraSecrets(parameters);
+  static getComponentSecrets(individual_secrets: string[], secrets_file?: string): any {
+    const component_secrets = DeployUtils.readSecretsFile(secrets_file);
+    const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets);
     if (extra_secrets && Object.keys(extra_secrets).length) {
       if (!component_secrets['*']) {
         component_secrets['*'] = {};
