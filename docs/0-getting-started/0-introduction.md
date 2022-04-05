@@ -70,7 +70,7 @@ $ architect link ./examples/react-app/
 The `architect.yml` file contains the component descriptors that power Architect deployments. Why don't you open up the file in our react-app example:
 
 ```yaml{numberLines: 1}
-name: examples/react-app
+name: react-app
 
 secrets:
   world_text:
@@ -151,9 +151,9 @@ This `architect.yml` describes each of our three `services`, exposes the fronten
 Now that we have a better understanding of what we're deploying, let's go ahead and start it up!
 
 ```sh
-$ architect dev examples/react-app:latest -i app:app
+$ architect dev react-app
 
-Using locally linked examples/react-app found at /architect-cli/examples/react-app
+Using locally linked react-app found at /architect-cli/examples/react-app
 http://app.arc.localhost:80/ => examples--react-app--app--latest--aklmrtvo
 
 http://localhost:50000/ => examples--react-app--api-db--latest--arrm58dc

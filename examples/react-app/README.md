@@ -29,7 +29,7 @@ $ cd ./architect-cli/examples/react-app
 $ architect link .
 
 # Deploy using the dev command
-$ architect dev examples/react-app:latest -i app:app
+$ architect dev react-app
 ```
 
 Once the deploy has completed, you can reach your new service by going to http://app.arc.localhost/.
@@ -43,7 +43,7 @@ Want to try deploying this to a cloud environment? Architect's got you covered t
 Alternatively, if you're already familiar with Architect and have your own environment registered, you can use the command below instead:
 
 ```sh
-$ architect deploy examples/react-app:latest -a <account-name> -e <environment-name>
+$ architect deploy react-app -a <account-name> -e <environment-name>
 ```
 
 ## Advanced deployment example

@@ -27,10 +27,10 @@ $ cd ./architect-cli/examples/database-seeding
 $ architect link .
 
 # Deploy using the dev command
-$ architect dev examples/database-seeding:latest -i main:main -p AUTO_DDL=migrate
+$ architect dev database-seeding:latest -p AUTO_DDL=migrate
 ```
 
-Once the deploy has completed, you can reach your new service by going to http://main.arc.localhost/.
+Once the deploy has completed, you can reach your new service by going to http://app.arc.localhost/.
 
 ## Deploying to the cloud
 
@@ -41,5 +41,5 @@ Want to try deploying this to a cloud environment? Architect's got you covered t
 Alternatively, if you're already familiar with Architect and have your own environment registered, you can use the command below instead:
 
 ```sh
-$ architect deploy examples/database-seeding:latest -a <account-name> -e <environment-name> -p AUTO_DDL=migrate
+$ architect deploy database-seeding:latest -a <account-name> -e <environment-name> -p AUTO_DDL=migrate
 ```

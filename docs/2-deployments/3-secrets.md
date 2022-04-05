@@ -8,9 +8,9 @@ If you've created a component already, you probably saw that components support 
 
 ```yaml
 # ./component/architect.yml
-name: examples/component
+name: component
 dependencies:
-  examples/dependency: latest
+  dependency: latest
 secrets:
   secret_key:
     required: true
@@ -20,7 +20,7 @@ services:
       SECRET_KEY: ${{ secrets.secret_key }}
 
 # ./dependency/architect.yml
-name: examples/dependency
+name: dependency
 secrets:
   username:
     required: true
@@ -38,7 +38,7 @@ services:
 The simplest way to specify secret values for components is by doing so directly from the deploy command. The command supports a `--secrets, -p` flag that allows you to specify the secret key and value as follows:
 
 ```sh
-$ architect deploy examples/dependency -p username=my-username -p password=my-password
+$ architect deploy dependency -p username=my-username -p password=my-password
 ```
 
 ## Using a config file
@@ -54,10 +54,10 @@ examples/dependency:
   password: my-password
 ```
 
-This file can then be specified directly in the deploy command to apply values to any components matching the keys in the file. The below will deploy examples/component, and since it depends on examples/dependency it will automatically be deployed as well. Each component matches a key in the file above so all the required secrets will be fulfilled.
+This file can then be specified directly in the deploy command to apply values to any components matching the keys in the file. The below will deploy component, and since it depends on dependency it will automatically be deployed as well. Each component matches a key in the file above so all the required secrets will be fulfilled.
 
 ```sh
-$ architect deploy examples/component --secrets secrets.yml
+$ architect deploy component --secrets secrets.yml
 ```
 
 The keys in the secrets file are simply patterns for matching components. Some examples are:

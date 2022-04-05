@@ -70,7 +70,7 @@ Now we can create a Task in the component file just as we would a Service. In th
 The `architect.yml`:
 
 ```yaml
-name: brahm-testing/my-task
+name: my-task
 description: A hello world task! 👋
 
 tasks:
@@ -84,14 +84,14 @@ We can validate the component to verify we haven't made any mistakes:
 
 ```shell
 % architect validate ./architect.yml
-✅ brahm-testing/my-task: /Users/brahmlower/development/my-task/architect.yml
+✅ my-task: /Users/test/development/my-task/architect.yml
 ```
 
 To run this locally, we'll need to link the component by running:
 
 ```shell
 % architect link ./architect.yml
-Successfully linked brahm-testing/my-task to local system at /Users/brahmlower/development/my-task/architect.yml.
+Successfully linked my-task to local system at /Users/test/development/my-task/architect.yml.
 ```
 
 Now that the component is linked, we can deploy it locally using the `architect dev`
@@ -99,15 +99,15 @@ command. Under the hood, this creates a docker-compose file which will be used
 as we execute the task.
 
 ```shell
-% architect dev brahm-testing/my-task
+% architect dev my-task
 ...
 ```
 
 And now we can execute the task locally:
 
 ```shell
-% architect task:exec --local brahm-testing/my-task hello-world
-Running task brahm-testing/my-task/hello-world:latest in the local architect environment...
+% architect task:exec --local my-task hello-world
+Running task my-task/hello-world:latest in the local architect environment...
 
 Creating architect-task-hello-world-xhkltnus_run ...
 Creating architect-task-hello-world-xhkltnus_run ... done
@@ -149,9 +149,9 @@ We will have to redeploy the component because we change its definition, so lets
 again to make sure everything is still working as expected.
 
 ```shell
-% architect dev brahm-testing/my-task
+% architect dev my-task
 ...
-% architect task:exec --local brahm-testing/my-task hello-world
+% architect task:exec --local my-task hello-world
 ...
 Hello, world!
 ```
@@ -170,7 +170,7 @@ Change the `my-task.sh` file to include a waving emoji in the output:
 Now we'll see the emoji in the output when we execute the task again without re-registering or re-deploying the component:
 
 ```shell
-% architect task:exec --local brahm-testing/my-task hello-world
+% architect task:exec --local my-task hello-world
 ...
 Hello, world! 👋
 ```
@@ -184,7 +184,7 @@ setting a value as a secret. In addition to adding the `secrets` section to the 
 The `architect.yml` file:
 
 ```diff
- name: brahm-testing/my-task
+ name: my-task
  description: A hello world task! 👋
 
 +secrets:
@@ -210,9 +210,9 @@ when we execute the task.
 
 
 ```shell
-% architect dev brahm-testing/my-task -p greeting=Hola
+% architect dev my-task -p greeting=Hola
 ...
-% architect task:exec --local brahm-testing/my-task hello-world
+% architect task:exec --local my-task hello-world
 Hola, world! 👋
 ...
 ```
@@ -294,7 +294,7 @@ the environment variable we reference in the script:
 Great! Now lets deploy our changes.
 
 ```shell
-% architect dev --detached brahm-testing/my-task -p greeting=Hola
+% architect dev --detached my-task -p greeting=Hola
 Building containers... done
 
 Once the containers are running they will be accessible via the following urls:
@@ -306,7 +306,7 @@ Starting containers...
 And now when we execute the task again, we'll see a greeting for a random name provided by the dependent service:
 
 ```
-% architect task:exec --local brahm-testing/my-task hello-world
+% architect task:exec --local my-task hello-world
 ...
 Hola, Katie! 👋
 ```

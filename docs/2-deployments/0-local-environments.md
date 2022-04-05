@@ -14,7 +14,7 @@ In order to help developers take advantage of dependency management during activ
 
 ```sh
 $ architect link ./examples/react-app/
-Successfully linked examples/react-app to local system at /architect-cli/examples/react-app.
+Successfully linked react-app to local system at /architect-cli/examples/react-app.
 ```
 
 ## Local deployment
@@ -22,9 +22,9 @@ Successfully linked examples/react-app to local system at /architect-cli/example
 Once you've registered a component locally or remotely, that component can then be deployed with a single command:
 
 ```sh
-$ architect dev examples/react-app:latest -i app:app -p world_text="dude"
+$ architect dev react-app -p world_text="dude"
 
-Using locally linked examples/react-app found at /architect-cli/examples/react-app
+Using locally linked react-app found at /architect-cli/examples/react-app
 http://app.arc.localhost:80/ => examples--react-app--app--latest--aklmrtvo
 
 http://localhost:50000/ => examples--react-app--api-db--latest--arrm58dc
@@ -55,7 +55,7 @@ Additionally, environment variables found on the local machine prefixed with `AR
 
 ```sh
 $ ARC_world_text="dude"
-$ architect dev examples/react-app:latest -i app:app
+$ architect dev react-app
 ```
 
 _In order to streamline local development, we recommend creating a single `.env` file checked into source control that includes a set of configuration options for developers to use when developing locally. They can easily mount the included secrets by running `source .env` before deploying._

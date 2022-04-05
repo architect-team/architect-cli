@@ -48,7 +48,7 @@ jobs:
         run: architect register ./architect.yml --tag ${{ env.MAINLINE_TAG_NAME }}
       - name: Deploy to Staging
         run: |
-          architect deploy --environment staging --auto-approve examples/my-component:${{ env.MAINLINE_TAG_NAME }}
+          architect deploy --environment staging --auto-approve my-component:${{ env.MAINLINE_TAG_NAME }}
 ```
 
 ## Cut releases for production
@@ -96,5 +96,5 @@ jobs:
         run: architect register ./architect.yml --tag ${{ github.event.release.tag_name }}
       - name: Deploy to Production
         run: |
-          architect deploy --environment production --auto-approve examples/my-component:${{ github.event.release.tag_name }}
+          architect deploy --environment production --auto-approve my-component:${{ github.event.release.tag_name }}
 ```
