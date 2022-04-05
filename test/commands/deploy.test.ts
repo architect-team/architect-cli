@@ -58,7 +58,7 @@ describe('remote deploy environment', function () {
   });
 });
 
-describe('remote deploy using a numeric parameter on the command line', function () {
+describe('remote deploy using a numeric secret on the command line', function () {
   const remoteDeploy = mockArchitectAuth
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
     .nock(MOCK_API_HOST, api => api
@@ -78,7 +78,7 @@ describe('remote deploy using a numeric parameter on the command line', function
 
   remoteDeploy
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest', '-p', 'app_replicas=4'])
-    .it('a numeric parameter is passed to the API as a number and not converted to a string', ctx => {
+    .it('a numeric secret is passed to the API as a number and not converted to a string', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
 });

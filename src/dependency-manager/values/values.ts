@@ -47,7 +47,7 @@ export class ValuesConfig {
       if (typeof component_values === 'object' && !(component_values instanceof Array)) {
         for (const [param_key, param_value] of Object.entries(component_values || {})) {
           // check that keys of values use allowed characters
-          if (!Slugs.ComponentParameterValidator.test(param_key)) {
+          if (!Slugs.ComponentSecretValidator.test(param_key)) {
             const validation_error = new ValidationError({
               component: component_key,
               path: `${component_key}.${param_key}`,

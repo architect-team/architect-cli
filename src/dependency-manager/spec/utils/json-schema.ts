@@ -222,17 +222,17 @@ const addDocsLinks = (definitions: Record<string, SchemaObject>): Record<string,
 };
 
 /**
- * Add support for template expressions like ${{ if eq(parameters.environment, dev) }}:
+ * Add support for template expressions like ${{ if eq(secrets.environment, dev) }}:
  */
 const addExpressions = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
   for (const [definition_name, definition] of Object.entries(definitions)) {
-    // Don't allow if statements in parameters
-    if (definition_name === 'ParameterDefinitionSpec') {
+    // Don't allow if statements in parameters/secrets
+    if (definition_name === 'SecretDefinitionSpec') {
       continue;
     }
     for (const [property_name, property] of Object.entries(definition.properties || {}) as [string, SchemaObject][]) {
       // Don't allow if statements in parameters or dependencies block
-      if (property_name === 'parameters' || property_name === 'dependencies') {
+      if (property_name === 'parameters' || property_name === 'secrets' || property_name === 'dependencies') {
         continue;
       }
 

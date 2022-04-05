@@ -12,7 +12,7 @@ import { GatewayNode } from './graph/node/gateway';
 import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
 import { ComponentSpec } from './spec/component-spec';
-import { transformComponentSpec, transformParameterDefinitionSpec, transformSecretDefinitionSpec } from './spec/transform/component-transform';
+import { transformComponentSpec, transformSecretDefinitionSpec } from './spec/transform/component-transform';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, ResourceType, Slugs } from './spec/utils/slugs';
 import { validateOrRejectSpec } from './spec/utils/spec-validator';
 import { Dictionary, transformDictionary } from './utils/dictionary';
@@ -346,7 +346,7 @@ export default abstract class DependencyManager {
     return dependency_components;
   }
 
-  validateRequiredSecrets(component: ComponentConfig, parameters: Dictionary<SecretValue>, secrets: Dictionary<SecretValue>): void { // TODO: 404: update
+  validateRequiredSecrets(component: ComponentConfig, secrets: Dictionary<SecretValue>): void { // TODO: 404: update
     const validation_errors = [];
     // Check required parameters and secrets for components
     for (const [key, value] of Object.entries(component.parameters).concat(Object.entries(component.secrets))) {
@@ -452,8 +452,9 @@ export default abstract class DependencyManager {
       }
 
       const secrets = this.getSecretsForComponentSpec(component_spec, all_secrets);
-      context.parameters = {
+      context.secrets = {
         ...context.parameters,
+        ...context.secrets,
         ...secrets,
       };
 
@@ -468,7 +469,7 @@ export default abstract class DependencyManager {
       const component_config = transformComponentSpec(component_spec);
 
       if (interpolate && validate) {
-        this.validateRequiredSecrets(component_config, context.parameters || {}, context.secrets || {}); // TODO: 404: update
+        this.validateRequiredSecrets(component_config, context.secrets || {}); // TODO: 404: update
       }
 
       const nodes = this.getComponentNodes(component_config);

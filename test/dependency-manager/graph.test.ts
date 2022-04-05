@@ -14,7 +14,7 @@ describe('graph', () => {
         architect/dependency: latest
         architect/missing-dependency: latest
 
-      parameters:
+      secrets:
         MYSQL_DATABASE:
           required: true
 
@@ -42,7 +42,7 @@ describe('graph', () => {
     const dependency_config = `
       name: architect/dependency
 
-      parameters:
+      secrets:
         MYSQL_DATABASE:
           required: true
 
@@ -87,7 +87,7 @@ describe('graph', () => {
       dependencies:
         architect/dependency: latest
 
-      parameters:
+      secrets:
         external_host:
 
       services:
@@ -95,7 +95,7 @@ describe('graph', () => {
           interfaces:
             main:
               port: 5432
-              host: \${{ parameters.external_host }}
+              host: \${{ secrets.external_host }}
           environment:
             OTHER_DB_ADDR: \${{ dependencies.architect/dependency.interfaces.db.url }}
     `;
@@ -103,7 +103,7 @@ describe('graph', () => {
     const dependency_config = `
       name: architect/dependency
 
-      parameters:
+      secrets:
         external_host:
 
       interfaces:
@@ -115,7 +115,7 @@ describe('graph', () => {
             mysql:
               port: 3306
               protocol: mysql
-              host: \${{ parameters.external_host }}
+              host: \${{ secrets.external_host }}
     `;
 
     nock('http://localhost').get('/accounts/architect/components/component/versions/latest')

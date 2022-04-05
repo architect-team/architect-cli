@@ -14,7 +14,7 @@ interfaces:
     ingress:
       subdomain: app
 
-parameters:
+secrets:
   api_db_host:
     description: API database host override
     required: false
@@ -42,15 +42,15 @@ services:
     image: postgres:11
     interfaces:
       postgres:
-        host: ${{ parameters.api_db_host }}
+        host: ${{ secrets.api_db_host }}
         port: 5432
-        username: ${{ parameters.root_db_user }}
-        password: ${{ parameters.root_db_pass }}
+        username: ${{ secrets.root_db_user }}
+        password: ${{ secrets.root_db_pass }}
         protocol: postgres
     environment:
-      POSTGRES_USER: ${{ parameters.root_db_user }}
-      POSTGRES_PASSWORD: ${{ parameters.root_db_pass }}
-      POSTGRES_DB: ${{ parameters.api_db_name }}
+      POSTGRES_USER: ${{ secrets.root_db_user }}
+      POSTGRES_PASSWORD: ${{ secrets.root_db_pass }}
+      POSTGRES_DB: ${{ secrets.api_db_name }}
 
   api:
     depends_on:
@@ -68,8 +68,8 @@ services:
       failure_threshold: 3
     environment:
       PORT: *api-port
-      DB_USE_SSL: ${{ parameters.db_use_ssl }}
-      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ parameters.api_db_name }}
+      DB_USE_SSL: ${{ secrets.db_use_ssl }}
+      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ secrets.api_db_name }}
     ${{ if architect.environment == 'local' }}:
       command: npm run start:dev
       volumes:
@@ -91,11 +91,11 @@ services:
       path: /api/names
       interval: 10s
       failure_threshold: 3
-    replicas: ${{ parameters.app_replicas }}
+    replicas: ${{ secrets.app_replicas }}
     environment:
       PORT: *app-port
       API_ADDR: ${{ services.api.interfaces.main.url }}
-      WORLD_TEXT: ${{ parameters.world_text }}
+      WORLD_TEXT: ${{ secrets.world_text }}
     ${{ if architect.environment == 'local' }}:
       build:
         dockerfile: Dockerfile.dev

@@ -35,15 +35,6 @@ export interface ComponentInterfaceConfig {
   path?: string;
 }
 
-export interface ParameterDefinitionConfig { // TODO: 404: remove
-  required?: boolean | string;
-
-  description?: string;
-
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  default?: boolean | number | object | string | null;
-}
-
 export interface SecretDefinitionConfig {
   required?: boolean | string;
 
@@ -68,8 +59,8 @@ export interface ComponentConfig {
   author?: string;
   homepage?: string;
 
-  parameters: Dictionary<ParameterDefinitionConfig>; // TODO: 404: remove
-  secrets: Dictionary<ParameterDefinitionConfig>;
+  parameters: Dictionary<SecretDefinitionConfig>; // TODO: 404: remove
+  secrets: Dictionary<SecretDefinitionConfig>;
   outputs: Dictionary<OutputDefinitionConfig>;
 
   services: Dictionary<ServiceConfig>;

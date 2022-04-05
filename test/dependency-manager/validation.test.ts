@@ -428,11 +428,11 @@ services:
     it('invalid key value', async () => {
       const component_config = `
       name: test/component
-      parameters:
+      secrets:
         environment: missing if
       services:
         app:
-          \${{ parameters.environment == 'local' }}:
+          \${{ secrets.environment == 'local' }}:
             environment:
               TEST: 1
       `
@@ -456,19 +456,19 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
-        `services.app.\${{ parameters.environment == 'local' }}`,
+        `services.app.\${{ secrets.environment == 'local' }}`,
       ])
       expect(errors[0].invalid_key).is.true;
       expect(errors[0].start?.row).eq(7);
       expect(errors[0].start?.column).eq(11);
       expect(errors[0].end?.row).eq(7);
-      expect(errors[0].end?.column).eq(51);
+      expect(errors[0].end?.column).eq(48);
     });
 
-    it('invalid component parameter keys', async () => {
+    it('invalid component secret keys', async () => {
       const component_config = `
       name: test/component
-      parameters:
+      secrets:
         test:
         test2: test
         test3: test
@@ -496,21 +496,21 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(2);
       expect(errors.map(e => e.path)).members([
-        'parameters.test%%%%',
-        'parameters.test***test'
+        'secrets.test%%%%',
+        'secrets.test***test'
       ])
-      expect(errors[0].message).includes(Slugs.ComponentParameterDescription);
+      expect(errors[0].message).includes(Slugs.ComponentSecretDescription);
     });
 
-    it('invalid parameter ref', async () => {
+    it('invalid secret ref', async () => {
       const component_config = `
       name: test/component
-      parameters:
+      secrets:
         test: test2
       services:
         api:
           environment:
-            TEST: \${{ parameter.test }}
+            TEST: \${{ secret.test }}
       `
 
       mock_fs({
@@ -535,12 +535,12 @@ services:
       expect(errors.map(e => e.path)).members([
         'services.api.environment.TEST',
       ])
-      expect(errors[0].message).includes('parameters.test');
+      expect(errors[0].message).includes('secrets.test');
       expect(errors[0].component).eq('test/component');
       expect(errors[0].start?.row).eq(8);
       expect(errors[0].start?.column).eq(23);
       expect(errors[0].end?.row).eq(8);
-      expect(errors[0].end?.column).eq(36);
+      expect(errors[0].end?.column).eq(33);
     });
 
     it('invalid component interfaces ref', async () => {
@@ -671,12 +671,12 @@ services:
     it('deploy time validation', async () => {
       const component_config = `
       name: test/component
-      parameters:
+      secrets:
         app_liveness_path: /health
       services:
         app:
           liveness_probe:
-            path: \${{ parameters.app_liveness_path }}
+            path: \${{ secrets.app_liveness_path }}
             port: 8080
         api:
           liveness_probe:
@@ -709,13 +709,13 @@ services:
     it('valid labels', async () => {
       const component_config = `
       name: test/component
-      parameters:
+      secrets:
         environment: dev
       services:
         app:
           labels:
             environment: dev
-            environment2: \${{ parameters.environment }}
+            environment2: \${{ secrets.environment }}
       `
       mock_fs({
         '/component.yml': component_config,
@@ -738,13 +738,13 @@ services:
     it('invalid labels', async () => {
       const component_config = `
       name: test/component
-      parameters:
+      secrets:
         environment: dev$%^%^%$T
       services:
         app:
           labels:
             environment: dev
-            environment2: \${{ parameters.environment }}
+            environment2: \${{ secrets.environment }}
             architect.io/Environment: dev
       `
       mock_fs({
@@ -772,7 +772,7 @@ services:
     it('invalid labels length', async () => {
       const component_config = `
       name: test/component
-      parameters:
+      secrets:
         environment: dev$%^%^%$&T
       services:
         app:
@@ -855,11 +855,11 @@ services:
     });
   });
 
-  describe('required parameter validation', () => {
-    it('required component parameters', async () => {
+  describe('required secret validation', () => {
+    it('required component secrets', async () => {
       const component_config = `
       name: test/component
-      parameters:
+      secrets:
         required:
         required-explicit:
           required: true
@@ -873,10 +873,10 @@ services:
           interfaces:
             main: 8080
           environment:
-            REQUIRED: \${{ parameters.required }}
-            REQUIRED_IMPLICIT: \${{ parameters.required-implicit }}
-            REQUIRED_EXPLICIT: \${{ parameters.required-explicit }}
-            NOT_REQUIRED: \${{ parameters.not-required }}
+            REQUIRED: \${{ secrets.required }}
+            REQUIRED_IMPLICIT: \${{ secrets.required-implicit }}
+            REQUIRED_EXPLICIT: \${{ secrets.required-explicit }}
+            NOT_REQUIRED: \${{ secrets.not-required }}
       `
       mock_fs({
         '/component.yml': component_config,
@@ -896,16 +896,16 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(3);
       expect(errors.map(e => e.path)).members([
-        'parameters.required',
-        'parameters.required-implicit',
-        'parameters.required-explicit',
+        'secrets.required',
+        'secrets.required-implicit',
+        'secrets.required-explicit',
       ])
       expect([...new Set(errors.map(e => e.component))]).members([
         'test/component',
       ])
     });
 
-    it('required dependency parameter', async () => {
+    it('required dependency secret', async () => {
       const component_config = `
       name: examples/hello-world
 
@@ -926,7 +926,7 @@ services:
       const component_config2 = `
       name: examples/hello-world2
 
-      parameters:
+      secrets:
         aws_secret:
 
       services:
@@ -935,7 +935,7 @@ services:
           interfaces:
             main: 3000
           environment:
-            AWS_SECRET: \${{ parameters.aws_secret }}
+            AWS_SECRET: \${{ secrets.aws_secret }}
 
       interfaces:
         echo:
@@ -964,7 +964,7 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
-        'parameters.aws_secret',
+        'secrets.aws_secret',
       ])
       expect([...new Set(errors.map(e => e.component))]).members([
         'examples/hello-world2',
@@ -1157,7 +1157,7 @@ services:
     const errors = JSON.parse(err.message);
     expect(errors).lengthOf(1);
     expect(err.message).includes(`services.app.interfaces`);
-    expect(err.message).includes('or must be an interpolation ref ex. ${{ parameters.example }}');
+    expect(err.message).includes('or must be an interpolation ref ex. ${{ secrets.example }}');
     expect(err.message).includes('or must be number');
     expect(err.message).includes('or must be object');
   });
@@ -1165,12 +1165,12 @@ services:
   it('valid interface interpolation reference', async () => {
     const component_config = `
       name: test/component
-      parameters:
+      secrets:
         app_port: 3000
       services:
         app:
           interfaces:
-            main: \${{ parameters.app_port }}
+            main: \${{ secrets.app_port }}
       `
     mock_fs({
       '/component.yml': component_config,
@@ -1218,7 +1218,7 @@ services:
     const errors = JSON.parse(err.message);
     expect(errors).lengthOf(1);
     expect(err.message).includes(`services.app.interfaces`);
-    expect(err.message).includes('or must be an interpolation ref ex. ${{ parameters.example }}');
+    expect(err.message).includes('or must be an interpolation ref ex. ${{ secrets.example }}');
     expect(err.message).includes('or must be number');
     expect(err.message).includes('or must be object');
   });
@@ -1318,11 +1318,11 @@ services:
   it('valid command', async () => {
     const component_config = `
       name: test/component
-      parameters:
+      secrets:
         SPRING_PROFILE: test
       services:
         app:
-          command: catalina.sh run -Pprofile=\${{ parameters.SPRING_PROFILE }}
+          command: catalina.sh run -Pprofile=\${{ secrets.SPRING_PROFILE }}
       `
     mock_fs({
       '/component.yml': component_config,
@@ -1585,7 +1585,7 @@ services:
       const yml = `
       name: test/component
       \${{ if true }}:
-        parameters:
+        secrets:
           test: test
       `
 
@@ -1604,10 +1604,10 @@ services:
       ]);
     })
 
-    it('cannot use if statement in parameters block', async () => {
+    it('cannot use if statement in secrets block', async () => {
       const yml = `
       name: test/component
-      parameters:
+      secrets:
         \${{ if true }}:
           test: test
       `
@@ -1623,14 +1623,14 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
-        'parameters.${{ if true }}',
+        'secrets.${{ if true }}',
       ]);
     })
 
-    it('cannot use if statement in parameter value block', async () => {
+    it('cannot use if statement in secret value block', async () => {
       const yml = `
       name: test/component
-      parameters:
+      secrets:
         test:
           \${{ if true }}:
             default: test
@@ -1647,7 +1647,7 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
-        'parameters.test.${{ if true }}',
+        'secrets.test.${{ if true }}',
       ]);
     })
 

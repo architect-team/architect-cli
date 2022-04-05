@@ -6,7 +6,7 @@ keywords:
 author: Architect.io
 homepage: https://architect.io
 
-parameters:
+secrets:
   param_string: architect
   param_number: 3000
   param_boolean: true
@@ -37,9 +37,9 @@ services:
       - 'hello'
     language: postgresql
     environment:
-      POSTGRES_USER: ${{ parameters.param_string }}
-      POSTGRES_PASSWORD: ${{ parameters.param_required }}
-      POSTGRES_DB: ${{ parameters.param_optional }}
+      POSTGRES_USER: ${{ secrets.param_string }}
+      POSTGRES_PASSWORD: ${{ secrets.param_required }}
+      POSTGRES_DB: ${{ secrets.param_optional }}
       ENVIRONMENT_UNSET:
     volumes:
       volume-string: ./some-volume
@@ -95,9 +95,9 @@ services:
         - 'hello'
       language: postgresql
       environment:
-        POSTGRES_USER: ${{ parameters.param_string }}
-        POSTGRES_PASSWORD: ${{ parameters.param_required }}
-        POSTGRES_DB: ${{ parameters.param_optional }}
+        POSTGRES_USER: ${{ secrets.param_string }}
+        POSTGRES_PASSWORD: ${{ secrets.param_required }}
+        POSTGRES_DB: ${{ secrets.param_optional }}
         ENVIRONMENT_UNSET:
       volumes:
         volume-string: ./some-volume
@@ -156,9 +156,9 @@ services:
     interfaces:
       http: 8080
     environment:
-      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ parameters.param_optional }}
-      DB_USER: ${{ parameters.param_string }}
-      DB_PASS: ${{ parameters.param_required }}
+      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ secrets.param_optional }}
+      DB_USER: ${{ secrets.param_string }}
+      DB_PASS: ${{ secrets.param_required }}
   frontend:
     build:
       context: ./frontend
@@ -173,7 +173,7 @@ services:
   stateless-api:
     image: heroku/nodejs-hello-world
     interfaces:
-      main: ${{ parameters.param_number }}
+      main: ${{ secrets.param_number }}
 
 tasks:
   curler:
@@ -186,7 +186,7 @@ tasks:
 
     environment:
       SERVER_URL: ${{ services.stateless-api.interfaces.main.url }}
-      RUN_CURL: ${{ parameters.param_boolean }}
+      RUN_CURL: ${{ secrets.param_boolean }}
 
   curler-build:
     schedule: '*/5 * * * ?'
@@ -198,7 +198,7 @@ tasks:
       - $RUN_CURL && $SERVER_URL
     environment:
       SERVER_URL: ${{ services.stateless-api.interfaces.main.url }}
-      RUN_CURL: ${{ parameters.param_boolean }}
+      RUN_CURL: ${{ secrets.param_boolean }}
 
 dependencies:
   examples/hello-world: latest

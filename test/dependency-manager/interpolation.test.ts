@@ -14,9 +14,9 @@ describe('interpolation spec v1', () => {
     const source = `
     test:
       - 1
-      - \${{ parameters.test2 }}`
+      - \${{ secrets.test2 }}`
     const context = {
-      parameters: {
+      secrets: {
         test2: 2
       }
     }
@@ -27,7 +27,7 @@ describe('interpolation spec v1', () => {
     const component_config = `
     name: examples/hello-world
 
-    parameters:
+    secrets:
       null_required:
       null_not_required:
         required: false
@@ -44,10 +44,10 @@ describe('interpolation spec v1', () => {
           main: 3000
         environment:
           NULL: null
-          NULL2: \${{ parameters.null_required }}
-          NULL3: \${{ parameters.null_not_required }}
-          NULL4: \${{ parameters.null_not_required_default }}
-          NULL5: \${{ parameters.null_default }}
+          NULL2: \${{ secrets.null_required }}
+          NULL3: \${{ secrets.null_not_required }}
+          NULL4: \${{ secrets.null_not_required_default }}
+          NULL5: \${{ secrets.null_default }}
 
     interfaces:
       echo:
@@ -73,14 +73,14 @@ describe('interpolation spec v1', () => {
     const component_config = `
     name: examples/hello-world
 
-    parameters:
+    secrets:
       first: 1
       second: 2
 
     services:
       api:
         environment:
-          TEST: \${{ parameters.first }} and \${{ parameters.second }}
+          TEST: \${{ secrets.first }} and \${{ secrets.second }}
     `
 
     mock_fs({
@@ -539,7 +539,7 @@ describe('interpolation spec v1', () => {
   //     interfaces: {
   //       main: '${{ services.web.interfaces.main.url }}'
   //     },
-  //     parameters: {
+  //     secrets: {
   //       log_level: 'debug'
   //     },
   //     services: {
@@ -554,7 +554,7 @@ describe('interpolation spec v1', () => {
   //     }
   //   }
 
-  //   const properties = 'log_level=${{ parameters.log_level }}'
+  //   const properties = 'log_level=${{ secrets.log_level }}'
 
   //   mock_fs({
   //     '/stack/web/application.properties': properties,
@@ -574,13 +574,13 @@ describe('interpolation spec v1', () => {
   //   });
   // });
 
-  // it('service environment param interpolated from component parameter with file ref', async () => {
+  // it('service environment param interpolated from component secret with file ref', async () => {
   //   const component_config = {
   //     name: 'test/component',
   //     interfaces: {
   //       main: '${{ services.web.interfaces.main.url }}'
   //     },
-  //     parameters: {
+  //     secrets: {
   //       TEST_FILE_DATA: 'file:./test-file.txt'
   //     },
   //     services: {
@@ -589,7 +589,7 @@ describe('interpolation spec v1', () => {
   //           main: 8080
   //         },
   //         environment: {
-  //           TEST_DATA: '${{ parameters.TEST_FILE_DATA }}'
+  //           TEST_DATA: '${{ secrets.TEST_FILE_DATA }}'
   //         }
   //       }
   //     }
@@ -866,7 +866,7 @@ describe('interpolation spec v1', () => {
   //   const component_config = `
   //   name: examples/hello-world
 
-  //   parameters:
+  //   secrets:
   //     TEST_FILE: manually set test file env # file:./this-file-does-not-exist.nope
 
   //   services:
@@ -875,7 +875,7 @@ describe('interpolation spec v1', () => {
   //       interfaces:
   //         main: 3000
   //       environment:
-  //         TEST_FILE_ENV: \${{ parameters.TEST_FILE }}
+  //         TEST_FILE_ENV: \${{ secrets.TEST_FILE }}
 
   //   interfaces:
   //     echo:
@@ -899,17 +899,17 @@ describe('interpolation spec v1', () => {
   //   });
   // });
 
-  it('parameter value starting with bracket does not produce invalid yaml', async () => {
+  it('secret value starting with bracket does not produce invalid yaml', async () => {
     const component_config = `
     name: examples/hello-world
 
-    parameters:
+    secrets:
       secret:
 
     services:
       api:
         environment:
-          SECRET: \${{ parameters.secret }}
+          SECRET: \${{ secrets.secret }}
     `
 
     mock_fs({
@@ -1038,11 +1038,11 @@ describe('interpolation spec v1', () => {
   //   });
   // });
 
-  it('implicit environment parameter', async () => {
+  it('implicit environment secret', async () => {
     const component_config = `
     name: examples/hello-world
 
-    parameters:
+    secrets:
       aws_secret:
       other_secret:
       default_secret: test3
@@ -1053,9 +1053,9 @@ describe('interpolation spec v1', () => {
         interfaces:
           main: 3000
         environment:
-          AWS_SECRET: \${{ parameters.aws_secret }}
-          OTHER_SECRET: \${{ parameters.other_secret }}
-          DEFAULT_SECRET: \${{ parameters.default_secret }}
+          AWS_SECRET: \${{ secrets.aws_secret }}
+          OTHER_SECRET: \${{ secrets.other_secret }}
+          DEFAULT_SECRET: \${{ secrets.default_secret }}
 
     interfaces:
       echo:
@@ -1106,7 +1106,7 @@ describe('interpolation spec v1', () => {
       app:
         url: \${{ services.app.interfaces.app.url }}
         ingress:
-          subdomain: \${{ parameters.test_subdomain }}
+          subdomain: \${{ secrets.test_subdomain }}
     services:
       app:
         interfaces:
@@ -1115,7 +1115,7 @@ describe('interpolation spec v1', () => {
           ADDR: \${{ ingresses.app.url }}
           CORS_URLS: \${{ ingresses.app.consumers }}
           DNS_ZONE: \${{ ingresses.app.dns_zone }}
-    parameters:
+    secrets:
       test_subdomain:
         required: true
     `
@@ -1146,14 +1146,14 @@ describe('interpolation spec v1', () => {
     expect(ingress_edge.consumers_map).keys('app')
   });
 
-  it('interpolate parameter for replicas', async () => {
+  it('interpolate secret for replicas', async () => {
     const component_config = `
     name: examples/hello-world
-    parameters:
+    secrets:
       replicas:
     services:
       api:
-        replicas: \${{ parameters.replicas }}
+        replicas: \${{ secrets.replicas }}
     `
 
     mock_fs({
@@ -1174,17 +1174,17 @@ describe('interpolation spec v1', () => {
     expect(node.config.replicas).to.eq(1);
   });
 
-  it('interpolate object parameter for replicas', async () => {
+  it('interpolate object secret for replicas', async () => {
     const component_config = `
     name: examples/hello-world
-    parameters:
+    secrets:
       api_config:
         default:
           min_replicas: 3
           max_replicas: 5
     services:
       api:
-        replicas: \${{ parameters.api_config.min_replicas }}
+        replicas: \${{ secrets.api_config.min_replicas }}
     `
 
     mock_fs({
@@ -1201,16 +1201,16 @@ describe('interpolation spec v1', () => {
     expect(node.config.replicas).to.eq(3);
   });
 
-  it('interpolate parameter to env with empty string', async () => {
+  it('interpolate secret to env with empty string', async () => {
     const component_config = `
     name: examples/hello-world
-    parameters:
+    secrets:
       secret:
         default: ''
     services:
       api:
         environment:
-          SECRET: \${{ parameters.secret }}
+          SECRET: \${{ secrets.secret }}
     `
 
     mock_fs({
@@ -1234,19 +1234,19 @@ describe('interpolation spec v1', () => {
     });
   });
 
-  it('interpolate nested parameter', async () => {
+  it('interpolate nested secret', async () => {
     const component_config = `
     name: examples/hello-world
-    parameters:
+    secrets:
       db_host:
         default: ''
     services:
       api:
         environment:
-          DB_ADDR: \${{ parameters.db_host }}:5432
-          DB_ADDR2: \${{ parameters.db_host }}:\${{ parameters.db_host }}
-          DB_ADDR3: \${{ parameters.db_host }}:\${{ parameters.db_host }}:5432
-          DB_ADDR4: \${{ parameters.db_host }}\${{ parameters.db_host }}
+          DB_ADDR: \${{ secrets.db_host }}:5432
+          DB_ADDR2: \${{ secrets.db_host }}:\${{ secrets.db_host }}
+          DB_ADDR3: \${{ secrets.db_host }}:\${{ secrets.db_host }}:5432
+          DB_ADDR4: \${{ secrets.db_host }}\${{ secrets.db_host }}
     `
 
     mock_fs({
@@ -1279,13 +1279,13 @@ describe('interpolation spec v1', () => {
   it('interpolate interfaces node', async () => {
     const component_config = `
     name: examples/hello-world
-    parameters:
+    secrets:
       subdomain: test
     interfaces:
       api:
         url: \${{ services.api.interfaces.main.url }}
         ingress:
-          subdomain: \${{ parameters.subdomain }}
+          subdomain: \${{ secrets.subdomain }}
     services:
       api:
         interfaces:
@@ -1318,7 +1318,7 @@ describe('interpolation spec v1', () => {
   it('interpolate interfaces ingress whitelist', async () => {
     const component_config = `
     name: examples/hello-world
-    parameters:
+    secrets:
       ip_whitelist:
         default: [127.0.0.1]
       required_ip_whitelist:
@@ -1326,11 +1326,11 @@ describe('interpolation spec v1', () => {
       api:
         url: \${{ services.api.interfaces.main.url }}
         ingress:
-          ip_whitelist: \${{ parameters.ip_whitelist }}
+          ip_whitelist: \${{ secrets.ip_whitelist }}
       api2:
         url: \${{ services.api.interfaces.main.url }}
         ingress:
-          ip_whitelist: \${{ parameters.required_ip_whitelist }}
+          ip_whitelist: \${{ secrets.required_ip_whitelist }}
     services:
       api:
         interfaces:
@@ -1373,15 +1373,15 @@ describe('interpolation spec v1', () => {
   it('interpolate component outputs', async () => {
     const publisher_config = `
     name: examples/publisher
-    parameters:
+    secrets:
       topic_name: test
     outputs:
       topic1: test
-      topic2: \${{ parameters.topic_name }}
+      topic2: \${{ secrets.topic_name }}
       topic3:
         value: test
       topic4:
-        value: \${{ parameters.topic_name }}
+        value: \${{ secrets.topic_name }}
     `
 
     const consumer_config = `
@@ -1514,7 +1514,7 @@ describe('interpolation spec v1', () => {
     const config = `
     name: examples/test
 
-    parameters:
+    secrets:
       api_port: 8080
 
     interfaces:
@@ -1527,7 +1527,7 @@ describe('interpolation spec v1', () => {
           API_ADDR: \${{ services.api.interfaces.main.url }}
       api:
         interfaces:
-          main: \${{ parameters.api_port }}
+          main: \${{ secrets.api_port }}
         environment:
           MY_PORT: \${{ services.api.interfaces.main.port }}
           MY_ADDR: \${{ services.api.interfaces.main.url }}

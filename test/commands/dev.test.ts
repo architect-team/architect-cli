@@ -25,7 +25,7 @@ describe('local dev environment', function () {
     return `
     name: hello-world
 
-    parameters:
+    secrets:
       hello_ingress: hello
 
     services:
@@ -39,7 +39,7 @@ describe('local dev environment', function () {
     interfaces:
       hello:
         ingress:
-          subdomain: \${{ parameters.hello_ingress }}
+          subdomain: \${{ secrets.hello_ingress }}
         url: \${{ services.api.interfaces.main.url }}
     `
   }
@@ -47,7 +47,7 @@ describe('local dev environment', function () {
   const local_component_config_with_parameters = `
     name: hello-world
 
-    parameters:
+    secrets:
       a_required_key:
         required: true
       another_required_key:
@@ -62,12 +62,12 @@ describe('local dev environment', function () {
       api:
         image: heroku/nodejs-hello-world
         interfaces:
-          main: \${{ parameters.api_port }}
+          main: \${{ secrets.api_port }}
         environment:
-          a_required_key: \${{ parameters.a_required_key }}
-          another_required_key: \${{ parameters.another_required_key }}
-          one_more_required_param: \${{ parameters.one_more_required_param }}
-          compose_escaped_variable: \${{ parameters.compose_escaped_variable }}
+          a_required_key: \${{ secrets.a_required_key }}
+          another_required_key: \${{ secrets.another_required_key }}
+          one_more_required_param: \${{ secrets.one_more_required_param }}
+          compose_escaped_variable: \${{ secrets.compose_escaped_variable }}
 
     interfaces:
       hello:
@@ -116,9 +116,9 @@ describe('local dev environment', function () {
           "main": 3000
         },
         "environment": {
-          "a_required_key": "${{ parameters.a_required_key }}",
-          "another_required_key": "${{ parameters.another_required_key }}",
-          "one_more_required_param": "${{ parameters.one_more_required_param }}"
+          "a_required_key": "${{ secrets.a_required_key }}",
+          "another_required_key": "${{ secrets.another_required_key }}",
+          "one_more_required_param": "${{ secrets.one_more_required_param }}"
         }
       }
     },
@@ -129,7 +129,7 @@ describe('local dev environment', function () {
       }
     },
 
-    "parameters": {
+    "secrets": {
       'a_required_key': {
         'required': true
       },
@@ -151,7 +151,7 @@ describe('local dev environment', function () {
       'interfaces': {
         'app': '\${{ services.app.interfaces.main.url }}'
       },
-      'parameters': {
+      'secrets': {
         'world_text': {
           'default': 'world'
         }
@@ -166,7 +166,7 @@ describe('local dev environment', function () {
           },
           'environment': {
             'PORT': '\${{ services.app.interfaces.main.port }}',
-            'WORLD_TEXT': '\${{ parameters.world_text }}'
+            'WORLD_TEXT': '\${{ secrets.world_text }}'
           }
         }
       }
@@ -190,7 +190,7 @@ describe('local dev environment', function () {
   const local_database_seeding_component_config = {
     "name": "database-seeding",
 
-    "parameters": {
+    "secrets": {
       "AUTO_DDL": {
         "default": "none"
       },
@@ -222,7 +222,7 @@ describe('local dev environment', function () {
           "DATABASE_USER": "${{ services.my-demo-db.environment.POSTGRES_USER }}",
           "DATABASE_PASSWORD": "${{ services.my-demo-db.environment.POSTGRES_PASSWORD }}",
           "DATABASE_SCHEMA": "${{ services.my-demo-db.environment.POSTGRES_DB }}",
-          "AUTO_DDL": "${{ parameters.AUTO_DDL }}"
+          "AUTO_DDL": "${{ secrets.AUTO_DDL }}"
         }
       },
 
@@ -232,9 +232,9 @@ describe('local dev environment', function () {
           "postgres": 5432,
         },
         "environment": {
-          "POSTGRES_DB": "${{ parameters.DB_NAME }}",
-          "POSTGRES_USER": "${{ parameters.DB_USER }}",
-          "POSTGRES_PASSWORD": "${{ parameters.DB_PASS }}"
+          "POSTGRES_DB": "${{ secrets.DB_NAME }}",
+          "POSTGRES_USER": "${{ secrets.DB_USER }}",
+          "POSTGRES_PASSWORD": "${{ secrets.DB_PASS }}"
         }
       }
     },

@@ -616,10 +616,10 @@ describe('interfaces spec v1', () => {
     });
   });
 
-  it('should allow HTTP basic auth values to be parameters', async () => {
+  it('should allow HTTP basic auth values to be secrets', async () => {
     const smtp_config = `
       name: architect/smtp
-      parameters:
+      secrets:
         SMTP_USER: param-user
         SMTP_PASS: param-pass
       services:
@@ -629,8 +629,8 @@ describe('interfaces spec v1', () => {
             smtp:
               port: 1025
               protocol: smtp
-              username: \${{ parameters.SMTP_USER }}
-              password: \${{ parameters.SMTP_PASS }}
+              username: \${{ secrets.SMTP_USER }}
+              password: \${{ secrets.SMTP_PASS }}
             dashboard: 1080
         test-app:
           image: hashicorp/http-echo
