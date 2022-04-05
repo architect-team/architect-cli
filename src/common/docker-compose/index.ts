@@ -129,7 +129,6 @@ export class DockerComposeUtils {
       }
       service.labels.push(`architect.ref=${node.config.metadata.ref}`);
 
-      /* Disable healthcheck since we removed autoheal container
       // Set liveness and healthcheck for services (not supported by Tasks)
       if (node instanceof ServiceNode) {
         const liveness_probe = node.config.liveness_probe;
@@ -149,7 +148,6 @@ export class DockerComposeUtils {
           }
         }
       }
-      */
 
       const is_wsl = os.release().toLowerCase().includes('microsoft');
       if (process.platform === 'linux' && !is_wsl && process.env.TEST !== '1') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
@@ -447,11 +445,12 @@ export class DockerComposeUtils {
     await fs.writeFile(compose_file, compose);
   }
 
-  public static async watchContainersHealth(compose_file: string, environment_name: string): Promise<void> {
+  public static async watchContainersHealth(compose_file: string, environment_name: string): Promise<{ stop: () => void }> {
     const max_restarts = 3;
+    const max_unhealthy_checks = 3;
     const reset_timer = 60000;
     let continueToRun = true;
-    const service_data_dictionary: Dictionary<{ restarts: number, last_restart_ms: number }> = {};
+    const service_data_dictionary: Dictionary<{ restarts: number, last_restart_ms: number, unhealthy_count: number }> = {};
     while (continueToRun) {
       await new Promise(r => setTimeout(r, 5000));
       const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
@@ -466,13 +465,28 @@ export class DockerComposeUtils {
           service_data_dictionary[service_name] = {
             restarts: 0,
             last_restart_ms: Date.now(),
+            unhealthy_count: 0,
           };
         }
 
-        const bad_state = state != 'running';
-        const bad_health = health != '' && health != 'healthy';
+        let bad_state = state != 'running';
+        const bad_health = health == 'unhealthy';
 
-        if (bad_state || bad_health) {
+        // We do not want to call it a bad state just because it is unhealthy once
+        // So we make sure we are unhealthy for n iterations before calling it a bad state
+        if (bad_health) {
+          service_data_dictionary[service_name].unhealthy_count++;
+          const tries_left = Math.max(max_unhealthy_checks - service_data_dictionary[service_name].unhealthy_count, 0);
+          console.log(chalk.yellow(`Health check for ${service_name} has failed. ${tries_left} attempts left`));
+          if (service_data_dictionary[service_name].unhealthy_count >= max_unhealthy_checks) {
+            bad_state = true;
+            service_data_dictionary[service_name].unhealthy_count = 0;
+          }
+        } else {
+          service_data_dictionary[service_name].unhealthy_count = 0;
+        }
+
+        if (bad_state) {
           const service_data = service_data_dictionary[service_name];
 
           if (Date.now() - service_data.last_restart_ms > reset_timer) {
@@ -484,17 +498,18 @@ export class DockerComposeUtils {
           if (service_data.restarts > max_restarts) {
             throw new Error(`Unable to start service ${service_name}`);
           }
-          console.log(chalk.red(`ERROR: Service ${service_name} has encountered an error is being restarted.`));
+          console.log(chalk.red(`ERROR: Service ${service_name} has encountered an error and is being restarted.`));
           console.log(chalk.red(`Retry attempt ${service_data.restarts} of ${max_restarts}`));
           await restart(id);
           DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(service_data.last_restart_ms).toISOString()], { stdout: 'inherit' });
         }
       }
     }
+    const stop = () => {
+      continueToRun = false;
+    };
     return {
-      stop: () => {
-        continueToRun = false;
-      },
+      stop: stop,
     };
   }
 }
