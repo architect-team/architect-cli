@@ -29,7 +29,7 @@ $ cd ./architect-cli/examples/stateful-component
 $ architect link .
 
 # Deploy using the dev command
-$ architect dev examples/stateless-component:latest -i frontend:frontend
+$ architect dev stateless-component:latest
 ```
 
 Once the deploy has completed, you can reach your new service by going to http://frontend.arc.localhost/.
@@ -43,7 +43,7 @@ Want to try deploying this to a cloud environment? Architect's got you covered t
 Alternatively, if you're already familiar with Architect and have your own environment registered, you can use the command below instead:
 
 ```sh
-$ architect deploy examples/stateless-component:latest -a <account-name> -e <environment-name>
+$ architect deploy stateless-component:latest -a <account-name> -e <environment-name>
 ```
 
 

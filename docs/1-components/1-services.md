@@ -7,7 +7,7 @@ title: Services
 Services describe the runtimes that power your application. Each service described in an `architect.yml` file will automatically be deployed to its own horizontally scaling replica with load balancing seamlessly between instances.
 
 ```yaml
-name: examples/my-component
+name: my-component
 
 services:
   my-api:
