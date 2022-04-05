@@ -22,14 +22,14 @@ When you view your deployed components, you'll see that the react-app has the na
 
 Configuring individual tenants works the same way as deploying those tenants: by providing the tenant name. Secrets use the component scopes to specify which values will be applied to which components, so setting a secret for a tenant is as simple as providing the tenant name in the component scope.
 
-In the case of the example React App, the following will override the `world_text` parameter for just the `sandiego` tenant.
+In the case of the example React App, the following will override the `world_text` secret for just the `sandiego` tenant.
 
 ```yaml
 'examples/react-app@sandiego':
   world_text: San Diego
 ```
 
-This enables minimal duplication of configuration, as you can specify any necessary values in a generic component scope, but then override specific values on a tenant-by-tenant basis. In the following example, the `planetearth` tenant would have the `foo` parameter as configured in the first scope, but would have the overwritten values for `world_text` set in the second scope.
+This enables minimal duplication of configuration, as you can specify any necessary values in a generic component scope, but then override specific values on a tenant-by-tenant basis. In the following example, the `planetearth` tenant would have the `foo` secret as configured in the first scope, but would have the overwritten values for `world_text` set in the second scope.
 
 ```yaml
 'examples/react-app':

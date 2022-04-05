@@ -15,10 +15,10 @@ keywords:
   - additional
   - search
   - keywords
-parameters:
+secrets:
   db_user:
     required: true
-    description: Human-readable description of my parameter
+    description: Human-readable description of my secret
     default: default-value
   db_pass: shorthand-default-value
   db_name: example
@@ -30,9 +30,9 @@ services:
         port: 5432
         protocol: postgres
     environment:
-      POSTGRES_USER: ${{ parameters.db_user }}
-      POSTGRES_PASSWORD: ${{ parameters.db_pass }}
-      POSTGRES_DATABASE: ${{ parameters.db_name }}
+      POSTGRES_USER: ${{ secrets.db_user }}
+      POSTGRES_PASSWORD: ${{ secrets.db_pass }}
+      POSTGRES_DATABASE: ${{ secrets.db_name }}
   my-api:
     depends_on:
       - database
@@ -50,9 +50,9 @@ services:
       port: 8080
       path: /health
     environment:
-      DB_ADDR: ${{ services.database.interfaces.pg.url }}/${{ parameters.db_name }}
-      DB_USER: ${{ parameters.db_user }}
-      DB_PASS: ${{ parameters.db_pass }}
+      DB_ADDR: ${{ services.database.interfaces.pg.url }}/${{ secrets.db_name }}
+      DB_USER: ${{ secrets.db_user }}
+      DB_PASS: ${{ secrets.db_pass }}
   my-frontend:
     build:
       context: .
@@ -115,8 +115,8 @@ A dictionary of named tasks included with the component. Each task described in 
 
 [Learn more about configuring tasks](/components/tasks)
 
-### parameters
+### secrets
 
-(optional) A dictionary of named, configurable fields for the component. Each parameter can include a description so that others know what to assign for values, a default value for when deployers don't specify one, and an indication as to whether or not a value is required.
+(optional) A dictionary of named, configurable fields for the component. Each secret can include a description so that others know what to assign for values, a default value for when deployers don't specify one, and an indication as to whether or not a value is required.
 
-[Learn more about configuring parameters](/components/parameters)
+[Learn more about configuring secrets](/components/secrets)

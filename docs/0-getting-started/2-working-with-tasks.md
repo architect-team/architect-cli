@@ -6,13 +6,13 @@ title: Working With Tasks
 
 Sometimes you want to execute some command on a recurring basis, or as a one-off operation. Architect components have the concept of a Task,
 similar to a cron job. Since Tasks are defined in a component in the similar way to Services, you can configure your tasks with dependencies on
-other components, take parameters, or call a service defined in the same component.
+other components, take secrets, or call a service defined in the same component.
 
 In this guide, we will walk through the process of creating a new Component with a Task that exercises most of the features available to Tasks.
 1. Create an example container and script to run as a Task
 2. Defining a minimal Component with a Task, and execute it locally
 3. Updating the Component to improve local development experience
-4. Tasks with Parameters
+4. Tasks with Secrets
 5. Tasks with Dependencies
 
 ## Create a Script and Dockerfile for our Task
@@ -175,11 +175,11 @@ Now we'll see the emoji in the output when we execute the task again without re-
 Hello, world! 👋
 ```
 
-## Tasks with Parameters
+## Tasks with Secrets
 
 The task we create supports a `GREETING` environment variable, so let's make use of that as we deploy the component by
-setting a value as a parameter. In addition to adding the `parameters` section to the component, we'll also declare the `GREETING` environment variable on the task, and assign it to the value given by the parameter. More information about parameters can be found in the [Components Parameters docs](/components/parameters) and the
-[Parameters Reference docs](/reference/architect-yml).
+setting a value as a secret. In addition to adding the `secrets` section to the component, we'll also declare the `GREETING` environment variable on the task, and assign it to the value given by the secret. More information about secrets can be found in the [Components Secrets docs](/components/secrets) and the
+[Secrets Reference docs](/reference/architect-yml).
 
 The `architect.yml` file:
 
@@ -187,7 +187,7 @@ The `architect.yml` file:
  name: brahm-testing/my-task
  description: A hello world task! 👋
 
-+parameters:
++secrets:
 +  greeting:
 +    required: false
 +    description: The greeting to use
@@ -198,14 +198,14 @@ The `architect.yml` file:
      build:
        context: ./
 +    environment:
-+      GREETING: ${{ parameters.greeting }}
++      GREETING: ${{ secrets.greeting }}
      ${{ if architect.environment == 'local' }}:
        volumes:
          src:
 ```
 
-Now we can redeploy the component with a parameter value, whose value will be used when the task is executed. It's
-important to understand that these parameters are set at deploy time, so we cannot re-declare the `GREETING` value later
+Now we can redeploy the component with a secret value, whose value will be used when the task is executed. It's
+important to understand that these secrets are set at deploy time, so we cannot re-declare the `GREETING` value later
 when we execute the task.
 
 
@@ -284,7 +284,7 @@ the environment variable we reference in the script:
 @@ -13,6 +24,7 @@ tasks:
        context: ./
      environment:
-       GREETING: ${{ parameters.greeting }}
+       GREETING: ${{ secrets.greeting }}
 +      API_URL: ${{ services.name-generator.interfaces.main.url }}
      ${{ if architect.environment == 'local' }}:
        volumes:

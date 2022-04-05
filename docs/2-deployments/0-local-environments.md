@@ -47,18 +47,18 @@ You may have also noticed the `-i` flag in the command. Much like `docker run` s
 
 Interface mapping serves the added function of telling the environment which interfaces should be deemed "external". Interfaces deemed external will be made available via an automatically deployed API gateway. Each environment will be allocated a gateway so long as there is at least one interface mapped to a component.
 
-### Setting parameter values
+### Setting secret values
 
-Finally, the `-p` flag in the dev command allows you to specify values for parameters defined by the component.
+Finally, the `-p` flag in the dev command allows you to specify values for secrets defined by the component.
 
-Additionally, environment variables found on the local machine prefixed with `ARC_` will be used to populate the parameter values of any components being deployed. For example, if we wanted to set the `world_text` parameter via environment parmeters, all we have to do is define a parameter named `ARC_world_text`:
+Additionally, environment variables found on the local machine prefixed with `ARC_` will be used to populate the secret values of any components being deployed. For example, if we wanted to set the `world_text` secret via environment parmeters, all we have to do is define a secret named `ARC_world_text`:
 
 ```sh
 $ ARC_world_text="dude"
 $ architect dev examples/react-app:latest -i app:app
 ```
 
-_In order to streamline local development, we recommend creating a single `.env` file checked into source control that includes a set of configuration options for developers to use when developing locally. They can easily mount the included parameters by running `source .env` before deploying._
+_In order to streamline local development, we recommend creating a single `.env` file checked into source control that includes a set of configuration options for developers to use when developing locally. They can easily mount the included secrets by running `source .env` before deploying._
 
 ### HSTS issues
 

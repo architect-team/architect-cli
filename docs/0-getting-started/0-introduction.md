@@ -72,7 +72,7 @@ The `architect.yml` file contains the component descriptors that power Architect
 ```yaml{numberLines: 1}
 name: examples/react-app
 
-parameters:
+secrets:
   world_text:
     description: Default greeting text for the landing page
     default: world
@@ -95,9 +95,9 @@ services:
         port: 5432
         protocol: postgres
     environment:
-      POSTGRES_USER: ${{ parameters.root_db_user }}
-      POSTGRES_PASSWORD: ${{ parameters.root_db_pass }}
-      POSTGRES_DB: ${{ parameters.api_db_name }}
+      POSTGRES_USER: ${{ secrets.root_db_user }}
+      POSTGRES_PASSWORD: ${{ secrets.root_db_pass }}
+      POSTGRES_DB: ${{ secrets.api_db_name }}
 
   # Describes the Node.js backend API
   api:
@@ -108,9 +108,9 @@ services:
     environment:
       PORT: *api-port
       DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}
-      DB_USER: ${{ parameters.root_db_user }}
-      DB_PASS: ${{ parameters.root_db_pass }}
-      DB_NAME: ${{ parameters.api_db_name }}
+      DB_USER: ${{ secrets.root_db_user }}
+      DB_PASS: ${{ secrets.root_db_pass }}
+      DB_NAME: ${{ secrets.api_db_name }}
     # The debug block defines features only used for local deployments. In this
     # case, we've mounted to src directory and instrumented a hot-reloading cmd
     ${{ if architect.environment == 'local' }}:
@@ -129,7 +129,7 @@ services:
     environment:
       PORT: *app-port
       API_ADDR: ${{ services.api.interfaces.main.url }}
-      WORLD_TEXT: ${{ parameters.world_text }}
+      WORLD_TEXT: ${{ secrets.world_text }}
     ${{ if architect.environment == 'local' }}:
       build:
         dockerfile: Dockerfile.dev
@@ -144,7 +144,7 @@ interfaces:
   app: ${{ services.app.interfaces.main.url }}
 ```
 
-This `architect.yml` describes each of our three `services`, exposes the frontend externally via `interfaces`, and allows the root DB credentials to be configured via `parameters`.
+This `architect.yml` describes each of our three `services`, exposes the frontend externally via `interfaces`, and allows the root DB credentials to be configured via `secrets`.
 
 ### Run the component
 

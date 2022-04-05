@@ -44,7 +44,7 @@ describe('local dev environment', function () {
     `
   }
 
-  const local_component_config_with_parameters = `
+  const local_component_config_with_secrets = `
     name: hello-world
 
     secrets:
@@ -74,7 +74,7 @@ describe('local dev environment', function () {
         url: \${{ services.api.interfaces.main.url }}
     `;
 
-  const basic_parameter_secrets = {
+  const basic_secrets = {
     'hello-world': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
@@ -83,7 +83,7 @@ describe('local dev environment', function () {
       'api_port': 3000
     },
   }
-  const wildcard_parameter_secrets = {
+  const wildcard_secrets = {
     'hello-world': {
       'a_required_key': 'some_value',
       'api_port': 3000,
@@ -93,7 +93,7 @@ describe('local dev environment', function () {
       'another_required_key': 'required_value'
     }
   }
-  const stacked_parameter_secrets = {
+  const stacked_secrets = {
     'hello-world': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
@@ -173,7 +173,7 @@ describe('local dev environment', function () {
     },
     'tag': 'latest'
   }
-  const component_and_dependency_parameter_secrets = {
+  const component_and_dependency_secrets = {
     'hello-world': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
@@ -183,7 +183,7 @@ describe('local dev environment', function () {
       'a_required_key': 'a_value_which_will_be_overwritten',
       'another_required_key': 'another_value_which_will_be_overwritten',
       'world_text': 'some other name',
-      'unused_parameter': 'value_not_used_by_any_component'
+      'unused_secret': 'value_not_used_by_any_component'
     }
   }
 
@@ -418,7 +418,7 @@ describe('local dev environment', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['dev', './examples/database-seeding/architect.yml', '-p', 'AUTO_DDL=seed', '-p', 'DB_NAME=test-db', '-i', 'app:main'])
-    .it('Create a local dev with a component, parameters, and an interface', ctx => {
+    .it('Create a local dev with a component, secrets, and an interface', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose);
@@ -427,10 +427,10 @@ describe('local dev environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      return buildSpecFromYml(local_component_config_with_parameters)
+      return buildSpecFromYml(local_component_config_with_secrets)
     })
     .stub(DeployUtils, 'readSecretsFile', () => {
-      return basic_parameter_secrets;
+      return basic_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -451,10 +451,10 @@ describe('local dev environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      return buildSpecFromYml(local_component_config_with_parameters)
+      return buildSpecFromYml(local_component_config_with_secrets)
     })
     .stub(DeployUtils, 'readSecretsFile', () => {
-      return basic_parameter_secrets;
+      return basic_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -474,10 +474,10 @@ describe('local dev environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      return buildSpecFromYml(local_component_config_with_parameters)
+      return buildSpecFromYml(local_component_config_with_secrets)
     })
     .stub(DeployUtils, 'readSecretsFile', () => {
-      return wildcard_parameter_secrets;
+      return wildcard_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -495,11 +495,11 @@ describe('local dev environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      return buildSpecFromYml(local_component_config_with_parameters)
+      return buildSpecFromYml(local_component_config_with_secrets)
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readSecretsFile', () => {
-      return stacked_parameter_secrets;
+      return stacked_secrets;
     })
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -520,7 +520,7 @@ describe('local dev environment', function () {
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readSecretsFile', () => {
-      return component_and_dependency_parameter_secrets;
+      return component_and_dependency_secrets;
     })
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
@@ -547,7 +547,7 @@ describe('local dev environment', function () {
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readSecretsFile', () => {
-      return component_and_dependency_parameter_secrets;
+      return component_and_dependency_secrets;
     })
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
@@ -573,10 +573,10 @@ describe('local dev environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      return buildSpecFromYml(local_component_config_with_parameters)
+      return buildSpecFromYml(local_component_config_with_secrets)
     })
     .stub(DeployUtils, 'readSecretsFile', () => {
-      return basic_parameter_secrets;
+      return basic_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))

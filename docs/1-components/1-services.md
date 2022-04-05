@@ -91,10 +91,10 @@ interfaces:
     host: rds.amazonwebservices.com
 
     # (optional) A basic auth username required to access the interface
-    username: ${{ parameters.API_USERNAME }}
+    username: ${{ secrets.API_USERNAME }}
 
     # (optional) A basic auth password required to access the interface
-    password: ${{ parameters.API_PASSWORD }}
+    password: ${{ secrets.API_PASSWORD }}
 
     # (optional) Specific path that the service is listening on
     path: /api
@@ -116,7 +116,7 @@ Architect supports overriding a service with the URL of an external host. When t
 
 ```yml
 ...
-parameters:
+secrets:
   postgres_host:
     required: false
 ...
@@ -125,7 +125,7 @@ services:
     image: postgres:11
     interfaces:
       postgres:
-        host: ${{ parameters.postgres_host }}
+        host: ${{ secrets.postgres_host }}
         port: 5432
         protocol: postgresql
     environment:
@@ -135,7 +135,7 @@ services:
 ...
 ```
 
-The parameter `postgres_host` will determine whether or not the service will be provisioned by Architect. If `postgres_host` is not set, Architect will provision the `api-db` service and create a `postgres:11` container. If the `postgres_host` parameter is set, `image: postgres:11` will be ignored and the container will not be provisioned by Architect. Any interpolated values that include the `api-db` service will produce the correct output in either instance with the difference being that `${{ services.api-db.interfaces.postgres.host }}` and `${{ services.api-db.interfaces.postgres.url }}` will change based on the `host` of the interface. Note that if a service has multiple interfaces and you would like to reference an external service, all of the Architect service's interfaces must specify the `host` override.
+The secret `postgres_host` will determine whether or not the service will be provisioned by Architect. If `postgres_host` is not set, Architect will provision the `api-db` service and create a `postgres:11` container. If the `postgres_host` secret is set, `image: postgres:11` will be ignored and the container will not be provisioned by Architect. Any interpolated values that include the `api-db` service will produce the correct output in either instance with the difference being that `${{ services.api-db.interfaces.postgres.host }}` and `${{ services.api-db.interfaces.postgres.url }}` will change based on the `host` of the interface. Note that if a service has multiple interfaces and you would like to reference an external service, all of the Architect service's interfaces must specify the `host` override.
 
 ### labels
 Dictionary of string keys and values that can be used to organize and categorize (scope and select) the service.
