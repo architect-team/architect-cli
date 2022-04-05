@@ -1,7 +1,7 @@
 import { classToPlain, plainToClass, serialize } from 'class-transformer';
 import { isMatch } from 'matcher';
 import { buildInterfacesRef, buildNodeRef, ComponentConfig } from './config/component-config';
-import { ArchitectContext, ComponentContext, ParameterValue } from './config/component-context';
+import { ArchitectContext, ComponentContext, SecretValue } from './config/component-context';
 import { DependencyGraph } from './graph';
 import { IngressEdge } from './graph/edge/ingress';
 import { OutputEdge } from './graph/edge/output';
@@ -12,7 +12,7 @@ import { GatewayNode } from './graph/node/gateway';
 import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
 import { ComponentSpec } from './spec/component-spec';
-import { transformComponentSpec, transformParameterDefinitionSpec } from './spec/transform/component-transform';
+import { transformComponentSpec, transformParameterDefinitionSpec, transformSecretDefinitionSpec } from './spec/transform/component-transform';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, ResourceType, Slugs } from './spec/utils/slugs';
 import { validateOrRejectSpec } from './spec/utils/spec-validator';
 import { Dictionary, transformDictionary } from './utils/dictionary';
@@ -252,7 +252,7 @@ export default abstract class DependencyManager {
     }
   }
 
-  getSecretsForComponentSpec(component_spec: ComponentSpec, all_values: Dictionary<Dictionary<string | number | null>>): Dictionary<ParameterValue> {
+  getSecretsForComponentSpec(component_spec: ComponentSpec, all_values: Dictionary<Dictionary<string | number | null>>): Dictionary<SecretValue> {
     // pre-sort values dictionary to properly stack/override any colliding keys
     const sorted_values_keys = Object.keys(all_values).sort();
     const sorted_values_dict: Dictionary<Dictionary<string | number | null>> = {};
@@ -264,7 +264,7 @@ export default abstract class DependencyManager {
     const { component_account_name, component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
     const component_ref_with_account = component_account_name ? component_ref : ComponentSlugUtils.build(this.account, component_name, instance_name);
 
-    const component_parameters = new Set(Object.keys(component_spec.parameters || {}));
+    const component_secrets = new Set(Object.keys(component_spec.secrets || {}));
 
     const res: Dictionary<any> = {};
     // add values from values file to all existing, matching components
@@ -276,9 +276,9 @@ export default abstract class DependencyManager {
         pattern = ComponentSlugUtils.build(component_account_name, component_name, instance_name);
       }
       if (isMatch(component_ref, [pattern]) || isMatch(component_ref_with_account, [pattern])) {
-        for (const [param_key, param_value] of Object.entries(params)) {
-          if (component_parameters.has(param_key)) {
-            res[param_key] = param_value;
+        for (const [secret_key, secret_value] of Object.entries(params)) {
+          if (component_secrets.has(secret_key)) {
+            res[secret_key] = secret_value;
           }
         }
       }
@@ -346,16 +346,16 @@ export default abstract class DependencyManager {
     return dependency_components;
   }
 
-  validateRequiredParameters(component: ComponentConfig, parameters: Dictionary<ParameterValue>): void {
+  validateRequiredSecrets(component: ComponentConfig, parameters: Dictionary<SecretValue>, secrets: Dictionary<SecretValue>): void { // TODO: 404: update
     const validation_errors = [];
-    // Check required parameters for components
-    for (const [pk, pv] of Object.entries(component.parameters)) {
-      if (pv.required !== false && parameters[pk] === undefined) {
+    // Check required parameters and secrets for components
+    for (const [key, value] of Object.entries(component.parameters).concat(Object.entries(component.secrets))) {
+      if (value.required !== false && secrets[key] === undefined) {
         const validation_error = new ValidationError({
           component: component.name,
-          path: `parameters.${pk}`,
-          message: `required parameter '${pk}' was not provided`,
-          value: pv.default,
+          path: `secrets.${key}`,
+          message: `required secret '${key}' was not provided`,
+          value: value.default,
         });
         validation_errors.push(validation_error);
       }
@@ -436,13 +436,19 @@ export default abstract class DependencyManager {
         interfaces: {},
         outputs: {},
         parameters: {},
+        secrets: {},
         services: {},
         tasks: {},
       };
 
-      const parameters = transformDictionary(transformParameterDefinitionSpec, component_spec.parameters);
+      const parameters = transformDictionary(transformSecretDefinitionSpec, component_spec.parameters);
       for (const [key, value] of Object.entries(parameters)) {
         context.parameters[key] = value.default;
+      }
+
+      const component_spec_secrets = transformDictionary(transformSecretDefinitionSpec, component_spec.secrets);
+      for (const [key, value] of Object.entries(component_spec_secrets)) {
+        context.secrets[key] = value.default;
       }
 
       const secrets = this.getSecretsForComponentSpec(component_spec, all_secrets);
@@ -462,7 +468,7 @@ export default abstract class DependencyManager {
       const component_config = transformComponentSpec(component_spec);
 
       if (interpolate && validate) {
-        this.validateRequiredParameters(component_config, context.parameters || {});
+        this.validateRequiredSecrets(component_config, context.parameters || {}, context.secrets || {}); // TODO: 404: update
       }
 
       const nodes = this.getComponentNodes(component_config);

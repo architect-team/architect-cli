@@ -131,29 +131,29 @@ export class ComponentInterfaceSpec {
 }
 
 @JSONSchema({
-  description: 'Components can define configurable parameters that can be used to enrich the contained services with environment-specific information (i.e. environment variables).',
+  description: 'Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).',
 })
-export class ParameterDefinitionSpec {
+export class SecretDefinitionSpec {
   static readonly merge_key = 'default';
 
   @IsOptional()
   @JSONSchema({
     type: 'boolean',
-    description: 'Denotes whether the parameter is required.',
+    description: 'Denotes whether the secret is required.',
   })
   required?: boolean;
 
   @IsOptional()
   @JSONSchema({
     type: 'string',
-    description: 'A human-friendly description of the parameter.',
+    description: 'A human-friendly description of the secret.',
   })
   description?: string;
 
   @IsOptional()
   @JSONSchema({
     ...ExpressionOr(AnyOf('array', 'boolean', 'number', 'object', 'string', 'null')),
-    description: 'Sets a default value for the parameter if one is not provided',
+    description: 'Sets a default value for the secret if one is not provided',
   })
   // eslint-disable-next-line @typescript-eslint/ban-types
   default?: boolean | number | object | string | null;
@@ -221,28 +221,42 @@ export class ComponentSpec {
   })
   homepage?: string;
 
-  @IsOptional()
+  @IsOptional() // TODO: 404: remove
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      [Slugs.ComponentParameterValidator.source]: AnyOf('string', 'number', 'boolean', ParameterDefinitionSpec, 'null'),
+      [Slugs.ComponentSecretValidator.source]: AnyOf('string', 'number', 'boolean', SecretDefinitionSpec, 'null'),
     },
     errorMessage: {
-      additionalProperties: Slugs.ComponentParameterDescription,
+      additionalProperties: Slugs.ComponentSecretDescription,
     },
-    description: 'A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you\'ll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec',
+    description: 'A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you\'ll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec',
   })
-  @Transform(transformObject(ParameterDefinitionSpec))
-  parameters?: Dictionary<string | number | boolean | ParameterDefinitionSpec | null>;
+  @Transform(transformObject(SecretDefinitionSpec))
+  parameters?: Dictionary<string | number | boolean | SecretDefinitionSpec | null>;
 
   @IsOptional()
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      [Slugs.ComponentParameterValidator.source]: AnyOf('string', 'number', 'boolean', OutputDefinitionSpec, 'null'),
+      [Slugs.ComponentSecretValidator.source]: AnyOf('string', 'number', 'boolean', SecretDefinitionSpec, 'null'),
     },
     errorMessage: {
-      additionalProperties: Slugs.ComponentParameterDescription,
+      additionalProperties: Slugs.ComponentSecretDescription,
+    },
+    description: 'A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you\'ll want to capture them as secrets. Specifying a primitive value here will set the default secret value. For more detailed configuration, specify a SecretDefinitionSpec',
+  })
+  @Transform(transformObject(SecretDefinitionSpec))
+  secrets?: Dictionary<string | number | boolean | SecretDefinitionSpec | null>;
+
+  @IsOptional()
+  @JSONSchema({
+    type: 'object',
+    patternProperties: {
+      [Slugs.ComponentSecretValidator.source]: AnyOf('string', 'number', 'boolean', OutputDefinitionSpec, 'null'),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ComponentSecretDescription,
     },
     description: 'A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names.',
   })

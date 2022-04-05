@@ -4,33 +4,33 @@ import yaml from 'js-yaml';
 import { Dictionary } from '../../';
 
 export default class DeployUtils {
-  private static getExtraEnvironmentVariables(parameters: string[]): Dictionary<string | number | undefined> {
-    const extra_env_vars: { [s: string]: string | number | undefined } = {};
+  private static getExtraSecrets(secrets: string[]): Dictionary<string | number | undefined> {
+    const extra_secrets: { [s: string]: string | number | undefined } = {};
 
-    for (const [param_name, param_value] of Object.entries(process.env || {})) {
-      if (param_name.startsWith('ARC_')) {
-        const key = param_name.substring(4);
-        let value: string | number | undefined = param_value;
+    for (const [secret_name, secret_value] of Object.entries(process.env || {})) {
+      if (secret_name.startsWith('ARC_')) {
+        const key = secret_name.substring(4);
+        let value: string | number | undefined = secret_value;
         if (value && isNumberString(value)) {
           value = parseFloat(value);
         }
-        extra_env_vars[key] = value;
+        extra_secrets[key] = value;
       }
     }
 
-    for (const param of parameters) {
-      const param_split = param.split('=');
-      if (param_split.length !== 2) {
-        throw new Error(`Bad format for parameter ${param}. Please specify in the format --parameter PARAM_NAME=PARAM_VALUE`);
+    for (const secret of secrets) {
+      const secret_split = secret.split('=');
+      if (secret_split.length !== 2) {
+        throw new Error(`Bad format for secret ${secret}. Please specify in the format --secret SECRET_NAME=SECRET_VALUE`);
       }
-      let value: string | number = param_split[1];
+      let value: string | number = secret_split[1];
       if (isNumberString(value)) {
         value = parseFloat(value);
       }
-      extra_env_vars[param_split[0]] = value;
+      extra_secrets[secret_split[0]] = value;
     }
 
-    return extra_env_vars;
+    return extra_secrets;
   }
 
   private static readSecretsFile(secrets_file_path: string | undefined) {
@@ -58,14 +58,14 @@ export default class DeployUtils {
     return flags;
   }
 
-  static getComponentSecrets(parameters: string[], secrets?: string): any {
+  static getComponentSecrets(parameters: string[], secrets?: string): any { // TODO: 404: update
     const component_secrets = DeployUtils.readSecretsFile(secrets);
-    const extra_params = DeployUtils.getExtraEnvironmentVariables(parameters);
-    if (extra_params && Object.keys(extra_params).length) {
+    const extra_secrets = DeployUtils.getExtraSecrets(parameters);
+    if (extra_secrets && Object.keys(extra_secrets).length) {
       if (!component_secrets['*']) {
         component_secrets['*'] = {};
       }
-      component_secrets['*'] = { ...component_secrets['*'], ...extra_params };
+      component_secrets['*'] = { ...component_secrets['*'], ...extra_secrets };
     }
     return component_secrets;
   }

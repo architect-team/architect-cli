@@ -1,6 +1,6 @@
-import { ComponentConfig, ComponentInterfaceConfig, OutputDefinitionConfig, ParameterDefinitionConfig } from '../../config/component-config';
+import { ComponentConfig, ComponentInterfaceConfig, OutputDefinitionConfig, SecretDefinitionConfig } from '../../config/component-config';
 import { transformDictionary } from '../../utils/dictionary';
-import { ComponentInterfaceSpec, ComponentSpec, OutputDefinitionSpec, ParameterDefinitionSpec } from '../component-spec';
+import { ComponentInterfaceSpec, ComponentSpec, OutputDefinitionSpec, SecretDefinitionSpec } from '../component-spec';
 import { Slugs } from '../utils/slugs';
 import { transformServiceSpec } from './service-transform';
 import { transformTaskSpec } from './task-transform';
@@ -21,16 +21,16 @@ export const transformBooleanString = (boolean_string: string | boolean): boolea
   }
 };
 
-export const transformParameterDefinitionSpec = (key: string, parameter_spec: string | number | boolean | ParameterDefinitionSpec | null): ParameterDefinitionConfig => {
-  if (parameter_spec && typeof parameter_spec === 'object') {
+export const transformSecretDefinitionSpec = (key: string, secret_spec: string | number | boolean | SecretDefinitionSpec | null): SecretDefinitionConfig => {
+  if (secret_spec && typeof secret_spec === 'object') {
     return {
-      required: parameter_spec.required ? transformBooleanString(parameter_spec.required) : true,
-      description: parameter_spec.description,
-      default: (!parameter_spec.default && parameter_spec.required === false) ? null : parameter_spec.default,
+      required: secret_spec.required ? transformBooleanString(secret_spec.required) : true,
+      description: secret_spec.description,
+      default: (!secret_spec.default && secret_spec.required === false) ? null : secret_spec.default,
     };
   } else {
     return {
-      default: parameter_spec === null ? undefined : parameter_spec,
+      default: secret_spec === null ? undefined : secret_spec,
     };
   }
 };
@@ -53,7 +53,8 @@ export const transformComponentInterfaceSpec = function (_: string, interface_sp
 };
 
 export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => {
-  const parameters = transformDictionary(transformParameterDefinitionSpec, spec.parameters);
+  const parameters = transformDictionary(transformSecretDefinitionSpec, spec.parameters); // TODO: 404: remove
+  const secrets = transformDictionary(transformSecretDefinitionSpec, spec.secrets);
   const outputs = transformDictionary(transformOutputDefinitionSpec, spec.outputs);
   const services = transformDictionary(transformServiceSpec, spec.services, spec.metadata);
   const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.metadata);
@@ -70,7 +71,8 @@ export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => 
     author: spec.author,
     homepage: spec.homepage,
 
-    parameters,
+    parameters, // TODO: 404: remove
+    secrets,
     outputs,
 
     services,
