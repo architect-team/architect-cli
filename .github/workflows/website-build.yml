@@ -3,7 +3,8 @@ name: Rebuilt Architect website
 on:
   push:
     paths:
-      - "docs/**"
+      - 'docs/**'
+  workflow_dispatch:
 
 jobs:
   publish:
