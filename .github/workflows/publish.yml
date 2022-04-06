@@ -11,6 +11,7 @@ env:
   CI: true
   NPM_CACHE_NAME: cli-node-modules
   GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+  NPM_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
 
 jobs:
   lint:
