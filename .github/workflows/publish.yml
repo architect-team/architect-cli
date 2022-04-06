@@ -77,6 +77,6 @@ jobs:
       - name: npm publish
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
-          GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) npm run semantic-release -- --dry-run
+          GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) npm run semantic-release
       - name: docs website re-build
         run: curl -X POST ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
