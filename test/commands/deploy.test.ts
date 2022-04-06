@@ -2,6 +2,7 @@ import { expect } from '@oclif/test';
 import sinon, { SinonSpy } from 'sinon';
 import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
 import Deploy from '../../src/commands/deploy';
+import DeployUtils from '../../src/common/utils/deploy.utils';
 import * as Docker from '../../src/common/utils/docker';
 import { app_host } from '../config.json';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
@@ -219,8 +220,19 @@ describe('pollPipeline handles failed deployments', () => {
     });
 });
 
-describe('remote deploy using a numeric secret on the command line', function () {
-  const remoteDeploy = mockArchitectAuth
+describe('deployment secrets', function () {
+  const wildcard_secrets = {
+    'echo': {
+      'a_required_key': 'some_value',
+      'api_port': 3000,
+      'one_more_required_param': 'one_more_value'
+    },
+    '*': {
+      'another_required_key': 'required_value'
+    }
+  }
+
+  mockArchitectAuth
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
@@ -231,17 +243,121 @@ describe('remote deploy using a numeric secret on the command line', function ()
       .get(`/accounts/${account.id}/environments/${environment.name}`)
       .reply(200, environment))
     .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`, body => {
+      .post(`/environments/${environment.id}/deploy`, (body) => {
         expect(body.values['*'].app_replicas).to.eq(4);
+        return body;
+      })
+    .reply(200, mock_pipeline))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--secret', 'app_replicas=4'])
+    .it('a numeric secret is passed to the API as a number and not converted to a string', ctx => {
+      expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
+    });
+
+  mockArchitectAuth
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
+    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.id}/environments/${environment.name}`)
+      .reply(200, environment))
+    .nock(MOCK_API_HOST, api => api
+      .post(`/environments/${environment.id}/deploy`, (body) => {
+        expect(body.values['*'].test_secret).to.eq('test');
+        expect(body.values['*'].another_secret).to.eq('another_test');
         return body;
       })
       .reply(200, mock_pipeline))
     .stdout({ print })
     .stderr({ print })
+    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--secret', 'test_secret=test', '--secret', 'another_secret=another_test'])
+    .it('passing multiple secrets inline', ctx => {
+      expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
+    });
 
-  remoteDeploy
-    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--secret', 'app_replicas=4'])
-    .it('a numeric secret is passed to the API as a number and not converted to a string', ctx => {
+  mockArchitectAuth // TODO: 404: remove
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
+    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.id}/environments/${environment.name}`)
+      .reply(200, environment))
+    .nock(MOCK_API_HOST, api => api
+      .post(`/environments/${environment.id}/deploy`, (body) => {
+        expect(body.values['*'].test_param).to.eq('test');
+        expect(body.values['*'].another_param).to.eq('another_test');
+        return body;
+      })
+      .reply(200, mock_pipeline))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--parameter', 'test_param=test', '--parameter', 'another_param=another_test'])
+    .it('passing multiple parameters inline', ctx => {
+      expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
+    });
+
+  mockArchitectAuth
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
+    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
+    .stub(DeployUtils, 'readSecretsFile', () => {
+        return wildcard_secrets;
+      })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.id}/environments/${environment.name}`)
+      .reply(200, environment))
+    .nock(MOCK_API_HOST, api => api
+      .post(`/environments/${environment.id}/deploy`, (body) => {
+        expect(body.values['*'].another_required_key).to.eq('required_value');
+        expect(body.values['echo'].a_required_key).to.eq('some_value');
+        expect(body.values['echo'].api_port).to.eq(3000);
+        expect(body.values['echo'].one_more_required_param).to.eq('one_more_value');
+        return body;
+      })
+      .reply(200, mock_pipeline))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--secret-file', './examples/echo/secrets.yml'])
+    .it('passing a secrets file', ctx => {
+      expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
+    });
+
+  mockArchitectAuth // TODO: 404: remove
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
+    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
+    .stub(DeployUtils, 'readSecretsFile', () => {
+        return wildcard_secrets;
+      })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.id}/environments/${environment.name}`)
+      .reply(200, environment))
+    .nock(MOCK_API_HOST, api => api
+      .post(`/environments/${environment.id}/deploy`, (body) => {
+        expect(body.values['*'].another_required_key).to.eq('required_value');
+        expect(body.values['echo'].a_required_key).to.eq('some_value');
+        expect(body.values['echo'].api_port).to.eq(3000);
+        expect(body.values['echo'].one_more_required_param).to.eq('one_more_value');
+        return body;
+      })
+      .reply(200, mock_pipeline))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--values', './examples/echo/secrets.yml'])
+    .it('passing a secrets file with the deprecated values flag', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
 });

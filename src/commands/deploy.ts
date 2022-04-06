@@ -177,7 +177,7 @@ export default class Deploy extends DeployCommand {
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
     const component_secrets = DeployUtils.getComponentSecrets(flags.secret, flags['secret-file']);
-    const component_parameters = DeployUtils.getComponentSecrets(flags.secret, flags['secret-file']);
+    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, flags['secret-file']); // TODO: 404: remove
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
