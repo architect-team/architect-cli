@@ -252,31 +252,31 @@ export default abstract class DependencyManager {
     }
   }
 
-  getSecretsForComponentSpec(component_spec: ComponentSpec, all_values: Dictionary<Dictionary<string | number | null>>): Dictionary<SecretValue> {
+  getSecretsForComponentSpec(component_spec: ComponentSpec, all_secrets: Dictionary<Dictionary<string | number | null>>): Dictionary<SecretValue> {
     // pre-sort values dictionary to properly stack/override any colliding keys
-    const sorted_values_keys = Object.keys(all_values).sort();
+    const sorted_values_keys = Object.keys(all_secrets).sort();
     const sorted_values_dict: Dictionary<Dictionary<string | number | null>> = {};
     for (const key of sorted_values_keys) {
-      sorted_values_dict[key] = all_values[key];
+      sorted_values_dict[key] = all_secrets[key];
     }
 
     const component_ref = component_spec.metadata.ref;
     const { component_account_name, component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
     const component_ref_with_account = component_account_name ? component_ref : ComponentSlugUtils.build(this.account, component_name, instance_name);
 
-    const component_secrets = new Set(Object.keys(component_spec.secrets || {}));
+    const component_secrets = new Set(Object.keys({ ...(component_spec.parameters || {}), ...(component_spec.secrets || {}) })); // TODO: 404: update
 
     const res: Dictionary<any> = {};
     // add values from values file to all existing, matching components
     // eslint-disable-next-line prefer-const
-    for (let [pattern, params] of Object.entries(sorted_values_dict)) {
+    for (let [pattern, secrets] of Object.entries(sorted_values_dict)) {
       // Backwards compat for tags
       if (ComponentVersionSlugUtils.Validator.test(pattern)) {
         const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(pattern);
         pattern = ComponentSlugUtils.build(component_account_name, component_name, instance_name);
       }
       if (isMatch(component_ref, [pattern]) || isMatch(component_ref_with_account, [pattern])) {
-        for (const [secret_key, secret_value] of Object.entries(params)) {
+        for (const [secret_key, secret_value] of Object.entries(secrets)) {
           if (component_secrets.has(secret_key)) {
             res[secret_key] = secret_value;
           }
@@ -457,9 +457,14 @@ export default abstract class DependencyManager {
         ...context.secrets,
         ...secrets,
       };
+      context.parameters = { // TODO: 404: remove
+        ...context.secrets,
+        ...context.parameters,
+        ...secrets,
+      };
 
       if (interpolate) {
-        // Interpolate parameters
+        // Interpolate secrets
         context = interpolateObject(context, context, { keys: false, values: true, file: component_spec.metadata.file });
 
         // Replace conditionals
@@ -469,7 +474,8 @@ export default abstract class DependencyManager {
       const component_config = transformComponentSpec(component_spec);
 
       if (interpolate && validate) {
-        this.validateRequiredSecrets(component_config, context.secrets || {}); // TODO: 404: update
+        this.validateRequiredSecrets(component_config, context.secrets || {});
+        this.validateRequiredSecrets(component_config, context.parameters || {}); // TODO: 404: remove
       }
 
       const nodes = this.getComponentNodes(component_config);

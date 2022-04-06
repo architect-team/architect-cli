@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import { Dictionary } from '../../';
 
 export default class DeployUtils {
-  private static getExtraSecrets(secrets: string[]): Dictionary<string | number | undefined> {
+  private static getExtraSecrets(secrets: string[] = []): Dictionary<string | number | undefined> {
     const extra_secrets: { [s: string]: string | number | undefined } = {};
 
     for (const [secret_name, secret_value] of Object.entries(process.env || {})) {
@@ -47,8 +47,7 @@ export default class DeployUtils {
     const flags: any = parsedFlags;
     flags['build-parallel'] = flags.build_parallel ? flags.build_parallel : flags['build-parallel'];
     flags['compose-file'] = flags.compose_file ? flags.compose_file : flags['compose-file'];
-    flags['secrets'] = flags.values ? flags.values : flags['secrets'];
-    flags['secret'] = flags['secret'].concat(flags['parameter'] || []);
+    flags['secrets'] = flags.values ? flags.values : flags.secrets;
 
     // If values were provided and secrets were not provided, override the secrets with the values
     if (!flags.secrets && fs.existsSync('./values.yml')) {
@@ -59,7 +58,7 @@ export default class DeployUtils {
     return flags;
   }
 
-  static getComponentSecrets(individual_secrets: string[], secrets_file?: string): any {
+  static getComponentSecrets(individual_secrets: string[], secrets_file?: string): Dictionary<Dictionary<string | number | null>> {
     const component_secrets = DeployUtils.readSecretsFile(secrets_file);
     const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets);
     if (extra_secrets && Object.keys(extra_secrets).length) {

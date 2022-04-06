@@ -12,7 +12,7 @@ import * as ComponentBuilder from '../../src/dependency-manager/spec/utils/compo
 import { MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = false;
+const print = true; // TODO: undo
 
 const account = {
   id: 'test-account-id',
@@ -40,6 +40,29 @@ describe('local dev environment', function () {
       hello:
         ingress:
           subdomain: \${{ secrets.hello_ingress }}
+        url: \${{ services.api.interfaces.main.url }}
+    `
+  }
+
+  function getDeprecatedHelloComponentConfig(): any { // TODO: 404: remove
+    return `
+    name: hello-world
+
+    parameters:
+      hello_ingress: hello
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main:
+            port: 3000
+        environment: {}
+
+    interfaces:
+      hello:
+        ingress:
+          subdomain: \${{ parameters.hello_ingress }}
         url: \${{ services.api.interfaces.main.url }}
     `
   }
@@ -246,6 +269,65 @@ describe('local dev environment', function () {
     }
   };
 
+  const deprecated_local_database_seeding_component_config = { // TODO: 404: remove
+    "name": "database-seeding",
+
+    "parameters": {
+      "AUTO_DDL": {
+        "default": "none"
+      },
+      "DB_USER": {
+        "default": "postgres"
+      },
+      "DB_PASS": {
+        "default": "architect"
+      },
+      "DB_NAME": {
+        "default": "seeding_demo"
+      }
+    },
+
+    "services": {
+      "app": {
+        "build": {
+          "context": "./",
+          "dockerfile": "Dockerfile",
+          "target": "production",
+        },
+        "interfaces": {
+          "main": 3000,
+        },
+        "depends_on": ["my-demo-db"],
+        "environment": {
+          "DATABASE_HOST": "${{ services.my-demo-db.interfaces.postgres.host }}",
+          "DATABASE_PORT": "${{ services.my-demo-db.interfaces.postgres.port }}",
+          "DATABASE_USER": "${{ services.my-demo-db.environment.POSTGRES_USER }}",
+          "DATABASE_PASSWORD": "${{ services.my-demo-db.environment.POSTGRES_PASSWORD }}",
+          "DATABASE_SCHEMA": "${{ services.my-demo-db.environment.POSTGRES_DB }}",
+          "AUTO_DDL": "${{ parameters.AUTO_DDL }}"
+        }
+      },
+
+      "my-demo-db": {
+        "image": "postgres:11",
+        "interfaces": {
+          "postgres": 5432,
+        },
+        "environment": {
+          "POSTGRES_DB": "${{ parameters.DB_NAME }}",
+          "POSTGRES_USER": "${{ parameters.DB_USER }}",
+          "POSTGRES_PASSWORD": "${{ parameters.DB_PASS }}"
+        }
+      }
+    },
+
+    "interfaces": {
+      "main": {
+        "url": "${{ services.app.interfaces.main.url }}"
+      }
+    }
+  };
+
   const seed_app_resource_ref = 'database-seeding.services.app'
   const seed_app_ref = resourceRefToNodeRef(seed_app_resource_ref);
   const seed_db_ref = resourceRefToNodeRef('database-seeding.services.my-demo-db');
@@ -387,6 +469,22 @@ describe('local dev environment', function () {
       expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
     })
 
+  test // TODO: 404: remove
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return getDeprecatedHelloComponentConfig();
+    })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'hello'])
+    .it('Create a local dev with a component and an interface (deprecated parameters block)', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
+    })
+
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'loadFile', () => {
@@ -419,6 +517,24 @@ describe('local dev environment', function () {
     .stderr({ print })
     .command(['dev', './examples/database-seeding/architect.yml', '--secret', 'AUTO_DDL=seed', '--secret', 'DB_NAME=test-db', '-i', 'app:main'])
     .it('Create a local dev with a component, secrets, and an interface', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose);
+    })
+
+  test // TODO: 404: remove
+    .timeout(20000)
+    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+      const spec = buildSpecFromYml(yaml.dump(deprecated_local_database_seeding_component_config));
+      spec.metadata.file = { path: './examples/database-seeding/architect.yml', contents: '' }
+      return spec;
+    })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/database-seeding/architect.yml', '--parameter', 'AUTO_DDL=seed', '--parameter', 'DB_NAME=test-db', '-i', 'app:main'])
+    .it('Create a local dev with a component, deprecated parameters, and an interface', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose);

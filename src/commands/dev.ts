@@ -225,6 +225,7 @@ export default class Dev extends BaseCommand {
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
     const component_secrets = DeployUtils.getComponentSecrets(flags.secret, flags.secrets);
+    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, flags.secrets);
 
     const linked_components = this.app.linkedComponents;
     const component_versions: string[] = [];
@@ -288,7 +289,9 @@ export default class Dev extends BaseCommand {
         component_specs.push(component_config);
       }
     }
-    const graph = await dependency_manager.getGraph(component_specs, component_secrets);
+
+    const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
+    const graph = await dependency_manager.getGraph(component_specs, all_secrets); // TODO: 404: update
     const compose = await DockerComposeUtils.generate(graph);
     await this.runCompose(compose);
   }
