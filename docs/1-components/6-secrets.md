@@ -25,4 +25,4 @@ secrets:
 
 To learn more about assigning values for secrets, see the docs on environment configuration:
 
-[Environment Configuration](/deployments/environment-configuration)
+[Environment Configuration](/deployments/secrets)

@@ -86,5 +86,5 @@ Once filled out, each deploy to the corresponding environment will be automatica
 Since there are three different methods by which you can provide secrets, you may be wondering what happens if you used more than one. Architect interprets provided secret values in the following order:
 
 1. `--secret` flag (highest priority)
-2. `--secrets` flag
+2. `--secret-file` flag
 3. Environment secrets (lowest priority)
