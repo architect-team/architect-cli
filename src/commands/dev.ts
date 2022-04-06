@@ -45,11 +45,11 @@ export default class Dev extends BaseCommand {
       multiple: true,
       default: [],
     }),
-    secrets: Flags.string({
-      char: 's',
+    'secret-file': Flags.string({
       description: 'Path of secrets file',
     }),
     secret: Flags.string({
+      char: 's',
       description: 'An individual secret key and value in the form SECRET_KEY=SECRET_VALUE',
       multiple: true,
       default: [],
@@ -89,7 +89,7 @@ export default class Dev extends BaseCommand {
     values: Flags.string({
       char: 'v',
       hidden: true,
-      description: `${Command.DEPRECATED} Please use --secrets.`,
+      description: `${Command.DEPRECATED} Please use --secret-file.`,
     }),
     detached: Flags.boolean({
       description: 'Run in detached mode',
@@ -224,8 +224,8 @@ export default class Dev extends BaseCommand {
     }
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, flags.secrets);
-    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, flags.secrets);
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, flags['secret-file']);
+    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, flags['secret-file']);
 
     const linked_components = this.app.linkedComponents;
     const component_versions: string[] = [];
