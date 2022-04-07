@@ -225,7 +225,7 @@ describe('deployment secrets', function () {
     'echo': {
       'a_required_key': 'some_value',
       'api_port': 3000,
-      'one_more_required_param': 'one_more_value'
+      'one_more_required_secret': 'one_more_value'
     },
     '*': {
       'another_required_key': 'required_value'
@@ -291,15 +291,15 @@ describe('deployment secrets', function () {
       .reply(200, environment))
     .nock(MOCK_API_HOST, api => api
       .post(`/environments/${environment.id}/deploy`, (body) => {
-        expect(body.values['*'].test_param).to.eq('test');
-        expect(body.values['*'].another_param).to.eq('another_test');
+        expect(body.values['*'].test_secret).to.eq('test');
+        expect(body.values['*'].another_secret).to.eq('another_test');
         return body;
       })
       .reply(200, mock_pipeline))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--parameter', 'test_param=test', '--parameter', 'another_param=another_test'])
-    .it('passing multiple parameters inline', ctx => {
+    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--parameter', 'test_secret=test', '--parameter', 'another_secret=another_test'])
+    .it('passing multiple deprecated parameters inline', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
 
@@ -321,7 +321,7 @@ describe('deployment secrets', function () {
         expect(body.values['*'].another_required_key).to.eq('required_value');
         expect(body.values['echo'].a_required_key).to.eq('some_value');
         expect(body.values['echo'].api_port).to.eq(3000);
-        expect(body.values['echo'].one_more_required_param).to.eq('one_more_value');
+        expect(body.values['echo'].one_more_required_secret).to.eq('one_more_value');
         return body;
       })
       .reply(200, mock_pipeline))
@@ -350,7 +350,7 @@ describe('deployment secrets', function () {
         expect(body.values['*'].another_required_key).to.eq('required_value');
         expect(body.values['echo'].a_required_key).to.eq('some_value');
         expect(body.values['echo'].api_port).to.eq(3000);
-        expect(body.values['echo'].one_more_required_param).to.eq('one_more_value');
+        expect(body.values['echo'].one_more_required_secret).to.eq('one_more_value');
         return body;
       })
       .reply(200, mock_pipeline))

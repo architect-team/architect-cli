@@ -5,7 +5,7 @@ import mock_fs from 'mock-fs';
 import nock from 'nock';
 import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, Slugs, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { ValuesConfig } from '../../src/dependency-manager/values/values';
+import { SecretsConfig } from '../../src/dependency-manager/secrets/secrets';
 
 describe('validate spec', () => {
 
@@ -985,7 +985,7 @@ services:
 
     let passed_validation = false;
     try {
-      ValuesConfig.validate(values_dict)
+      SecretsConfig.validate(values_dict)
       passed_validation = true;
     } catch (e: any) { }
     expect(passed_validation).true;
@@ -1000,7 +1000,7 @@ services:
 
     let err;
     try {
-      ValuesConfig.validate(values_dict)
+      SecretsConfig.validate(values_dict)
     } catch (e: any) {
       err = e;
     }
@@ -1019,7 +1019,7 @@ services:
 
     let err;
     try {
-      ValuesConfig.validate(values_dict)
+      SecretsConfig.validate(values_dict)
     } catch (e: any) {
       err = e;
     }
@@ -1037,7 +1037,7 @@ services:
 
     let err;
     try {
-      ValuesConfig.validate(values_dict)
+      SecretsConfig.validate(values_dict)
     } catch (e: any) {
       err = e;
     }
@@ -1063,7 +1063,7 @@ services:
 
     let err;
     try {
-      ValuesConfig.validate(values_dict)
+      SecretsConfig.validate(values_dict)
     } catch (e: any) {
       err = e;
     }

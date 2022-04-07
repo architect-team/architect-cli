@@ -224,6 +224,7 @@ export class ComponentSpec {
   @IsOptional() // TODO: 404: remove
   @JSONSchema({
     type: 'object',
+    deprecated: true,
     patternProperties: {
       [Slugs.ComponentSecretValidator.source]: AnyOf('string', 'number', 'boolean', SecretDefinitionSpec, 'null'),
     },

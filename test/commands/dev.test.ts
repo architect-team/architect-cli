@@ -12,7 +12,7 @@ import * as ComponentBuilder from '../../src/dependency-manager/spec/utils/compo
 import { MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = true; // TODO: undo
+const print = false;
 
 const account = {
   id: 'test-account-id',
@@ -75,7 +75,7 @@ describe('local dev environment', function () {
         required: true
       another_required_key:
         required: true
-      one_more_required_param:
+      one_more_required_secret:
         required: true
       compose_escaped_variable:
         required: false
@@ -89,7 +89,7 @@ describe('local dev environment', function () {
         environment:
           a_required_key: \${{ secrets.a_required_key }}
           another_required_key: \${{ secrets.another_required_key }}
-          one_more_required_param: \${{ secrets.one_more_required_param }}
+          one_more_required_secret: \${{ secrets.one_more_required_secret }}
           compose_escaped_variable: \${{ secrets.compose_escaped_variable }}
 
     interfaces:
@@ -106,7 +106,7 @@ describe('local dev environment', function () {
         required: true
       another_required_key:
         required: true
-      one_more_required_param:
+      one_more_required_secret:
         required: true
       compose_escaped_variable:
         required: false
@@ -120,7 +120,7 @@ describe('local dev environment', function () {
         environment:
           a_required_key: \${{ parameters.a_required_key }}
           another_required_key: \${{ parameters.another_required_key }}
-          one_more_required_param: \${{ parameters.one_more_required_param }}
+          one_more_required_secret: \${{ parameters.one_more_required_secret }}
           compose_escaped_variable: \${{ parameters.compose_escaped_variable }}
 
     interfaces:
@@ -132,7 +132,7 @@ describe('local dev environment', function () {
     'hello-world': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
-      'one_more_required_param': 'one_more_value',
+      'one_more_required_secret': 'one_more_value',
       'compose_escaped_variable': 'variable_split_$_with_dollar$signs',
       'api_port': 3000
     },
@@ -141,7 +141,7 @@ describe('local dev environment', function () {
     'hello-world': {
       'a_required_key': 'some_value',
       'api_port': 3000,
-      'one_more_required_param': 'one_more_value'
+      'one_more_required_secret': 'one_more_value'
     },
     '*': {
       'another_required_key': 'required_value'
@@ -151,7 +151,7 @@ describe('local dev environment', function () {
     'hello-world': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
-      'one_more_required_param': 'one_more_value',
+      'one_more_required_secret': 'one_more_value',
       'api_port': 3000
     },
     '*': {
@@ -172,7 +172,7 @@ describe('local dev environment', function () {
         "environment": {
           "a_required_key": "${{ secrets.a_required_key }}",
           "another_required_key": "${{ secrets.another_required_key }}",
-          "one_more_required_param": "${{ secrets.one_more_required_param }}"
+          "one_more_required_secret": "${{ secrets.one_more_required_secret }}"
         }
       }
     },
@@ -190,7 +190,7 @@ describe('local dev environment', function () {
       'another_required_key': {
         'required': true
       },
-      'one_more_required_param': {
+      'one_more_required_secret': {
         'required': true
       }
     },
@@ -231,7 +231,7 @@ describe('local dev environment', function () {
     'hello-world': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
-      'one_more_required_param': 'one_more_value'
+      'one_more_required_secret': 'one_more_value'
     },
     '*': {
       'a_required_key': 'a_value_which_will_be_overwritten',
@@ -591,7 +591,7 @@ describe('local dev environment', function () {
       expect(hello_world_service.external_links).to.contain('gateway:test.arc.localhost');
       expect(hello_world_service.environment.a_required_key).to.equal('some_value');
       expect(hello_world_service.environment.another_required_key).to.equal('required_value');
-      expect(hello_world_service.environment.one_more_required_param).to.equal('one_more_value');
+      expect(hello_world_service.environment.one_more_required_secret).to.equal('one_more_value');
     })
 
   test // TODO: 404: remove
@@ -614,7 +614,7 @@ describe('local dev environment', function () {
       expect(hello_world_service.external_links).to.contain('gateway:test.arc.localhost');
       expect(hello_world_service.environment.a_required_key).to.equal('some_value');
       expect(hello_world_service.environment.another_required_key).to.equal('required_value');
-      expect(hello_world_service.environment.one_more_required_param).to.equal('one_more_value');
+      expect(hello_world_service.environment.one_more_required_secret).to.equal('one_more_value');
     })
 
   // This test will be removed when the deprecated 'values' flag is removed
@@ -638,7 +638,7 @@ describe('local dev environment', function () {
       expect(hello_world_service.external_links).to.contain('gateway:test.arc.localhost');
       expect(hello_world_service.environment.a_required_key).to.equal('some_value');
       expect(hello_world_service.environment.another_required_key).to.equal('required_value');
-      expect(hello_world_service.environment.one_more_required_param).to.equal('one_more_value');
+      expect(hello_world_service.environment.one_more_required_secret).to.equal('one_more_value');
     })
 
   test
@@ -659,7 +659,7 @@ describe('local dev environment', function () {
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
-      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
+      expect(hello_world_environment.one_more_required_secret).to.equal('one_more_value');
     })
 
   test
@@ -680,7 +680,7 @@ describe('local dev environment', function () {
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
-      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
+      expect(hello_world_environment.one_more_required_secret).to.equal('one_more_value');
     })
 
   test
@@ -707,7 +707,7 @@ describe('local dev environment', function () {
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
-      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
+      expect(hello_world_environment.one_more_required_secret).to.equal('one_more_value');
     })
 
   test
@@ -736,7 +736,7 @@ describe('local dev environment', function () {
       const react_app_environment = (runCompose.firstCall.args[0].services[react_app_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
-      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
+      expect(hello_world_environment.one_more_required_secret).to.equal('one_more_value');
       expect(react_app_environment.WORLD_TEXT).to.equal('some other name');
     })
 

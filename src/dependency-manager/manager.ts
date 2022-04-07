@@ -11,6 +11,7 @@ import { ComponentNode } from './graph/node/component';
 import { GatewayNode } from './graph/node/gateway';
 import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
+import { SecretsConfig } from './secrets/secrets';
 import { ComponentSpec } from './spec/component-spec';
 import { transformComponentSpec, transformSecretDefinitionSpec } from './spec/transform/component-transform';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, ResourceType, Slugs } from './spec/utils/slugs';
@@ -18,7 +19,6 @@ import { validateOrRejectSpec } from './spec/utils/spec-validator';
 import { Dictionary, transformDictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
 import { interpolateObjectLoose, interpolateObjectOrReject, replaceInterpolationBrackets } from './utils/interpolation';
-import { ValuesConfig } from './values/values';
 
 export default abstract class DependencyManager {
 
@@ -413,7 +413,7 @@ export default abstract class DependencyManager {
   async getGraph(component_specs: ComponentSpec[], all_secrets: Dictionary<Dictionary<string | number | null>> = {}, interpolate = true, validate = true, external_addr: string): Promise<DependencyGraph> {
     if (validate) {
       this.detectCircularDependencies(component_specs);
-      ValuesConfig.validate(all_secrets);
+      SecretsConfig.validate(all_secrets);
     }
 
     const interpolateObject = validate ? interpolateObjectOrReject : interpolateObjectLoose;
@@ -441,7 +441,7 @@ export default abstract class DependencyManager {
         tasks: {},
       };
 
-      const parameters = transformDictionary(transformSecretDefinitionSpec, component_spec.parameters);
+      const parameters = transformDictionary(transformSecretDefinitionSpec, component_spec.parameters); // TODO: 404: remove
       for (const [key, value] of Object.entries(parameters)) {
         context.parameters[key] = value.default;
       }
@@ -453,7 +453,7 @@ export default abstract class DependencyManager {
 
       const secrets = this.getSecretsForComponentSpec(component_spec, all_secrets);
       context.secrets = {
-        ...context.parameters,
+        ...context.parameters, // TODO: 404: remove
         ...context.secrets,
         ...secrets,
       };

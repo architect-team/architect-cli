@@ -8,7 +8,7 @@ Components can define configurable secrets that can be used to enrich the contai
 
 ```yaml
 secrets:
-  param_key:
+  secret_key:
     default: default-value
     description: My description
     required: true
@@ -18,7 +18,7 @@ In order to make it easier to describe secrets, Architect also supports a shorth
 
 ```yaml
 secrets:
-  param_key: default-value
+  secret_key: default-value
 ```
 
 # Assigning secret values
