@@ -1,3 +1,10 @@
+## [1.15.1-rc.3](https://github.com/architect-team/architect-cli/compare/v1.15.1-rc.2...v1.15.1-rc.3) (2022-04-06)
+
+
+### Bug Fixes
+
+* Update package version for semantic release. ([f39b2c3](https://github.com/architect-team/architect-cli/commit/f39b2c385313757dececab951db5ffafc24e5424))
+
 ## [1.15.1-rc.2](https://github.com/architect-team/architect-cli/compare/v1.15.1-rc.1...v1.15.1-rc.2) (2022-04-06)
 
 
