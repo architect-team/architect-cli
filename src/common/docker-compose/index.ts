@@ -8,7 +8,7 @@ import pLimit from 'p-limit';
 import path from 'path';
 import untildify from 'untildify';
 import which from 'which';
-import { ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ServiceNode, TaskNode } from '../../';
+import { ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
 import { restart } from '../utils/docker';
 import PortUtil from '../utils/port';
@@ -135,6 +135,8 @@ export class DockerComposeUtils {
         if (liveness_probe) {
           if (!liveness_probe.command) {
             liveness_probe.command = ['CMD-SHELL', `curl -f http://localhost:${liveness_probe.port}${liveness_probe.path} || exit 1`];
+          } else {
+            liveness_probe.command = ['CMD-SHELL', liveness_probe.command.join(' ')];
           }
           service.healthcheck = {
             test: liveness_probe.command,
@@ -334,7 +336,7 @@ export class DockerComposeUtils {
     return raw_config;
   }
 
-  private static async dockerCommandCheck(): Promise<void> {
+  private static dockerCommandCheck(): void {
     try {
       which.sync('docker');
     } catch {
@@ -346,8 +348,8 @@ export class DockerComposeUtils {
     }
   }
 
-  public static async dockerCompose(args: string[], execa_opts?: Options, use_console = false): Promise<execa.ExecaChildProcess<string>> {
-    await this.dockerCommandCheck();
+  public static dockerCompose(args: string[], execa_opts?: Options, use_console = false): execa.ExecaChildProcess<string> {
+    this.dockerCommandCheck();
     if (use_console) {
       process.stdin.setRawMode(true);
     }
@@ -391,11 +393,12 @@ export class DockerComposeUtils {
 
   public static async getLocalServiceForEnvironment(compose_file: string, service_name?: string): Promise<{ display_name: string, name: string }> {
     // docker-compose -f and -p don't work in tandem
-    const compose = yaml.load(fs.readFileSync(compose_file).toString()) as any;
+    const compose = yaml.load(fs.readFileSync(compose_file).toString()) as DockerComposeTemplate;
 
     const services: { name: string, value: { display_name: string, name: string } }[] = [];
-    for (const [service_name, service] of Object.entries(compose.services) as [string, DockerService][]) {
-      const display_name = service.labels?.find((label) => label.startsWith('architect.ref='))?.split('=')[1] || service_name;
+    for (const [service_name, service] of Object.entries(compose.services)) {
+      const display_name = service.labels?.find((label) => label.startsWith('architect.ref='))?.split('=')[1];
+      if (!display_name) continue;
       services.push({ name: display_name, value: { name: service_name, display_name } });
     }
 
@@ -446,6 +449,15 @@ export class DockerComposeUtils {
   }
 
   public static async watchContainersHealth(compose_file: string, environment_name: string): Promise<{ stop: () => void }> {
+    const compose = yaml.load(fs.readFileSync(compose_file).toString()) as DockerComposeTemplate;
+
+    const service_ref_map: Dictionary<string | undefined> = {};
+    for (const [service_name, service] of Object.entries(compose.services)) {
+      const service_ref = service.labels?.find((label) => label.startsWith('architect.ref='))?.split('=')[1];
+      if (!service_ref) continue;
+      service_ref_map[service_name] = service_ref;
+    }
+
     const max_restarts = 3;
     const max_unhealthy_checks = 3;
     const reset_timer = 60000;
@@ -457,7 +469,13 @@ export class DockerComposeUtils {
       for (const container_state of container_states) {
         const id = container_state.ID;
         const full_service_name = container_state.Service;
-        const service_name = container_state.Service.split('--')[1];
+
+        const service_ref = service_ref_map[full_service_name];
+        if (!service_ref) { continue; }
+
+        const { resource_type, resource_name: service_name } = ResourceSlugUtils.parse(service_ref);
+        if (resource_type !== 'services') continue;
+
         const state = container_state.State.toLowerCase();
         const health = container_state.Health.toLowerCase();
 

@@ -207,9 +207,14 @@ export default class Dev extends BaseCommand {
       compose_args.push('-d');
     }
 
-    const dockerComposeRunnable = DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit', env: { COMPOSE_IGNORE_ORPHANS: 'true' } });
-    await DockerComposeUtils.watchContainersHealth(compose_file, project_name);
-    await dockerComposeRunnable;
+    const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit', env: { COMPOSE_IGNORE_ORPHANS: 'true' } });
+    try {
+      await DockerComposeUtils.watchContainersHealth(compose_file, project_name);
+    } catch (err) {
+      docker_compose_runnable.kill();
+      throw err;
+    }
+    await docker_compose_runnable;
     fs.removeSync(compose_file);
   }
 
