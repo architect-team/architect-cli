@@ -473,14 +473,14 @@ export class DockerComposeUtils {
         const service_ref = service_ref_map[full_service_name];
         if (!service_ref) { continue; }
 
-        const { resource_type, resource_name: service_name } = ResourceSlugUtils.parse(service_ref);
+        const { resource_type } = ResourceSlugUtils.parse(service_ref);
         if (resource_type !== 'services') continue;
 
         const state = container_state.State.toLowerCase();
         const health = container_state.Health.toLowerCase();
 
-        if (!service_data_dictionary[service_name]) {
-          service_data_dictionary[service_name] = {
+        if (!service_data_dictionary[service_ref]) {
+          service_data_dictionary[service_ref] = {
             restarts: 0,
             last_restart_ms: Date.now(),
             unhealthy_count: 0,
@@ -493,19 +493,19 @@ export class DockerComposeUtils {
         // We do not want to call it a bad state just because it is unhealthy once
         // So we make sure we are unhealthy for n iterations before calling it a bad state
         if (bad_health) {
-          service_data_dictionary[service_name].unhealthy_count++;
-          const tries_left = Math.max(max_unhealthy_checks - service_data_dictionary[service_name].unhealthy_count, 0);
-          console.log(chalk.yellow(`Health check for ${service_name} has failed. ${tries_left} attempts left`));
-          if (service_data_dictionary[service_name].unhealthy_count >= max_unhealthy_checks) {
+          service_data_dictionary[service_ref].unhealthy_count++;
+          const tries_left = Math.max(max_unhealthy_checks - service_data_dictionary[service_ref].unhealthy_count, 0);
+          console.log(chalk.yellow(`Health check for ${service_ref} has failed. ${tries_left} attempts left`));
+          if (service_data_dictionary[service_ref].unhealthy_count >= max_unhealthy_checks) {
             bad_state = true;
-            service_data_dictionary[service_name].unhealthy_count = 0;
+            service_data_dictionary[service_ref].unhealthy_count = 0;
           }
         } else {
-          service_data_dictionary[service_name].unhealthy_count = 0;
+          service_data_dictionary[service_ref].unhealthy_count = 0;
         }
 
         if (bad_state) {
-          const service_data = service_data_dictionary[service_name];
+          const service_data = service_data_dictionary[service_ref];
 
           if (Date.now() - service_data.last_restart_ms > reset_timer) {
             service_data.restarts = 0;
@@ -514,9 +514,9 @@ export class DockerComposeUtils {
           service_data.restarts++;
           service_data.last_restart_ms = Date.now();
           if (service_data.restarts > max_restarts) {
-            throw new Error(`Unable to start service ${service_name}`);
+            throw new Error(`Unable to start ${service_ref}`);
           }
-          console.log(chalk.red(`ERROR: Service ${service_name} has encountered an error and is being restarted.`));
+          console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
           console.log(chalk.red(`Retry attempt ${service_data.restarts} of ${max_restarts}`));
           await restart(id);
           DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(service_data.last_restart_ms).toISOString()], { stdout: 'inherit' });
