@@ -519,7 +519,6 @@ export class DockerComposeUtils {
           console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
           console.log(chalk.red(`Retry attempt ${service_data.restarts} of ${max_restarts}`));
           await restart(id);
-          DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(service_data.last_restart_ms).toISOString()], { stdout: 'inherit' });
         }
       }
     }

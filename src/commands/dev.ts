@@ -211,8 +211,7 @@ export default class Dev extends BaseCommand {
     try {
       await DockerComposeUtils.watchContainersHealth(compose_file, project_name);
     } catch (err) {
-      docker_compose_runnable.kill();
-      throw err;
+      console.error(err);
     }
     await docker_compose_runnable;
     fs.removeSync(compose_file);
