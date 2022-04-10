@@ -18,6 +18,20 @@ jobs:
     name: Publish CLI
     runs-on: ubuntu-latest
     steps:
+      - name: Wait for tests to succeed
+        uses: lewagon/wait-on-check-action@v1.0.0
+        with:
+          ref: ${{ github.ref }}
+          check-name: 'Run tests'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+      - name: Wait for lint to succeed
+        uses: lewagon/wait-on-check-action@v1.0.0
+        with:
+          ref: ${{ github.ref }}
+          check-name: 'Run lint'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
@@ -25,7 +39,6 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run readme
-      - run: npm run pack
       - name: npm publish
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
