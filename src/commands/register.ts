@@ -7,7 +7,7 @@ import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ResourceSpec, Slugs } from '../';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ResourceSpec, ServiceNode, Slugs } from '../';
 import AccountUtils from '../architect/account/account.utils';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
@@ -77,6 +77,12 @@ export default class ComponentRegister extends Command {
 
     const loaded_spec = await dependency_manager.loadComponentSpec(component_spec.name);
     const graph = await dependency_manager.getGraph([loaded_spec], undefined, false, false);
+    // Tmp fix to register host overrides
+    for (const node of graph.nodes.filter(n => n instanceof ServiceNode) as ServiceNode[]) {
+      for (const interface_config of Object.values(node.interfaces)) {
+        delete interface_config?.host;
+      }
+    }
     const full_compose = await DockerComposeUtils.generate(graph);
 
     const compose: DockerComposeTemplate = {
@@ -159,6 +165,9 @@ export default class ComponentRegister extends Command {
         const image_without_tag = Docker.stripTagFromImage(image);
         service.image = `${image_without_tag}@${digest}`;
       }
+      if (!service.image) {
+        this.error(`Failed to register service ${service_name}. No image found.`);
+      }
     }
     for (const [task_name, task] of Object.entries(new_spec.tasks || {})) {
       delete task.debug; // we don't need to compare the debug block for remotely-deployed components
@@ -170,6 +179,9 @@ export default class ComponentRegister extends Command {
         // we don't need the tag on our image because we use the digest as the key
         const image_without_tag = Docker.stripTagFromImage(image);
         task.image = `${image_without_tag}@${digest}`;
+      }
+      if (!task.image) {
+        this.error(`Failed to register task ${task_name}. No image found.`);
       }
     }
 
