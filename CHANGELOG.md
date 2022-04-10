@@ -1,3 +1,10 @@
+## [1.15.1-rc.4](https://github.com/architect-team/architect-cli/compare/v1.15.1-rc.3...v1.15.1-rc.4) (2022-04-10)
+
+
+### Bug Fixes
+
+* **register:** issue with host overrides ([e21be62](https://github.com/architect-team/architect-cli/commit/e21be626d9cde7560ec81aa4dcbd69a54103b326))
+
 ## [1.15.1-rc.3](https://github.com/architect-team/architect-cli/compare/v1.15.1-rc.2...v1.15.1-rc.3) (2022-04-06)
 
 
