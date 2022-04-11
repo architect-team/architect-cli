@@ -1,16 +1,11 @@
-name: Rebuilt Architect website
+name: Rebuild Architect docs
 
 on:
-  push:
-    paths:
-      - "docs/**"
+  workflow_dispatch:
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Publish
-        uses: netlify/actions/build@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      - name: docs website re-build
+        run: curl -X POST ${{ secrets.NETLIFY_BUILD_HOOK_URL }}

@@ -101,7 +101,7 @@ $ architect dev ./architect.yml
 
 # Linking a component and using by name
 $ architect link ./architect.yml
-$ architect deploy component/name
+$ architect deploy <name>
 ```
 
 ## How can I test non-debugging behavior locally?

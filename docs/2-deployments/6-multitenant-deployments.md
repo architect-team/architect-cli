@@ -7,7 +7,7 @@ title: Multi-Tenant Deployments
 Though components support horizontal scaling through the replicas property, there are cases where you may want multiple separate deployments of a component in a single environment. The default deployment process will create an instance of the component as an unnamed global tenant, but you can deploy a separate instance by providing a tenanat name. Having multiple instances of a component deployed in this manner is called a "multi-tenant deployment".
 
 ```
-architect-local deploy examples/react-app@app1
+architect deploy react-app@app1
 ```
 
 This process works for updating existing deployments as well. If an "app1" tenant of the `examples/react-app` component had already been deployed, the above command would have deployed to that same tenant, leaving any other instances of the component untouched.

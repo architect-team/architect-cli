@@ -1,7 +1,7 @@
 {
   "name": "@architect-io/cli",
   "description": "Command-line interface for Architect.io",
-  "version": "1.14.5-rc.7",
+  "version": "1.15.2",
   "author": "Architect.io",
   "bin": {
     "architect": "./bin/run"
@@ -49,6 +49,13 @@
   },
   "devDependencies": {
     "@oclif/test": "2.0.3",
+    "@semantic-release/changelog": "^6.0.1",
+    "@semantic-release/commit-analyzer": "^9.0.2",
+    "@semantic-release/exec": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^8.0.4",
+    "@semantic-release/npm": "^9.0.1",
+    "@semantic-release/release-notes-generator": "^10.0.3",
     "@types/chai": "4.2.15",
     "@types/diff": "^5.0.1",
     "@types/estraverse": "^5.1.1",
@@ -137,7 +144,8 @@
     "coverage": "nyc --extension .ts npm test",
     "test": "mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
     "pack": "oclif pack:tarballs",
-    "readme": "./bin/readme"
+    "readme": "./bin/readme",
+    "semantic-release": "./node_modules/semantic-release/bin/semantic-release.js"
   },
   "types": "lib/index.d.ts"
 }

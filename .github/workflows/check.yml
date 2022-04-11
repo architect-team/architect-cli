@@ -1,11 +1,12 @@
-name: CLI - Cut Release Candidate
+name: Checks
 
 on: push
 
 env:
   CI: true
-  PRERELEASE_PREFIX: rc
   NPM_CACHE_NAME: cli-node-modules
+  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+  NPM_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
 
 jobs:
   lint:
@@ -57,29 +58,3 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
-  cut_release:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: [lint, test]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-      - run: npm install
-      - run: npm run build
-      - name: Bump NPM version
-        id: npm-version-bump
-        run: |
-          echo "::set-output name=version::$(npm version prerelease --git-tag-version=false --preid=${PRERELEASE_PREFIX})"
-          git config --global user.name "Github Actions"
-          git config --global user.email "bot@architect.io"
-          git config --global pull.rebase false
-          git add package.json package-lock.json
-          git commit -m "New CLI RC from commit: ${{ github.sha }}"
-          git pull
-          git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-      - name: npm publish (release candidate)
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
-          npm publish --tag ${PRERELEASE_PREFIX}
