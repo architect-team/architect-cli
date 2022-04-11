@@ -21,17 +21,6 @@ const plugins = [
     }
   ],
   [
-    "@semantic-release/github",
-    {
-      "assets": [
-        {
-          "path": "dist/*.tar.gz",
-          "label": "Architect-CLI ${nextRelease.version}"
-        }
-      ]
-    }
-  ],
-  [
     "@semantic-release/exec",
     {
       "publishCmd": "npm run pack"
