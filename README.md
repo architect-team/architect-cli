@@ -1,7 +1,3 @@
----
-title: CLI
----
-
 <!-- docs -->
 
 <p align="center">
