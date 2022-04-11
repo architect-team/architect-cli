@@ -4,6 +4,7 @@ import yaml from 'js-yaml';
 import sinon from 'sinon';
 import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
+import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
@@ -265,6 +266,7 @@ describe('register', function () {
   mockArchitectAuth
     .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .stub(DockerComposeUtils, 'dockerCompose', sinon.stub())
+    .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -284,6 +286,14 @@ describe('register', function () {
       const compose = DockerComposeUtils.dockerCompose as sinon.SinonStub;
       expect(compose.callCount).to.eq(2);
       expect(compose.firstCall.args[0][4]).to.deep.equal('NODE_ENV=dev');
+
+      const writeCompose = DockerComposeUtils.writeCompose as sinon.SinonStub;
+      const compose_contents = yaml.load(writeCompose.firstCall.args[1]) as DockerComposeTemplate;
+
+      expect(Object.values(compose_contents.services).map(s => s.image)).to.have.members([
+        'mock.registry.localhost/examples/react-app.services.api:latest',
+        'mock.registry.localhost/examples/react-app.services.app:latest',
+      ]);
     });
 
   mockArchitectAuth
