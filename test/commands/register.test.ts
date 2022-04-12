@@ -8,7 +8,7 @@ import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
-import { mockArchitectAuth, MOCK_API_HOST, TMP_DIR } from '../utils/mocks';
+import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('register', function () {
 
@@ -96,6 +96,7 @@ describe('register', function () {
     .it('register superset', async ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
 
+      /*
       const writeCompose = DockerComposeUtils.writeCompose as sinon.SinonStub;
       const compose_contents = yaml.load(writeCompose.firstCall.args[1]) as DockerComposeTemplate;
 
@@ -109,6 +110,7 @@ describe('register', function () {
       } finally {
         fs.removeSync(compose_path);
       }
+      */
     });
 
   mockArchitectAuth
