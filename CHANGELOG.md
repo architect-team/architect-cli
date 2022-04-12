@@ -1,3 +1,10 @@
+## [1.15.1-rc.5](https://github.com/architect-team/architect-cli/compare/v1.15.1-rc.4...v1.15.1-rc.5) (2022-04-12)
+
+
+### Bug Fixes
+
+* **register:** ignore conditional services for register and validate docker-compose ([87e44f9](https://github.com/architect-team/architect-cli/commit/87e44f9b3153de5514c0f783ce9115737c0d6c82))
+
 ## [1.15.1-rc.4](https://github.com/architect-team/architect-cli/compare/v1.15.1-rc.3...v1.15.1-rc.4) (2022-04-10)
 
 
