@@ -519,6 +519,12 @@ export class DockerComposeUtils {
           console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
           console.log(chalk.red(`Retry attempt ${service_data.restarts} of ${max_restarts}`));
           await restart(id);
+          // Docker compose will stop watching when there is a single container and it goes down.
+          // If all containers go down at the same time it will wait for the restart and just move on. So only need this
+          // for the case of 1 container with a health check.
+          if (container_states.length == 1) {
+            DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(service_data.last_restart_ms).toISOString()], { stdout: 'inherit' });
+          }
         }
       }
     }
