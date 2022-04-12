@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-import execa from 'execa';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import sinon from 'sinon';
@@ -7,8 +6,7 @@ import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
-import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
-import { mockArchitectAuth, MOCK_API_HOST, TMP_DIR } from '../utils/mocks';
+import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('register', function () {
 
@@ -66,7 +64,6 @@ describe('register', function () {
 
   mockArchitectAuth
     .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
-    .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -75,12 +72,10 @@ describe('register', function () {
       .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, (uri, body: any, cb) => {
         expect(validateSpec(body.config)).to.have.lengthOf(0);
-        for (const [service_name, service] of Object.entries(body.config.services) as [string, ServiceSpec][]) {
-          if (IF_EXPRESSION_REGEX.test(service_name)) { continue; }
+        for (const service of Object.values(body.config.services) as ServiceSpec[]) {
           expect(service.image).not.undefined;
         }
-        for (const [task_name, task] of Object.entries(body.config.tasks) as [string, TaskSpec][]) {
-          if (IF_EXPRESSION_REGEX.test(task_name)) { continue; }
+        for (const task of Object.values(body.config.tasks) as TaskSpec[]) {
           expect(task.image).not.undefined;
         }
         cb(null, body)
@@ -93,22 +88,8 @@ describe('register', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples'])
-    .it('register superset', async ctx => {
+    .it('register superset', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
-
-      const writeCompose = DockerComposeUtils.writeCompose as sinon.SinonStub;
-      const compose_contents = yaml.load(writeCompose.firstCall.args[1]) as DockerComposeTemplate;
-
-      const compose_path = `${TMP_DIR}/docker-compose.yml`;
-      try {
-        fs.ensureFileSync(compose_path);
-        fs.writeFileSync(compose_path, yaml.dump(compose_contents));
-        const cmd = execa.commandSync('docker compose config --quiet', { cwd: TMP_DIR });
-        expect(cmd.stdout).to.be.eq('');
-        expect(cmd.exitCode).to.be.eq(0);
-      } finally {
-        fs.removeSync(compose_path);
-      }
     });
 
   mockArchitectAuth

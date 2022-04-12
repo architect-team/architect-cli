@@ -153,8 +153,6 @@ services:
     build:
       context: ./backend
       target: production
-      ${{ if architect.environment == 'local' }}:
-        target: dev
     interfaces:
       http: 8080
     environment:
@@ -172,14 +170,6 @@ services:
       build:
         args:
           NODE_ENV: development
-  ${{ if architect.environment == 'local' }}:
-    local-cli:
-      build:
-        context: ./frontend
-      interfaces:
-        web: 8081
-      environment:
-        API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
   stateless-api:
     image: heroku/nodejs-hello-world
     interfaces:
@@ -209,12 +199,6 @@ tasks:
     environment:
       SERVER_URL: ${{ services.stateless-api.interfaces.main.url }}
       RUN_CURL: ${{ parameters.param_boolean }}
-  ${{ if architect.environment == 'local' }}:
-    local-task:
-      build:
-        context: ./frontend
-      environment:
-        API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
 
 dependencies:
   examples/hello-world: latest
