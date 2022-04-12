@@ -171,14 +171,19 @@ export default class Deploy extends DeployCommand {
   }
 
   protected async runRemote(): Promise<void> {
-    const { args, flags } = await this.parse(Deploy);
+    const { args, flags, raw } = await this.parse(Deploy);
 
     const components = args.configs_or_components;
 
+    // Ensure we capture all secret-files provided
+    const all_secret_files = DeployUtils.getAllSecretFiles(raw);
+
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, flags['secret-file']);
-    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, flags['secret-file']); // TODO: 404: remove
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_files);
+    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_files); // TODO: 404: remove
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
+
+    console.log(all_secrets);
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);

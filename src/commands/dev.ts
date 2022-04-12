@@ -216,16 +216,19 @@ export default class Dev extends BaseCommand {
   }
 
   private async runLocal() {
-    const { args, flags } = await this.parse(Dev);
+    const { args, flags, raw } = await this.parse(Dev);
     await Docker.verify();
 
     if (!args.configs_or_components || !args.configs_or_components.length) {
       args.configs_or_components = ['./architect.yml'];
     }
 
+    // Ensure we capture all secret-files provided
+    const all_secret_files = DeployUtils.getAllSecretFiles(raw);
+
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, flags['secret-file']);
-    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, flags['secret-file']);
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_files);
+    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_files);
 
     const linked_components = this.app.linkedComponents;
     const component_versions: string[] = [];
