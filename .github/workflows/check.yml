@@ -10,7 +10,6 @@ env:
 
 jobs:
   lint:
-    name: Run lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -31,7 +30,6 @@ jobs:
       - run: npm run lint
       - run: npm run check-circular
   test:
-    name: Run tests
     strategy:
       matrix:
         node-version: [12.x, 14.x, 16.x]
