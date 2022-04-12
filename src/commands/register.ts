@@ -14,6 +14,7 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import * as Docker from '../common/utils/docker';
+import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
 tmp.setGracefulCleanup();
 
@@ -155,6 +156,8 @@ export default class ComponentRegister extends Command {
 
     const new_spec = classToClass(component_spec);
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
+      if (IF_EXPRESSION_REGEX.test(service_name)) { continue; }
+
       delete service.debug; // we don't need to compare the debug block for remotely-deployed components
 
       const ref = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, 'services', service_name);
@@ -170,6 +173,8 @@ export default class ComponentRegister extends Command {
       }
     }
     for (const [task_name, task] of Object.entries(new_spec.tasks || {})) {
+      if (IF_EXPRESSION_REGEX.test(task_name)) { continue; }
+
       delete task.debug; // we don't need to compare the debug block for remotely-deployed components
 
       const ref = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, 'tasks', task_name);
