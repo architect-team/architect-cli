@@ -24,9 +24,6 @@ parameters:
   api_db_name:
     description: Name of the database used by the API
     default: test_database
-  api_host:
-    description: API host override
-    required: false
   app_replicas:
     description: Number of instances of the react frontend
     default: 1
@@ -63,16 +60,14 @@ services:
       args:
         NODE_ENV: production
     interfaces:
-      main:
-        host: ${{ parameters.api_host }}
-        port: 8080
+      main: &api-port 8080
     liveness_probe:
       path: /names
-      port: ${{ services.api.interfaces.main.port }}
+      port: *api-port
       interval: 10s
       failure_threshold: 3
     environment:
-      PORT: ${{ services.api.interfaces.main.port }}
+      PORT: *api-port
       DB_USE_SSL: ${{ parameters.db_use_ssl }}
       DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ parameters.api_db_name }}
     ${{ if architect.environment == 'local' }}:
