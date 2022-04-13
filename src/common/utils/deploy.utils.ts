@@ -59,7 +59,7 @@ export default class DeployUtils {
     return flags;
   }
 
-  static getComponentSecrets(individual_secrets: string[], secrets_file: string | string[]): Dictionary<Dictionary<string | number | null>> {
+  static getComponentSecrets(individual_secrets: string[], secrets_file: string[]): Dictionary<Dictionary<string | number | null>> {
     // Check to see if there are multiple secret files; else, just read the single secret file
     let component_secrets: any = {};
     for (const secret_file of secrets_file) {
