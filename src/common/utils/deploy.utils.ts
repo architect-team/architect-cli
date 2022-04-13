@@ -59,28 +59,14 @@ export default class DeployUtils {
     return flags;
   }
 
-  static getAllSecretFiles(raw_argv: any): string[] {
-    const all_secret_files = [];
-    for (const raw_flag of raw_argv) {
-      if (raw_flag.type === 'flag' && (raw_flag.flag === 'secret-file' || raw_flag.flag === 'values')) {
-        all_secret_files.push(raw_flag.input);
-      }
-    }
-    return all_secret_files;
-  }
-
-  static getComponentSecrets(individual_secrets: string[], secrets_file?: string | string[]): Dictionary<Dictionary<string | number | null>> {
+  static getComponentSecrets(individual_secrets: string[], secrets_file: string | string[]): Dictionary<Dictionary<string | number | null>> {
     // Check to see if there are multiple secret files; else, just read the single secret file
     let component_secrets: any = {};
-    if (Array.isArray(secrets_file)) {
-      for (const secret_file of secrets_file) {
-        const output_catch = DeployUtils.readSecretsFile(secret_file);
-        // Deep merge to ensure all values from files are captured
-        // By default, the last file in the array will always supersede any other values
-        component_secrets = _.merge(component_secrets,output_catch);
-      }
-    } else {
-      component_secrets = DeployUtils.readSecretsFile(secrets_file);
+    for (const secret_file of secrets_file) {
+      const output_catch = DeployUtils.readSecretsFile(secret_file);
+      // Deep merge to ensure all values from files are captured
+      // By default, the last file in the array will always supersede any other values
+       component_secrets = _.merge(component_secrets,output_catch);
     }
 
     const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets);

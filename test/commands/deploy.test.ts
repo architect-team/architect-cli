@@ -360,43 +360,4 @@ describe('deployment secrets', function () {
     .it('passing a secrets file with the deprecated values flag', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
-
-
-  const raw_argv = [
-    { type: 'arg', input: '80' },
-    { type: 'arg', input: 'free=bird' },
-    { type: 'flag', flag: 'secret-file', input: 'secrets.yml' },
-    { type: 'flag', flag: 'secret-file', input: 'test-secrets.yml' },
-    { type: 'arg', input: '--port' },
-    { type: 'flag', flag: 'secret', input: 'ah=ha' }
-  ];
-  // testing multiple secret files
-  mockArchitectAuth // TODO: 254: Remove
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
-    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
-    .stub(DeployUtils, 'readSecretsFile', () => {
-        return wildcard_secrets;
-      })
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`, (body) => {
-        expect(body.values['*'].another_required_key).to.eq('required_value');
-        expect(body.values['echo'].a_required_key).to.eq('some_value');
-        expect(body.values['echo'].api_port).to.eq(3000);
-        expect(body.values['echo'].one_more_required_secret).to.eq('one_more_value');
-        return body;
-      })
-      .reply(200, mock_pipeline))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--secret-file', './examples/echo/secrets.yml', '--secret-file', './examples/echo/secrets2.yml'])
-    .it('properly intakes both files', ctx => {
-      expect(DeployUtils.getAllSecretFiles(raw_argv).length).to.equal(2);
-    })
 });
