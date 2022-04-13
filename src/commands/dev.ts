@@ -47,6 +47,8 @@ export default class Dev extends BaseCommand {
     }),
     'secret-file': Flags.string({
       description: 'Path of secrets file',
+      multiple: true,
+      default: [],
     }),
     secret: Flags.string({
       char: 's',

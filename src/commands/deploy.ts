@@ -109,6 +109,8 @@ export default class Deploy extends DeployCommand {
     }),
     'secret-file': Flags.string({
       description: 'Path of secrets file',
+      multiple: true,
+      default: [],
     }),
     secret: Flags.string({
       char: 's',
