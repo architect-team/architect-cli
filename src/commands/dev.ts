@@ -202,12 +202,12 @@ export default class Dev extends BaseCommand {
       }, poll_interval);
     }
 
-    const compose_args = ['-f', compose_file, '-p', project_name, 'up', '--renew-anon-volumes', '--timeout', '0'];
+    const compose_args = ['-f', compose_file, '-p', project_name, 'up', '--remove-orphans', '--renew-anon-volumes', '--timeout', '0'];
     if (flags.detached) {
       compose_args.push('-d');
     }
 
-    await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit', env: { COMPOSE_IGNORE_ORPHANS: 'true' } });
+    await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' });
     fs.removeSync(compose_file);
   }
 
