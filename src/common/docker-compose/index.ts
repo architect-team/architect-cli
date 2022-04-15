@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
@@ -7,8 +8,9 @@ import pLimit from 'p-limit';
 import path from 'path';
 import untildify from 'untildify';
 import which from 'which';
-import { ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ServiceNode, TaskNode } from '../../';
+import { ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
+import { restart } from '../utils/docker';
 import PortUtil from '../utils/port';
 import DockerComposeTemplate, { DockerService, DockerServiceBuild } from './template';
 
@@ -127,13 +129,14 @@ export class DockerComposeUtils {
       }
       service.labels.push(`architect.ref=${node.config.metadata.ref}`);
 
-      /* Disable healthcheck since we removed autoheal container
       // Set liveness and healthcheck for services (not supported by Tasks)
       if (node instanceof ServiceNode) {
         const liveness_probe = node.config.liveness_probe;
         if (liveness_probe) {
           if (!liveness_probe.command) {
             liveness_probe.command = ['CMD-SHELL', `curl -f http://localhost:${liveness_probe.port}${liveness_probe.path} || exit 1`];
+          } else {
+            liveness_probe.command = ['CMD-SHELL', liveness_probe.command.join(' ')];
           }
           service.healthcheck = {
             test: liveness_probe.command,
@@ -147,7 +150,6 @@ export class DockerComposeUtils {
           }
         }
       }
-      */
 
       const is_wsl = os.release().toLowerCase().includes('microsoft');
       if (process.platform === 'linux' && !is_wsl && process.env.TEST !== '1') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
@@ -334,7 +336,7 @@ export class DockerComposeUtils {
     return raw_config;
   }
 
-  private static async dockerCommandCheck(): Promise<void> {
+  private static dockerCommandCheck(): void {
     try {
       which.sync('docker');
     } catch {
@@ -346,8 +348,8 @@ export class DockerComposeUtils {
     }
   }
 
-  public static async dockerCompose(args: string[], execa_opts?: Options, use_console = false): Promise<execa.ExecaChildProcess<string>> {
-    await this.dockerCommandCheck();
+  public static dockerCompose(args: string[], execa_opts?: Options, use_console = false): execa.ExecaChildProcess<string> {
+    this.dockerCommandCheck();
     if (use_console) {
       process.stdin.setRawMode(true);
     }
@@ -391,11 +393,12 @@ export class DockerComposeUtils {
 
   public static async getLocalServiceForEnvironment(compose_file: string, service_name?: string): Promise<{ display_name: string, name: string }> {
     // docker-compose -f and -p don't work in tandem
-    const compose = yaml.load(fs.readFileSync(compose_file).toString()) as any;
+    const compose = yaml.load(fs.readFileSync(compose_file).toString()) as DockerComposeTemplate;
 
     const services: { name: string, value: { display_name: string, name: string } }[] = [];
-    for (const [service_name, service] of Object.entries(compose.services) as [string, DockerService][]) {
-      const display_name = service.labels?.find((label) => label.startsWith('architect.ref='))?.split('=')[1] || service_name;
+    for (const [service_name, service] of Object.entries(compose.services)) {
+      const display_name = service.labels?.find((label) => label.startsWith('architect.ref='))?.split('=')[1];
+      if (!display_name) continue;
       services.push({ name: display_name, value: { name: service_name, display_name } });
     }
 
@@ -443,5 +446,93 @@ export class DockerComposeUtils {
   public static async writeCompose(compose_file: string, compose: string): Promise<void> {
     await fs.ensureFile(compose_file);
     await fs.writeFile(compose_file, compose);
+  }
+
+  public static async watchContainersHealth(compose_file: string, environment_name: string): Promise<{ stop: () => void }> {
+    const compose = yaml.load(fs.readFileSync(compose_file).toString()) as DockerComposeTemplate;
+
+    const service_ref_map: Dictionary<string | undefined> = {};
+    for (const [service_name, service] of Object.entries(compose.services)) {
+      const service_ref = service.labels?.find((label) => label.startsWith('architect.ref='))?.split('=')[1];
+      if (!service_ref) continue;
+      service_ref_map[service_name] = service_ref;
+    }
+
+    const max_restarts = 3;
+    const max_unhealthy_checks = 3;
+    const reset_timer = 60000;
+    let continueToRun = true;
+    const service_data_dictionary: Dictionary<{ restarts: number, last_restart_ms: number, unhealthy_count: number }> = {};
+    while (continueToRun) {
+      await new Promise(r => setTimeout(r, 5000));
+      const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
+      for (const container_state of container_states) {
+        const id = container_state.ID;
+        const full_service_name = container_state.Service;
+
+        const service_ref = service_ref_map[full_service_name];
+        if (!service_ref) { continue; }
+
+        const { resource_type } = ResourceSlugUtils.parse(service_ref);
+        if (resource_type !== 'services') continue;
+
+        const state = container_state.State.toLowerCase();
+        const health = container_state.Health.toLowerCase();
+
+        if (!service_data_dictionary[service_ref]) {
+          service_data_dictionary[service_ref] = {
+            restarts: 0,
+            last_restart_ms: Date.now(),
+            unhealthy_count: 0,
+          };
+        }
+
+        let bad_state = state != 'running';
+        const bad_health = health == 'unhealthy';
+
+        // We do not want to call it a bad state just because it is unhealthy once
+        // So we make sure we are unhealthy for n iterations before calling it a bad state
+        if (bad_health) {
+          service_data_dictionary[service_ref].unhealthy_count++;
+          const tries_left = Math.max(max_unhealthy_checks - service_data_dictionary[service_ref].unhealthy_count, 0);
+          console.log(chalk.yellow(`Health check for ${service_ref} has failed. ${tries_left} attempts left`));
+          if (service_data_dictionary[service_ref].unhealthy_count >= max_unhealthy_checks) {
+            bad_state = true;
+            service_data_dictionary[service_ref].unhealthy_count = 0;
+          }
+        } else {
+          service_data_dictionary[service_ref].unhealthy_count = 0;
+        }
+
+        if (bad_state) {
+          const service_data = service_data_dictionary[service_ref];
+
+          if (Date.now() - service_data.last_restart_ms > reset_timer) {
+            service_data.restarts = 0;
+          }
+
+          service_data.restarts++;
+          service_data.last_restart_ms = Date.now();
+          if (service_data.restarts > max_restarts) {
+            throw new Error(`Unable to start ${service_ref}`);
+          }
+          console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
+          console.log(chalk.red(`Retry attempt ${service_data.restarts} of ${max_restarts}`));
+          await restart(id);
+          // Docker compose will stop watching when there is a single container and it goes down.
+          // If all containers go down at the same time it will wait for the restart and just move on. So only need this
+          // for the case of 1 container with a health check.
+          if (container_states.length == 1) {
+            DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(service_data.last_restart_ms).toISOString()], { stdout: 'inherit' });
+          }
+        }
+      }
+    }
+    const stop = () => {
+      continueToRun = false;
+    };
+    return {
+      stop: stop,
+    };
   }
 }
