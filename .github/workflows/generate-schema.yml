@@ -3,7 +3,7 @@ name: Generate ComponentSpec JSONSchema and Docs
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - 'src/dependency-manager/**/*'
 
