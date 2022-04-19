@@ -459,8 +459,6 @@ export class DockerComposeUtils {
     }
 
     const max_restarts = 3;
-    const max_unhealthy_checks = 3;
-    const reset_timer = 60000;
     let continueToRun = true;
     const service_data_dictionary: Dictionary<{ restarts: number, last_restart_ms: number, unhealthy_count: number }> = {};
     while (continueToRun) {
@@ -487,29 +485,12 @@ export class DockerComposeUtils {
           };
         }
 
-        let bad_state = state != 'running';
+        const bad_state = state != 'running';
         const bad_health = health == 'unhealthy';
+        const is_running = state == 'running';
 
-        // We do not want to call it a bad state just because it is unhealthy once
-        // So we make sure we are unhealthy for n iterations before calling it a bad state
-        if (bad_health) {
-          service_data_dictionary[service_ref].unhealthy_count++;
-          const tries_left = Math.max(max_unhealthy_checks - service_data_dictionary[service_ref].unhealthy_count, 0);
-          console.log(chalk.yellow(`Health check for ${service_ref} has failed. ${tries_left} attempts left`));
-          if (service_data_dictionary[service_ref].unhealthy_count >= max_unhealthy_checks) {
-            bad_state = true;
-            service_data_dictionary[service_ref].unhealthy_count = 0;
-          }
-        } else {
-          service_data_dictionary[service_ref].unhealthy_count = 0;
-        }
-
-        if (bad_state) {
+        if (bad_state || bad_health) {
           const service_data = service_data_dictionary[service_ref];
-
-          if (Date.now() - service_data.last_restart_ms > reset_timer) {
-            service_data.restarts = 0;
-          }
 
           service_data.restarts++;
           service_data.last_restart_ms = Date.now();
@@ -525,6 +506,8 @@ export class DockerComposeUtils {
           if (container_states.length == 1) {
             DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(service_data.last_restart_ms).toISOString()], { stdout: 'inherit' });
           }
+        } else if (is_running) {
+          service_data_dictionary[service_ref].restarts = 0;
         }
       }
     }
