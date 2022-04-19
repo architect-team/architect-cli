@@ -449,6 +449,11 @@ export class DockerComposeUtils {
   }
 
   public static async watchContainersHealth(compose_file: string, environment_name: string): Promise<{ stop: () => void }> {
+    // To better emulate kubernetes we will always restart a failed container.
+    // Kubernetes has 3 modes for Restart. Always, OnFailure and Never. If a liveness probe exists
+    // then we will assume a Never policy is not expected. In this instance OnFailure and Always mean pretty
+    // much the same thing so we will just Always restart
+
     const compose = yaml.load(fs.readFileSync(compose_file).toString()) as DockerComposeTemplate;
 
     const service_ref_map: Dictionary<string | undefined> = {};
@@ -458,9 +463,8 @@ export class DockerComposeUtils {
       service_ref_map[service_name] = service_ref;
     }
 
-    const max_restarts = 3;
     let continueToRun = true;
-    const service_data_dictionary: Dictionary<{ restarts: number, last_restart_ms: number, unhealthy_count: number }> = {};
+    const service_data_dictionary: Dictionary<{ last_restart_ms: number }> = {};
     while (continueToRun) {
       await new Promise(r => setTimeout(r, 5000));
       const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
@@ -479,26 +483,18 @@ export class DockerComposeUtils {
 
         if (!service_data_dictionary[service_ref]) {
           service_data_dictionary[service_ref] = {
-            restarts: 0,
             last_restart_ms: Date.now(),
-            unhealthy_count: 0,
           };
         }
 
         const bad_state = state != 'running';
         const bad_health = health == 'unhealthy';
-        const is_running = state == 'running';
 
         if (bad_state || bad_health) {
           const service_data = service_data_dictionary[service_ref];
 
-          service_data.restarts++;
           service_data.last_restart_ms = Date.now();
-          if (service_data.restarts > max_restarts) {
-            throw new Error(`Unable to start ${service_ref}`);
-          }
           console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
-          console.log(chalk.red(`Retry attempt ${service_data.restarts} of ${max_restarts}`));
           await restart(id);
           // Docker compose will stop watching when there is a single container and it goes down.
           // If all containers go down at the same time it will wait for the restart and just move on. So only need this
@@ -506,8 +502,6 @@ export class DockerComposeUtils {
           if (container_states.length == 1) {
             DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(service_data.last_restart_ms).toISOString()], { stdout: 'inherit' });
           }
-        } else if (is_running) {
-          service_data_dictionary[service_ref].restarts = 0;
         }
       }
     }
