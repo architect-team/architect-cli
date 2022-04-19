@@ -4,12 +4,6 @@ const plugins = [
   "@semantic-release/commit-analyzer",
   "@semantic-release/release-notes-generator",
   [
-    "@semantic-release/changelog",
-    {
-      "changelogFile": "CHANGELOG.md"
-    }
-  ],
-  [
     "@semantic-release/git",
     {
       "assets": [
@@ -38,6 +32,11 @@ const main_plugins = plugins.concat([[
         "label": "Architect-CLI ${nextRelease.version}"
       }
     ]
+  }
+], [
+  "@semantic-release/changelog",
+  {
+    "changelogFile": "CHANGELOG.md"
   }
 ]]);
 
