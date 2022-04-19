@@ -59,7 +59,6 @@ export interface ComponentConfig {
   author?: string;
   homepage?: string;
 
-  parameters: Dictionary<SecretDefinitionConfig>; // TODO: 404: remove
   secrets: Dictionary<SecretDefinitionConfig>;
   outputs: Dictionary<OutputDefinitionConfig>;
 

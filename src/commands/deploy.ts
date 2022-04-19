@@ -100,6 +100,7 @@ export default class Deploy extends DeployCommand {
       char: 'p',
       description: `${Command.DEPRECATED} Please use --secret.`,
       multiple: true,
+      hidden: true,
     }),
     interface: Flags.string({
       char: 'i',
@@ -112,6 +113,11 @@ export default class Deploy extends DeployCommand {
       multiple: true,
       default: [],
     }),
+    secrets: Flags.string({
+      description: `${Command.DEPRECATED} Please use --secret-file.`,
+      multiple: true,
+      hidden: true,
+    }),
     secret: Flags.string({
       char: 's',
       description: 'An individual secret key and value in the form SECRET_KEY=SECRET_VALUE',
@@ -121,6 +127,7 @@ export default class Deploy extends DeployCommand {
     values: Flags.string({
       char: 'v',
       hidden: true,
+      multiple: true,
       description: `${Command.DEPRECATED} Please use --secret-file.`,
     }),
     'deletion-protection': Flags.boolean({
@@ -178,8 +185,9 @@ export default class Deploy extends DeployCommand {
     const components = args.configs_or_components;
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, flags['secret-file']);
-    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, flags['secret-file']); // TODO: 404: remove
+    const all_secret_file_values = flags['secret-file'].concat(flags.secrets); // TODO: 404: remove
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values); // TODO: 404: update
+    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_file_values); // TODO: 404: remove
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
 
     const account = await AccountUtils.getAccount(this.app, flags.account);

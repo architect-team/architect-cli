@@ -38,6 +38,7 @@ export default class Dev extends BaseCommand {
       char: 'p',
       description: `${Command.DEPRECATED} Please use --secret.`,
       multiple: true,
+      hidden: true,
     }),
     interface: Flags.string({
       char: 'i',
@@ -49,6 +50,11 @@ export default class Dev extends BaseCommand {
       description: 'Path of secrets file',
       multiple: true,
       default: [],
+    }),
+    secrets: Flags.string({
+      description: `${Command.DEPRECATED} Please use --secret-file.`,
+      multiple: true,
+      hidden: true,
     }),
     secret: Flags.string({
       char: 's',
@@ -228,8 +234,9 @@ export default class Dev extends BaseCommand {
     }
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, flags['secret-file']);
-    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, flags['secret-file']);
+    const all_secret_file_values = flags['secret-file'].concat(flags.secrets); // TODO: 404: remove
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values);
+    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_file_values);
 
     const linked_components = this.app.linkedComponents;
     const component_versions: string[] = [];

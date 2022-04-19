@@ -48,13 +48,13 @@ export default class DeployUtils {
     const flags: any = parsedFlags;
     flags['build-parallel'] = flags.build_parallel ? flags.build_parallel : flags['build-parallel'];
     flags['compose-file'] = flags.compose_file ? flags.compose_file : flags['compose-file'];
-    flags['secret-file'] = flags.values ? flags.values : flags['secret-file'];
+    flags['secret-file'] = (flags.values || []).concat(flags.secrets || []).concat(flags['secret-file']);
 
     // If values were provided and secrets were not provided, override the secrets with the values
-    if (!flags.secrets && fs.existsSync('./values.yml')) {
-      flags.secrets = './values.yml';
-    } else if (!flags.secrets && fs.existsSync('./secrets.yml')) {
-      flags.secrets = './secrets.yml';
+    if (!flags['secret-file'] && fs.existsSync('./values.yml')) {
+      flags['secret-file'] = ['./values.yml'];
+    } else if (!flags['secret-file'] && fs.existsSync('./secrets.yml')) {
+      flags['secret-file'] = ['./secrets.yml'];
     }
     return flags;
   }

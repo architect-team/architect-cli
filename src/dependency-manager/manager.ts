@@ -349,7 +349,7 @@ export default abstract class DependencyManager {
   validateRequiredSecrets(component: ComponentConfig, secrets: Dictionary<SecretValue>): void { // TODO: 404: update
     const validation_errors = [];
     // Check required parameters and secrets for components
-    for (const [key, value] of Object.entries(component.parameters).concat(Object.entries(component.secrets))) {
+    for (const [key, value] of Object.entries(component.secrets)) {
       if (value.required !== false && secrets[key] === undefined) {
         const validation_error = new ValidationError({
           component: component.name,
@@ -442,26 +442,17 @@ export default abstract class DependencyManager {
       };
 
       const parameters = transformDictionary(transformSecretDefinitionSpec, component_spec.parameters); // TODO: 404: remove
-      for (const [key, value] of Object.entries(parameters)) {
-        context.parameters[key] = value.default;
-      }
-
       const component_spec_secrets = transformDictionary(transformSecretDefinitionSpec, component_spec.secrets);
-      for (const [key, value] of Object.entries(component_spec_secrets)) {
+      for (const [key, value] of Object.entries(parameters).concat(Object.entries(component_spec_secrets))) {
         context.secrets[key] = value.default;
       }
 
       const secrets = this.getSecretsForComponentSpec(component_spec, all_secrets);
       context.secrets = {
-        ...context.parameters, // TODO: 404: remove
         ...context.secrets,
         ...secrets,
       };
-      context.parameters = { // TODO: 404: remove
-        ...context.secrets,
-        ...context.parameters,
-        ...secrets,
-      };
+      context.parameters = context.secrets; // TODO: 404: remove
 
       if (interpolate) {
         // Interpolate secrets

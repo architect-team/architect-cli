@@ -1,3 +1,4 @@
+import deepmerge from 'deepmerge';
 import { ComponentConfig, ComponentInterfaceConfig, OutputDefinitionConfig, SecretDefinitionConfig } from '../../config/component-config';
 import { transformDictionary } from '../../utils/dictionary';
 import { ComponentInterfaceSpec, ComponentSpec, OutputDefinitionSpec, SecretDefinitionSpec } from '../component-spec';
@@ -53,8 +54,7 @@ export const transformComponentInterfaceSpec = function (_: string, interface_sp
 };
 
 export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => {
-  const parameters = transformDictionary(transformSecretDefinitionSpec, spec.parameters); // TODO: 404: remove
-  const secrets = transformDictionary(transformSecretDefinitionSpec, spec.secrets);
+  const secrets = transformDictionary(transformSecretDefinitionSpec, deepmerge(spec.parameters || {}, spec.secrets ||{})); // TODO: update
   const outputs = transformDictionary(transformOutputDefinitionSpec, spec.outputs);
   const services = transformDictionary(transformServiceSpec, spec.services, spec.metadata);
   const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.metadata);
@@ -71,7 +71,6 @@ export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => 
     author: spec.author,
     homepage: spec.homepage,
 
-    parameters, // TODO: 404: remove
     secrets,
     outputs,
 
