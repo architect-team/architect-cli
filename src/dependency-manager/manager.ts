@@ -150,7 +150,7 @@ export default abstract class DependencyManager {
       while ((matches = services_regex.exec(service_string)) != null) {
         if (!matches.groups) { continue; }
         const { service_name, interface_name } = matches.groups;
-        const to = buildNodeRef(component, 'services', service_name);
+        const to = buildNodeRef(component, 'services', service_name); // TODO?
         if (to === from) continue;
         if (!service_edge_map[to]) service_edge_map[to] = {};
         service_edge_map[to][`service->${interface_name}`] = interface_name;
@@ -219,7 +219,7 @@ export default abstract class DependencyManager {
       if (!matches) continue;
       if (!matches.groups) { continue; }
       const { service_name, interface_name } = matches.groups;
-      const to = buildNodeRef(component, 'services', service_name);
+      const to = buildNodeRef(component, 'services', service_name); // TODO?
       if (!service_edge_map[to]) service_edge_map[to] = {};
       service_edge_map[to][component_interface_name] = interface_name;
     }
@@ -386,6 +386,8 @@ export default abstract class DependencyManager {
         throw new ArchitectError(`The subdomain ${subdomain} is claimed by multiple component interfaces:\n[${values.sort().join(', ')}]\nPlease set interfaces.<name>.ingress.subdomain=<subdomain> or interfaces.<name>.ingress.path=<path> to avoid conflicts.`);
       }
     }
+
+     // TODO: validate name duplicates
   }
 
   detectCircularDependencies(component_specs: ComponentSpec[]): void {
@@ -720,7 +722,7 @@ export default abstract class DependencyManager {
       this.validateGraph(graph);
       graph.validated = true;
     }
-
+// console.log(JSON.stringify(graph, null, 2))
     return graph;
   }
 }

@@ -73,10 +73,10 @@ export const transformResourceSpec = (resource_type: ResourceType, key: string, 
   const environment = transformResourceSpecEnvironment(spec.environment);
   const { component_account_name, component_name, instance_name } = ComponentSlugUtils.parse(metadata.ref);
   return {
-    name: key,
+    name: spec.reserved_name || key,
     metadata: {
       ...metadata,
-      ref: ResourceSlugUtils.build(component_account_name, component_name, resource_type, key, instance_name),
+      ref: ResourceSlugUtils.build(component_account_name, component_name, resource_type, spec.reserved_name || key, instance_name),
     },
     description: spec.description,
     image: spec.image,
@@ -90,5 +90,6 @@ export const transformResourceSpec = (resource_type: ResourceType, key: string, 
     deploy: spec.deploy,
     depends_on: spec.depends_on || [],
     labels: spec.labels || new Map(),
+    reserved_name: spec.reserved_name,
   };
 };

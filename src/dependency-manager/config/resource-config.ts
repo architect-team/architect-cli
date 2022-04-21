@@ -33,7 +33,7 @@ export interface ResourceConfig {
   deploy?: DeployConfig;
   depends_on: string[];
   labels: Map<string, string>;
-  reserved_name?: null | string;
+  reserved_name?: string;
 }
 
 export const getResourceName = (resource_config: ResourceConfig): string => {
