@@ -16,6 +16,7 @@ import DockerComposeTemplate from '../common/docker-compose/template';
 import * as Docker from '../common/utils/docker';
 import DockerBuildXUtils from '../common/utils/docker-buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
+import AppConfig from '../app-config/config';
 
 tmp.setGracefulCleanup();
 
@@ -109,10 +110,10 @@ export default class ComponentRegister extends Command {
         }
 
         if (DockerBuildXUtils.isMacM1Machine()) {
-          const macPlatforms: any = {
-            "x-bake": { "platforms": ["linux/amd64", "linux/arm64"] }
+          const bakePlatforms: any = {
+            "x-bake": { "platforms": DockerBuildXUtils.getPlatforms() }
           };
-          service.build = { ...service.build, ...macPlatforms };
+          service.build = { ...service.build, ...bakePlatforms };
         }
 
         compose.services[service_name] = {
@@ -138,17 +139,29 @@ export default class ComponentRegister extends Command {
       return self.indexOf(value) === index;
     }).reduce((arr, value) => {
       arr.push("--set");
-      arr.push("*.args." + value);
+      arr.push(`*.args.${value}`);
       return arr;
     }, [] as string[]);
 
     // Create a docker builder instance
     try {
-      await DockerBuildXUtils.dockerBuildX(["create", "--name", "architect"], {
-        stdio: "inherit",
-      });
+      const is_local = this.app.config.api_host.includes("localhost");
+      if (is_local) {
+        // Create a configuration file for buildkitd
+        const local_buildkitd_config_file = "buildkitd.toml";
+        const file_content = `[registry.\"${this.app.config.registry_host}\"]\n  http = true\n  insecure = true`;
+        await DockerBuildXUtils.writeBuildkitdConfigFile(local_buildkitd_config_file, file_content);
+        
+        await DockerBuildXUtils.dockerBuildX(["create", "--name", "architect", "--driver-opt", "network=host", "--use", "--buildkitd-flags", "--allow-insecure-entitlement security.insecure", `--config=${local_buildkitd_config_file}`], {
+          stdio: "inherit",
+        });
+      } else {
+        await DockerBuildXUtils.dockerBuildX(["create", "--name", "architect"], {
+          stdio: "inherit",
+        });
+      }
     } catch (err: any) {
-      this.log(`Docker builder instance already exists. Using 'architect' builder instance ...`);
+      this.log(`Docker builder instance 'architect' already exists. Using existing 'architect' builder instance ...`);
     }
 
     try {
@@ -160,7 +173,6 @@ export default class ComponentRegister extends Command {
       this.error(err);
     }
 
-    const node_env = "*.args.NODE_ENV=PRODUCTION"
     try {
       await DockerBuildXUtils.dockerBuildX(["bake", "-f", compose_file, "--push", ...build_args, "--builder", "architect"], {
         stdio: "inherit",
