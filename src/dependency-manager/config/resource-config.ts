@@ -35,7 +35,3 @@ export interface ResourceConfig {
   labels: Map<string, string>;
   reserved_name?: string;
 }
-
-export const getResourceName = (resource_config: ResourceConfig): string => {
-  return resource_config.reserved_name || resource_config.name;
-};

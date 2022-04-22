@@ -2,7 +2,6 @@ import { classToPlain, plainToClass, serialize } from 'class-transformer';
 import { isMatch } from 'matcher';
 import { buildInterfacesRef, buildNodeRef, ComponentConfig } from './config/component-config';
 import { ArchitectContext, ComponentContext, ParameterValue } from './config/component-context';
-import { getResourceName } from './config/resource-config';
 import { DependencyGraph } from './graph';
 import { IngressEdge } from './graph/edge/ingress';
 import { OutputEdge } from './graph/edge/output';
@@ -29,9 +28,9 @@ export default abstract class DependencyManager {
   getComponentNodes(component: ComponentConfig): DependencyNode[] {
     const nodes = [];
     // Load component services
-    for (const service_config of Object.values(component.services)) {
+    for (const [service_name, service_config] of Object.entries(component.services)) {
       const node = new ServiceNode({
-        ref: buildNodeRef(component, 'services', getResourceName(service_config)),
+        ref: service_config.reserved_name || buildNodeRef(component, 'services', service_name),
         config: service_config,
         local_path: component.metadata.file?.path,
         artifact_image: component.artifact_image,
@@ -40,9 +39,9 @@ export default abstract class DependencyManager {
     }
 
     // Load component tasks
-    for (const task_config of Object.values(component.tasks)) {
+    for (const [task_name, task_config] of Object.entries(component.tasks)) {
       const node = new TaskNode({
-        ref: buildNodeRef(component, 'tasks', getResourceName(task_config)),
+        ref: task_config.reserved_name || buildNodeRef(component, 'tasks', task_name),
         config: task_config,
         local_path: component.metadata.file?.path,
       });
@@ -71,7 +70,7 @@ export default abstract class DependencyManager {
     const services = Object.entries(component_config.services).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'services' as ResourceType, resource_config }));
     const tasks = Object.entries(component_config.tasks).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'tasks' as ResourceType, resource_config }));
     for (const { resource_config, resource_type } of [...services, ...tasks]) {
-      const from = buildNodeRef(component, resource_type, getResourceName(resource_config));
+      const from = resource_config.reserved_name || buildNodeRef(component, resource_type, resource_config.name);
       const copy = { ...resource_config } as any;
       delete copy.metadata;
       const service_string = replaceInterpolationBrackets(serialize(copy));
@@ -498,7 +497,7 @@ export default abstract class DependencyManager {
             environment: {},
           };
         }
-        const service_ref = buildNodeRef(component_config, 'services', getResourceName(service_config));
+        const service_ref = service_config.reserved_name || buildNodeRef(component_config, 'services', service_name);
         for (const [interface_name, value] of Object.entries(service_config.interfaces)) {
           const interface_ref = `services.${service_name}.interfaces.${interface_name}`;
 
@@ -709,7 +708,7 @@ export default abstract class DependencyManager {
       const services = Object.entries(component_config.services).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'services' as ResourceType, resource_config }));
       const tasks = Object.entries(component_config.tasks).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'tasks' as ResourceType, resource_config }));
       for (const { resource_config, resource_type } of [...services, ...tasks]) {
-        const resource_ref = buildNodeRef(component_config, resource_type, getResourceName(resource_config));
+        const resource_ref = resource_config.reserved_name || buildNodeRef(component_config, resource_type, resource_config.name);
         const node = graph.getNodeByRef(resource_ref) as ServiceNode | TaskNode;
         if (this.use_sidecar) {
           node.proxy_port_mapping = component_config.metadata.proxy_port_mapping;
@@ -722,7 +721,7 @@ export default abstract class DependencyManager {
       this.validateGraph(graph);
       graph.validated = true;
     }
-// console.log(JSON.stringify(graph, null, 2))
+
     return graph;
   }
 }

@@ -278,6 +278,7 @@ export default class Dev extends BaseCommand {
 
     for (const component_version of component_versions) {
       const component_config = await dependency_manager.loadComponentSpec(component_version, component_options);
+
       if (flags.recursive) {
         const dependency_configs = await dependency_manager.loadComponentSpecs(component_config.metadata.ref);
         component_specs.push(...dependency_configs);
@@ -286,7 +287,6 @@ export default class Dev extends BaseCommand {
       }
     }
     const graph = await dependency_manager.getGraph(component_specs, component_secrets);
-    // throw new Error('test')
     const compose = await DockerComposeUtils.generate(graph);
     await this.runCompose(compose);
   }
