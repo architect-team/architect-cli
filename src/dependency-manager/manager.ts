@@ -51,7 +51,7 @@ export default abstract class DependencyManager {
   }
 
   getComponentRef(component_string: string): string {
-    const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
+    const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(component_string);
     const resolved_account = this.account && this.account === component_account_name ? undefined : component_account_name;
     const component_ref = ComponentSlugUtils.build(resolved_account, component_name, instance_name);
     return component_ref;
@@ -69,8 +69,8 @@ export default abstract class DependencyManager {
     // Add edges FROM services to other services
     const services = Object.entries(component_config.services).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'services' as ResourceType, resource_config }));
     const tasks = Object.entries(component_config.tasks).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'tasks' as ResourceType, resource_config }));
-    for (const { resource_config, resource_type } of [...services, ...tasks]) {
-      const from = resource_config.reserved_name || buildNodeRef(component, resource_type, resource_config.name);
+    for (const { resource_config, resource_name, resource_type } of [...services, ...tasks]) {
+      const from = resource_config.reserved_name || buildNodeRef(component, resource_type, resource_name);
       const copy = { ...resource_config } as any;
       delete copy.metadata;
       const service_string = replaceInterpolationBrackets(serialize(copy));
