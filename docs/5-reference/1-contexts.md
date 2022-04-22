@@ -14,7 +14,7 @@ There are several context groups that contain important, dynamic information abo
 | --------------------------------------- | ------------------------------------------------------------------------- |
 | [`dependencies`](#dependencies-context) | References to the dynamic outputs of each dependency and their interfaces |
 | [`ingresses`](#ingresses-context)       | References to the dynamic outputs of external interfaces                  |
-| [`parameters`](#parameters-context)     | Dynamic values for the parameters declared by your component              |
+| [`secrets`](#secrets-context)           | Dynamic values for the secrets declared by your component                 |
 | [`services`](#services-context)         | References to the dynamic outputs of each service and their interfaces    |
 
 ### `dependencies` context
@@ -39,14 +39,14 @@ The `ingresses` context contains information about the external exposed interfac
 | `ingresses`             | `object` | Information on the ingress rules of the component                                                                      |
 | `ingresses.<interface>` | `object` | Information on an ingress rule matching the interface. [See the interface values](#interface-values) for more details. |
 
-### `parameters` context
+### `secrets` context
 
-The `parameters` context contains all the values assigned to each parameter declared by your component.
+The `secrets` context contains all the values assigned to each secret declared by your component.
 
 | Property           | Type     | Description                                      |
 | ------------------ | -------- | ------------------------------------------------ |
-| `parameters`       | `object` | A dictionary containing the parameter values     |
-| `parameters.<key>` | `string` | Resolves to the value of the specified parameter |
+| `secrets`          | `object` | A dictionary containing the secret values        |
+| `secrets.<key>`    | `string` | Resolves to the value of the specified secret    |
 
 ### `services` context
 

@@ -36,9 +36,9 @@ export default class Dev extends BaseCommand {
     }),
     parameter: Flags.string({
       char: 'p',
-      description: 'Component parameters',
+      description: `${Command.DEPRECATED} Please use --secret.`,
       multiple: true,
-      default: [],
+      hidden: true,
     }),
     interface: Flags.string({
       char: 'i',
@@ -46,9 +46,21 @@ export default class Dev extends BaseCommand {
       multiple: true,
       default: [],
     }),
-    secrets: Flags.string({
-      char: 's',
+    'secret-file': Flags.string({
       description: 'Path of secrets file',
+      multiple: true,
+      default: [],
+    }),
+    secrets: Flags.string({
+      description: `${Command.DEPRECATED} Please use --secret-file.`,
+      multiple: true,
+      hidden: true,
+    }),
+    secret: Flags.string({
+      char: 's',
+      description: 'An individual secret key and value in the form SECRET_KEY=SECRET_VALUE',
+      multiple: true,
+      default: [],
     }),
     recursive: Flags.boolean({
       char: 'r',
@@ -85,7 +97,7 @@ export default class Dev extends BaseCommand {
     values: Flags.string({
       char: 'v',
       hidden: true,
-      description: `${Command.DEPRECATED} Please use --secrets.`,
+      description: `${Command.DEPRECATED} Please use --secret-file.`,
     }),
     detached: Flags.boolean({
       description: 'Run in detached mode',
@@ -222,7 +234,9 @@ export default class Dev extends BaseCommand {
     }
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const component_secrets = DeployUtils.getComponentSecrets(flags.parameter, flags.secrets);
+    const all_secret_file_values = flags['secret-file'].concat(flags.secrets); // TODO: 404: remove
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values);
+    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_file_values);
 
     const linked_components = this.app.linkedComponents;
     const component_versions: string[] = [];
@@ -286,7 +300,9 @@ export default class Dev extends BaseCommand {
         component_specs.push(component_config);
       }
     }
-    const graph = await dependency_manager.getGraph(component_specs, component_secrets);
+
+    const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
+    const graph = await dependency_manager.getGraph(component_specs, all_secrets); // TODO: 404: update
     const compose = await DockerComposeUtils.generate(graph);
     await this.runCompose(compose);
   }

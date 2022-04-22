@@ -83,22 +83,22 @@ describe('template', () => {
       }
     });
 
-    it('divide parameters', async () => {
+    it('divide secrets', async () => {
       const context = {
-        'parameters.left-2.num': 6,
-        'parameters.right': 3
+        'secrets.left-2.num': 6,
+        'secrets.right': 3
       }
-      const program = `\${{ parameters.left-2.num / parameters.right }}`;
+      const program = `\${{ secrets.left-2.num / secrets.right }}`;
       const parser = new ArchitectParser();
       expect(parser.parseString(program, context)).to.eq(2);
       expect(parser.errors).to.have.lengthOf(0);
     });
 
-    it('divide parameter with slash', async () => {
+    it('divide secret with slash', async () => {
       const context = {
-        'parameters.test/slash': 6,
+        'secrets.test/slash': 6,
       }
-      const program = `\${{ parameters.test/slash / 3 }}`;
+      const program = `\${{ secrets.test/slash / 3 }}`;
       const parser = new ArchitectParser();
       expect(parser.parseString(program, context)).to.eq(2);
       expect(parser.errors).to.have.lengthOf(0);
@@ -108,15 +108,15 @@ describe('template', () => {
   describe('functions', () => {
     it('trim', async () => {
       const context = {
-        'parameters.test': `  whitespace  `,
+        'secrets.test': `  whitespace  `,
       }
 
-      const base = `\${{ parameters.test }}`;
+      const base = `\${{ secrets.test }}`;
       const parser = new ArchitectParser();
       expect(parser.parseString(base, context)).to.eq('  whitespace  ');
       expect(parser.errors).to.have.lengthOf(0);
 
-      const program = `\${{ 'no-' + trim(parameters.test) }}`;
+      const program = `\${{ 'no-' + trim(secrets.test) }}`;
       expect(parser.parseString(program, context)).to.eq('no-whitespace');
       expect(parser.errors).to.have.lengthOf(0);
     });
@@ -126,7 +126,7 @@ describe('template', () => {
     it('nested if statements', async () => {
       const component_config = `
     name: examples/hello-world
-    parameters:
+    secrets:
       environment: local
 
     interfaces:
@@ -146,7 +146,7 @@ describe('template', () => {
           \${{ if true }}:
             environment:
               NODE_ENV: production
-              \${{ if (parameters.environment == 'local') }}:
+              \${{ if (secrets.environment == 'local') }}:
                 NODE_ENV: development
               \${{ if architect.environment == 'local' }}:
                 LOCAL: 1
@@ -187,7 +187,7 @@ describe('template', () => {
     it('if statements for host overrides', async () => {
       const component_config = `
     name: examples/hello-world
-    parameters:
+    secrets:
       environment: prod
 
     services:
@@ -196,7 +196,7 @@ describe('template', () => {
           main:
             port: 5432
             protocol: postgres
-            \${{ if parameters.environment == 'prod' }}:
+            \${{ if secrets.environment == 'prod' }}:
               port: 5432
               host: 'db.aws.com'
       api:

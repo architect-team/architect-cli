@@ -28,7 +28,7 @@ describe('component builder unit test', function () {
     const parsed_yml = parseSourceYml(source_yml);
 
     expect((parsed_yml as any).name).to.equal('superset');
-    expect((parsed_yml as any).parameters.param_unset).to.be.null; // checks and makes sure we're properly parsing empty keys to 'null'
+    expect((parsed_yml as any).secrets.param_unset).to.be.null; // checks and makes sure we're properly parsing empty keys to 'null'
   });
 
   it(`buildConfigFromYml parses yaml and builds into config`, async () => {

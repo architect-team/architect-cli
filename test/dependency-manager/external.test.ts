@@ -64,7 +64,7 @@ describe('external spec v1', () => {
   it('simple no override', async () => {
     const component_config = {
       name: 'architect/cloud',
-      parameters: {
+      secrets: {
         optional_host: { required: false },
         optional_port: { default: 8080 }
       },
@@ -72,8 +72,8 @@ describe('external spec v1', () => {
         app: {
           interfaces: {
             main: {
-              host: '${{ parameters.optional_host }}',
-              port: '${{ parameters.optional_port }}'
+              host: '${{ secrets.optional_host }}',
+              port: '${{ secrets.optional_port }}'
             }
           },
           environment: {
@@ -112,7 +112,7 @@ describe('external spec v1', () => {
   it('simple external override', async () => {
     const component_config = {
       name: 'architect/cloud',
-      parameters: {
+      secrets: {
         optional_host: {},
         optional_port: { default: 8080 }
       },
@@ -120,8 +120,8 @@ describe('external spec v1', () => {
         app: {
           interfaces: {
             main: {
-              host: '${{ parameters.optional_host }}',
-              port: '${{ parameters.optional_port }}'
+              host: '${{ secrets.optional_host }}',
+              port: '${{ secrets.optional_port }}'
             }
           },
           environment: {
@@ -256,7 +256,7 @@ describe('external spec v1', () => {
 
     const dependency_config = `
       name: architect/dependency
-      parameters:
+      secrets:
         optional_host: ci.architect.io
       services:
         app:
@@ -269,7 +269,7 @@ describe('external spec v1', () => {
             ci:
               port: 8501
               protocol: https
-              host: \${{ parameters.optional_host }}
+              host: \${{ secrets.optional_host }}
           environment:
             DEP_EXTERNAL_ADDR: \${{ ingresses.api.url }}
             CI_EXTERNAL_ADDR: \${{ ingresses.ci.url }}
@@ -347,11 +347,11 @@ describe('external spec v1', () => {
     });
   });
 
-  it('host override db via parameter', async () => {
+  it('host override db via secret', async () => {
     const component_config = `
       name: architect/component
 
-      parameters:
+      secrets:
         MYSQL_HOST:
           required: false
         MYSQL_DATABASE:
@@ -363,14 +363,14 @@ describe('external spec v1', () => {
           command: mysqld
           interfaces:
             mysql:
-              host: \${{ parameters.MYSQL_HOST }}
+              host: \${{ secrets.MYSQL_HOST }}
               port: 3306
               protocol: mysql
 
         core:
           environment:
-            MYSQL_DB_URL: jdbc:mysql://\${{ services.db.interfaces.mysql.host }}:\${{ services.db.interfaces.mysql.port }}/\${{ parameters.MYSQL_DATABASE }}?serverTimezone=UTC
-            MYSQL_DB_URL2: jdbc:\${{ services.db.interfaces.mysql.url }}/\${{ parameters.MYSQL_DATABASE }}?serverTimezone=UTC
+            MYSQL_DB_URL: jdbc:mysql://\${{ services.db.interfaces.mysql.host }}:\${{ services.db.interfaces.mysql.port }}/\${{ secrets.MYSQL_DATABASE }}?serverTimezone=UTC
+            MYSQL_DB_URL2: jdbc:\${{ services.db.interfaces.mysql.url }}/\${{ secrets.MYSQL_DATABASE }}?serverTimezone=UTC
     `;
 
     mock_fs({

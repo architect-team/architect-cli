@@ -19,7 +19,7 @@ description: |
   on-demand environments while enabling the production environment to use an
   existing database instance.
 
-parameters:
+secrets:
   existing_pg_host:
     required: false
     description: |
@@ -45,13 +45,13 @@ services:
     image: postgres:13
     interfaces:
       main:
-        host: ${{ parameters.existing_pg_host }}
+        host: ${{ secrets.existing_pg_host }}
         port: 5432
     environment:
-      POSTGRES_USER: ${{ parameters.db_user }}
-      POSTGRES_PASSWORD: ${{ parameters.db_pass }}
-      POSTGRES_DB: ${{ parameters.db_name }}
-  
+      POSTGRES_USER: ${{ secrets.db_user }}
+      POSTGRES_PASSWORD: ${{ secrets.db_pass }}
+      POSTGRES_DB: ${{ secrets.db_name }}
+
   api:
     build:
       context: ./
@@ -61,7 +61,7 @@ services:
       DB_ADDR: ${{ services.db.interfaces.main.url }}
 ```
 
-By default, the above component will be deployed with a new postgres instance automatically (deployed as a dockerized service). If you wish to connect to an existing instance however, all you have to do is assign a value for the parameter at deploy-time:
+By default, the above component will be deployed with a new postgres instance automatically (deployed as a dockerized service). If you wish to connect to an existing instance however, all you have to do is assign a value for the secret at deploy-time:
 
 ```sh
 $ architect deploy example/component -p existing_pg_host=<id>.rds.amazonaws.com
@@ -74,7 +74,7 @@ Another use-case for virtual nodes is to connect to legacy, or otherwise non-con
 ```yaml
 name: example/virtual-component
 description: An example component showing how to declare an externally managed service.
-  
+
 services:
   legacy-monolith:
     interfaces:

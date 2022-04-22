@@ -17,7 +17,7 @@ describe('superset spec validation', function () {
       await manager.getGraph([component_spec], { '*': { param_unset: 'test' } });
     });
 
-    it(`config interpolation works with multiline parameters`, async () => {
+    it(`config interpolation works with multiline secrets`, async () => {
       const component_spec = buildSpecFromPath(`test/mocks/superset/architect.yml`);
       const secrets_yml = `
         '*':
@@ -41,7 +41,7 @@ describe('superset spec validation', function () {
       })
     });
 
-    it(`config interpolation works with multiline parameters 2`, async () => {
+    it(`config interpolation works with multiline secrets 2`, async () => {
       const component_spec = buildSpecFromPath(`test/mocks/superset/architect.yml`);
       const secrets_yml = `
         '*':
