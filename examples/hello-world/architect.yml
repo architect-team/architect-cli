@@ -9,7 +9,8 @@ keywords:
 
 services:
   api:
-    image: heroku/nodejs-hello-world
+    build:
+      context: .
     interfaces:
       main: 3000
 

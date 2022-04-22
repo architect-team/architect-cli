@@ -11,13 +11,13 @@ outputs:
     value: ${{ parameters.publish_topic }}
 
 dependencies:
-  architect/gcp-pubsub: latest
+  examples/gcp-pubsub: latest
 
 services:
   api:
     build:
       context: ./
     environment:
-      GCP_PROJECT_ID: ${{ dependencies['architect/gcp-pubsub'].outputs.gcp_project_id }}
-      PUBSUB_ENDPOINT: ${{ dependencies['architect/gcp-pubsub'].interfaces.pubsub.url }}
+      GCP_PROJECT_ID: ${{ dependencies['examples/gcp-pubsub'].outputs.gcp_project_id }}
+      PUBSUB_ENDPOINT: ${{ dependencies['examples/gcp-pubsub'].interfaces.pubsub.url }}
       PUBSUB_TOPIC: ${{ parameters.publish_topic }}
