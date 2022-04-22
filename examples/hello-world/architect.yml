@@ -9,9 +9,11 @@ keywords:
 
 services:
   api:
-    image: heroku/nodejs-hello-world
+    build:
+      context: .
     interfaces:
       main: 3000
+    # reserved_name: test-reserved-name
 
 interfaces:
   hello:
