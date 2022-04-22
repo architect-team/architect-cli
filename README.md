@@ -209,7 +209,7 @@ Create a deploy job on Architect Cloud
 ```
 USAGE
   $ architect deploy [CONFIGS_OR_COMPONENTS] [--auto-approve | -o <value> | ] [-a <value>] [-e <value>]
-    [--production ] [-d ] [-p <value>] [-i <value>] [-s <value>] [--deletion-protection | ] [-r] [--browser]
+    [--production ] [-d ] [-i <value>] [--secret-file <value>] [-s <value>] [--deletion-protection | ] [-r] [--browser]
 
 ARGUMENTS
   CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `account/component:latest`. Multiple components are
@@ -221,14 +221,14 @@ FLAGS
   -e, --environment=<value>   Architect environment
   -i, --interface=<value>...  [default: ] Component interfaces
   -o, --compose-file=<value>  Path where the compose file should be written to
-  -p, --parameter=<value>...  [default: ] Component parameters
   -r, --[no-]recursive        [default: true] Toggle to automatically deploy all dependencies
-  -s, --secrets=<value>       Path of secrets file
+  -s, --secret=<value>...     [default: ] An individual secret key and value in the form SECRET_KEY=SECRET_VALUE
   --auto-approve              Automatically approve the deployment without a review step. Used for debugging and CI
                               flows.
   --[no-]browser              [default: true] Automatically open urls in the browser for local deployments
   --[no-]deletion-protection  [default: true] Toggle for deletion protection on deployments
   --production                [deprecated] Please use --environment.
+  --secret-file=<value>...    [default: ] Path of secrets file
 
 DESCRIPTION
   Create a deploy job on Architect Cloud
@@ -263,8 +263,8 @@ Run your stack locally
 
 ```
 USAGE
-  $ architect dev [CONFIGS_OR_COMPONENTS] [-a <value>] [-o <value> | -e <value> |  |  | ] [-p <value>]
-    [-i <value>] [-s <value>] [-r] [--browser] [--port <value>] [-d]
+  $ architect dev [CONFIGS_OR_COMPONENTS] [-a <value>] [-o <value> | -e <value> |  |  | ] [-i <value>]
+    [--secret-file <value>] [-s <value>] [-r] [--browser] [--port <value>] [-d]
 
 ARGUMENTS
   CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `account/component:latest`. Multiple components are
@@ -276,11 +276,11 @@ FLAGS
   -e, --environment=<value>   Architect environment
   -i, --interface=<value>...  [default: ] Component interfaces
   -o, --compose-file=<value>  Path where the compose file should be written to
-  -p, --parameter=<value>...  [default: ] Component parameters
   -r, --[no-]recursive        [default: true] Toggle to automatically deploy all dependencies
-  -s, --secrets=<value>       Path of secrets file
+  -s, --secret=<value>...     [default: ] An individual secret key and value in the form SECRET_KEY=SECRET_VALUE
   --[no-]browser              [default: true] Automatically open urls in the browser for local deployments
   --port=<value>              [default: 80] [default: 80] Port for the gateway
+  --secret-file=<value>...    [default: ] Path of secrets file
 
 DESCRIPTION
   Run your stack locally
