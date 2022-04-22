@@ -1,4 +1,4 @@
-name: architect/gcp-pubsub
+name: examples/gcp-pubsub
 description: Component enabling integration with GCP pub/sub
 keywords:
   - gcp
