@@ -1,3 +1,3 @@
 main:
-  host: ${{ parameters.main_host }}
-  port: ${{ parameters.main_port }}
+  host: ${{ secrets.main_host }}
+  port: ${{ secrets.main_port }}

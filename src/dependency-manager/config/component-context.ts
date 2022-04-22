@@ -5,7 +5,7 @@ import { ServiceInterfaceConfig } from './service-config';
 
 export type OutputValue = string | number | boolean | null;
 // eslint-disable-next-line @typescript-eslint/ban-types
-export type ParameterValue = string | number | boolean | null | object | undefined;
+export type SecretValue = string | number | boolean | null | object | undefined;
 
 export interface ServiceContext {
   environment?: Dictionary<EnvironmentSpecValue>;
@@ -29,7 +29,8 @@ export interface ArchitectContext {
 export interface ComponentContext {
   name: string;
   dependencies: Dictionary<DependencyContext>;
-  parameters: Dictionary<ParameterValue>;
+  parameters: Dictionary<SecretValue>; // TODO: 404: remove
+  secrets: Dictionary<SecretValue>;
   outputs: Dictionary<OutputValue>;
   ingresses: Dictionary<ComponentInterfaceConfig>;
   interfaces: Dictionary<ComponentInterfaceConfig>;

@@ -44,7 +44,7 @@ describe('register', function () {
         expect(body.tag).to.eq('1.0.0')
         expect(body.config.name).to.eq('fusionauth')
         expect(body.config.services.fusionauth.image).to.eq('fusionauth/fusionauth-app:latest')
-        expect(body.config.services.fusionauth.environment.ADMIN_USER_PASSWORD).to.eq('${{ parameters.admin_user_password }}')
+        expect(body.config.services.fusionauth.environment.ADMIN_USER_PASSWORD).to.eq('${{ secrets.admin_user_password }}')
         expect(body.config.services.fusionauth.environment.FUSIONAUTH_KICKSTART).to.eq('/usr/local/fusionauth/kickstart.json')
 
         const config = fs.readFileSync('examples/fusionauth/config/kickstart.json');

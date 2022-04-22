@@ -181,7 +181,7 @@ export const ExpressionOr = (schema: SchemaObject): DecoratorSchema => {
         pattern: EXPRESSION_REGEX.source,
         errorMessage: {
           // __arc__ is replaced later to avoid json pointer issues with ajv
-          pattern: 'must be an interpolation ref ex. $__arc__{{ parameters.example }}',
+          pattern: 'must be an interpolation ref ex. $__arc__{{ secrets.example }}',
         },
       },
     ],
