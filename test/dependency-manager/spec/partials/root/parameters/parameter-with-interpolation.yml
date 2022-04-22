@@ -3,4 +3,4 @@ root_db_user:
   default: root
 db_user:
   description: Application user to assign to the generated database
-  default: ${{ parameters.root_db_user }}
+  default: ${{ secrets.root_db_user }}

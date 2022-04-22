@@ -27,9 +27,9 @@ services:
       DATABASE_ADDR: ${{ services.database.interfaces.pg.url }}
 ```
 
-The above example describes two services: a database service and an API service that contains our custom code. Normally we'd have to deploy the database service first, get its resolvable address, and then inject it into the environment parameters for the API when we deploy that next. With Architect however, all those steps are automated for you.
+The above example describes two services: a database service and an API service that contains our custom code. Normally we'd have to deploy the database service first, get its resolvable address, and then inject it into the environment secrets for the API when we deploy that next. With Architect however, all those steps are automated for you.
 
-As you can see from the above example, we've set the value of the `DATABASE_ADDR` environment parameter to be `${{ services.database.interfaces.pg.url }}`, which is a reference to the interface in the included database service. This particular value will resolve to something like `postgres://database.local:5432`.
+As you can see from the above example, we've set the value of the `DATABASE_ADDR` environment secret to be `${{ services.database.interfaces.pg.url }}`, which is a reference to the interface in the included database service. This particular value will resolve to something like `postgres://database.local:5432`.
 
 By referencing a peer service in this way, Architect is able to resolve this reference to the appropriate value based on the service discovery technology available in the target environment. Locally this might mean it resolves to a peer docker-compose service, in Kubernetes it might use the k8s embedded service discovery, or in more complex use-cases it may use a custom tool set entirely. In any case, developers no longer need to worry about the tools or processes since Architect will enrich the value for them.
 

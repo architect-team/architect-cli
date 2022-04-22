@@ -12,7 +12,7 @@
 
 An extremely common, modern application stack includes three services: a frontend webapp, a server-side API, and a database. In this example, you'll learn how that stack can be captured in an Architect component to enable automated deployments, networking, and network security for your application wherever it gets deployed to.
 
-In the `architect.yml` file for this project, we describe all three of these services as deployable runtimes. However, we also leverage Architect's [service discovery](//docs.architect.io/components/service-discovery) features to populate environment parameters by reference. This not only allows us to automatically connect the services to each other, but it also allows Architect to build strict network policies to whitelist the traffic between these services. Now we won't have any work ahead of us to promote this stack from local dev all the way through to production readiness!
+In the `architect.yml` file for this project, we describe all three of these services as deployable runtimes. However, we also leverage Architect's [service discovery](//docs.architect.io/components/service-discovery) features to populate environment secrets by reference. This not only allows us to automatically connect the services to each other, but it also allows Architect to build strict network policies to whitelist the traffic between these services. Now we won't have any work ahead of us to promote this stack from local dev all the way through to production readiness!
 
 [Learn more about the architect.yml file](//docs.architect.io/configuration)
 

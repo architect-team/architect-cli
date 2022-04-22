@@ -11,7 +11,7 @@ Every environment gets allocated a base URL used to fulfill all ingress traffic 
 ```yaml
 name: example/component
 
-parameters:
+secrets:
   ingress_subdomain:
     default: app
     description: Subdomain to listen for requests on
@@ -25,7 +25,7 @@ interfaces:
   app:
     url: ${{ services.frontend.interfaces.app.url }}
     ingress:
-      subdomain: ${{ parameters.ingress_subdomain }}
+      subdomain: ${{ secrets.ingress_subdomain }}
 ```
 
 The above component declares a configurable ingress rule to listen on a subdomain (by default, "app"). You can then deploy the component with a single line into an environment and it will automatically be exposed via the API gateway:
