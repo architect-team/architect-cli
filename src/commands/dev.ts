@@ -5,7 +5,6 @@ import fs from 'fs-extra';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
 import opener from 'opener';
-import { Writable } from 'stream';
 import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
@@ -120,11 +119,11 @@ export default class Dev extends BaseCommand {
     return parsed;
   }
 
-  setupSigInt(callback: () => void) {
+  setupSigInt(callback: () => void): void {
     if (process.platform === "win32") {
-      var rl = require("readline").createInterface({
+      const rl = require("readline").createInterface({
         input: process.stdin,
-        output: process.stdout
+        output: process.stdout,
       });
 
       rl.on("SIGINT", function () {
@@ -225,6 +224,8 @@ export default class Dev extends BaseCommand {
       compose_args.push('-d');
     }
 
+    const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args, { stdout: 'pipe', stdin: "ignore" });
+
     let is_exiting = false;
     this.setupSigInt(() => {
       if (is_exiting) {
@@ -233,21 +234,6 @@ export default class Dev extends BaseCommand {
       is_exiting = true;
       docker_compose_runnable.kill('SIGTERM');
     });
-
-    const logger = new Writable();
-
-    logger._write = (chunk, _encoding, next) => {
-      chunk.toString().split('\n').filter((e: string) => e).forEach((line: string) => {
-        if (line.indexOf('Gracefully stopping...') !== -1) {
-          console.log(line);
-        } else {
-          console.log("\nGracefully stopping..... Please Wait.....");
-        }
-      });
-      next();
-    };
-
-    const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args, { stdout: 'pipe', stdin: "ignore" });
 
     // When docker compose is stopping it will tell the user to hit `ctrl-c` again
     // to cancel. We disabled this functionality so also making the message more clear
@@ -266,7 +252,7 @@ export default class Dev extends BaseCommand {
           const newLine = lineParts.join('|');
 
           if (!service_colors.get(service)) {
-            service_colors.set(service, chalk.rgb(rand(), rand(), rand()))
+            service_colors.set(service, chalk.rgb(rand(), rand(), rand()));
           }
 
           const color = service_colors.get(service) as chalk.Chalk;
