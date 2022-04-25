@@ -1,9 +1,10 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
+import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
 import path from 'path';
-import { resourceRefToNodeRef } from '../../src';
+import { resourceRefToNodeRef, ServiceNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
@@ -110,147 +111,151 @@ describe('components with reserved_name field set', function () {
       expect(graph.edges.map((e) => e.toString())).has.members([])
     });
 
-    // it('simple remote component with override', async () => {
-    //   const component_config = {
-    //     name: 'architect/cloud',
-    //     parameters: {
-    //       log_level: 'info'
-    //     },
-    //     services: {
-    //       app: {
-    //         interfaces: {
-    //           main: 8080
-    //         },
-    //         environment: {
-    //           LOG_LEVEL: '${{ parameters.log_level }}'
-    //         }
-    //       }
-    //     }
-    //   };
+    it('simple remote component with override', async () => {
+      const reserved_name = 'test-name';
+      const component_config = {
+        name: 'architect/cloud',
+        parameters: {
+          log_level: 'info'
+        },
+        services: {
+          app: {
+            interfaces: {
+              main: 8080
+            },
+            environment: {
+              LOG_LEVEL: '${{ parameters.log_level }}'
+            },
+            reserved_name,
+          }
+        }
+      };
 
-    //   nock('http://localhost').get(`/accounts/architect/components/cloud/versions/v1`)
-    //     .reply(200, { tag: 'v1', config: component_config, service: { url: 'architect/cloud:v1' } });
+      nock('http://localhost').get(`/accounts/architect/components/cloud/versions/v1`)
+        .reply(200, { tag: 'v1', config: component_config, service: { url: 'architect/cloud:v1' } });
 
-    //   const manager = new LocalDependencyManager(axios.create());
-    //   const graph = await manager.getGraph([
-    //     await manager.loadComponentSpec('architect/cloud:v1')
-    //   ], { '*': { log_level: 'debug' } });
-    //   const app_ref = resourceRefToNodeRef('architect/cloud.services.app');
-    //   expect(graph.nodes.map((n) => n.ref)).has.members([app_ref]);
-    //   expect(graph.edges.map((e) => e.toString())).has.members([]);
-    //   const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
-    //   expect(app_node.config.environment.LOG_LEVEL).eq('debug');
-    // });
+      const manager = new LocalDependencyManager(axios.create());
+      const graph = await manager.getGraph([
+        await manager.loadComponentSpec('architect/cloud:v1')
+      ], { '*': { log_level: 'debug' } });
+      const app_ref = reserved_name;
+      expect(graph.nodes.map((n) => n.ref)).has.members([app_ref]);
+      expect(graph.edges.map((e) => e.toString())).has.members([]);
+      const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
+      expect(app_node.config.environment.LOG_LEVEL).eq('debug');
+    });
 
-    // it('local component with edges', async () => {
-    //   const component_config = {
-    //     name: 'architect/cloud',
-    //     services: {
-    //       app: {
-    //         interfaces: {
-    //           main: 8080
-    //         },
-    //         depends_on: ['api'],
-    //         environment: {
-    //           API_ADDR: '${{ services.api.interfaces.main.url }}'
-    //         }
-    //       },
-    //       api: {
-    //         interfaces: {
-    //           main: 8080
-    //         },
-    //         depends_on: ['db'],
-    //         environment: {
-    //           DB_ADDR: '${{ services.db.interfaces.main.url }}'
-    //         }
-    //       },
-    //       db: {
-    //         interfaces: {
-    //           main: 5432
-    //         }
-    //       }
-    //     },
-    //     interfaces: {}
-    //   };
+    it('local component with edges', async () => {
+      const reserved_name = 'test-name';
+      const component_config = {
+        name: 'architect/cloud',
+        services: {
+          app: {
+            interfaces: {
+              main: 8080
+            },
+            depends_on: ['api'],
+            environment: {
+              API_ADDR: '${{ services.api.interfaces.main.url }}'
+            }
+          },
+          api: {
+            interfaces: {
+              main: 8080
+            },
+            depends_on: ['db'],
+            environment: {
+              DB_ADDR: '${{ services.db.interfaces.main.url }}'
+            },
+            reserved_name,
+          },
+          db: {
+            interfaces: {
+              main: 5432
+            }
+          }
+        },
+        interfaces: {}
+      };
 
-    //   mock_fs({
-    //     '/stack/architect.yml': yaml.dump(component_config),
-    //   });
+      mock_fs({
+        '/stack/architect.yml': yaml.dump(component_config),
+      });
 
-    //   const manager = new LocalDependencyManager(axios.create(), {
-    //     'architect/cloud': '/stack/architect.yml'
-    //   });
-    //   const graph = await manager.getGraph([
-    //     await manager.loadComponentSpec('architect/cloud:latest')
-    //   ]);
-    //   const app_ref = resourceRefToNodeRef('architect/cloud.services.app');
-    //   const api_ref = resourceRefToNodeRef('architect/cloud.services.api');
-    //   const db_ref = resourceRefToNodeRef('architect/cloud.services.db');
-    //   expect(graph.nodes.map((n) => n.ref)).has.members([
-    //     app_ref,
-    //     api_ref,
-    //     db_ref
-    //   ])
-    //   expect(graph.edges.map((e) => e.toString())).has.members([
-    //     `${app_ref} [service->main] -> ${api_ref} [main]`,
-    //     `${api_ref} [service->main] -> ${db_ref} [main]`
-    //   ])
-    //   // Test parameter values
-    //   const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
-    //   expect(app_node.config.environment.API_ADDR).eq(`http://${api_ref}:8080`)
+      const manager = new LocalDependencyManager(axios.create(), {
+        'architect/cloud': '/stack/architect.yml'
+      });
+      const graph = await manager.getGraph([
+        await manager.loadComponentSpec('architect/cloud:latest')
+      ]);
+      const app_ref = resourceRefToNodeRef('architect/cloud.services.app');
+      const api_ref = reserved_name;// resourceRefToNodeRef('architect/cloud.services.api') // reserved_name;
+      const db_ref = resourceRefToNodeRef('architect/cloud.services.db');
+      expect(graph.nodes.map((n) => n.ref)).has.members([
+        app_ref,
+        api_ref,
+        db_ref
+      ])
+      expect(graph.edges.map((e) => e.toString())).has.members([
+        `${app_ref} [service->main] -> ${api_ref} [main]`,
+        `${api_ref} [service->main] -> ${db_ref} [main]`
+      ])
+      // Test parameter values
+      const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
+      expect(app_node.config.environment.API_ADDR).eq(`http://${api_ref}:8080`)
 
-    //   const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
-    //   expect(api_node.config.environment.DB_ADDR).eq(`http://${db_ref}:5432`)
+      const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
+      expect(api_node.config.environment.DB_ADDR).eq(`http://${db_ref}:5432`)
 
-    //   const template = await DockerComposeUtils.generate(graph);
-    //   const expected_compose: DockerComposeTemplate = {
-    //     "services": {
-    //       [api_ref]: {
-    //         "depends_on": [
-    //           `${db_ref}`
-    //         ],
-    //         "environment": {
-    //           "DB_ADDR": `http://${db_ref}:5432`
-    //         },
-    //         "ports": [
-    //           "50001:8080",
-    //         ],
-    //         "build": {
-    //           "context": path.resolve("/stack")
-    //         },
-    //         labels: ['architect.ref=architect/cloud.services.api']
-    //       },
-    //       [app_ref]: {
-    //         "depends_on": [
-    //           `${api_ref}`
-    //         ],
-    //         "environment": {
-    //           "API_ADDR": `http://${api_ref}:8080`
-    //         },
-    //         "ports": [
-    //           "50000:8080"
-    //         ],
-    //         "build": {
-    //           "context": path.resolve("/stack")
-    //         },
-    //         labels: ['architect.ref=architect/cloud.services.app']
-    //       },
-    //       [db_ref]: {
-    //         "environment": {},
-    //         "ports": [
-    //           "50002:5432"
-    //         ],
-    //         "build": {
-    //           "context": path.resolve("/stack")
-    //         },
-    //         labels: ['architect.ref=architect/cloud.services.db']
-    //       }
-    //     },
-    //     "version": "3",
-    //     "volumes": {},
-    //   };
-    //   expect(template).to.be.deep.equal(expected_compose);
-    // });
+      const template = await DockerComposeUtils.generate(graph);
+      const expected_compose: DockerComposeTemplate = {
+        "services": {
+          [api_ref]: {
+            "depends_on": [
+              `${db_ref}`
+            ],
+            "environment": {
+              "DB_ADDR": `http://${db_ref}:5432`
+            },
+            "ports": [
+              "50001:8080",
+            ],
+            "build": {
+              "context": path.resolve("/stack")
+            },
+            labels: [`architect.ref=${api_ref}`]
+          },
+          [app_ref]: {
+            "depends_on": [
+              `${api_ref}` // TODO: why is this missing?
+            ],
+            "environment": {
+              "API_ADDR": `http://${api_ref}:8080`
+            },
+            "ports": [
+              "50000:8080"
+            ],
+            "build": {
+              "context": path.resolve("/stack")
+            },
+            labels: ['architect.ref=architect/cloud.services.app']
+          },
+          [db_ref]: {
+            "environment": {},
+            "ports": [
+              "50002:5432"
+            ],
+            "build": {
+              "context": path.resolve("/stack")
+            },
+            labels: ['architect.ref=architect/cloud.services.db']
+          }
+        },
+        "version": "3",
+        "volumes": {},
+      };
+      expect(template).to.be.deep.equal(expected_compose);
+    });
 
     // it('local component with local dependency', async () => {
     //   const cloud_component_config = {

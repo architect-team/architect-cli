@@ -2,6 +2,7 @@ import { classToPlain, plainToClass, serialize } from 'class-transformer';
 import { isMatch } from 'matcher';
 import { buildInterfacesRef, buildNodeRef, ComponentConfig } from './config/component-config';
 import { ArchitectContext, ComponentContext, SecretValue } from './config/component-context';
+import { ServiceConfig } from './config/service-config';
 import { DependencyGraph } from './graph';
 import { IngressEdge } from './graph/edge/ingress';
 import { OutputEdge } from './graph/edge/output';
@@ -149,7 +150,9 @@ export default abstract class DependencyManager {
       while ((matches = services_regex.exec(service_string)) != null) {
         if (!matches.groups) { continue; }
         const { service_name, interface_name } = matches.groups;
-        const to = buildNodeRef(component, 'services', service_name); // TODO?
+        const service_to = services.find(s => s.resource_name === service_name)
+        const to = service_to?.resource_config.reserved_name || buildNodeRef(component, 'services', service_name);
+
         if (to === from) continue;
         if (!service_edge_map[to]) service_edge_map[to] = {};
         service_edge_map[to][`service->${interface_name}`] = interface_name;
