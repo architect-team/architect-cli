@@ -448,7 +448,7 @@ export class DockerComposeUtils {
     await fs.writeFile(compose_file, compose);
   }
 
-  public static async watchContainersHealth(compose_file: string, environment_name: string): Promise<{ stop: () => void }> {
+  public static async watchContainersHealth(compose_file: string, environment_name: string, should_stop: () => boolean): Promise<void> {
     // To better emulate kubernetes we will always restart a failed container.
     // Kubernetes has 3 modes for Restart. Always, OnFailure and Never. If a liveness probe exists
     // then we will assume a Never policy is not expected. In this instance OnFailure and Always mean pretty
@@ -463,53 +463,60 @@ export class DockerComposeUtils {
       service_ref_map[service_name] = service_ref;
     }
 
-    let continueToRun = true;
     const service_data_dictionary: Dictionary<{ last_restart_ms: number }> = {};
-    while (continueToRun) {
-      await new Promise(r => setTimeout(r, 5000));
-      const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
-      for (const container_state of container_states) {
-        const id = container_state.ID;
-        const full_service_name = container_state.Service;
+    try {
+      while (!should_stop()) {
+        const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
+        for (const container_state of container_states) {
+          const id = container_state.ID;
+          const full_service_name = container_state.Service;
 
-        const service_ref = service_ref_map[full_service_name];
-        if (!service_ref) { continue; }
+          const service_ref = service_ref_map[full_service_name];
+          if (!service_ref) { continue; }
 
-        const { resource_type } = ResourceSlugUtils.parse(service_ref);
-        if (resource_type !== 'services') continue;
+          const { resource_type } = ResourceSlugUtils.parse(service_ref);
+          if (resource_type !== 'services') continue;
 
-        const state = container_state.State.toLowerCase();
-        const health = container_state.Health.toLowerCase();
+          const state = container_state.State.toLowerCase();
+          const health = container_state.Health.toLowerCase();
 
-        if (!service_data_dictionary[service_ref]) {
-          service_data_dictionary[service_ref] = {
-            last_restart_ms: Date.now(),
-          };
-        }
+          // Docker compose will only exit containers when stopping an up
+          // If we have no service data and the contianer state was exited
+          // it means that these containers were from an old instance and we
+          // are not yet in a bad state.
+          if (!service_data_dictionary[service_ref] && state == 'exited') {
+            continue;
+          }
 
-        const bad_state = state != 'running';
-        const bad_health = health == 'unhealthy';
+          if (!service_data_dictionary[service_ref]) {
+            service_data_dictionary[service_ref] = {
+              last_restart_ms: Date.now(),
+            };
+          }
 
-        if (bad_state || bad_health) {
-          const service_data = service_data_dictionary[service_ref];
+          const bad_state = state != 'running';
+          const bad_health = health == 'unhealthy';
 
-          service_data.last_restart_ms = Date.now();
-          console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
-          await restart(id);
-          // Docker compose will stop watching when there is a single container and it goes down.
-          // If all containers go down at the same time it will wait for the restart and just move on. So only need this
-          // for the case of 1 container with a health check.
-          if (container_states.length == 1) {
-            DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(service_data.last_restart_ms).toISOString()], { stdout: 'inherit' });
+          if (bad_state || bad_health) {
+            const service_data = service_data_dictionary[service_ref];
+
+            service_data.last_restart_ms = Date.now();
+            console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
+            await restart(id);
+            // Docker compose will stop watching when there is a single container and it goes down.
+            // If all containers go down at the same time it will wait for the restart and just move on. So only need this
+            // for the case of 1 container with a health check.
+            if (container_states.length == 1) {
+              DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(service_data.last_restart_ms).toISOString()], { stdout: 'inherit' });
+            }
           }
         }
+        await new Promise(r => setTimeout(r, 5000));
+      }
+    } catch (ex) {
+      if (!should_stop()) {
+        throw ex;
       }
     }
-    const stop = () => {
-      continueToRun = false;
-    };
-    return {
-      stop: stop,
-    };
   }
 }

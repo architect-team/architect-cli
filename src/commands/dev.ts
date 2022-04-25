@@ -131,6 +131,23 @@ export default class Dev extends BaseCommand {
     return parsed;
   }
 
+  setupSigInt(callback: () => void): void {
+    if (process.platform === "win32") {
+      const rl = require("readline").createInterface({
+        input: process.stdin,
+        output: process.stdout,
+      });
+
+      rl.on("SIGINT", function () {
+        process.emit("SIGINT", "SIGINT");
+      });
+    }
+
+    process.on("SIGINT", function () {
+      callback();
+    });
+  }
+
   async runCompose(compose: DockerComposeTemplate): Promise<void> {
     const { flags } = await this.parse(Dev);
 
@@ -219,10 +236,54 @@ export default class Dev extends BaseCommand {
       compose_args.push('-d');
     }
 
-    const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' });
-    DockerComposeUtils.watchContainersHealth(compose_file, project_name);
-    await docker_compose_runnable;
+    const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args, { stdout: 'pipe', stdin: "ignore" });
+
+    let is_exiting = false;
+    this.setupSigInt(() => {
+      if (is_exiting) {
+        return;
+      }
+      is_exiting = true;
+      docker_compose_runnable.kill('SIGTERM');
+    });
+
+    // When docker compose is stopping it will tell the user to hit `ctrl-c` again
+    // to cancel. We disabled this functionality so also making the message more clear
+    const service_colors = new Map<string, chalk.Chalk>();
+    const rand = () => Math.floor(Math.random() * 255);
+    docker_compose_runnable.stdout?.on('data', (data) => {
+      for (const line of data.toString().split('\n')) {
+        if (line.indexOf('Gracefully stopping...') !== -1) {
+          console.log("\nGracefully stopping..... Please Wait.....");
+          return;
+        }
+        const lineParts = line.split('|');
+        if (lineParts.length > 1) {
+          const service: string = lineParts[0];
+          lineParts.shift();
+          const newLine = lineParts.join('|');
+
+          if (!service_colors.get(service)) {
+            service_colors.set(service, chalk.rgb(rand(), rand(), rand()));
+          }
+
+          const color = service_colors.get(service) as chalk.Chalk;
+
+          console.log(color(service + "\t| ") + newLine);
+        }
+      }
+    });
+    DockerComposeUtils.watchContainersHealth(compose_file, project_name, () => { return is_exiting; });
+
+    try {
+      await docker_compose_runnable;
+    } catch (ex) {
+      if (!is_exiting) {
+        throw ex;
+      }
+    }
     fs.removeSync(compose_file);
+    process.exit();
   }
 
   private async runLocal() {
