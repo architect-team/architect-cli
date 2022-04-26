@@ -5,7 +5,7 @@ keywords:
   - pubsub
   - events
 
-secrets:
+parameters:
   gcp_project_id:
     description: Name of the GCP project to connect to
     required: true
@@ -22,17 +22,17 @@ secrets:
 outputs:
   gcp_project_id:
     description: Project ID the pubsub is configured in
-    value: ${{ secrets.gcp_project_id }}
+    value: ${{ parameters.gcp_project_id }}
 
 services:
   pubsub:
     image: gcr.io/google.com/cloudsdktool/cloud-sdk:emulators
-    command: gcloud beta emulators pubsub start --host-port=0.0.0.0:${{ secrets.service_port }} --project=${{ secrets.gcp_project_id }}
+    command: gcloud beta emulators pubsub start --host-port=0.0.0.0:${{ parameters.service_port }} --project=${{ parameters.gcp_project_id }}
     interfaces:
       main:
-        host: ${{ secrets.service_endpoint }}
-        protocol: ${{ secrets.service_protocol }}
-        port: ${{ secrets.service_port }}
+        host: ${{ parameters.service_endpoint }}
+        protocol: ${{ parameters.service_protocol }}
+        port: ${{ parameters.service_port }}
 
 interfaces:
   pubsub:
