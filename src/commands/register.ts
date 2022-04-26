@@ -111,7 +111,7 @@ export default class ComponentRegister extends Command {
 
         if (DockerBuildXUtils.isMacM1Machine()) {
           const bakePlatforms: any = {
-            "x-bake": { "platforms": DockerBuildXUtils.getPlatforms() }
+            "x-bake": { "platforms": DockerBuildXUtils.getPlatforms() },
           };
           service.build = { ...service.build, ...bakePlatforms };
         }
@@ -149,7 +149,7 @@ export default class ComponentRegister extends Command {
       if (is_local) {
         // Create a configuration file for buildkitd
         const local_buildkitd_config_file = "buildkitd.toml";
-        const file_content = `[registry.\"${this.app.config.registry_host}\"]\n  http = true\n  insecure = true`;
+        const file_content = `[registry."${this.app.config.registry_host}"]\n  http = true\n  insecure = true`;
         await DockerBuildXUtils.writeBuildkitdConfigFile(local_buildkitd_config_file, file_content);
     
         await DockerBuildXUtils.dockerBuildX(["create", "--name", "architect", "--driver-opt", "network=host", "--use", "--buildkitd-flags", "--allow-insecure-entitlement security.insecure", `--config=${local_buildkitd_config_file}`], {

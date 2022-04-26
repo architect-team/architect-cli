@@ -3,12 +3,12 @@ import fs from "fs-extra";
 
 export default class DockerBuildXUtils {
 
-  public static isMacM1Machine() {
+  public static isMacM1Machine(): boolean {
     return require("os").cpus()[0].model.includes("Apple M1");
   }
 
   public static getPlatforms(): string[] {
-    let platforms: string[] = ["linux/amd64"];
+    const platforms: string[] = ["linux/amd64"];
     return this.isMacM1Machine() ? [...platforms, "linux/arm64"] : platforms;
   }
 
@@ -30,8 +30,8 @@ export default class DockerBuildXUtils {
       return result.stdout;
     });
 
-    let instances_arr: string[] = instances_str.split('\n');
-    for (let row of instances_arr) {
+    const instances_arr: string[] = instances_str.split('\n');
+    for (const row of instances_arr) {
       if (row.includes(instance_name)) {
         return true;
       }
