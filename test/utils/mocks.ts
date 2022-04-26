@@ -25,5 +25,7 @@ export const mockArchitectAuth = test
   .stub(AuthClient.prototype, 'refreshToken', () => { })
   .stub(Docker, 'verify', () => { })
   .stub(DockerComposeUtils, 'dockerCompose', () => { })
+  .stub(DockerComposeUtils, 'writeCompose', () => { })
   .stub(DockerBuildXUtils, 'writeBuildkitdConfigFile', () => { })
   .stub(DockerBuildXUtils, 'dockerBuildX', () => { })
+  .stub(DockerBuildXUtils, 'createBuilder', () => { })

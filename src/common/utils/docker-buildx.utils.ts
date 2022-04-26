@@ -1,5 +1,6 @@
 import execa, { Options } from "execa";
 import fs from "fs-extra";
+import config from "../../app-config/config";
 
 export default class DockerBuildXUtils {
 
@@ -20,23 +21,22 @@ export default class DockerBuildXUtils {
     });
   }
 
-  public static async writeCompose(compose_file: string, compose: string): Promise<void> {
-    await fs.ensureFile(compose_file);
-    await fs.writeFile(compose_file, compose);
-  }
+  public static async createBuilder(config: config): Promise<void> {
+    const is_local = config.api_host.includes("localhost");
+    if (is_local) {
+      // Create a configuration file for buildkitd
+      const local_buildkitd_config_file = config.getConfigDir() + "/buildkitd.toml";
+      const file_content = `[registry."${config.registry_host}"]\n  http = true\n  insecure = true`;
+      await this.writeBuildkitdConfigFile(local_buildkitd_config_file, file_content);
 
-  public static async doesBuilderInstanceExist(instance_name: string): Promise<boolean> {
-    const instances_str = await execa("docker", ["buildx", "ls"]).then(result => {
-      return result.stdout;
-    });
-
-    const instances_arr: string[] = instances_str.split('\n');
-    for (const row of instances_arr) {
-      if (row.includes(instance_name)) {
-        return true;
-      }
+      await this.dockerBuildX(["create", "--name", "architect", "--driver-opt", "network=host", "--use", "--buildkitd-flags", "--allow-insecure-entitlement security.insecure", `--config=${local_buildkitd_config_file}`], {
+        stdio: "inherit",
+      });
+    } else {
+      await this.dockerBuildX(["create", "--name", "architect"], {
+        stdio: "inherit",
+      });
     }
-    return false;
   }
 
   public static async dockerBuildX(args: string[], execa_opts?: Options, use_console = false): Promise<execa.ExecaChildProcess<string>> {

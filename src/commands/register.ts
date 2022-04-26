@@ -16,7 +16,6 @@ import DockerComposeTemplate from '../common/docker-compose/template';
 import * as Docker from '../common/utils/docker';
 import DockerBuildXUtils from '../common/utils/docker-buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
-import AppConfig from '../app-config/config';
 
 tmp.setGracefulCleanup();
 
@@ -127,7 +126,7 @@ export default class ComponentRegister extends Command {
     const project_name = `register.${resourceRefToNodeRef(component_spec.name)}.${tag}`;
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
 
-    await DockerBuildXUtils.writeCompose(compose_file, yaml.dump(compose));
+    await DockerComposeUtils.writeCompose(compose_file, yaml.dump(compose));
 
     let build_args: string[] = [];
     for (const service_config of Object.values(component_spec.services || {})) {
@@ -145,21 +144,7 @@ export default class ComponentRegister extends Command {
     }, [] as string[]);
 
     try {
-      const is_local = this.app.config.api_host.includes("localhost");
-      if (is_local) {
-        // Create a configuration file for buildkitd
-        const local_buildkitd_config_file = "buildkitd.toml";
-        const file_content = `[registry."${this.app.config.registry_host}"]\n  http = true\n  insecure = true`;
-        await DockerBuildXUtils.writeBuildkitdConfigFile(local_buildkitd_config_file, file_content);
-    
-        await DockerBuildXUtils.dockerBuildX(["create", "--name", "architect", "--driver-opt", "network=host", "--use", "--buildkitd-flags", "--allow-insecure-entitlement security.insecure", `--config=${local_buildkitd_config_file}`], {
-          stdio: "inherit",
-        });
-      } else {
-        await DockerBuildXUtils.dockerBuildX(["create", "--name", "architect"], {
-          stdio: "inherit",
-        });
-      }
+      await DockerBuildXUtils.createBuilder(this.app.config);
     } catch (err: any) {
       this.log(`Docker builder instance 'architect' already exists. Using existing 'architect' builder instance ...`);
     }
@@ -170,7 +155,7 @@ export default class ComponentRegister extends Command {
       });
     } catch (err: any) {
       fs.removeSync(compose_file);
-      this.log(`Docker buildx failed to inspect`);
+      this.log(`Unable to start buildx builder. Please make sure docker is running.`);
       this.error(err);
     }
 

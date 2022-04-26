@@ -443,6 +443,11 @@ export class DockerComposeUtils {
     return path.join(config_dir, LocalPaths.LOCAL_DEPLOY_PATH, `${project_name}.yml`);
   }
 
+  public static async writeCompose(compose_file: string, compose: string): Promise<void> {
+    await fs.ensureFile(compose_file);
+    await fs.writeFile(compose_file, compose);
+  }
+
   public static async watchContainersHealth(compose_file: string, environment_name: string, should_stop: () => boolean): Promise<void> {
     // To better emulate kubernetes we will always restart a failed container.
     // Kubernetes has 3 modes for Restart. Always, OnFailure and Never. If a liveness probe exists
