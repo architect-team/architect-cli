@@ -8,7 +8,7 @@ keywords:
   - nodejs
   - python
 
-secrets:
+parameters:
   queue_name:
     required: true
 
@@ -28,7 +28,7 @@ services:
       app: 3000
     environment:
       AMQP_HOST: ${{ services.message-broker.interfaces.amqp.host }}
-      QUEUE_NAME: ${{ secrets.queue_name }}
+      QUEUE_NAME: ${{ parameters.queue_name }}
     command:
       - sh
       - -c
@@ -41,7 +41,7 @@ services:
       dockerfile: Dockerfile
     environment:
       AMQP_HOST: ${{ services.message-broker.interfaces.amqp.host }}
-      QUEUE_NAME: ${{ secrets.queue_name }}
+      QUEUE_NAME: ${{ parameters.queue_name }}
     command:
       - sh
       - -c
