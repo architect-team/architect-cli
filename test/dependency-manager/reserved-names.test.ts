@@ -10,7 +10,7 @@ import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 
 describe('components with reserved_name field set', function () {
-  describe('standard components', function () {
+  describe('standard components with reserved name', function () {
     it('simple local component', async () => {
       const reserved_name = 'test-name';
       const component_config_yml = `
@@ -32,6 +32,7 @@ describe('components with reserved_name field set', function () {
       const manager = new LocalDependencyManager(axios.create(), {
         'architect/cloud': '/stack'
       });
+
       const graph = await manager.getGraph([
         await manager.loadComponentSpec('architect/cloud:latest')
       ]);
@@ -75,6 +76,59 @@ describe('components with reserved_name field set', function () {
       expect(template).to.be.deep.equal(expected_compose);
     });
 
+    // it('simple local component with interpolated reserved name', async () => {
+    //   const full_reserved_name = 'test-name-api';
+    //   const component_config_yml = `
+    //     name: architect/cloud
+    //     secrets:
+    //       name_override:
+    //         default: test-name
+    //     services:
+    //       api:
+    //         interfaces:
+    //           main: 8080
+    //         reserved_name: \${{ secrets.name_override }}-api
+    //   `
+
+    //   mock_fs({
+    //     '/stack/architect.yml': component_config_yml,
+    //   });
+
+    //   const manager = new LocalDependencyManager(axios.create(), {
+    //     'architect/cloud': '/stack'
+    //   });
+
+    //   const graph = await manager.getGraph([
+    //     await manager.loadComponentSpec('architect/cloud:latest')
+    //   ]);
+
+    //   const api_ref = full_reserved_name;
+
+    //   expect(graph.nodes.map((n) => n.ref)).has.members([
+    //     api_ref,
+    //   ])
+    //   expect(graph.edges.map((e) => e.toString())).has.members([])
+
+    //   const template = await DockerComposeUtils.generate(graph);
+    //   const expected_compose: DockerComposeTemplate = {
+    //     "services": {
+    //       [api_ref]: {
+    //         "environment": {},
+    //         "ports": [
+    //           "50000:8080"
+    //         ],
+    //         "build": {
+    //           "context": path.resolve("/stack")
+    //         },
+    //         labels: [`architect.ref=${full_reserved_name}`]
+    //       },
+    //     },
+    //     "version": "3",
+    //     "volumes": {},
+    //   };
+    //   expect(template).to.be.deep.equal(expected_compose);
+    // });
+
     it('simple remote component', async () => {
       const reserved_name = 'test-name';
       const component_config_json = {
@@ -115,7 +169,7 @@ describe('components with reserved_name field set', function () {
       const reserved_name = 'test-name';
       const component_config = {
         name: 'architect/cloud',
-        parameters: {
+        secrets: {
           log_level: 'info'
         },
         services: {
@@ -124,7 +178,7 @@ describe('components with reserved_name field set', function () {
               main: 8080
             },
             environment: {
-              LOG_LEVEL: '${{ parameters.log_level }}'
+              LOG_LEVEL: '${{ secrets.log_level }}'
             },
             reserved_name,
           }
