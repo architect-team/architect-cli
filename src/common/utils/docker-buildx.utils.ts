@@ -20,6 +20,25 @@ export default class DockerBuildXUtils {
     });
   }
 
+  public static async writeCompose(compose_file: string, compose: string): Promise<void> {
+    await fs.ensureFile(compose_file);
+    await fs.writeFile(compose_file, compose);
+  }
+
+  public static async doesBuilderInstanceExist(instance_name: string): Promise<boolean> {
+    const instances_str = await execa("docker", ["buildx", "ls"]).then(result => {
+      return result.stdout;
+    });
+
+    let instances_arr: string[] = instances_str.split('\n');
+    for (let row of instances_arr) {
+      if (row.includes(instance_name)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static async dockerBuildX(args: string[], execa_opts?: Options, use_console = false): Promise<execa.ExecaChildProcess<string>> {
     if (use_console) {
       process.stdin.setRawMode(true);

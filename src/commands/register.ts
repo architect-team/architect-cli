@@ -127,7 +127,7 @@ export default class ComponentRegister extends Command {
     const project_name = `register.${resourceRefToNodeRef(component_spec.name)}.${tag}`;
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
 
-    await DockerComposeUtils.writeCompose(compose_file, yaml.dump(compose));
+    await DockerBuildXUtils.writeCompose(compose_file, yaml.dump(compose));
 
     let build_args: string[] = [];
     for (const service_config of Object.values(component_spec.services || {})) {
@@ -135,6 +135,7 @@ export default class ComponentRegister extends Command {
         return `${arg}`;
       }));
     }
+
     build_args = build_args.filter((value, index, self) => {
       return self.indexOf(value) === index;
     }).reduce((arr, value) => {
@@ -143,7 +144,6 @@ export default class ComponentRegister extends Command {
       return arr;
     }, [] as string[]);
 
-    // Create a docker builder instance
     try {
       const is_local = this.app.config.api_host.includes("localhost");
       if (is_local) {
@@ -151,7 +151,7 @@ export default class ComponentRegister extends Command {
         const local_buildkitd_config_file = "buildkitd.toml";
         const file_content = `[registry.\"${this.app.config.registry_host}\"]\n  http = true\n  insecure = true`;
         await DockerBuildXUtils.writeBuildkitdConfigFile(local_buildkitd_config_file, file_content);
-        
+    
         await DockerBuildXUtils.dockerBuildX(["create", "--name", "architect", "--driver-opt", "network=host", "--use", "--buildkitd-flags", "--allow-insecure-entitlement security.insecure", `--config=${local_buildkitd_config_file}`], {
           stdio: "inherit",
         });
@@ -170,6 +170,7 @@ export default class ComponentRegister extends Command {
       });
     } catch (err: any) {
       fs.removeSync(compose_file);
+      this.log(`Docker buildx failed to inspect`);
       this.error(err);
     }
 
@@ -179,7 +180,7 @@ export default class ComponentRegister extends Command {
       });
     } catch (err: any) {
       fs.removeSync(compose_file);
-      this.log(`Docker buildx bake failed.`);
+      this.log(`Docker buildx bake failed`);
       this.error(err);
     }
 
