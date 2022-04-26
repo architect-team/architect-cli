@@ -45,7 +45,7 @@ describe('register', function () {
         expect(body.tag).to.eq('1.0.0')
         expect(body.config.name).to.eq('fusionauth')
         expect(body.config.services.fusionauth.image).to.eq('fusionauth/fusionauth-app:latest')
-        expect(body.config.services.fusionauth.environment.ADMIN_USER_PASSWORD).to.eq('${{ parameters.admin_user_password }}')
+        expect(body.config.services.fusionauth.environment.ADMIN_USER_PASSWORD).to.eq('${{ secrets.admin_user_password }}')
         expect(body.config.services.fusionauth.environment.FUSIONAUTH_KICKSTART).to.eq('/usr/local/fusionauth/kickstart.json')
 
         const config = fs.readFileSync('examples/fusionauth/config/kickstart.json');
@@ -121,19 +121,19 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, (uri, body: any, cb) => {
-        const contents = yaml.load(fs.readFileSync('examples/hello-world/architect.yml').toString());
+        const contents = yaml.load(fs.readFileSync('examples/gcp-pubsub/pubsub/architect.yml').toString());
         expect(body.config).to.deep.equal(contents);
         expect(validateSpec(body.config)).to.have.lengthOf(0);
         cb(null, body)
       })
     )
     .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples/components/hello-world/versions/1.0.0`)
+      .get(`/accounts/examples/components/gcp-pubsub/versions/1.0.0`)
       .reply(200)
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'examples/hello-world/architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', 'examples/gcp-pubsub/pubsub/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('it reports to the user that the component was registered successfully', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
@@ -147,24 +147,24 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0')
-        expect(body.config.name).to.eq('hello-world')
-        expect(body.config.services.api.image).to.eq('heroku/nodejs-hello-world')
+        expect(body.config.name).to.eq('examples/gcp-pubsub')
+        expect(body.config.services.pubsub.image).to.eq('gcr.io/google.com/cloudsdktool/cloud-sdk:emulators')
         return body;
       })
       .reply(200, {})
     )
     .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples/components/hello-world/versions/1.0.0`)
+      .get(`/accounts/examples/components/gcp-pubsub/versions/1.0.0`)
       .reply(200)
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'examples/hello-world/architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', 'examples/gcp-pubsub/pubsub/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('it does not call any docker commands if the image is provided', ctx => {
       const getDigest = Docker.getDigest as sinon.SinonStub;
       expect(getDigest.notCalled).to.be.true;
 
-      expect(ctx.stderr).to.contain('Registering component hello-world:1.0.0 with Architect Cloud');
+      expect(ctx.stderr).to.contain('Registering component examples/gcp-pubsub:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
@@ -178,14 +178,14 @@ describe('register', function () {
       .reply(200, {})
     )
     .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples/components/hello-world/versions/latest`)
+      .get(`/accounts/examples/components/gcp-pubsub/versions/latest`)
       .reply(200)
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'examples/hello-world/architect.yml', '-a', 'examples'])
+    .command(['register', 'examples/gcp-pubsub/pubsub/architect.yml', '-a', 'examples'])
     .it('it defaults the tag to latest if not supplied', ctx => {
-      expect(ctx.stderr).to.contain('Registering component hello-world:latest with Architect Cloud');
+      expect(ctx.stderr).to.contain('Registering component examples/gcp-pubsub:latest with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 

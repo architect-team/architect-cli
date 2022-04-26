@@ -1,12 +1,12 @@
 name: examples/subscriber
 
-parameters:
+secrets:
   subscription_key:
     description: Key used to define this subscriber
     default: subscriber
 
 dependencies:
-  architect/gcp-pubsub: latest
+  examples/gcp-pubsub: latest
   examples/publisher: latest
 
 services:
@@ -14,7 +14,7 @@ services:
     build:
       context: ./
     environment:
-      PUBSUB_ENDPOINT: ${{ dependencies['architect/gcp-pubsub'].interfaces.pubsub.url }}
-      GCP_PROJECT_ID: ${{ dependencies['architect/gcp-pubsub'].outputs.gcp_project_id }}
+      PUBSUB_ENDPOINT: ${{ dependencies['examples/gcp-pubsub'].interfaces.pubsub.url }}
+      GCP_PROJECT_ID: ${{ dependencies['examples/gcp-pubsub'].outputs.gcp_project_id }}
       PUBSUB_TOPIC: ${{ dependencies['examples/publisher'].outputs.publish_topic }}
-      PUBSUB_SUBSCRIPTION: ${{ parameters.subscription_key }}
+      PUBSUB_SUBSCRIPTION: ${{ secrets.subscription_key }}

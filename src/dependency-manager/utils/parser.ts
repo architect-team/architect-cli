@@ -241,7 +241,7 @@ export class ArchitectParser {
       last_value = ast.body[0].value;
     }
 
-    // Handle case where value a number or boolean. Ex ${{ parameters.replicas }} is a number
+    // Handle case where value a number or boolean. Ex ${{ secrets.replicas }} is a number
     if (res === `${last_value}`) {
       return last_value;
     }

@@ -35,7 +35,7 @@ export interface ComponentInterfaceConfig {
   path?: string;
 }
 
-export interface ParameterDefinitionConfig {
+export interface SecretDefinitionConfig {
   required?: boolean | string;
 
   description?: string;
@@ -59,7 +59,7 @@ export interface ComponentConfig {
   author?: string;
   homepage?: string;
 
-  parameters: Dictionary<ParameterDefinitionConfig>;
+  secrets: Dictionary<SecretDefinitionConfig>;
   outputs: Dictionary<OutputDefinitionConfig>;
 
   services: Dictionary<ServiceConfig>;

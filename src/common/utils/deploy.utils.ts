@@ -1,36 +1,37 @@
 import { isNumberString } from 'class-validator';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
+import _ from 'lodash';
 import { Dictionary } from '../../';
 
 export default class DeployUtils {
-  private static getExtraEnvironmentVariables(parameters: string[]): Dictionary<string | number | undefined> {
-    const extra_env_vars: { [s: string]: string | number | undefined } = {};
+  private static getExtraSecrets(secrets: string[] = []): Dictionary<string | number | undefined> {
+    const extra_secrets: { [s: string]: string | number | undefined } = {};
 
-    for (const [param_name, param_value] of Object.entries(process.env || {})) {
-      if (param_name.startsWith('ARC_')) {
-        const key = param_name.substring(4);
-        let value: string | number | undefined = param_value;
+    for (const [secret_name, secret_value] of Object.entries(process.env || {})) {
+      if (secret_name.startsWith('ARC_')) {
+        const key = secret_name.substring(4);
+        let value: string | number | undefined = secret_value;
         if (value && isNumberString(value)) {
           value = parseFloat(value);
         }
-        extra_env_vars[key] = value;
+        extra_secrets[key] = value;
       }
     }
 
-    for (const param of parameters) {
-      const param_split = param.split('=');
-      if (param_split.length !== 2) {
-        throw new Error(`Bad format for parameter ${param}. Please specify in the format --parameter PARAM_NAME=PARAM_VALUE`);
+    for (const secret of secrets) {
+      const secret_split = secret.split('=');
+      if (secret_split.length !== 2) {
+        throw new Error(`Bad format for secret ${secret}. Please specify in the format --secret SECRET_NAME=SECRET_VALUE`);
       }
-      let value: string | number = param_split[1];
+      let value: string | number = secret_split[1];
       if (isNumberString(value)) {
         value = parseFloat(value);
       }
-      extra_env_vars[param_split[0]] = value;
+      extra_secrets[secret_split[0]] = value;
     }
 
-    return extra_env_vars;
+    return extra_secrets;
   }
 
   private static readSecretsFile(secrets_file_path: string | undefined) {
@@ -47,25 +48,34 @@ export default class DeployUtils {
     const flags: any = parsedFlags;
     flags['build-parallel'] = flags.build_parallel ? flags.build_parallel : flags['build-parallel'];
     flags['compose-file'] = flags.compose_file ? flags.compose_file : flags['compose-file'];
-    flags['secrets'] = flags.values ? flags.values : flags['secrets'];
+    flags['secret-file'] = (flags.values || []).concat(flags.secrets || []).concat(flags['secret-file']);
 
     // If values were provided and secrets were not provided, override the secrets with the values
-    if (!flags.secrets && fs.existsSync('./values.yml')) {
-      flags.secrets = './values.yml';
-    } else if (!flags.secrets && fs.existsSync('./secrets.yml')) {
-      flags.secrets = './secrets.yml';
+    if (!flags['secret-file'] && fs.existsSync('./values.yml')) {
+      flags['secret-file'] = ['./values.yml'];
+    } else if (!flags['secret-file'] && fs.existsSync('./secrets.yml')) {
+      flags['secret-file'] = ['./secrets.yml'];
     }
     return flags;
   }
 
-  static getComponentSecrets(parameters: string[], secrets?: string): any {
-    const component_secrets = DeployUtils.readSecretsFile(secrets);
-    const extra_params = DeployUtils.getExtraEnvironmentVariables(parameters);
-    if (extra_params && Object.keys(extra_params).length) {
+  static getComponentSecrets(individual_secrets: string[], secrets_file: string[]): Dictionary<Dictionary<string | number | null>> {
+    // Check to see if there are multiple secret files; else, just read the single secret file
+    let component_secrets: any = {};
+    for (const secret_file of secrets_file) {
+      const output_catch = DeployUtils.readSecretsFile(secret_file);
+      // Deep merge to ensure all values from files are captured
+      // By default, the last file in the array will always supersede any other values
+       component_secrets = _.merge(component_secrets,output_catch);
+    }
+
+    const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets);
+    if (extra_secrets && Object.keys(extra_secrets).length) {
       if (!component_secrets['*']) {
         component_secrets['*'] = {};
       }
-      component_secrets['*'] = { ...component_secrets['*'], ...extra_params };
+      // Shallow merge to ensure CLI arguments replace anything from the secrets file
+      component_secrets['*'] = { ...component_secrets['*'], ...extra_secrets };
     }
     return component_secrets;
   }

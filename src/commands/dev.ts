@@ -36,9 +36,9 @@ export default class Dev extends BaseCommand {
     }),
     parameter: Flags.string({
       char: 'p',
-      description: 'Component parameters',
+      description: `${Command.DEPRECATED} Please use --secret.`,
       multiple: true,
-      default: [],
+      hidden: true,
     }),
     interface: Flags.string({
       char: 'i',
@@ -46,9 +46,21 @@ export default class Dev extends BaseCommand {
       multiple: true,
       default: [],
     }),
-    secrets: Flags.string({
-      char: 's',
+    'secret-file': Flags.string({
       description: 'Path of secrets file',
+      multiple: true,
+      default: [],
+    }),
+    secrets: Flags.string({
+      description: `${Command.DEPRECATED} Please use --secret-file.`,
+      multiple: true,
+      hidden: true,
+    }),
+    secret: Flags.string({
+      char: 's',
+      description: 'An individual secret key and value in the form SECRET_KEY=SECRET_VALUE',
+      multiple: true,
+      default: [],
     }),
     recursive: Flags.boolean({
       char: 'r',
@@ -85,7 +97,7 @@ export default class Dev extends BaseCommand {
     values: Flags.string({
       char: 'v',
       hidden: true,
-      description: `${Command.DEPRECATED} Please use --secrets.`,
+      description: `${Command.DEPRECATED} Please use --secret-file.`,
     }),
     detached: Flags.boolean({
       description: 'Run in detached mode',
@@ -117,6 +129,23 @@ export default class Dev extends BaseCommand {
     parsed.flags = DeployUtils.parseFlags(parsed.flags);
 
     return parsed;
+  }
+
+  setupSigInt(callback: () => void): void {
+    if (process.platform === "win32") {
+      const rl = require("readline").createInterface({
+        input: process.stdin,
+        output: process.stdout,
+      });
+
+      rl.on("SIGINT", function () {
+        process.emit("SIGINT", "SIGINT");
+      });
+    }
+
+    process.on("SIGINT", function () {
+      callback();
+    });
   }
 
   async runCompose(compose: DockerComposeTemplate): Promise<void> {
@@ -202,13 +231,59 @@ export default class Dev extends BaseCommand {
       }, poll_interval);
     }
 
-    const compose_args = ['-f', compose_file, '-p', project_name, 'up', '--renew-anon-volumes', '--timeout', '0'];
+    const compose_args = ['-f', compose_file, '-p', project_name, 'up', '--remove-orphans', '--renew-anon-volumes', '--timeout', '0'];
     if (flags.detached) {
       compose_args.push('-d');
     }
 
-    await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit', env: { COMPOSE_IGNORE_ORPHANS: 'true' } });
+    const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args, { stdout: 'pipe', stdin: "ignore" });
+
+    let is_exiting = false;
+    this.setupSigInt(() => {
+      if (is_exiting) {
+        return;
+      }
+      is_exiting = true;
+      docker_compose_runnable.kill('SIGTERM');
+    });
+
+    // When docker compose is stopping it will tell the user to hit `ctrl-c` again
+    // to cancel. We disabled this functionality so also making the message more clear
+    const service_colors = new Map<string, chalk.Chalk>();
+    const rand = () => Math.floor(Math.random() * 255);
+    docker_compose_runnable.stdout?.on('data', (data) => {
+      for (const line of data.toString().split('\n')) {
+        if (line.indexOf('Gracefully stopping...') !== -1) {
+          console.log("\nGracefully stopping..... Please Wait.....");
+          return;
+        }
+        const lineParts = line.split('|');
+        if (lineParts.length > 1) {
+          const service: string = lineParts[0];
+          lineParts.shift();
+          const newLine = lineParts.join('|');
+
+          if (!service_colors.get(service)) {
+            service_colors.set(service, chalk.rgb(rand(), rand(), rand()));
+          }
+
+          const color = service_colors.get(service) as chalk.Chalk;
+
+          console.log(color(service + "\t| ") + newLine);
+        }
+      }
+    });
+    DockerComposeUtils.watchContainersHealth(compose_file, project_name, () => { return is_exiting; });
+
+    try {
+      await docker_compose_runnable;
+    } catch (ex) {
+      if (!is_exiting) {
+        throw ex;
+      }
+    }
     fs.removeSync(compose_file);
+    process.exit();
   }
 
   private async runLocal() {
@@ -220,7 +295,9 @@ export default class Dev extends BaseCommand {
     }
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const component_secrets = DeployUtils.getComponentSecrets(flags.parameter, flags.secrets);
+    const all_secret_file_values = flags['secret-file'].concat(flags.secrets); // TODO: 404: remove
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values);
+    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_file_values);
 
     const linked_components = this.app.linkedComponents;
     const component_versions: string[] = [];
@@ -284,7 +361,9 @@ export default class Dev extends BaseCommand {
         component_specs.push(component_config);
       }
     }
-    const graph = await dependency_manager.getGraph(component_specs, component_secrets);
+
+    const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
+    const graph = await dependency_manager.getGraph(component_specs, all_secrets); // TODO: 404: update
     const compose = await DockerComposeUtils.generate(graph);
     await this.runCompose(compose);
   }

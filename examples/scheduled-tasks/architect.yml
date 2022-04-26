@@ -16,7 +16,8 @@ tasks:
 
 services:
   api:
-    image: heroku/nodejs-hello-world
+    build:
+      context: ../hello-world
     interfaces:
       main: 3000
 

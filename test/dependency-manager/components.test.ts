@@ -110,7 +110,7 @@ describe('components spec v1', function () {
     it('simple remote component with override', async () => {
       const component_config = {
         name: 'architect/cloud',
-        parameters: {
+        secrets: {
           log_level: 'info'
         },
         services: {
@@ -119,7 +119,7 @@ describe('components spec v1', function () {
               main: 8080
             },
             environment: {
-              LOG_LEVEL: '${{ parameters.log_level }}'
+              LOG_LEVEL: '${{ secrets.log_level }}'
             }
           }
         }
@@ -192,7 +192,7 @@ describe('components spec v1', function () {
         `${app_ref} [service->main] -> ${api_ref} [main]`,
         `${api_ref} [service->main] -> ${db_ref} [main]`
       ])
-      // Test parameter values
+      // Test secret values
       const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
       expect(app_node.config.environment.API_ADDR).eq(`http://${api_ref}:8080`)
 
@@ -320,7 +320,7 @@ describe('components spec v1', function () {
         `${api_ref} [service->web] -> ${ci_ref} [web]`
       ])
 
-      // Test parameter values
+      // Test secret values
       const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(api_node.config.environment.CONCOURSE_ADDR).eq(`http://${web_ref}:8080`)
       expect(api_node.config.name).to.eq('api');
@@ -551,24 +551,24 @@ describe('components spec v1', function () {
 
       const component_b_v1 = `
         name: examples/component-b
-        parameters:
+        secrets:
           test_required:
         services:
           api:
             image: test:v1
             environment:
-              TEST_REQUIRED: \${{ parameters.test_required }}
+              TEST_REQUIRED: \${{ secrets.test_required }}
         `;
 
       const component_b_v2 = `
         name: examples/component-b
-        parameters:
+        secrets:
           test_required:
         services:
           api:
             image: test:v2
             environment:
-              TEST_REQUIRED: \${{ parameters.test_required }}
+              TEST_REQUIRED: \${{ secrets.test_required }}
         `;
 
       nock('http://localhost').get(`/accounts/examples/components/component-a/versions/v1`)
@@ -766,14 +766,14 @@ describe('components spec v1', function () {
     it('validation does not run if validate is set to false', async () => {
       const component_config_yml = `
         name: architect/cloud
-        parameters:
+        secrets:
           app_replicas:
             default: 1
         services:
           app:
             interfaces:
               main: 8080
-            replicas: \${{ parameters.app_replicas }}
+            replicas: \${{ secrets.app_replicas }}
       `
 
       mock_fs({
@@ -856,14 +856,14 @@ describe('components spec v1', function () {
       `
         const api_component_config_yml = `
         name: ${combination.api}
-        parameters:
+        secrets:
           api_replicas:
             default: 1
         interfaces:
           api: \${{ services.api.interfaces.main.url }}
         services:
           api:
-            replicas: \${{ parameters.api_replicas }}
+            replicas: \${{ secrets.api_replicas }}
             interfaces:
               main: 8080
             environment:

@@ -98,9 +98,9 @@ export default class Deploy extends DeployCommand {
     }),
     parameter: Flags.string({
       char: 'p',
-      description: 'Component parameters',
+      description: `${Command.DEPRECATED} Please use --secret.`,
       multiple: true,
-      default: [],
+      hidden: true,
     }),
     interface: Flags.string({
       char: 'i',
@@ -108,14 +108,27 @@ export default class Deploy extends DeployCommand {
       multiple: true,
       default: [],
     }),
-    secrets: Flags.string({
-      char: 's',
+    'secret-file': Flags.string({
       description: 'Path of secrets file',
+      multiple: true,
+      default: [],
+    }),
+    secrets: Flags.string({
+      description: `${Command.DEPRECATED} Please use --secret-file.`,
+      multiple: true,
+      hidden: true,
+    }),
+    secret: Flags.string({
+      char: 's',
+      description: 'An individual secret key and value in the form SECRET_KEY=SECRET_VALUE',
+      multiple: true,
+      default: [],
     }),
     values: Flags.string({
       char: 'v',
       hidden: true,
-      description: `${Command.DEPRECATED} Please use --secrets.`,
+      multiple: true,
+      description: `${Command.DEPRECATED} Please use --secret-file.`,
     }),
     'deletion-protection': Flags.boolean({
       default: true,
@@ -172,7 +185,10 @@ export default class Deploy extends DeployCommand {
     const components = args.configs_or_components;
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const component_secrets = DeployUtils.getComponentSecrets(flags.parameter, flags.secrets);
+    const all_secret_file_values = flags['secret-file'].concat(flags.secrets); // TODO: 404: remove
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values); // TODO: 404: update
+    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_file_values); // TODO: 404: remove
+    const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
@@ -183,7 +199,7 @@ export default class Deploy extends DeployCommand {
         component: component,
         interfaces: interfaces_map,
         recursive: flags.recursive,
-        values: component_secrets,
+        values: all_secrets, // TODO: 404: update
         prevent_destroy: flags['deletion-protection'],
       };
       deployment_dtos.push(deploy_dto);

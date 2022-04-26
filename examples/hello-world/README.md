@@ -10,7 +10,7 @@
 
 # Hello world w/ Architect
 
-This example will show you the leanest possible use-case for Architect – "Hello world"! In this example, we've written a component spec (the `architect.yml` file) that defines a component powered entirely by a public docker image, `heroku/nodejs-hello-world`. From there it goes on to annotate the ports the service listens on and the interfaces that should be exposed to upstream callers.
+This example will show you the leanest possible use-case for Architect – "Hello world"! In this example, we've written a component spec (the `architect.yml` file) that defines a component powered our own Docker image. From there it goes on to annotate the ports the service listens on and the interfaces that should be exposed to upstream callers.
 
 [Learn more about the architect.yml file](//docs.architect.io/configuration)
 

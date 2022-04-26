@@ -1,5 +1,5 @@
 import { ReferenceObject, SchemaObject } from 'openapi3-ts';
-import { ComponentInterfaceSpec, ComponentSpec, ParameterDefinitionSpec } from '../component-spec';
+import { ComponentInterfaceSpec, ComponentSpec, SecretDefinitionSpec } from '../component-spec';
 import { ServiceSpec } from '../service-spec';
 import { TaskSpec } from '../task-spec';
 import { DEBUG_PREFIX, getDocsPath, stripDebugDefinitions } from './json-schema';
@@ -236,7 +236,7 @@ const schemaToMarkdown = (schema: SchemaObject): string => {
   const ordered_definitions: { [key: string]: SchemaObject } = {
     ComponentSpec: no_debug_schema.definitions[ComponentSpec.name],
     ServiceSpec: no_debug_schema.definitions[ServiceSpec.name],
-    ParameterDefinitionSpec: no_debug_schema.definitions[ParameterDefinitionSpec.name],
+    SecretDefinitionSpec: no_debug_schema.definitions[SecretDefinitionSpec.name],
     ComponentInterfaceSpec: no_debug_schema.definitions[ComponentInterfaceSpec.name],
     TaskSpec: no_debug_schema.definitions[TaskSpec.name],
     ...no_debug_schema.definitions,

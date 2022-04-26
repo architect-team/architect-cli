@@ -25,6 +25,29 @@ describe('local dev environment', function () {
     return `
     name: hello-world
 
+    secrets:
+      hello_ingress: hello
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main:
+            port: 3000
+        environment: {}
+
+    interfaces:
+      hello:
+        ingress:
+          subdomain: \${{ secrets.hello_ingress }}
+        url: \${{ services.api.interfaces.main.url }}
+    `
+  }
+
+  function getDeprecatedHelloComponentConfig(): any { // TODO: 404: remove
+    return `
+    name: hello-world
+
     parameters:
       hello_ingress: hello
 
@@ -44,7 +67,38 @@ describe('local dev environment', function () {
     `
   }
 
-  const local_component_config_with_parameters = `
+  const local_component_config_with_secrets = `
+    name: hello-world
+
+    secrets:
+      a_required_key:
+        required: true
+      another_required_key:
+        required: true
+      one_more_required_secret:
+        required: true
+      compose_escaped_variable:
+        required: false
+      api_port:
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: \${{ secrets.api_port }}
+        environment:
+          a_required_key: \${{ secrets.a_required_key }}
+          another_required_key: \${{ secrets.another_required_key }}
+          one_more_required_secret: \${{ secrets.one_more_required_secret }}
+          compose_escaped_variable: \${{ secrets.compose_escaped_variable }}
+
+    interfaces:
+      hello:
+        url: \${{ services.api.interfaces.main.url }}
+    `;
+
+  // TODO: 404: remove
+  const deprecated_local_component_config_with_parameters = `
     name: hello-world
 
     parameters:
@@ -52,7 +106,7 @@ describe('local dev environment', function () {
         required: true
       another_required_key:
         required: true
-      one_more_required_param:
+      one_more_required_secret:
         required: true
       compose_escaped_variable:
         required: false
@@ -66,7 +120,7 @@ describe('local dev environment', function () {
         environment:
           a_required_key: \${{ parameters.a_required_key }}
           another_required_key: \${{ parameters.another_required_key }}
-          one_more_required_param: \${{ parameters.one_more_required_param }}
+          one_more_required_secret: \${{ parameters.one_more_required_secret }}
           compose_escaped_variable: \${{ parameters.compose_escaped_variable }}
 
     interfaces:
@@ -74,30 +128,30 @@ describe('local dev environment', function () {
         url: \${{ services.api.interfaces.main.url }}
     `;
 
-  const basic_parameter_secrets = {
+  const basic_secrets = {
     'hello-world': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
-      'one_more_required_param': 'one_more_value',
+      'one_more_required_secret': 'one_more_value',
       'compose_escaped_variable': 'variable_split_$_with_dollar$signs',
       'api_port': 3000
     },
   }
-  const wildcard_parameter_secrets = {
+  const wildcard_secrets = {
     'hello-world': {
       'a_required_key': 'some_value',
       'api_port': 3000,
-      'one_more_required_param': 'one_more_value'
+      'one_more_required_secret': 'one_more_value'
     },
     '*': {
       'another_required_key': 'required_value'
     }
   }
-  const stacked_parameter_secrets = {
+  const stacked_secrets = {
     'hello-world': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
-      'one_more_required_param': 'one_more_value',
+      'one_more_required_secret': 'one_more_value',
       'api_port': 3000
     },
     '*': {
@@ -116,9 +170,9 @@ describe('local dev environment', function () {
           "main": 3000
         },
         "environment": {
-          "a_required_key": "${{ parameters.a_required_key }}",
-          "another_required_key": "${{ parameters.another_required_key }}",
-          "one_more_required_param": "${{ parameters.one_more_required_param }}"
+          "a_required_key": "${{ secrets.a_required_key }}",
+          "another_required_key": "${{ secrets.another_required_key }}",
+          "one_more_required_secret": "${{ secrets.one_more_required_secret }}"
         }
       }
     },
@@ -129,14 +183,14 @@ describe('local dev environment', function () {
       }
     },
 
-    "parameters": {
+    "secrets": {
       'a_required_key': {
         'required': true
       },
       'another_required_key': {
         'required': true
       },
-      'one_more_required_param': {
+      'one_more_required_secret': {
         'required': true
       }
     },
@@ -151,7 +205,7 @@ describe('local dev environment', function () {
       'interfaces': {
         'app': '\${{ services.app.interfaces.main.url }}'
       },
-      'parameters': {
+      'secrets': {
         'world_text': {
           'default': 'world'
         }
@@ -166,28 +220,87 @@ describe('local dev environment', function () {
           },
           'environment': {
             'PORT': '\${{ services.app.interfaces.main.port }}',
-            'WORLD_TEXT': '\${{ parameters.world_text }}'
+            'WORLD_TEXT': '\${{ secrets.world_text }}'
           }
         }
       }
     },
     'tag': 'latest'
   }
-  const component_and_dependency_parameter_secrets = {
+  const component_and_dependency_secrets = {
     'hello-world': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
-      'one_more_required_param': 'one_more_value'
+      'one_more_required_secret': 'one_more_value'
     },
     '*': {
       'a_required_key': 'a_value_which_will_be_overwritten',
       'another_required_key': 'another_value_which_will_be_overwritten',
       'world_text': 'some other name',
-      'unused_parameter': 'value_not_used_by_any_component'
+      'unused_secret': 'value_not_used_by_any_component'
     }
   }
 
   const local_database_seeding_component_config = {
+    "name": "database-seeding",
+
+    "secrets": {
+      "AUTO_DDL": {
+        "default": "none"
+      },
+      "DB_USER": {
+        "default": "postgres"
+      },
+      "DB_PASS": {
+        "default": "architect"
+      },
+      "DB_NAME": {
+        "default": "seeding_demo"
+      }
+    },
+
+    "services": {
+      "app": {
+        "build": {
+          "context": "./",
+          "dockerfile": "Dockerfile",
+          "target": "production",
+        },
+        "interfaces": {
+          "main": 3000,
+        },
+        "depends_on": ["my-demo-db"],
+        "environment": {
+          "DATABASE_HOST": "${{ services.my-demo-db.interfaces.postgres.host }}",
+          "DATABASE_PORT": "${{ services.my-demo-db.interfaces.postgres.port }}",
+          "DATABASE_USER": "${{ services.my-demo-db.environment.POSTGRES_USER }}",
+          "DATABASE_PASSWORD": "${{ services.my-demo-db.environment.POSTGRES_PASSWORD }}",
+          "DATABASE_SCHEMA": "${{ services.my-demo-db.environment.POSTGRES_DB }}",
+          "AUTO_DDL": "${{ secrets.AUTO_DDL }}"
+        }
+      },
+
+      "my-demo-db": {
+        "image": "postgres:11",
+        "interfaces": {
+          "postgres": 5432,
+        },
+        "environment": {
+          "POSTGRES_DB": "${{ secrets.DB_NAME }}",
+          "POSTGRES_USER": "${{ secrets.DB_USER }}",
+          "POSTGRES_PASSWORD": "${{ secrets.DB_PASS }}"
+        }
+      }
+    },
+
+    "interfaces": {
+      "main": {
+        "url": "${{ services.app.interfaces.main.url }}"
+      }
+    }
+  };
+
+  const deprecated_local_database_seeding_component_config = { // TODO: 404: remove
     "name": "database-seeding",
 
     "parameters": {
@@ -387,6 +500,22 @@ describe('local dev environment', function () {
       expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
     })
 
+  test // TODO: 404: remove
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return getDeprecatedHelloComponentConfig();
+    })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'hello'])
+    .it('Create a local dev with a component and an interface (deprecated parameters block)', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
+    })
+
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'loadFile', () => {
@@ -417,8 +546,26 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/database-seeding/architect.yml', '-p', 'AUTO_DDL=seed', '-p', 'DB_NAME=test-db', '-i', 'app:main'])
-    .it('Create a local dev with a component, parameters, and an interface', ctx => {
+    .command(['dev', './examples/database-seeding/architect.yml', '-s', 'AUTO_DDL=seed', '--secret', 'DB_NAME=test-db', '-i', 'app:main'])
+    .it('Create a local dev with a component, secrets, and an interface', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose);
+    })
+
+  test // TODO: 404: remove
+    .timeout(20000)
+    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+      const spec = buildSpecFromYml(yaml.dump(deprecated_local_database_seeding_component_config));
+      spec.metadata.file = { path: './examples/database-seeding/architect.yml', contents: '' }
+      return spec;
+    })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/database-seeding/architect.yml', '--parameter', 'AUTO_DDL=seed', '--parameter', 'DB_NAME=test-db', '-i', 'app:main'])
+    .it('Create a local dev with a component, deprecated parameters, and an interface', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose);
@@ -427,16 +574,16 @@ describe('local dev environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      return buildSpecFromYml(local_component_config_with_parameters)
+      return buildSpecFromYml(local_component_config_with_secrets)
     })
     .stub(DeployUtils, 'readSecretsFile', () => {
-      return basic_parameter_secrets;
+      return basic_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/secrets.yml'])
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secret-file', './examples/hello-world/secrets.yml'])
     .it('Create a local dev with a basic component and a basic secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -444,17 +591,40 @@ describe('local dev environment', function () {
       expect(hello_world_service.external_links).to.contain('gateway:test.arc.localhost');
       expect(hello_world_service.environment.a_required_key).to.equal('some_value');
       expect(hello_world_service.environment.another_required_key).to.equal('required_value');
-      expect(hello_world_service.environment.one_more_required_param).to.equal('one_more_value');
+      expect(hello_world_service.environment.one_more_required_secret).to.equal('one_more_value');
+    })
+
+  test // TODO: 404: remove
+    .timeout(20000)
+    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+      return buildSpecFromYml(deprecated_local_component_config_with_parameters)
+    })
+    .stub(DeployUtils, 'readSecretsFile', () => {
+      return basic_secrets;
+    })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secret-file', './examples/hello-world/secrets.yml'])
+    .it('Create a local dev with a basic component using deprecated parameters and a basic secrets file', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      const hello_world_service = runCompose.firstCall.args[0].services[hello_api_ref] as any;
+      expect(hello_world_service.external_links).to.contain('gateway:test.arc.localhost');
+      expect(hello_world_service.environment.a_required_key).to.equal('some_value');
+      expect(hello_world_service.environment.another_required_key).to.equal('required_value');
+      expect(hello_world_service.environment.one_more_required_secret).to.equal('one_more_value');
     })
 
   // This test will be removed when the deprecated 'values' flag is removed
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      return buildSpecFromYml(local_component_config_with_parameters)
+      return buildSpecFromYml(local_component_config_with_secrets)
     })
     .stub(DeployUtils, 'readSecretsFile', () => {
-      return basic_parameter_secrets;
+      return basic_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -468,49 +638,49 @@ describe('local dev environment', function () {
       expect(hello_world_service.external_links).to.contain('gateway:test.arc.localhost');
       expect(hello_world_service.environment.a_required_key).to.equal('some_value');
       expect(hello_world_service.environment.another_required_key).to.equal('required_value');
-      expect(hello_world_service.environment.one_more_required_param).to.equal('one_more_value');
+      expect(hello_world_service.environment.one_more_required_secret).to.equal('one_more_value');
     })
 
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      return buildSpecFromYml(local_component_config_with_parameters)
+      return buildSpecFromYml(local_component_config_with_secrets)
     })
     .stub(DeployUtils, 'readSecretsFile', () => {
-      return wildcard_parameter_secrets;
+      return wildcard_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/secrets.yml'])
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secret-file', './examples/hello-world/secrets.yml'])
     .it('Create a local dev with a basic component and a wildcard secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
-      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
+      expect(hello_world_environment.one_more_required_secret).to.equal('one_more_value');
     })
 
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      return buildSpecFromYml(local_component_config_with_parameters)
+      return buildSpecFromYml(local_component_config_with_secrets)
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readSecretsFile', () => {
-      return stacked_parameter_secrets;
+      return stacked_secrets;
     })
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/secrets.yml'])
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secret-file', './examples/hello-world/secrets.yml'])
     .it('Create a local dev with a basic component and a stacked secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
-      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
+      expect(hello_world_environment.one_more_required_secret).to.equal('one_more_value');
     })
 
   test
@@ -520,7 +690,7 @@ describe('local dev environment', function () {
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readSecretsFile', () => {
-      return component_and_dependency_parameter_secrets;
+      return component_and_dependency_secrets;
     })
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
@@ -531,13 +701,13 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/secrets.yml', '-a', 'examples'])
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secret-file', './examples/hello-world/secrets.yml', '-a', 'examples'])
     .it('Create a local dev with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
-      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
+      expect(hello_world_environment.one_more_required_secret).to.equal('one_more_value');
     })
 
   test
@@ -547,7 +717,7 @@ describe('local dev environment', function () {
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readSecretsFile', () => {
-      return component_and_dependency_parameter_secrets;
+      return component_and_dependency_secrets;
     })
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
@@ -558,7 +728,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/secrets.yml', '-r', '-a', 'examples'])
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secret-file', './examples/hello-world/secrets.yml', '-r', '-a', 'examples'])
     .it('Create a local recursive dev with a basic component, a dependency, and a secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -566,23 +736,23 @@ describe('local dev environment', function () {
       const react_app_environment = (runCompose.firstCall.args[0].services[react_app_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
-      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
+      expect(hello_world_environment.one_more_required_secret).to.equal('one_more_value');
       expect(react_app_environment.WORLD_TEXT).to.equal('some other name');
     })
 
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      return buildSpecFromYml(local_component_config_with_parameters)
+      return buildSpecFromYml(local_component_config_with_secrets)
     })
     .stub(DeployUtils, 'readSecretsFile', () => {
-      return basic_parameter_secrets;
+      return basic_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-s', './examples/hello-world/secrets.yml'])
+    .command(['dev', './examples/hello-world/architect.yml', '--secret-file', './examples/hello-world/secrets.yml'])
     .it('Dollar signs are escaped for environment variables in local compose devments', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -658,7 +828,7 @@ describe('local dev environment', function () {
           }
         };
       })
-      .command(['dev', '-s', './examples/hello-world/secrets.yml', 'hello-world@tenant-1', 'hello-world@tenant-2'])
+      .command(['dev', '--secret-file', './examples/hello-world/secrets.yml', 'hello-world@tenant-1', 'hello-world@tenant-2'])
       .it('Create a local dev with multiple instances of the same component', ctx => {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true;
