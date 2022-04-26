@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import execa from 'execa';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import sinon from 'sinon';
