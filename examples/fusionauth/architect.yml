@@ -2,7 +2,7 @@ name: fusionauth
 description: An example fusion auth Architect component
 homepage: https://github.com/architect-team/architect-cli/tree/master/examples/fusionauth
 
-secrets:
+parameters:
   db_name:
     description: Name of the database containing FusionAuth tables
     default: fusionauth
@@ -14,10 +14,10 @@ secrets:
     default: secret
   fusionauth_db_user:
     description: Username used by FusionAuth to regularly access the database
-    default: ${{ secrets.root_db_user }}
+    default: ${{ parameters.root_db_user }}
   fusionauth_db_pass:
     description: Username used by FusionAuth to regularly access the database
-    default: ${{ secrets.root_db_pass }}
+    default: ${{ parameters.root_db_pass }}
   fusionauth_memory:
     description: Memory to allocate to the FusionAuth JVM
     default: 512M
@@ -47,29 +47,29 @@ services:
       postgres:
         protocol: postgresql
         port: 5432
-        host: ${{ secrets.fusionauth_db_host }}
+        host: ${{ parameters.fusionauth_db_host }}
     environment:
-      POSTGRES_USER: ${{ secrets.root_db_user }}
-      POSTGRES_PASSWORD: ${{ secrets.root_db_pass }}
-      POSTGRES_DB: ${{ secrets.db_name }}
+      POSTGRES_USER: ${{ parameters.root_db_user }}
+      POSTGRES_PASSWORD: ${{ parameters.root_db_pass }}
+      POSTGRES_DB: ${{ parameters.db_name }}
 
   fusionauth:
     image: fusionauth/fusionauth-app:latest
     interfaces:
       public: 9011
     environment:
-      DATABASE_URL: jdbc:${{ services.fusionauth-db.interfaces.postgres.url }}/${{ secrets.db_name }}
-      DATABASE_ROOT_USER: ${{ secrets.root_db_user }}
-      DATABASE_ROOT_PASSWORD: ${{ secrets.root_db_pass }}
-      DATABASE_USER: ${{ secrets.fusionauth_db_user }}
-      DATABASE_PASSWORD: ${{ secrets.fusionauth_db_pass }}
-      FUSIONAUTH_MEMORY: ${{ secrets.fusionauth_memory }}
+      DATABASE_URL: jdbc:${{ services.fusionauth-db.interfaces.postgres.url }}/${{ parameters.db_name }}
+      DATABASE_ROOT_USER: ${{ parameters.root_db_user }}
+      DATABASE_ROOT_PASSWORD: ${{ parameters.root_db_pass }}
+      DATABASE_USER: ${{ parameters.fusionauth_db_user }}
+      DATABASE_PASSWORD: ${{ parameters.fusionauth_db_pass }}
+      FUSIONAUTH_MEMORY: ${{ parameters.fusionauth_memory }}
       FUSIONAUTH_SEARCH_ENGINE_TYPE: database
       FUSIONAUTH_URL: ${{ interfaces.app.url }}
       FUSIONAUTH_RUNTIME_MODE: development
-      FUSIONAUTH_API_KEY: ${{ secrets.default_api_key }}
-      ADMIN_USER_EMAIL: ${{ secrets.admin_user_email }}
-      ADMIN_USER_PASSWORD: ${{ secrets.admin_user_password }}
+      FUSIONAUTH_API_KEY: ${{ parameters.default_api_key }}
+      ADMIN_USER_EMAIL: ${{ parameters.admin_user_email }}
+      ADMIN_USER_PASSWORD: ${{ parameters.admin_user_password }}
       KICKSTART_CONTENTS: file:./config/kickstart.json
       FUSIONAUTH_KICKSTART: /usr/local/fusionauth/kickstart.json
       FUSIONAUTH_APP_SILENT_MODE: false
