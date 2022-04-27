@@ -9,7 +9,7 @@ keywords:
   - nodejs
   - reactjs
 
-parameters:
+secrets:
   db_user:
     description: Root user to assign to the component's DB
     default: architect
@@ -28,18 +28,18 @@ services:
         port: 5432
         protocol: postgresql
     environment:
-      POSTGRES_USER: ${{ parameters.db_user }}
-      POSTGRES_PASSWORD: ${{ parameters.db_pass }}
-      POSTGRES_DB: ${{ parameters.db_name }}
+      POSTGRES_USER: ${{ secrets.db_user }}
+      POSTGRES_PASSWORD: ${{ secrets.db_pass }}
+      POSTGRES_DB: ${{ secrets.db_name }}
   stateful-api:
     build:
       context: ./backend
     interfaces:
       http: 8080
     environment:
-      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ parameters.db_name }}
-      DB_USER: ${{ parameters.db_user }}
-      DB_PASS: ${{ parameters.db_pass }}
+      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ secrets.db_name }}
+      DB_USER: ${{ secrets.db_user }}
+      DB_PASS: ${{ secrets.db_pass }}
   frontend:
     build:
       context: ./frontend

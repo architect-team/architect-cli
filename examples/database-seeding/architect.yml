@@ -8,7 +8,7 @@ keywords:
   - nodejs
   - express-js
 
-parameters:
+secrets:
   auto_ddl:
     description: Options are 'none', 'migrate', and 'seed'; none- no ddl; migrate- runs unrun database migrations at application start; seed- runs unrun migrations and test data seeding script at application start
     default: none
@@ -35,16 +35,16 @@ services:
       DATABASE_USER: ${{ services.my-demo-db.environment.POSTGRES_USER }}
       DATABASE_PASSWORD: ${{ services.my-demo-db.environment.POSTGRES_PASSWORD }}
       DATABASE_SCHEMA: ${{ services.my-demo-db.environment.POSTGRES_DB }}
-      AUTO_DDL: ${{ parameters.auto_ddl }}
+      AUTO_DDL: ${{ secrets.auto_ddl }}
 
   my-demo-db:
     image: postgres:11
     interfaces:
       postgres: 5432
     environment:
-      POSTGRES_DB: ${{ parameters.db_name }}
-      POSTGRES_USER: ${{ parameters.db_user }}
-      POSTGRES_PASSWORD: ${{ parameters.db_pass }}
+      POSTGRES_DB: ${{ secrets.db_name }}
+      POSTGRES_USER: ${{ secrets.db_user }}
+      POSTGRES_PASSWORD: ${{ secrets.db_pass }}
 
 interfaces:
   main:
