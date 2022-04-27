@@ -1,6 +1,6 @@
 name: examples/publisher
 
-parameters:
+secrets:
   publish_topic:
     description: Topic name the service will publish events to
     default: topic
@@ -8,7 +8,7 @@ parameters:
 outputs:
   publish_topic:
     description: Topic name events will be published to
-    value: ${{ parameters.publish_topic }}
+    value: ${{ secrets.publish_topic }}
 
 dependencies:
   examples/gcp-pubsub: latest
@@ -20,4 +20,4 @@ services:
     environment:
       GCP_PROJECT_ID: ${{ dependencies['examples/gcp-pubsub'].outputs.gcp_project_id }}
       PUBSUB_ENDPOINT: ${{ dependencies['examples/gcp-pubsub'].interfaces.pubsub.url }}
-      PUBSUB_TOPIC: ${{ parameters.publish_topic }}
+      PUBSUB_TOPIC: ${{ secrets.publish_topic }}
