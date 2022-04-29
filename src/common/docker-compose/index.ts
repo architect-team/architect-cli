@@ -57,7 +57,7 @@ export class DockerComposeUtils {
       }
 
       compose.services[gateway_node.ref] = {
-        image: 'traefik:v2.4.14',
+        image: 'traefik:v2.6.2',
         command: [
           '--api.insecure=true',
           '--pilot.dashboard=false',
@@ -502,7 +502,12 @@ export class DockerComposeUtils {
 
             service_data.last_restart_ms = Date.now();
             console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
-            await restart(id);
+            try {
+              await restart(id);
+            } catch (err) {
+              console.log(chalk.red(`ERROR: ${service_ref} failed to restart.`));
+              continue;
+            }
             // Docker compose will stop watching when there is a single container and it goes down.
             // If all containers go down at the same time it will wait for the restart and just move on. So only need this
             // for the case of 1 container with a health check.
