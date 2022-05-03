@@ -143,29 +143,15 @@ export default class ComponentRegister extends Command {
       return arr;
     }, [] as string[]);
 
-    try {
-      await DockerBuildXUtils.createBuilder(this.app.config);
-    } catch (err: any) {
-      this.log(`Docker builder instance 'architect' already exists. Using existing 'architect' builder instance ...`);
-    }
+    const builder = await DockerBuildXUtils.getBuilder(this.app.config);
 
     try {
-      await DockerBuildXUtils.dockerBuildX(["inspect", "--bootstrap"], {
+      await DockerBuildXUtils.dockerBuildX(["bake", "-f", compose_file, "--push", ...build_args, "--builder", builder], {
         stdio: "inherit",
       });
     } catch (err: any) {
       fs.removeSync(compose_file);
-      this.log(`Unable to start buildx builder. Please make sure docker is running.`);
-      this.error(err);
-    }
-
-    try {
-      await DockerBuildXUtils.dockerBuildX(["bake", "-f", compose_file, "--push", ...build_args, "--builder", "architect"], {
-        stdio: "inherit",
-      });
-    } catch (err: any) {
-      fs.removeSync(compose_file);
-      this.log(`Docker buildx bake failed`);
+      this.log(`Docker buildx bake failed. Please make sure docker is running.`);
       this.error(err);
     }
 

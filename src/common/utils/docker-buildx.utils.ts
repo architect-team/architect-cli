@@ -21,22 +21,29 @@ export default class DockerBuildXUtils {
     });
   }
 
-  public static async createBuilder(config: config): Promise<void> {
-    const is_local = config.api_host.includes("localhost");
-    if (is_local) {
-      // Create a configuration file for buildkitd
-      const local_buildkitd_config_file = config.getConfigDir() + "/buildkitd.toml";
-      const file_content = `[registry."${config.registry_host}"]\n  http = true\n  insecure = true`;
-      await this.writeBuildkitdConfigFile(local_buildkitd_config_file, file_content);
+  public static async getBuilder(config: config): Promise<string> {
+    const is_local = config.api_host.includes("localhost") || config.api_host.includes("0.0.0.0") || config.api_host.includes("127.0.0.1");
+    const builder = is_local ? "architect-local" : "architect";
 
-      await this.dockerBuildX(["create", "--name", "architect", "--driver-opt", "network=host", "--use", "--buildkitd-flags", "--allow-insecure-entitlement security.insecure", `--config=${local_buildkitd_config_file}`], {
-        stdio: "inherit",
-      });
-    } else {
-      await this.dockerBuildX(["create", "--name", "architect"], {
-        stdio: "inherit",
-      });
-    }
+    try {
+      if (is_local) {
+        // Create a configuration file for buildkitd
+        const local_buildkitd_config_file = config.getConfigDir() + "/buildkitd.toml";
+        const file_content = `[registry."${config.registry_host}"]\n  http = true\n  insecure = true`;
+        await this.writeBuildkitdConfigFile(local_buildkitd_config_file, file_content);
+
+        await this.dockerBuildX(["create", "--name", builder, "--driver-opt", "network=host", "--use", "--buildkitd-flags", "--allow-insecure-entitlement security.insecure", `--config=${local_buildkitd_config_file}`], {
+          stdio: "inherit",
+        });
+      } else {
+        await this.dockerBuildX(["create", "--name", builder], {
+          stdio: "inherit",
+        });
+      }
+    // eslint-disable-next-line no-empty
+    } catch { }
+
+    return builder;
   }
 
   public static async dockerBuildX(args: string[], execa_opts?: Options, use_console = false): Promise<execa.ExecaChildProcess<string>> {

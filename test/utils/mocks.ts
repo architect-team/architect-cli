@@ -28,4 +28,4 @@ export const mockArchitectAuth = test
   .stub(DockerComposeUtils, 'writeCompose', () => { })
   .stub(DockerBuildXUtils, 'writeBuildkitdConfigFile', () => { })
   .stub(DockerBuildXUtils, 'dockerBuildX', () => { })
-  .stub(DockerBuildXUtils, 'createBuilder', () => { })
+  .stub(DockerBuildXUtils, 'getBuilder', () => { })
