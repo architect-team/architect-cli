@@ -36,7 +36,8 @@ export default class DeployUtils {
 
   private static readSecretsFile(secrets_file_path: string | undefined) {
     let component_secrets: any = {};
-    if (secrets_file_path && fs.existsSync(secrets_file_path)) {
+    if (secrets_file_path) {
+      // Hard error if the secrets file isn't found - otherwise it'll lead to a confusing ux
       const secrets_file_data = fs.readFileSync(secrets_file_path);
       component_secrets = yaml.load(secrets_file_data.toString('utf-8'));
     }
@@ -66,7 +67,7 @@ export default class DeployUtils {
       const output_catch = DeployUtils.readSecretsFile(secret_file);
       // Deep merge to ensure all values from files are captured
       // By default, the last file in the array will always supersede any other values
-       component_secrets = _.merge(component_secrets,output_catch);
+      component_secrets = _.merge(component_secrets, output_catch);
     }
 
     const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets);
