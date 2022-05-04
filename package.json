@@ -146,6 +146,7 @@
     "test": "mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
     "pack": "oclif pack:tarballs",
     "readme": "./bin/readme",
+    "generate:schema-docs": "ts-node --project ./tsconfig.json ./src/dependency-manager/generate.ts",
     "semantic-release": "./node_modules/semantic-release/bin/semantic-release.js"
   },
   "types": "lib/index.d.ts"
