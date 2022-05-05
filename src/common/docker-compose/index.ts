@@ -464,8 +464,8 @@ export class DockerComposeUtils {
     }
 
     const service_data_dictionary: Dictionary<{ last_restart_ms: number }> = {};
-    try {
-      while (!should_stop()) {
+    while (!should_stop()) {
+      try {
         const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
         for (const container_state of container_states) {
           const id = container_state.ID;
@@ -517,10 +517,10 @@ export class DockerComposeUtils {
           }
         }
         await new Promise(r => setTimeout(r, 5000));
-      }
-    } catch (ex) {
-      if (!should_stop()) {
-        throw ex;
+      } catch (ex) {
+        // Ignore any errors. Since this service just watches services health it does
+        // not matter if an error occurs we should not stop a running dev instance
+        // just because the `watcher` failed.
       }
     }
   }
