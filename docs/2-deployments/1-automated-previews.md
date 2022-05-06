@@ -157,6 +157,9 @@ default:
     - mkdir -p $DOCKER_CONFIG/cli-plugins
     - curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose
     - chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
+    # Install docker buildx plugin
+    - curl -SL https://github.com/docker/buildx/releases/download/v0.8.2/buildx-v0.8.2.linux-amd64 -o $DOCKER_CONFIG/cli-plugins/docker-buildx
+    - chmod +x $DOCKER_CONFIG/cli-plugins/docker-buildx
     # Install architect cli and login
     - npm install -g @architect-io/cli
     - architect login -e $ARCHITECT_EMAIL -p $ARCHITECT_PASSWORD
