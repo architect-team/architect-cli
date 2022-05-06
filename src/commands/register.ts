@@ -14,6 +14,7 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import * as Docker from '../common/utils/docker';
+import DockerBuildXUtils from '../common/utils/docker-buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
 tmp.setGracefulCleanup();
@@ -107,6 +108,13 @@ export default class ComponentRegister extends Command {
           delete service.build.args;
         }
 
+        if (DockerBuildXUtils.isMacM1Machine()) {
+          const bakePlatforms: any = {
+            "x-bake": { "platforms": DockerBuildXUtils.getPlatforms() },
+          };
+          service.build = { ...service.build, ...bakePlatforms };
+        }
+
         compose.services[service_name] = {
           build: service.build,
           image: image,
@@ -120,38 +128,31 @@ export default class ComponentRegister extends Command {
 
     await DockerComposeUtils.writeCompose(compose_file, yaml.dump(compose));
 
-    let build_args: string[] = [];
+    let build_args: string[] = flags.arg || [];
     for (const service_config of Object.values(component_spec.services || {})) {
       build_args = build_args.concat((await this.getBuildArgs(service_config)).map(arg => {
         return `${arg}`;
       }));
     }
+
     build_args = build_args.filter((value, index, self) => {
       return self.indexOf(value) === index;
     }).reduce((arr, value) => {
-      arr.push('--build-arg');
-      arr.push(value);
+      arr.push("--set");
+      arr.push(`*.args.${value}`);
       return arr;
     }, [] as string[]);
 
+    const builder = await DockerBuildXUtils.getBuilder(this.app.config);
+
     try {
-      await DockerComposeUtils.dockerCompose(['-f', compose_file, 'build', ...build_args], {
-        stdio: 'inherit',
+      await DockerBuildXUtils.dockerBuildX(["bake", "-f", compose_file, "--push", ...build_args, "--builder", builder], {
+        stdio: "inherit",
       });
     } catch (err: any) {
       fs.removeSync(compose_file);
-      this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
+      this.log(`Docker buildx bake failed. Please make sure docker is running.`);
       this.error(err);
-    }
-
-    this.log(chalk.blue(`Uploading images ${component_spec.name}:${tag} with Architect Cloud...`));
-
-    try {
-      await DockerComposeUtils.dockerCompose(['-f', compose_file, 'push'], {
-        stdio: 'inherit',
-      });
-    } finally {
-      fs.removeSync(compose_file);
     }
 
     const new_spec = classToClass(component_spec);
