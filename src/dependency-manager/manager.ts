@@ -25,10 +25,6 @@ export default abstract class DependencyManager {
   use_sidecar = true;
   account?: string;
 
-  validateSecrets(secrets_dict: Dictionary<SecretValue>): void {
-    SecretsConfig.validate(secrets_dict);
-  }
-
   getComponentNodes(component: ComponentConfig): DependencyNode[] {
     const nodes = [];
     // Load component services
