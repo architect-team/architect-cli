@@ -1,31 +1,28 @@
 const { GIT_BRANCH: branch } = process.env;
 
-const plugins = [
-  "@semantic-release/commit-analyzer",
-  "@semantic-release/release-notes-generator",
-  [
-    "@semantic-release/git",
-    {
-      "assets": [
-        "CHANGELOG.md",
-        "README.md",
-        "package.json",
-        "package-lock.json",
-        "docs/5-reference/2-architect-yml.md",
-        "src/dependency-manager/schema/architect.schema.json",
-      ]
-    }
-  ],
-  [
-    "@semantic-release/exec",
-    {
-      "publishCmd": "npm run pack"
-    }
-  ],
-  "@semantic-release/npm"
+const commitAnalyzer = "@semantic-release/commit-analyzer";
+const releaseNotesGenerator = "@semantic-release/release-notes-generator";
+const git = [
+  "@semantic-release/git",
+  {
+    "assets": [
+      "CHANGELOG.md",
+      "README.md",
+      "package.json",
+      "package-lock.json",
+      "docs/5-reference/2-architect-yml.md",
+      "src/dependency-manager/schema/architect.schema.json",
+    ]
+  }
 ];
-
-const main_plugins = plugins.concat([[
+const exec = [
+  "@semantic-release/exec",
+  {
+    "publishCmd": "npm run pack"
+  }
+];
+const npm = "@semantic-release/npm";
+const github = [
   "@semantic-release/github",
   {
     "assets": [
@@ -35,12 +32,32 @@ const main_plugins = plugins.concat([[
       }
     ]
   }
-], [
+];
+const changelog = [
   "@semantic-release/changelog",
   {
     "changelogFile": "CHANGELOG.md"
   }
-]]);
+];
+
+
+const default_plugins = [
+  commitAnalyzer,
+  releaseNotesGenerator,
+  exec,
+  npm,
+  git
+]
+
+const main_plugins = [
+  commitAnalyzer,
+  releaseNotesGenerator,
+  changelog,
+  exec,
+  npm,
+  git,
+  github
+]
 
 module.exports = {
   "branches": [
@@ -54,5 +71,8 @@ module.exports = {
       "prerelease": true
     }
   ],
-  plugins: branch === 'main' ? main_plugins : plugins,
+  plugins: branch === 'main' ? main_plugins : default_plugins,
 };
+
+
+console.log(module.exports);
