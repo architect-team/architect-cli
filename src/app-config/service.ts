@@ -39,6 +39,7 @@ export default class AppService {
       baseURL: this.config.api_host,
       timeout: 10000,
       headers: {
+        'Cli-Version': this.version,
         'User-Agent': `architect/cli ${this.version} ${os.platform()} ${os.type()}/${os.release()}`,
       },
     });
