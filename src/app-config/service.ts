@@ -1,11 +1,12 @@
 import axios, { AxiosInstance } from 'axios';
 import fs from 'fs-extra';
 import https from 'https';
+import os from 'os';
 import path from 'path';
 import { URL } from 'url';
+import { Dictionary } from '../';
 import User from '../architect/user/user.entity';
 import LoginRequiredError from '../common/errors/login-required';
-import { Dictionary } from '../';
 import LocalPaths from '../paths';
 import AuthClient from './auth';
 import AppConfig from './config';
@@ -39,6 +40,7 @@ export default class AppService {
       timeout: 10000,
       headers: {
         'Cli-Version': this.version,
+        'User-Agent': `architect/cli ${this.version} ${os.platform()} ${os.type()}/${os.release()}`,
       },
     });
 
