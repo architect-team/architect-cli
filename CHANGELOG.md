@@ -1,3 +1,10 @@
+## [1.16.4](https://github.com/architect-team/architect-cli/compare/v1.16.3...v1.16.4) (2022-05-17)
+
+
+### Bug Fixes
+
+* **register:** Reverted buildx changes as we investigate issues with CI providers. ([a0b17d4](https://github.com/architect-team/architect-cli/commit/a0b17d479bbcb47d1852b27f6af05395496cf03b))
+
 ## [1.16.3](https://github.com/architect-team/architect-cli/compare/v1.16.2...v1.16.3) (2022-05-12)
 
 
