@@ -1320,17 +1320,20 @@ describe('interpolation spec v1', () => {
     name: examples/hello-world
     secrets:
       ip_whitelist:
-        default: [127.0.0.1]
+        required: true
       required_ip_whitelist:
+        required: true
     interfaces:
       api:
         url: \${{ services.api.interfaces.main.url }}
         ingress:
-          ip_whitelist: \${{ secrets.ip_whitelist }}
+          ip_whitelist:
+            - \${{ secrets.ip_whitelist }}
       api2:
         url: \${{ services.api.interfaces.main.url }}
         ingress:
-          ip_whitelist: \${{ secrets.required_ip_whitelist }}
+          ip_whitelist:
+            - \${{ secrets.required_ip_whitelist }}
     services:
       api:
         interfaces:
@@ -1347,7 +1350,7 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph(
       await manager.loadComponentSpecs('examples/hello-world'),
       // @ts-ignore
-      { '*': { required_ip_whitelist: ['127.0.0.1/32'] } }
+      { '*': { ip_whitelist: '1.2.3.4', required_ip_whitelist: '127.0.0.1/32' } }
     );
     const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
 
@@ -1358,7 +1361,7 @@ describe('interpolation spec v1', () => {
       api: {
         url: `http://${api_ref}:8080`,
         ingress: {
-          ip_whitelist: ['127.0.0.1']
+          ip_whitelist: ['1.2.3.4']
         }
       },
       api2: {
