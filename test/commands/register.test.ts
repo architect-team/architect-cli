@@ -7,7 +7,6 @@ import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
-import DockerBuildXUtils from '../../src/common/utils/docker-buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
@@ -239,7 +238,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth
-    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub().throws('Some internal docker build exception'))
+    .stub(DockerComposeUtils, 'dockerCompose', sinon.stub().throws('Some internal docker build exception'))
     .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
@@ -251,11 +250,11 @@ describe('register', function () {
     .catch(err => {
       expect(`${err}`).to.contain('Some internal docker build exception')
     })
-    .it('rejects with informative error message if docker buildx inspect fails', ctx => {
+    .it('rejects with informative error message if docker build fails', ctx => {
       const getDigest = Docker.getDigest as sinon.SinonStub;
       expect(getDigest.notCalled).to.be.true;
 
-      expect(ctx.stdout).to.contain("Docker buildx bake failed. Please make sure docker is running.");
+      expect(ctx.stdout).to.contain('Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present');
     });
 
   mockArchitectAuth
@@ -287,7 +286,7 @@ describe('register', function () {
 
   mockArchitectAuth
     .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
-    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
+    .stub(DockerComposeUtils, 'dockerCompose', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
@@ -305,9 +304,9 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'examples/react-app/architect.yml', '--arg', 'NODE_ENV=dev', '-a', 'examples'])
     .it('override build arg specified in architect.yml', ctx => {
-      const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
-      expect(compose.callCount).to.eq(1);
-      expect(compose.firstCall.args[0][5]).to.deep.equal("*.args.NODE_ENV=dev");
+      const compose = DockerComposeUtils.dockerCompose as sinon.SinonStub;
+      expect(compose.callCount).to.eq(2);
+      expect(compose.firstCall.args[0][4]).to.deep.equal('NODE_ENV=dev');
 
       const writeCompose = DockerComposeUtils.writeCompose as sinon.SinonStub;
       const compose_contents = yaml.load(writeCompose.firstCall.args[1]) as DockerComposeTemplate;
@@ -320,7 +319,7 @@ describe('register', function () {
 
   mockArchitectAuth
     .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
-    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
+    .stub(DockerComposeUtils, 'dockerCompose', sinon.stub())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -337,9 +336,9 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'examples/stateful-component/architect.yml', '--arg', 'NODE_ENV=dev', '--arg', 'SSH_PUB_KEY="abc==\ntest.architect.io"', '-a', 'examples'])
     .it('set build arg not specified in architect.yml', ctx => {
-      const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
-      expect(compose.callCount).to.eq(1);
-      expect(compose.firstCall.args[0][5]).to.deep.equal("*.args.NODE_ENV=dev");
-      expect(compose.firstCall.args[0][7]).to.deep.equal('*.args.SSH_PUB_KEY="abc==\ntest.architect.io"');
+      const compose = DockerComposeUtils.dockerCompose as sinon.SinonStub;
+      expect(compose.callCount).to.eq(2);
+      expect(compose.firstCall.args[0][4]).to.deep.equal('NODE_ENV=dev');
+      expect(compose.firstCall.args[0][6]).to.deep.equal('SSH_PUB_KEY="abc==\ntest.architect.io"');
     });
 });
