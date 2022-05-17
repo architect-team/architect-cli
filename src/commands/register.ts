@@ -120,7 +120,7 @@ export default class ComponentRegister extends Command {
 
     await DockerComposeUtils.writeCompose(compose_file, yaml.dump(compose));
 
-    let build_args: string[] = [];
+    let build_args: string[] = flags.arg || [];
     for (const service_config of Object.values(component_spec.services || {})) {
       build_args = build_args.concat((await this.getBuildArgs(service_config)).map(arg => {
         return `${arg}`;
