@@ -7,7 +7,7 @@ import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ResourceSpec, ServiceNode, Slugs } from '../';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs } from '../';
 import AccountUtils from '../architect/account/account.utils';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
@@ -120,13 +120,16 @@ export default class ComponentRegister extends Command {
 
     await DockerComposeUtils.writeCompose(compose_file, yaml.dump(compose));
 
-    let build_args: string[] = flags.arg || [];
-    for (const service_config of Object.values(component_spec.services || {})) {
-      build_args = build_args.concat((await this.getBuildArgs(service_config)).map(arg => {
-        return `${arg}`;
-      }));
+    const args = flags.arg || [];
+
+    for (const arg of args) {
+      const [key, value] = arg.split(/=([^]+)/);
+      if (!value) {
+        throw new Error(`--arg must be in the format key=value: ${arg}`);
+      }
     }
-    build_args = build_args.filter((value, index, self) => {
+
+    const build_args = args.filter((value, index, self) => {
       return self.indexOf(value) === index;
     }).reduce((arr, value) => {
       arr.push('--build-arg');
@@ -230,20 +233,6 @@ export default class ComponentRegister extends Command {
     this.log(chalk.green(`Successfully registered component`));
 
     console.log("Time: " + (Date.now() - start_time));
-  }
-
-  private async getBuildArgs(resource_spec: ResourceSpec): Promise<string[]> {
-    const { flags } = await this.parse(ComponentRegister);
-
-    const build_args_map: Dictionary<string | null> = { ...resource_spec.build?.args };
-    for (const arg of flags.arg || []) {
-      const [key, value] = arg.split(/=([^]+)/);
-      if (!value) {
-        throw new Error(`--arg must be in the format key=value: ${arg}`);
-      }
-      build_args_map[key] = value;
-    }
-    return Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
   }
 
   private async getDigest(image: string) {
