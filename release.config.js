@@ -1,5 +1,6 @@
 const { GIT_BRANCH: branch } = process.env;
 
+
 const commitAnalyzer = "@semantic-release/commit-analyzer";
 const releaseNotesGenerator = "@semantic-release/release-notes-generator";
 const git = [
