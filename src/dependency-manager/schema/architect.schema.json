@@ -4306,6 +4306,10 @@
                   {
                     "type": "string",
                     "format": "cidrv4"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
                   }
                 ]
               }
@@ -4365,6 +4369,10 @@
                           {
                             "type": "string",
                             "format": "cidrv4"
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
                           }
                         ]
                       }
@@ -8230,6 +8238,10 @@
                   {
                     "type": "string",
                     "format": "cidrv4"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
                   }
                 ]
               }
@@ -8289,6 +8301,10 @@
                           {
                             "type": "string",
                             "format": "cidrv4"
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
                           }
                         ]
                       }
