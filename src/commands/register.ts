@@ -145,7 +145,7 @@ export default class ComponentRegister extends Command {
 
     const builder = await DockerBuildXUtils.getBuilder(this.app.config);
 
-    try {// TODO: include context here
+    try {
       await DockerBuildXUtils.dockerBuildX(["bake", "-f", compose_file, "--push", ...build_args, "--builder", builder], builder, {
         stdio: "inherit",
       });
