@@ -1140,6 +1140,304 @@
         }
       }
     },
+    "DeployModuleSpec": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
+        },
+        "inputs": {
+          "type": "object",
+          "patternProperties": {
+            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "^\\${{\\s*if(.*?)\\s*}}$": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                  },
+                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+          },
+          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "inputs"
+      ],
+      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
+                },
+                "inputs": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "^\\${{\\s*if(.*?)\\s*}}$": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "patternProperties": {
+                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "errorMessage": {
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                          },
+                          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                  },
+                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+                  "additionalProperties": false
+                }
+              },
+              "type": "object",
+              "required": [
+                "path",
+                "inputs"
+              ],
+              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
+    "DeploySpec": {
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Selects the preferred deploy strategy for the service."
+        },
+        "modules": {
+          "type": "object",
+          "patternProperties": {
+            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/DeployModuleSpec"
+                }
+              ]
+            },
+            "^\\${{\\s*if(.*?)\\s*}}$": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/DeployModuleSpec"
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                  },
+                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+          },
+          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "required": [
+        "strategy",
+        "modules"
+      ],
+      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "strategy": {
+                  "type": "string",
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Selects the preferred deploy strategy for the service."
+                },
+                "modules": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/DeployModuleSpec"
+                        }
+                      ]
+                    },
+                    "^\\${{\\s*if(.*?)\\s*}}$": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "patternProperties": {
+                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/DeployModuleSpec"
+                                }
+                              ]
+                            }
+                          },
+                          "errorMessage": {
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                          },
+                          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                  },
+                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+                  "additionalProperties": false
+                }
+              },
+              "type": "object",
+              "required": [
+                "strategy",
+                "modules"
+              ],
+              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
     "BuildSpec": {
       "properties": {
         "context": {
@@ -1543,6 +1841,9 @@
             "url": "/docs/components/services/#cpu--memory"
           }
         },
+        "deploy": {
+          "$ref": "#/definitions/DeploySpec"
+        },
         "depends_on": {
           "type": "array",
           "items": {
@@ -1813,6 +2114,9 @@
                   "externalDocs": {
                     "url": "/docs/components/services/#cpu--memory"
                   }
+                },
+                "deploy": {
+                  "$ref": "#/definitions/DeploySpec"
                 },
                 "depends_on": {
                   "type": "array",
@@ -2869,6 +3173,9 @@
             "url": "/docs/components/services/#cpu--memory"
           }
         },
+        "deploy": {
+          "$ref": "#/definitions/DeploySpec"
+        },
         "depends_on": {
           "type": "array",
           "items": {
@@ -3304,6 +3611,9 @@
                     "url": "/docs/components/services/#cpu--memory"
                   }
                 },
+                "deploy": {
+                  "$ref": "#/definitions/DeploySpec"
+                },
                 "depends_on": {
                   "type": "array",
                   "items": {
@@ -3592,6 +3902,9 @@
             "url": "/docs/components/services/#cpu--memory"
           }
         },
+        "deploy": {
+          "$ref": "#/definitions/DeploySpec"
+        },
         "depends_on": {
           "type": "array",
           "items": {
@@ -3876,6 +4189,9 @@
                   "externalDocs": {
                     "url": "/docs/components/services/#cpu--memory"
                   }
+                },
+                "deploy": {
+                  "$ref": "#/definitions/DeploySpec"
                 },
                 "depends_on": {
                   "type": "array",
@@ -5475,6 +5791,288 @@
         }
       }
     },
+    "_DebugDeployModuleSpec": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
+        },
+        "inputs": {
+          "type": "object",
+          "patternProperties": {
+            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "^\\${{\\s*if(.*?)\\s*}}$": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                  },
+                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+          },
+          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
+                },
+                "inputs": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "^\\${{\\s*if(.*?)\\s*}}$": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "patternProperties": {
+                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "errorMessage": {
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                          },
+                          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                  },
+                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+                  "additionalProperties": false
+                }
+              },
+              "type": "object",
+              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
+    "_DebugDeploySpec": {
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Selects the preferred deploy strategy for the service."
+        },
+        "modules": {
+          "type": "object",
+          "patternProperties": {
+            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugDeployModuleSpec"
+                }
+              ]
+            },
+            "^\\${{\\s*if(.*?)\\s*}}$": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/_DebugDeployModuleSpec"
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                  },
+                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+          },
+          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "strategy": {
+                  "type": "string",
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Selects the preferred deploy strategy for the service."
+                },
+                "modules": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/_DebugDeployModuleSpec"
+                        }
+                      ]
+                    },
+                    "^\\${{\\s*if(.*?)\\s*}}$": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "patternProperties": {
+                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/_DebugDeployModuleSpec"
+                                }
+                              ]
+                            }
+                          },
+                          "errorMessage": {
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                          },
+                          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                  },
+                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+                  "additionalProperties": false
+                }
+              },
+              "type": "object",
+              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
     "_DebugBuildSpec": {
       "properties": {
         "context": {
@@ -6546,6 +7144,9 @@
             "url": "/docs/components/services/#cpu--memory"
           }
         },
+        "deploy": {
+          "$ref": "#/definitions/_DebugDeploySpec"
+        },
         "depends_on": {
           "type": "array",
           "items": {
@@ -6940,6 +7541,9 @@
                     "url": "/docs/components/services/#cpu--memory"
                   }
                 },
+                "deploy": {
+                  "$ref": "#/definitions/_DebugDeploySpec"
+                },
                 "depends_on": {
                   "type": "array",
                   "items": {
@@ -7225,6 +7829,9 @@
             "url": "/docs/components/services/#cpu--memory"
           }
         },
+        "deploy": {
+          "$ref": "#/definitions/_DebugDeploySpec"
+        },
         "depends_on": {
           "type": "array",
           "items": {
@@ -7506,6 +8113,9 @@
                   "externalDocs": {
                     "url": "/docs/components/services/#cpu--memory"
                   }
+                },
+                "deploy": {
+                  "$ref": "#/definitions/_DebugDeploySpec"
                 },
                 "depends_on": {
                   "type": "array",
