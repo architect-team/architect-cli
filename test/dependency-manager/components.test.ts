@@ -785,7 +785,7 @@ describe('components spec v1', function () {
       });
       const config = await manager.loadComponentSpec('architect/cloud:latest');
 
-      await manager.getGraph([config], { '*': { app_replicas: '<redacted>' } }, true, false);
+      await manager.getGraph([config], { '*': { app_replicas: '<redacted>' } }, { interpolate: true, validate: false });
     });
 
     it('test account scoping', async () => {

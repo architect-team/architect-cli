@@ -77,7 +77,7 @@ export default class ComponentRegister extends Command {
     dependency_manager.account = selected_account.name;
 
     const loaded_spec = await dependency_manager.loadComponentSpec(component_spec.name);
-    const graph = await dependency_manager.getGraph([loaded_spec], undefined, false, false);
+    const graph = await dependency_manager.getGraph([loaded_spec], undefined, { interpolate: false, validate: false });
     // Tmp fix to register host overrides
     for (const node of graph.nodes.filter(n => n instanceof ServiceNode) as ServiceNode[]) {
       for (const interface_config of Object.values(node.interfaces)) {

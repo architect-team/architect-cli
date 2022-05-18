@@ -1037,7 +1037,7 @@ services:
 
     let err;
     try {
-      SecretsConfig.validate(values_dict)
+      SecretsConfig.validate(values_dict as any)
     } catch (e: any) {
       err = e;
     }
