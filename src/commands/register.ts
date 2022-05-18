@@ -110,10 +110,17 @@ export default class ComponentRegister extends Command {
 
         if (DockerBuildXUtils.isMacM1Machine()) {
           const bakePlatforms: any = {
-            "x-bake": { "platforms": DockerBuildXUtils.getPlatforms() },
+            'x-bake': { 'platforms': DockerBuildXUtils.getPlatforms() },
           };
           service.build = { ...service.build, ...bakePlatforms };
         }
+        service.build!['x-bake'] = { // TODO: remove !?
+          ...service.build!['x-bake'], // TODO: remove !?
+          platforms: ['linux/amd64', 'linux/arm64'],
+          'cache-from': 'type=local,src=/tmp/buildx-cache-architect-local', // TODO: change cache dir
+          'cache-to': 'type=local,dest=/tmp/buildx-cache-architect-local', // TODO: change cache dir
+          pull: true, // TODO: why can't caches be shared between different builders?
+        };
 
         compose.services[service_name] = {
           build: service.build,
@@ -138,7 +145,7 @@ export default class ComponentRegister extends Command {
     build_args = build_args.filter((value, index, self) => {
       return self.indexOf(value) === index;
     }).reduce((arr, value) => {
-      arr.push("--set");
+      arr.push('--set');
       arr.push(`*.args.${value}`);
       return arr;
     }, [] as string[]);
@@ -146,8 +153,8 @@ export default class ComponentRegister extends Command {
     const builder = await DockerBuildXUtils.getBuilder(this.app.config);
 
     try {
-      await DockerBuildXUtils.dockerBuildX(["bake", "-f", compose_file, "--push", ...build_args, "--builder", builder], builder, {
-        stdio: "inherit",
+      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args, '--builder', builder], builder, {
+        stdio: 'inherit',
       });
     } catch (err: any) {
       fs.removeSync(compose_file);
@@ -230,7 +237,7 @@ export default class ComponentRegister extends Command {
     CliUx.ux.action.stop();
     this.log(chalk.green(`Successfully registered component`));
 
-    console.log("Time: " + (Date.now() - start_time));
+    console.log('Time: ' + (Date.now() - start_time));
   }
 
   private async getBuildArgs(resource_spec: ResourceSpec): Promise<string[]> {

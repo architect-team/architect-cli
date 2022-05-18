@@ -1,7 +1,6 @@
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import config from '../../app-config/config';
-import { docker } from './docker';
 
 export default class DockerBuildXUtils {
 
@@ -26,12 +25,24 @@ export default class DockerBuildXUtils {
     const is_local = config.api_host.includes('localhost') || config.api_host.includes('0.0.0.0') || config.api_host.includes('127.0.0.1');
     const builder = is_local ? 'architect-local' : 'architect';
 
+    // TODO: how do we create a custom context with a "docker-container" driver, not a "docker" driver?
     // Create a docker context
-    try {
-      await docker(['context', 'create', builder]);
-    // eslint-disable-next-line no-empty
-    } catch (err) { }
+    // try {
+    //   await docker(['context', 'create', builder]);
+    // // eslint-disable-next-line no-empty
+    // } catch (err) { }
 
+    // throw new Error('test')
+
+    // https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images
+    /*
+      In order to not explode, needed to run
+      docker run --privileged --rm tonistiigi/binfmt --uninstall qemu-aarch64
+      docker run -it --rm --privileged tonistiigi/binfmt --install all
+      https://github.com/docker/buildx/issues/464
+      https://github.com/tonistiigi/binfmt#uninstalling-emulators
+      https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images
+    */
     try {
       if (is_local) {
         // Create a configuration file for buildkitd
@@ -39,10 +50,10 @@ export default class DockerBuildXUtils {
         const file_content = `[registry.'${config.registry_host}']\n  http = true\n  insecure = true`;
         await this.writeBuildkitdConfigFile(local_buildkitd_config_file, file_content);
 
-        await this.dockerBuildX(['create', '--name', builder, '--driver-opt', 'network=host', '--use', '--buildkitd-flags', '--allow-insecure-entitlement security.insecure', `--config=${local_buildkitd_config_file}`], builder, {
+        await this.dockerBuildX(['create', '--name', builder, '--driver', 'docker-container', '--driver-opt', 'image=moby/buildkit:master,network=host', '--use', '--buildkitd-flags', '--allow-insecure-entitlement security.insecure', `--config=${local_buildkitd_config_file}`], builder, {
           stdio: 'inherit',
         });
-      } else {
+      } else { // TODO: also test this
         await this.dockerBuildX(['create', '--name', builder], builder, {
           stdio: 'inherit',
         });
@@ -57,7 +68,9 @@ export default class DockerBuildXUtils {
     if (use_console) {
       process.stdin.setRawMode(true);
     }
-    const cmd = execa('docker', [`--context=${docker_context_name}`, 'buildx', ...args], execa_opts);
+    // TODO: how do we create a custom context with a "docker-container" driver, not a "docker" driver?
+    // const cmd = execa('docker', [`--context=${docker_context_name}`, 'buildx', ...args], execa_opts);
+    const cmd = execa('docker', ['buildx', ...args], execa_opts);
     if (use_console) {
       cmd.on('exit', () => {
         process.exit();
