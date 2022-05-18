@@ -4,6 +4,7 @@ import { classToClass, classToPlain } from 'class-transformer';
 import * as Diff from 'diff';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
+import os from 'os';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
@@ -108,18 +109,12 @@ export default class ComponentRegister extends Command {
           delete service.build.args;
         }
 
-        if (DockerBuildXUtils.isMacM1Machine()) {
-          const bakePlatforms: any = {
-            'x-bake': { 'platforms': DockerBuildXUtils.getPlatforms() },
-          };
-          service.build = { ...service.build, ...bakePlatforms };
-        }
-        service.build!['x-bake'] = { // TODO: remove !?
-          ...service.build!['x-bake'], // TODO: remove !?
-          platforms: ['linux/amd64', 'linux/arm64'],
-          'cache-from': 'type=local,src=/tmp/buildx-cache-architect-local', // TODO: change cache dir
-          'cache-to': 'type=local,dest=/tmp/buildx-cache-architect-local', // TODO: change cache dir
-          pull: true, // TODO: why can't caches be shared between different builders?
+        const cache_directory = path.join(os.tmpdir(), `architect-build-cache${ DockerBuildXUtils.isLocal(this.app.config) ? '-local' : ''}`);
+        service.build['x-bake'] = {
+          platforms: DockerBuildXUtils.getPlatforms(),
+          'cache-from': `type=local,src=${cache_directory}`,
+          'cache-to': `type=local,dest=${cache_directory}`,
+          pull: true,
         };
 
         compose.services[service_name] = {

@@ -1,6 +1,7 @@
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import config from '../../app-config/config';
+import { docker } from './docker';
 
 export default class DockerBuildXUtils {
 
@@ -21,18 +22,19 @@ export default class DockerBuildXUtils {
     });
   }
 
+  public static isLocal(config: config): boolean {
+    return config.api_host.includes('localhost') || config.api_host.includes('0.0.0.0') || config.api_host.includes('127.0.0.1');
+  }
+
   public static async getBuilder(config: config): Promise<string> {
-    const is_local = config.api_host.includes('localhost') || config.api_host.includes('0.0.0.0') || config.api_host.includes('127.0.0.1');
+    const is_local = this.isLocal(config);
     const builder = is_local ? 'architect-local' : 'architect';
 
-    // TODO: how do we create a custom context with a "docker-container" driver, not a "docker" driver?
     // Create a docker context
-    // try {
-    //   await docker(['context', 'create', builder]);
-    // // eslint-disable-next-line no-empty
-    // } catch (err) { }
-
-    // throw new Error('test')
+    try {
+      await docker(['context', 'create', `${builder}-context`]);
+    // eslint-disable-next-line no-empty
+    } catch (err) { }
 
     // https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images
     /*
@@ -64,13 +66,11 @@ export default class DockerBuildXUtils {
     return builder;
   }
 
-  public static async dockerBuildX(args: string[], docker_context_name: string, execa_opts?: Options, use_console = false): Promise<execa.ExecaChildProcess<string>> {
+  public static async dockerBuildX(args: string[], docker_builder_name: string, execa_opts?: Options, use_console = false): Promise<execa.ExecaChildProcess<string>> {
     if (use_console) {
       process.stdin.setRawMode(true);
     }
-    // TODO: how do we create a custom context with a "docker-container" driver, not a "docker" driver?
-    // const cmd = execa('docker', [`--context=${docker_context_name}`, 'buildx', ...args], execa_opts);
-    const cmd = execa('docker', ['buildx', ...args], execa_opts);
+    const cmd = execa('docker', [`--context=${docker_builder_name}-context`, 'buildx', ...args], execa_opts);
     if (use_console) {
       cmd.on('exit', () => {
         process.exit();
