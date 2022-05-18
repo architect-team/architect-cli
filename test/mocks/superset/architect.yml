@@ -56,14 +56,6 @@ services:
         build_arg_unset:
     cpu: 2
     memory: 4GB
-    deploy:
-      strategy: deploy-strategy
-      modules:
-        deploy-module:
-          path: ./deploy/module
-          inputs:
-            deploy-input-string: some_deploy_input
-            deploy-input-unset:
     depends_on:
       - stateful-api
     labels:
@@ -118,14 +110,6 @@ services:
           build_arg_unset:
       cpu: 2
       memory: 4GB
-      deploy:
-        strategy: deploy-strategy
-        modules:
-          deploy-module:
-            path: ./deploy/module
-            inputs:
-              deploy-input-string: some_deploy_input
-              deploy-input-unset:
       depends_on:
         - stateful-api
       labels:
