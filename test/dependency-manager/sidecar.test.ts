@@ -548,7 +548,7 @@ describe('sidecar spec v1', () => {
     const graph = await manager.getGraph([
       stateless_component,
       hello_component
-    ], undefined, true, false);
+    ], undefined, { interpolate: true, validate: false });
 
     const app_ref = ecsResourceRefToNodeRef('examples/stateless-component.services.stateless-app');
     const app_node = graph.getNodeByRef(app_ref);

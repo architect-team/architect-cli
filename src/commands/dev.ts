@@ -322,7 +322,7 @@ export default class Dev extends BaseCommand {
     if (!port_available) {
       this.error(`Could not run architect on port ${flags.port}.\nPlease stop an existing process or specify --port to choose a different port.`);
     }
-    dependency_manager.gateway_port = flags.port;
+    dependency_manager.external_addr = `arc.localhost:${flags.port}`;
 
     if (flags.account) {
       const account = await AccountUtils.getAccount(this.app, flags.account);
