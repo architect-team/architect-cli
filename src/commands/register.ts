@@ -36,6 +36,10 @@ export default class ComponentRegister extends Command {
       description: 'Tag to give to the new component',
       default: 'latest',
     }),
+    'cache-directory': Flags.string({
+      description: 'Directory to write build cache to',
+      default: path.join(os.tmpdir(), 'architect-build-cache'),
+    }),
   };
 
   static args = [{
@@ -109,11 +113,10 @@ export default class ComponentRegister extends Command {
           delete service.build.args;
         }
 
-        const cache_directory = path.join(os.tmpdir(), `architect-build-cache${ DockerBuildXUtils.isLocal(this.app.config) ? '-local' : ''}`);
         service.build['x-bake'] = {
           platforms: DockerBuildXUtils.getPlatforms(),
-          'cache-from': `type=local,src=${cache_directory}`,
-          'cache-to': `type=local,dest=${cache_directory}`,
+          'cache-from': `type=local,src=${flags['cache-directory']}`,
+          'cache-to': `type=local,dest=${flags['cache-directory']}`,
           pull: true,
         };
 

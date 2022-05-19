@@ -36,15 +36,6 @@ export default class DockerBuildXUtils {
     // eslint-disable-next-line no-empty
     } catch (err) { }
 
-    // https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images
-    /*
-      In order to not explode, needed to run
-      docker run --privileged --rm tonistiigi/binfmt --uninstall qemu-aarch64
-      docker run -it --rm --privileged tonistiigi/binfmt --install all
-      https://github.com/docker/buildx/issues/464
-      https://github.com/tonistiigi/binfmt#uninstalling-emulators
-      https://docs.docker.com/buildx/working-with-buildx/#build-multi-platform-images
-    */
     try {
       if (is_local) {
         // Create a configuration file for buildkitd
