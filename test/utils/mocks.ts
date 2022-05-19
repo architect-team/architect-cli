@@ -2,7 +2,6 @@ import { test } from '@oclif/test';
 import path from 'path';
 import AuthClient from '../../src/app-config/auth';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
-import DockerBuildXUtils from '../../src/common/utils/docker-buildx.utils';
 import * as Docker from '../../src/common/utils/docker';
 
 export const MOCK_API_HOST = 'http://mock.api.localhost';
@@ -26,6 +25,3 @@ export const mockArchitectAuth = test
   .stub(Docker, 'verify', () => { })
   .stub(DockerComposeUtils, 'dockerCompose', () => { })
   .stub(DockerComposeUtils, 'writeCompose', () => { })
-  .stub(DockerBuildXUtils, 'writeBuildkitdConfigFile', () => { })
-  .stub(DockerBuildXUtils, 'dockerBuildX', () => { })
-  .stub(DockerBuildXUtils, 'getBuilder', () => { })

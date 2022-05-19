@@ -347,7 +347,7 @@ describe('interpolation spec v1', () => {
     });
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('examples/frontend')
-    ], {}, true, false);
+    ], {}, { interpolate: true, validate: false });
 
     const frontend_ref = resourceRefToNodeRef('examples/frontend.services.app');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
