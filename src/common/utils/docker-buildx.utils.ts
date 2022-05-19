@@ -46,7 +46,7 @@ export default class DockerBuildXUtils {
         await this.dockerBuildX(['create', '--name', builder, '--driver', 'docker-container', '--driver-opt', 'image=moby/buildkit:master,network=host', '--use', '--buildkitd-flags', '--allow-insecure-entitlement security.insecure', `--config=${local_buildkitd_config_file}`], builder, {
           stdio: 'inherit',
         });
-      } else { // TODO: also test this
+      } else {
         await this.dockerBuildX(['create', '--name', builder], builder, {
           stdio: 'inherit',
         });
