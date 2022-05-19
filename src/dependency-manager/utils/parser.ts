@@ -83,7 +83,7 @@ export class ArchitectParser {
     this.errors = [];
   }
 
-  protected parseExpression(program: string, context_map: any, ignore_keys: string[] = [], _depth = 0): any {
+  protected parseExpression(program: string, context_map: any, _depth = 0): any {
     const ast = LooseParser.parse(program, { ecmaVersion: 2020 });
 
     estraverse.replace(ast, {
@@ -104,24 +104,20 @@ export class ArchitectParser {
           const value = context_map[context_key];
 
           if (!(context_key in context_map)) {
-            // TODO:333 instead of ignore_keys - opt-in
-            const ignored = ignore_keys.some((k) => context_key.startsWith(k));
-            if (!ignored) {
-              this.errors.push(new ValidationError({
-                component: context_map.name,
-                path: '<unknown>',
-                message: `Invalid interpolation ref: \${{ ${context_key} }}`,
-                value: context_key,
-              }));
-              return {
-                type: 'Literal',
-                value: `<error: ${context_key}>`,
-              };
-            }
+            this.errors.push(new ValidationError({
+              component: context_map.name,
+              path: '', // Set in interpolation.ts
+              message: `Invalid interpolation ref: \${{ ${context_key} }}`,
+              value: context_key,
+            }));
+            return {
+              type: 'Literal',
+              value: `<error: ${context_key}>`,
+            };
           }
           return {
             type: 'Literal',
-            value: this.parseString(value, context_map, ignore_keys, _depth + 1),
+            value: this.parseString(value, context_map, _depth + 1),
           };
         }
       },
@@ -227,7 +223,7 @@ export class ArchitectParser {
     return ast;
   }
 
-  public parseString(program: string, context_map: any, ignore_keys: string[] = [], _depth = 0): any {
+  public parseString(program: string, context_map: any, _depth = 0): any {
     if (_depth === 0) {
       this.errors = [];
     }
@@ -236,9 +232,11 @@ export class ArchitectParser {
 
     let last_value;
     for (const match of matches(program, EXPRESSION_REGEX)) {
-      const ast = this.parseExpression(match[1], context_map, ignore_keys, _depth);
-      res = res.replace(match[0], ast.body[0].value);
-      last_value = ast.body[0].value;
+      const ast = this.parseExpression(match[1], context_map, _depth);
+      if (this.errors.length === 0) {
+        res = res.replace(match[0], ast.body[0].value);
+        last_value = ast.body[0].value;
+      }
     }
 
     // Handle case where value a number or boolean. Ex ${{ secrets.replicas }} is a number

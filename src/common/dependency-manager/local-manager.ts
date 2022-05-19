@@ -160,6 +160,7 @@ export default class LocalDependencyManager extends DependencyManager {
   getArchitectContext(): ArchitectContext {
     return {
       environment: this.environment,
+      tag: 'latest', // TODO:TJ this.tag
     };
   }
 }

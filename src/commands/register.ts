@@ -15,6 +15,7 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import * as Docker from '../common/utils/docker';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
+import { registerInterpolation } from '../dependency-manager/utils/interpolation';
 
 tmp.setGracefulCleanup();
 
@@ -60,24 +61,32 @@ export default class ComponentRegister extends Command {
     const start_time = Date.now();
 
     // here we validate spec and config, but only need to send the spec to the API so we don't need the resulting config
-    const component_spec = buildSpecFromPath(config_path);
+    let component_spec = buildSpecFromPath(config_path);
 
     if (!component_spec.name) {
       throw new Error('Component Config must have a name');
     }
 
+    const context = {
+      architect: {
+        tag: 'latest',
+        args: {
+          test: 'test2', // TODO:TJ
+        },
+      },
+    };
+
+    component_spec = registerInterpolation(component_spec, context);
+
     const { component_account_name, component_name } = ComponentSlugUtils.parse(component_spec.name);
     const selected_account = await AccountUtils.getAccount(this.app, component_account_name || flags.account);
 
-    const dependency_manager = new LocalDependencyManager(
-      this.app.api,
-      { [component_spec.name]: config_path }
-    );
+    const dependency_manager = new LocalDependencyManager(this.app.api);
     dependency_manager.environment = 'production';
     dependency_manager.account = selected_account.name;
 
-    const loaded_spec = await dependency_manager.loadComponentSpec(component_spec.name);
-    const graph = await dependency_manager.getGraph([loaded_spec], undefined, { interpolate: false, validate: false });
+    // TODO:TJ test dependencies const loaded_spec = await dependency_manager.loadComponentSpec(component_spec.name);
+    const graph = await dependency_manager.getGraph([component_spec], undefined, { interpolate: false, validate: false });
     // Tmp fix to register host overrides
     for (const node of graph.nodes.filter(n => n instanceof ServiceNode) as ServiceNode[]) {
       for (const interface_config of Object.values(node.interfaces)) {
@@ -102,10 +111,6 @@ export default class ComponentRegister extends Command {
         const ref_with_account = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, resource_type, resource_name);
 
         const image = `${this.app.config.registry_host}/${ref_with_account}:${tag}`;
-
-        if (service.build) {
-          delete service.build.args;
-        }
 
         compose.services[service_name] = {
           build: service.build,
