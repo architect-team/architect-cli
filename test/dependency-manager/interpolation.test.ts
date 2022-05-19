@@ -1370,6 +1370,64 @@ describe('interpolation spec v1', () => {
     });
   });
 
+  it('interpolate interfaces ingress whitelist with single value', async () => {
+    const component_config = `
+    name: examples/hello-world
+    secrets:
+      ip_whitelist:
+        required: true
+      required_ip_whitelist:
+        required: true
+    interfaces:
+      api:
+        url: \${{ services.api.interfaces.main.url }}
+        ingress:
+          ip_whitelist:
+            - \${{ secrets.ip_whitelist }}
+      api2:
+        url: \${{ services.api.interfaces.main.url }}
+        ingress:
+          ip_whitelist:
+            - \${{ secrets.required_ip_whitelist }}
+    services:
+      api:
+        interfaces:
+          main: 8080
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentSpecs('examples/hello-world'),
+      // @ts-ignore
+      { '*': { ip_whitelist: '1.2.3.4', required_ip_whitelist: '127.0.0.1/32' } }
+    );
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+
+    const hello_component = await manager.loadComponentSpec('examples/hello-world')
+    const component_ref = buildInterfacesRef(hello_component);
+    const node = graph.getNodeByRef(component_ref) as ComponentNode;
+    expect(node.config.interfaces).to.deep.eq({
+      api: {
+        url: `http://${api_ref}:8080`,
+        ingress: {
+          ip_whitelist: ['1.2.3.4']
+        }
+      },
+      api2: {
+        url: `http://${api_ref}:8080`,
+        ingress: {
+          ip_whitelist: ['127.0.0.1/32']
+        }
+      }
+    });
+  });
+
   it('interpolate component outputs', async () => {
     const publisher_config = `
     name: examples/publisher
