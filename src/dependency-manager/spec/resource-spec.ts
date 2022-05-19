@@ -197,8 +197,10 @@ export abstract class ResourceSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...ExpressionOr({ type: 'string', pattern: Slugs.ArchitectSlugRegexBase }),
-    description: 'A specific service name which will override the service name specified as the key in the component.',
+    type: 'string',
+    pattern: Slugs.ReservedNameValidator.source,
+    errorMessage: Slugs.ReservedNameDescription,
+    description: 'A specific service name which will override the service name specified in the component.',
   })
   reserved_name?: string;
 }

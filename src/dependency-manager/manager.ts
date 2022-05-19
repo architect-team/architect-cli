@@ -149,7 +149,7 @@ export default abstract class DependencyManager {
       while ((matches = services_regex.exec(service_string)) != null) {
         if (!matches.groups) { continue; }
         const { service_name, interface_name } = matches.groups;
-        const service_to = services.find(s => s.resource_name === service_name)
+        const service_to = services.find(s => s.resource_name === service_name);
         const to = service_to?.resource_config.reserved_name || buildNodeRef(component, 'services', service_name);
 
         if (to === from) continue;

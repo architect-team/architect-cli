@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
 import path from 'path';
-import { IngressEdge, resourceRefToNodeRef, ServiceNode } from '../../src';
+import { IngressEdge, resourceRefToNodeRef, ServiceNode, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
@@ -76,58 +76,42 @@ describe('components with reserved_name field set', function () {
       expect(template).to.be.deep.equal(expected_compose);
     });
 
-    // it('simple local component with interpolated reserved name', async () => {
-    //   const full_reserved_name = 'test-name-api';
-    //   const component_config_yml = `
-    //     name: architect/cloud
-    //     secrets:
-    //       name_override:
-    //         default: test-name
-    //     services:
-    //       api:
-    //         interfaces:
-    //           main: 8080
-    //         reserved_name: \${{ secrets.name_override }}-api
-    //   `
+    it('simple local component with interpolated reserved name', async () => { // TODO: can't interpolate a reserved name
+      const full_reserved_name = 'test-name-api';
+      const component_config_yml = `
+        name: architect/cloud
+        secrets:
+          name_override:
+            default: test-name
+        services:
+          api:
+            interfaces:
+              main: 8080
+            reserved_name: \${{ secrets.name_override }}-api
+      `
 
-    //   mock_fs({
-    //     '/stack/architect.yml': component_config_yml,
-    //   });
+      mock_fs({
+        '/stack/architect.yml': component_config_yml,
+      });
 
-    //   const manager = new LocalDependencyManager(axios.create(), {
-    //     'architect/cloud': '/stack'
-    //   });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'architect/cloud': '/stack'
+      });
 
-    //   const graph = await manager.getGraph([
-    //     await manager.loadComponentSpec('architect/cloud:latest')
-    //   ]);
-
-    //   const api_ref = full_reserved_name;
-
-    //   expect(graph.nodes.map((n) => n.ref)).has.members([
-    //     api_ref,
-    //   ])
-    //   expect(graph.edges.map((e) => e.toString())).has.members([])
-
-    //   const template = await DockerComposeUtils.generate(graph);
-    //   const expected_compose: DockerComposeTemplate = {
-    //     "services": {
-    //       [api_ref]: {
-    //         "environment": {},
-    //         "ports": [
-    //           "50000:8080"
-    //         ],
-    //         "build": {
-    //           "context": path.resolve("/stack")
-    //         },
-    //         labels: [`architect.ref=${full_reserved_name}`]
-    //       },
-    //     },
-    //     "version": "3",
-    //     "volumes": {},
-    //   };
-    //   expect(template).to.be.deep.equal(expected_compose);
-    // });
+      try {
+        await manager.loadComponentSpec('architect/cloud:latest');
+      } catch (err: any) {
+        expect(err).instanceOf(ValidationErrors);
+        const errors = JSON.parse(err.message) as ValidationError[];
+        expect(errors).lengthOf(1);
+        expect(errors[0].path).eq(`services.api.reserved_name`);
+        expect(errors[0].value).includes('${{ secrets.name_override }}-api');
+        expect(errors[0].start?.row).eq(10);
+        expect(errors[0].start?.column).eq(27);
+        expect(errors[0].end?.row).eq(10);
+        expect(errors[0].end?.column).eq(59);
+      }
+    });
 
     it('simple remote component', async () => {
       const reserved_name = 'test-name';
