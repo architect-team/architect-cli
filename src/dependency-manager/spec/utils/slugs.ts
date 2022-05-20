@@ -34,10 +34,6 @@ export class Slugs {
   public static ComponentSecretDescription = 'must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between.';
   public static ComponentSecretRegexBase = `[a-zA-Z0-9_-]+`;
   public static ComponentSecretValidator = new RegExp(`^${Slugs.ComponentSecretRegexBase}$`);
-
-  public static ReservedNameDescription = `must contain only alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between; max length ${Slugs.SLUG_CHAR_LIMIT}`;
-  public static ReservedNameRegexBase = `[a-zA-Z0-9_-]{1,${Slugs.SLUG_CHAR_LIMIT}}`;
-  public static ReservedNameValidator = new RegExp(`^${Slugs.ComponentSecretRegexBase}$`);
 }
 
 export interface ParsedSlug {

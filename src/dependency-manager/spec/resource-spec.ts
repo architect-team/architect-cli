@@ -144,8 +144,8 @@ export abstract class ResourceSpec {
   @IsOptional()
   @JSONSchema({
     type: 'string',
-    pattern: Slugs.ReservedNameValidator.source,
-    errorMessage: Slugs.ReservedNameDescription,
+    pattern: Slugs.ArchitectSlugValidator.source,
+    errorMessage: Slugs.ArchitectSlugDescription,
     description: 'A specific service name which will override the service name specified in the component.',
   })
   reserved_name?: string;
