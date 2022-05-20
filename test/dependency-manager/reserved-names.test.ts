@@ -76,8 +76,7 @@ describe('components with reserved_name field set', function () {
       expect(template).to.be.deep.equal(expected_compose);
     });
 
-    it('simple local component with interpolated reserved name', async () => { // TODO: can't interpolate a reserved name
-      const full_reserved_name = 'test-name-api';
+    it('simple local component with interpolated reserved name', async () => {
       const component_config_yml = `
         name: architect/cloud
         secrets:
@@ -473,7 +472,7 @@ describe('components with reserved_name field set', function () {
       ])
     });
 
-    it('components with shared dependencies', async () => {
+    it('components with a shared dependency', async () => {
       const reserved_name = 'test-name';
       const component_a = `
       name: examples/component-a
@@ -542,6 +541,40 @@ describe('components with reserved_name field set', function () {
         C_ADDR: `http://${c_ref}:8080`,
         C_EXT_ADDR: `http://api.arc.localhost`
       })
+    });
+
+    it(`the same reserved name can't be used for more than one service`, async () => {
+      const component_config_yml = `
+        name: architect/cloud
+        secrets:
+          name_override:
+            default: test-name
+        services:
+          api:
+            interfaces:
+              main: 8080
+            reserved_name: uncreative-name
+          api-2:
+            interfaces:
+              main: 8080
+            reserved_name: uncreative-name
+      `
+
+      mock_fs({
+        '/stack/architect.yml': component_config_yml,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), {
+        'architect/cloud': '/stack/architect.yml'
+      });
+
+      try {
+        await manager.getGraph([
+          await manager.loadComponentSpec('architect/cloud:latest')
+        ]);
+      } catch (err: any) {
+        expect(err.message).eq(`A service named uncreative-name is declared in multiple places. The same name can't be used for multiple services.`);
+      }
     });
   });
 });

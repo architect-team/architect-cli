@@ -387,8 +387,16 @@ export default abstract class DependencyManager {
         throw new ArchitectError(`The subdomain ${subdomain} is claimed by multiple component interfaces:\n[${values.sort().join(', ')}]\nPlease set interfaces.<name>.ingress.subdomain=<subdomain> or interfaces.<name>.ingress.path=<path> to avoid conflicts.`);
       }
     }
+  }
 
-     // TODO: validate name duplicates
+  validateReservedNodeNames(all_nodes: DependencyNode[]) {
+    const seen_nodes: DependencyNode[] = [];
+    for (const node of all_nodes.filter(n => n instanceof ServiceNode || n instanceof TaskNode)) {
+      if (seen_nodes.find(n => !!node.instance_id && !!n.instance_id && n.ref === node.ref && n.instance_id !== node.instance_id)) {
+        throw new Error(`A service named ${node.ref} is declared in multiple places. The same name can't be used for multiple services.`);
+      }
+      seen_nodes.push(node);
+    }
   }
 
   detectCircularDependencies(component_specs: ComponentSpec[]): void {
@@ -474,6 +482,7 @@ export default abstract class DependencyManager {
       }
 
       const nodes = this.getComponentNodes(component_config);
+      this.validateReservedNodeNames(nodes.concat(graph.nodes));
 
       const has_interfaces = Object.keys(component_config.interfaces).length > 0;
       const has_outputs = Object.keys(component_config.outputs).length > 0;
