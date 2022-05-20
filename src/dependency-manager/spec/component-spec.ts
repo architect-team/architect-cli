@@ -55,7 +55,7 @@ export class IngressSpec {
     ...ExpressionOr({
       type: "array",
       items: {
-        anyOf: [{ type: 'string', format: 'cidrv4' }],
+        anyOf: [{ type: 'string', format: 'cidrv4' }, { type: 'string', pattern: '\\${{\\s*secrets\\.[\\w-]+\\s*}}' }],
       },
     }),
     description: 'IP addresses that are allowed to access the interface',

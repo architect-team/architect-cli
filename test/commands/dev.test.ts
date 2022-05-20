@@ -414,7 +414,7 @@ describe('local dev environment', function () {
         labels: ['architect.ref=database-seeding.services.my-demo-db']
       },
       "gateway": {
-        "image": "traefik:v2.4.14",
+        "image": "traefik:v2.6.2",
         "command": [
           "--api.insecure=true",
           "--pilot.dashboard=false",
@@ -461,7 +461,7 @@ describe('local dev environment', function () {
         "image": "heroku/nodejs-hello-world",
       },
       "gateway": {
-        "image": "traefik:v2.4.14",
+        "image": "traefik:v2.6.2",
         "command": [
           "--api.insecure=true",
           "--pilot.dashboard=false",

@@ -57,7 +57,7 @@ export class DockerComposeUtils {
       }
 
       compose.services[gateway_node.ref] = {
-        image: 'traefik:v2.4.14',
+        image: 'traefik:v2.6.2',
         command: [
           '--api.insecure=true',
           '--pilot.dashboard=false',
@@ -464,8 +464,8 @@ export class DockerComposeUtils {
     }
 
     const service_data_dictionary: Dictionary<{ last_restart_ms: number }> = {};
-    try {
-      while (!should_stop()) {
+    while (!should_stop()) {
+      try {
         const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
         for (const container_state of container_states) {
           const id = container_state.ID;
@@ -502,7 +502,12 @@ export class DockerComposeUtils {
 
             service_data.last_restart_ms = Date.now();
             console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
-            await restart(id);
+            try {
+              await restart(id);
+            } catch (err) {
+              console.log(chalk.red(`ERROR: ${service_ref} failed to restart.`));
+              continue;
+            }
             // Docker compose will stop watching when there is a single container and it goes down.
             // If all containers go down at the same time it will wait for the restart and just move on. So only need this
             // for the case of 1 container with a health check.
@@ -512,10 +517,10 @@ export class DockerComposeUtils {
           }
         }
         await new Promise(r => setTimeout(r, 5000));
-      }
-    } catch (ex) {
-      if (!should_stop()) {
-        throw ex;
+      } catch (ex) {
+        // Ignore any errors. Since this service just watches services health it does
+        // not matter if an error occurs we should not stop a running dev instance
+        // just because the `watcher` failed.
       }
     }
   }

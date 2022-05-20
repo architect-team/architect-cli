@@ -34,6 +34,7 @@
     },
     "parameters": {
       "type": "object",
+      "deprecated": true,
       "patternProperties": {
         "^[a-zA-Z0-9_-]+$": {
           "anyOf": [
@@ -47,7 +48,7 @@
               "type": "boolean"
             },
             {
-              "$ref": "#/definitions/ParameterDefinitionSpec"
+              "$ref": "#/definitions/SecretDefinitionSpec"
             },
             {
               "type": "null"
@@ -58,7 +59,36 @@
       "errorMessage": {
         "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
       },
-      "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
+      "description": "[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec",
+      "additionalProperties": false
+    },
+    "secrets": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/SecretDefinitionSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "errorMessage": {
+        "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+      },
+      "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as secrets. Specifying a primitive value here will set the default secret value. For more detailed configuration, specify a SecretDefinitionSpec",
       "additionalProperties": false
     },
     "outputs": {
@@ -308,6 +338,7 @@
             },
             "parameters": {
               "type": "object",
+              "deprecated": true,
               "patternProperties": {
                 "^[a-zA-Z0-9_-]+$": {
                   "anyOf": [
@@ -321,7 +352,7 @@
                       "type": "boolean"
                     },
                     {
-                      "$ref": "#/definitions/ParameterDefinitionSpec"
+                      "$ref": "#/definitions/SecretDefinitionSpec"
                     },
                     {
                       "type": "null"
@@ -332,7 +363,36 @@
               "errorMessage": {
                 "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
               },
-              "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
+              "description": "[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec",
+              "additionalProperties": false
+            },
+            "secrets": {
+              "type": "object",
+              "patternProperties": {
+                "^[a-zA-Z0-9_-]+$": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "$ref": "#/definitions/SecretDefinitionSpec"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "errorMessage": {
+                "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+              },
+              "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as secrets. Specifying a primitive value here will set the default secret value. For more detailed configuration, specify a SecretDefinitionSpec",
               "additionalProperties": false
             },
             "outputs": {
@@ -563,7 +623,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -579,7 +639,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -595,7 +655,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -611,7 +671,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -627,7 +687,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -644,7 +704,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -673,7 +733,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -737,7 +797,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -753,7 +813,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -769,7 +829,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -785,7 +845,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -801,7 +861,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -818,7 +878,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -847,7 +907,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -914,7 +974,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -929,7 +989,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -944,7 +1004,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -966,7 +1026,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -1001,7 +1061,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -1016,7 +1076,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -1031,7 +1091,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -1053,7 +1113,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -1080,304 +1140,6 @@
         }
       }
     },
-    "DeployModuleSpec": {
-      "properties": {
-        "path": {
-          "type": "string",
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
-        },
-        "inputs": {
-          "type": "object",
-          "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "^\\${{\\s*if(.*?)\\s*}}$": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                  "additionalProperties": false
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-          },
-          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-          "additionalProperties": false
-        }
-      },
-      "type": "object",
-      "required": [
-        "path",
-        "inputs"
-      ],
-      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "path": {
-                  "type": "string",
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
-                },
-                "inputs": {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "^\\${{\\s*if(.*?)\\s*}}$": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          },
-                          "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                          },
-                          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                          "additionalProperties": false
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                  "additionalProperties": false
-                }
-              },
-              "type": "object",
-              "required": [
-                "path",
-                "inputs"
-              ],
-              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
-    "DeploySpec": {
-      "properties": {
-        "strategy": {
-          "type": "string",
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Selects the preferred deploy strategy for the service."
-        },
-        "modules": {
-          "type": "object",
-          "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/DeployModuleSpec"
-                }
-              ]
-            },
-            "^\\${{\\s*if(.*?)\\s*}}$": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/DeployModuleSpec"
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                  "additionalProperties": false
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-          },
-          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-          "additionalProperties": false
-        }
-      },
-      "type": "object",
-      "required": [
-        "strategy",
-        "modules"
-      ],
-      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "strategy": {
-                  "type": "string",
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "Selects the preferred deploy strategy for the service."
-                },
-                "modules": {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/DeployModuleSpec"
-                        }
-                      ]
-                    },
-                    "^\\${{\\s*if(.*?)\\s*}}$": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/DeployModuleSpec"
-                                }
-                              ]
-                            }
-                          },
-                          "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                          },
-                          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                          "additionalProperties": false
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                  "additionalProperties": false
-                }
-              },
-              "type": "object",
-              "required": [
-                "strategy",
-                "modules"
-              ],
-              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
     "BuildSpec": {
       "properties": {
         "context": {
@@ -1389,7 +1151,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -1448,7 +1210,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -1464,7 +1226,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -1491,7 +1253,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -1550,7 +1312,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -1566,7 +1328,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -1608,7 +1370,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -1633,7 +1395,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -1658,7 +1420,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -1724,7 +1486,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                   "externalDocs": {
                     "url": "/docs/components/services/#local-configuration"
                   },
@@ -1736,7 +1498,7 @@
           "errorMessage": {
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
           },
-          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
           "externalDocs": {
             "url": "/docs/components/services/#local-configuration"
           },
@@ -1754,7 +1516,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -1772,7 +1534,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -1780,9 +1542,6 @@
           "externalDocs": {
             "url": "/docs/components/services/#cpu--memory"
           }
-        },
-        "deploy": {
-          "$ref": "#/definitions/DeploySpec"
         },
         "depends_on": {
           "type": "array",
@@ -1808,7 +1567,7 @@
                   "type": "string",
                   "pattern": "\\${{\\s*(.*?)\\s*}}",
                   "errorMessage": {
-                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                   }
                 }
               ]
@@ -1828,7 +1587,7 @@
                           "type": "string",
                           "pattern": "\\${{\\s*(.*?)\\s*}}",
                           "errorMessage": {
-                            "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                           }
                         }
                       ]
@@ -1882,7 +1641,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -1907,7 +1666,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -1932,7 +1691,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -1998,7 +1757,7 @@
                           "errorMessage": {
                             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                           },
-                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                           "externalDocs": {
                             "url": "/docs/components/services/#local-configuration"
                           },
@@ -2010,7 +1769,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                   "externalDocs": {
                     "url": "/docs/components/services/#local-configuration"
                   },
@@ -2028,7 +1787,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2046,7 +1805,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2054,9 +1813,6 @@
                   "externalDocs": {
                     "url": "/docs/components/services/#cpu--memory"
                   }
-                },
-                "deploy": {
-                  "$ref": "#/definitions/DeploySpec"
                 },
                 "depends_on": {
                   "type": "array",
@@ -2082,7 +1838,7 @@
                           "type": "string",
                           "pattern": "\\${{\\s*(.*?)\\s*}}",
                           "errorMessage": {
-                            "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                           }
                         }
                       ]
@@ -2102,7 +1858,7 @@
                                   "type": "string",
                                   "pattern": "\\${{\\s*(.*?)\\s*}}",
                                   "errorMessage": {
-                                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                                   }
                                 }
                               ]
@@ -2147,7 +1903,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2165,7 +1921,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2209,7 +1965,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2227,7 +1983,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2274,7 +2030,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2289,7 +2045,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2324,7 +2080,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2339,7 +2095,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2377,7 +2133,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2399,7 +2155,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2414,7 +2170,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2429,7 +2185,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2452,7 +2208,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2474,7 +2230,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2490,7 +2246,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2505,7 +2261,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2524,7 +2280,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2569,7 +2325,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2591,7 +2347,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2606,7 +2362,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2621,7 +2377,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2644,7 +2400,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2666,7 +2422,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2682,7 +2438,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2697,7 +2453,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2716,7 +2472,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -2777,7 +2533,7 @@
                   "type": "string",
                   "pattern": "\\${{\\s*(.*?)\\s*}}",
                   "errorMessage": {
-                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                   }
                 }
               ]
@@ -2803,7 +2559,7 @@
                           "type": "string",
                           "pattern": "\\${{\\s*(.*?)\\s*}}",
                           "errorMessage": {
-                            "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                           }
                         }
                       ]
@@ -2918,7 +2674,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2940,7 +2696,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2965,7 +2721,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -2990,7 +2746,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -3056,7 +2812,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                   "externalDocs": {
                     "url": "/docs/components/services/#local-configuration"
                   },
@@ -3068,7 +2824,7 @@
           "errorMessage": {
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
           },
-          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
           "externalDocs": {
             "url": "/docs/components/services/#local-configuration"
           },
@@ -3086,7 +2842,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -3104,7 +2860,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -3112,9 +2868,6 @@
           "externalDocs": {
             "url": "/docs/components/services/#cpu--memory"
           }
-        },
-        "deploy": {
-          "$ref": "#/definitions/DeploySpec"
         },
         "depends_on": {
           "type": "array",
@@ -3140,7 +2893,7 @@
                   "type": "string",
                   "pattern": "\\${{\\s*(.*?)\\s*}}",
                   "errorMessage": {
-                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                   }
                 }
               ]
@@ -3160,7 +2913,7 @@
                           "type": "string",
                           "pattern": "\\${{\\s*(.*?)\\s*}}",
                           "errorMessage": {
-                            "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                           }
                         }
                       ]
@@ -3215,7 +2968,7 @@
                           "type": "string",
                           "pattern": "\\${{\\s*(.*?)\\s*}}",
                           "errorMessage": {
-                            "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                           }
                         }
                       ]
@@ -3241,7 +2994,7 @@
                                   "type": "string",
                                   "pattern": "\\${{\\s*(.*?)\\s*}}",
                                   "errorMessage": {
-                                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                                   }
                                 }
                               ]
@@ -3356,7 +3109,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -3378,7 +3131,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -3403,7 +3156,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -3428,7 +3181,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -3494,7 +3247,7 @@
                           "errorMessage": {
                             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                           },
-                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                           "externalDocs": {
                             "url": "/docs/components/services/#local-configuration"
                           },
@@ -3506,7 +3259,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                   "externalDocs": {
                     "url": "/docs/components/services/#local-configuration"
                   },
@@ -3524,7 +3277,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -3542,7 +3295,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -3550,9 +3303,6 @@
                   "externalDocs": {
                     "url": "/docs/components/services/#cpu--memory"
                   }
-                },
-                "deploy": {
-                  "$ref": "#/definitions/DeploySpec"
                 },
                 "depends_on": {
                   "type": "array",
@@ -3578,7 +3328,7 @@
                           "type": "string",
                           "pattern": "\\${{\\s*(.*?)\\s*}}",
                           "errorMessage": {
-                            "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                           }
                         }
                       ]
@@ -3598,7 +3348,7 @@
                                   "type": "string",
                                   "pattern": "\\${{\\s*(.*?)\\s*}}",
                                   "errorMessage": {
-                                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                                   }
                                 }
                               ]
@@ -3650,7 +3400,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -3669,7 +3419,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -3694,7 +3444,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -3719,7 +3469,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -3785,7 +3535,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                   "externalDocs": {
                     "url": "/docs/components/services/#local-configuration"
                   },
@@ -3797,7 +3547,7 @@
           "errorMessage": {
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
           },
-          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
           "externalDocs": {
             "url": "/docs/components/services/#local-configuration"
           },
@@ -3815,7 +3565,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -3833,7 +3583,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -3841,9 +3591,6 @@
           "externalDocs": {
             "url": "/docs/components/services/#cpu--memory"
           }
-        },
-        "deploy": {
-          "$ref": "#/definitions/DeploySpec"
         },
         "depends_on": {
           "type": "array",
@@ -3869,7 +3616,7 @@
                   "type": "string",
                   "pattern": "\\${{\\s*(.*?)\\s*}}",
                   "errorMessage": {
-                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                   }
                 }
               ]
@@ -3889,7 +3636,7 @@
                           "type": "string",
                           "pattern": "\\${{\\s*(.*?)\\s*}}",
                           "errorMessage": {
-                            "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                           }
                         }
                       ]
@@ -3938,7 +3685,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -3957,7 +3704,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -3982,7 +3729,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -4007,7 +3754,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -4073,7 +3820,7 @@
                           "errorMessage": {
                             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                           },
-                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                           "externalDocs": {
                             "url": "/docs/components/services/#local-configuration"
                           },
@@ -4085,7 +3832,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                   "externalDocs": {
                     "url": "/docs/components/services/#local-configuration"
                   },
@@ -4103,7 +3850,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -4121,7 +3868,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -4129,9 +3876,6 @@
                   "externalDocs": {
                     "url": "/docs/components/services/#cpu--memory"
                   }
-                },
-                "deploy": {
-                  "$ref": "#/definitions/DeploySpec"
                 },
                 "depends_on": {
                   "type": "array",
@@ -4157,7 +3901,7 @@
                           "type": "string",
                           "pattern": "\\${{\\s*(.*?)\\s*}}",
                           "errorMessage": {
-                            "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                           }
                         }
                       ]
@@ -4177,7 +3921,7 @@
                                   "type": "string",
                                   "pattern": "\\${{\\s*(.*?)\\s*}}",
                                   "errorMessage": {
-                                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                                   }
                                 }
                               ]
@@ -4231,7 +3975,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -4246,6 +3990,10 @@
                   {
                     "type": "string",
                     "format": "cidrv4"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
                   }
                 ]
               }
@@ -4254,7 +4002,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -4290,7 +4038,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -4305,6 +4053,10 @@
                           {
                             "type": "string",
                             "format": "cidrv4"
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
                           }
                         ]
                       }
@@ -4313,7 +4065,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -4354,7 +4106,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -4369,7 +4121,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -4384,7 +4136,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -4399,7 +4151,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -4414,7 +4166,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -4429,7 +4181,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -4470,7 +4222,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -4485,7 +4237,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -4500,7 +4252,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -4515,7 +4267,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -4530,7 +4282,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -4545,7 +4297,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -4567,15 +4319,15 @@
         }
       }
     },
-    "ParameterDefinitionSpec": {
+    "SecretDefinitionSpec": {
       "properties": {
         "required": {
           "type": "boolean",
-          "description": "Denotes whether the parameter is required."
+          "description": "Denotes whether the secret is required."
         },
         "description": {
           "type": "string",
-          "description": "A human-friendly description of the parameter."
+          "description": "A human-friendly description of the secret."
         },
         "default": {
           "anyOf": [
@@ -4605,18 +4357,18 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
-          "description": "Sets a default value for the parameter if one is not provided"
+          "description": "Sets a default value for the secret if one is not provided"
         }
       },
       "type": "object",
-      "description": "Components can define configurable parameters that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
+      "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
       "additionalProperties": false,
       "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#parameterdefinitionspec"
+        "url": "https://www.architect.io/docs/reference/architect-yml#secretdefinitionspec"
       }
     },
     "OutputDefinitionSpec": {
@@ -4699,6 +4451,7 @@
         },
         "parameters": {
           "type": "object",
+          "deprecated": true,
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "anyOf": [
@@ -4712,7 +4465,7 @@
                   "type": "boolean"
                 },
                 {
-                  "$ref": "#/definitions/ParameterDefinitionSpec"
+                  "$ref": "#/definitions/SecretDefinitionSpec"
                 },
                 {
                   "type": "null"
@@ -4723,7 +4476,36 @@
           "errorMessage": {
             "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
           },
-          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
+          "description": "[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec",
+          "additionalProperties": false
+        },
+        "secrets": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "$ref": "#/definitions/SecretDefinitionSpec"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+          },
+          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as secrets. Specifying a primitive value here will set the default secret value. For more detailed configuration, specify a SecretDefinitionSpec",
           "additionalProperties": false
         },
         "outputs": {
@@ -4973,6 +4755,7 @@
                 },
                 "parameters": {
                   "type": "object",
+                  "deprecated": true,
                   "patternProperties": {
                     "^[a-zA-Z0-9_-]+$": {
                       "anyOf": [
@@ -4986,7 +4769,7 @@
                           "type": "boolean"
                         },
                         {
-                          "$ref": "#/definitions/ParameterDefinitionSpec"
+                          "$ref": "#/definitions/SecretDefinitionSpec"
                         },
                         {
                           "type": "null"
@@ -4997,7 +4780,36 @@
                   "errorMessage": {
                     "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
                   },
-                  "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
+                  "description": "[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec",
+                  "additionalProperties": false
+                },
+                "secrets": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^[a-zA-Z0-9_-]+$": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "$ref": "#/definitions/SecretDefinitionSpec"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+                  },
+                  "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as secrets. Specifying a primitive value here will set the default secret value. For more detailed configuration, specify a SecretDefinitionSpec",
                   "additionalProperties": false
                 },
                 "outputs": {
@@ -5228,7 +5040,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -5244,7 +5056,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -5260,7 +5072,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -5276,7 +5088,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -5292,7 +5104,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -5309,7 +5121,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -5338,7 +5150,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -5365,7 +5177,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -5381,7 +5193,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -5397,7 +5209,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -5413,7 +5225,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -5429,7 +5241,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -5446,7 +5258,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -5475,7 +5287,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -5505,7 +5317,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -5520,7 +5332,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -5535,7 +5347,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -5557,7 +5369,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -5592,7 +5404,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -5607,7 +5419,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -5622,7 +5434,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -5644,7 +5456,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -5671,288 +5483,6 @@
         }
       }
     },
-    "_DebugDeployModuleSpec": {
-      "properties": {
-        "path": {
-          "type": "string",
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
-        },
-        "inputs": {
-          "type": "object",
-          "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "^\\${{\\s*if(.*?)\\s*}}$": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                  "additionalProperties": false
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-          },
-          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-          "additionalProperties": false
-        }
-      },
-      "type": "object",
-      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "path": {
-                  "type": "string",
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
-                },
-                "inputs": {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "^\\${{\\s*if(.*?)\\s*}}$": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          },
-                          "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                          },
-                          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                          "additionalProperties": false
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                  "additionalProperties": false
-                }
-              },
-              "type": "object",
-              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
-    "_DebugDeploySpec": {
-      "properties": {
-        "strategy": {
-          "type": "string",
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Selects the preferred deploy strategy for the service."
-        },
-        "modules": {
-          "type": "object",
-          "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/_DebugDeployModuleSpec"
-                }
-              ]
-            },
-            "^\\${{\\s*if(.*?)\\s*}}$": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/_DebugDeployModuleSpec"
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                  "additionalProperties": false
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-          },
-          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-          "additionalProperties": false
-        }
-      },
-      "type": "object",
-      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "strategy": {
-                  "type": "string",
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "Selects the preferred deploy strategy for the service."
-                },
-                "modules": {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/_DebugDeployModuleSpec"
-                        }
-                      ]
-                    },
-                    "^\\${{\\s*if(.*?)\\s*}}$": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/_DebugDeployModuleSpec"
-                                }
-                              ]
-                            }
-                          },
-                          "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                          },
-                          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                          "additionalProperties": false
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                  "additionalProperties": false
-                }
-              },
-              "type": "object",
-              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
     "_DebugBuildSpec": {
       "properties": {
         "context": {
@@ -5964,7 +5494,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6023,7 +5553,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6039,7 +5569,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6066,7 +5596,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6125,7 +5655,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6141,7 +5671,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6171,7 +5701,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6189,7 +5719,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6219,7 +5749,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6237,7 +5767,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6270,7 +5800,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6285,7 +5815,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6315,7 +5845,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6330,7 +5860,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6363,7 +5893,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6385,7 +5915,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6400,7 +5930,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6415,7 +5945,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6438,7 +5968,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6460,7 +5990,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6476,7 +6006,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6491,7 +6021,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6510,7 +6040,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6538,7 +6068,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6560,7 +6090,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6575,7 +6105,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6590,7 +6120,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6613,7 +6143,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6635,7 +6165,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6651,7 +6181,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6666,7 +6196,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6685,7 +6215,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -6726,7 +6256,7 @@
                   "type": "string",
                   "pattern": "\\${{\\s*(.*?)\\s*}}",
                   "errorMessage": {
-                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                   }
                 }
               ]
@@ -6752,7 +6282,7 @@
                           "type": "string",
                           "pattern": "\\${{\\s*(.*?)\\s*}}",
                           "errorMessage": {
-                            "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                           }
                         }
                       ]
@@ -6829,7 +6359,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6851,7 +6381,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6876,7 +6406,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6901,7 +6431,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -6967,7 +6497,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                   "externalDocs": {
                     "url": "/docs/components/services/#local-configuration"
                   },
@@ -6979,7 +6509,7 @@
           "errorMessage": {
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
           },
-          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
           "externalDocs": {
             "url": "/docs/components/services/#local-configuration"
           },
@@ -6997,7 +6527,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -7015,7 +6545,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -7023,9 +6553,6 @@
           "externalDocs": {
             "url": "/docs/components/services/#cpu--memory"
           }
-        },
-        "deploy": {
-          "$ref": "#/definitions/_DebugDeploySpec"
         },
         "depends_on": {
           "type": "array",
@@ -7051,7 +6578,7 @@
                   "type": "string",
                   "pattern": "\\${{\\s*(.*?)\\s*}}",
                   "errorMessage": {
-                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                   }
                 }
               ]
@@ -7071,7 +6598,7 @@
                           "type": "string",
                           "pattern": "\\${{\\s*(.*?)\\s*}}",
                           "errorMessage": {
-                            "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                           }
                         }
                       ]
@@ -7123,7 +6650,7 @@
                           "type": "string",
                           "pattern": "\\${{\\s*(.*?)\\s*}}",
                           "errorMessage": {
-                            "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                           }
                         }
                       ]
@@ -7149,7 +6676,7 @@
                                   "type": "string",
                                   "pattern": "\\${{\\s*(.*?)\\s*}}",
                                   "errorMessage": {
-                                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                                   }
                                 }
                               ]
@@ -7226,7 +6753,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -7248,7 +6775,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -7273,7 +6800,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -7298,7 +6825,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -7364,7 +6891,7 @@
                           "errorMessage": {
                             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                           },
-                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                           "externalDocs": {
                             "url": "/docs/components/services/#local-configuration"
                           },
@@ -7376,7 +6903,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                   "externalDocs": {
                     "url": "/docs/components/services/#local-configuration"
                   },
@@ -7394,7 +6921,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -7412,7 +6939,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -7420,9 +6947,6 @@
                   "externalDocs": {
                     "url": "/docs/components/services/#cpu--memory"
                   }
-                },
-                "deploy": {
-                  "$ref": "#/definitions/_DebugDeploySpec"
                 },
                 "depends_on": {
                   "type": "array",
@@ -7448,7 +6972,7 @@
                           "type": "string",
                           "pattern": "\\${{\\s*(.*?)\\s*}}",
                           "errorMessage": {
-                            "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                           }
                         }
                       ]
@@ -7468,7 +6992,7 @@
                                   "type": "string",
                                   "pattern": "\\${{\\s*(.*?)\\s*}}",
                                   "errorMessage": {
-                                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                                   }
                                 }
                               ]
@@ -7517,7 +7041,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -7536,7 +7060,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -7561,7 +7085,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -7586,7 +7110,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -7652,7 +7176,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                   "externalDocs": {
                     "url": "/docs/components/services/#local-configuration"
                   },
@@ -7664,7 +7188,7 @@
           "errorMessage": {
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
           },
-          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
           "externalDocs": {
             "url": "/docs/components/services/#local-configuration"
           },
@@ -7682,7 +7206,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -7700,7 +7224,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -7708,9 +7232,6 @@
           "externalDocs": {
             "url": "/docs/components/services/#cpu--memory"
           }
-        },
-        "deploy": {
-          "$ref": "#/definitions/_DebugDeploySpec"
         },
         "depends_on": {
           "type": "array",
@@ -7736,7 +7257,7 @@
                   "type": "string",
                   "pattern": "\\${{\\s*(.*?)\\s*}}",
                   "errorMessage": {
-                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                   }
                 }
               ]
@@ -7756,7 +7277,7 @@
                           "type": "string",
                           "pattern": "\\${{\\s*(.*?)\\s*}}",
                           "errorMessage": {
-                            "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                           }
                         }
                       ]
@@ -7802,7 +7323,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -7821,7 +7342,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -7846,7 +7367,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -7871,7 +7392,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -7937,7 +7458,7 @@
                           "errorMessage": {
                             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                           },
-                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                           "externalDocs": {
                             "url": "/docs/components/services/#local-configuration"
                           },
@@ -7949,7 +7470,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
                   "externalDocs": {
                     "url": "/docs/components/services/#local-configuration"
                   },
@@ -7967,7 +7488,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -7985,7 +7506,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -7993,9 +7514,6 @@
                   "externalDocs": {
                     "url": "/docs/components/services/#cpu--memory"
                   }
-                },
-                "deploy": {
-                  "$ref": "#/definitions/_DebugDeploySpec"
                 },
                 "depends_on": {
                   "type": "array",
@@ -8021,7 +7539,7 @@
                           "type": "string",
                           "pattern": "\\${{\\s*(.*?)\\s*}}",
                           "errorMessage": {
-                            "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                           }
                         }
                       ]
@@ -8041,7 +7559,7 @@
                                   "type": "string",
                                   "pattern": "\\${{\\s*(.*?)\\s*}}",
                                   "errorMessage": {
-                                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                                   }
                                 }
                               ]
@@ -8095,7 +7613,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -8110,6 +7628,10 @@
                   {
                     "type": "string",
                     "format": "cidrv4"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
                   }
                 ]
               }
@@ -8118,7 +7640,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -8154,7 +7676,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -8169,6 +7691,10 @@
                           {
                             "type": "string",
                             "format": "cidrv4"
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
                           }
                         ]
                       }
@@ -8177,7 +7703,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -8218,7 +7744,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -8233,7 +7759,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -8248,7 +7774,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -8263,7 +7789,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -8278,7 +7804,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -8293,7 +7819,7 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
@@ -8331,7 +7857,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -8346,7 +7872,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -8361,7 +7887,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -8376,7 +7902,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -8391,7 +7917,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -8406,7 +7932,7 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
@@ -8425,15 +7951,15 @@
         }
       }
     },
-    "_DebugParameterDefinitionSpec": {
+    "_DebugSecretDefinitionSpec": {
       "properties": {
         "required": {
           "type": "boolean",
-          "description": "Denotes whether the parameter is required."
+          "description": "Denotes whether the secret is required."
         },
         "description": {
           "type": "string",
-          "description": "A human-friendly description of the parameter."
+          "description": "A human-friendly description of the secret."
         },
         "default": {
           "anyOf": [
@@ -8463,18 +7989,18 @@
               "type": "string",
               "pattern": "\\${{\\s*(.*?)\\s*}}",
               "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
           ],
-          "description": "Sets a default value for the parameter if one is not provided"
+          "description": "Sets a default value for the secret if one is not provided"
         }
       },
       "type": "object",
-      "description": "Components can define configurable parameters that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
+      "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
       "additionalProperties": false,
       "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#parameterdefinitionspec"
+        "url": "https://www.architect.io/docs/reference/architect-yml#secretdefinitionspec"
       },
       "patternProperties": {
         "^\\${{\\s*if(.*?)\\s*}}$": {
@@ -8483,11 +8009,11 @@
               "properties": {
                 "required": {
                   "type": "boolean",
-                  "description": "Denotes whether the parameter is required."
+                  "description": "Denotes whether the secret is required."
                 },
                 "description": {
                   "type": "string",
-                  "description": "A human-friendly description of the parameter."
+                  "description": "A human-friendly description of the secret."
                 },
                 "default": {
                   "anyOf": [
@@ -8517,18 +8043,18 @@
                       "type": "string",
                       "pattern": "\\${{\\s*(.*?)\\s*}}",
                       "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
                   ],
-                  "description": "Sets a default value for the parameter if one is not provided"
+                  "description": "Sets a default value for the secret if one is not provided"
                 }
               },
               "type": "object",
-              "description": "Components can define configurable parameters that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
+              "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
               "additionalProperties": false,
               "externalDocs": {
-                "url": "https://www.architect.io/docs/reference/architect-yml#parameterdefinitionspec"
+                "url": "https://www.architect.io/docs/reference/architect-yml#secretdefinitionspec"
               },
               "patternProperties": {}
             }
@@ -8610,6 +8136,7 @@
         },
         "parameters": {
           "type": "object",
+          "deprecated": true,
           "patternProperties": {
             "^[a-zA-Z0-9_-]+$": {
               "anyOf": [
@@ -8623,7 +8150,7 @@
                   "type": "boolean"
                 },
                 {
-                  "$ref": "#/definitions/_DebugParameterDefinitionSpec"
+                  "$ref": "#/definitions/_DebugSecretDefinitionSpec"
                 },
                 {
                   "type": "null"
@@ -8634,7 +8161,36 @@
           "errorMessage": {
             "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
           },
-          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
+          "description": "[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec",
+          "additionalProperties": false
+        },
+        "secrets": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "$ref": "#/definitions/_DebugSecretDefinitionSpec"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+          },
+          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as secrets. Specifying a primitive value here will set the default secret value. For more detailed configuration, specify a SecretDefinitionSpec",
           "additionalProperties": false
         },
         "outputs": {
@@ -8881,6 +8437,7 @@
                 },
                 "parameters": {
                   "type": "object",
+                  "deprecated": true,
                   "patternProperties": {
                     "^[a-zA-Z0-9_-]+$": {
                       "anyOf": [
@@ -8894,7 +8451,7 @@
                           "type": "boolean"
                         },
                         {
-                          "$ref": "#/definitions/_DebugParameterDefinitionSpec"
+                          "$ref": "#/definitions/_DebugSecretDefinitionSpec"
                         },
                         {
                           "type": "null"
@@ -8905,7 +8462,36 @@
                   "errorMessage": {
                     "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
                   },
-                  "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
+                  "description": "[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec",
+                  "additionalProperties": false
+                },
+                "secrets": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^[a-zA-Z0-9_-]+$": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "$ref": "#/definitions/_DebugSecretDefinitionSpec"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+                  },
+                  "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as secrets. Specifying a primitive value here will set the default secret value. For more detailed configuration, specify a SecretDefinitionSpec",
                   "additionalProperties": false
                 },
                 "outputs": {

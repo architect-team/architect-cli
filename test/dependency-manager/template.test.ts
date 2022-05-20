@@ -254,7 +254,7 @@ describe('template', () => {
       });
       const graph = await manager.getGraph([
         await manager.loadComponentSpec('examples/hello-world'),
-      ], undefined, false);
+      ], undefined, { interpolate: false });
       expect(graph.nodes).lengthOf(0);
       expect(graph.edges).lengthOf(0);
     });
