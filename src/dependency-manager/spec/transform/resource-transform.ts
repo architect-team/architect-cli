@@ -73,7 +73,7 @@ export const transformResourceSpec = (resource_type: ResourceType, key: string, 
   const environment = transformResourceSpecEnvironment(spec.environment);
   const { component_account_name, component_name, instance_name } = ComponentSlugUtils.parse(metadata.ref);
   return {
-    name: spec.reserved_name || key,
+    name: key,
     metadata: {
       ...metadata,
       ref: spec.reserved_name || ResourceSlugUtils.build(component_account_name, component_name, resource_type, key, instance_name),

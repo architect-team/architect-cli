@@ -199,7 +199,7 @@ export class DependencyGraph {
 
   private getExplicitDependsOn(node: ServiceNode | TaskNode): ServiceNode[] {
     return this.nodes
-      .filter(n => n.instance_id === node.instance_id && node.config.depends_on.includes((n as ServiceNode | TaskNode)?.config?.name))
+      .filter(n => n.instance_id === node.instance_id && node.config.depends_on.includes((n as ServiceNode | TaskNode)?.config?.reserved_name || (n as ServiceNode | TaskNode)?.config?.name))
       .filter(n => n instanceof ServiceNode)
       .map(n => n as ServiceNode);
   }

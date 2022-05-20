@@ -11,7 +11,7 @@ import DockerComposeTemplate from '../../src/common/docker-compose/template';
 
 describe('components with reserved_name field set', function () {
   describe('standard components with reserved name', function () {
-    it('simple local component', async () => {
+    it('simple local component with reserved name', async () => {
       const reserved_name = 'test-name';
       const component_config_yml = `
         name: architect/cloud
@@ -182,7 +182,7 @@ describe('components with reserved_name field set', function () {
       expect(app_node.config.environment.LOG_LEVEL).eq('debug');
     });
 
-    it('local component with edges', async () => {
+    it('local component with edges and reserved name', async () => {
       const reserved_name = 'test-name';
       const component_config = {
         name: 'architect/cloud',
@@ -264,7 +264,7 @@ describe('components with reserved_name field set', function () {
           },
           [app_ref]: {
             "depends_on": [
-              `${api_ref}`
+              `${reserved_name}`
             ],
             "environment": {
               "API_ADDR": `http://${api_ref}:8080`
@@ -375,7 +375,8 @@ describe('components with reserved_name field set', function () {
       expect(api_node.config.metadata.ref).to.eq('cloud.services.api');
       const worker_node = graph.getNodeByRef(worker_ref) as ServiceNode;
       expect(worker_node.config.environment.CONCOURSE_TSA_HOST).eq(web_ref);
-      expect(worker_node.config.name).to.eq(reserved_name);
+      expect(worker_node.config.name).to.eq('worker');
+      expect(worker_node.ref).to.eq(reserved_name);
       expect(worker_node.config.metadata.tag).to.eq('6.2');
       expect(worker_node.config.metadata.ref).to.eq(reserved_name);
     });

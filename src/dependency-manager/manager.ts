@@ -33,7 +33,7 @@ export default abstract class DependencyManager {
     // Load component services
     for (const [service_name, service_config] of Object.entries(component.services)) {
       const node = new ServiceNode({
-        ref: service_config.reserved_name || buildNodeRef(component, 'services', service_name),
+        ref: buildNodeRef(component, 'services', service_name),
         config: service_config,
         local_path: component.metadata.file?.path,
         artifact_image: component.artifact_image,
@@ -44,7 +44,7 @@ export default abstract class DependencyManager {
     // Load component tasks
     for (const [task_name, task_config] of Object.entries(component.tasks)) {
       const node = new TaskNode({
-        ref: task_config.reserved_name || buildNodeRef(component, 'tasks', task_name),
+        ref: buildNodeRef(component, 'tasks', task_name),
         config: task_config,
         local_path: component.metadata.file?.path,
       });
@@ -73,7 +73,7 @@ export default abstract class DependencyManager {
     const services = Object.entries(component_config.services).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'services' as ResourceType, resource_config }));
     const tasks = Object.entries(component_config.tasks).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'tasks' as ResourceType, resource_config }));
     for (const { resource_config, resource_name, resource_type } of [...services, ...tasks]) {
-      const from = resource_config.reserved_name || buildNodeRef(component, resource_type, resource_name);
+      const from = buildNodeRef(component, resource_type, resource_name);
       const copy = { ...resource_config } as any;
       delete copy.metadata;
       const service_string = replaceInterpolationBrackets(serialize(copy));
@@ -153,7 +153,7 @@ export default abstract class DependencyManager {
         if (!matches.groups) { continue; }
         const { service_name, interface_name } = matches.groups;
         const service_to = services.find(s => s.resource_name === service_name);
-        const to = service_to?.resource_config.reserved_name || buildNodeRef(component, 'services', service_name);
+        const to = buildNodeRef(component, 'services', service_name);
 
         if (to === from) continue;
         if (!service_edge_map[to]) service_edge_map[to] = {};
@@ -502,7 +502,7 @@ export default abstract class DependencyManager {
           environment: {},
         };
       }
-      const service_ref = service.reserved_name || buildNodeRef(component_config, 'services', service_name);
+      const service_ref = buildNodeRef(component_config, 'services', service_name);
       for (const [interface_name, value] of Object.entries(service.interfaces)) {
         const interface_ref = `services.${service_name}.interfaces.${interface_name}`;
 
@@ -740,7 +740,7 @@ export default abstract class DependencyManager {
       const services = Object.entries(component_config.services).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'services' as ResourceType, resource_config }));
       const tasks = Object.entries(component_config.tasks).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'tasks' as ResourceType, resource_config }));
       for (const { resource_config, resource_type } of [...services, ...tasks]) {
-        const resource_ref = resource_config.reserved_name || buildNodeRef(component_config, resource_type, resource_config.name);
+        const resource_ref = buildNodeRef(component_config, resource_type, resource_config.name);
         const node = graph.getNodeByRef(resource_ref) as ServiceNode | TaskNode;
         if (this.use_sidecar) {
           node.proxy_port_mapping = component_config.metadata.proxy_port_mapping;
