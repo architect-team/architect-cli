@@ -57,6 +57,7 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
  | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/components/services/#cpu--memory) |
  | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
  | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/components/services/#labels) |
+ | `reserved_name` | string | A specific service name which will override the service name specified in the component. | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.*--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">Regex</a> |
 
 
 ## SecretDefinitionSpec
@@ -106,6 +107,7 @@ A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, tr
  | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/components/services/#cpu--memory) |
  | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
  | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/components/services/#labels) |
+ | `reserved_name` | string | A specific service name which will override the service name specified in the component. | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.*--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">Regex</a> |
 
 
 ## LivenessProbeSpec
@@ -168,6 +170,7 @@ A container to run as a sidecar to the related component or service
  | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/components/services/#cpu--memory) |
  | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
  | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/components/services/#labels) |
+ | `reserved_name` | string | A specific service name which will override the service name specified in the component. | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.*--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">Regex</a> |
 
 
 ## ScalingMetricsSpec
