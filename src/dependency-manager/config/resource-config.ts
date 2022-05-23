@@ -33,4 +33,5 @@ export interface ResourceConfig {
   deploy?: DeployConfig;
   depends_on: string[];
   labels: Map<string, string>;
+  reserved_name?: string;
 }
