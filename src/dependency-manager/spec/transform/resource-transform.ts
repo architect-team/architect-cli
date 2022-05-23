@@ -76,7 +76,7 @@ export const transformResourceSpec = (resource_type: ResourceType, key: string, 
     name: key,
     metadata: {
       ...metadata,
-      ref: ResourceSlugUtils.build(component_account_name, component_name, resource_type, key, instance_name),
+      ref: spec.reserved_name || ResourceSlugUtils.build(component_account_name, component_name, resource_type, key, instance_name),
     },
     description: spec.description,
     image: spec.image,
@@ -89,5 +89,6 @@ export const transformResourceSpec = (resource_type: ResourceType, key: string, 
     memory: spec.memory,
     depends_on: spec.depends_on || [],
     labels: spec.labels || new Map(),
+    reserved_name: spec.reserved_name,
   };
 };

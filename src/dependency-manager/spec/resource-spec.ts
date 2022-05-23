@@ -140,4 +140,13 @@ export abstract class ResourceSpec {
     externalDocs: { url: '/docs/components/services/#labels' },
   })
   labels?: Map<string, string>;
+
+  @IsOptional()
+  @JSONSchema({
+    type: 'string',
+    pattern: Slugs.ArchitectSlugValidator.source,
+    errorMessage: Slugs.ArchitectSlugDescription,
+    description: 'A specific service name which will override the service name specified in the component.',
+  })
+  reserved_name?: string;
 }
