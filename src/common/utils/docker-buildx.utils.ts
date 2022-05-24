@@ -22,13 +22,17 @@ export default class DockerBuildXUtils {
     });
   }
 
+  public static isLocal(config: config): boolean {
+    return config.api_host.includes('localhost') || config.api_host.includes('0.0.0.0') || config.api_host.includes('127.0.0.1');
+  }
+
   public static async getBuilder(config: config): Promise<string> {
-    const is_local = config.api_host.includes('localhost') || config.api_host.includes('0.0.0.0') || config.api_host.includes('127.0.0.1');
+    const is_local = this.isLocal(config);
     const builder = is_local ? 'architect-local' : 'architect';
 
     // Create a docker context
     try {
-      await docker(['context', 'create', builder]);
+      await docker(['context', 'create', `${builder}-context`]);
     // eslint-disable-next-line no-empty
     } catch (err) { }
 
@@ -39,7 +43,7 @@ export default class DockerBuildXUtils {
         const file_content = `[registry.'${config.registry_host}']\n  http = true\n  insecure = true`;
         await this.writeBuildkitdConfigFile(local_buildkitd_config_file, file_content);
 
-        await this.dockerBuildX(['create', '--name', builder, '--driver-opt', 'network=host', '--use', '--buildkitd-flags', '--allow-insecure-entitlement security.insecure', `--config=${local_buildkitd_config_file}`], builder, {
+        await this.dockerBuildX(['create', '--name', builder, '--driver', 'docker-container', '--driver-opt', 'image=moby/buildkit:master,network=host', '--use', '--buildkitd-flags', '--allow-insecure-entitlement security.insecure', `--config=${local_buildkitd_config_file}`], builder, {
           stdio: 'inherit',
         });
       } else {
@@ -53,11 +57,11 @@ export default class DockerBuildXUtils {
     return builder;
   }
 
-  public static async dockerBuildX(args: string[], docker_context_name: string, execa_opts?: Options, use_console = false): Promise<execa.ExecaChildProcess<string>> {
+  public static async dockerBuildX(args: string[], docker_builder_name: string, execa_opts?: Options, use_console = false): Promise<execa.ExecaChildProcess<string>> {
     if (use_console) {
       process.stdin.setRawMode(true);
     }
-    const cmd = execa('docker', [`--context=${docker_context_name}`, 'buildx', ...args], execa_opts);
+    const cmd = execa('docker', [`--context=${docker_builder_name}-context`, 'buildx', ...args], execa_opts);
     if (use_console) {
       cmd.on('exit', () => {
         process.exit();
