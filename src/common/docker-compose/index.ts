@@ -134,7 +134,7 @@ export class DockerComposeUtils {
         const liveness_probe = node.config.liveness_probe;
         if (liveness_probe) {
           if (!liveness_probe.command) {
-            liveness_probe.command = ['CMD-SHELL', `curl -f http://localhost:${liveness_probe.port}${liveness_probe.path} || exit 1`];
+            liveness_probe.command = ['CMD-SHELL', `curl -f http://localhost:${liveness_probe.port}${liveness_probe.path} || exit 1`]; // deprecated
           } else {
             liveness_probe.command = ['CMD-SHELL', liveness_probe.command.join(' ')];
           }

@@ -9,7 +9,7 @@ export const transformLivenessProbeSpecCommand = function (command: string[] | s
     return undefined;
   }
   if (typeof command === 'string') {
-    return shell_parse(command.replace(/\$/g, '__arc__')).map(e => `${e}`.replace(/__arc__/g, '$'));
+    return shell_parse(command.replace(/\$/g, '__arc__')).map((e: any) => `${e.op || e}`.replace(/__arc__/g, '$'));
   } else {
     return command;
   }
