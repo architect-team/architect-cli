@@ -12,7 +12,7 @@ import * as ComponentBuilder from '../../src/dependency-manager/spec/utils/compo
 import { MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = false;
+const print = true;
 
 const account = {
   id: 'test-account-id',
@@ -35,6 +35,8 @@ describe('local dev environment', function () {
           main:
             port: 3000
         environment: {}
+        liveness_probe:
+          command: curl --fail localhost:3000 || exit 1
 
     interfaces:
       hello:
@@ -58,6 +60,8 @@ describe('local dev environment', function () {
           main:
             port: 3000
         environment: {}
+        liveness_probe:
+          command: curl --fail localhost:3000 || exit 1
 
     interfaces:
       hello:
@@ -459,6 +463,16 @@ describe('local dev environment', function () {
           "gateway:hello.arc.localhost"
         ],
         "image": "heroku/nodejs-hello-world",
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl --fail localhost:3000 || exit 1"
+          ],
+          "interval": "30s",
+          "timeout": "5s",
+          "retries": 3,
+          "start_period": "0s"
+        },
       },
       "gateway": {
         "image": "traefik:v2.6.2",
@@ -900,4 +914,30 @@ describe('local dev environment', function () {
         expect(compose.services[auth_ref].labels).includes('traefik.enable=true');
       })
   });
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return getHelloComponentConfig();
+    })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'hello'])
+    .it('Command with an operator is converted correctly to the docker compose file', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      const compose = runCompose.firstCall.args[0];
+      expect(runCompose.calledOnce).to.be.true;
+      expect(compose.services['hello-world--api'].healthcheck).to.deep.equal({
+        "test": [
+          "CMD-SHELL",
+          "curl --fail localhost:3000 || exit 1"
+        ],
+        "interval": "30s",
+        "timeout": "5s",
+        "retries": 3,
+        "start_period": "0s"
+      });
+    });
 });
