@@ -1,5 +1,5 @@
 import { ClassConstructor, plainToClass, TransformFnParams } from 'class-transformer';
-import { parse as shell_parse } from 'shell-quote';
+import stringArgv from 'string-argv';
 import { LivenessProbeConfig, VolumeConfig } from '../../config/common-config';
 import { Dictionary } from '../../utils/dictionary';
 import { LivenessProbeSpec, VolumeSpec } from '../common-spec';
@@ -9,7 +9,7 @@ export const transformLivenessProbeSpecCommand = function (command: string[] | s
     return undefined;
   }
   if (typeof command === 'string') {
-    return shell_parse(command.replace(/\$/g, '__arc__')).map((e: any) => `${e.op || e}`.replace(/__arc__/g, '$'));
+    return stringArgv(command);
   } else {
     return command;
   }
