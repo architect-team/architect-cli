@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
-import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, Slugs, ValidationError, ValidationErrors } from '../../src';
+import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { SecretsConfig } from '../../src/dependency-manager/secrets/secrets';
 
@@ -1350,7 +1350,7 @@ services:
         SPRING_PROFILE: test
       services:
         app:
-          command: catalina.sh run -Pprofile=\${{ secrets.SPRING_PROFILE }}
+          command: catalina.sh run -Pprofile=\${{ secrets.SPRING_PROFILE }} --test-string "two words" --test-env $API_KEY
       `
     mock_fs({
       '/component.yml': component_config,
@@ -1359,15 +1359,11 @@ services:
       'test/component': '/component.yml',
     });
 
-    let err;
-    try {
-      await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
-      ]);
-    } catch (e: any) {
-      err = e;
-    }
-    expect(err).to.be.undefined;
+    const graph = await manager.getGraph([
+      await manager.loadComponentSpec('test/component'),
+    ]);
+    const service_node = graph.nodes.find((node) => node instanceof ServiceNode) as ServiceNode;
+    expect(service_node.config.command).to.deep.equal(['catalina.sh', 'run', '-Pprofile=test', '--test-string', 'two words', '--test-env', '$API_KEY'])
   });
 
   it('liveness_probe rejects command with path', async () => {

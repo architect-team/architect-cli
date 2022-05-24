@@ -1,4 +1,4 @@
-import { parse as shell_parse } from 'shell-quote';
+import stringArgv from 'string-argv';
 import { BuildConfig, ResourceConfig } from '../../config/resource-config';
 import { Dictionary } from '../../utils/dictionary';
 import { ComponentInstanceMetadata } from '../component-spec';
@@ -10,7 +10,7 @@ export const transformResourceSpecCommand = (command: string | string[] | undefi
   if (command instanceof Array) {
     return command;
   }
-  return shell_parse(command.replace(/\$/g, '__arc__')).map(e => `${e}`.replace(/__arc__/g, '$'));
+  return stringArgv(command);
 };
 
 export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | undefined): string[] => {
@@ -18,7 +18,7 @@ export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | 
   if (entrypoint instanceof Array) {
     return entrypoint;
   }
-  return shell_parse(entrypoint.replace(/\$/g, '__arc__')).map(e => `${e}`.replace(/__arc__/g, '$'));
+  return stringArgv(entrypoint);
 };
 
 export const transformResourceSpecEnvironment = (environment: Dictionary<EnvironmentSpecValue> | undefined): Dictionary<string | null> => {
