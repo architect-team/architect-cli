@@ -5,9 +5,9 @@ export interface LivenessProbeConfig {
   timeout: string;
   interval: string;
   initial_delay: string;
-  path?: string;
+  path?: string; // deprecated
   command?: string[];
-  port?: number | string; // TODO:290:number
+  port?: number | string; // deprecated
 }
 
 // Though VolumeConfig is only used in the ServiceConfig, it's expected that this
