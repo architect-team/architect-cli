@@ -1,13 +1,13 @@
 import { CliUx, Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
+import { Dictionary, Slugs } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
 import PipelineUtils from '../../architect/pipeline/pipeline.utils';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 import Command from '../../base-command';
+import { AgentPlatformUtils } from '../../common/utils/agent-platform.utils';
 import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.utils';
-import { Dictionary } from '../../';
-import { Slugs } from '../../';
 
 export default class PlatformCreate extends Command {
   static aliases = ['platforms:register', 'platform:create', 'platforms:create'];
@@ -27,7 +27,7 @@ export default class PlatformCreate extends Command {
       hidden: true,
     }),
     ['auto-approve']: Flags.boolean(),
-    type: Flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes'] }),
+    type: Flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes', 'AGENT', 'agent'] }),
     host: Flags.string({ char: 'h' }),
     kubeconfig: Flags.string({
       char: 'k',
@@ -52,6 +52,26 @@ export default class PlatformCreate extends Command {
 
   async run(): Promise<void> {
     await this.createPlatform();
+  }
+
+  private async installAppliations(flags: any, created_platform: any, platform_name: string, account_name: string) {
+    if (!flags['auto-approve']) {
+      const confirmation = await inquirer.prompt({
+        type: 'confirm',
+        name: 'application_install',
+        message: `Would you like to install the requisite networking applications? This is a required step before using Architect with this platform. More details at the above URL.`,
+      });
+      if (!confirmation.application_install) {
+        this.warn(`Installation cancelled. You will be unable to deploy services to this platform.\n\nIf you decide to proceed with installation, you can do so at the above URL. Or if you would like to deregister this platform from Architect, run: \n\narchitect platform:destroy -a ${account_name} --auto_approve ${platform_name}`);
+        return;
+      }
+    }
+
+    this.log(`Hang tight! This could take as long as 15m, so feel free to grab a cup of coffee while you wait.`);
+    CliUx.ux.action.start(chalk.blue('Installing platform applications'));
+    const pipeline_id = await this.createPlatformApplications(created_platform.id);
+    await PipelineUtils.pollPipeline(this.app, pipeline_id);
+    CliUx.ux.action.stop();
   }
 
   private async createPlatform() {
@@ -89,26 +109,18 @@ export default class PlatformCreate extends Command {
 
     CliUx.ux.action.start('Registering platform with Architect');
     const created_platform = await this.postPlatformToApi(platform_dto, account.id);
+    console.log(created_platform);
     CliUx.ux.action.stop();
     this.log(`Platform registered: ${this.app.config.app_host}/${account.name}/platforms/new?platform_id=${created_platform.id}`);
 
-    if (!flags['auto-approve']) {
-      const confirmation = await inquirer.prompt({
-        type: 'confirm',
-        name: 'application_install',
-        message: `Would you like to install the requisite networking applications? This is a required step before using Architect with this platform. More details at the above URL.`,
-      });
-      if (!confirmation.application_install) {
-        this.warn(`Installation cancelled. You will be unable to deploy services to this platform.\n\nIf you decide to proceed with installation, you can do so at the above URL. Or if you would like to deregister this platform from Architect, run: \n\narchitect platform:destroy -a ${account.name} --auto_approve ${platform_name}`);
-        return;
-      }
+    if (flags.type?.toLowerCase() == 'agent') {
+      CliUx.ux.action.start(chalk.blue('Installing the agent'));
+      AgentPlatformUtils.installAgent(flags, created_platform.properties.agent_tokens[0], this.app.config);
+      CliUx.ux.action.stop();
+      await this.installAppliations(flags, created_platform, account.name, platform_name);
+    } else {
+      await this.installAppliations(flags, created_platform, account.name, platform_name);
     }
-
-    this.log(`Hang tight! This could take as long as 15m, so feel free to grab a cup of coffee while you wait.`);
-    CliUx.ux.action.start(chalk.blue('Installing platform applications'));
-    const pipeline_id = await this.createPlatformApplications(created_platform.id);
-    await PipelineUtils.pollPipeline(this.app, pipeline_id);
-    CliUx.ux.action.stop();
 
     return created_platform;
   }
@@ -122,13 +134,18 @@ export default class PlatformCreate extends Command {
         message: 'What type of platform would you like to register?',
         choices: [
           'kubernetes',
+          'agent'
         ],
       },
     ]);
 
     const selected_type = (flags.type || platform_type_answers.platform_type).toLowerCase();
 
+    flags.type = selected_type;
+
     switch (selected_type) {
+      case 'agent':
+        return await AgentPlatformUtils.configureAgentPlatform(flags);
       case 'kubernetes':
         return await KubernetesPlatformUtils.configureKubernetesPlatform(flags);
       case 'architect':

@@ -138,6 +138,7 @@ export class DockerComposeUtils {
           } else {
             liveness_probe.command = ['CMD-SHELL', liveness_probe.command.join(' ')];
           }
+          console.log(liveness_probe.command)
           service.healthcheck = {
             test: liveness_probe.command,
             interval: liveness_probe.interval,
@@ -501,6 +502,8 @@ export class DockerComposeUtils {
             const service_data = service_data_dictionary[service_ref];
 
             service_data.last_restart_ms = Date.now();
+            console.log("State: " + state + " health: " + health);
+            console.log(container_state);
             console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
             try {
               await restart(id);

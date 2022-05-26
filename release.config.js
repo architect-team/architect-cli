@@ -74,5 +74,4 @@ module.exports = {
   plugins: branch === 'main' ? main_plugins : default_plugins,
 };
 
-
 console.log(module.exports);
