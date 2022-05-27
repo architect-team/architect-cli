@@ -1,11 +1,18 @@
 import { Command, Interfaces } from '@oclif/core';
+import { Dedupe, ExtraErrorData, RewriteFrames, Transaction } from '@sentry/integrations';
+import * as Sentry from '@sentry/node';
 import chalk from 'chalk';
+import { execSync } from 'child_process';
+import os from 'os';
+import path from 'path';
 import { ValidationErrors } from './';
 import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
+import LocalPaths from './paths';
 
 const DEPRECATED_LABEL = '[deprecated]';
+const CLI_SENTRY_DSN = 'https://52645738b46a4989986c80bb40d39eaa@o298191.ingest.sentry.io/6377983';
 
 export default abstract class BaseCommand extends Command {
   static readonly DEPRECATED: string = DEPRECATED_LABEL;
@@ -92,11 +99,75 @@ export default abstract class BaseCommand extends Command {
     return super.parse(options, [...args, ...flags]);
   }
 
+  async _logToSentry(err: any): Promise<void> {
+    const auth_result = await this.app.auth.getPersistedTokenJSON();
+    const auth_user = await this.app.auth.checkLogin();
+    const config_dir = this.app.config.getConfigDir();
+    const active_config_file = path.join(config_dir, LocalPaths.CLI_CONFIG_FILENAME);
+    const docker_version = execSync('docker version --format \'{{json .}}\'').toString();
+
+    Sentry.init({
+      dsn: CLI_SENTRY_DSN,
+      debug: false,
+      attachStacktrace: true,
+      environment: this.config.bin,
+      integrations: [
+        new Dedupe(),
+        new RewriteFrames({
+          root: __dirname || process.cwd(),
+        }),
+        new ExtraErrorData(),
+        new Transaction(),
+      ],
+      beforeSend(event: any) {
+        // Prevent sending sensitive information like access tokens to sentry
+        if (event.req?.data?.token) {
+          event.req.data.token = '*'.repeat(event.req?.data?.token.length);
+        }
+        return event;
+      },
+      initialScope: {
+        user: { id: auth_user.id, email: auth_result?.email },
+        extra: {
+          command_metadata: (await this.parse(this.constructor as any)).raw,
+          linked_components: this.app.linkedComponents,
+          cli_version: this.app.version,
+          shell: this.config.bin,
+          docker_info: docker_version,
+          os_platform: os.platform(),
+          os_type: os.type(),
+          os_release: os.release(),
+          node_version: process.version,
+          config_dir: config_dir,
+          log_level: this.app.config.log_level,
+          registry_host: this.app.config.registry_host,
+          api_host: this.app.config.api_host,
+          app_host: this.app.config.app_host,
+          account: this.app.config.account,
+          cwd: process.cwd(),
+          active_config_file: active_config_file,
+        },
+        tags: {
+          os: os.platform(),
+          node_runtime: process.version,
+          user: auth_user.name || auth_result?.email,
+          'user-email': auth_result?.email,
+          cli: this.app.version,
+          shell: this.config.bin,
+        }
+      },
+    });
+    err.code = err.response.status;
+    err.description = err.response.statusText;
+    return Sentry.withScope(scope => Sentry.captureException(err));
+  }
+
   async catch(err: any): Promise<void> {
     if (err.oclif && err.oclif.exit === 0) return;
 
     if (err instanceof ValidationErrors) {
-      return prettyValidationErrors(err);
+      prettyValidationErrors(err);
+      return this._logToSentry(err);
     }
 
     if (err.response?.data instanceof Object) {
@@ -116,8 +187,8 @@ export default abstract class BaseCommand extends Command {
       err.message += `\nstderr: ${err.stderr}`;
     }
 
-    err.message = chalk.red(err.message);
+    console.error(chalk.red(err.message));
 
-    return super.catch(err);
+    return this._logToSentry(err);
   }
 }
