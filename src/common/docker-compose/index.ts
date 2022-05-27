@@ -127,7 +127,12 @@ export class DockerComposeUtils {
       if (!service.labels) {
         service.labels = [];
       }
-      service.labels.push(`architect.ref=${node.config.metadata.ref}`);
+
+      if (node.config.reserved_name) {
+        service.labels.push(`architect.ref=${node.config.metadata.instance_id}.${node instanceof ServiceNode ? 'services' : 'tasks'}.${node.config.metadata.ref}`);
+      } else {
+        service.labels.push(`architect.ref=${node.config.metadata.ref}`);
+      }
 
       // Set liveness and healthcheck for services (not supported by Tasks)
       if (node instanceof ServiceNode) {
