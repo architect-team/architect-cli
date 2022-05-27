@@ -154,7 +154,7 @@ export default abstract class BaseCommand extends Command {
           'user-email': auth_result?.email,
           cli: this.app.version,
           shell: this.config.bin,
-        }
+        },
       },
     });
     err.code = err.response.status;
