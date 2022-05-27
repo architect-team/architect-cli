@@ -67,7 +67,7 @@ describe('components with reserved_name field set', function () {
             "build": {
               "context": path.resolve("/stack")
             },
-            labels: [`architect.ref=${reserved_name}`]
+            labels: [`architect.ref=architect/cloud.services.api`]
           },
         },
         "version": "3",
@@ -260,7 +260,7 @@ describe('components with reserved_name field set', function () {
             "build": {
               "context": path.resolve("/stack")
             },
-            labels: [`architect.ref=${api_ref}`]
+            labels: [`architect.ref=architect/cloud.services.api`]
           },
           [app_ref]: {
             "depends_on": [
