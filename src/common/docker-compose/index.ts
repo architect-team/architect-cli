@@ -122,12 +122,7 @@ export class DockerComposeUtils {
         service.labels = [];
       }
 
-      let component_name;
-      let tenant_name;
-      if (node.config.metadata.instance_id) {
-        [component_name, tenant_name] = node.config.metadata.instance_id.split('@');
-      }
-      service.labels.push(`architect.ref=${component_name}.${node instanceof ServiceNode ? 'services' : 'tasks'}.${node.config.name}${tenant_name ? `@${tenant_name}` : ''}`);
+      service.labels.push(node.architect_ref);
 
       // Set liveness and healthcheck for services (not supported by Tasks)
       if (node instanceof ServiceNode) {

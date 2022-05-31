@@ -39,4 +39,13 @@ export class TaskNode extends DependencyNode implements TaskNodeOptions {
   get is_local(): boolean {
     return this.local_path !== '';
   }
+
+  get architect_ref(): string {
+    let component_name;
+    let tenant_name;
+    if (this.config.metadata.instance_id) {
+      [component_name, tenant_name] = this.config.metadata.instance_id.split('@');
+    }
+    return `architect.ref=${component_name}.tasks.${this.config.name}${tenant_name ? `@${tenant_name}` : ''}`;
+  }
 }
