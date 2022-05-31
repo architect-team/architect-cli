@@ -62,4 +62,14 @@ export default class AppConfig {
       account: this.account,
     };
   }
+
+  toSentry(): Dictionary<string> {
+    return {
+      log_level: this.log_level,
+      registry_host: this.registry_host,
+      api_host: this.api_host,
+      app_host: this.app_host,
+      account: this.account,
+    };
+  }
 }

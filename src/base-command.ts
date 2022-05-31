@@ -102,9 +102,6 @@ export default abstract class BaseCommand extends Command {
   async _logToSentry(err: any): Promise<void> {
     const auth_result = await this.app.auth.getPersistedTokenJSON();
     const auth_user = await this.app.auth.checkLogin();
-    const config_dir = this.app.config.getConfigDir();
-    const active_config_file = path.join(config_dir, LocalPaths.CLI_CONFIG_FILENAME);
-    const docker_version = execSync('docker version --format \'{{json .}}\'').toString();
 
     Sentry.init({
       dsn: CLI_SENTRY_DSN,
@@ -122,43 +119,40 @@ export default abstract class BaseCommand extends Command {
       beforeSend(event: any) {
         // Prevent sending sensitive information like access tokens to sentry
         if (event.req?.data?.token) {
-          event.req.data.token = '*'.repeat(event.req?.data?.token.length);
+          event.req.data.token = '*'.repeat(20);
         }
         return event;
       },
       initialScope: {
-        user: { id: auth_user.id, email: auth_result?.email },
+        user: {
+          email: auth_result?.email,
+          id: auth_user.id,
+        },
         extra: {
+          ...this.config,
+          ...this.app.config.toSentry(),
+          command: `${process.argv.join(' ')}`,
           command_metadata: (await this.parse(this.constructor as any)).raw,
-          linked_components: this.app.linkedComponents,
-          cli_version: this.app.version,
-          shell: this.config.bin,
-          docker_info: docker_version,
-          os_platform: os.platform(),
-          os_type: os.type(),
-          os_release: os.release(),
-          node_version: process.version,
-          config_dir: config_dir,
-          log_level: this.app.config.log_level,
-          registry_host: this.app.config.registry_host,
-          api_host: this.app.config.api_host,
-          app_host: this.app.config.app_host,
-          account: this.app.config.account,
+          config_file: path.join(this.app.config.getConfigDir(), LocalPaths.CLI_CONFIG_FILENAME),
           cwd: process.cwd(),
-          active_config_file: active_config_file,
+          docker_info: execSync('docker version').toString(),
+          linked_components: this.app.linkedComponents,
+          log_level: this.app.config.log_level,
+          node_version: process.version,
+          os_release: os.release(),
+          os_type: os.type(),
         },
         tags: {
-          os: os.platform(),
+          cli: this.app.version,
           node_runtime: process.version,
+          os: os.platform(),
+          shell: this.config.shell,
           user: auth_user.name || auth_result?.email,
           'user-email': auth_result?.email,
-          cli: this.app.version,
-          shell: this.config.bin,
         },
       },
     });
-    err.code = err.response.status;
-    err.description = err.response.statusText;
+
     return Sentry.withScope(scope => Sentry.captureException(err));
   }
 
