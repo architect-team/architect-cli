@@ -42,6 +42,6 @@ export class TaskNode extends DependencyNode implements TaskNodeOptions {
   }
 
   get architect_ref(): string {
-    return Refs.getArchitectRef(this);
+    return Refs.getArchitectRef(this.config, 'tasks');
   }
 }

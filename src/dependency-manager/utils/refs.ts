@@ -1,6 +1,4 @@
 import crypto from 'crypto';
-import { ServiceNode } from '../graph/node/service';
-import { TaskNode } from '../graph/node/task';
 
 export class Refs {
   private static HASH_LENGTH = 8;
@@ -55,14 +53,13 @@ export class Refs {
       .replace(/[\\/+=]/g, ''); // we also remove occurances of slash, plus, and equals to make url-safe
   }
 
-  public static getArchitectRef(node: ServiceNode | TaskNode): string {
+  public static getArchitectRef(node_config: any, node_type: 'services' | 'tasks'): string {
     let component_name;
     let tenant_name;
-    if (node.config.metadata.instance_id) {
-      [component_name, tenant_name] = node.config.metadata.instance_id.split('@');
+    if (node_config.metadata.instance_id) {
+      [component_name, tenant_name] = node_config.metadata.instance_id.split('@');
     }
-    const node_type = node instanceof ServiceNode ? 'services' : 'tasks';
     const tenant = tenant_name ? `@${tenant_name}` : '';
-    return `architect.ref=${component_name}.${node_type}.${node.config.name}${tenant}`;
+    return `architect.ref=${component_name}.${node_type}.${node_config.name}${tenant}`;
   }
 }

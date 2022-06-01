@@ -1,4 +1,4 @@
-import { DependencyNode, DependencyNodeOptions } from '.';
+import { DependencyNode, DependencyNodeOptions, getArchitectRef } from '.';
 import { ServiceConfig, ServiceInterfaceConfig } from '../../config/service-config';
 import { Refs } from '../../utils/refs';
 
@@ -46,6 +46,6 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   }
 
   get architect_ref(): string {
-    return Refs.getArchitectRef(this);
+    return Refs.getArchitectRef(this.config, 'services');
   }
 }
