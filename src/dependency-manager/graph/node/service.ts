@@ -1,4 +1,4 @@
-import { DependencyNode, DependencyNodeOptions, getArchitectRef } from '.';
+import { DependencyNode, DependencyNodeOptions } from '.';
 import { ServiceConfig, ServiceInterfaceConfig } from '../../config/service-config';
 import { Refs } from '../../utils/refs';
 

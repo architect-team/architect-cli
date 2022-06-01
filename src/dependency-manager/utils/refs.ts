@@ -60,6 +60,6 @@ export class Refs {
       [component_name, tenant_name] = node_config.metadata.instance_id.split('@');
     }
     const tenant = tenant_name ? `@${tenant_name}` : '';
-    return `architect.ref=${component_name}.${node_type}.${node_config.name}${tenant}`;
+    return `${component_name}.${node_type}.${node_config.name}${tenant}`;
   }
 }
