@@ -1,5 +1,6 @@
 import { DependencyNode, DependencyNodeOptions } from '.';
 import { ServiceConfig, ServiceInterfaceConfig } from '../../config/service-config';
+import { Refs } from '../../utils/refs';
 
 export interface ServiceNodeOptions {
   ref: string;
@@ -45,11 +46,6 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   }
 
   get architect_ref(): string {
-    let component_name;
-    let tenant_name;
-    if (this.config.metadata.instance_id) {
-      [component_name, tenant_name] = this.config.metadata.instance_id.split('@');
-    }
-    return `architect.ref=${component_name}.services.${this.config.name}${tenant_name ? `@${tenant_name}` : ''}`;
+    return Refs.getArchitectRef(this);
   }
 }
