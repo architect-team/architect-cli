@@ -55,7 +55,7 @@ export class Refs {
       .replace(/[\\/+=]/g, ''); // we also remove occurances of slash, plus, and equals to make url-safe
   }
 
-  public static getArchitectRef(node: ServiceNode | TaskNode) {
+  public static getArchitectRef(node: ServiceNode | TaskNode): string {
     let component_name;
     let tenant_name;
     if (node.config.metadata.instance_id) {
