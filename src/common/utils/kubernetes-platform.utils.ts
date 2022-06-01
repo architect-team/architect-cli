@@ -142,6 +142,7 @@ export class KubernetesPlatformUtils {
       '-o', 'json',
     ]);
 
+    console.log(JSON.parse(saRes.stdout));
     const secrets = JSON.parse(saRes.stdout).secrets;
     if (!secrets) {
       throw new Error('Unable to retrieve service account secret');

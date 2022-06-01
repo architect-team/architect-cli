@@ -66,11 +66,6 @@ services:
       main:
         host: ${{ secrets.api_host }}
         port: 8080
-    liveness_probe:
-      path: /names
-      port: ${{ services.api.interfaces.main.port }}
-      interval: 10s
-      failure_threshold: 3
     environment:
       PORT: ${{ services.api.interfaces.main.port }}
       DB_USE_SSL: ${{ secrets.db_use_ssl }}
@@ -91,11 +86,6 @@ services:
         NODE_ENV: production
     interfaces:
       main: &app-port 8080
-    liveness_probe:
-      port: *app-port
-      path: /api/names
-      interval: 10s
-      failure_threshold: 3
     replicas: ${{ secrets.app_replicas }}
     environment:
       PORT: *app-port
