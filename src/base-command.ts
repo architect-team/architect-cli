@@ -108,7 +108,7 @@ export default abstract class BaseCommand extends Command {
     let command_metadata = {};
 
     if (!calling_class.is_sensitive) {
-      command = `${process.argv.join(' ')}`
+      command = `${process.argv.join(' ')}`;
       command_metadata = (await this.parse(this.constructor as any)).raw;
     }
 
