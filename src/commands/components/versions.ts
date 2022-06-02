@@ -23,26 +23,36 @@ export default class ComponentVersions extends Command {
   }];
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(ComponentVersions);
+    try {
+      const { args, flags } = await this.parse(ComponentVersions);
 
-    if (!args.component_name) {
-      this.log('You must specify the name of a component.');
-      return;
+      if (!args.component_name) {
+        this.log('You must specify the name of a component.');
+        return;
+      }
+
+      const account: Account = await AccountUtils.getAccount(this.app, flags.account);
+
+      const { data: component } = await this.app.api.get(`/accounts/${account.name}/components/${args.component_name}`);
+      const { data: { rows: component_versions } } = await this.app.api.get(`/components/${component.component_id}/versions`);
+
+      const table = new Table({ head: ['Tag', 'Created'] });
+      for (const component_version of component_versions.sort((cv1: ComponentVersion, cv2: ComponentVersion) => cv1.tag.localeCompare(cv2.tag))) {
+        table.push([
+          component_version.tag,
+          localizedTimestamp(component_version.created_at),
+        ]);
+      }
+
+      this.log(table.toString());
+    } catch (e: any) {
+      if (e instanceof Error) {
+        const cli_stacktrace = Error(__filename).stack?.substring(6);
+        if (cli_stacktrace) {
+          e.stack += `\n    at${cli_stacktrace}`;
+        }
+      }
+      throw e;
     }
-
-    const account: Account = await AccountUtils.getAccount(this.app, flags.account);
-
-    const { data: component } = await this.app.api.get(`/accounts/${account.name}/components/${args.component_name}`);
-    const { data: { rows: component_versions } } = await this.app.api.get(`/components/${component.component_id}/versions`);
-
-    const table = new Table({ head: ['Tag', 'Created'] });
-    for (const component_version of component_versions.sort((cv1: ComponentVersion, cv2: ComponentVersion) => cv1.tag.localeCompare(cv2.tag))) {
-      table.push([
-        component_version.tag,
-        localizedTimestamp(component_version.created_at),
-      ]);
-    }
-
-    this.log(table.toString());
   }
 }

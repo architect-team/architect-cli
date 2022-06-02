@@ -47,34 +47,44 @@ export default class EnvironmentDestroy extends Command {
   }
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(EnvironmentDestroy);
+    try {
+      const { args, flags } = await this.parse(EnvironmentDestroy);
 
-    const account = await AccountUtils.getAccount(this.app, flags.account);
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, args.environment);
+      const account = await AccountUtils.getAccount(this.app, flags.account);
+      const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, args.environment);
 
-    let answers = await inquirer.prompt([{
-      type: 'input',
-      name: 'destroy',
-      message: 'Are you absolutely sure? This will deregister the environment.\nPlease type in the name of the environment to confirm.\n',
-      validate: (value: any, answers: any) => {
-        if (value === environment.name) {
-          return true;
+      let answers = await inquirer.prompt([{
+        type: 'input',
+        name: 'destroy',
+        message: 'Are you absolutely sure? This will deregister the environment.\nPlease type in the name of the environment to confirm.\n',
+        validate: (value: any, answers: any) => {
+          if (value === environment.name) {
+            return true;
+          }
+          return `Name must match: ${chalk.blue(environment.name)}`;
+        },
+        when: !flags['auto-approve'],
+      }]);
+
+      CliUx.ux.action.start(chalk.blue('Deregistering environment'));
+      answers = { ...args, ...flags, ...answers };
+      const { data: account_environment } = await this.app.api.get(`/accounts/${account.id}/environments/${environment.name}`);
+
+      await this.app.api.delete(`/environments/${account_environment.id}`, {
+        params: {
+          force: answers.force ? 1 : 0,
+        },
+      });
+      CliUx.ux.action.stop();
+      this.log(chalk.green('Environment deregistered'));
+    } catch (e) {
+      if (e instanceof Error) {
+        const cli_stacktrace = Error(__filename).stack?.substring(6);
+        if (cli_stacktrace) {
+          e.stack += `\n    at${cli_stacktrace}`;
         }
-        return `Name must match: ${chalk.blue(environment.name)}`;
-      },
-      when: !flags['auto-approve'],
-    }]);
-
-    CliUx.ux.action.start(chalk.blue('Deregistering environment'));
-    answers = { ...args, ...flags, ...answers };
-    const { data: account_environment } = await this.app.api.get(`/accounts/${account.id}/environments/${environment.name}`);
-
-    await this.app.api.delete(`/environments/${account_environment.id}`, {
-      params: {
-        force: answers.force ? 1 : 0,
-      },
-    });
-    CliUx.ux.action.stop();
-    this.log(chalk.green('Environment deregistered'));
+      }
+      throw e;
+    }
   }
 }

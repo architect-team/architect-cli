@@ -29,41 +29,51 @@ export default class Components extends Command {
   }];
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(Components);
+    try {
+      const { args, flags } = await this.parse(Components);
 
-    let account: Account | undefined = undefined;
-    if (flags.account) {
-      account = await AccountUtils.getAccount(this.app, flags.account);
-    }
-
-    const params = {
-      q: args.query || '',
-      account_id: account?.id,
-    };
-
-    let { data: { rows: components } } = await this.app.api.get(`/components`, { params });
-    components = components.filter((c: Component) => c.account);
-
-    if (!components.length) {
-      if (args.query) {
-        this.log(`No components found matching ${args.query}.`);
-      } else {
-        this.log('You have not registered any components yet. Use `architect register` to set up your first one.');
+      let account: Account | undefined = undefined;
+      if (flags.account) {
+        account = await AccountUtils.getAccount(this.app, flags.account);
       }
-      return;
-    }
 
-    const table = new Table({ head: ['Name', 'Account', 'Versions', 'Created', 'Updated'] });
-    for (const component of components.sort((c1: Component, c2: Component) => c1.name.localeCompare(c2.name))) {
-      table.push([
-        component.name,
-        component.account.name,
-        component.metadata.tag_count,
-        localizedTimestamp(component.created_at),
-        localizedTimestamp(component.updated_at),
-      ]);
-    }
+      const params = {
+        q: args.query || '',
+        account_id: account?.id,
+      };
 
-    this.log(table.toString());
+      let { data: { rows: components } } = await this.app.api.get(`/components`, { params });
+      components = components.filter((c: Component) => c.account);
+
+      if (!components.length) {
+        if (args.query) {
+          this.log(`No components found matching ${args.query}.`);
+        } else {
+          this.log('You have not registered any components yet. Use `architect register` to set up your first one.');
+        }
+        return;
+      }
+
+      const table = new Table({ head: ['Name', 'Account', 'Versions', 'Created', 'Updated'] });
+      for (const component of components.sort((c1: Component, c2: Component) => c1.name.localeCompare(c2.name))) {
+        table.push([
+          component.name,
+          component.account.name,
+          component.metadata.tag_count,
+          localizedTimestamp(component.created_at),
+          localizedTimestamp(component.updated_at),
+        ]);
+      }
+
+      this.log(table.toString());
+    } catch (e: any) {
+      if (e instanceof Error) {
+        const cli_stacktrace = Error(__filename).stack?.substring(6);
+        if (cli_stacktrace) {
+          e.stack += `\n    at${cli_stacktrace}`;
+        }
+      }
+      throw e;
+    }
   }
 }

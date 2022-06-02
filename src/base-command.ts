@@ -12,7 +12,7 @@ import LoginRequiredError from './common/errors/login-required';
 import LocalPaths from './paths';
 
 const DEPRECATED_LABEL = '[deprecated]';
-const CLI_SENTRY_DSN = 'https://52645738b46a4989986c80bb40d39eaa@o298191.ingest.sentry.io/6377983';
+const CLI_SENTRY_DSN = 'https://272fd53f577f4729b014701d74fe6c53@o298191.ingest.sentry.io/6465948';
 
 export default abstract class BaseCommand extends Command {
   static readonly DEPRECATED: string = DEPRECATED_LABEL;
@@ -102,6 +102,15 @@ export default abstract class BaseCommand extends Command {
   async _logToSentry(err: any): Promise<void> {
     const auth_result = await this.app.auth.getPersistedTokenJSON();
     const auth_user = await this.app.auth.checkLogin();
+    const calling_class = (this.constructor as any);
+
+    let command = '';
+    let command_metadata = {};
+
+    if (!calling_class.is_sensitive) {
+      command = `${process.argv.join(' ')}`
+      command_metadata = (await this.parse(this.constructor as any)).raw;
+    }
 
     Sentry.init({
       dsn: CLI_SENTRY_DSN,
@@ -131,8 +140,8 @@ export default abstract class BaseCommand extends Command {
         extra: {
           ...this.config,
           ...this.app.config.toSentry(),
-          command: `${process.argv.join(' ')}`,
-          command_metadata: (await this.parse(this.constructor as any)).raw,
+          command: command,
+          command_metadata: command_metadata,
           config_file: path.join(this.app.config.getConfigDir(), LocalPaths.CLI_CONFIG_FILENAME),
           cwd: process.cwd(),
           docker_info: execSync('docker version').toString(),
@@ -161,6 +170,9 @@ export default abstract class BaseCommand extends Command {
 
     if (err instanceof ValidationErrors) {
       prettyValidationErrors(err);
+      if (err.stack) {
+        console.error(chalk.red(err.stack));
+      }
       return this._logToSentry(err);
     }
 
@@ -182,6 +194,10 @@ export default abstract class BaseCommand extends Command {
     }
 
     console.error(chalk.red(err.message));
+
+    if (err instanceof Error && err.stack) {
+      console.error(chalk.red(err.stack));
+    }
 
     return this._logToSentry(err);
   }

@@ -36,44 +36,54 @@ export default class EnvironmentCreate extends Command {
   }];
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(EnvironmentCreate);
+    try {
+      const { args, flags } = await this.parse(EnvironmentCreate);
 
-    const answers: any = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'environment',
-        message: 'What would you like to name your new environment?',
-        when: !args.environment,
-        filter: value => value.toLowerCase(),
-        validate: value => {
-          if (Slugs.ArchitectSlugValidator.test(value)) return true;
-          return `environment ${Slugs.ArchitectSlugDescription}`;
+      const answers: any = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'environment',
+          message: 'What would you like to name your new environment?',
+          when: !args.environment,
+          filter: value => value.toLowerCase(),
+          validate: value => {
+            if (Slugs.ArchitectSlugValidator.test(value)) return true;
+            return `environment ${Slugs.ArchitectSlugDescription}`;
+          },
         },
-      },
-    ]);
+      ]);
 
-    const environment_name = args.environment || answers.environment;
-    if (!Slugs.ArchitectSlugValidator.test(environment_name)) {
-      throw new Error(`environment ${Slugs.ArchitectSlugDescription}`);
+      const environment_name = args.environment || answers.environment;
+      if (!Slugs.ArchitectSlugValidator.test(environment_name)) {
+        throw new Error(`environment ${Slugs.ArchitectSlugDescription}`);
+      }
+
+      const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the environment with' });
+      const platform = await PlatformUtils.getPlatform(this.app.api, account, flags.platform);
+
+      CliUx.ux.action.start(chalk.blue('Registering environment with Architect'));
+
+      const dto: CreateEnvironmentDto = {
+        name: environment_name,
+        description: flags.description,
+        platform_id: platform.id,
+      };
+      if (flags.ttl) {
+        dto.ttl = flags.ttl;
+      }
+      await this.app.api.post(`/accounts/${account.id}/environments`, dto);
+
+      const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment_name}`;
+      CliUx.ux.action.stop();
+      this.log(chalk.green(`Environment created: ${environment_url}`));
+    } catch (e: any) {
+      if (e instanceof Error) {
+        const cli_stacktrace = Error(__filename).stack?.substring(6);
+        if (cli_stacktrace) {
+          e.stack += `\n    at${cli_stacktrace}`;
+        }
+      }
+      throw e;
     }
-
-    const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the environment with' });
-    const platform = await PlatformUtils.getPlatform(this.app.api, account, flags.platform);
-
-    CliUx.ux.action.start(chalk.blue('Registering environment with Architect'));
-
-    const dto: CreateEnvironmentDto = {
-      name: environment_name,
-      description: flags.description,
-      platform_id: platform.id,
-    };
-    if (flags.ttl) {
-      dto.ttl = flags.ttl;
-    }
-    await this.app.api.post(`/accounts/${account.id}/environments`, dto);
-
-    const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment_name}`;
-    CliUx.ux.action.stop();
-    this.log(chalk.green(`Environment created: ${environment_url}`));
   }
 }

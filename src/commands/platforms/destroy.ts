@@ -47,34 +47,44 @@ export default class PlatformDestroy extends Command {
   }
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(PlatformDestroy);
+    try {
+      const { args, flags } = await this.parse(PlatformDestroy);
 
-    const account = await AccountUtils.getAccount(this.app, flags.account);
-    const platform = await PlatformUtils.getPlatform(this.app.api, account, args.platform);
+      const account = await AccountUtils.getAccount(this.app, flags.account);
+      const platform = await PlatformUtils.getPlatform(this.app.api, account, args.platform);
 
-    let answers = await inquirer.prompt([{
-      type: 'input',
-      name: 'destroy',
-      message: 'Are you absolutely sure? This will deregister the platform from the Architect system.\nPlease type in the name of the platform to confirm.\n',
-      validate: (value: any, answers: any) => {
-        if (value === platform.name) {
-          return true;
+      let answers = await inquirer.prompt([{
+        type: 'input',
+        name: 'destroy',
+        message: 'Are you absolutely sure? This will deregister the platform from the Architect system.\nPlease type in the name of the platform to confirm.\n',
+        validate: (value: any, answers: any) => {
+          if (value === platform.name) {
+            return true;
+          }
+          return `Name must match: ${chalk.blue(platform.name)}`;
+        },
+        when: !flags['auto-approve'],
+      }]);
+
+      answers = { ...args, ...flags, ...answers };
+      const { data: account_platform } = await this.app.api.get(`/accounts/${account.id}/platforms/${platform.name}`);
+
+      CliUx.ux.action.start(chalk.blue('Deregistering platform'));
+      const params: any = {};
+      if (answers.force) {
+        params.force = 1;
+      }
+      await this.app.api.delete(`/platforms/${account_platform.id}`, { params });
+      CliUx.ux.action.stop();
+      this.log(chalk.green('Platform deregistered'));
+    } catch (e: any) {
+      if (e instanceof Error) {
+        const cli_stacktrace = Error(__filename).stack?.substring(6);
+        if (cli_stacktrace) {
+          e.stack += `\n    at${cli_stacktrace}`;
         }
-        return `Name must match: ${chalk.blue(platform.name)}`;
-      },
-      when: !flags['auto-approve'],
-    }]);
-
-    answers = { ...args, ...flags, ...answers };
-    const { data: account_platform } = await this.app.api.get(`/accounts/${account.id}/platforms/${platform.name}`);
-
-    CliUx.ux.action.start(chalk.blue('Deregistering platform'));
-    const params: any = {};
-    if (answers.force) {
-      params.force = 1;
+      }
+      throw e;
     }
-    await this.app.api.delete(`/platforms/${account_platform.id}`, { params });
-    CliUx.ux.action.stop();
-    this.log(chalk.green('Platform deregistered'));
   }
 }
