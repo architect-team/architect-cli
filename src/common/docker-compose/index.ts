@@ -14,12 +14,6 @@ import { restart } from '../utils/docker';
 import PortUtil from '../utils/port';
 import DockerComposeTemplate, { DockerService, DockerServiceBuild } from './template';
 
-class LocalService {
-  slugless_name!: string;
-  display_name!: string;
-  service_name!: string;
-}
-
 export class DockerComposeUtils {
 
   // used to namespace docker-compose projects so multiple deployments can happen to local
@@ -127,7 +121,8 @@ export class DockerComposeUtils {
       if (!service.labels) {
         service.labels = [];
       }
-      service.labels.push(`architect.ref=${node.config.metadata.ref}`);
+
+      service.labels.push(`architect.ref=${node.architect_ref}`);
 
       // Set liveness and healthcheck for services (not supported by Tasks)
       if (node instanceof ServiceNode) {

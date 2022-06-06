@@ -1,5 +1,6 @@
 import { DependencyNode, DependencyNodeOptions } from '.';
 import { TaskConfig } from '../../config/task-config';
+import { Refs } from '../../utils/refs';
 
 export interface TaskNodeOptions {
   ref: string;
@@ -38,5 +39,9 @@ export class TaskNode extends DependencyNode implements TaskNodeOptions {
 
   get is_local(): boolean {
     return this.local_path !== '';
+  }
+
+  get architect_ref(): string {
+    return Refs.getArchitectRef(this.config, 'tasks');
   }
 }
