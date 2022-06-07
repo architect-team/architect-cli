@@ -33,6 +33,10 @@ export default class EnvironmentDestroy extends Command {
     parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
+  static sensitive = new Set();
+
+  static non_sensitive = new Set([...Object.keys({ ...this.flags }), ...this.args.map(arg => arg.name)]);
+
   protected async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
@@ -79,9 +83,9 @@ export default class EnvironmentDestroy extends Command {
       this.log(chalk.green('Environment deregistered'));
     } catch (e) {
       if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack?.substring(6);
+        const cli_stacktrace = Error(__filename).stack;
         if (cli_stacktrace) {
-          e.stack += `\n    at${cli_stacktrace}`;
+          e.stack = cli_stacktrace;
         }
       }
       throw e;

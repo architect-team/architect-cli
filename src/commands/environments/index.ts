@@ -18,6 +18,10 @@ export default class Environments extends Command {
     description: 'Search term used to filter the results',
   }];
 
+  static sensitive = new Set();
+
+  static non_sensitive = new Set([...Object.keys({ ...this.flags }), ...this.args.map(arg => arg.name)]);
+
   async run(): Promise<void> {
     try {
       const { args, flags } = await this.parse(Environments);
@@ -57,9 +61,9 @@ export default class Environments extends Command {
       this.log(table.toString());
     } catch (e) {
       if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack?.substring(6);
+        const cli_stacktrace = Error(__filename).stack;
         if (cli_stacktrace) {
-          e.stack += `\n    at${cli_stacktrace}`;
+          e.stack = cli_stacktrace;
         }
       }
       throw e;

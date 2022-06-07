@@ -2,7 +2,7 @@ import Command from '../../base-command';
 import Table from '../../base-table';
 
 export default class ConfigView extends Command {
-  static is_sensitive = true;
+
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -13,6 +13,10 @@ export default class ConfigView extends Command {
   static flags = {
     ...Command.flags,
   };
+
+  static sensitive = new Set([...Object.keys({ ...this.flags })]);
+
+  static non_sensitive = new Set();
 
   async run(): Promise<void> {
     try {
@@ -25,9 +29,9 @@ export default class ConfigView extends Command {
       this.log(table.toString());
     } catch (e: any) {
       if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack?.substring(6);
+        const cli_stacktrace = Error(__filename).stack;
         if (cli_stacktrace) {
-          e.stack += `\n    at${cli_stacktrace}`;
+          e.stack = cli_stacktrace;
         }
       }
       throw e;

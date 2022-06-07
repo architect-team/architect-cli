@@ -99,18 +99,35 @@ export default abstract class BaseCommand extends Command {
     return super.parse(options, [...args, ...flags]);
   }
 
+  async _getFilteredMetadata(calling_class: any) {
+    const { args, flags } = await this.parse(calling_class);
+    const _args = Object.entries(args).map(([key, value]) => {
+      if (calling_class.non_sensitive.has(key)) {
+        return { [key]: value };
+      } else if (calling_class.sensitive.has(key)) {
+        return { '[Filtered]': '**********' };
+      } else {
+        return { '[Unknown]': '**********' };
+      }
+    });
+
+    const _flags = Object.entries(flags).map(([key, value]) => {
+      if (calling_class.non_sensitive.has(key)) {
+        return { [key]: value };
+      } else if (calling_class.sensitive.has(key)) {
+        return { '[Filtered]': '**********' };
+      } else {
+        return { '[Unknown]': '**********' };
+      }
+    });
+
+    return { args: _args, flags: _flags };
+  }
+
   async _logToSentry(err: any): Promise<void> {
     const auth_result = await this.app.auth.getPersistedTokenJSON();
     const auth_user = await this.app.auth.checkLogin();
-    const calling_class = (this.constructor as any);
-
-    let command = '';
-    let command_metadata = {};
-
-    if (!calling_class.is_sensitive) {
-      command = `${process.argv.join(' ')}`;
-      command_metadata = (await this.parse(this.constructor as any)).raw;
-    }
+    const metadata = await this._getFilteredMetadata(this.constructor as any);
 
     Sentry.init({
       dsn: CLI_SENTRY_DSN,
@@ -140,8 +157,8 @@ export default abstract class BaseCommand extends Command {
         extra: {
           ...this.config,
           ...this.app.config.toSentry(),
-          command: command,
-          command_metadata: command_metadata,
+          command_args: metadata.args,
+          command_flags: metadata.flags,
           config_file: path.join(this.app.config.getConfigDir(), LocalPaths.CLI_CONFIG_FILENAME),
           cwd: process.cwd(),
           docker_info: execSync('docker version').toString(),

@@ -8,7 +8,20 @@ export default class WhoAmI extends Command {
     return true;
   }
 
+  static sensitive = new Set();
+  static non_sensitive = new Set();
+
   async run(): Promise<void> {
-    this.log((await this.app.auth.getPersistedTokenJSON())?.email);
+    try {
+      this.log((await this.app.auth.getPersistedTokenJSON())?.email);
+    } catch (e: any) {
+      if (e instanceof Error) {
+        const cli_stacktrace = Error(__filename).stack;
+        if (cli_stacktrace) {
+          e.stack = cli_stacktrace;
+        }
+      }
+      throw e;
+    }
   }
 }

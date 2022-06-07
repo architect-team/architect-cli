@@ -36,6 +36,10 @@ export default class PlatformCreate extends Command {
     flag: Flags.string({ multiple: true, default: [] }),
   };
 
+  static sensitive = new Set();
+
+  static non_sensitive = new Set([...Object.keys({ ...this.flags }), ...this.args.map(arg => arg.name)]);
+
   protected async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
@@ -113,9 +117,9 @@ export default class PlatformCreate extends Command {
       return created_platform;
     } catch (e: any) {
       if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack?.substring(6);
+        const cli_stacktrace = Error(__filename).stack;
         if (cli_stacktrace) {
-          e.stack += `\n    at${cli_stacktrace}`;
+          e.stack = cli_stacktrace;
         }
       }
       throw e;
