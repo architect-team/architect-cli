@@ -941,13 +941,14 @@ describe('local dev environment', function () {
       });
     });
 
+    const non_existent_path = path.join('/tmp', 'non', 'existent', 'path');
     test
     .timeout(20000)
     .stub(ComponentBuilder, 'loadFile', () => {
       const config = yaml.load(getHelloComponentConfig()) as ComponentConfig;
       delete config.services.api.image;
       config.services.api.build = {
-        context: '/tmp/non/existent/path'
+        context: non_existent_path,
       };
       return yaml.dump(config);
     })
@@ -957,7 +958,7 @@ describe('local dev environment', function () {
     .stderr({ print })
     .command(['dev', './examples/hello-world/architect.yml'])
     .catch(err => {
-      expect(err.message.replace('\u001b[31m', '').replace('\u001b[39m', '')).to.equal('The path /tmp/non/existent/path used for the build context of service api does not exist.'); // \u001b[31m and \u001b[39m are the red color code
+      expect(err.message.replace('\u001b[31m', '').replace('\u001b[39m', '')).to.equal(`The path ${non_existent_path} used for the build context of service api does not exist.`); // \u001b[31m and \u001b[39m are the red color code
     })
     .it(`Throws error if a path is given that doesn't exist`, ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
