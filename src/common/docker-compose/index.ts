@@ -169,7 +169,7 @@ export class DockerComposeUtils {
           if (build.context || args.length) {
             const compose_build: DockerServiceBuild = {};
             if (build.context) {
-              compose_build.context = path.resolve(component_path, untildify(build.context))
+              compose_build.context = path.resolve(component_path, untildify(build.context));
               if (!fs.existsSync(compose_build.context)) {
                 throw new Error(`The path ${compose_build.context} used for the build context of service ${node.config.name} does not exist.`);
               }
