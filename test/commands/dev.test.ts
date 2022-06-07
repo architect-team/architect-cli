@@ -5,7 +5,6 @@ import sinon from 'sinon';
 import { buildSpecFromYml, ComponentConfig, resourceRefToNodeRef } from '../../src';
 import AppService from '../../src/app-config/service';
 import Dev from '../../src/commands/dev';
-import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import DeployUtils from '../../src/common/utils/deploy.utils';
 import * as Docker from '../../src/common/utils/docker';
@@ -958,7 +957,7 @@ describe('local dev environment', function () {
     .stderr({ print })
     .command(['dev', './examples/hello-world/architect.yml'])
     .catch(err => {
-      expect(err.message).to.equal(`\u001b[31mThe path /tmp/non/existent/path used for the build context of service api does not exist.\u001b[39m`);
+      expect(err.message.replace('\u001b[31m', '').replace('\u001b[39m', '')).to.equal('The path /tmp/non/existent/path used for the build context of service api does not exist.'); // \u001b[31m and \u001b[39m are the red color code
     })
     .it(`Throws error if a path is given that doesn't exist`, ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
