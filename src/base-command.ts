@@ -99,7 +99,7 @@ export default abstract class BaseCommand extends Command {
     return super.parse(options, [...args, ...flags]);
   }
 
-  async _getFilteredMetadata(calling_class: any) {
+  async _getFilteredMetadata(calling_class: any): Promise<any> {
     const { args, flags } = await this.parse(calling_class);
     const _args = Object.entries(args).map(([key, value]) => {
       if (calling_class.non_sensitive.has(key)) {
