@@ -2,9 +2,10 @@ import { expect, test } from '@oclif/test';
 import yaml from 'js-yaml';
 import path from 'path';
 import sinon from 'sinon';
-import { buildSpecFromYml, resourceRefToNodeRef } from '../../src';
+import { buildSpecFromYml, ComponentConfig, resourceRefToNodeRef } from '../../src';
 import AppService from '../../src/app-config/service';
 import Dev from '../../src/commands/dev';
+import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import DeployUtils from '../../src/common/utils/deploy.utils';
 import * as Docker from '../../src/common/utils/docker';
@@ -939,5 +940,28 @@ describe('local dev environment', function () {
         "retries": 3,
         "start_period": "0s"
       });
+    });
+
+    test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      const config = yaml.load(getHelloComponentConfig()) as ComponentConfig;
+      delete config.services.api.image;
+      config.services.api.build = {
+        context: '/tmp/non/existent/path'
+      };
+      return yaml.dump(config);
+    })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml'])
+    .catch(err => {
+      expect(err.message).to.equal(`\u001b[31mThe path /tmp/non/existent/path used for the build context of service api does not exist.\u001b[39m`);
+    })
+    .it(`Throws error if a path is given that doesn't exist`, ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.false;
     });
 });
