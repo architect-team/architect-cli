@@ -3,9 +3,15 @@ import path from 'path';
 import untildify from 'untildify';
 import { buildSpecFromPath } from '../';
 import Command from '../base-command';
-
+import { ToSentry } from '../sentry';
 declare const process: NodeJS.Process;
 
+@ToSentry(Error,
+  (err, ctx) => {
+    const error = err as any;
+    error.stack = Error(ctx.id).stack;
+    return error;
+})
 export default class Link extends Command {
   async auth_required(): Promise<boolean> {
     return false;
@@ -25,33 +31,23 @@ export default class Link extends Command {
 
   static sensitive = new Set();
 
-  static non_sensitive = new Set([...Object.keys({ ...this.flags }), ...this.args.map(arg => arg.name)]);
+  static non_sensitive = new Set([...Object.keys({ ...Link.flags }), ...Link.args.map(arg => arg.name)]);
 
   async run(): Promise<void> {
-    try {
-      const { args } = await this.parse(Link);
+    const { args } = await this.parse(Link);
 
-      const component_path = path.resolve(untildify(args.componentPath));
-      // Try to load the component from the path to ensure it exists and is valid
-      try {
-        const component_config = buildSpecFromPath(component_path);
-        this.app.linkComponentPath(component_config.name, component_path);
-        this.log(`Successfully linked ${chalk.green(component_config.name)} to local system at ${chalk.green(component_path)}.`);
-      } catch (err: any) {
-        if (err.name === 'missing_config_file') {
-          this.log(chalk.red(err.message));
-        } else {
-          throw err;
-        }
+    const component_path = path.resolve(untildify(args.componentPath));
+    // Try to load the component from the path to ensure it exists and is valid
+    try {
+      const component_config = buildSpecFromPath(component_path);
+      this.app.linkComponentPath(component_config.name, component_path);
+      this.log(`Successfully linked ${chalk.green(component_config.name)} to local system at ${chalk.green(component_path)}.`);
+    } catch (err: any) {
+      if (err.name === 'missing_config_file') {
+        this.log(chalk.red(err.message));
+      } else {
+        throw err;
       }
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
     }
   }
 }

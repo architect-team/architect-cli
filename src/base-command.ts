@@ -2,13 +2,13 @@ import { Command, Interfaces } from '@oclif/core';
 import { Dedupe, ExtraErrorData, RewriteFrames, Transaction } from '@sentry/integrations';
 import * as Sentry from '@sentry/node';
 import chalk from 'chalk';
-import { execSync } from 'child_process';
 import os from 'os';
 import path from 'path';
 import { ValidationErrors } from './';
 import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
+import { docker } from './common/utils/docker';
 import LocalPaths from './paths';
 
 const DEPRECATED_LABEL = '[deprecated]';
@@ -99,35 +99,27 @@ export default abstract class BaseCommand extends Command {
     return super.parse(options, [...args, ...flags]);
   }
 
-  async _getFilteredMetadata(calling_class: any): Promise<any> {
-    const { args, flags } = await this.parse(calling_class);
-    const _args = Object.entries(args).map(([key, value]) => {
-      if (calling_class.non_sensitive.has(key)) {
+  async _filterSensitiveSentryMetadata(sentry_metadata: any): Promise<any> {
+    const context = this.constructor as any;
+    return Object.entries(sentry_metadata).map(([key, value]) => {
+      if (context.non_sensitive.has(key)) {
         return { [key]: value };
-      } else if (calling_class.sensitive.has(key)) {
+      } else if (sentry_metadata.sensitive.has(key)) {
         return { '[Filtered]': '**********' };
       } else {
         return { '[Unknown]': '**********' };
       }
     });
-
-    const _flags = Object.entries(flags).map(([key, value]) => {
-      if (calling_class.non_sensitive.has(key)) {
-        return { [key]: value };
-      } else if (calling_class.sensitive.has(key)) {
-        return { '[Filtered]': '**********' };
-      } else {
-        return { '[Unknown]': '**********' };
-      }
-    });
-
-    return { args: _args, flags: _flags };
   }
 
   async _logToSentry(err: any): Promise<void> {
     const auth_result = await this.app.auth.getPersistedTokenJSON();
     const auth_user = await this.app.auth.checkLogin();
-    const metadata = await this._getFilteredMetadata(this.constructor as any);
+
+    const { args, flags } = await this.parse(this.constructor as any);
+    const filtered_sentry_args = await this._filterSensitiveSentryMetadata(args);
+    const filtered_sentry_flags = await this._filterSensitiveSentryMetadata(flags);
+    const docker_version = await docker(['version'], { stdout: false });
 
     Sentry.init({
       dsn: CLI_SENTRY_DSN,
@@ -155,13 +147,11 @@ export default abstract class BaseCommand extends Command {
           id: auth_user.id,
         },
         extra: {
-          ...this.config,
-          ...this.app.config.toSentry(),
-          command_args: metadata.args,
-          command_flags: metadata.flags,
+          command_args: filtered_sentry_args,
+          command_flags: filtered_sentry_flags,
           config_file: path.join(this.app.config.getConfigDir(), LocalPaths.CLI_CONFIG_FILENAME),
           cwd: process.cwd(),
-          docker_info: execSync('docker version').toString(),
+          docker_info: docker_version.stdout,
           linked_components: this.app.linkedComponents,
           log_level: this.app.config.log_level,
           node_version: process.version,

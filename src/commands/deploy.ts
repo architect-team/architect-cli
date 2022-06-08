@@ -7,8 +7,15 @@ import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import Command from '../base-command';
 import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../common/errors/pipeline-errors';
 import DeployUtils from '../common/utils/deploy.utils';
+import { ToSentry } from '../sentry';
 import Dev from "./dev";
 
+@ToSentry(Error,
+  (err, ctx) => {
+    const error = err as any;
+    error.stack = Error(ctx.id).stack;
+    return error;
+})
 export abstract class DeployCommand extends Command {
 
   static flags = {
@@ -26,7 +33,7 @@ export abstract class DeployCommand extends Command {
 
   static sensitive = new Set();
 
-  static non_sensitive = new Set([...Object.keys({ ...this.flags })]);
+  static non_sensitive = new Set([...Object.keys({ ...DeployCommand.flags })]);
 
   protected async parse<F, A extends {
     [name: string]: any;
@@ -184,108 +191,88 @@ export default class Deploy extends DeployCommand {
   }
 
   protected async runRemote(): Promise<void> {
-    try {
-      const { args, flags } = await this.parse(Deploy);
+    const { args, flags } = await this.parse(Deploy);
 
-      const components = args.configs_or_components;
+    const components = args.configs_or_components;
 
-      const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-      const all_secret_file_values = flags['secret-file'].concat(flags.secrets); // TODO: 404: remove
-      const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values); // TODO: 404: update
-      const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_file_values); // TODO: 404: remove
-      const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
+    const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
+    const all_secret_file_values = flags['secret-file'].concat(flags.secrets); // TODO: 404: remove
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values); // TODO: 404: update
+    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_file_values); // TODO: 404: remove
+    const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
 
-      const account = await AccountUtils.getAccount(this.app, flags.account);
-      const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
+    const account = await AccountUtils.getAccount(this.app, flags.account);
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
-      const deployment_dtos = [];
-      for (const component of components) {
-        const deploy_dto = {
-          component: component,
-          interfaces: interfaces_map,
-          recursive: flags.recursive,
-          values: all_secrets, // TODO: 404: update
-          prevent_destroy: flags['deletion-protection'],
-        };
-        deployment_dtos.push(deploy_dto);
-      }
-
-      CliUx.ux.action.start(chalk.blue(`Creating pipeline${deployment_dtos.length ? 's' : ''}`));
-      const pipelines = await Promise.all(
-        deployment_dtos.map(async (deployment_dto) => {
-          const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, deployment_dto);
-          return { component_name: deployment_dto.component, pipeline };
-        })
-      );
-      CliUx.ux.action.stop();
-
-      const approved_pipelines = [];
-      for (const pipeline of pipelines) {
-        const approved = await this.approvePipeline(pipeline.pipeline);
-        if (approved) {
-          approved_pipelines.push(pipeline);
-        }
-      }
-
-      if (!approved_pipelines?.length) {
-        this.log(chalk.blue('Cancelled all pipelines'));
-        return;
-      }
-
-      CliUx.ux.action.start(chalk.blue('Deploying'));
-      await Promise.all(
-        approved_pipelines.map((pipeline) => {
-          return PipelineUtils.pollPipeline(this.app, pipeline.pipeline.id)
-            .then(() => {
-              this.log(chalk.green(`${pipeline.component_name} Deployed`));
-            })
-            .catch((err) => {
-              if (err instanceof PipelineAbortedError || err instanceof DeploymentFailedError || err instanceof PollingTimeout) {
-                this.warn(err.message);
-              } else {
-                throw err;
-              }
-            });
-        })
-      );
-      CliUx.ux.action.stop();
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
+    const deployment_dtos = [];
+    for (const component of components) {
+      const deploy_dto = {
+        component: component,
+        interfaces: interfaces_map,
+        recursive: flags.recursive,
+        values: all_secrets, // TODO: 404: update
+        prevent_destroy: flags['deletion-protection'],
+      };
+      deployment_dtos.push(deploy_dto);
     }
+
+    CliUx.ux.action.start(chalk.blue(`Creating pipeline${deployment_dtos.length ? 's' : ''}`));
+    const pipelines = await Promise.all(
+      deployment_dtos.map(async (deployment_dto) => {
+        const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, deployment_dto);
+        return { component_name: deployment_dto.component, pipeline };
+      })
+    );
+    CliUx.ux.action.stop();
+
+    const approved_pipelines = [];
+    for (const pipeline of pipelines) {
+      const approved = await this.approvePipeline(pipeline.pipeline);
+      if (approved) {
+        approved_pipelines.push(pipeline);
+      }
+    }
+
+    if (!approved_pipelines?.length) {
+      this.log(chalk.blue('Cancelled all pipelines'));
+      return;
+    }
+
+    CliUx.ux.action.start(chalk.blue('Deploying'));
+    await Promise.all(
+      approved_pipelines.map((pipeline) => {
+        return PipelineUtils.pollPipeline(this.app, pipeline.pipeline.id)
+          .then(() => {
+            this.log(chalk.green(`${pipeline.component_name} Deployed`));
+          })
+          .catch((err) => {
+            if (err instanceof PipelineAbortedError || err instanceof DeploymentFailedError || err instanceof PollingTimeout) {
+              this.warn(err.message);
+            } else {
+              throw err;
+            }
+          });
+      })
+    );
+    CliUx.ux.action.stop();
   }
 
   async run(): Promise<void> {
-    try {
-      const { args, flags } = await this.parse(Deploy);
+    const { args, flags } = await this.parse(Deploy);
 
-      if (args.configs_or_components && args.configs_or_components.length > 1) {
-        if (flags.interface?.length) {
-          throw new Error('Interface flag not supported if deploying multiple components in the same command.');
-        }
+    if (args.configs_or_components && args.configs_or_components.length > 1) {
+      if (flags.interface?.length) {
+        throw new Error('Interface flag not supported if deploying multiple components in the same command.');
       }
+    }
 
-      if (flags.local) {
-        this.log(chalk.yellow("The --local(-l) flag will be deprecated soon. Please switch over to using the architect dev command instead."));
-        this.log(chalk.yellow("All deprecated flags will also be removed."));
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        await Dev.run();
-      } else {
-        await this.runRemote();
-      }
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
+    if (flags.local) {
+      this.log(chalk.yellow("The --local(-l) flag will be deprecated soon. Please switch over to using the architect dev command instead."));
+      this.log(chalk.yellow("All deprecated flags will also be removed."));
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      await Dev.run();
+    } else {
+      await this.runRemote();
     }
   }
 }

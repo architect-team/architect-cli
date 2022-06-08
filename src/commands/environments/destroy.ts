@@ -4,7 +4,14 @@ import inquirer from 'inquirer';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import Command from '../../base-command';
+import { ToSentry } from '../../sentry';
 
+@ToSentry(Error,
+  (err, ctx) => {
+    const error = err as any;
+    error.stack = Error(ctx.id).stack;
+    return error;
+})
 export default class EnvironmentDestroy extends Command {
   static aliases = ['environment:destroy', 'envs:destroy', 'env:destroy', 'env:deregister', 'environment:deregister'];
   static description = 'Deregister an environment';
@@ -35,7 +42,8 @@ export default class EnvironmentDestroy extends Command {
 
   static sensitive = new Set();
 
-  static non_sensitive = new Set([...Object.keys({ ...this.flags }), ...this.args.map(arg => arg.name)]);
+  static non_sensitive = new Set([...Object.keys({ ...EnvironmentDestroy.flags }),
+    ...EnvironmentDestroy.args.map(arg => arg.name)]);
 
   protected async parse<F, A extends {
     [name: string]: any;
@@ -51,44 +59,34 @@ export default class EnvironmentDestroy extends Command {
   }
 
   async run(): Promise<void> {
-    try {
-      const { args, flags } = await this.parse(EnvironmentDestroy);
+    const { args, flags } = await this.parse(EnvironmentDestroy);
 
-      const account = await AccountUtils.getAccount(this.app, flags.account);
-      const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, args.environment);
+    const account = await AccountUtils.getAccount(this.app, flags.account);
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, args.environment);
 
-      let answers = await inquirer.prompt([{
-        type: 'input',
-        name: 'destroy',
-        message: 'Are you absolutely sure? This will deregister the environment.\nPlease type in the name of the environment to confirm.\n',
-        validate: (value: any, answers: any) => {
-          if (value === environment.name) {
-            return true;
-          }
-          return `Name must match: ${chalk.blue(environment.name)}`;
-        },
-        when: !flags['auto-approve'],
-      }]);
-
-      CliUx.ux.action.start(chalk.blue('Deregistering environment'));
-      answers = { ...args, ...flags, ...answers };
-      const { data: account_environment } = await this.app.api.get(`/accounts/${account.id}/environments/${environment.name}`);
-
-      await this.app.api.delete(`/environments/${account_environment.id}`, {
-        params: {
-          force: answers.force ? 1 : 0,
-        },
-      });
-      CliUx.ux.action.stop();
-      this.log(chalk.green('Environment deregistered'));
-    } catch (e) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
+    let answers = await inquirer.prompt([{
+      type: 'input',
+      name: 'destroy',
+      message: 'Are you absolutely sure? This will deregister the environment.\nPlease type in the name of the environment to confirm.\n',
+      validate: (value: any, answers: any) => {
+        if (value === environment.name) {
+          return true;
         }
-      }
-      throw e;
-    }
+        return `Name must match: ${chalk.blue(environment.name)}`;
+      },
+      when: !flags['auto-approve'],
+    }]);
+
+    CliUx.ux.action.start(chalk.blue('Deregistering environment'));
+    answers = { ...args, ...flags, ...answers };
+    const { data: account_environment } = await this.app.api.get(`/accounts/${account.id}/environments/${environment.name}`);
+
+    await this.app.api.delete(`/environments/${account_environment.id}`, {
+      params: {
+        force: answers.force ? 1 : 0,
+      },
+    });
+    CliUx.ux.action.stop();
+    this.log(chalk.green('Environment deregistered'));
   }
 }

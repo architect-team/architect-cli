@@ -1,6 +1,13 @@
 import Command from '../../base-command';
 import Table from '../../base-table';
+import { ToSentry } from '../../sentry';
 
+@ToSentry(Error,
+  (err, ctx) => {
+    const error = err as any;
+    error.stack = Error(ctx.id).stack;
+    return error;
+})
 export default class ConfigView extends Command {
 
   async auth_required(): Promise<boolean> {
@@ -14,27 +21,17 @@ export default class ConfigView extends Command {
     ...Command.flags,
   };
 
-  static sensitive = new Set([...Object.keys({ ...this.flags })]);
+  static sensitive = new Set([...Object.keys({ ...ConfigView.flags })]);
 
   static non_sensitive = new Set();
 
   async run(): Promise<void> {
-    try {
-      const table = new Table({ head: ['Name', 'Value'] });
+    const table = new Table({ head: ['Name', 'Value'] });
 
-      for (const entry of Object.entries(this.app.config.toJSON())) {
-        table.push(entry);
-      }
-
-      this.log(table.toString());
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
+    for (const entry of Object.entries(this.app.config.toJSON())) {
+      table.push(entry);
     }
+
+    this.log(table.toString());
   }
 }

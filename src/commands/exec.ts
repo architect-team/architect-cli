@@ -8,7 +8,14 @@ import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
+import { ToSentry } from '../sentry';
 
+@ToSentry(Error,
+  (err, ctx) => {
+    const error = err as any;
+    error.stack = Error(ctx.id).stack;
+    return error;
+})
 export default class Exec extends Command {
   async auth_required(): Promise<boolean> {
     return false;
@@ -49,8 +56,8 @@ export default class Exec extends Command {
   static sensitive = new Set(['stdin', 'command']);
 
   static non_sensitive = new Set(
-    [...Object.keys({ ...this.flags }), ...this.args.map(arg => arg.name)]
-      .filter((value) => !this.sensitive.has(value))
+    [...Object.keys({ ...Exec.flags }), ...Exec.args.map(arg => arg.name)]
+      .filter((value) => !Exec.sensitive.has(value))
   );
 
   public static readonly StdinStream = 0;
@@ -170,122 +177,91 @@ export default class Exec extends Command {
   }
 
   async runRemote(account: Account): Promise<void> {
-    try {
-      const { args, flags } = await this.parse(Exec);
+    const { args, flags } = await this.parse(Exec);
 
-      const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
-      let component_account_name: string | undefined;
-      let component_name: string | undefined;
-      let resource_name: string | undefined;
-      let instance_name: string | undefined;
-      if (args.resource) {
-        const parsed = parseUnknownSlug(args.resource);
-        component_account_name = parsed.component_account_name;
-        component_name = parsed.component_name;
-        resource_name = parsed.resource_name;
-        instance_name = parsed.instance_name;
-      }
-
-      const replica_query = {
-        component_account_name,
-        component_name,
-        component_resource_name: resource_name,
-        component_instance_name: instance_name,
-      };
-
-      const { data: replicas }: { data: Replica[] } = await this.app.api.get(`/environments/${environment.id}/replicas`, {
-        params: replica_query,
-      });
-
-      if (!replicas.length)
-        throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
-
-      const replica = await EnvironmentUtils.getReplica(replicas);
-
-      const query = new URLSearchParams({
-        ext_ref: replica.ext_ref,
-        container: replica.node_ref,
-        stdin: flags.stdin.toString(),
-        tty: flags.tty.toString(),
-      });
-      for (const c of args.command.split(' ')) {
-        query.append('command', c);
-      }
-
-      const uri = `${this.app.config.api_host}/environments/${environment.id}/ws/exec?${query}`;
-      await this.exec(uri);
-
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
+    let component_account_name: string | undefined;
+    let component_name: string | undefined;
+    let resource_name: string | undefined;
+    let instance_name: string | undefined;
+    if (args.resource) {
+      const parsed = parseUnknownSlug(args.resource);
+      component_account_name = parsed.component_account_name;
+      component_name = parsed.component_name;
+      resource_name = parsed.resource_name;
+      instance_name = parsed.instance_name;
     }
+
+    const replica_query = {
+      component_account_name,
+      component_name,
+      component_resource_name: resource_name,
+      component_instance_name: instance_name,
+    };
+
+    const { data: replicas }: { data: Replica[] } = await this.app.api.get(`/environments/${environment.id}/replicas`, {
+      params: replica_query,
+    });
+
+    if (!replicas.length)
+      throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
+
+    const replica = await EnvironmentUtils.getReplica(replicas);
+
+    const query = new URLSearchParams({
+      ext_ref: replica.ext_ref,
+      container: replica.node_ref,
+      stdin: flags.stdin.toString(),
+      tty: flags.tty.toString(),
+    });
+    for (const c of args.command.split(' ')) {
+      query.append('command', c);
+    }
+
+    const uri = `${this.app.config.api_host}/environments/${environment.id}/ws/exec?${query}`;
+    await this.exec(uri);
   }
 
   async runLocal(): Promise<void> {
-    try {
-      const { args, flags } = await this.parse(Exec);
+    const { args, flags } = await this.parse(Exec);
 
-      const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
-      const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
-      const service = await DockerComposeUtils.getLocalServiceForEnvironment(compose_file, args.resource);
+    const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
+    const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
+    const service = await DockerComposeUtils.getLocalServiceForEnvironment(compose_file, args.resource);
 
-      const compose_args = ['-f', compose_file, '-p', environment_name, 'exec'];
-      // https://docs.docker.com/compose/reference/exec/
-      if (!flags.tty || !process.stdout.isTTY) {
-        compose_args.push('-T');
-      }
-      compose_args.push(service.name);
-      compose_args.push(args.command);
-
-      await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' }, true);
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
+    const compose_args = ['-f', compose_file, '-p', environment_name, 'exec'];
+    // https://docs.docker.com/compose/reference/exec/
+    if (!flags.tty || !process.stdout.isTTY) {
+      compose_args.push('-T');
     }
+    compose_args.push(service.name);
+    compose_args.push(args.command);
+
+    await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' }, true);
   }
 
   async run(): Promise<void> {
-    try {
-      inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
+    inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
-      const { flags } = await this.parse(Exec);
+    const { flags } = await this.parse(Exec);
 
-      // If no account is default to local first.
-      if (!flags.account && flags.environment) {
-        // If the env exists locally then just assume local
-        const is_local_env = await DockerComposeUtils.isLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
-        if (is_local_env) {
-          return await this.runLocal();
-        }
-      }
-
-      // If no env is set then we don't know if this is local or remote so ask
-      const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: !flags.environment });
-
-      if (AccountUtils.isLocalAccount(account)) {
+    // If no account is default to local first.
+    if (!flags.account && flags.environment) {
+      // If the env exists locally then just assume local
+      const is_local_env = await DockerComposeUtils.isLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
+      if (is_local_env) {
         return await this.runLocal();
       }
-
-      await this.runRemote(account);
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
     }
+
+    // If no env is set then we don't know if this is local or remote so ask
+    const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: !flags.environment });
+
+    if (AccountUtils.isLocalAccount(account)) {
+      return await this.runLocal();
+    }
+
+    await this.runRemote(account);
   }
 }

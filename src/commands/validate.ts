@@ -6,9 +6,16 @@ import untildify from 'untildify';
 import { buildSpecFromPath } from '../';
 import Command from '../base-command';
 import MissingContextError from '../common/errors/missing-build-context';
+import { ToSentry } from '../sentry';
 
 tmp.setGracefulCleanup();
 
+@ToSentry(Error,
+  (err, ctx) => {
+    const error = err as any;
+    error.stack = Error(ctx.id).stack;
+    return error;
+})
 export default class ComponentValidate extends Command {
   async auth_required(): Promise<boolean> {
     return false;
@@ -28,7 +35,8 @@ export default class ComponentValidate extends Command {
 
   static sensitive = new Set();
 
-  static non_sensitive = new Set([...Object.keys({ ...this.flags }), ...this.args.map(arg => arg.name)]);
+  static non_sensitive = new Set([...Object.keys({ ...ComponentValidate.flags }),
+    ...ComponentValidate.args.map(arg => arg.name)]);
 
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
   protected async parse<F, A extends {
@@ -54,37 +62,27 @@ export default class ComponentValidate extends Command {
   }
 
   async run(): Promise<void> {
-    try {
-      const { args } = await this.parse(ComponentValidate);
+    const { args } = await this.parse(ComponentValidate);
 
-      const config_paths: Set<string> = new Set();
+    const config_paths: Set<string> = new Set();
 
-      if (args.configs_or_components) {
-        for (let config_path of args.configs_or_components) {
-          if (this.app.linkedComponents[config_path]) {
-            config_path = this.app.linkedComponents[config_path];
-          }
-          config_path = path.resolve(untildify(config_path));
-          config_paths.add(config_path);
+    if (args.configs_or_components) {
+      for (let config_path of args.configs_or_components) {
+        if (this.app.linkedComponents[config_path]) {
+          config_path = this.app.linkedComponents[config_path];
         }
+        config_path = path.resolve(untildify(config_path));
+        config_paths.add(config_path);
       }
+    }
 
-      if (config_paths.size <= 0) {
-        throw new MissingContextError();
-      }
+    if (config_paths.size <= 0) {
+      throw new MissingContextError();
+    }
 
-      for (const config_path of config_paths) {
-        const component_spec = buildSpecFromPath(config_path);
-        this.log(chalk.green(`✅ ${component_spec.name}: ${component_spec.metadata.file?.path}`));
-      }
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
+    for (const config_path of config_paths) {
+      const component_spec = buildSpecFromPath(config_path);
+      this.log(chalk.green(`✅ ${component_spec.name}: ${component_spec.metadata.file?.path}`));
     }
   }
 }

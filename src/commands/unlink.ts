@@ -4,7 +4,14 @@ import path from 'path';
 import untildify from 'untildify';
 import { buildSpecFromPath } from '../';
 import Command from '../base-command';
+import { ToSentry } from '../sentry';
 
+@ToSentry(Error,
+  (err, ctx) => {
+    const error = err as any;
+    error.stack = Error(ctx.id).stack;
+    return error;
+})
 export default class Unlink extends Command {
   async auth_required(): Promise<boolean> {
     return false;
@@ -29,43 +36,33 @@ export default class Unlink extends Command {
 
   static sensitive = new Set();
 
-  static non_sensitive = new Set([...Object.keys({ ...this.flags }), ...this.args.map(arg => arg.name)]);
+  static non_sensitive = new Set([...Object.keys({ ...Unlink.flags }), ...Unlink.args.map(arg => arg.name)]);
 
   async run(): Promise<void> {
-    try {
-      const { args, flags } = await this.parse(Unlink);
+    const { args, flags } = await this.parse(Unlink);
 
-      if (flags.all) {
-        this.app.unlinkAllComponents();
-        this.log(chalk.green('Successfully purged all linked components'));
+    if (flags.all) {
+      this.app.unlinkAllComponents();
+      this.log(chalk.green('Successfully purged all linked components'));
+      return;
+    }
+
+    if (args.componentPathOrName === '.' || args.componentPathOrName.toLowerCase().endsWith("architect.yml")) {
+      const component_path = path.resolve(untildify(args.componentPathOrName));
+      try {
+        const component_config = buildSpecFromPath(component_path);
+        args.componentPathOrName = component_config.name;
+      } catch (err: any) {
+        this.log(chalk.red('Unable to locate architect.yml file'));
         return;
       }
+    }
 
-      if (args.componentPathOrName === '.' || args.componentPathOrName.toLowerCase().endsWith("architect.yml")) {
-        const component_path = path.resolve(untildify(args.componentPathOrName));
-        try {
-          const component_config = buildSpecFromPath(component_path);
-          args.componentPathOrName = component_config.name;
-        } catch (err: any) {
-          this.log(chalk.red('Unable to locate architect.yml file'));
-          return;
-        }
-      }
-
-      const removedComponentName = this.app.unlinkComponent(args.componentPathOrName);
-      if (!removedComponentName) {
-        this.log(chalk.red(`No linked component found matching, ${args.componentPathOrName}`));
-      } else {
-        this.log(chalk.green(`Successfully unlinked ${removedComponentName}`));
-      }
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
+    const removedComponentName = this.app.unlinkComponent(args.componentPathOrName);
+    if (!removedComponentName) {
+      this.log(chalk.red(`No linked component found matching, ${args.componentPathOrName}`));
+    } else {
+      this.log(chalk.green(`Successfully unlinked ${removedComponentName}`));
     }
   }
 }

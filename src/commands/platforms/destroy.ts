@@ -4,7 +4,14 @@ import inquirer from 'inquirer';
 import AccountUtils from '../../architect/account/account.utils';
 import PlatformUtils from '../../architect/platform/platform.utils';
 import Command from '../../base-command';
+import { ToSentry } from '../../sentry';
 
+@ToSentry(Error,
+  (err, ctx) => {
+    const error = err as any;
+    error.stack = Error(ctx.id).stack;
+    return error;
+})
 export default class PlatformDestroy extends Command {
   static aliases = ['platforms:deregister', 'platform:destroy', 'platforms:destroy'];
   static description = 'Deregister a platform from Architect';
@@ -35,7 +42,8 @@ export default class PlatformDestroy extends Command {
 
   static sensitive = new Set();
 
-  static non_sensitive = new Set([...Object.keys({ ...this.flags }), ...this.args.map(arg => arg.name)]);
+  static non_sensitive = new Set([...Object.keys({ ...PlatformDestroy.flags }),
+    ...PlatformDestroy.args.map(arg => arg.name)]);
 
   protected async parse<F, A extends {
     [name: string]: any;
@@ -51,44 +59,34 @@ export default class PlatformDestroy extends Command {
   }
 
   async run(): Promise<void> {
-    try {
-      const { args, flags } = await this.parse(PlatformDestroy);
+    const { args, flags } = await this.parse(PlatformDestroy);
 
-      const account = await AccountUtils.getAccount(this.app, flags.account);
-      const platform = await PlatformUtils.getPlatform(this.app.api, account, args.platform);
+    const account = await AccountUtils.getAccount(this.app, flags.account);
+    const platform = await PlatformUtils.getPlatform(this.app.api, account, args.platform);
 
-      let answers = await inquirer.prompt([{
-        type: 'input',
-        name: 'destroy',
-        message: 'Are you absolutely sure? This will deregister the platform from the Architect system.\nPlease type in the name of the platform to confirm.\n',
-        validate: (value: any, answers: any) => {
-          if (value === platform.name) {
-            return true;
-          }
-          return `Name must match: ${chalk.blue(platform.name)}`;
-        },
-        when: !flags['auto-approve'],
-      }]);
-
-      answers = { ...args, ...flags, ...answers };
-      const { data: account_platform } = await this.app.api.get(`/accounts/${account.id}/platforms/${platform.name}`);
-
-      CliUx.ux.action.start(chalk.blue('Deregistering platform'));
-      const params: any = {};
-      if (answers.force) {
-        params.force = 1;
-      }
-      await this.app.api.delete(`/platforms/${account_platform.id}`, { params });
-      CliUx.ux.action.stop();
-      this.log(chalk.green('Platform deregistered'));
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
+    let answers = await inquirer.prompt([{
+      type: 'input',
+      name: 'destroy',
+      message: 'Are you absolutely sure? This will deregister the platform from the Architect system.\nPlease type in the name of the platform to confirm.\n',
+      validate: (value: any, answers: any) => {
+        if (value === platform.name) {
+          return true;
         }
-      }
-      throw e;
+        return `Name must match: ${chalk.blue(platform.name)}`;
+      },
+      when: !flags['auto-approve'],
+    }]);
+
+    answers = { ...args, ...flags, ...answers };
+    const { data: account_platform } = await this.app.api.get(`/accounts/${account.id}/platforms/${platform.name}`);
+
+    CliUx.ux.action.start(chalk.blue('Deregistering platform'));
+    const params: any = {};
+    if (answers.force) {
+      params.force = 1;
     }
+    await this.app.api.delete(`/platforms/${account_platform.id}`, { params });
+    CliUx.ux.action.stop();
+    this.log(chalk.green('Platform deregistered'));
   }
 }

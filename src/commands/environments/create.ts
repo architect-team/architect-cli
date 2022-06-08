@@ -5,6 +5,7 @@ import { Slugs } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
 import PlatformUtils from '../../architect/platform/platform.utils';
 import Command from '../../base-command';
+import { ToSentry } from '../../sentry';
 
 interface CreateEnvironmentDto {
   name: string;
@@ -13,6 +14,12 @@ interface CreateEnvironmentDto {
   ttl?: string;
 }
 
+@ToSentry(Error,
+  (err, ctx) => {
+    const error = err as any;
+    error.stack = Error(ctx.id).stack;
+    return error;
+})
 export default class EnvironmentCreate extends Command {
   static aliases = ['environment:create', 'envs:create', 'env:create'];
   static description = 'Register a new environment with Architect Cloud';
@@ -37,57 +44,48 @@ export default class EnvironmentCreate extends Command {
 
   static sensitive = new Set();
 
-  static non_sensitive = new Set([...Object.keys({ ...this.flags }), ...this.args.map(arg => arg.name)]);
+  static non_sensitive = new Set([...Object.keys({ ...EnvironmentCreate.flags }),
+    ...EnvironmentCreate.args.map(arg => arg.name)]);
 
   async run(): Promise<void> {
-    try {
-      const { args, flags } = await this.parse(EnvironmentCreate);
+    const { args, flags } = await this.parse(EnvironmentCreate);
 
-      const answers: any = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'environment',
-          message: 'What would you like to name your new environment?',
-          when: !args.environment,
-          filter: value => value.toLowerCase(),
-          validate: value => {
-            if (Slugs.ArchitectSlugValidator.test(value)) return true;
-            return `environment ${Slugs.ArchitectSlugDescription}`;
-          },
+    const answers: any = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'environment',
+        message: 'What would you like to name your new environment?',
+        when: !args.environment,
+        filter: value => value.toLowerCase(),
+        validate: value => {
+          if (Slugs.ArchitectSlugValidator.test(value)) return true;
+          return `environment ${Slugs.ArchitectSlugDescription}`;
         },
-      ]);
+      },
+    ]);
 
-      const environment_name = args.environment || answers.environment;
-      if (!Slugs.ArchitectSlugValidator.test(environment_name)) {
-        throw new Error(`environment ${Slugs.ArchitectSlugDescription}`);
-      }
-
-      const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the environment with' });
-      const platform = await PlatformUtils.getPlatform(this.app.api, account, flags.platform);
-
-      CliUx.ux.action.start(chalk.blue('Registering environment with Architect'));
-
-      const dto: CreateEnvironmentDto = {
-        name: environment_name,
-        description: flags.description,
-        platform_id: platform.id,
-      };
-      if (flags.ttl) {
-        dto.ttl = flags.ttl;
-      }
-      await this.app.api.post(`/accounts/${account.id}/environments`, dto);
-
-      const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment_name}`;
-      CliUx.ux.action.stop();
-      this.log(chalk.green(`Environment created: ${environment_url}`));
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
+    const environment_name = args.environment || answers.environment;
+    if (!Slugs.ArchitectSlugValidator.test(environment_name)) {
+      throw new Error(`environment ${Slugs.ArchitectSlugDescription}`);
     }
+
+    const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the environment with' });
+    const platform = await PlatformUtils.getPlatform(this.app.api, account, flags.platform);
+
+    CliUx.ux.action.start(chalk.blue('Registering environment with Architect'));
+
+    const dto: CreateEnvironmentDto = {
+      name: environment_name,
+      description: flags.description,
+      platform_id: platform.id,
+    };
+    if (flags.ttl) {
+      dto.ttl = flags.ttl;
+    }
+    await this.app.api.post(`/accounts/${account.id}/environments`, dto);
+
+    const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment_name}`;
+    CliUx.ux.action.stop();
+    this.log(chalk.green(`Environment created: ${environment_url}`));
   }
 }

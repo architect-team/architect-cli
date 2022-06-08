@@ -7,7 +7,14 @@ import PipelineUtils from '../../architect/pipeline/pipeline.utils';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 import Command from '../../base-command';
 import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.utils';
+import { ToSentry } from '../../sentry';
 
+@ToSentry(Error,
+  (err, ctx) => {
+    const error = err as any;
+    error.stack = Error(ctx.id).stack;
+    return error;
+})
 export default class PlatformCreate extends Command {
   static aliases = ['platforms:register', 'platform:create', 'platforms:create'];
   static description = 'Register a new platform with Architect Cloud';
@@ -38,7 +45,8 @@ export default class PlatformCreate extends Command {
 
   static sensitive = new Set();
 
-  static non_sensitive = new Set([...Object.keys({ ...this.flags }), ...this.args.map(arg => arg.name)]);
+  static non_sensitive = new Set([...Object.keys({ ...PlatformCreate.flags }),
+    ...PlatformCreate.args.map(arg => arg.name)]);
 
   protected async parse<F, A extends {
     [name: string]: any;
@@ -58,72 +66,62 @@ export default class PlatformCreate extends Command {
   }
 
   private async createPlatform() {
-    try {
-      const { args, flags } = await this.parse(PlatformCreate);
+    const { args, flags } = await this.parse(PlatformCreate);
 
-      const answers: any = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'platform',
-          message: 'What would you like to name your new platform?',
-          when: !args.platform,
-          filter: value => value.toLowerCase(),
-          validate: value => {
-            if (Slugs.ArchitectSlugValidator.test(value)) return true;
-            return `platform ${Slugs.ArchitectSlugDescription}`;
-          },
+    const answers: any = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'platform',
+        message: 'What would you like to name your new platform?',
+        when: !args.platform,
+        filter: value => value.toLowerCase(),
+        validate: value => {
+          if (Slugs.ArchitectSlugValidator.test(value)) return true;
+          return `platform ${Slugs.ArchitectSlugDescription}`;
         },
-      ]);
+      },
+    ]);
 
-      const platform_name = args.platform || answers.platform;
-      if (!Slugs.ArchitectSlugValidator.test(platform_name)) {
-        throw new Error(`platform ${Slugs.ArchitectSlugDescription}`);
-      }
-
-      const flags_map: Dictionary<boolean> = {};
-      for (const flag of flags.flag) {
-        flags_map[flag] = true;
-      }
-
-      const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the platform with' });
-
-      const platform = await this.createArchitectPlatform(flags);
-
-      const platform_dto = { name: platform_name, ...platform, flags: flags_map };
-
-      CliUx.ux.action.start('Registering platform with Architect');
-      const created_platform = await this.postPlatformToApi(platform_dto, account.id);
-      CliUx.ux.action.stop();
-      this.log(`Platform registered: ${this.app.config.app_host}/${account.name}/platforms/new?platform_id=${created_platform.id}`);
-
-      if (!flags['auto-approve']) {
-        const confirmation = await inquirer.prompt({
-          type: 'confirm',
-          name: 'application_install',
-          message: `Would you like to install the requisite networking applications? This is a required step before using Architect with this platform. More details at the above URL.`,
-        });
-        if (!confirmation.application_install) {
-          this.warn(`Installation cancelled. You will be unable to deploy services to this platform.\n\nIf you decide to proceed with installation, you can do so at the above URL. Or if you would like to deregister this platform from Architect, run: \n\narchitect platform:destroy -a ${account.name} --auto_approve ${platform_name}`);
-          return;
-        }
-      }
-
-      this.log(`Hang tight! This could take as long as 15m, so feel free to grab a cup of coffee while you wait.`);
-      CliUx.ux.action.start(chalk.blue('Installing platform applications'));
-      const pipeline_id = await this.createPlatformApplications(created_platform.id);
-      await PipelineUtils.pollPipeline(this.app, pipeline_id);
-      CliUx.ux.action.stop();
-
-      return created_platform;
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
+    const platform_name = args.platform || answers.platform;
+    if (!Slugs.ArchitectSlugValidator.test(platform_name)) {
+      throw new Error(`platform ${Slugs.ArchitectSlugDescription}`);
     }
+
+    const flags_map: Dictionary<boolean> = {};
+    for (const flag of flags.flag) {
+      flags_map[flag] = true;
+    }
+
+    const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the platform with' });
+
+    const platform = await this.createArchitectPlatform(flags);
+
+    const platform_dto = { name: platform_name, ...platform, flags: flags_map };
+
+    CliUx.ux.action.start('Registering platform with Architect');
+    const created_platform = await this.postPlatformToApi(platform_dto, account.id);
+    CliUx.ux.action.stop();
+    this.log(`Platform registered: ${this.app.config.app_host}/${account.name}/platforms/new?platform_id=${created_platform.id}`);
+
+    if (!flags['auto-approve']) {
+      const confirmation = await inquirer.prompt({
+        type: 'confirm',
+        name: 'application_install',
+        message: `Would you like to install the requisite networking applications? This is a required step before using Architect with this platform. More details at the above URL.`,
+      });
+      if (!confirmation.application_install) {
+        this.warn(`Installation cancelled. You will be unable to deploy services to this platform.\n\nIf you decide to proceed with installation, you can do so at the above URL. Or if you would like to deregister this platform from Architect, run: \n\narchitect platform:destroy -a ${account.name} --auto_approve ${platform_name}`);
+        return;
+      }
+    }
+
+    this.log(`Hang tight! This could take as long as 15m, so feel free to grab a cup of coffee while you wait.`);
+    CliUx.ux.action.start(chalk.blue('Installing platform applications'));
+    const pipeline_id = await this.createPlatformApplications(created_platform.id);
+    await PipelineUtils.pollPipeline(this.app, pipeline_id);
+    CliUx.ux.action.stop();
+
+    return created_platform;
   }
 
   async createArchitectPlatform(flags: any): Promise<CreatePlatformInput> {

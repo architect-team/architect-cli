@@ -10,7 +10,14 @@ import Environment from '../architect/environment/environment.entity';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
+import { ToSentry } from '../sentry';
 
+@ToSentry(Error,
+  (err, ctx) => {
+    const error = err as any;
+    error.stack = Error(ctx.id).stack;
+    return error;
+})
 export default class Logs extends Command {
   async auth_required(): Promise<boolean> {
     return false;
@@ -54,7 +61,7 @@ export default class Logs extends Command {
 
   static sensitive = new Set();
 
-  static non_sensitive = new Set([...Object.keys({ ...this.flags }), ...this.args.map(arg => arg.name)]);
+  static non_sensitive = new Set([...Object.keys({ ...Logs.flags }), ...Logs.args.map(arg => arg.name)]);
 
   private async createLogger(display_name: string) {
     const { args, flags } = await this.parse(Logs);
@@ -91,66 +98,56 @@ export default class Logs extends Command {
   }
 
   async runLocal(): Promise<void> {
-    try {
-      const { args, flags } = await this.parse(Logs);
+    const { args, flags } = await this.parse(Logs);
 
-      const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
-      const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
-      const service = await DockerComposeUtils.getLocalServiceForEnvironment(compose_file, args.resource);
+    const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
+    const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
+    const service = await DockerComposeUtils.getLocalServiceForEnvironment(compose_file, args.resource);
 
-      const compose_args = ['-f', compose_file, '-p', environment_name, 'logs'];
-      if (flags.follow) {
-        compose_args.push('--follow');
-      }
-      if (flags.timestamps) {
-        compose_args.push('--timestamps');
-      }
-      if (flags.tail != -1) {
-        compose_args.push('--tail');
-        compose_args.push(flags.tail.toString());
-      }
-      if (flags.since != '') {
-        compose_args.push('--since');
-        compose_args.push(flags.since.toString());
-      }
-      compose_args.push(service.name);
-
-      let show_header = true;
-      const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(service.display_name))} ${chalk.hex('#D3D3D3')('|')}`;
-
-      const logger = new Writable();
-
-      logger._write = (chunk, _encoding, next) => {
-        chunk.toString().split('\n').filter((e: string) => e).forEach((line: string) => {
-          if (!flags.raw && show_header) {
-            this.log(chalk.bold(chalk.white('Logs:')));
-            this.log(chalk.bold(chalk.white('―'.repeat(process.stdout.columns))));
-            show_header = false;
-          }
-          if (!flags.raw) {
-            line = line.substring(line.indexOf('|') + 1);
-          }
-          this.log(prefix, chalk.cyan(line));
-        });
-        next();
-      };
-
-      const childProcess = spawn('docker', ["compose", ...compose_args],
-        { stdio: [process.stdin, null, process.stderr] });
-      (childProcess.stdout as Readable).pipe(logger);
-
-      await new Promise((resolve) => {
-        childProcess.on('close', resolve);
-      });
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
+    const compose_args = ['-f', compose_file, '-p', environment_name, 'logs'];
+    if (flags.follow) {
+      compose_args.push('--follow');
     }
+    if (flags.timestamps) {
+      compose_args.push('--timestamps');
+    }
+    if (flags.tail != -1) {
+      compose_args.push('--tail');
+      compose_args.push(flags.tail.toString());
+    }
+    if (flags.since != '') {
+      compose_args.push('--since');
+      compose_args.push(flags.since.toString());
+    }
+    compose_args.push(service.name);
+
+    let show_header = true;
+    const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(service.display_name))} ${chalk.hex('#D3D3D3')('|')}`;
+
+    const logger = new Writable();
+
+    logger._write = (chunk, _encoding, next) => {
+      chunk.toString().split('\n').filter((e: string) => e).forEach((line: string) => {
+        if (!flags.raw && show_header) {
+          this.log(chalk.bold(chalk.white('Logs:')));
+          this.log(chalk.bold(chalk.white('―'.repeat(process.stdout.columns))));
+          show_header = false;
+        }
+        if (!flags.raw) {
+          line = line.substring(line.indexOf('|') + 1);
+        }
+        this.log(prefix, chalk.cyan(line));
+      });
+      next();
+    };
+
+    const childProcess = spawn('docker', ["compose", ...compose_args],
+      { stdio: [process.stdin, null, process.stderr] });
+    (childProcess.stdout as Readable).pipe(logger);
+
+    await new Promise((resolve) => {
+      childProcess.on('close', resolve);
+    });
   }
 
 
@@ -182,118 +179,98 @@ export default class Logs extends Command {
   }
 
   async runRemoteLogs(environment: Environment, replica_query: any): Promise<void> {
-    try {
-      const { args, flags } = await this.parse(Logs);
+    const { args, flags } = await this.parse(Logs);
 
-      const { data: replicas }: { data: Replica[] } = await this.app.api.get(`/environments/${environment.id}/replicas`, {
-        params: replica_query,
-      });
+    const { data: replicas }: { data: Replica[] } = await this.app.api.get(`/environments/${environment.id}/replicas`, {
+      params: replica_query,
+    });
 
-      if (!replicas.length)
-        throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
+    if (!replicas.length)
+      throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
-      const replica = await EnvironmentUtils.getReplica(replicas);
+    const replica = await EnvironmentUtils.getReplica(replicas);
 
-      const logs_query: any = {};
-      logs_query.ext_ref = replica.ext_ref;
-      logs_query.container = replica.node_ref;
-      logs_query.follow = flags.follow;
-      if (flags.since)
-        logs_query.since = flags.since;
-      if (flags.tail >= 0)
-        logs_query.tail = flags.tail;
-      logs_query.timestamps = flags.timestamps;
+    const logs_query: any = {};
+    logs_query.ext_ref = replica.ext_ref;
+    logs_query.container = replica.node_ref;
+    logs_query.follow = flags.follow;
+    if (flags.since)
+      logs_query.since = flags.since;
+    if (flags.tail >= 0)
+      logs_query.tail = flags.tail;
+    logs_query.timestamps = flags.timestamps;
 
-      let display_name = replica.display_name;
-      if (!display_name) {
-        const { resource_name } = ResourceSlugUtils.parse(replica.resource_ref);
-        display_name = resource_name;
-      }
-
-      const log = await this.createLogger(display_name);
-
-      let log_stream;
-      try {
-        const { data: stream } = await this.app.api.get(`/environments/${environment.id}/logs`, {
-          params: logs_query,
-          responseType: 'stream',
-          timeout: 1000 * 60 * 60 * 24, // one day
-        });
-        log_stream = stream;
-      } catch (err) {
-        this.error(chalk.red(`Couldn't get logs from pod ${replica.ext_ref}. Check that the pod is in a steady state.`));
-      }
-
-      let stdout = '';
-      log_stream.on('data', (chunk: string) => {
-        stdout += chunk;
-        const lines = stdout.split('\n');
-        while (lines.length > 1) {
-          const line = lines.shift() || '';
-          log(line);
-        }
-        stdout = lines.shift() || '';
-      });
-      log_stream.on('end', async () => {
-        if (stdout) {
-          log(stdout);
-        }
-        if (flags.follow) {
-          // Attempt to reconnect in 30s
-          this.log(chalk.yellow(`Log stream ended, attempting to recover in 30 seconds...`));
-          setTimeout(() => {
-            this.log(chalk.yellow(`Log stream ended, attempting to recover in 20 seconds...`));
-          }, 1000 * 10);
-          setTimeout(() => {
-            this.log(chalk.yellow(`Log stream ended, attempting to recover in 10 seconds...`));
-          }, 1000 * 20);
-          setTimeout(() => {
-            this.runRemoteLogs(environment, replica_query);
-          }, 1000 * 30);
-        }
-      });
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
+    let display_name = replica.display_name;
+    if (!display_name) {
+      const { resource_name } = ResourceSlugUtils.parse(replica.resource_ref);
+      display_name = resource_name;
     }
+
+    const log = await this.createLogger(display_name);
+
+    let log_stream;
+    try {
+      const { data: stream } = await this.app.api.get(`/environments/${environment.id}/logs`, {
+        params: logs_query,
+        responseType: 'stream',
+        timeout: 1000 * 60 * 60 * 24, // one day
+      });
+      log_stream = stream;
+    } catch (err) {
+      this.error(chalk.red(`Couldn't get logs from pod ${replica.ext_ref}. Check that the pod is in a steady state.`));
+    }
+
+    let stdout = '';
+    log_stream.on('data', (chunk: string) => {
+      stdout += chunk;
+      const lines = stdout.split('\n');
+      while (lines.length > 1) {
+        const line = lines.shift() || '';
+        log(line);
+      }
+      stdout = lines.shift() || '';
+    });
+    log_stream.on('end', async () => {
+      if (stdout) {
+        log(stdout);
+      }
+      if (flags.follow) {
+        // Attempt to reconnect in 30s
+        this.log(chalk.yellow(`Log stream ended, attempting to recover in 30 seconds...`));
+        setTimeout(() => {
+          this.log(chalk.yellow(`Log stream ended, attempting to recover in 20 seconds...`));
+        }, 1000 * 10);
+        setTimeout(() => {
+          this.log(chalk.yellow(`Log stream ended, attempting to recover in 10 seconds...`));
+        }, 1000 * 20);
+        setTimeout(() => {
+          this.runRemoteLogs(environment, replica_query);
+        }, 1000 * 30);
+      }
+    });
   }
 
   async run(): Promise<void> {
-    try {
-      inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
+    inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
-      const { flags } = await this.parse(Logs);
+    const { flags } = await this.parse(Logs);
 
-      // If no account is default to local first.
-      if (!flags.account && flags.environment) {
-        // If the env exists locally then just assume local
-        const is_local_env = await DockerComposeUtils.isLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
-        if (is_local_env) {
-          return await this.runLocal();
-        }
-      }
-
-      // If no env is set then we don't know if this is local or remote so ask
-      const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: !flags.environment });
-
-      if (AccountUtils.isLocalAccount(account)) {
+    // If no account is default to local first.
+    if (!flags.account && flags.environment) {
+      // If the env exists locally then just assume local
+      const is_local_env = await DockerComposeUtils.isLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
+      if (is_local_env) {
         return await this.runLocal();
       }
-
-      await this.runRemote(account);
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
     }
+
+    // If no env is set then we don't know if this is local or remote so ask
+    const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: !flags.environment });
+
+    if (AccountUtils.isLocalAccount(account)) {
+      return await this.runLocal();
+    }
+
+    await this.runRemote(account);
   }
 }

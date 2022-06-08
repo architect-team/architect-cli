@@ -4,8 +4,15 @@ import AccountUtils from '../architect/account/account.utils';
 import Deployment from '../architect/deployment/deployment.entity';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import PipelineUtils from '../architect/pipeline/pipeline.utils';
+import { ToSentry } from '../sentry';
 import { DeployCommand } from './deploy';
 
+@ToSentry(Error,
+  (err, ctx) => {
+    const error = err as any;
+    error.stack = Error(ctx.id).stack;
+    return error;
+})
 export default class Destroy extends DeployCommand {
   async auth_required(): Promise<boolean> {
     return true;
@@ -27,41 +34,31 @@ export default class Destroy extends DeployCommand {
 
   static sensitive = new Set();
 
-  static non_sensitive = new Set([...Object.keys({ ...this.flags })]);
+  static non_sensitive = new Set([...Object.keys({ ...Destroy.flags })]);
 
   async run(): Promise<void> {
-    try {
-      const { flags } = await this.parse(Destroy);
+    const { flags } = await this.parse(Destroy);
 
-      const account = await AccountUtils.getAccount(this.app, flags.account);
-      const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
+    const account = await AccountUtils.getAccount(this.app, flags.account);
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
-      CliUx.ux.action.start(chalk.blue('Creating pipeline'));
-      let instance_ids;
-      if (flags.components) {
-        const { data: instances_to_destroy } = await this.app.api.get(`/environments/${environment.id}/instances`, { params: { component_versions: flags.components } });
-        instance_ids = instances_to_destroy.map((instance: Deployment) => instance.instance_id);
-      }
-      const { data: pipeline } = await this.app.api.delete(`/environments/${environment.id}/instances`, { data: { instance_ids } });
-      CliUx.ux.action.stop();
-
-      const approved = await this.approvePipeline(pipeline);
-      if (!approved) {
-        return;
-      }
-
-      CliUx.ux.action.start(chalk.blue('Deploying'));
-      await PipelineUtils.pollPipeline(this.app, pipeline.id);
-      this.log(chalk.green(`Deployed`));
-      CliUx.ux.action.stop();
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
+    CliUx.ux.action.start(chalk.blue('Creating pipeline'));
+    let instance_ids;
+    if (flags.components) {
+      const { data: instances_to_destroy } = await this.app.api.get(`/environments/${environment.id}/instances`, { params: { component_versions: flags.components } });
+      instance_ids = instances_to_destroy.map((instance: Deployment) => instance.instance_id);
     }
+    const { data: pipeline } = await this.app.api.delete(`/environments/${environment.id}/instances`, { data: { instance_ids } });
+    CliUx.ux.action.stop();
+
+    const approved = await this.approvePipeline(pipeline);
+    if (!approved) {
+      return;
+    }
+
+    CliUx.ux.action.start(chalk.blue('Deploying'));
+    await PipelineUtils.pollPipeline(this.app, pipeline.id);
+    this.log(chalk.green(`Deployed`));
+    CliUx.ux.action.stop();
   }
 }

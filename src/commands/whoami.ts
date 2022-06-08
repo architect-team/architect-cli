@@ -1,5 +1,12 @@
 import Command from '../base-command';
+import { ToSentry } from '../sentry';
 
+@ToSentry(Error,
+  (err, ctx) => {
+    const error = err as any;
+    error.stack = Error(ctx.id).stack;
+    return error;
+})
 export default class WhoAmI extends Command {
   static aliases = ['whoami'];
   static description = 'Get the logged in user';
@@ -12,16 +19,6 @@ export default class WhoAmI extends Command {
   static non_sensitive = new Set();
 
   async run(): Promise<void> {
-    try {
-      this.log((await this.app.auth.getPersistedTokenJSON())?.email);
-    } catch (e: any) {
-      if (e instanceof Error) {
-        const cli_stacktrace = Error(__filename).stack;
-        if (cli_stacktrace) {
-          e.stack = cli_stacktrace;
-        }
-      }
-      throw e;
-    }
+    this.log((await this.app.auth.getPersistedTokenJSON())?.email);
   }
 }
