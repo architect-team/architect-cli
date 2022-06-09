@@ -71,6 +71,26 @@ export class KubernetesPlatformUtils {
       kube_context = new_platform_answers.context;
     }
 
+    /**
+     * Currently, we do not support K8 v1.24 or higher
+     * Below checks user's Server version to ensure it's under 1.24
+     */
+    const { stdout } = await execa('kubectl', [
+      ...set_kubeconfig,
+      'version', '--short=true']);
+
+    const api_version = stdout.split('v').pop();
+    if (api_version) {
+      const [major_ver, minor_ver] = api_version.split('.').map(int => parseInt(int));
+
+      if (major_ver >= 1 && minor_ver >= 24) {
+        throw new ArchitectError('Architect currently does not support Kubernetes v1.24 or higher.');
+      }
+    } else {
+      throw new ArchitectError('Error reading kubectl version.');
+    }
+
+    // Check for existing Service Account
     let use_existing_sa;
     try {
       await execa('kubectl', [

@@ -1,13 +1,12 @@
 import { CliUx, Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
+import { Dictionary, Slugs } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
 import PipelineUtils from '../../architect/pipeline/pipeline.utils';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 import Command from '../../base-command';
 import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.utils';
-import { Dictionary } from '../../';
-import { Slugs } from '../../';
 
 export default class PlatformCreate extends Command {
   static aliases = ['platforms:register', 'platform:create', 'platforms:create'];
@@ -56,6 +55,16 @@ export default class PlatformCreate extends Command {
 
   private async createPlatform() {
     const { args, flags } = await this.parse(PlatformCreate);
+
+    this.log(chalk.yellow(`
+    ==============================================================================================================
+
+      Note - Architect currently supports Kubernetes up to v1.23
+
+      For more details, please refer to - https://github.com/hashicorp/terraform-provider-kubernetes/issues/1724
+
+    ==============================================================================================================
+    `));
 
     const answers: any = await inquirer.prompt([
       {
