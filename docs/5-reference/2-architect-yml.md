@@ -121,9 +121,9 @@ Configuration for service health checks. Architect uses health checks are used f
  | `timeout` | string \| [Expression](/docs/reference/contexts) | The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s | default: `5s` |
  | `interval` | string \| [Expression](/docs/reference/contexts) | The time period in seconds between each health check execution. You may specify any value between: 5s and 300s | default: `30s` |
  | `initial_delay` | string \| [Expression](/docs/reference/contexts) | Delays the check from running for the specified amount of time | default: `0s` |
- | `path` | string \| [Expression](/docs/reference/contexts) | Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set). |  |
+ | ~~`path`~~ | string \| [Expression](/docs/reference/contexts) | [Deprecated: use `command` instead.] Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set). | Deprecated |
  | `command` | Array&lt;string&gt; \| string | Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set). |  |
- | `port` | number \| [Expression](/docs/reference/contexts) | Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set). |  |
+ | ~~`port`~~ | number \| [Expression](/docs/reference/contexts) | [Deprecated: use `command` instead.] Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set). | Deprecated |
 
 
 ## VolumeSpec
