@@ -56,7 +56,9 @@ export class Refs {
   public static getArchitectRef(node_config: any, node_type: 'services' | 'tasks'): string {
     let component_name;
     let tenant_name;
-    if (node_config.metadata.instance_id) {
+    if (node_config.metadata.instance_id.includes('---')) {
+      [component_name, tenant_name] = node_config.metadata.instance_id.split('---');
+    } else {
       [component_name, tenant_name] = node_config.metadata.instance_id.split('@');
     }
     const tenant = tenant_name ? `@${tenant_name}` : '';
