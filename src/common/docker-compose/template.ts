@@ -1,8 +1,16 @@
+interface XBakeConfig {
+  platforms: string[];
+  'cache-from': string | string[];
+  'cache-to': string | string[];
+  pull: boolean;
+}
+
 export interface DockerServiceBuild {
   context?: string;
   args?: string[] | { [s: string]: string };
   dockerfile?: string;
   target?: string;
+  'x-bake'?: XBakeConfig;
 }
 
 export interface DockerComposeVolume {

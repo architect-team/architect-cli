@@ -1,8 +1,9 @@
 import { ComponentSlugUtils, ComponentVersionSlugUtils, Slugs } from '../spec/utils/slugs';
 import { ValidationError, ValidationErrors } from '../utils/errors';
+import { SecretsDict } from './type';
 
 export class SecretsConfig {
-  static validate(secrets_dict: any): void {
+  static validate(secrets_dict: SecretsDict): void {
     if (!secrets_dict) {
       return;
     }

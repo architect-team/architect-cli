@@ -29,8 +29,7 @@ services:
       architect.io/environment: dev
       architect.io/service: api
     liveness_probe:
-      port: 8080
-      path: /health
+      command: curl --fail localhost:8080/health || exit 1
     replicas: 2
     cpu: 1
     memory: 512mb
@@ -152,9 +151,11 @@ could contain dashes (-), underscores (_), dots (.), and alphanumerics between.
 This configuration is essentially the health check for the service. It's important to specify so that traffic isn't load balanced to unhealthy services. Critical for rolling updates to function properly.
 ```yaml
 liveness_probe:
-  # (required) Port that the http check will run against
+  # (required) Command that will be run to check application health
+  command: curl --fail localhost:8080/health || exit 1
+  # (deprecated, optional) Port that the http check will run against
   port: 8080
-  # (required) Path for the http check
+  # (deprecated, optional) Path for the http check
   path: /health
   # (optional, defaults to 0s) Delays the check from running for the specified amount of time
   initial_delay: 0s

@@ -28,5 +28,3 @@ export const transformServiceSpec = (key: string, spec: ServiceSpec, metadata: C
     scaling: spec.scaling,
   };
 };
-
-

@@ -162,7 +162,7 @@ export const validateDependsOn = (component: ComponentSpec): ValidationError[] =
   const depends_on_map: { [name: string]: string[] } = {};
 
   for (const [name, service] of Object.entries(component.services || {})) {
-    depends_on_map[name] = service.depends_on || [];
+    depends_on_map[service.reserved_name || name] = service.depends_on || [];
   }
 
   const task_map: { [name: string]: boolean } = {};

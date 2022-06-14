@@ -52,4 +52,14 @@ export class Refs {
       .toLowerCase() // we need to makes everything lower which unfortunately removes some entropy
       .replace(/[\\/+=]/g, ''); // we also remove occurances of slash, plus, and equals to make url-safe
   }
+
+  public static getArchitectRef(node_config: any, node_type: 'services' | 'tasks'): string {
+    let component_name;
+    let tenant_name;
+    if (node_config.metadata.instance_id) {
+      [component_name, tenant_name] = node_config.metadata.instance_id.split('@');
+    }
+    const tenant = tenant_name ? `@${tenant_name}` : '';
+    return `${component_name}.${node_type}.${node_config.name}${tenant}`;
+  }
 }

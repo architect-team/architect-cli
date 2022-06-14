@@ -1,4 +1,4 @@
-import { parse as shell_parse } from 'shell-quote';
+import stringArgv from 'string-argv';
 import { BuildConfig, ResourceConfig } from '../../config/resource-config';
 import { Dictionary } from '../../utils/dictionary';
 import { ComponentInstanceMetadata } from '../component-spec';
@@ -10,7 +10,7 @@ export const transformResourceSpecCommand = (command: string | string[] | undefi
   if (command instanceof Array) {
     return command;
   }
-  return shell_parse(command.replace(/\$/g, '__arc__')).map(e => `${e}`.replace(/__arc__/g, '$'));
+  return stringArgv(command);
 };
 
 export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | undefined): string[] => {
@@ -18,7 +18,7 @@ export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | 
   if (entrypoint instanceof Array) {
     return entrypoint;
   }
-  return shell_parse(entrypoint.replace(/\$/g, '__arc__')).map(e => `${e}`.replace(/__arc__/g, '$'));
+  return stringArgv(entrypoint);
 };
 
 export const transformResourceSpecEnvironment = (environment: Dictionary<EnvironmentSpecValue> | undefined): Dictionary<string | null> => {
@@ -76,7 +76,7 @@ export const transformResourceSpec = (resource_type: ResourceType, key: string, 
     name: key,
     metadata: {
       ...metadata,
-      ref: ResourceSlugUtils.build(component_account_name, component_name, resource_type, key, instance_name),
+      ref: spec.reserved_name || ResourceSlugUtils.build(component_account_name, component_name, resource_type, key, instance_name),
     },
     description: spec.description,
     image: spec.image,
@@ -87,8 +87,8 @@ export const transformResourceSpec = (resource_type: ResourceType, key: string, 
     build: transformBuildSpec(spec.build, spec.image),
     cpu: spec.cpu,
     memory: spec.memory,
-    deploy: spec.deploy,
     depends_on: spec.depends_on || [],
     labels: spec.labels || new Map(),
+    reserved_name: spec.reserved_name,
   };
 };
