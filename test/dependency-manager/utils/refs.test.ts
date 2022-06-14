@@ -12,28 +12,6 @@ describe('Refs.safeRef', () => {
 
   const tag = '1.0.0';
   const transformed_tag = '1-0-0';
-  const tenant_name = 'tenant-name';
-
-  const node_config = {
-    name: service_name,
-    metadata: {
-      instance_id: `${component_account_name}/${component_name}`,
-    },
-  };
-
-  const node_config_with_tenant = {
-    name: service_name,
-    metadata: {
-      instance_id: `${component_account_name}/${component_name}@${tenant_name}`,
-    },
-  };
-
-  const node_config_with_api_tenant = {
-    name: service_name,
-    metadata: {
-      instance_id: `${component_account_name}/${component_name}---${tenant_name}`,
-    },
-  };
 
   it(`Refs.safeRef works for component_slug`, async () => {
     const component_slug = `${component_account_name}/${component_name}`;
@@ -235,46 +213,4 @@ describe('Refs.safeRef', () => {
     expect(trim_ref.length).to.be.equal(trim_length);
     expect(trim_ref).to.equal(`boutique-shop-fron${suffix}-mwwd9bxo`);
   });
-
-  // it(`Refs.getArchitectRef works for service with no tenant`, async () => {
-  //   const expected_ref = `${component_account_name}/${component_name}.services.${service_name}`;
-
-  //   const architect_ref = Refs.getArchitectRef(node_config, 'services');
-  //   expect(architect_ref).to.equal(expected_ref);
-  // });
-
-  // it(`Refs.getArchitectRef works for service with a tenant`, async () => {
-  //   const expected_ref = `${component_account_name}/${component_name}.services.${service_name}@${tenant_name}`;
-
-  //   const architect_ref = Refs.getArchitectRef(node_config_with_tenant, 'services');
-  //   expect(architect_ref).to.equal(expected_ref);
-  // });
-
-  // it(`Refs.getArchitectRef works for service with an api tenant`, async () => {
-  //   const expected_ref = `${component_account_name}/${component_name}.services.${service_name}@${tenant_name}`;
-
-  //   const architect_ref = Refs.getArchitectRef(node_config_with_api_tenant, 'services');
-  //   expect(architect_ref).to.equal(expected_ref);
-  // });
-
-  // it(`Refs.getArchitectRef works for task with no tenant`, async () => {
-  //   const expected_ref = `${component_account_name}/${component_name}.tasks.${service_name}`;
-
-  //   const architect_ref = Refs.getArchitectRef(node_config, 'tasks');
-  //   expect(architect_ref).to.equal(expected_ref);
-  // });
-
-  // it(`Refs.getArchitectRef works for task with a tenant`, async () => {
-  //   const expected_ref = `${component_account_name}/${component_name}.tasks.${service_name}@${tenant_name}`;
-
-  //   const architect_ref = Refs.getArchitectRef(node_config_with_tenant, 'tasks');
-  //   expect(architect_ref).to.equal(expected_ref);
-  // });
-
-  // it(`Refs.getArchitectRef works for task with an api tenant`, async () => {
-  //   const expected_ref = `${component_account_name}/${component_name}.tasks.${service_name}@${tenant_name}`;
-
-  //   const architect_ref = Refs.getArchitectRef(node_config_with_api_tenant, 'tasks');
-  //   expect(architect_ref).to.equal(expected_ref);
-  // });
 });
