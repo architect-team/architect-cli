@@ -32,7 +32,7 @@ export default class ComponentRegister extends BaseCommand {
       ...Flags.string({
         description: 'Build arg(s) to pass to docker build',
         multiple: true,
-      })
+      }),
     },
     tag: {
       non_sensitive: true,
@@ -40,14 +40,14 @@ export default class ComponentRegister extends BaseCommand {
         char: 't',
         description: 'Tag to give to the new component',
         default: 'latest',
-      })
+      }),
     },
     'cache-directory': {
       non_sensitive: true,
       ...Flags.string({
         description: 'Directory to write build cache to',
         default: path.join(os.tmpdir(), 'architect-build-cache'),
-      })
+      }),
     },
   };
 

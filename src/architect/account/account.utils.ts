@@ -13,7 +13,7 @@ export default class AccountUtils {
         env: 'ARCHITECT_ACCOUNT',
         char: 'a',
         parse: async value => value.toLowerCase(),
-      })
+      }),
     },
   };
 

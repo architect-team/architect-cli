@@ -37,7 +37,7 @@ export default class PlatformUtils {
         description: 'Architect platform',
         env: 'ARCHITECT_PLATFORM',
         parse: async value => value.toLowerCase(),
-      })
+      }),
     },
   };
 

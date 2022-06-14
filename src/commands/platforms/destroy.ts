@@ -17,14 +17,14 @@ export default class PlatformDestroy extends BaseCommand {
       ...Flags.boolean({
         description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
         hidden: true,
-      })
+      }),
     },
     ['auto-approve']: {
       non_sensitive: true,
       ...Flags.boolean({
         description: 'Automatically apply the changes',
         default: false,
-      })
+      }),
     },
     force: {
       non_sensitive: true,
@@ -32,7 +32,7 @@ export default class PlatformDestroy extends BaseCommand {
         description: 'Force the deletion even if the platform is not empty',
         char: 'f',
         default: false,
-      })
+      }),
     },
   };
 

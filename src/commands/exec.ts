@@ -34,7 +34,7 @@ export default class Exec extends BaseCommand {
         char: 't',
         allowNo: true,
         default: true,
-      })
+      }),
     },
   };
 

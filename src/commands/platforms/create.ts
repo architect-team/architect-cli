@@ -27,24 +27,24 @@ export default class PlatformCreate extends BaseCommand {
       ...Flags.boolean({
         description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
         hidden: true,
-      })
+      }),
     },
     ['auto-approve']: {
       non_sensitive: true,
-      ...Flags.boolean()
+      ...Flags.boolean(),
     },
     type: {
       non_sensitive: true,
       ...Flags.string({
         char: 't',
-        options: ['KUBERNETES', 'kubernetes']
-      })
+        options: ['KUBERNETES', 'kubernetes'],
+      }),
     },
     host: {
       non_sensitive: true,
       ...Flags.string({
-        char: 'h'
-      })
+        char: 'h',
+      }),
     },
     kubeconfig: {
       non_sensitive: true,
@@ -52,11 +52,14 @@ export default class PlatformCreate extends BaseCommand {
         char: 'k',
         default: '~/.kube/config',
         exclusive: ['host'],
-      })
+      }),
     },
     flag: {
       non_sensitive: true,
-      ...Flags.string({ multiple: true, default: [] })
+      ...Flags.string({
+        multiple: true,
+        default: [],
+      }),
     },
   };
 

@@ -24,7 +24,7 @@ export default class Destroy extends DeployCommand {
         char: 'c',
         description: 'Component(s) to destroy',
         multiple: true,
-      })
+      }),
     },
   };
 

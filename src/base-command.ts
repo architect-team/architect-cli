@@ -110,8 +110,8 @@ export default abstract class BaseCommand extends Command {
     const calling_class = this.constructor as any;
 
     const non_sensitive = new Set([
-      ...Object.entries(calling_class.flags).filter(([, value]) => (value as any).non_sensitive).map(([key,]) => key),
-      ...Object.entries(calling_class.args).filter(([, value]) => (value as any).non_sensitive).map(([, value]) => (value as any).name)
+      ...Object.entries(calling_class.flags).filter(([_, value]) => (value as any).non_sensitive).map(([key, _]) => key),
+      ...Object.entries(calling_class.args).filter(([_, value]) => (value as any).non_sensitive).map(([_, value]) => (value as any).name),
     ]);
 
     const { args, flags } = await this.parse(calling_class);

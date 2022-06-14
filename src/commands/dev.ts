@@ -35,7 +35,7 @@ export default class Dev extends BaseCommand {
         description: 'Path where the compose file should be written to',
         default: '',
         exclusive: ['environment', 'auto-approve', 'auto_approve', 'refresh'],
-      })
+      }),
     },
     parameter: Flags.string({
       char: 'p',
@@ -50,7 +50,7 @@ export default class Dev extends BaseCommand {
         description: 'Component interfaces',
         multiple: true,
         default: [],
-      })
+      }),
     },
     'secret-file': Flags.string({
       description: 'Path of secrets file',
@@ -75,7 +75,7 @@ export default class Dev extends BaseCommand {
         default: true,
         allowNo: true,
         description: '[default: true] Toggle to automatically deploy all dependencies',
-      })
+      }),
     },
     browser: {
       non_sensitive: true,
@@ -83,14 +83,14 @@ export default class Dev extends BaseCommand {
         default: true,
         allowNo: true,
         description: '[default: true] Automatically open urls in the browser for local deployments',
-      })
+      }),
     },
     port: {
       non_sensitive: true,
       ...Flags.integer({
         default: 80,
         description: '[default: 80] Port for the gateway',
-      })
+      }),
     },
     // Used for proxy from deploy to dev. These will be removed once --local is deprecated
     local: {
@@ -100,7 +100,7 @@ export default class Dev extends BaseCommand {
         description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
         exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
         hidden: true,
-      })
+      }),
     },
     production: {
       non_sensitive: true,
@@ -108,7 +108,7 @@ export default class Dev extends BaseCommand {
         description: `${Command.DEPRECATED} Please use --environment.`,
         dependsOn: ['local'],
         hidden: true,
-      })
+      }),
     },
     compose_file: {
       non_sensitive: true,
@@ -116,7 +116,7 @@ export default class Dev extends BaseCommand {
         description: `${Command.DEPRECATED} Please use --compose-file.`,
         exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
         hidden: true,
-      })
+      }),
     },
     values: Flags.string({
       char: 'v',
@@ -128,7 +128,7 @@ export default class Dev extends BaseCommand {
       ...Flags.boolean({
         description: 'Run in detached mode',
         char: 'd',
-      })
+      }),
     },
   };
 

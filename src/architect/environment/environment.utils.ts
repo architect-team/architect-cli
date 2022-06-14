@@ -23,7 +23,7 @@ export class EnvironmentUtils {
         char: 'e',
         env: 'ARCHITECT_ENVIRONMENT',
         parse: async (value) => value.toLowerCase(),
-      })
+      }),
     },
   };
 

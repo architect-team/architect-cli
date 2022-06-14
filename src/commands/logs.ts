@@ -28,35 +28,35 @@ export default class Logs extends BaseCommand {
         description: 'Specify if the logs should be streamed.',
         char: 'f',
         default: false,
-      })
+      }),
     },
     since: {
       non_sensitive: true,
       ...Flags.string({
         description: 'Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used.',
         default: '',
-      })
+      }),
     },
     raw: {
       non_sensitive: true,
       ...Flags.boolean({
         description: 'Show the raw output of the logs.',
         default: false,
-      })
+      }),
     },
     tail: {
       non_sensitive: true,
       ...Flags.integer({
         description: 'Lines of recent log file to display. Defaults to -1 with no selector, showing all log lines otherwise 10, if a selector is provided.',
         default: -1,
-      })
+      }),
     },
     timestamps: {
       non_sensitive: true,
       ...Flags.boolean({
         description: 'Include timestamps on each line in the log output.',
         default: false,
-      })
+      }),
     },
   };
 

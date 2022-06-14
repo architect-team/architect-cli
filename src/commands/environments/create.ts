@@ -25,13 +25,13 @@ export default class EnvironmentCreate extends BaseCommand {
       non_sensitive: true,
       ...Flags.string({
         description: 'Environment Description',
-      })
+      }),
     },
     ttl: {
       non_sensitive: true,
       ...Flags.string({
         description: 'The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m',
-      })
+      }),
     },
   };
 

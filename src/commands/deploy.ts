@@ -19,14 +19,14 @@ export abstract class DeployCommand extends BaseCommand {
         exclusive: ['compose-file', 'compose_file'],
         description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
         hidden: true,
-      })
+      }),
     },
     'auto-approve': {
       non_sensitive: true,
       ...Flags.boolean({
         exclusive: ['compose-file', 'compose_file'],
         description: 'Automatically approve the deployment without a review step. Used for debugging and CI flows.',
-      })
+      }),
     },
   };
 
@@ -75,7 +75,6 @@ export default class Deploy extends DeployCommand {
     ...DeployCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-
     local: {
       non_sensitive: true,
       ...Flags.boolean({
@@ -83,14 +82,14 @@ export default class Deploy extends DeployCommand {
         description: `${BaseCommand.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
         exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
         hidden: true,
-      })
+      }),
     },
     production: {
       non_sensitive: true,
       ...Flags.boolean({
         description: `${BaseCommand.DEPRECATED} Please use --environment.`,
         dependsOn: ['local'],
-      })
+      }),
     },
     compose_file: {
       non_sensitive: true,
@@ -98,7 +97,7 @@ export default class Deploy extends DeployCommand {
         description: `${BaseCommand.DEPRECATED} Please use --compose-file.`,
         exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
         hidden: true,
-      })
+      }),
     },
     'compose-file': {
       non_sensitive: true,
@@ -107,7 +106,7 @@ export default class Deploy extends DeployCommand {
         description: 'Path where the compose file should be written to',
         default: '',
         exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
-      })
+      }),
     },
     detached: {
       non_sensitive: true,
@@ -115,7 +114,7 @@ export default class Deploy extends DeployCommand {
         description: 'Run in detached mode',
         char: 'd',
         dependsOn: ['local'],
-      })
+      }),
     },
     parameter: {
       non_sensitive: true,
@@ -124,7 +123,7 @@ export default class Deploy extends DeployCommand {
         description: `${BaseCommand.DEPRECATED} Please use --secret.`,
         multiple: true,
         hidden: true,
-      })
+      }),
     },
     interface: {
       non_sensitive: true,
@@ -133,7 +132,7 @@ export default class Deploy extends DeployCommand {
         description: 'Component interfaces',
         multiple: true,
         default: [],
-      })
+      }),
     },
     'secret-file': Flags.string({
       description: 'Path of secrets file',
@@ -164,7 +163,7 @@ export default class Deploy extends DeployCommand {
         allowNo: true,
         description: '[default: true] Toggle for deletion protection on deployments',
         exclusive: ['local'],
-      })
+      }),
     },
     recursive: {
       non_sensitive: true,
@@ -173,7 +172,7 @@ export default class Deploy extends DeployCommand {
         default: true,
         allowNo: true,
         description: '[default: true] Toggle to automatically deploy all dependencies',
-      })
+      }),
     },
     refresh: {
       non_sensitive: true,
@@ -182,7 +181,7 @@ export default class Deploy extends DeployCommand {
         hidden: true,
         allowNo: true,
         exclusive: ['local', 'compose-file', 'compose_file'],
-      })
+      }),
     },
     browser: {
       non_sensitive: true,
@@ -190,7 +189,7 @@ export default class Deploy extends DeployCommand {
         default: true,
         allowNo: true,
         description: '[default: true] Automatically open urls in the browser for local deployments',
-      })
+      }),
     },
   };
 

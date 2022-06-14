@@ -18,7 +18,7 @@ export default class Unlink extends BaseCommand {
       non_sensitive: true,
       ...Flags.boolean({
         description: 'Unlink all components registered locally',
-      })
+      }),
     },
   };
 

@@ -25,7 +25,7 @@ export abstract class InitCommand extends BaseCommand {
       ...Flags.string({
         description: `${BaseCommand.DEPRECATED} Please use --component-file.`,
         hidden: true,
-      })
+      }),
     },
     'component-file': {
       non_sensitive: true,
@@ -33,25 +33,25 @@ export abstract class InitCommand extends BaseCommand {
         char: 'o',
         description: 'Path where the component file should be written to',
         default: 'architect.yml',
-      })
+      }),
     },
     name: {
       non_sensitive: true,
       ...Flags.string({
         char: 'n',
-      })
+      }),
     },
     from_compose: {
       non_sensitive: true,
       ...Flags.string({
         description: `${BaseCommand.DEPRECATED} Please use --from-compose.`,
         hidden: true,
-      })
+      }),
     },
     'from-compose': {
       non_sensitive: true,
       ...Flags.string({}),
-    }
+    },
   };
 
   protected async parse<F, A extends {

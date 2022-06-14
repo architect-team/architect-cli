@@ -15,7 +15,6 @@ export default class ConfigGet extends BaseCommand {
   };
 
   static args = [{
-    non_sensitive: true,
     name: 'option',
     required: true,
     description: 'Name of a config option',
