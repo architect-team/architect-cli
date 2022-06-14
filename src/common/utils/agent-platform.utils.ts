@@ -159,8 +159,8 @@ spec:
           env:
           - name: ARCHITECT_TOKEN
             value: "${token}"
-          - name: HOST
-            value: "https://host.docker.internal:50006"
+          - name: AGENT_SERVER
+            value: "https://host.docker.internal:50005"
 `;
     const yamlFile = path.join(config.getConfigDir(), 'agent.yml');
     fs.writeFileSync(yamlFile, yaml);
