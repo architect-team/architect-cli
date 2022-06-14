@@ -6,17 +6,10 @@ import { ArchitectError, Dictionary, parseUnknownSlug } from '../';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
-import Command from '../base-command';
+import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
-import { ToSentry } from '../sentry';
 
-@ToSentry(Error,
-  (err, ctx) => {
-    const error = err as any;
-    error.stack = Error(ctx.id).stack;
-    return error;
-})
-export default class Exec extends Command {
+export default class Exec extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -25,7 +18,7 @@ export default class Exec extends Command {
   static usage = 'exec [RESOURCE] [FLAGS] -- [COMMAND]';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
     stdin: Flags.boolean({
@@ -34,12 +27,15 @@ export default class Exec extends Command {
       allowNo: true,
       default: true,
     }),
-    tty: Flags.boolean({
-      description: 'Stdin is a TTY.',
-      char: 't',
-      allowNo: true,
-      default: true,
-    }),
+    tty: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: 'Stdin is a TTY.',
+        char: 't',
+        allowNo: true,
+        default: true,
+      })
+    },
   };
 
   static args = [{
@@ -47,18 +43,14 @@ export default class Exec extends Command {
     description: 'Command to run',
     required: true,
   }, {
+    non_sensitive: true,
     name: 'resource',
     description: 'Name of resource',
     required: false,
     parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
-  static sensitive = new Set(['stdin', 'command']);
-
-  static non_sensitive = new Set(
-    [...Object.keys({ ...Exec.flags }), ...Exec.args.map(arg => arg.name)]
-      .filter((value) => !Exec.sensitive.has(value))
-  );
+  //static sensitive = new Set(['stdin', 'command']);
 
   public static readonly StdinStream = 0;
   public static readonly StdoutStream = 1;

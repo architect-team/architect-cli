@@ -7,18 +7,11 @@ import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
 import { validateOrRejectSpec } from '../';
-import Command from '../base-command';
+import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { ComposeConverter } from '../common/docker-compose/converter';
-import { ToSentry } from '../sentry';
 
-@ToSentry(Error,
-  (err, ctx) => {
-    const error = err as any;
-    error.stack = Error(ctx.id).stack;
-    return error;
-})
-export abstract class InitCommand extends Command {
+export abstract class InitCommand extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -26,29 +19,40 @@ export abstract class InitCommand extends Command {
   static description = 'Initialize an architect component from an existing docker-compose file';
 
   static flags = {
-    ...Command.flags,
-    component_file: Flags.string({
-      description: `${Command.DEPRECATED} Please use --component-file.`,
-      hidden: true,
-    }),
-    'component-file': Flags.string({
-      char: 'o',
-      description: 'Path where the component file should be written to',
-      default: 'architect.yml',
-    }),
-    name: Flags.string({
-      char: 'n',
-    }),
-    from_compose: Flags.string({
-      description: `${Command.DEPRECATED} Please use --from-compose.`,
-      hidden: true,
-    }),
-    'from-compose': Flags.string({}),
+    ...BaseCommand.flags,
+    component_file: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: `${BaseCommand.DEPRECATED} Please use --component-file.`,
+        hidden: true,
+      })
+    },
+    'component-file': {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'o',
+        description: 'Path where the component file should be written to',
+        default: 'architect.yml',
+      })
+    },
+    name: {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'n',
+      })
+    },
+    from_compose: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: `${BaseCommand.DEPRECATED} Please use --from-compose.`,
+        hidden: true,
+      })
+    },
+    'from-compose': {
+      non_sensitive: true,
+      ...Flags.string({}),
+    }
   };
-
-  static sensitive = new Set();
-
-  static non_sensitive = new Set([...Object.keys({ ...InitCommand.flags })]);
 
   protected async parse<F, A extends {
     [name: string]: any;

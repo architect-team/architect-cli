@@ -4,15 +4,8 @@ import AccountUtils from '../architect/account/account.utils';
 import Deployment from '../architect/deployment/deployment.entity';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import PipelineUtils from '../architect/pipeline/pipeline.utils';
-import { ToSentry } from '../sentry';
 import { DeployCommand } from './deploy';
 
-@ToSentry(Error,
-  (err, ctx) => {
-    const error = err as any;
-    error.stack = Error(ctx.id).stack;
-    return error;
-})
 export default class Destroy extends DeployCommand {
   async auth_required(): Promise<boolean> {
     return true;
@@ -25,16 +18,15 @@ export default class Destroy extends DeployCommand {
     ...DeployCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    components: Flags.string({
-      char: 'c',
-      description: 'Component(s) to destroy',
-      multiple: true,
-    }),
+    components: {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'c',
+        description: 'Component(s) to destroy',
+        multiple: true,
+      })
+    },
   };
-
-  static sensitive = new Set();
-
-  static non_sensitive = new Set([...Object.keys({ ...Destroy.flags })]);
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Destroy);

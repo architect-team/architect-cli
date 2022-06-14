@@ -4,8 +4,7 @@ import inquirer from 'inquirer';
 import { Slugs } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
 import PlatformUtils from '../../architect/platform/platform.utils';
-import Command from '../../base-command';
-import { ToSentry } from '../../sentry';
+import BaseCommand from '../../base-command';
 
 interface CreateEnvironmentDto {
   name: string;
@@ -14,38 +13,34 @@ interface CreateEnvironmentDto {
   ttl?: string;
 }
 
-@ToSentry(Error,
-  (err, ctx) => {
-    const error = err as any;
-    error.stack = Error(ctx.id).stack;
-    return error;
-})
-export default class EnvironmentCreate extends Command {
+export default class EnvironmentCreate extends BaseCommand {
   static aliases = ['environment:create', 'envs:create', 'env:create'];
   static description = 'Register a new environment with Architect Cloud';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...PlatformUtils.flags,
-    description: Flags.string({
-      description: 'Environment Description',
-    }),
-    ttl: Flags.string({
-      description: 'The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m',
-    }),
+    description: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: 'Environment Description',
+      })
+    },
+    ttl: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: 'The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m',
+      })
+    },
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'environment',
     description: 'Name to give the environment',
     parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
-
-  static sensitive = new Set();
-
-  static non_sensitive = new Set([...Object.keys({ ...EnvironmentCreate.flags }),
-    ...EnvironmentCreate.args.map(arg => arg.name)]);
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(EnvironmentCreate);

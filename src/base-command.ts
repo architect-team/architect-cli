@@ -99,32 +99,39 @@ export default abstract class BaseCommand extends Command {
     return super.parse(options, [...args, ...flags]);
   }
 
-  async _filterSensitiveSentryMetadata(sentry_metadata: any): Promise<any> {
-    const context = this.constructor as any;
-    return Object.entries(sentry_metadata).map(([key, value]) => {
-      if (context.non_sensitive.has(key)) {
-        return { [key]: value };
-      } else if (sentry_metadata.sensitive.has(key)) {
-        return { '[Filtered]': '**********' };
-      } else {
-        return { '[Unknown]': '**********' };
-      }
-    });
+  async _filterNonSensitiveSentryMetadata(non_sensitive: Set<string>, metadata: any): Promise<any> {
+    return Object
+      .entries(metadata)
+      .filter((value,) => non_sensitive.has(value[0]))
+      .map(key => ({ [key[0]]: key[1] }));
+  }
+
+  async _getNonSensitiveSentryMetadata(): Promise<any> {
+    const calling_class = this.constructor as any;
+
+    const non_sensitive = new Set([
+      ...Object.entries(calling_class.flags).filter(([, value]) => (value as any).non_sensitive).map(([key,]) => key),
+      ...Object.entries(calling_class.args).filter(([, value]) => (value as any).non_sensitive).map(([, value]) => (value as any).name)
+    ]);
+
+    const { args, flags } = await this.parse(calling_class);
+    const filtered_sentry_args = await this._filterNonSensitiveSentryMetadata(non_sensitive, args);
+    const filtered_sentry_flags = await this._filterNonSensitiveSentryMetadata(non_sensitive, flags);
+
+    return { filtered_sentry_args, filtered_sentry_flags };
   }
 
   async _logToSentry(err: any): Promise<void> {
-    const auth_result = await this.app.auth.getPersistedTokenJSON();
-    const auth_user = await this.app.auth.checkLogin();
 
-    const { args, flags } = await this.parse(this.constructor as any);
-    const filtered_sentry_args = await this._filterSensitiveSentryMetadata(args);
-    const filtered_sentry_flags = await this._filterSensitiveSentryMetadata(flags);
+    const { filtered_sentry_args, filtered_sentry_flags } = await this._getNonSensitiveSentryMetadata();
     const docker_version = await docker(['version'], { stdout: false });
+
+    const auth_result = await this.app?.auth?.getPersistedTokenJSON();
+    const auth_user = await this.app?.auth?.checkLogin();
 
     Sentry.init({
       dsn: CLI_SENTRY_DSN,
       debug: false,
-      attachStacktrace: true,
       environment: this.config.bin,
       integrations: [
         new Dedupe(),
@@ -144,7 +151,7 @@ export default abstract class BaseCommand extends Command {
       initialScope: {
         user: {
           email: auth_result?.email,
-          id: auth_user.id,
+          id: auth_user?.id,
         },
         extra: {
           command_args: filtered_sentry_args,
@@ -163,12 +170,11 @@ export default abstract class BaseCommand extends Command {
           node_runtime: process.version,
           os: os.platform(),
           shell: this.config.shell,
-          user: auth_user.name || auth_result?.email,
+          user: auth_user?.name || auth_result?.email,
           'user-email': auth_result?.email,
         },
       },
     });
-
     return Sentry.withScope(scope => Sentry.captureException(err));
   }
 
@@ -176,12 +182,10 @@ export default abstract class BaseCommand extends Command {
     if (err.oclif && err.oclif.exit === 0) return;
 
     if (err instanceof ValidationErrors) {
-      prettyValidationErrors(err);
-      if (err.stack) {
-        console.error(chalk.red(err.stack));
-      }
-      return this._logToSentry(err);
+      return prettyValidationErrors(err);
     }
+
+    err.stack = Error((this.constructor as any).name).stack;
 
     if (err.response?.data instanceof Object) {
       err.message += `\nmethod: ${err.config.method}`;
@@ -202,7 +206,7 @@ export default abstract class BaseCommand extends Command {
 
     console.error(chalk.red(err.message));
 
-    if (err instanceof Error && err.stack) {
+    if (err.stack) {
       console.error(chalk.red(err.stack));
     }
 

@@ -1,9 +1,8 @@
 import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
-import Command from '../../base-command';
+import BaseCommand from '../../base-command';
 import Table from '../../base-table';
 import localizedTimestamp from '../../common/utils/localized-timestamp';
-import { ToSentry } from '../../sentry';
 
 interface Component {
   created_at: string;
@@ -15,30 +14,20 @@ interface Component {
   account: Account;
 }
 
-@ToSentry(Error,
-  (err, ctx) => {
-    const error = err as any;
-    error.stack = Error(ctx.id).stack;
-    return error;
-})
-export default class Components extends Command {
+export default class Components extends BaseCommand {
   static aliases = ['components', 'components:search', 'component:search', 'component:search'];
   static description = 'Search components you have access to';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
     ...AccountUtils.flags,
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'query',
     description: 'Search term used to filter the results',
   }];
-
-  static sensitive = new Set();
-
-  static non_sensitive = new Set([...Object.keys({ ...Components.flags }),
-    ...Components.args.map(arg => arg.name)]);
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Components);

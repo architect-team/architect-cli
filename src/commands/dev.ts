@@ -15,14 +15,7 @@ import DockerComposeTemplate from '../common/docker-compose/template';
 import DeployUtils from '../common/utils/deploy.utils';
 import * as Docker from '../common/utils/docker';
 import PortUtil from '../common/utils/port';
-import { ToSentry } from '../sentry';
 
-@ToSentry(Error,
-  (err, ctx) => {
-    const error = err as any;
-    error.stack = Error(ctx.id).stack;
-    return error;
-})
 export default class Dev extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
@@ -35,24 +28,30 @@ export default class Dev extends BaseCommand {
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
 
-    'compose-file': Flags.string({
-      char: 'o',
-      description: 'Path where the compose file should be written to',
-      default: '',
-      exclusive: ['environment', 'auto-approve', 'auto_approve', 'refresh'],
-    }),
+    'compose-file': {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'o',
+        description: 'Path where the compose file should be written to',
+        default: '',
+        exclusive: ['environment', 'auto-approve', 'auto_approve', 'refresh'],
+      })
+    },
     parameter: Flags.string({
       char: 'p',
       description: `${Command.DEPRECATED} Please use --secret.`,
       multiple: true,
       hidden: true,
     }),
-    interface: Flags.string({
-      char: 'i',
-      description: 'Component interfaces',
-      multiple: true,
-      default: [],
-    }),
+    interface: {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'i',
+        description: 'Component interfaces',
+        multiple: true,
+        default: [],
+      })
+    },
     'secret-file': Flags.string({
       description: 'Path of secrets file',
       multiple: true,
@@ -69,60 +68,75 @@ export default class Dev extends BaseCommand {
       multiple: true,
       default: [],
     }),
-    recursive: Flags.boolean({
-      char: 'r',
-      default: true,
-      allowNo: true,
-      description: '[default: true] Toggle to automatically deploy all dependencies',
-    }),
-    browser: Flags.boolean({
-      default: true,
-      allowNo: true,
-      description: '[default: true] Automatically open urls in the browser for local deployments',
-    }),
-    port: Flags.integer({
-      default: 80,
-      description: '[default: 80] Port for the gateway',
-    }),
+    recursive: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        char: 'r',
+        default: true,
+        allowNo: true,
+        description: '[default: true] Toggle to automatically deploy all dependencies',
+      })
+    },
+    browser: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        default: true,
+        allowNo: true,
+        description: '[default: true] Automatically open urls in the browser for local deployments',
+      })
+    },
+    port: {
+      non_sensitive: true,
+      ...Flags.integer({
+        default: 80,
+        description: '[default: 80] Port for the gateway',
+      })
+    },
     // Used for proxy from deploy to dev. These will be removed once --local is deprecated
-    local: Flags.boolean({
-      char: 'l',
-      description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
-      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
-      hidden: true,
-    }),
-    production: Flags.boolean({
-      description: `${Command.DEPRECATED} Please use --environment.`,
-      dependsOn: ['local'],
-      hidden: true,
-    }),
-    compose_file: Flags.string({
-      description: `${Command.DEPRECATED} Please use --compose-file.`,
-      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
-      hidden: true,
-    }),
+    local: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        char: 'l',
+        description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
+        exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
+        hidden: true,
+      })
+    },
+    production: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: `${Command.DEPRECATED} Please use --environment.`,
+        dependsOn: ['local'],
+        hidden: true,
+      })
+    },
+    compose_file: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: `${Command.DEPRECATED} Please use --compose-file.`,
+        exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+        hidden: true,
+      })
+    },
     values: Flags.string({
       char: 'v',
       hidden: true,
       description: `${Command.DEPRECATED} Please use --secret-file.`,
     }),
-    detached: Flags.boolean({
-      description: 'Run in detached mode',
-      char: 'd',
-    }),
+    detached: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: 'Run in detached mode',
+        char: 'd',
+      })
+    },
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'configs_or_components',
     description: 'Path to an architect.yml file or component `account/component:latest`. Multiple components are accepted.',
   }];
-
-  static sensitive = new Set(['secret-file', 'secret', 'secrets', 'values', 'parameter']);
-
-  static non_sensitive = new Set(
-    [...Object.keys({ ...Dev.flags }), ...Dev.args.map(arg => arg.name)]
-      .filter((value) => !Dev.sensitive.has(value))
-  );
 
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
   protected async parse<F, A extends {

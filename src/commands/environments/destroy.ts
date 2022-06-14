@@ -3,47 +3,45 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
-import Command from '../../base-command';
-import { ToSentry } from '../../sentry';
+import BaseCommand from '../../base-command';
 
-@ToSentry(Error,
-  (err, ctx) => {
-    const error = err as any;
-    error.stack = Error(ctx.id).stack;
-    return error;
-})
-export default class EnvironmentDestroy extends Command {
+export default class EnvironmentDestroy extends BaseCommand {
   static aliases = ['environment:destroy', 'envs:destroy', 'env:destroy', 'env:deregister', 'environment:deregister'];
   static description = 'Deregister an environment';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
     ...AccountUtils.flags,
-    auto_approve: Flags.boolean({
-      description: `${Command.DEPRECATED} Please use --auto-approve.`,
-      hidden: true,
-    }),
-    ['auto-approve']: Flags.boolean({
-      description: 'Automatically apply the changes',
-      default: false,
-    }),
-    force: Flags.boolean({
-      description: 'Force the deletion even if the environment is not empty',
-      char: 'f',
-      default: false,
-    }),
+    auto_approve: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
+        hidden: true,
+      }),
+    },
+    ['auto-approve']: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: 'Automatically apply the changes',
+        default: false,
+      }),
+    },
+    force: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: 'Force the deletion even if the environment is not empty',
+        char: 'f',
+        default: false,
+      }),
+    },
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'environment',
     description: 'Name of the environment to deregister',
     parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
-
-  static sensitive = new Set();
-
-  static non_sensitive = new Set([...Object.keys({ ...EnvironmentDestroy.flags }),
-    ...EnvironmentDestroy.args.map(arg => arg.name)]);
 
   protected async parse<F, A extends {
     [name: string]: any;

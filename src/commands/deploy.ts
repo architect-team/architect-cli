@@ -4,36 +4,31 @@ import inquirer from 'inquirer';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import PipelineUtils from '../architect/pipeline/pipeline.utils';
-import Command from '../base-command';
+import BaseCommand from '../base-command';
 import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../common/errors/pipeline-errors';
 import DeployUtils from '../common/utils/deploy.utils';
-import { ToSentry } from '../sentry';
 import Dev from "./dev";
 
-@ToSentry(Error,
-  (err, ctx) => {
-    const error = err as any;
-    error.stack = Error(ctx.id).stack;
-    return error;
-})
-export abstract class DeployCommand extends Command {
+export abstract class DeployCommand extends BaseCommand {
 
   static flags = {
-    ...Command.flags,
-    auto_approve: Flags.boolean({
-      exclusive: ['compose-file', 'compose_file'],
-      description: `${Command.DEPRECATED} Please use --auto-approve.`,
-      hidden: true,
-    }),
-    'auto-approve': Flags.boolean({
-      exclusive: ['compose-file', 'compose_file'],
-      description: 'Automatically approve the deployment without a review step. Used for debugging and CI flows.',
-    }),
+    ...BaseCommand.flags,
+    auto_approve: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        exclusive: ['compose-file', 'compose_file'],
+        description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
+        hidden: true,
+      })
+    },
+    'auto-approve': {
+      non_sensitive: true,
+      ...Flags.boolean({
+        exclusive: ['compose-file', 'compose_file'],
+        description: 'Automatically approve the deployment without a review step. Used for debugging and CI flows.',
+      })
+    },
   };
-
-  static sensitive = new Set();
-
-  static non_sensitive = new Set([...Object.keys({ ...DeployCommand.flags })]);
 
   protected async parse<F, A extends {
     [name: string]: any;
@@ -81,51 +76,72 @@ export default class Deploy extends DeployCommand {
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
 
-    local: Flags.boolean({
-      char: 'l',
-      description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
-      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
-      hidden: true,
-    }),
-    production: Flags.boolean({
-      description: `${Command.DEPRECATED} Please use --environment.`,
-      dependsOn: ['local'],
-    }),
-    compose_file: Flags.string({
-      description: `${Command.DEPRECATED} Please use --compose-file.`,
-      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
-      hidden: true,
-    }),
-    'compose-file': Flags.string({
-      char: 'o',
-      description: 'Path where the compose file should be written to',
-      default: '',
-      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
-    }),
-    detached: Flags.boolean({
-      description: 'Run in detached mode',
-      char: 'd',
-      dependsOn: ['local'],
-    }),
-    parameter: Flags.string({
-      char: 'p',
-      description: `${Command.DEPRECATED} Please use --secret.`,
-      multiple: true,
-      hidden: true,
-    }),
-    interface: Flags.string({
-      char: 'i',
-      description: 'Component interfaces',
-      multiple: true,
-      default: [],
-    }),
+    local: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        char: 'l',
+        description: `${BaseCommand.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
+        exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
+        hidden: true,
+      })
+    },
+    production: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: `${BaseCommand.DEPRECATED} Please use --environment.`,
+        dependsOn: ['local'],
+      })
+    },
+    compose_file: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: `${BaseCommand.DEPRECATED} Please use --compose-file.`,
+        exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+        hidden: true,
+      })
+    },
+    'compose-file': {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'o',
+        description: 'Path where the compose file should be written to',
+        default: '',
+        exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      })
+    },
+    detached: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: 'Run in detached mode',
+        char: 'd',
+        dependsOn: ['local'],
+      })
+    },
+    parameter: {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'p',
+        description: `${BaseCommand.DEPRECATED} Please use --secret.`,
+        multiple: true,
+        hidden: true,
+      })
+    },
+    interface: {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'i',
+        description: 'Component interfaces',
+        multiple: true,
+        default: [],
+      })
+    },
     'secret-file': Flags.string({
       description: 'Path of secrets file',
       multiple: true,
       default: [],
     }),
     secrets: Flags.string({
-      description: `${Command.DEPRECATED} Please use --secret-file.`,
+      description: `${BaseCommand.DEPRECATED} Please use --secret-file.`,
       multiple: true,
       hidden: true,
     }),
@@ -139,34 +155,47 @@ export default class Deploy extends DeployCommand {
       char: 'v',
       hidden: true,
       multiple: true,
-      description: `${Command.DEPRECATED} Please use --secret-file.`,
+      description: `${BaseCommand.DEPRECATED} Please use --secret-file.`,
     }),
-    'deletion-protection': Flags.boolean({
-      default: true,
-      allowNo: true,
-      description: '[default: true] Toggle for deletion protection on deployments',
-      exclusive: ['local'],
-    }),
-    recursive: Flags.boolean({
-      char: 'r',
-      default: true,
-      allowNo: true,
-      description: '[default: true] Toggle to automatically deploy all dependencies',
-    }),
-    refresh: Flags.boolean({
-      default: true,
-      hidden: true,
-      allowNo: true,
-      exclusive: ['local', 'compose-file', 'compose_file'],
-    }),
-    browser: Flags.boolean({
-      default: true,
-      allowNo: true,
-      description: '[default: true] Automatically open urls in the browser for local deployments',
-    }),
+    'deletion-protection': {
+      non_sensitive: true,
+      ...Flags.boolean({
+        default: true,
+        allowNo: true,
+        description: '[default: true] Toggle for deletion protection on deployments',
+        exclusive: ['local'],
+      })
+    },
+    recursive: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        char: 'r',
+        default: true,
+        allowNo: true,
+        description: '[default: true] Toggle to automatically deploy all dependencies',
+      })
+    },
+    refresh: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        default: true,
+        hidden: true,
+        allowNo: true,
+        exclusive: ['local', 'compose-file', 'compose_file'],
+      })
+    },
+    browser: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        default: true,
+        allowNo: true,
+        description: '[default: true] Automatically open urls in the browser for local deployments',
+      })
+    },
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'configs_or_components',
     description: 'Path to an architect.yml file or component `account/component:latest`. Multiple components are accepted.',
   }];

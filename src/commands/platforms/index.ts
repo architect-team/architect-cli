@@ -1,35 +1,24 @@
 import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
-import Command from '../../base-command';
+import BaseCommand from '../../base-command';
 import Table from '../../base-table';
 import localizedTimestamp from '../../common/utils/localized-timestamp';
-import { ToSentry } from '../../sentry';
 
-@ToSentry(Error,
-  (err, ctx) => {
-    const error = err as any;
-    error.stack = Error(ctx.id).stack;
-    return error;
-})
-export default class Platforms extends Command {
+export default class Platforms extends BaseCommand {
   static aliases = ['platform', 'platform:search', 'platforms', 'platforms:search'];
   static description = 'Search for platforms on Architect Cloud';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
     ...AccountUtils.flags,
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'query',
     description: 'Search query used to filter results',
     required: false,
   }];
-
-  static sensitive = new Set();
-
-  static non_sensitive = new Set([...Object.keys({ ...Platforms.flags }),
-    ...Platforms.args.map(arg => arg.name)]);
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Platforms);

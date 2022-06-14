@@ -1,15 +1,8 @@
 import AppConfig from '../../app-config/config';
-import Command from '../../base-command';
+import BaseCommand from '../../base-command';
 import InvalidConfigOption from '../../common/errors/invalid-config-option';
-import { ToSentry } from '../../sentry';
 
-@ToSentry(Error,
-  (err, ctx) => {
-    const error = err as any;
-    error.stack = Error(ctx.id).stack;
-    return error;
-})
-export default class ConfigGet extends Command {
+export default class ConfigGet extends BaseCommand {
 
   async auth_required(): Promise<boolean> {
     return false;
@@ -18,18 +11,15 @@ export default class ConfigGet extends Command {
   static description = 'Get the value of a CLI config option';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'option',
     required: true,
     description: 'Name of a config option',
   }];
-
-  static sensitive = new Set([...Object.keys({ ...ConfigGet.flags }), ...ConfigGet.args.map(arg => arg.name)]);
-
-  static non_sensitive = new Set();
 
   async run(): Promise<void> {
     const { args } = await this.parse(ConfigGet);

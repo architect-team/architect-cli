@@ -3,16 +3,9 @@ import chalk from 'chalk';
 import path from 'path';
 import untildify from 'untildify';
 import { buildSpecFromPath } from '../';
-import Command from '../base-command';
-import { ToSentry } from '../sentry';
+import BaseCommand from '../base-command';
 
-@ToSentry(Error,
-  (err, ctx) => {
-    const error = err as any;
-    error.stack = Error(ctx.id).stack;
-    return error;
-})
-export default class Unlink extends Command {
+export default class Unlink extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -20,23 +13,23 @@ export default class Unlink extends Command {
   static description = 'Unlink a component from the host by path or name';
 
   static flags = {
-    ...Command.flags,
-    all: Flags.boolean({
-      description: 'Unlink all components registered locally',
-    }),
+    ...BaseCommand.flags,
+    all: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: 'Unlink all components registered locally',
+      })
+    },
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'componentPathOrName',
     char: 'p',
     default: '.',
     parse: async (value: string): Promise<string> => value.toLowerCase(),
     required: false,
   }];
-
-  static sensitive = new Set();
-
-  static non_sensitive = new Set([...Object.keys({ ...Unlink.flags }), ...Unlink.args.map(arg => arg.name)]);
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Unlink);

@@ -2,17 +2,10 @@ import chalk from 'chalk';
 import path from 'path';
 import untildify from 'untildify';
 import { buildSpecFromPath } from '../';
-import Command from '../base-command';
-import { ToSentry } from '../sentry';
+import BaseCommand from '../base-command';
 declare const process: NodeJS.Process;
 
-@ToSentry(Error,
-  (err, ctx) => {
-    const error = err as any;
-    error.stack = Error(ctx.id).stack;
-    return error;
-})
-export default class Link extends Command {
+export default class Link extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -20,16 +13,15 @@ export default class Link extends Command {
   static description = 'Link a local component to the host to be used to power local deployments.';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'componentPath',
     char: 'p',
     default: '.',
   }];
-
-  static sensitive = new Set();
 
   static non_sensitive = new Set([...Object.keys({ ...Link.flags }), ...Link.args.map(arg => arg.name)]);
 

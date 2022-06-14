@@ -1,15 +1,8 @@
 import AppConfig from '../../app-config/config';
-import Command from '../../base-command';
+import BaseCommand from '../../base-command';
 import InvalidConfigOption from '../../common/errors/invalid-config-option';
-import { ToSentry } from '../../sentry';
 
-@ToSentry(Error,
-  (err, ctx) => {
-    const error = err as any;
-    error.stack = Error(ctx.id).stack;
-    return error;
-})
-export default class ConfigSet extends Command {
+export default class ConfigSet extends BaseCommand {
 
   async auth_required(): Promise<boolean> {
     return false;
@@ -18,7 +11,7 @@ export default class ConfigSet extends Command {
   static description = 'Set a new value for a CLI configuration option';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
   };
 
   static args = [{
@@ -30,10 +23,6 @@ export default class ConfigSet extends Command {
     required: true,
     description: 'New value to assign to a config option',
   }];
-
-  static sensitive = new Set([...Object.keys({ ...ConfigSet.flags }), ...ConfigSet.args.map(arg => arg.name)]);
-
-  static non_sensitive = new Set();
 
   async run(): Promise<void> {
     const { args } = await this.parse(ConfigSet);

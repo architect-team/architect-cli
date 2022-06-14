@@ -31,11 +31,14 @@ export interface EcsPlatformCredentials {
 
 export default class PlatformUtils {
   static flags = {
-    platform: Flags.string({
-      description: 'Architect platform',
-      env: 'ARCHITECT_PLATFORM',
-      parse: async value => value.toLowerCase(),
-    }),
+    platform: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: 'Architect platform',
+        env: 'ARCHITECT_PLATFORM',
+        parse: async value => value.toLowerCase(),
+      })
+    },
   };
 
   static async getPlatform(api: AxiosInstance, account: Account, platform_name?: string): Promise<Platform> {

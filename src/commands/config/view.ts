@@ -1,14 +1,7 @@
-import Command from '../../base-command';
+import BaseCommand from '../../base-command';
 import Table from '../../base-table';
-import { ToSentry } from '../../sentry';
 
-@ToSentry(Error,
-  (err, ctx) => {
-    const error = err as any;
-    error.stack = Error(ctx.id).stack;
-    return error;
-})
-export default class ConfigView extends Command {
+export default class ConfigView extends BaseCommand {
 
   async auth_required(): Promise<boolean> {
     return false;
@@ -18,12 +11,8 @@ export default class ConfigView extends Command {
   static aliases = ['config'];
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
   };
-
-  static sensitive = new Set([...Object.keys({ ...ConfigView.flags })]);
-
-  static non_sensitive = new Set();
 
   async run(): Promise<void> {
     const table = new Table({ head: ['Name', 'Value'] });
