@@ -222,6 +222,7 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
   } else {
     component_spec.metadata = {
       ref: component_spec.name,
+      architect_ref: component_spec.name,
       tag: 'latest',
       instance_date: new Date(),
     };

@@ -77,6 +77,7 @@ export const transformResourceSpec = (resource_type: ResourceType, key: string, 
     metadata: {
       ...metadata,
       ref: spec.reserved_name || ResourceSlugUtils.build(component_account_name, component_name, resource_type, key, instance_name),
+      architect_ref: ResourceSlugUtils.build(component_account_name, component_name, resource_type, key, instance_name),
     },
     description: spec.description,
     image: spec.image,
