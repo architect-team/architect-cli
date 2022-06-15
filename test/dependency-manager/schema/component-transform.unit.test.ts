@@ -14,10 +14,11 @@ describe('component transform unit test', function () {
 
   it(`transformComponentSpec successfully transforms spec with metadata`, async () => {
     const { source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset/architect.yml`);
+    const ref = 'tests/superset@instance-1';
 
     const metadata = {
-      ref: 'tests/superset@instance-1',
-      architect_ref: 'tests/superset@instance-1',
+      ref,
+      architect_ref: ref,
       tag: 'latest',
       instance_name: 'instance-1',
       instance_id: 'test-instance-id',
