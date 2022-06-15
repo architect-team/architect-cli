@@ -44,8 +44,4 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   get is_local(): boolean {
     return this.local_path !== '';
   }
-
-  get architect_ref(): string {
-    return Refs.getArchitectRef(this.config, 'services');
-  }
 }
