@@ -56,16 +56,6 @@ export default class PlatformCreate extends Command {
   private async createPlatform() {
     const { args, flags } = await this.parse(PlatformCreate);
 
-    this.log(chalk.yellow(`
-    ==============================================================================================================
-
-      Note - Architect currently supports Kubernetes up to v1.23
-
-      For more details, please refer to - https://github.com/hashicorp/terraform-provider-kubernetes/issues/1724
-
-    ==============================================================================================================
-    `));
-
     const answers: any = await inquirer.prompt([
       {
         type: 'input',

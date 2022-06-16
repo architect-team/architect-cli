@@ -86,8 +86,6 @@ export class KubernetesPlatformUtils {
       if (major_ver >= 1 && minor_ver >= 24) {
         throw new ArchitectError('Architect currently does not support Kubernetes v1.24 or higher.');
       }
-    } else {
-      throw new ArchitectError('Error reading kubectl version.');
     }
 
     // Check for existing Service Account
