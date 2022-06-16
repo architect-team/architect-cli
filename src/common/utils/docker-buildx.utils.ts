@@ -3,15 +3,113 @@ import fs from 'fs-extra';
 import config from '../../app-config/config';
 import { docker } from './docker';
 
+const OPERATING_SYSTEMS = ['aix', 'android', 'darwin', 'dragonfly', 'freebsd', 'hurd', 'illumos', 'js', 'linux', 'nacl', 'netbsd', 'openbsd', 'plan9', 'solaris', 'windows', 'zos'];
+const ARCHITECTURES = ['386', 'amd64', 'amd64p32', 'arm', 'armbe', 'arm64', 'arm64be', 'ppc64', 'ppc64le', 'mips', 'mipsle', 'mips64', 'mips64le', 'mips64p32', 'mips64p32le', 'ppc', 'riscv', 'riscv64', 's390', 's390x', 'sparc', 'sparc64', 'wasm'];
+
+interface Platform {
+  os: string,
+  arch: string,
+  variant: string,
+}
+
 export default class DockerBuildXUtils {
 
   public static isMacM1Machine(): boolean {
     return require('os').cpus()[0].model.includes('Apple M1');
   }
 
-  public static getPlatforms(): string[] {
-    const platforms: string[] = ['linux/amd64'];
-    return this.isMacM1Machine() ? [...platforms, 'linux/arm64'] : platforms;
+  public static normalizeOS(os: string): string {
+    os = os.toLowerCase();
+    return os === 'macos' ? 'darwin' : os;
+  }
+
+  public static normalizePlatform(platform: Platform): Platform {
+    let arch = platform.arch.toLowerCase();
+    let variant = platform.variant.toLowerCase();
+    switch (arch) {
+      case 'i386':
+        arch = '386';
+        variant = '';
+        break;
+      case 'x86_64':
+      case 'x86-64':
+        arch = 'amd64';
+        variant = '';
+        break;
+      case 'aarch64':
+      case 'arm64':
+        arch = 'arm64';
+        switch (variant) {
+          case '8':
+          case 'v8':
+            variant = '';
+        }
+        break;
+      case 'armhf':
+        arch = 'arm';
+        variant = 'v7';
+        break;
+      case 'armel':
+        arch = 'arm';
+        variant = 'v6';
+        break;
+      case 'arm':
+        switch (variant) {
+          case '':
+          case '7':
+            variant = 'v7';
+            break;
+          case '5':
+          case '6':
+          case '8':
+            variant = 'v' + variant;
+        }
+    }
+
+    platform.arch = arch;
+    platform.variant = variant;
+    platform.os = this.normalizeOS(platform.os);
+    return platform;
+  }
+
+  public static convertToPlatform(platform: string): Platform {
+    const err_msg = 'Failed to register with platform flag. Must use format {OS}/{architecture}/{?version}. Ex: linux/amd64 or linux/arm/v7';
+    
+    const parsed = platform.split('/');
+    if (parsed.length < 2 || parsed.length > 3) {
+      throw new Error(err_msg);
+    }
+
+    const pf: Platform = {
+      os: parsed[0],
+      arch: parsed[1],
+      variant: parsed.length === 3 ? parsed[2] : '',
+    };
+    return pf;
+  }
+
+  public static convertPlatformToString(platform: Platform): string {
+    const platform_str = platform.os + '/' + platform.arch;
+    return platform.variant ? platform_str + '/' + platform.variant : platform_str;
+  }
+
+  public static normalizePlatforms(platform_flag: string): string[] {
+    const platforms: string[] = platform_flag.split(',');
+    const normed_platforms : string[] = [];
+    for (const platform_str of platforms) {
+      let platform = this.convertToPlatform(platform_str);
+      platform = this.normalizePlatform(platform);
+
+      if (!ARCHITECTURES.includes(platform.arch)) {
+        throw new Error('Your platform architecture is not supported.\nSupported architectures: ' + ARCHITECTURES.join(', '));
+      }
+      if (!OPERATING_SYSTEMS.includes(platform.os)) {
+        throw new Error('Your platform operating system is not supported.\nSupported operating systems: ' + OPERATING_SYSTEMS.join(', '));
+      }
+
+      normed_platforms.push(this.convertPlatformToString(platform));
+    }
+    return normed_platforms;
   }
 
   public static async writeBuildkitdConfigFile(file_name: string, file_content: string): Promise<void> {

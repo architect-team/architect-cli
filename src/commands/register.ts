@@ -36,6 +36,10 @@ export default class ComponentRegister extends Command {
       description: 'Tag to give to the new component',
       default: 'latest',
     }),
+    platform: Flags.string({
+      description: 'Platform(s) you are running on',
+      default: 'linux/amd64',
+    }),
     'cache-directory': Flags.string({
       description: 'Directory to write build cache to',
       default: path.join(os.tmpdir(), 'architect-build-cache'),
@@ -113,8 +117,16 @@ export default class ComponentRegister extends Command {
           delete service.build.args;
         }
 
+        let platforms: string[];
+        try {
+          platforms = DockerBuildXUtils.normalizePlatforms(flags['platform']);
+        } catch (err: any) {
+          this.log('Failed to normalize platforms. Please make sure platform argument is correct.');
+          this.error(err);
+        }
+
         service.build['x-bake'] = {
-          platforms: DockerBuildXUtils.getPlatforms(),
+          platforms: platforms,
           'cache-from': `type=local,src=${flags['cache-directory']}`,
           'cache-to': `type=local,dest=${flags['cache-directory']}`,
           pull: true,
