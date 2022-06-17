@@ -3,14 +3,14 @@ import fs from 'fs-extra';
 import config from '../../app-config/config';
 import { docker } from './docker';
 
-const OPERATING_SYSTEMS = ['aix', 'android', 'darwin', 'dragonfly', 'freebsd', 'hurd', 'illumos', 'js', 'linux', 'nacl', 'netbsd', 'openbsd', 'plan9', 'solaris', 'windows', 'zos'];
-const ARCHITECTURES = ['386', 'amd64', 'amd64p32', 'arm', 'armbe', 'arm64', 'arm64be', 'ppc64', 'ppc64le', 'mips', 'mipsle', 'mips64', 'mips64le', 'mips64p32', 'mips64p32le', 'ppc', 'riscv', 'riscv64', 's390', 's390x', 'sparc', 'sparc64', 'wasm'];
-
-interface Platform {
-  os: string,
-  arch: string,
-  variant: string,
-}
+// Adapted from https://github.com/docker-library/official-images#architectures-other-than-amd64
+const PLATFORM_MAP = new Map<string, string>([
+  ['arm32v6', 'linux/arm/v6'],
+  ['arm32v7', 'linux/arm/v7'],
+  ['arm64v8', 'linux/arm64'],
+  ['amd64', 'linux/amd64'],
+  ['windows-amd64', 'windows/amd64'],
+]);
 
 export default class DockerBuildXUtils {
 
@@ -18,98 +18,21 @@ export default class DockerBuildXUtils {
     return require('os').cpus()[0].model.includes('Apple M1');
   }
 
-  public static normalizeOS(os: string): string {
-    os = os.toLowerCase();
-    return os === 'macos' ? 'darwin' : os;
-  }
-
-  public static normalizePlatform(platform: Platform): Platform {
-    let arch = platform.arch.toLowerCase();
-    let variant = platform.variant.toLowerCase();
-    switch (arch) {
-      case 'i386':
-        arch = '386';
-        variant = '';
-        break;
-      case 'x86_64':
-      case 'x86-64':
-        arch = 'amd64';
-        variant = '';
-        break;
-      case 'aarch64':
-      case 'arm64':
-        arch = 'arm64';
-        switch (variant) {
-          case '8':
-          case 'v8':
-            variant = '';
-        }
-        break;
-      case 'armhf':
-        arch = 'arm';
-        variant = 'v7';
-        break;
-      case 'armel':
-        arch = 'arm';
-        variant = 'v6';
-        break;
-      case 'arm':
-        switch (variant) {
-          case '':
-          case '7':
-            variant = 'v7';
-            break;
-          case '5':
-          case '6':
-          case '8':
-            variant = 'v' + variant;
-        }
+  public static getBuildxPlatform(platform: string): string {
+    if (!PLATFORM_MAP.has(platform)) {
+      const keys = Array.from(PLATFORM_MAP.keys()).join(', ');
+      throw new Error('Platform is not supported. Supported platforms: ' + keys);
     }
-
-    platform.arch = arch;
-    platform.variant = variant;
-    platform.os = this.normalizeOS(platform.os);
-    return platform;
+    return PLATFORM_MAP.get(platform) as string;
   }
 
-  public static convertToPlatform(platform: string): Platform {
-    const err_msg = 'Failed to register with platform flag. Must use format {OS}/{architecture}/{?version}. Ex: linux/amd64 or linux/arm/v7';
-    
-    const parsed = platform.split('/');
-    if (parsed.length < 2 || parsed.length > 3) {
-      throw new Error(err_msg);
-    }
-
-    const pf: Platform = {
-      os: parsed[0],
-      arch: parsed[1],
-      variant: parsed.length === 3 ? parsed[2] : '',
-    };
-    return pf;
-  }
-
-  public static convertPlatformToString(platform: Platform): string {
-    const platform_str = platform.os + '/' + platform.arch;
-    return platform.variant ? platform_str + '/' + platform.variant : platform_str;
-  }
-
-  public static normalizePlatforms(platform_flag: string): string[] {
+  public static convertToBuildxPlatforms(platform_flag: string): string[] {
     const platforms: string[] = platform_flag.split(',');
-    const normed_platforms : string[] = [];
+    const buildx_platforms : string[] = [];
     for (const platform_str of platforms) {
-      let platform = this.convertToPlatform(platform_str);
-      platform = this.normalizePlatform(platform);
-
-      if (!ARCHITECTURES.includes(platform.arch)) {
-        throw new Error('Your platform architecture is not supported.\nSupported architectures: ' + ARCHITECTURES.join(', '));
-      }
-      if (!OPERATING_SYSTEMS.includes(platform.os)) {
-        throw new Error('Your platform operating system is not supported.\nSupported operating systems: ' + OPERATING_SYSTEMS.join(', '));
-      }
-
-      normed_platforms.push(this.convertPlatformToString(platform));
+      buildx_platforms.push(this.getBuildxPlatform(platform_str));
     }
-    return normed_platforms;
+    return buildx_platforms;
   }
 
   public static async writeBuildkitdConfigFile(file_name: string, file_content: string): Promise<void> {

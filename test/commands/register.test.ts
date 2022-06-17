@@ -87,7 +87,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'examples/fusionauth/architect.yml', '-t', '1.0.0', '--platform', 'linux/amd64,linux/arm64', '-a', 'examples'])
+    .command(['register', 'examples/fusionauth/architect.yml', '-t', '1.0.0', '--platform', 'amd64', '-a', 'examples'])
     .it('register component with platform flag', ctx => {
       const getDigest = Docker.getDigest as sinon.SinonStub;
       expect(getDigest.notCalled).to.be.true;
@@ -96,7 +96,7 @@ describe('register', function () {
     });
   
   mockArchitectAuth
-    .stub(DockerBuildXUtils, 'normalizePlatforms', sinon.stub().throws('Some internal docker build exception'))
+    .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().throws('Some internal docker build exception'))
     .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
@@ -112,7 +112,7 @@ describe('register', function () {
       const getDigest = Docker.getDigest as sinon.SinonStub;
       expect(getDigest.notCalled).to.be.true;
 
-      expect(ctx.stdout).to.contain('Failed to normalize platforms');
+      expect(ctx.stdout).to.contain('Failed to convert platform argument to docker buildx platforms');
     });
 
   mockArchitectAuth
