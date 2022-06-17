@@ -1,6 +1,7 @@
 import { Command, Interfaces } from '@oclif/core';
 import { Dedupe, ExtraErrorData, RewriteFrames, Transaction } from '@sentry/integrations';
 import * as Sentry from '@sentry/node';
+import '@sentry/tracing';
 import chalk from 'chalk';
 import os from 'os';
 import path from 'path';
@@ -17,7 +18,6 @@ const CLI_SENTRY_DSN = 'https://272fd53f577f4729b014701d74fe6c53@o298191.ingest.
 export default abstract class BaseCommand extends Command {
   static readonly DEPRECATED: string = DEPRECATED_LABEL;
 
-  span: any;
   app!: AppService;
   accounts?: any;
 
@@ -44,7 +44,7 @@ export default abstract class BaseCommand extends Command {
       .map(key => ({ [key[0]]: key[1] }));
   }
 
-  async _getNonSensitiveSentryMetadata(args: any[], flags: any[]): Promise<any> {
+  async _getNonSensitiveSentryMetadata(_args?: any[], _flags?: any[]): Promise<any> {
     const calling_class = this.constructor as any;
 
     const non_sensitive = new Set([
@@ -52,36 +52,41 @@ export default abstract class BaseCommand extends Command {
       ...Object.entries(calling_class.args || {}).filter(([_, value]) => (value as any).non_sensitive).map(([_, value]) => (value as any).name),
     ]);
 
-    const filtered_sentry_args = await this._filterNonSensitiveSentryMetadata(non_sensitive, args);
-    const filtered_sentry_flags = await this._filterNonSensitiveSentryMetadata(non_sensitive, flags);
+    const { args, flags } = await this.parse(calling_class);
+
+    const filtered_sentry_args = await this._filterNonSensitiveSentryMetadata(non_sensitive, _args || args);
+    const filtered_sentry_flags = await this._filterNonSensitiveSentryMetadata(non_sensitive, _flags || flags);
 
     return { filtered_sentry_args, filtered_sentry_flags };
   }
 
-  async prerun(): Promise<void> {
+  async setup_sentry_analytics(): Promise<void> {
 
-    const docker_version = await docker(['version'], { stdout: false });
+    Sentry.init({
+      dsn: CLI_SENTRY_DSN,
+      debug: false,
+      environment: this.config?.bin,
+      release: process.env?.npm_package_version,
+      tracesSampleRate: 1.0,
+      attachStacktrace: true,
+      integrations: [
+        new Dedupe(),
+        new RewriteFrames({
+          root: __dirname || process.cwd(),
+        }),
+        new ExtraErrorData(),
+        new Transaction(),
+      ],
+      beforeSend(event: any) {
+        if (event.req?.data?.token) {
+          event.req.data.token = '*'.repeat(20);
+        }
+        return event;
+      },
+    });
 
     const auth_user = await this.app?.auth?.getPersistedTokenJSON();
     const auth_login = await this.app?.auth?.checkLogin();
-
-    const sentry_session_metadata = {
-      email: auth_user?.email || '',
-      id: auth_login?.id || os.hostname(),
-      config_file: path.join(this.app?.config?.getConfigDir(), LocalPaths.CLI_CONFIG_FILENAME),
-      cwd: process.cwd(),
-      docker_info: docker_version.stdout,
-      linked_components: this.app?.linkedComponents,
-      log_level: this.app?.config?.log_level,
-      node_versions: process.versions,
-      node_version: process.version,
-      os_info: os.userInfo() || {},
-      os_release: os.release() || '',
-      os_type: os.type() || '',
-      os_platform: os.platform() || '',
-      os_arch: os.arch() || '',
-      os_hostname: os.hostname() || '',
-    };
 
     const sentry_session_tags = {
       cli: this.app.version,
@@ -97,62 +102,50 @@ export default abstract class BaseCommand extends Command {
       id: auth_login?.id || os.hostname(),
     };
 
-    let transaction = Sentry.getCurrentHub()?.getScope()?.getTransaction();
-    if (transaction) {
-      this.span = transaction.startChild({
-        status: 'ok',
-        op: (this.constructor as any).name,
-        description: `${auth_user?.email} ${(this.constructor as any).name}`,
-        data: sentry_session_metadata,
-        tags: sentry_session_tags,
-      });
-    } else {
-      this.span = Sentry.startTransaction({
-        op: (this.constructor as any).name,
-        status: 'not_found',
-        name: `${auth_user?.email} ${(this.constructor as any).name}`,
-        data: sentry_session_metadata,
-        tags: sentry_session_tags,
-      });
-    }
+    const sentry_session_docker_version = await docker(['version'], { stdout: false });
 
-    Sentry.configureScope(scope => {
-      if (this.span) {
-        scope.setSpan(this.span);
-      }
-      scope.setExtras(sentry_session_metadata);
-      scope.setTags(sentry_session_tags);
-      scope.setUser(sentry_session_user);
+    const sentry_session_metadata = {
+      email: auth_user?.email || '',
+      id: auth_login?.id || os.hostname(),
+      config_file: path.join(this.app?.config?.getConfigDir(), LocalPaths.CLI_CONFIG_FILENAME),
+      cwd: process.cwd(),
+      docker_info: sentry_session_docker_version.stdout,
+      linked_components: this.app?.linkedComponents,
+      log_level: this.app?.config?.log_level,
+      node_versions: process.versions,
+      node_version: process.version,
+      os_info: os.userInfo() || {},
+      os_release: os.release() || '',
+      os_type: os.type() || '',
+      os_platform: os.platform() || '',
+      os_arch: os.arch() || '',
+      os_hostname: os.hostname() || '',
+    };
+
+    const sentry_session_transaction = {
+      op: (this.constructor as any).name,
+      status: 'ok',
+      description: sentry_session_user.email,
+      tags: sentry_session_tags,
+      name: (this.constructor as any).name,
+    };
+
+    const transaction = Sentry.startTransaction({ ...sentry_session_transaction });
+
+    return Sentry.configureScope(scope => {
+      scope.setSpan(transaction);
+      scope.setExtras({ ...sentry_session_metadata });
+      scope.setTags({ ...sentry_session_tags });
+      scope.setUser({ ...sentry_session_user });
       scope.addBreadcrumb({
-        category: 'info',
-        data: (this.constructor as any).name,
-        level: Sentry.Severity.Info,
-      })
+        category: 'transaction',
+        message: `${scope.getTransaction()?.name || (this.constructor as any).name} :: start`,
+        level: 'info',
+      });
     });
   }
 
   async init(): Promise<void> {
-
-    Sentry.init({
-      dsn: CLI_SENTRY_DSN,
-      debug: false,
-      environment: this.config.bin,
-      integrations: [
-        new Dedupe(),
-        new RewriteFrames({
-          root: __dirname || process.cwd(),
-        }),
-        new ExtraErrorData(),
-        new Transaction(),
-      ],
-      beforeSend(event: any) {
-        if (event.req?.data?.token) {
-          event.req.data.token = '*'.repeat(20);
-        }
-        return event;
-      }
-    });
-
     const { flags } = await this.parse(this.constructor as any);
     const flag_definitions = (this.constructor as any).flags;
     this.checkFlagDeprecations(flags, flag_definitions);
@@ -175,16 +168,36 @@ export default abstract class BaseCommand extends Command {
           }
         }
       }
-    } else {
-      await this.prerun();
+    }
+
+    try {
+      return await this.setup_sentry_analytics();
+    } catch {
+      // avoid cyclical dependency if initializing stack locally using dev command.
     }
   }
 
   protected async finally(_: Error | undefined): Promise<any> {
+    const cur_scope = Sentry.getCurrentHub()?.getScope();
     try {
-      this.span.finish();
+      cur_scope?.addBreadcrumb({
+        category: 'transaction',
+        message: `${cur_scope?.getTransaction()?.name || (this.constructor as any).name} :: end`,
+        level: 'info',
+      });
+      Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
+      Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
     } catch {
-      // do nothing
+      // nothing to do here
+    }
+    if (_) {
+      if (!(_ instanceof ValidationErrors)) {
+        _.stack = Error((this.constructor as any).name).stack;
+      }
+      return Sentry.withScope(scope => {
+        scope.setExtra('stack', _.stack);
+        Sentry.captureException(_);
+      });
     }
     return super.finally(_);
   }
@@ -223,24 +236,21 @@ export default abstract class BaseCommand extends Command {
       }
     }
 
-    const { filtered_sentry_args, filtered_sentry_flags } = await this._getNonSensitiveSentryMetadata(args, flags);
-
-    Sentry.configureScope(scope => {
-      scope.setExtra('command_args', filtered_sentry_args);
-      scope.setExtra('command_flags', filtered_sentry_flags);
-    });
-
     return super.parse(options, [...args, ...flags]);
   }
 
   async catch(err: any): Promise<void> {
     if (err.oclif && err.oclif.exit === 0) return;
 
-    if (err instanceof ValidationErrors) {
-      return prettyValidationErrors(err);
-    }
+    const { filtered_sentry_args, filtered_sentry_flags } = await this._getNonSensitiveSentryMetadata();
+    Sentry.configureScope(scope => {
+      scope?.setExtra('command_args', filtered_sentry_args);
+      scope?.setExtra('command_flags', filtered_sentry_flags);
+    });
 
-    err.stack = Error((this.constructor as any).name).stack;
+    if (err instanceof ValidationErrors) {
+      prettyValidationErrors(err);
+    }
 
     if (err.response?.data instanceof Object) {
       err.message += `\nmethod: ${err.config.method}`;
@@ -262,11 +272,9 @@ export default abstract class BaseCommand extends Command {
     console.error(chalk.red(err.message));
 
     if (err.stack) {
-      console.error(chalk.red(err.stack));
+      console.error(err.stack);
     }
 
-    return Sentry.withScope(scope => Sentry.captureException(err));
+    return this.finally(err);
   }
-
-
 }
