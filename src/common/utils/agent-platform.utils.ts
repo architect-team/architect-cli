@@ -134,7 +134,7 @@ export class AgentPlatformUtils {
     };
   }
 
-  public static async installAgent(flags: any, token: string, config: AppConfig) {
+  public static async installAgent(flags: any, token: string, host: string, config: AppConfig) {
     const yaml = `
 apiVersion: apps/v1
 kind: Deployment
@@ -160,7 +160,7 @@ spec:
           - name: ARCHITECT_TOKEN
             value: "${token}"
           - name: AGENT_SERVER
-            value: "https://host.docker.internal:50005"
+            value: "${host}"
 `;
     const yamlFile = path.join(config.getConfigDir(), 'agent.yml');
     fs.writeFileSync(yamlFile, yaml);

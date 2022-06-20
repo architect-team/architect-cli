@@ -115,7 +115,7 @@ export default class PlatformCreate extends Command {
 
     if (flags.type?.toLowerCase() == 'agent') {
       CliUx.ux.action.start(chalk.blue('Installing the agent'));
-      AgentPlatformUtils.installAgent(flags, created_platform.properties.agent_tokens[0], this.app.config);
+      AgentPlatformUtils.installAgent(flags, created_platform.properties.agent_tokens[0], this.app.config.agent_server_host, this.app.config);
       CliUx.ux.action.stop();
       await this.installAppliations(flags, created_platform, account.name, platform_name);
     } else {

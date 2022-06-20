@@ -12,6 +12,7 @@ export default class AppConfig {
   oauth_host: string;
   oauth_client_id: string;
   account: string;
+  agent_server_host: string;
 
   constructor(config_dir: string, partial?: Partial<AppConfig>) {
     this.config_dir = config_dir;
@@ -28,6 +29,7 @@ export default class AppConfig {
     this.oauth_host = 'https://auth.architect.io';
     this.oauth_client_id = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
     this.account = '';
+    this.agent_server_host = 'local';
 
     // Override defaults with input values
     Object.assign(this, partial);
@@ -60,6 +62,7 @@ export default class AppConfig {
       oauth_host: this.oauth_host,
       oauth_client_id: this.oauth_client_id,
       account: this.account,
+      agent_server_host: this.agent_server_host,
     };
   }
 }
