@@ -87,7 +87,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'examples/fusionauth/architect.yml', '-t', '1.0.0', '--platform', 'amd64', '--platform', 'arm64v8', '-a', 'examples'])
+    .command(['register', 'examples/fusionauth/architect.yml', '-t', '1.0.0', '--platform', 'amd64', '--platform', 'arm64v8', '--platform', 'windows-amd64', '-a', 'examples'])
     .it('register component with platform flag', ctx => {
       const getDigest = Docker.getDigest as sinon.SinonStub;
       expect(getDigest.notCalled).to.be.true;
