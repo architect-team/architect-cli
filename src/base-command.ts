@@ -10,6 +10,7 @@ import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
 import { docker } from './common/utils/docker';
+import PromptUtils from './common/utils/prompt-utils';
 import LocalPaths from './paths';
 
 const DEPRECATED_LABEL = '[deprecated]';
@@ -60,7 +61,7 @@ export default abstract class BaseCommand extends Command {
     return { filtered_sentry_args, filtered_sentry_flags };
   }
 
-  async setup_sentry_analytics(): Promise<void> {
+  async setupSentryAnalytics(): Promise<void> {
 
     Sentry.init({
       dsn: CLI_SENTRY_DSN,
@@ -69,10 +70,13 @@ export default abstract class BaseCommand extends Command {
       release: process.env?.npm_package_version,
       tracesSampleRate: 1.0,
       attachStacktrace: true,
+      maxBreadcrumbs: 50,
+      sendClientReports: true,
       integrations: [
         new Dedupe(),
         new RewriteFrames({
-          root: __dirname || process.cwd(),
+          root: LocalPaths.SENTRY_PATH,
+          prefix: `src/`,
         }),
         new ExtraErrorData(),
         new Transaction(),
@@ -82,6 +86,12 @@ export default abstract class BaseCommand extends Command {
           event.req.data.token = '*'.repeat(20);
         }
         return event;
+      },
+      beforeBreadcrumb(breadcrumb: any) {
+        if (breadcrumb.category === 'console') {
+          breadcrumb.message = PromptUtils.strip_ascii_color_codes_from_string(breadcrumb.message);
+        }
+        return breadcrumb;
       },
     });
 
@@ -169,11 +179,10 @@ export default abstract class BaseCommand extends Command {
         }
       }
     }
-
     try {
-      return await this.setup_sentry_analytics();
+      return await this.setupSentryAnalytics();
     } catch {
-      // avoid cyclical dependency if initializing stack locally using dev command.
+      // avoid cyclical dependency if running itself locally using dev.
     }
   }
 
@@ -191,15 +200,9 @@ export default abstract class BaseCommand extends Command {
       // nothing to do here
     }
     if (_) {
-      if (!(_ instanceof ValidationErrors)) {
-        _.stack = Error((this.constructor as any).name).stack;
-      }
-      return Sentry.withScope(scope => {
-        scope.setExtra('stack', _.stack);
-        Sentry.captureException(_);
-      });
+      return Sentry.withScope(scope => Sentry.captureException(_));
     }
-    return super.finally(_);
+    return await super.finally(void 0);
   }
 
   // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
@@ -272,9 +275,13 @@ export default abstract class BaseCommand extends Command {
     console.error(chalk.red(err.message));
 
     if (err.stack) {
-      console.error(err.stack);
+      console.error(chalk.red(
+        err.stack.replace(err.message, (this.constructor as any).name)
+      ));
     }
 
-    return this.finally(err);
+    err.stack = PromptUtils.strip_ascii_color_codes_from_string(err.stack);
+
+    return await this.finally(err);
   }
 }

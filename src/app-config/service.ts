@@ -17,6 +17,7 @@ export default class AppService {
   linkedComponents: Dictionary<string> = {};
   _api: AxiosInstance;
   version: string;
+  errorContext?: Error;
 
   static async create(config_dir: string, version: string): Promise<AppService> {
     const service = new AppService(config_dir, version);
@@ -144,11 +145,19 @@ export default class AppService {
             return this._api.request(error_config);
           }
 
+          if (this.errorContext?.stack) {
+            err.stack = this.errorContext.stack;
+          }
           // Note: it is okay to rethrow these errors as they are here because the catch block in the basecommand.ts should correctly interpret axios errors.
           throw err;
         }
       );
     }
+
+    this._api.interceptors.request.use((config) => {
+      this.errorContext = new Error("Thrown at:");
+      return config;
+    });
 
     return this._api;
   }
