@@ -38,7 +38,8 @@ export default class ComponentRegister extends Command {
     }),
     platform: Flags.string({
       description: 'Platform(s) you are running on',
-      default: 'amd64',
+      default: ['amd64'],
+      multiple: true,
     }),
     'cache-directory': Flags.string({
       description: 'Directory to write build cache to',
@@ -121,7 +122,6 @@ export default class ComponentRegister extends Command {
         try {
           platforms = DockerBuildXUtils.convertToBuildxPlatforms(flags['platform']);
         } catch (err: any) {
-          this.log('Failed to convert platform argument to docker buildx platforms. Please provide the correct platform(s).');
           this.error(err);
         }
 

@@ -21,13 +21,12 @@ export default class DockerBuildXUtils {
   public static getBuildxPlatform(platform: string): string {
     if (!PLATFORM_MAP.has(platform)) {
       const keys = Array.from(PLATFORM_MAP.keys()).join(', ');
-      throw new Error('Platform is not supported. Supported platforms: ' + keys);
+      throw new Error(`Platform '${platform}' is not supported. Supported platforms: ` + keys);
     }
     return PLATFORM_MAP.get(platform) as string;
   }
 
-  public static convertToBuildxPlatforms(platform_flag: string): string[] {
-    const platforms: string[] = platform_flag.split(',');
+  public static convertToBuildxPlatforms(platforms: string[]): string[] {
     const buildx_platforms : string[] = [];
     for (const platform_str of platforms) {
       buildx_platforms.push(this.getBuildxPlatform(platform_str));
