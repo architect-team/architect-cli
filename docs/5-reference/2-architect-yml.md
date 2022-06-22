@@ -48,7 +48,7 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
  | `scaling` | [ScalingSpec](#scalingspec) |  |  |
  | `description` | string | Human readable description |  |
  | `image` | string \| [Expression](/docs/reference/contexts) | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
- | `command` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
+ | `command` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker startup command. Use this if you need to override or parameterize the docker image command. |  |
  | `entrypoint` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
  | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/components/services/#local-configuration) |
@@ -98,7 +98,7 @@ A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, tr
  | `schedule` | string \| [Expression](/docs/reference/contexts) | A cron expression by which this task will be scheduled. Leave blank to deploy a task that never runs unless triggered from the CLI. |  |
  | `description` | string | Human readable description |  |
  | `image` | string \| [Expression](/docs/reference/contexts) | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
- | `command` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
+ | `command` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker startup command. Use this if you need to override or parameterize the docker image command. |  |
  | `entrypoint` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
  | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/components/services/#local-configuration) |
@@ -161,7 +161,7 @@ A container to run as a sidecar to the related component or service
  | `liveness_probe` | [LivenessProbeSpec](#livenessprobespec) |  |  |
  | `description` | string | Human readable description |  |
  | `image` | string \| [Expression](/docs/reference/contexts) | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
- | `command` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
+ | `command` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker startup command. Use this if you need to override or parameterize the docker image command. |  |
  | `entrypoint` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
  | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/components/services/#local-configuration) |
