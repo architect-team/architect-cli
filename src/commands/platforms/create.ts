@@ -1,5 +1,6 @@
 import { CliUx, Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
+import execa from 'execa';
 import inquirer from 'inquirer';
 import { Dictionary, Slugs } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
@@ -74,6 +75,15 @@ export default class PlatformCreate extends Command {
     CliUx.ux.action.stop();
   }
 
+  private getLocalServerAgentHost(): string {
+    if (this.app.config.agent_server_host.toLocaleLowerCase().trim() !== 'local') {
+      return this.app.config.agent_server_host;
+    }
+    const results = execa.sync('docker', ['port', 'cloud-cloud--agent-server-1', '9081/tcp'])
+    const port = results.stdout.split(':')[1];
+    return 'https://host.docker.internal:' + port;
+  }
+
   private async createPlatform() {
     const { args, flags } = await this.parse(PlatformCreate);
 
@@ -115,7 +125,7 @@ export default class PlatformCreate extends Command {
 
     if (flags.type?.toLowerCase() == 'agent') {
       CliUx.ux.action.start(chalk.blue('Installing the agent'));
-      AgentPlatformUtils.installAgent(flags, created_platform.properties.agent_tokens[0], this.app.config.agent_server_host, this.app.config);
+      AgentPlatformUtils.installAgent(flags, created_platform.token.access_token, this.getLocalServerAgentHost(), this.app.config);
       CliUx.ux.action.stop();
       await this.installAppliations(flags, created_platform, account.name, platform_name);
     } else {
