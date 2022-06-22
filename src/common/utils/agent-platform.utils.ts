@@ -134,7 +134,7 @@ export class AgentPlatformUtils {
     };
   }
 
-  public static async installAgent(flags: any, token: string, host: string, config: AppConfig) {
+  public static async installAgent(flags: any, token: string, host: string, config: AppConfig): Promise<void> {
     const yaml = `
 apiVersion: apps/v1
 kind: Deployment

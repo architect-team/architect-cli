@@ -79,8 +79,9 @@ export default class PlatformCreate extends Command {
     if (this.app.config.agent_server_host.toLocaleLowerCase().trim() !== 'local') {
       return this.app.config.agent_server_host;
     }
-    const results = execa.sync('docker', ['port', 'cloud-cloud--agent-server-1', '9081/tcp'])
-    const port = results.stdout.split(':')[1];
+    const container_name_results = execa.sync('docker', ['ps', '-f', 'name=agent-server', '--format', '{{.Names}}']);
+    const port_results = execa.sync('docker', ['port', container_name_results.stdout, '9081/tcp']);
+    const port = port_results.stdout.split(':')[1];
     return 'https://host.docker.internal:' + port;
   }
 
@@ -144,7 +145,7 @@ export default class PlatformCreate extends Command {
         message: 'What type of platform would you like to register?',
         choices: [
           'kubernetes',
-          'agent'
+          'agent',
         ],
       },
     ]);

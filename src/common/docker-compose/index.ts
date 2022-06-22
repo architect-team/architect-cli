@@ -133,7 +133,6 @@ export class DockerComposeUtils {
           } else {
             liveness_probe.command = ['CMD-SHELL', liveness_probe.command.join(' ')];
           }
-          console.log(liveness_probe.command)
           service.healthcheck = {
             test: liveness_probe.command,
             interval: liveness_probe.interval,
