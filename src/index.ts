@@ -1,3 +1,4 @@
+// Only include browser compatible exports
 export * from './common/docker-compose/converter';
 export * from './dependency-manager/config/common-config';
 export * from './dependency-manager/config/component-config';
