@@ -75,13 +75,26 @@ export default class PlatformCreate extends Command {
     CliUx.ux.action.stop();
   }
 
+  private getLocalServerAgentIP(): string {
+    const results = execa.sync('dig', ['host.docker.internal', '+short'])
+    return results.stdout;
+  }
+
+  private getLocalServerAgentPort(): string {
+    const container_name_results = execa.sync('docker', ['ps', '-f', 'name=agent-server', '--format', '{{.Names}}']);
+    const results = execa.sync('docker', ['port', container_name_results.stdout, '9081/tcp'])
+    return results.stdout.split(':')[1];
+  }
+
   private getLocalServerAgentHost(): string {
-    if (this.app.config.agent_server_host.toLocaleLowerCase().trim() !== 'local') {
+    const host = this.app.config.agent_server_host.toLocaleLowerCase().trim();
+    if (host[host.length - 1] === ':') {
+      return `${host}${this.getLocalServerAgentPort()}`
+    }
+    if (host !== 'local') {
       return this.app.config.agent_server_host;
     }
-    const results = execa.sync('docker', ['port', 'cloud-cloud--agent-server-1', '9081/tcp'])
-    const port = results.stdout.split(':')[1];
-    return 'https://host.docker.internal:' + port;
+    return `https://${this.getLocalServerAgentIP()}:${this.getLocalServerAgentPort()}`;
   }
 
   private async createPlatform() {
@@ -119,7 +132,6 @@ export default class PlatformCreate extends Command {
 
     CliUx.ux.action.start('Registering platform with Architect');
     const created_platform = await this.postPlatformToApi(platform_dto, account.id);
-    console.log(created_platform);
     CliUx.ux.action.stop();
     this.log(`Platform registered: ${this.app.config.app_host}/${account.name}/platforms/new?platform_id=${created_platform.id}`);
 
