@@ -8,7 +8,7 @@ import os from 'os';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ResourceSpec, ServiceNode, Slugs } from '../';
+import { ArchitectError, ComponentSlugUtils, Dictionary, resourceRefToNodeRef, ResourceSlugUtils, ResourceSpec, ServiceNode, Slugs } from '../';
 import AccountUtils from '../architect/account/account.utils';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
@@ -16,6 +16,7 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import * as Docker from '../common/utils/docker';
 import DockerBuildXUtils from '../common/utils/docker-buildx.utils';
+import { buildSpecFromPath, dumpToYml } from '../dependency-manager/spec/utils/component-builder';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
 tmp.setGracefulCleanup();

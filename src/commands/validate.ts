@@ -5,7 +5,7 @@ import tmp from 'tmp';
 import untildify from 'untildify';
 import Command from '../base-command';
 import MissingContextError from '../common/errors/missing-build-context';
-import { buildSpecFromPath } from '../';
+import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-builder';
 
 tmp.setGracefulCleanup();
 

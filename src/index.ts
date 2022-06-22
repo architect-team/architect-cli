@@ -27,7 +27,6 @@ export * from './dependency-manager/spec/transform/resource-transform';
 export * from './dependency-manager/spec/transform/service-transform';
 export * from './dependency-manager/spec/transform/sidecar-transform';
 export * from './dependency-manager/spec/transform/task-transform';
-export * from './dependency-manager/spec/utils/component-builder';
 export * from './dependency-manager/spec/utils/json-schema';
 export * from './dependency-manager/spec/utils/slugs';
 export * from './dependency-manager/spec/utils/spec-merge';

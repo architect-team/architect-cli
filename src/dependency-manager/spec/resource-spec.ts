@@ -68,7 +68,7 @@ export abstract class ResourceSpec {
   @IsOptional()
   @JSONSchema({
     ...ExpressionOr(StringOrStringArray()),
-    description: 'The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command.',
+    description: 'The docker startup command. Use this if you need to override or parameterize the docker image command.',
   })
   command?: string | string[];
 
