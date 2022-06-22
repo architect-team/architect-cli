@@ -1,7 +1,8 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
+import { resourceRefToNodeRef, ServiceNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { buildSpecFromPath, parseSourceYml, resourceRefToNodeRef, ServiceNode } from '../../src';
+import { buildSpecFromPath, parseSourceYml } from '../../src/dependency-manager/spec/utils/component-builder';
 
 describe('superset spec validation', function () {
 

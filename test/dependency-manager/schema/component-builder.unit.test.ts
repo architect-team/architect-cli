@@ -1,6 +1,7 @@
 import { expect } from '@oclif/test';
 import path from 'path';
-import { buildConfigFromYml, loadSourceYmlFromPathOrReject, parseSourceYml, Slugs } from '../../../src';
+import { Slugs } from '../../../src';
+import { buildConfigFromYml, loadSourceYmlFromPathOrReject, parseSourceYml } from '../../../src/dependency-manager/spec/utils/component-builder';
 
 describe('component builder unit test', function () {
 

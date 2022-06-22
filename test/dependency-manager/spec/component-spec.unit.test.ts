@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import { classToPlain, plainToClass } from 'class-transformer';
 import yaml from 'js-yaml';
-import { buildConfigFromYml, buildSpecFromYml, ComponentSpec, dumpToYml } from '../../../src';
+import { ComponentSpec } from '../../../src';
+import { buildConfigFromYml, buildSpecFromYml, dumpToYml } from '../../../src/dependency-manager/spec/utils/component-builder';
 import { overrideSpec } from '../../../src/dependency-manager/spec/utils/spec-merge';
 import { loadAllTestSpecCombinations } from './partials/spec-test-harness';
 

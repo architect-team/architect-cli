@@ -3,9 +3,10 @@ import { expect } from 'chai';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
-import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
+import { resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { SecretsConfig } from '../../src/dependency-manager/secrets/secrets';
+import { buildSpecFromPath, buildSpecFromYml } from '../../src/dependency-manager/spec/utils/component-builder';
 
 describe('validate spec', () => {
 

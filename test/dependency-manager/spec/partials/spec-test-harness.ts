@@ -1,7 +1,7 @@
 import deepmerge from 'deepmerge';
 import fs from 'fs-extra';
 import path from 'path';
-import { parseSourceYml } from '../../../../src';
+import { parseSourceYml } from '../../../../src/dependency-manager/spec/utils/component-builder';
 
 const lsDirectories = (dir: string) => {
   return fs.readdirSync(path.resolve(dir), { withFileTypes: true })

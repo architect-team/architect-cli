@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import mock_fs from 'mock-fs';
-import { buildSpecFromPath } from '../../src';
+import { buildSpecFromPath } from '../../src/dependency-manager/spec/utils/component-builder';
 
 describe('config spec v1', () => {
   it('simple configs', async () => {
