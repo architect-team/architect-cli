@@ -32,8 +32,14 @@ export default class SecretsDownload extends Command {
 
   async run(): Promise<void> {
     const { flags, args } = await this.parse(SecretsDownload);
-    const secrets_file = path.resolve(untildify(args.secrets_file));
+
     const account = await AccountUtils.getAccount(this.app, flags.account);
+    const { data: user } = await this.app.api.get('/users/me');
+    const membership = user.memberships?.find((membership: any) => membership.account.id === account.id);
+    const is_admin = !!membership && membership.role !== 'MEMBER';
+    if (!is_admin) {
+      this.error('You do not have permission to download secrets. Please contact your admin.');
+    }
 
     let secrets = [];
     let environment;
@@ -49,9 +55,11 @@ export default class SecretsDownload extends Command {
       secret_yaml[secret.scope] = secret_yaml[secret.scope] || {};
       secret_yaml[secret.scope][secret.key] = secret.value;
     }
+
+    const secrets_file = path.resolve(untildify(args.secrets_file));
     await fs.writeFile(secrets_file, yaml.dump(secret_yaml), (err) => {
       if (err) {
-        throw new Error('Failed to download secrets!');
+        this.error('Failed to download secrets!');
       }
     });
 

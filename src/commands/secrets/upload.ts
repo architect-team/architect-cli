@@ -43,14 +43,16 @@ export default class SecretsUpload extends Command {
 
   async run(): Promise<void> {
     const { flags, args } = await this.parse(SecretsUpload);
+    const account = await AccountUtils.getAccount(this.app, flags.account);
 
-    // loaded secrets
-    const secrets_file = path.resolve(untildify(args.secrets_file));
-    const secrets_file_data = fs.readFileSync(secrets_file);
-    const loaded_secret_yml = yaml.load(secrets_file_data.toString('utf-8')) as Dictionary<Dictionary<string>>;
+    const { data: user } = await this.app.api.get('/users/me');
+    const membership = user.memberships?.find((membership: any) => membership.account.id === account.id);
+    const is_admin = !!membership && membership.role !== 'MEMBER';
+    if (!is_admin) {
+      this.error('You do not have permission to upload secrets. Please contact your admin.');
+    }
 
     // existing secrets
-    const account = await AccountUtils.getAccount(this.app, flags.account);
     let existing_secrets = [];
     let environment;
     if (!flags.environment) {
@@ -59,6 +61,11 @@ export default class SecretsUpload extends Command {
       environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
       existing_secrets = (await this.app.api.get(`environments/${environment.id}/secrets/values`, { params: { inherited: true } })).data;
     }
+
+    // loaded secrets
+    const secrets_file = path.resolve(untildify(args.secrets_file));
+    const secrets_file_data = fs.readFileSync(secrets_file);
+    const loaded_secret_yml = yaml.load(secrets_file_data.toString('utf-8')) as Dictionary<Dictionary<string>>;
 
     const existing_secret_yml: Dictionary<Dictionary<string>> = {};
     for (const secret of existing_secrets) {
