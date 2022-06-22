@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
-import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, Slugs, ValidationError, ValidationErrors } from '../../src';
+import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { SecretsConfig } from '../../src/dependency-manager/secrets/secrets';
 
@@ -49,11 +49,39 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors[0].path).eq(`services.stateless-app.debug.debug`);
-      expect(errors[0].message).includes(`Did you mean deploy?`);
+      expect(errors[0].message).includes(`Invalid key: debug`);
       expect(errors[0].start?.row).eq(10);
       expect(errors[0].start?.column).eq(7);
       expect(errors[0].end?.row).eq(10);
       expect(errors[0].end?.column).eq(12);
+    });
+
+    it('invalid deploy key', async () => {
+      const component_config = `
+      name: test/component
+      services:
+        stateless-app:
+          deploy:
+            strategy: deploy-strategy
+            modules:
+              deploy-module:
+                path: ./deploy/module
+                inputs:
+                  deploy-input-string: some_deploy_input
+                  deploy-input-unset:
+      `
+      mock_fs({ '/architect.yml': component_config });
+      let err;
+      try {
+        buildSpecFromPath('/architect.yml')
+      } catch (e: any) {
+        err = e;
+      }
+      expect(err).instanceOf(ValidationErrors);
+      const errors = JSON.parse(err.message);
+      expect(errors).lengthOf(1);
+      expect(errors[0].path).eq(`services.stateless-app.deploy`);
+      expect(errors[0].message).includes(`Invalid key: deploy`);
     });
 
     it('invalid replicas value', async () => {
@@ -1322,7 +1350,7 @@ services:
         SPRING_PROFILE: test
       services:
         app:
-          command: catalina.sh run -Pprofile=\${{ secrets.SPRING_PROFILE }}
+          command: catalina.sh run -Pprofile=\${{ secrets.SPRING_PROFILE }} --test-string "two words" --test-env $API_KEY
       `
     mock_fs({
       '/component.yml': component_config,
@@ -1331,15 +1359,11 @@ services:
       'test/component': '/component.yml',
     });
 
-    let err;
-    try {
-      await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
-      ]);
-    } catch (e: any) {
-      err = e;
-    }
-    expect(err).to.be.undefined;
+    const graph = await manager.getGraph([
+      await manager.loadComponentSpec('test/component'),
+    ]);
+    const service_node = graph.nodes.find((node) => node instanceof ServiceNode) as ServiceNode;
+    expect(service_node.config.command).to.deep.equal(['catalina.sh', 'run', '-Pprofile=test', '--test-string', 'two words', '--test-env', '$API_KEY'])
   });
 
   it('liveness_probe rejects command with path', async () => {

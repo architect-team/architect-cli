@@ -35,7 +35,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (--version)
-@architect-io/cli/1.15.2 linux-x64 node-v16.15.0
+@architect-io/cli/1.16.0-rc.11 linux-x64 node-v16.15.1
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -47,17 +47,43 @@ USAGE
 
 <!-- commands -->
 * [`architect autocomplete [SHELL]`](#architect-autocomplete-shell)
+* [`architect c:register [COMPONENT]`](#architect-cregister-component)
+* [`architect c:validate [CONFIGS_OR_COMPONENTS]`](#architect-cvalidate-configs_or_components)
+* [`architect comp:register [COMPONENT]`](#architect-compregister-component)
+* [`architect comp:validate [CONFIGS_OR_COMPONENTS]`](#architect-compvalidate-configs_or_components)
+* [`architect component:register [COMPONENT]`](#architect-componentregister-component)
+* [`architect component:search [QUERY]`](#architect-componentsearch-query)
+* [`architect component:validate [CONFIGS_OR_COMPONENTS]`](#architect-componentvalidate-configs_or_components)
+* [`architect component:version [COMPONENT_NAME]`](#architect-componentversion-component_name)
+* [`architect component:versions [COMPONENT_NAME]`](#architect-componentversions-component_name)
 * [`architect components [QUERY]`](#architect-components-query)
+* [`architect components:register [COMPONENT]`](#architect-componentsregister-component)
+* [`architect components:search [QUERY]`](#architect-componentssearch-query)
+* [`architect components:validate [CONFIGS_OR_COMPONENTS]`](#architect-componentsvalidate-configs_or_components)
 * [`architect components:versions [COMPONENT_NAME]`](#architect-componentsversions-component_name)
+* [`architect config`](#architect-config)
 * [`architect config:get OPTION`](#architect-configget-option)
 * [`architect config:set OPTION VALUE`](#architect-configset-option-value)
 * [`architect config:view`](#architect-configview)
 * [`architect deploy [CONFIGS_OR_COMPONENTS]`](#architect-deploy-configs_or_components)
 * [`architect destroy`](#architect-destroy)
 * [`architect dev [CONFIGS_OR_COMPONENTS]`](#architect-dev-configs_or_components)
+* [`architect env [QUERY]`](#architect-env-query)
+* [`architect env:create [ENVIRONMENT]`](#architect-envcreate-environment)
+* [`architect env:deregister [ENVIRONMENT]`](#architect-envderegister-environment)
+* [`architect env:destroy [ENVIRONMENT]`](#architect-envdestroy-environment)
+* [`architect env:search [QUERY]`](#architect-envsearch-query)
+* [`architect environment:create [ENVIRONMENT]`](#architect-environmentcreate-environment)
+* [`architect environment:deregister [ENVIRONMENT]`](#architect-environmentderegister-environment)
+* [`architect environment:destroy [ENVIRONMENT]`](#architect-environmentdestroy-environment)
 * [`architect environments [QUERY]`](#architect-environments-query)
 * [`architect environments:create [ENVIRONMENT]`](#architect-environmentscreate-environment)
 * [`architect environments:destroy [ENVIRONMENT]`](#architect-environmentsdestroy-environment)
+* [`architect environments:search [QUERY]`](#architect-environmentssearch-query)
+* [`architect envs [QUERY]`](#architect-envs-query)
+* [`architect envs:create [ENVIRONMENT]`](#architect-envscreate-environment)
+* [`architect envs:destroy [ENVIRONMENT]`](#architect-envsdestroy-environment)
+* [`architect envs:search [QUERY]`](#architect-envssearch-query)
 * [`architect exec [RESOURCE] [FLAGS] -- [COMMAND]`](#architect-exec-resource-flags----command)
 * [`architect help [COMMAND]`](#architect-help-command)
 * [`architect init`](#architect-init)
@@ -65,11 +91,19 @@ USAGE
 * [`architect login`](#architect-login)
 * [`architect logout`](#architect-logout)
 * [`architect logs [RESOURCE]`](#architect-logs-resource)
+* [`architect platform [QUERY]`](#architect-platform-query)
+* [`architect platform:create [PLATFORM]`](#architect-platformcreate-platform)
+* [`architect platform:destroy [PLATFORM]`](#architect-platformdestroy-platform)
+* [`architect platform:search [QUERY]`](#architect-platformsearch-query)
 * [`architect platforms [QUERY]`](#architect-platforms-query)
 * [`architect platforms:create [PLATFORM]`](#architect-platformscreate-platform)
+* [`architect platforms:deregister [PLATFORM]`](#architect-platformsderegister-platform)
 * [`architect platforms:destroy [PLATFORM]`](#architect-platformsdestroy-platform)
+* [`architect platforms:register [PLATFORM]`](#architect-platformsregister-platform)
+* [`architect platforms:search [QUERY]`](#architect-platformssearch-query)
 * [`architect register [COMPONENT]`](#architect-register-component)
 * [`architect task COMPONENT TASK`](#architect-task-component-task)
+* [`architect task:exec COMPONENT TASK`](#architect-taskexec-component-task)
 * [`architect unlink [COMPONENTPATHORNAME]`](#architect-unlink-componentpathorname)
 * [`architect validate [CONFIGS_OR_COMPONENTS]`](#architect-validate-configs_or_components)
 * [`architect whoami`](#architect-whoami)
@@ -103,6 +137,218 @@ EXAMPLES
 
 _See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v1.2.0/src/commands/autocomplete/index.ts)_
 
+## `architect c:register [COMPONENT]`
+
+Register a new Component with Architect Cloud
+
+```
+USAGE
+  $ architect c:register [COMPONENT] [-a <value>] [--arg <value>] [-t <value>] [--cache-directory <value>]
+
+ARGUMENTS
+  COMPONENT  [default: ./] Path to a component to register
+
+FLAGS
+  -a, --account=<value>      Architect account
+  -t, --tag=<value>          [default: latest] Tag to give to the new component
+  --arg=<value>...           Build arg(s) to pass to docker build
+  --cache-directory=<value>  [default: /tmp/architect-build-cache] Directory to write build cache to
+
+DESCRIPTION
+  Register a new Component with Architect Cloud
+
+ALIASES
+  $ architect component:register
+  $ architect components:register
+  $ architect c:register
+  $ architect comp:register
+```
+
+## `architect c:validate [CONFIGS_OR_COMPONENTS]`
+
+Validate that an architect.yml is syntactically correct.
+
+```
+USAGE
+  $ architect c:validate [CONFIGS_OR_COMPONENTS]
+
+ARGUMENTS
+  CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `account/component:latest`. Multiple components are
+                         accepted.
+
+DESCRIPTION
+  Validate that an architect.yml is syntactically correct.
+
+ALIASES
+  $ architect component:validate
+  $ architect components:validate
+  $ architect c:validate
+  $ architect comp:validate
+  $ architect validate
+```
+
+## `architect comp:register [COMPONENT]`
+
+Register a new Component with Architect Cloud
+
+```
+USAGE
+  $ architect comp:register [COMPONENT] [-a <value>] [--arg <value>] [-t <value>] [--cache-directory <value>]
+
+ARGUMENTS
+  COMPONENT  [default: ./] Path to a component to register
+
+FLAGS
+  -a, --account=<value>      Architect account
+  -t, --tag=<value>          [default: latest] Tag to give to the new component
+  --arg=<value>...           Build arg(s) to pass to docker build
+  --cache-directory=<value>  [default: /tmp/architect-build-cache] Directory to write build cache to
+
+DESCRIPTION
+  Register a new Component with Architect Cloud
+
+ALIASES
+  $ architect component:register
+  $ architect components:register
+  $ architect c:register
+  $ architect comp:register
+```
+
+## `architect comp:validate [CONFIGS_OR_COMPONENTS]`
+
+Validate that an architect.yml is syntactically correct.
+
+```
+USAGE
+  $ architect comp:validate [CONFIGS_OR_COMPONENTS]
+
+ARGUMENTS
+  CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `account/component:latest`. Multiple components are
+                         accepted.
+
+DESCRIPTION
+  Validate that an architect.yml is syntactically correct.
+
+ALIASES
+  $ architect component:validate
+  $ architect components:validate
+  $ architect c:validate
+  $ architect comp:validate
+  $ architect validate
+```
+
+## `architect component:register [COMPONENT]`
+
+Register a new Component with Architect Cloud
+
+```
+USAGE
+  $ architect component:register [COMPONENT] [-a <value>] [--arg <value>] [-t <value>] [--cache-directory <value>]
+
+ARGUMENTS
+  COMPONENT  [default: ./] Path to a component to register
+
+FLAGS
+  -a, --account=<value>      Architect account
+  -t, --tag=<value>          [default: latest] Tag to give to the new component
+  --arg=<value>...           Build arg(s) to pass to docker build
+  --cache-directory=<value>  [default: /tmp/architect-build-cache] Directory to write build cache to
+
+DESCRIPTION
+  Register a new Component with Architect Cloud
+
+ALIASES
+  $ architect component:register
+  $ architect components:register
+  $ architect c:register
+  $ architect comp:register
+```
+
+## `architect component:search [QUERY]`
+
+Search components you have access to
+
+```
+USAGE
+  $ architect component:search [QUERY] [-a <value>]
+
+ARGUMENTS
+  QUERY  Search term used to filter the results
+
+FLAGS
+  -a, --account=<value>  Architect account
+
+DESCRIPTION
+  Search components you have access to
+
+ALIASES
+  $ architect components
+  $ architect components:search
+  $ architect component:search
+  $ architect component:search
+```
+
+## `architect component:validate [CONFIGS_OR_COMPONENTS]`
+
+Validate that an architect.yml is syntactically correct.
+
+```
+USAGE
+  $ architect component:validate [CONFIGS_OR_COMPONENTS]
+
+ARGUMENTS
+  CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `account/component:latest`. Multiple components are
+                         accepted.
+
+DESCRIPTION
+  Validate that an architect.yml is syntactically correct.
+
+ALIASES
+  $ architect component:validate
+  $ architect components:validate
+  $ architect c:validate
+  $ architect comp:validate
+  $ architect validate
+```
+
+## `architect component:version [COMPONENT_NAME]`
+
+Search component versions of a particular component
+
+```
+USAGE
+  $ architect component:version [COMPONENT_NAME] [-a <value>]
+
+FLAGS
+  -a, --account=<value>  Architect account
+
+DESCRIPTION
+  Search component versions of a particular component
+
+ALIASES
+  $ architect component:versions
+  $ architect component:version
+```
+
+## `architect component:versions [COMPONENT_NAME]`
+
+Search component versions of a particular component
+
+```
+USAGE
+  $ architect component:versions [COMPONENT_NAME] [-a <value>]
+
+FLAGS
+  -a, --account=<value>  Architect account
+
+DESCRIPTION
+  Search component versions of a particular component
+
+ALIASES
+  $ architect component:versions
+  $ architect component:version
+```
+
 ## `architect components [QUERY]`
 
 Search components you have access to
@@ -127,7 +373,81 @@ ALIASES
   $ architect component:search
 ```
 
-_See code: [src/commands/components/index.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/components/index.ts)_
+_See code: [src/commands/components/index.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/components/index.ts)_
+
+## `architect components:register [COMPONENT]`
+
+Register a new Component with Architect Cloud
+
+```
+USAGE
+  $ architect components:register [COMPONENT] [-a <value>] [--arg <value>] [-t <value>] [--cache-directory <value>]
+
+ARGUMENTS
+  COMPONENT  [default: ./] Path to a component to register
+
+FLAGS
+  -a, --account=<value>      Architect account
+  -t, --tag=<value>          [default: latest] Tag to give to the new component
+  --arg=<value>...           Build arg(s) to pass to docker build
+  --cache-directory=<value>  [default: /tmp/architect-build-cache] Directory to write build cache to
+
+DESCRIPTION
+  Register a new Component with Architect Cloud
+
+ALIASES
+  $ architect component:register
+  $ architect components:register
+  $ architect c:register
+  $ architect comp:register
+```
+
+## `architect components:search [QUERY]`
+
+Search components you have access to
+
+```
+USAGE
+  $ architect components:search [QUERY] [-a <value>]
+
+ARGUMENTS
+  QUERY  Search term used to filter the results
+
+FLAGS
+  -a, --account=<value>  Architect account
+
+DESCRIPTION
+  Search components you have access to
+
+ALIASES
+  $ architect components
+  $ architect components:search
+  $ architect component:search
+  $ architect component:search
+```
+
+## `architect components:validate [CONFIGS_OR_COMPONENTS]`
+
+Validate that an architect.yml is syntactically correct.
+
+```
+USAGE
+  $ architect components:validate [CONFIGS_OR_COMPONENTS]
+
+ARGUMENTS
+  CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `account/component:latest`. Multiple components are
+                         accepted.
+
+DESCRIPTION
+  Validate that an architect.yml is syntactically correct.
+
+ALIASES
+  $ architect component:validate
+  $ architect components:validate
+  $ architect c:validate
+  $ architect comp:validate
+  $ architect validate
+```
 
 ## `architect components:versions [COMPONENT_NAME]`
 
@@ -148,7 +468,22 @@ ALIASES
   $ architect component:version
 ```
 
-_See code: [src/commands/components/versions.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/components/versions.ts)_
+_See code: [src/commands/components/versions.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/components/versions.ts)_
+
+## `architect config`
+
+View all the CLI configuration settings
+
+```
+USAGE
+  $ architect config
+
+DESCRIPTION
+  View all the CLI configuration settings
+
+ALIASES
+  $ architect config
+```
 
 ## `architect config:get OPTION`
 
@@ -165,7 +500,7 @@ DESCRIPTION
   Get the value of a CLI config option
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/config/get.ts)_
 
 ## `architect config:set OPTION VALUE`
 
@@ -183,7 +518,7 @@ DESCRIPTION
   Set a new value for a CLI configuration option
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/config/set.ts)_
 
 ## `architect config:view`
 
@@ -200,7 +535,7 @@ ALIASES
   $ architect config
 ```
 
-_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/config/view.ts)_
+_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/config/view.ts)_
 
 ## `architect deploy [CONFIGS_OR_COMPONENTS]`
 
@@ -234,7 +569,7 @@ DESCRIPTION
   Create a deploy job on Architect Cloud
 ```
 
-_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/deploy.ts)_
+_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/deploy.ts)_
 
 ## `architect destroy`
 
@@ -255,7 +590,7 @@ DESCRIPTION
   Destroy components from an environment
 ```
 
-_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/destroy.ts)_
+_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/destroy.ts)_
 
 ## `architect dev [CONFIGS_OR_COMPONENTS]`
 
@@ -286,7 +621,219 @@ DESCRIPTION
   Run your stack locally
 ```
 
-_See code: [src/commands/dev.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/dev.ts)_
+_See code: [src/commands/dev.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/dev.ts)_
+
+## `architect env [QUERY]`
+
+Search environments you have access to
+
+```
+USAGE
+  $ architect env [QUERY] [-a <value>]
+
+ARGUMENTS
+  QUERY  Search term used to filter the results
+
+FLAGS
+  -a, --account=<value>  Architect account
+
+DESCRIPTION
+  Search environments you have access to
+
+ALIASES
+  $ architect environments
+  $ architect envs
+  $ architect env
+  $ architect environments:search
+  $ architect envs:search
+  $ architect env:search
+```
+
+## `architect env:create [ENVIRONMENT]`
+
+Register a new environment with Architect Cloud
+
+```
+USAGE
+  $ architect env:create [ENVIRONMENT] [-a <value>] [--platform <value>] [--description <value>] [--ttl <value>]
+
+ARGUMENTS
+  ENVIRONMENT  Name to give the environment
+
+FLAGS
+  -a, --account=<value>  Architect account
+  --description=<value>  Environment Description
+  --platform=<value>     Architect platform
+  --ttl=<value>          The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m
+
+DESCRIPTION
+  Register a new environment with Architect Cloud
+
+ALIASES
+  $ architect environment:create
+  $ architect envs:create
+  $ architect env:create
+```
+
+## `architect env:deregister [ENVIRONMENT]`
+
+Deregister an environment
+
+```
+USAGE
+  $ architect env:deregister [ENVIRONMENT] [-a <value>] [--auto-approve] [-f]
+
+ARGUMENTS
+  ENVIRONMENT  Name of the environment to deregister
+
+FLAGS
+  -a, --account=<value>  Architect account
+  -f, --force            Force the deletion even if the environment is not empty
+  --auto-approve         Automatically apply the changes
+
+DESCRIPTION
+  Deregister an environment
+
+ALIASES
+  $ architect environment:destroy
+  $ architect envs:destroy
+  $ architect env:destroy
+  $ architect env:deregister
+  $ architect environment:deregister
+```
+
+## `architect env:destroy [ENVIRONMENT]`
+
+Deregister an environment
+
+```
+USAGE
+  $ architect env:destroy [ENVIRONMENT] [-a <value>] [--auto-approve] [-f]
+
+ARGUMENTS
+  ENVIRONMENT  Name of the environment to deregister
+
+FLAGS
+  -a, --account=<value>  Architect account
+  -f, --force            Force the deletion even if the environment is not empty
+  --auto-approve         Automatically apply the changes
+
+DESCRIPTION
+  Deregister an environment
+
+ALIASES
+  $ architect environment:destroy
+  $ architect envs:destroy
+  $ architect env:destroy
+  $ architect env:deregister
+  $ architect environment:deregister
+```
+
+## `architect env:search [QUERY]`
+
+Search environments you have access to
+
+```
+USAGE
+  $ architect env:search [QUERY] [-a <value>]
+
+ARGUMENTS
+  QUERY  Search term used to filter the results
+
+FLAGS
+  -a, --account=<value>  Architect account
+
+DESCRIPTION
+  Search environments you have access to
+
+ALIASES
+  $ architect environments
+  $ architect envs
+  $ architect env
+  $ architect environments:search
+  $ architect envs:search
+  $ architect env:search
+```
+
+## `architect environment:create [ENVIRONMENT]`
+
+Register a new environment with Architect Cloud
+
+```
+USAGE
+  $ architect environment:create [ENVIRONMENT] [-a <value>] [--platform <value>] [--description <value>] [--ttl <value>]
+
+ARGUMENTS
+  ENVIRONMENT  Name to give the environment
+
+FLAGS
+  -a, --account=<value>  Architect account
+  --description=<value>  Environment Description
+  --platform=<value>     Architect platform
+  --ttl=<value>          The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m
+
+DESCRIPTION
+  Register a new environment with Architect Cloud
+
+ALIASES
+  $ architect environment:create
+  $ architect envs:create
+  $ architect env:create
+```
+
+## `architect environment:deregister [ENVIRONMENT]`
+
+Deregister an environment
+
+```
+USAGE
+  $ architect environment:deregister [ENVIRONMENT] [-a <value>] [--auto-approve] [-f]
+
+ARGUMENTS
+  ENVIRONMENT  Name of the environment to deregister
+
+FLAGS
+  -a, --account=<value>  Architect account
+  -f, --force            Force the deletion even if the environment is not empty
+  --auto-approve         Automatically apply the changes
+
+DESCRIPTION
+  Deregister an environment
+
+ALIASES
+  $ architect environment:destroy
+  $ architect envs:destroy
+  $ architect env:destroy
+  $ architect env:deregister
+  $ architect environment:deregister
+```
+
+## `architect environment:destroy [ENVIRONMENT]`
+
+Deregister an environment
+
+```
+USAGE
+  $ architect environment:destroy [ENVIRONMENT] [-a <value>] [--auto-approve] [-f]
+
+ARGUMENTS
+  ENVIRONMENT  Name of the environment to deregister
+
+FLAGS
+  -a, --account=<value>  Architect account
+  -f, --force            Force the deletion even if the environment is not empty
+  --auto-approve         Automatically apply the changes
+
+DESCRIPTION
+  Deregister an environment
+
+ALIASES
+  $ architect environment:destroy
+  $ architect envs:destroy
+  $ architect env:destroy
+  $ architect env:deregister
+  $ architect environment:deregister
+```
 
 ## `architect environments [QUERY]`
 
@@ -314,7 +861,7 @@ ALIASES
   $ architect env:search
 ```
 
-_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/environments/index.ts)_
+_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/environments/index.ts)_
 
 ## `architect environments:create [ENVIRONMENT]`
 
@@ -343,7 +890,7 @@ ALIASES
   $ architect env:create
 ```
 
-_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/environments/create.ts)_
+_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/environments/create.ts)_
 
 ## `architect environments:destroy [ENVIRONMENT]`
 
@@ -372,7 +919,138 @@ ALIASES
   $ architect environment:deregister
 ```
 
-_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/environments/destroy.ts)_
+_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/environments/destroy.ts)_
+
+## `architect environments:search [QUERY]`
+
+Search environments you have access to
+
+```
+USAGE
+  $ architect environments:search [QUERY] [-a <value>]
+
+ARGUMENTS
+  QUERY  Search term used to filter the results
+
+FLAGS
+  -a, --account=<value>  Architect account
+
+DESCRIPTION
+  Search environments you have access to
+
+ALIASES
+  $ architect environments
+  $ architect envs
+  $ architect env
+  $ architect environments:search
+  $ architect envs:search
+  $ architect env:search
+```
+
+## `architect envs [QUERY]`
+
+Search environments you have access to
+
+```
+USAGE
+  $ architect envs [QUERY] [-a <value>]
+
+ARGUMENTS
+  QUERY  Search term used to filter the results
+
+FLAGS
+  -a, --account=<value>  Architect account
+
+DESCRIPTION
+  Search environments you have access to
+
+ALIASES
+  $ architect environments
+  $ architect envs
+  $ architect env
+  $ architect environments:search
+  $ architect envs:search
+  $ architect env:search
+```
+
+## `architect envs:create [ENVIRONMENT]`
+
+Register a new environment with Architect Cloud
+
+```
+USAGE
+  $ architect envs:create [ENVIRONMENT] [-a <value>] [--platform <value>] [--description <value>] [--ttl <value>]
+
+ARGUMENTS
+  ENVIRONMENT  Name to give the environment
+
+FLAGS
+  -a, --account=<value>  Architect account
+  --description=<value>  Environment Description
+  --platform=<value>     Architect platform
+  --ttl=<value>          The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m
+
+DESCRIPTION
+  Register a new environment with Architect Cloud
+
+ALIASES
+  $ architect environment:create
+  $ architect envs:create
+  $ architect env:create
+```
+
+## `architect envs:destroy [ENVIRONMENT]`
+
+Deregister an environment
+
+```
+USAGE
+  $ architect envs:destroy [ENVIRONMENT] [-a <value>] [--auto-approve] [-f]
+
+ARGUMENTS
+  ENVIRONMENT  Name of the environment to deregister
+
+FLAGS
+  -a, --account=<value>  Architect account
+  -f, --force            Force the deletion even if the environment is not empty
+  --auto-approve         Automatically apply the changes
+
+DESCRIPTION
+  Deregister an environment
+
+ALIASES
+  $ architect environment:destroy
+  $ architect envs:destroy
+  $ architect env:destroy
+  $ architect env:deregister
+  $ architect environment:deregister
+```
+
+## `architect envs:search [QUERY]`
+
+Search environments you have access to
+
+```
+USAGE
+  $ architect envs:search [QUERY] [-a <value>]
+
+ARGUMENTS
+  QUERY  Search term used to filter the results
+
+FLAGS
+  -a, --account=<value>  Architect account
+
+DESCRIPTION
+  Search environments you have access to
+
+ALIASES
+  $ architect environments
+  $ architect envs
+  $ architect env
+  $ architect environments:search
+  $ architect envs:search
+  $ architect env:search
+```
 
 ## `architect exec [RESOURCE] [FLAGS] -- [COMMAND]`
 
@@ -396,7 +1074,7 @@ DESCRIPTION
   Exec into service instances
 ```
 
-_See code: [src/commands/exec.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/exec.ts)_
+_See code: [src/commands/exec.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/exec.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -435,7 +1113,7 @@ DESCRIPTION
   Initialize an architect component from an existing docker-compose file
 ```
 
-_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/init.ts)_
 
 ## `architect link [COMPONENTPATH]`
 
@@ -449,7 +1127,7 @@ DESCRIPTION
   Link a local component to the host to be used to power local deployments.
 ```
 
-_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/link.ts)_
+_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/link.ts)_
 
 ## `architect login`
 
@@ -467,7 +1145,7 @@ DESCRIPTION
   Login to the Architect Cloud platform
 ```
 
-_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/login.ts)_
 
 ## `architect logout`
 
@@ -481,7 +1159,7 @@ DESCRIPTION
   Logout from the Architect registry
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/logout.ts)_
 
 ## `architect logs [RESOURCE]`
 
@@ -510,7 +1188,109 @@ DESCRIPTION
   Get logs from services both locally and remote
 ```
 
-_See code: [src/commands/logs.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/logs.ts)_
+_See code: [src/commands/logs.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/logs.ts)_
+
+## `architect platform [QUERY]`
+
+Search for platforms on Architect Cloud
+
+```
+USAGE
+  $ architect platform [QUERY] [-a <value>]
+
+ARGUMENTS
+  QUERY  Search query used to filter results
+
+FLAGS
+  -a, --account=<value>  Architect account
+
+DESCRIPTION
+  Search for platforms on Architect Cloud
+
+ALIASES
+  $ architect platform
+  $ architect platform:search
+  $ architect platforms
+  $ architect platforms:search
+```
+
+## `architect platform:create [PLATFORM]`
+
+Register a new platform with Architect Cloud
+
+```
+USAGE
+  $ architect platform:create [PLATFORM] [-a <value>] [--auto-approve] [-t KUBERNETES|kubernetes] [-k <value> | -h
+    <value>] [--flag <value>]
+
+ARGUMENTS
+  PLATFORM  Name to give the platform
+
+FLAGS
+  -a, --account=<value>     Architect account
+  -h, --host=<value>
+  -k, --kubeconfig=<value>  [default: ~/.kube/config]
+  -t, --type=<option>       <options: KUBERNETES|kubernetes>
+  --auto-approve
+  --flag=<value>...         [default: ]
+
+DESCRIPTION
+  Register a new platform with Architect Cloud
+
+ALIASES
+  $ architect platforms:register
+  $ architect platform:create
+  $ architect platforms:create
+```
+
+## `architect platform:destroy [PLATFORM]`
+
+Deregister a platform from Architect
+
+```
+USAGE
+  $ architect platform:destroy [PLATFORM] [-a <value>] [--auto-approve] [-f]
+
+ARGUMENTS
+  PLATFORM  Name of the platform to deregister
+
+FLAGS
+  -a, --account=<value>  Architect account
+  -f, --force            Force the deletion even if the platform is not empty
+  --auto-approve         Automatically apply the changes
+
+DESCRIPTION
+  Deregister a platform from Architect
+
+ALIASES
+  $ architect platforms:deregister
+  $ architect platform:destroy
+  $ architect platforms:destroy
+```
+
+## `architect platform:search [QUERY]`
+
+Search for platforms on Architect Cloud
+
+```
+USAGE
+  $ architect platform:search [QUERY] [-a <value>]
+
+ARGUMENTS
+  QUERY  Search query used to filter results
+
+FLAGS
+  -a, --account=<value>  Architect account
+
+DESCRIPTION
+  Search for platforms on Architect Cloud
+
+ALIASES
+  $ architect platform
+  $ architect platform:search
+  $ architect platforms
+  $ architect platforms:search
+```
 
 ## `architect platforms [QUERY]`
 
@@ -536,7 +1316,7 @@ ALIASES
   $ architect platforms:search
 ```
 
-_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/platforms/index.ts)_
+_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/platforms/index.ts)_
 
 ## `architect platforms:create [PLATFORM]`
 
@@ -567,7 +1347,32 @@ ALIASES
   $ architect platforms:create
 ```
 
-_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/platforms/create.ts)_
+_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/platforms/create.ts)_
+
+## `architect platforms:deregister [PLATFORM]`
+
+Deregister a platform from Architect
+
+```
+USAGE
+  $ architect platforms:deregister [PLATFORM] [-a <value>] [--auto-approve] [-f]
+
+ARGUMENTS
+  PLATFORM  Name of the platform to deregister
+
+FLAGS
+  -a, --account=<value>  Architect account
+  -f, --force            Force the deletion even if the platform is not empty
+  --auto-approve         Automatically apply the changes
+
+DESCRIPTION
+  Deregister a platform from Architect
+
+ALIASES
+  $ architect platforms:deregister
+  $ architect platform:destroy
+  $ architect platforms:destroy
+```
 
 ## `architect platforms:destroy [PLATFORM]`
 
@@ -594,7 +1399,60 @@ ALIASES
   $ architect platforms:destroy
 ```
 
-_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/platforms/destroy.ts)_
+_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/platforms/destroy.ts)_
+
+## `architect platforms:register [PLATFORM]`
+
+Register a new platform with Architect Cloud
+
+```
+USAGE
+  $ architect platforms:register [PLATFORM] [-a <value>] [--auto-approve] [-t KUBERNETES|kubernetes] [-k <value> | -h
+    <value>] [--flag <value>]
+
+ARGUMENTS
+  PLATFORM  Name to give the platform
+
+FLAGS
+  -a, --account=<value>     Architect account
+  -h, --host=<value>
+  -k, --kubeconfig=<value>  [default: ~/.kube/config]
+  -t, --type=<option>       <options: KUBERNETES|kubernetes>
+  --auto-approve
+  --flag=<value>...         [default: ]
+
+DESCRIPTION
+  Register a new platform with Architect Cloud
+
+ALIASES
+  $ architect platforms:register
+  $ architect platform:create
+  $ architect platforms:create
+```
+
+## `architect platforms:search [QUERY]`
+
+Search for platforms on Architect Cloud
+
+```
+USAGE
+  $ architect platforms:search [QUERY] [-a <value>]
+
+ARGUMENTS
+  QUERY  Search query used to filter results
+
+FLAGS
+  -a, --account=<value>  Architect account
+
+DESCRIPTION
+  Search for platforms on Architect Cloud
+
+ALIASES
+  $ architect platform
+  $ architect platform:search
+  $ architect platforms
+  $ architect platforms:search
+```
 
 ## `architect register [COMPONENT]`
 
@@ -602,15 +1460,16 @@ Register a new Component with Architect Cloud
 
 ```
 USAGE
-  $ architect register [COMPONENT] [-a <value>] [--arg <value>] [-t <value>]
+  $ architect register [COMPONENT] [-a <value>] [--arg <value>] [-t <value>] [--cache-directory <value>]
 
 ARGUMENTS
   COMPONENT  [default: ./] Path to a component to register
 
 FLAGS
-  -a, --account=<value>  Architect account
-  -t, --tag=<value>      [default: latest] Tag to give to the new component
-  --arg=<value>...       Build arg(s) to pass to docker build
+  -a, --account=<value>      Architect account
+  -t, --tag=<value>          [default: latest] Tag to give to the new component
+  --arg=<value>...           Build arg(s) to pass to docker build
+  --cache-directory=<value>  [default: /tmp/architect-build-cache] Directory to write build cache to
 
 DESCRIPTION
   Register a new Component with Architect Cloud
@@ -622,7 +1481,7 @@ ALIASES
   $ architect comp:register
 ```
 
-_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/register.ts)_
+_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/register.ts)_
 
 ## `architect task COMPONENT TASK`
 
@@ -649,7 +1508,32 @@ ALIASES
   $ architect task:exec
 ```
 
-_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/task.ts)_
+_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/task.ts)_
+
+## `architect task:exec COMPONENT TASK`
+
+Execute a task in the given environment
+
+```
+USAGE
+  $ architect task:exec [COMPONENT] [TASK] [-l | -a <value> |  |  | ] [-o <value> |  | -e <value> |  |  | ]
+
+ARGUMENTS
+  COMPONENT  The name of the component that contains the task to execute
+  TASK       The name of the task to execute
+
+FLAGS
+  -a, --account=<value>       Architect account
+  -e, --environment=<value>   Architect environment
+  -l, --local                 Deploy the stack locally instead of via Architect Cloud
+  -o, --compose-file=<value>  Path where the compose file should be written to
+
+DESCRIPTION
+  Execute a task in the given environment
+
+ALIASES
+  $ architect task:exec
+```
 
 ## `architect unlink [COMPONENTPATHORNAME]`
 
@@ -666,7 +1550,7 @@ DESCRIPTION
   Unlink a component from the host by path or name
 ```
 
-_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/unlink.ts)_
+_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/unlink.ts)_
 
 ## `architect validate [CONFIGS_OR_COMPONENTS]`
 
@@ -691,7 +1575,7 @@ ALIASES
   $ architect validate
 ```
 
-_See code: [src/commands/validate.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/validate.ts)_
+_See code: [src/commands/validate.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/validate.ts)_
 
 ## `architect whoami`
 
@@ -708,5 +1592,5 @@ ALIASES
   $ architect whoami
 ```
 
-_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v1.15.2/src/commands/whoami.ts)_
+_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v1.16.0-rc.11/src/commands/whoami.ts)_
 <!-- commandsstop -->

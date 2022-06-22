@@ -89,8 +89,9 @@ export class LivenessProbeSpec {
 
   @IsOptional()
   @JSONSchema({
+    deprecated: true,
     ...ExpressionOr({ type: 'string', pattern: '^\\/.*$' }),
-    description: 'Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set).',
+    description: '[Deprecated: use `command` instead.] Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set).',
   })
   path?: string;
 
@@ -103,8 +104,9 @@ export class LivenessProbeSpec {
 
   @IsOptional()
   @JSONSchema({
+    deprecated: true,
     ...ExpressionOr({ type: 'number' }),
-    description: 'Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set).',
+    description: '[Deprecated: use `command` instead.] Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set).',
   })
   port?: number | string;
 }

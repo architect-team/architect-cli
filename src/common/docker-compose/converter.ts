@@ -57,6 +57,7 @@ export class ComposeConverter {
           warnings.push(`Could not convert ${service_name} property ${property_name}`);
         }
       }
+      architect_service.reserved_name = service_name;
       architect_component.services[service_name] = architect_service;
     }
 

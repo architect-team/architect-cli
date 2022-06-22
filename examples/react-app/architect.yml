@@ -67,8 +67,7 @@ services:
         host: ${{ secrets.api_host }}
         port: 8080
     liveness_probe:
-      path: /names
-      port: ${{ services.api.interfaces.main.port }}
+      command: curl --fail localhost:${{ services.api.interfaces.main.port }}/names || exit 1
       interval: 10s
       failure_threshold: 3
     environment:
@@ -92,8 +91,7 @@ services:
     interfaces:
       main: &app-port 8080
     liveness_probe:
-      port: *app-port
-      path: /api/names
+      command: curl --fail localhost:8080/api/names || exit 1
       interval: 10s
       failure_threshold: 3
     replicas: ${{ secrets.app_replicas }}

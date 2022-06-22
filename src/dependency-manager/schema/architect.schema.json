@@ -695,6 +695,7 @@
           "default": "0s"
         },
         "path": {
+          "deprecated": true,
           "anyOf": [
             {
               "type": "string",
@@ -708,7 +709,7 @@
               }
             }
           ],
-          "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
+          "description": "[Deprecated: use `command` instead.] Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
         },
         "command": {
           "anyOf": [
@@ -725,6 +726,7 @@
           "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
         },
         "port": {
+          "deprecated": true,
           "anyOf": [
             {
               "type": "number"
@@ -737,7 +739,7 @@
               }
             }
           ],
-          "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
+          "description": "[Deprecated: use `command` instead.] Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
         }
       },
       "type": "object",
@@ -869,6 +871,7 @@
                   "default": "0s"
                 },
                 "path": {
+                  "deprecated": true,
                   "anyOf": [
                     {
                       "type": "string",
@@ -882,7 +885,7 @@
                       }
                     }
                   ],
-                  "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
+                  "description": "[Deprecated: use `command` instead.] Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
                 },
                 "command": {
                   "anyOf": [
@@ -899,6 +902,7 @@
                   "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
                 },
                 "port": {
+                  "deprecated": true,
                   "anyOf": [
                     {
                       "type": "number"
@@ -911,7 +915,7 @@
                       }
                     }
                   ],
-                  "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
+                  "description": "[Deprecated: use `command` instead.] Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
                 }
               },
               "type": "object",
@@ -1133,304 +1137,6 @@
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
-    "DeployModuleSpec": {
-      "properties": {
-        "path": {
-          "type": "string",
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-              }
-            }
-          ],
-          "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
-        },
-        "inputs": {
-          "type": "object",
-          "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "^\\${{\\s*if(.*?)\\s*}}$": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                  "additionalProperties": false
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-          },
-          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-          "additionalProperties": false
-        }
-      },
-      "type": "object",
-      "required": [
-        "path",
-        "inputs"
-      ],
-      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "path": {
-                  "type": "string",
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
-                },
-                "inputs": {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "^\\${{\\s*if(.*?)\\s*}}$": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          },
-                          "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                          },
-                          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                          "additionalProperties": false
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                  "additionalProperties": false
-                }
-              },
-              "type": "object",
-              "required": [
-                "path",
-                "inputs"
-              ],
-              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
-    "DeploySpec": {
-      "properties": {
-        "strategy": {
-          "type": "string",
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-              }
-            }
-          ],
-          "description": "Selects the preferred deploy strategy for the service."
-        },
-        "modules": {
-          "type": "object",
-          "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/DeployModuleSpec"
-                }
-              ]
-            },
-            "^\\${{\\s*if(.*?)\\s*}}$": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/DeployModuleSpec"
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                  "additionalProperties": false
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-          },
-          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-          "additionalProperties": false
-        }
-      },
-      "type": "object",
-      "required": [
-        "strategy",
-        "modules"
-      ],
-      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "strategy": {
-                  "type": "string",
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-                      }
-                    }
-                  ],
-                  "description": "Selects the preferred deploy strategy for the service."
-                },
-                "modules": {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/DeployModuleSpec"
-                        }
-                      ]
-                    },
-                    "^\\${{\\s*if(.*?)\\s*}}$": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/DeployModuleSpec"
-                                }
-                              ]
-                            }
-                          },
-                          "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                          },
-                          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                          "additionalProperties": false
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                  "additionalProperties": false
-                }
-              },
-              "type": "object",
-              "required": [
-                "strategy",
-                "modules"
-              ],
-              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
               },
               "patternProperties": {}
             }
@@ -1841,9 +1547,6 @@
             "url": "/docs/components/services/#cpu--memory"
           }
         },
-        "deploy": {
-          "$ref": "#/definitions/DeploySpec"
-        },
         "depends_on": {
           "type": "array",
           "items": {
@@ -1908,6 +1611,12 @@
             "url": "/docs/components/services/#labels"
           },
           "additionalProperties": false
+        },
+        "reserved_name": {
+          "type": "string",
+          "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+          "description": "A specific service name which will override the service name specified in the component."
         }
       },
       "type": "object",
@@ -2115,9 +1824,6 @@
                     "url": "/docs/components/services/#cpu--memory"
                   }
                 },
-                "deploy": {
-                  "$ref": "#/definitions/DeploySpec"
-                },
                 "depends_on": {
                   "type": "array",
                   "items": {
@@ -2182,6 +1888,12 @@
                     "url": "/docs/components/services/#labels"
                   },
                   "additionalProperties": false
+                },
+                "reserved_name": {
+                  "type": "string",
+                  "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+                  "description": "A specific service name which will override the service name specified in the component."
                 }
               },
               "type": "object",
@@ -3173,9 +2885,6 @@
             "url": "/docs/components/services/#cpu--memory"
           }
         },
-        "deploy": {
-          "$ref": "#/definitions/DeploySpec"
-        },
         "depends_on": {
           "type": "array",
           "items": {
@@ -3240,6 +2949,12 @@
             "url": "/docs/components/services/#labels"
           },
           "additionalProperties": false
+        },
+        "reserved_name": {
+          "type": "string",
+          "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+          "description": "A specific service name which will override the service name specified in the component."
         }
       },
       "type": "object",
@@ -3611,9 +3326,6 @@
                     "url": "/docs/components/services/#cpu--memory"
                   }
                 },
-                "deploy": {
-                  "$ref": "#/definitions/DeploySpec"
-                },
                 "depends_on": {
                   "type": "array",
                   "items": {
@@ -3678,6 +3390,12 @@
                     "url": "/docs/components/services/#labels"
                   },
                   "additionalProperties": false
+                },
+                "reserved_name": {
+                  "type": "string",
+                  "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+                  "description": "A specific service name which will override the service name specified in the component."
                 }
               },
               "type": "object",
@@ -3902,9 +3620,6 @@
             "url": "/docs/components/services/#cpu--memory"
           }
         },
-        "deploy": {
-          "$ref": "#/definitions/DeploySpec"
-        },
         "depends_on": {
           "type": "array",
           "items": {
@@ -3969,6 +3684,12 @@
             "url": "/docs/components/services/#labels"
           },
           "additionalProperties": false
+        },
+        "reserved_name": {
+          "type": "string",
+          "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+          "description": "A specific service name which will override the service name specified in the component."
         }
       },
       "type": "object",
@@ -4190,9 +3911,6 @@
                     "url": "/docs/components/services/#cpu--memory"
                   }
                 },
-                "deploy": {
-                  "$ref": "#/definitions/DeploySpec"
-                },
                 "depends_on": {
                   "type": "array",
                   "items": {
@@ -4257,6 +3975,12 @@
                     "url": "/docs/components/services/#labels"
                   },
                   "additionalProperties": false
+                },
+                "reserved_name": {
+                  "type": "string",
+                  "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+                  "description": "A specific service name which will override the service name specified in the component."
                 }
               },
               "type": "object",
@@ -4306,6 +4030,10 @@
                   {
                     "type": "string",
                     "format": "cidrv4"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
                   }
                 ]
               }
@@ -4365,6 +4093,10 @@
                           {
                             "type": "string",
                             "format": "cidrv4"
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
                           }
                         ]
                       }
@@ -5420,6 +5152,7 @@
           "default": "0s"
         },
         "path": {
+          "deprecated": true,
           "anyOf": [
             {
               "type": "string",
@@ -5433,7 +5166,7 @@
               }
             }
           ],
-          "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
+          "description": "[Deprecated: use `command` instead.] Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
         },
         "command": {
           "anyOf": [
@@ -5450,6 +5183,7 @@
           "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
         },
         "port": {
+          "deprecated": true,
           "anyOf": [
             {
               "type": "number"
@@ -5462,7 +5196,7 @@
               }
             }
           ],
-          "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
+          "description": "[Deprecated: use `command` instead.] Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
         }
       },
       "type": "object",
@@ -5557,6 +5291,7 @@
                   "default": "0s"
                 },
                 "path": {
+                  "deprecated": true,
                   "anyOf": [
                     {
                       "type": "string",
@@ -5570,7 +5305,7 @@
                       }
                     }
                   ],
-                  "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
+                  "description": "[Deprecated: use `command` instead.] Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
                 },
                 "command": {
                   "anyOf": [
@@ -5587,6 +5322,7 @@
                   "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
                 },
                 "port": {
+                  "deprecated": true,
                   "anyOf": [
                     {
                       "type": "number"
@@ -5599,7 +5335,7 @@
                       }
                     }
                   ],
-                  "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
+                  "description": "[Deprecated: use `command` instead.] Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
                 }
               },
               "type": "object",
@@ -5784,288 +5520,6 @@
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
-    "_DebugDeployModuleSpec": {
-      "properties": {
-        "path": {
-          "type": "string",
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-              }
-            }
-          ],
-          "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
-        },
-        "inputs": {
-          "type": "object",
-          "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "^\\${{\\s*if(.*?)\\s*}}$": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                  "additionalProperties": false
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-          },
-          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-          "additionalProperties": false
-        }
-      },
-      "type": "object",
-      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "path": {
-                  "type": "string",
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
-                },
-                "inputs": {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "^\\${{\\s*if(.*?)\\s*}}$": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          },
-                          "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                          },
-                          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                          "additionalProperties": false
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                  "additionalProperties": false
-                }
-              },
-              "type": "object",
-              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
-    "_DebugDeploySpec": {
-      "properties": {
-        "strategy": {
-          "type": "string",
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-              }
-            }
-          ],
-          "description": "Selects the preferred deploy strategy for the service."
-        },
-        "modules": {
-          "type": "object",
-          "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/_DebugDeployModuleSpec"
-                }
-              ]
-            },
-            "^\\${{\\s*if(.*?)\\s*}}$": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/_DebugDeployModuleSpec"
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                  "additionalProperties": false
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-          },
-          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-          "additionalProperties": false
-        }
-      },
-      "type": "object",
-      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "strategy": {
-                  "type": "string",
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-                      }
-                    }
-                  ],
-                  "description": "Selects the preferred deploy strategy for the service."
-                },
-                "modules": {
-                  "type": "object",
-                  "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/_DebugDeployModuleSpec"
-                        }
-                      ]
-                    },
-                    "^\\${{\\s*if(.*?)\\s*}}$": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/_DebugDeployModuleSpec"
-                                }
-                              ]
-                            }
-                          },
-                          "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                          },
-                          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                          "additionalProperties": false
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
-                  },
-                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                  "additionalProperties": false
-                }
-              },
-              "type": "object",
-              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
               },
               "patternProperties": {}
             }
@@ -7144,9 +6598,6 @@
             "url": "/docs/components/services/#cpu--memory"
           }
         },
-        "deploy": {
-          "$ref": "#/definitions/_DebugDeploySpec"
-        },
         "depends_on": {
           "type": "array",
           "items": {
@@ -7211,6 +6662,12 @@
             "url": "/docs/components/services/#labels"
           },
           "additionalProperties": false
+        },
+        "reserved_name": {
+          "type": "string",
+          "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+          "description": "A specific service name which will override the service name specified in the component."
         }
       },
       "type": "object",
@@ -7541,9 +6998,6 @@
                     "url": "/docs/components/services/#cpu--memory"
                   }
                 },
-                "deploy": {
-                  "$ref": "#/definitions/_DebugDeploySpec"
-                },
                 "depends_on": {
                   "type": "array",
                   "items": {
@@ -7608,6 +7062,12 @@
                     "url": "/docs/components/services/#labels"
                   },
                   "additionalProperties": false
+                },
+                "reserved_name": {
+                  "type": "string",
+                  "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+                  "description": "A specific service name which will override the service name specified in the component."
                 }
               },
               "type": "object",
@@ -7829,9 +7289,6 @@
             "url": "/docs/components/services/#cpu--memory"
           }
         },
-        "deploy": {
-          "$ref": "#/definitions/_DebugDeploySpec"
-        },
         "depends_on": {
           "type": "array",
           "items": {
@@ -7896,6 +7353,12 @@
             "url": "/docs/components/services/#labels"
           },
           "additionalProperties": false
+        },
+        "reserved_name": {
+          "type": "string",
+          "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+          "description": "A specific service name which will override the service name specified in the component."
         }
       },
       "type": "object",
@@ -8114,9 +7577,6 @@
                     "url": "/docs/components/services/#cpu--memory"
                   }
                 },
-                "deploy": {
-                  "$ref": "#/definitions/_DebugDeploySpec"
-                },
                 "depends_on": {
                   "type": "array",
                   "items": {
@@ -8181,6 +7641,12 @@
                     "url": "/docs/components/services/#labels"
                   },
                   "additionalProperties": false
+                },
+                "reserved_name": {
+                  "type": "string",
+                  "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+                  "description": "A specific service name which will override the service name specified in the component."
                 }
               },
               "type": "object",
@@ -8230,6 +7696,10 @@
                   {
                     "type": "string",
                     "format": "cidrv4"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
                   }
                 ]
               }
@@ -8289,6 +7759,10 @@
                           {
                             "type": "string",
                             "format": "cidrv4"
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
                           }
                         ]
                       }

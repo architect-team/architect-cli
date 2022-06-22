@@ -14,12 +14,6 @@ import { restart } from '../utils/docker';
 import PortUtil from '../utils/port';
 import DockerComposeTemplate, { DockerService, DockerServiceBuild } from './template';
 
-class LocalService {
-  slugless_name!: string;
-  display_name!: string;
-  service_name!: string;
-}
-
 export class DockerComposeUtils {
 
   // used to namespace docker-compose projects so multiple deployments can happen to local
@@ -127,14 +121,15 @@ export class DockerComposeUtils {
       if (!service.labels) {
         service.labels = [];
       }
-      service.labels.push(`architect.ref=${node.config.metadata.ref}`);
+
+      service.labels.push(`architect.ref=${node.config.metadata.architect_ref}`);
 
       // Set liveness and healthcheck for services (not supported by Tasks)
       if (node instanceof ServiceNode) {
         const liveness_probe = node.config.liveness_probe;
         if (liveness_probe) {
           if (!liveness_probe.command) {
-            liveness_probe.command = ['CMD-SHELL', `curl -f http://localhost:${liveness_probe.port}${liveness_probe.path} || exit 1`];
+            liveness_probe.command = ['CMD-SHELL', `curl -f http://localhost:${liveness_probe.port}${liveness_probe.path} || exit 1`]; // deprecated
           } else {
             liveness_probe.command = ['CMD-SHELL', liveness_probe.command.join(' ')];
           }

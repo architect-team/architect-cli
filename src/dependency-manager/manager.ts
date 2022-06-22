@@ -54,7 +54,7 @@ export default abstract class DependencyManager {
   }
 
   getComponentRef(component_string: string): string {
-    const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
+    const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(component_string);
     const resolved_account = this.account && this.account === component_account_name ? undefined : component_account_name;
     const component_ref = ComponentSlugUtils.build(resolved_account, component_name, instance_name);
     return component_ref;
@@ -152,7 +152,9 @@ export default abstract class DependencyManager {
       while ((matches = services_regex.exec(service_string)) != null) {
         if (!matches.groups) { continue; }
         const { service_name, interface_name } = matches.groups;
+        const service_to = services.find(s => s.resource_name === service_name);
         const to = buildNodeRef(component, 'services', service_name);
+
         if (to === from) continue;
         if (!service_edge_map[to]) service_edge_map[to] = {};
         service_edge_map[to][`service->${interface_name}`] = interface_name;
@@ -390,6 +392,16 @@ export default abstract class DependencyManager {
     }
   }
 
+  validateReservedNodeNames(all_nodes: DependencyNode[]): void {
+    const seen_nodes: DependencyNode[] = [];
+    for (const node of all_nodes.filter(n => n instanceof ServiceNode || n instanceof TaskNode)) {
+      if (seen_nodes.find(n => !!node.instance_id && !!n.instance_id && n.ref === node.ref && n.instance_id !== node.instance_id)) {
+        throw new Error(`A service named ${node.ref} is declared in multiple places. The same name can't be used for multiple services.`);
+      }
+      seen_nodes.push(node);
+    }
+  }
+
   detectCircularDependencies(component_specs: ComponentSpec[]): void {
     const component_specs_map: Dictionary<ComponentSpec> = {};
     for (const component_spec of component_specs) {
@@ -460,6 +472,7 @@ export default abstract class DependencyManager {
     }
 
     const nodes = this.getComponentNodes(component_config);
+    this.validateReservedNodeNames(nodes.concat(graph.nodes));
 
     const has_interfaces = Object.keys(component_config.interfaces).length > 0;
     const has_outputs = Object.keys(component_config.outputs).length > 0;
