@@ -1,4 +1,5 @@
-import crypto from 'crypto';
+import Base64 from 'crypto-js/enc-base64';
+import md5 from 'crypto-js/md5';
 
 export class Refs {
   private static HASH_LENGTH = 8;
@@ -47,8 +48,10 @@ export class Refs {
    * @param uri
    */
   private static toDigest(uri: string): string {
-    return crypto.createHash('md5').update(uri)
-      .digest("base64") // base64 adds entropy in a more compact string
+    const hash = md5(uri);
+    const base64 = Base64.stringify(hash); // base64 adds entropy in a more compact string
+
+    return base64
       .toLowerCase() // we need to makes everything lower which unfortunately removes some entropy
       .replace(/[\\/+=]/g, ''); // we also remove occurances of slash, plus, and equals to make url-safe
   }
