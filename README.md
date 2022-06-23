@@ -35,7 +35,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (--version)
-@architect-io/cli/1.16.0-rc.11 linux-x64 node-v16.15.1
+@architect-io/cli/1.16.4 linux-x64 node-v17.3.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
