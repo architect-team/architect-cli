@@ -1,3 +1,10 @@
+## [1.17.1](https://github.com/architect-team/architect-cli/compare/v1.17.0...v1.17.1) (2022-06-23)
+
+
+### Bug Fixes
+
+* **error:** safeguard adding more error context ([afa04f3](https://github.com/architect-team/architect-cli/commit/afa04f38541486e075c942634ad41dd3a1f73a35))
+
 # [1.17.0](https://github.com/architect-team/architect-cli/compare/v1.16.4...v1.17.0) (2022-06-23)
 
 
