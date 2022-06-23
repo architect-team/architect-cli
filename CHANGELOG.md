@@ -1,3 +1,18 @@
+# [1.17.0](https://github.com/architect-team/architect-cli/compare/v1.16.4...v1.17.0) (2022-06-23)
+
+
+### Bug Fixes
+
+* **interpolation:** Whitelist interpolation ([#577](https://github.com/architect-team/architect-cli/issues/577)) ([792de39](https://github.com/architect-team/architect-cli/commit/792de39b9904c75cbc0b02c650611e98cfc1b340))
+* **ref:** Behind the scenes support for better name handling ([d96008f](https://github.com/architect-team/architect-cli/commit/d96008f76aa7ca077eac8fa519d84e4ed886e0b3))
+* **register:** Switch to buildx for building containers ([539e189](https://github.com/architect-team/architect-cli/commit/539e189a2f4a470b91101084409abed0f5a57703))
+
+
+### Features
+
+* **reserved names:** Adding architect_ref for image name generation and tagging ([d5e4c51](https://github.com/architect-team/architect-cli/commit/d5e4c518f875c06dbe3eb4f35dd6d6effc060da4))
+* **reserved_name:** Adding reserved names ([#564](https://github.com/architect-team/architect-cli/issues/564)) ([0058d3d](https://github.com/architect-team/architect-cli/commit/0058d3d526f6d2044e044a26d546eed8cc90057f))
+
 ## [1.16.4](https://github.com/architect-team/architect-cli/compare/v1.16.3...v1.16.4) (2022-05-17)
 
 
