@@ -134,8 +134,15 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
   if (validation_regex) {
     const obj_keys = Object.keys(buildContextMap(obj));
 
+    // Filter down errors for use cases like register
     const filtered_errors = [];
     for (const error of errors) {
+      // Edge case for local environments
+      // TODO:TJ
+      if (error.path.endsWith(`\${{ if architect.environment == 'local' }}`)) {
+        continue;
+      }
+
       if (validation_regex.test(error.path)) {
         filtered_errors.push(error);
       } else if (error.invalid_key) {

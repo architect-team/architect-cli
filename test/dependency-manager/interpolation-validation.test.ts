@@ -5,7 +5,9 @@ import { registerInterpolation } from '../../src/dependency-manager/utils/interp
 describe('interpolation-validation', () => {
   const context = {
     architect: {
-      tag: 'latest'
+      build: {
+        tag: 'latest'
+      }
     }
   }
 
@@ -36,7 +38,7 @@ describe('interpolation-validation', () => {
           api:
             build:
               args:
-                \${{ if architect.environment == 'local' }}:
+                \${{ if architect.environment == 'prod' }}:
                   ENV: prod
         `
 
@@ -52,7 +54,7 @@ describe('interpolation-validation', () => {
         name: hello-world
         services:
           api:
-            \${{ if architect.environment == 'local' }}:
+            \${{ if architect.environment == 'prod' }}:
               build:
                 args:
                   ENV: prod
@@ -69,7 +71,7 @@ describe('interpolation-validation', () => {
       const component_config = `
         name: hello-world
         services:
-          \${{ if architect.environment == 'local' }}:
+          \${{ if architect.environment == 'prod' }}:
             api:
               build:
                 args:
@@ -83,6 +85,53 @@ describe('interpolation-validation', () => {
       }).to.be.throws(ValidationErrors);
     });
 
+    describe('local environment (edge case)', () => {
+      it('can use conditional in build block if local', async () => {
+        const component_config = `
+        name: hello-world
+        services:
+          api:
+            build:
+              args:
+                \${{ if architect.environment == 'local' }}:
+                  ENV: local
+        `
+
+        const component_spec = buildSpecFromYml(component_config)
+        registerInterpolation(component_spec, context)
+      });
+
+      it('can use conditional around build block if local', async () => {
+        const component_config = `
+        name: hello-world
+        services:
+          api:
+            \${{ if architect.environment == 'local' }}:
+              build:
+                args:
+                  ENV: local
+        `
+
+        const component_spec = buildSpecFromYml(component_config)
+        registerInterpolation(component_spec, context)
+      });
+
+      it('can use conditional around service block with build block if local', async () => {
+        const component_config = `
+        name: hello-world
+        services:
+          \${{ if architect.environment == 'local' }}:
+            api:
+              build:
+                args:
+                  ENV: local
+        `
+
+        const component_spec = buildSpecFromYml(component_config)
+        registerInterpolation(component_spec, context)
+      });
+    });
+
     it('can use tag conditional in build block', async () => {
       const component_config = `
         name: hello-world
@@ -90,7 +139,7 @@ describe('interpolation-validation', () => {
           api:
             build:
               args:
-                \${{ if architect.tag == 'latest' }}:
+                \${{ if architect.build.tag == 'latest' }}:
                   ENV: prod
         `
 
@@ -105,7 +154,7 @@ describe('interpolation-validation', () => {
           api:
             build:
               args:
-                TAG: \${{ architect.tag }}
+                TAG: \${{ architect.build.tag }}
         `
 
       const component_spec = buildSpecFromYml(component_config)
