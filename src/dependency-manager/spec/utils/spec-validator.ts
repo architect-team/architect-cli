@@ -115,7 +115,7 @@ let _cached_validate: ValidateFunction;
 export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
   if (!_cached_validate) {
     // TODO:288 enable strict mode?
-    const ajv = new Ajv({ allErrors: true, unicodeRegExp: false });
+    const ajv = new Ajv({ allErrors: true, unicodeRegExp: false, code: { source: true, esm: true } });
     addFormats(ajv);
     ajv.addFormat('cidrv4', /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?:\/(?:3[0-2]|[12]?[0-9]))?$/);
     ajv.addFormat('cron', (value: string): boolean => value === "" || cron(value, cron_options).isValid());

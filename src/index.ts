@@ -38,10 +38,3 @@ export * from './dependency-manager/utils/errors';
 export * from './dependency-manager/utils/refs';
 export * from './dependency-manager/utils/types';
 
-import DependencyManager from './dependency-manager/manager';
-import { validateOrRejectSpec } from './dependency-manager/spec/utils/spec-validator';
-
-exports = {
-  DependencyManager,
-  validateOrRejectSpec,
-};

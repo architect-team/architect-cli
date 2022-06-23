@@ -15,7 +15,7 @@
     "@oclif/plugin-warn-if-update-available": "2.0.4",
     "acorn": "^8.7.1",
     "acorn-loose": "^8.3.0",
-    "ajv": "^8.6.3",
+    "ajv": "^8.11.0",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^2.1.1",
     "axios": "^0.21.4",
