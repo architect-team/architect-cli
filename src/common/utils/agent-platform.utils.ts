@@ -11,7 +11,6 @@ import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 import { KubernetesPlatformUtils } from './kubernetes-platform.utils';
 
 const SERVICE_ACCOUNT_NAME = 'architect-agent';
-const ARCHITECT_NAMESPACE = 'architect';
 
 export class AgentPlatformUtils {
 
@@ -117,8 +116,6 @@ export class AgentPlatformUtils {
       }
     }
 
-    await execa('kubectl', ['create', 'namespace', ARCHITECT_NAMESPACE]);
-
     if (!use_existing_sa) {
       CliUx.ux.action.start('Creating the service account');
       await KubernetesPlatformUtils.createKubernetesServiceAccount(untildify(kubeconfig_path), SERVICE_ACCOUNT_NAME);
@@ -173,8 +170,7 @@ spec:
 
     await execa('kubectl', [
       ...set_kubeconfig,
-      'apply', '-f', yamlFile,
-      `--namespace=${ARCHITECT_NAMESPACE}`
+      'apply', '-f', yamlFile
     ]);
   }
 
