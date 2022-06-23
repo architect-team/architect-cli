@@ -1,3 +1,10 @@
+## [1.17.2](https://github.com/architect-team/architect-cli/compare/v1.17.1...v1.17.2) (2022-06-23)
+
+
+### Bug Fixes
+
+* **publish:** Clean before publishing ([#605](https://github.com/architect-team/architect-cli/issues/605)) ([e6c6aae](https://github.com/architect-team/architect-cli/commit/e6c6aae299e18478e37b05f8ee0f0fce622b455f))
+
 ## [1.17.1](https://github.com/architect-team/architect-cli/compare/v1.17.0...v1.17.1) (2022-06-23)
 
 
