@@ -40,12 +40,11 @@ export * from './dependency-manager/utils/types';
 
 import { DependencyGraph } from './dependency-manager/graph';
 import DependencyManager from './dependency-manager/manager';
-import { buildSpecFromYml } from './dependency-manager/spec/utils/component-builder';
+import { validateOrRejectSpec } from './dependency-manager/spec/utils/spec-validator';
 
 export default DependencyManager;
 
-
-exports.DependencyGraph = DependencyGraph;
-if (module) {
-  module.exports.buildSpecFromYml = buildSpecFromYml;
+if (process.env.TEST !== '1') {
+  exports.DependencyGraph = DependencyGraph;
+  module.exports.validateOrRejectSpec = validateOrRejectSpec;
 }
