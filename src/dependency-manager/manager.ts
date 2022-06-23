@@ -22,7 +22,7 @@ import { Dictionary, transformDictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
 import { interpolateObjectLoose, interpolateObjectOrReject, replaceInterpolationBrackets } from './utils/interpolation';
 
-export default abstract class DependencyManager {
+export abstract class DependencyManager {
 
   use_sidecar = true;
   account?: string;
