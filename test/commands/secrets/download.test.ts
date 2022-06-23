@@ -36,25 +36,31 @@ describe('secrets', function () {
 
   const account_secrets = [
     {
-      scope: '*',
-      key: 'my-secret',
-      value: 'a-val',
+      scope: 'cloud/*',
+      key: 'secret',
+      value: 'secret-val',
       account: account
     },
     {
-      scope: 'cloud/*',
-      key: 'secret',
+      scope: '*',
+      key: 'acc-secret',
       value: 'acc-secret-val',
       account: account
     }
   ]
 
-  const environment_secrets = [
+  const environment_secrets_w_inheritance = [
+    {
+      scope: 'cloud/*',
+      key: 'secret',
+      value: 'override',
+      environment: environment
+    },
     {
       scope: '*',
-      key: 'my-secret',
-      value: 'e-val',
-      environment: environment
+      key: 'acc-secret',
+      value: 'acc-secret-val',
+      account: account
     }
   ]
 
@@ -74,7 +80,8 @@ describe('secrets', function () {
     .stderr({ print })
     .command(['secrets', '-a', 'examples'])
     .it('download account secrets successfully', ctx => {
-      expect(ctx.stdout).to.contain('Successfully downloaded secrets')
+      const secrets = JSON.parse(ctx.stdout);
+      expect(Object.keys(secrets)).to.have.lengthOf(2);
     })
   
   defaults
@@ -85,14 +92,15 @@ describe('secrets', function () {
       .get(`/accounts/${account.id}/environments/${environment.name}`)
       .reply(200, environment))
     .nock(MOCK_API_HOST, api => api
-      .get(`/environments/${environment.id}/secrets/values`)
-      .reply(200, environment_secrets))
+      .get(`/environments/${environment.id}/secrets/values?inherited=true`)
+      .reply(200, environment_secrets_w_inheritance))
     .stdout({ print })
     .stderr({ print })
-    .command(['secrets', '-a', 'examples', '-e', 'env'])
-    .it('download environment secrets successfully with default filename', ctx => {
-      expect(ctx.stdout).to.contain('Successfully downloaded secrets')
-      expect(ctx.stdout).to.contain('secrets.yml')
+    .command(['secrets', '-a', 'examples', '-e', 'env', './test/mocks/secrets/my-downloaded-secrets.yml'])
+    .it('download environment secrets successfully', ctx => {
+      const secret_yml = JSON.parse(ctx.stdout);
+      expect(Object.keys(secret_yml)).to.have.lengthOf(2);
+      expect(secret_yml['cloud/*']['secret']).to.eq('override');
     })
   
   defaults
@@ -103,15 +111,15 @@ describe('secrets', function () {
       .get(`/accounts/${account.id}/environments/${environment.name}`)
       .reply(200, environment))
     .nock(MOCK_API_HOST, api => api
-      .get(`/environments/${environment.id}/secrets/values`)
-      .reply(200, environment_secrets))
+      .get(`/environments/${environment.id}/secrets/values?inherited=true`)
+      .reply(200, []))
     .stdout({ print })
     .stderr({ print })
     .command(['secrets', '-a', 'examples', '-e', 'env', './my-secrets.yml'])
-    .it('download environment secrets successfully with provided filename', ctx => {
-      expect(ctx.stdout).to.contain('Successfully downloaded secrets')
-      expect(ctx.stdout).to.contain('my-secrets.yml')
+    .catch(ctx => {
+      expect(ctx.message).to.contain('There are no secrets to be downloaded.')
     })
+    .it('download environment secrets failed when there are no secrets');
   
   defaults
     .nock(MOCK_API_HOST, api => api

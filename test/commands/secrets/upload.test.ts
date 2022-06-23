@@ -101,13 +101,9 @@ describe('secrets', function () {
     .command(['secrets:set', '-a', 'examples', '--override', './test/mocks/secrets/account-secrets.yml'])
     .it('upload account secrets successfully with override', ctx => {
       const secrets = JSON.parse(ctx.stdout);
-      const override_secret = secrets.filter((s: any) => s.key === 'secret');
+      const override_secret = secrets.filter((s: any) => s.scope === 'cloud/*' && s.key === 'secret');
       expect(override_secret).to.have.lengthOf(1);
-      expect(override_secret[0]).to.deep.eq({
-        scope: 'cloud/*',
-        key: 'secret',
-        value: 'override',
-      })
+      expect(override_secret[0].value).to.eq('override')
     })
   
   defaults
@@ -128,7 +124,6 @@ describe('secrets', function () {
     .command(['secrets:set', '-a', 'examples', '-e', 'env', './test/mocks/secrets/environment-secrets.yml'])
     .it('upload environment secrets successfully', ctx => {
       const secrets = JSON.parse(ctx.stdout);
-      console.log('--> ',secrets);
       expect(secrets).to.have.lengthOf(1);
       expect(secrets[0]).to.deep.eq({
         scope: '*',
@@ -155,13 +150,9 @@ describe('secrets', function () {
     .command(['secrets:set', '-a', 'examples', '-e', 'env', '--override', './test/mocks/secrets/environment-secrets.yml'])
     .it('upload environment secrets successfully with override', ctx => {
       const secrets = JSON.parse(ctx.stdout);
-      const override_secret = secrets.filter((s: any) => s.key === 'secret');
+      const override_secret = secrets.filter((s: any) => s.scope === '*' && s.key === 'secret');
       expect(override_secret).to.have.lengthOf(1);
-      expect(override_secret[0]).to.deep.eq({
-        scope: '*',
-        key: 'secret',
-        value: 'override',
-      })
+      expect(override_secret[0].value).to.eq('override')
     })
   
   defaults

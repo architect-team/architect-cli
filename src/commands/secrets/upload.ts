@@ -79,8 +79,8 @@ export default class SecretsUpload extends Command {
 
     // update secrets
     const update_secrets: Secret[] = [];
-    for (const [scope, yml_secrets] of Object.entries(loaded_secret_yml)) {
-      for (const [key, value] of Object.entries(yml_secrets)) {
+    for (const [scope, secrets] of Object.entries(loaded_secret_yml)) {
+      for (const [key, value] of Object.entries(secrets)) {
         if (flags.override || !existing_secret_yml || !existing_secret_yml[scope] || !existing_secret_yml[scope][key]) {
           update_secrets.push({ scope, key, value });
         }

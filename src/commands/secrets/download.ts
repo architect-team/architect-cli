@@ -47,26 +47,26 @@ export default class SecretsDownload extends Command {
       secrets = (await this.app.api.get(`accounts/${account.id}/secrets/values`)).data;
     } else {
       environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
-      secrets = (await this.app.api.get(`environments/${environment.id}/secrets/values`)).data;
+      secrets = (await this.app.api.get(`environments/${environment.id}/secrets/values`, { params: { inherited: true } })).data;
     }
 
     if (secrets.length === 0) {
       this.error('There are no secrets to be downloaded.');
     }
 
-    const secret_yaml: SecretsDict = {};
+    const secret_yml: SecretsDict = {};
     for (const secret of secrets) {
-      secret_yaml[secret.scope] = secret_yaml[secret.scope] || {};
-      secret_yaml[secret.scope][secret.key] = secret.value;
+      secret_yml[secret.scope] = secret_yml[secret.scope] || {};
+      secret_yml[secret.scope][secret.key] = secret.value;
     }
 
     const secrets_file = path.resolve(untildify(args.secrets_file));
-    await fs.writeFile(secrets_file, yaml.dump(secret_yaml), (err) => {
+    await fs.writeFile(secrets_file, yaml.dump(secret_yml), (err) => {
       if (err) {
         this.error('Failed to download secrets!');
       }
     });
 
-    this.log(`Successfully downloaded secrets to ${secrets_file}`);
+    this.log(JSON.stringify(secret_yml, null, 4));
   }
 }
