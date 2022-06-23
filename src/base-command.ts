@@ -99,24 +99,28 @@ export default abstract class BaseCommand extends Command {
       return prettyValidationErrors(err);
     }
 
-    if (err.response?.data instanceof Object) {
-      err.message += `\nmethod: ${err.config.method}`;
-      for (const [k, v] of Object.entries(err.response.data)) {
-        try {
-          const msg = JSON.parse(v as any).message;
-          if (!msg) { throw new Error('Invalid msg'); }
-          err.message += `\n${k}: ${msg}`;
-        } catch {
-          err.message += `\n${k}: ${v}`;
+    try {
+      if (err.response?.data instanceof Object) {
+        err.message += `\nmethod: ${err.config.method}`;
+        for (const [k, v] of Object.entries(err.response.data)) {
+          try {
+            const msg = JSON.parse(v as any).message;
+            if (!msg) { throw new Error('Invalid msg'); }
+            err.message += `\n${k}: ${msg}`;
+          } catch {
+            err.message += `\n${k}: ${v}`;
+          }
         }
       }
-    }
 
-    if (err.stderr) {
-      err.message += `\nstderr: ${err.stderr}`;
-    }
+      if (err.stderr) {
+        err.message += `\nstderr: ${err.stderr}`;
+      }
 
-    err.message = chalk.red(err.message);
+      err.message = chalk.red(err.message);
+    } catch {
+      this.warn('Unable to add more context to error message');
+    }
 
     return super.catch(err);
   }
