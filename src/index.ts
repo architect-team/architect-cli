@@ -38,13 +38,10 @@ export * from './dependency-manager/utils/errors';
 export * from './dependency-manager/utils/refs';
 export * from './dependency-manager/utils/types';
 
-import { DependencyGraph } from './dependency-manager/graph';
 import DependencyManager from './dependency-manager/manager';
 import { validateOrRejectSpec } from './dependency-manager/spec/utils/spec-validator';
 
-export default DependencyManager;
-
-if (process.env.TEST !== '1') {
-  exports.DependencyGraph = DependencyGraph;
-  module.exports.validateOrRejectSpec = validateOrRejectSpec;
-}
+exports = {
+  DependencyManager,
+  validateOrRejectSpec,
+};
