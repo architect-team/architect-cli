@@ -1,58 +1,8 @@
-import { IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
 import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString, OneOf, StringOrStringArray } from './utils/json-schema-annotations';
 import { Slugs } from './utils/slugs';
-
-@JSONSchema({
-  description: 'The DeploySpec represents deploy-time configuration for a service or a task.',
-})
-export class DeployModuleSpec {
-  @IsString()
-  @JSONSchema({
-    ...ExpressionOrString(),
-    description: 'The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time.',
-  })
-  path!: string;
-
-  @IsObject()
-  @JSONSchema({
-    type: 'object',
-    patternProperties: {
-      [Slugs.ArchitectSlugValidator.source]: AnyOf('string', 'null'),
-    },
-    errorMessage: {
-      additionalProperties: Slugs.ArchitectSlugDescription,
-    },
-    description: 'A set of key-value pairs that represent Terraform inputs and their values.',
-  })
-  inputs!: Dictionary<string | null>;
-}
-
-@JSONSchema({
-  description: 'The DeploySpec represents deploy-time configuration for a service or a task.',
-})
-export class DeploySpec {
-  @IsString()
-  @JSONSchema({
-    ...ExpressionOrString(),
-    description: 'Selects the preferred deploy strategy for the service.',
-  })
-  strategy!: string;
-
-  @IsObject()
-  @JSONSchema({
-    type: 'object',
-    patternProperties: {
-      [Slugs.ArchitectSlugValidator.source]: AnyOf(DeployModuleSpec),
-    },
-    errorMessage: {
-      additionalProperties: Slugs.ArchitectSlugDescription,
-    },
-    description: 'A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.',
-  })
-  modules!: Dictionary<DeployModuleSpec>;
-}
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type EnvironmentSpecValue = boolean | null | number | object | string;
@@ -171,10 +121,6 @@ export abstract class ResourceSpec {
   memory?: string;
 
   @IsOptional()
-  @ValidateNested()
-  deploy?: DeploySpec;
-
-  @IsOptional()
   @JSONSchema({
     ...ArrayOf('string'),
     description: 'An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks.',
@@ -194,4 +140,13 @@ export abstract class ResourceSpec {
     externalDocs: { url: '/docs/components/services/#labels' },
   })
   labels?: Map<string, string>;
+
+  @IsOptional()
+  @JSONSchema({
+    type: 'string',
+    pattern: Slugs.ArchitectSlugValidator.source,
+    errorMessage: Slugs.ArchitectSlugDescription,
+    description: 'A specific service name which will override the service name specified in the component.',
+  })
+  reserved_name?: string;
 }

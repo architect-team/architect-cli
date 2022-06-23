@@ -139,6 +139,13 @@ export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max
 };
 
 export const buildNodeRef = (component_config: ComponentConfig, resource_type: ResourceType, resource_name: string, max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
+  if (component_config[resource_type][resource_name]) {
+    const reserved_name = component_config[resource_type][resource_name].reserved_name;
+    if (reserved_name) {
+      return reserved_name;
+    }
+  }
+
   const component_ref = component_config.metadata.ref;
   const parsed = ComponentSlugUtils.parse(component_ref);
   const service_ref = ResourceSlugUtils.build(parsed.component_account_name, parsed.component_name, resource_type, resource_name, component_config.metadata?.instance_name);

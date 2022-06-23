@@ -2,7 +2,7 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
-import DependencyManager, { ArchitectContext, ArchitectError, buildSpecFromPath, buildSpecFromYml, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, DependencyGraph, Dictionary, generateIngressesOverrideSpec, IngressSpec, overrideSpec } from '../../';
+import DependencyManager, { ArchitectContext, ArchitectError, buildSpecFromPath, buildSpecFromYml, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary, generateIngressesOverrideSpec, IngressSpec, overrideSpec } from '../../';
 import { IF_EXPRESSION_REGEX } from '../../dependency-manager/spec/utils/interpolation';
 
 export interface ComponentConfigOpts {
@@ -16,7 +16,6 @@ export default class LocalDependencyManager extends DependencyManager {
   linked_components: Dictionary<string>;
   use_sidecar = false;
   environment = 'local';
-  gateway_port = 80;
   now = new Date();
 
   loaded_components: Dictionary<ComponentSpec> = {};
@@ -44,6 +43,7 @@ export default class LocalDependencyManager extends DependencyManager {
     let spec: ComponentSpec;
     const metadata: ComponentInstanceMetadata = {
       ref: component_ref,
+      architect_ref: component_ref,
       tag: tag,
       instance_name,
       instance_id: options?.instance_id || component_ref,
@@ -162,10 +162,5 @@ export default class LocalDependencyManager extends DependencyManager {
     return {
       environment: this.environment,
     };
-  }
-
-  async getGraph(component_specs: ComponentSpec[], values: Dictionary<Dictionary<string | number | null>> = {}, interpolate = true, validate = true): Promise<DependencyGraph> {
-    const external_addr = `arc.localhost:${this.gateway_port}`;
-    return super.getGraph(component_specs, values, interpolate, validate, external_addr);
   }
 }

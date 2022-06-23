@@ -55,9 +55,9 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
  | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu required to run a service or a task | [More](/docs/components/services/#cpu--memory) |
  | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/components/services/#cpu--memory) |
- | `deploy` | [DeploySpec](#deployspec) |  |  |
  | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
  | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/components/services/#labels) |
+ | `reserved_name` | string | A specific service name which will override the service name specified in the component. | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.*--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">Regex</a> |
 
 
 ## SecretDefinitionSpec
@@ -105,9 +105,9 @@ A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, tr
  | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu required to run a service or a task | [More](/docs/components/services/#cpu--memory) |
  | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/components/services/#cpu--memory) |
- | `deploy` | [DeploySpec](#deployspec) |  |  |
  | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
  | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/components/services/#labels) |
+ | `reserved_name` | string | A specific service name which will override the service name specified in the component. | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.*--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">Regex</a> |
 
 
 ## LivenessProbeSpec
@@ -121,9 +121,9 @@ Configuration for service health checks. Architect uses health checks are used f
  | `timeout` | string \| [Expression](/docs/reference/contexts) | The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s | default: `5s` |
  | `interval` | string \| [Expression](/docs/reference/contexts) | The time period in seconds between each health check execution. You may specify any value between: 5s and 300s | default: `30s` |
  | `initial_delay` | string \| [Expression](/docs/reference/contexts) | Delays the check from running for the specified amount of time | default: `0s` |
- | `path` | string \| [Expression](/docs/reference/contexts) | Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set). |  |
+ | ~~`path`~~ | string \| [Expression](/docs/reference/contexts) | [Deprecated: use `command` instead.] Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set). | Deprecated |
  | `command` | Array&lt;string&gt; \| string | Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set). |  |
- | `port` | number \| [Expression](/docs/reference/contexts) | Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set). |  |
+ | ~~`port`~~ | number \| [Expression](/docs/reference/contexts) | [Deprecated: use `command` instead.] Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set). | Deprecated |
 
 
 ## VolumeSpec
@@ -137,26 +137,6 @@ Architect can mount volumes onto your services and tasks to store data that shou
  | `key` | string \| [Expression](/docs/reference/contexts) | A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set). | [More](/docs/components/services/#volumes) |
  | `description` | string | Human-readable description of volume |  |
  | `readonly` | boolean \| [Expression](/docs/reference/contexts) | Marks the volume as readonly. |  |
-
-
-## DeployModuleSpec
-
-The DeploySpec represents deploy-time configuration for a service or a task.
-
-| Field  (*=required)  | Type       | Description    | Misc           |
-| -------------------- | ---------- | -------------- | -------------- |
- | `path`* | string \| [Expression](/docs/reference/contexts) | The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time. |  |
- | `inputs`* | Dict&lt;string&gt; | A set of key-value pairs that represent Terraform inputs and their values. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.*--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
-
-
-## DeploySpec
-
-The DeploySpec represents deploy-time configuration for a service or a task.
-
-| Field  (*=required)  | Type       | Description    | Misc           |
-| -------------------- | ---------- | -------------- | -------------- |
- | `strategy`* | string \| [Expression](/docs/reference/contexts) | Selects the preferred deploy strategy for the service. |  |
- | `modules`* | Dict&lt;string&gt; | A set of named Terraform modules to override the default Terraform that architect uses at deploy-time. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.*--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
 
 
 ## BuildSpec
@@ -188,9 +168,9 @@ A container to run as a sidecar to the related component or service
  | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu required to run a service or a task | [More](/docs/components/services/#cpu--memory) |
  | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/components/services/#cpu--memory) |
- | `deploy` | [DeploySpec](#deployspec) |  |  |
  | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
  | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/components/services/#labels) |
+ | `reserved_name` | string | A specific service name which will override the service name specified in the component. | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.*--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">Regex</a> |
 
 
 ## ScalingMetricsSpec
@@ -240,7 +220,7 @@ An ingress exposes an interface to external network traffic through an architect
  | `enabled` | boolean | Marks the interface as an ingress. |  |
  | `subdomain` | string | The subdomain that will be used if the interface is exposed externally (defaults to the interface name) |  |
  | `path` | string \| [Expression](/docs/reference/contexts) | The path of the interface used for path based routing |  |
- | `ip_whitelist` | Array&lt;string&gt; \| [Expression](/docs/reference/contexts) | IP addresses that are allowed to access the interface |  |
+ | `ip_whitelist` | Array&lt;string \| string&gt; \| [Expression](/docs/reference/contexts) | IP addresses that are allowed to access the interface |  |
 
 
 ## OutputDefinitionSpec

@@ -4,6 +4,7 @@ import { classToClass, classToPlain } from 'class-transformer';
 import * as Diff from 'diff';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
+import os from 'os';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
@@ -14,6 +15,7 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import * as Docker from '../common/utils/docker';
+import DockerBuildXUtils from '../common/utils/docker-buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
 tmp.setGracefulCleanup();
@@ -33,6 +35,10 @@ export default class ComponentRegister extends Command {
       char: 't',
       description: 'Tag to give to the new component',
       default: 'latest',
+    }),
+    'cache-directory': Flags.string({
+      description: 'Directory to write build cache to',
+      default: path.join(os.tmpdir(), 'architect-build-cache'),
     }),
   };
 
@@ -77,7 +83,7 @@ export default class ComponentRegister extends Command {
     dependency_manager.account = selected_account.name;
 
     const loaded_spec = await dependency_manager.loadComponentSpec(component_spec.name);
-    const graph = await dependency_manager.getGraph([loaded_spec], undefined, false, false);
+    const graph = await dependency_manager.getGraph([loaded_spec], undefined, { interpolate: false, validate: false });
     // Tmp fix to register host overrides
     for (const node of graph.nodes.filter(n => n instanceof ServiceNode) as ServiceNode[]) {
       for (const interface_config of Object.values(node.interfaces)) {
@@ -107,6 +113,13 @@ export default class ComponentRegister extends Command {
           delete service.build.args;
         }
 
+        service.build['x-bake'] = {
+          platforms: DockerBuildXUtils.getPlatforms(),
+          'cache-from': `type=local,src=${flags['cache-directory']}`,
+          'cache-to': `type=local,dest=${flags['cache-directory']}`,
+          pull: true,
+        };
+
         compose.services[service_name] = {
           build: service.build,
           image: image,
@@ -126,32 +139,25 @@ export default class ComponentRegister extends Command {
         return `${arg}`;
       }));
     }
+
     build_args = build_args.filter((value, index, self) => {
       return self.indexOf(value) === index;
     }).reduce((arr, value) => {
-      arr.push('--build-arg');
-      arr.push(value);
+      arr.push('--set');
+      arr.push(`*.args.${value}`);
       return arr;
     }, [] as string[]);
 
+    const builder = await DockerBuildXUtils.getBuilder(this.app.config);
+
     try {
-      await DockerComposeUtils.dockerCompose(['-f', compose_file, 'build', ...build_args], {
+      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args, '--builder', builder], builder, {
         stdio: 'inherit',
       });
     } catch (err: any) {
       fs.removeSync(compose_file);
-      this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
+      this.log(`Docker buildx bake failed. Please make sure docker is running.`);
       this.error(err);
-    }
-
-    this.log(chalk.blue(`Uploading images ${component_spec.name}:${tag} with Architect Cloud...`));
-
-    try {
-      await DockerComposeUtils.dockerCompose(['-f', compose_file, 'push'], {
-        stdio: 'inherit',
-      });
-    } finally {
-      fs.removeSync(compose_file);
     }
 
     const new_spec = classToClass(component_spec);
@@ -193,8 +199,8 @@ export default class ComponentRegister extends Command {
     const config = classToPlain(new_spec);
     delete config.metadata;
     const component_dto = {
-      tag: tag,
-      config: config,
+      tag,
+      config,
     };
 
     let previous_config_data;
@@ -229,7 +235,7 @@ export default class ComponentRegister extends Command {
     CliUx.ux.action.stop();
     this.log(chalk.green(`Successfully registered component`));
 
-    console.log("Time: " + (Date.now() - start_time));
+    console.log('Time: ' + (Date.now() - start_time));
   }
 
   private async getBuildArgs(resource_spec: ResourceSpec): Promise<string[]> {

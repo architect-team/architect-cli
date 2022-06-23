@@ -1,5 +1,6 @@
 import { DependencyNode, DependencyNodeOptions } from '.';
 import { TaskConfig } from '../../config/task-config';
+import { Refs } from '../../utils/refs';
 
 export interface TaskNodeOptions {
   ref: string;
