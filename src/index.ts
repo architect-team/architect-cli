@@ -33,11 +33,19 @@ export * from './dependency-manager/spec/utils/slugs';
 export * from './dependency-manager/spec/utils/spec-merge';
 export * from './dependency-manager/spec/utils/spec-validator';
 export * from './dependency-manager/utils/dictionary';
+export { Dictionary } from './dependency-manager/utils/dictionary';
 export * from './dependency-manager/utils/errors';
 export * from './dependency-manager/utils/refs';
 export * from './dependency-manager/utils/types';
 
+import { DependencyGraph } from './dependency-manager/graph';
 import DependencyManager from './dependency-manager/manager';
+import { buildSpecFromYml } from './dependency-manager/spec/utils/component-builder';
 
 export default DependencyManager;
 
+
+exports.DependencyGraph = DependencyGraph;
+if (module) {
+  module.exports.buildSpecFromYml = buildSpecFromYml;
+}
