@@ -8,6 +8,7 @@ import { Dictionary } from '../..';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import Command from '../../base-command';
+import { SecretsDict } from '../../dependency-manager/secrets/type';
 
 tmp.setGracefulCleanup();
 
@@ -59,15 +60,18 @@ export default class SecretsUpload extends Command {
       existing_secrets = (await this.app.api.get(`accounts/${account.id}/secrets/values`)).data;
     } else {
       environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
-      existing_secrets = (await this.app.api.get(`environments/${environment.id}/secrets/values`, { params: { inherited: true } })).data;
+      existing_secrets = (await this.app.api.get(`environments/${environment.id}/secrets/values`)).data;
     }
 
     // loaded secrets
     const secrets_file = path.resolve(untildify(args.secrets_file));
     const secrets_file_data = fs.readFileSync(secrets_file);
     const loaded_secret_yml = yaml.load(secrets_file_data.toString('utf-8')) as Dictionary<Dictionary<string>>;
+    if (!loaded_secret_yml) {
+      this.error('There are no secrets to be uploaded.');
+    }
 
-    const existing_secret_yml: Dictionary<Dictionary<string>> = {};
+    const existing_secret_yml: SecretsDict = {};
     for (const secret of existing_secrets) {
       existing_secret_yml[secret.scope] = existing_secret_yml[secret.scope] || {};
       existing_secret_yml[secret.scope][secret.key] = secret.value;
@@ -88,5 +92,7 @@ export default class SecretsUpload extends Command {
     } else {
       await this.app.api.post(`/accounts/${account.id}/secrets/batch`, update_secrets);
     }
+
+    this.log(JSON.stringify(update_secrets, null, 4));
   }
 }

@@ -3,10 +3,10 @@ import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import { Dictionary } from '../..';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import Command from '../../base-command';
+import { SecretsDict } from '../../dependency-manager/secrets/type';
 
 tmp.setGracefulCleanup();
 
@@ -47,10 +47,14 @@ export default class SecretsDownload extends Command {
       secrets = (await this.app.api.get(`accounts/${account.id}/secrets/values`)).data;
     } else {
       environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
-      secrets = (await this.app.api.get(`environments/${environment.id}/secrets/values`, { params: { inherited: true } })).data;
+      secrets = (await this.app.api.get(`environments/${environment.id}/secrets/values`)).data;
     }
 
-    const secret_yaml: Dictionary<Dictionary<string>> = {};
+    if (secrets.length === 0) {
+      this.error('There are no secrets to be downloaded.');
+    }
+
+    const secret_yaml: SecretsDict = {};
     for (const secret of secrets) {
       secret_yaml[secret.scope] = secret_yaml[secret.scope] || {};
       secret_yaml[secret.scope][secret.key] = secret.value;
@@ -63,6 +67,6 @@ export default class SecretsDownload extends Command {
       }
     });
 
-    this.log(`Secrets are downloaded to ${secrets_file}`);
+    this.log(`Successfully downloaded secrets to ${secrets_file}`);
   }
 }
