@@ -15,7 +15,7 @@ interface DOCTOR_INPUT_PROPERTIES {
   COMPOSE: {
     DEFAULT_VALUE: boolean;
   };
-};
+}
 
 export default class Doctor extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -34,9 +34,9 @@ export default class Doctor extends BaseCommand {
 
   history: any[] = [];
 
-  static description: string = 'Get debugging information for troubleshooting';
-  static usage: string = 'doctor [FLAGS]';
-  static num_records_hint: string = `${this.properties.NUM_RECORDS.LOWER_BOUND_INCLUSIVE} to ${this.properties.NUM_RECORDS.UPPER_BOUND_INCLUSIVE} inclusive.`
+  static description = 'Get debugging information for troubleshooting';
+  static usage = 'doctor [FLAGS]';
+  static num_records_hint = `${this.properties.NUM_RECORDS.LOWER_BOUND_INCLUSIVE} to ${this.properties.NUM_RECORDS.UPPER_BOUND_INCLUSIVE} inclusive.`;
   static flags: any = {
     ...BaseCommand.flags,
     'num-records': {
@@ -112,7 +112,7 @@ export default class Doctor extends BaseCommand {
         default: flags.compose ? flags.compose : Doctor.properties.COMPOSE.DEFAULT_VALUE,
       }]
     );
-    let command_metadata = await this.readCommandHistoryFromFileSystem();
+    const command_metadata = await this.readCommandHistoryFromFileSystem();
     this.history = (command_metadata || []).slice(~Math.min(answers.num_records, command_metadata.length) + 1);
 
     const port = await PortUtil.getAvailablePort(60000);
@@ -124,6 +124,6 @@ export default class Doctor extends BaseCommand {
       } catch (e) {
         // timeout
       }
-    }, 5);
+    }, 30);
   }
 }

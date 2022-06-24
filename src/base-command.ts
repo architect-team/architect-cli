@@ -22,7 +22,7 @@ export default abstract class BaseCommand extends Command {
 
   app!: AppService;
   accounts?: any;
-  oclif_env: string = 'local';
+  oclif_env?: string;
 
   async auth_required(): Promise<boolean> {
     return true;
@@ -63,12 +63,12 @@ export default abstract class BaseCommand extends Command {
     return { filtered_sentry_args, filtered_sentry_flags };
   }
 
-  async setupAnalytics(env: string = this.oclif_env): Promise<void> {
-
+  async setupAnalytics(): Promise<void> {
+    const analytics_env = this.oclif_env;
     Sentry.init({
       dsn: CLI_SENTRY_DSN,
       debug: false,
-      environment: env,
+      environment: analytics_env,
       release: process.env?.npm_package_version,
       tracesSampleRate: 1.0,
       attachStacktrace: true,
@@ -83,14 +83,14 @@ export default abstract class BaseCommand extends Command {
         new Transaction(),
       ],
       beforeSend(event: any) {
-        if (env === 'local') return null;
+        if (analytics_env === 'local') return null;
         if (event.req?.data?.token) {
           event.req.data.token = '*'.repeat(20);
         }
         return event;
       },
       beforeBreadcrumb(breadcrumb: any) {
-        if (env === 'local') return null;
+        if (analytics_env === 'local') return null;
         if (breadcrumb.category === 'console') {
           breadcrumb.message = PromptUtils.strip_ascii_color_codes_from_string(breadcrumb.message);
         }
@@ -102,7 +102,7 @@ export default abstract class BaseCommand extends Command {
     const auth_login = await this.app?.auth?.checkLogin();
 
     const sentry_session_tags = {
-      environment: env,
+      environment: analytics_env,
       cli: this.app.version,
       node_runtime: process.version,
       os: os.platform(),
@@ -116,15 +116,16 @@ export default abstract class BaseCommand extends Command {
       id: auth_login?.id || os.hostname(),
     };
 
-    let docker_version = await docker(['version', '-f', 'json'], { stdout: false });
-    let docker_containers = await docker(['ps', '--format', '{"ID":"{{ .ID }}", "Image": "{{ .Image }}", "Name":"{{ .Names }}"},'], { stdout: false });
-    let docker_stdout = (docker_containers.stdout as string);
-    let sentry_session_docker_containers = JSON.parse(`[${docker_stdout.substring(0, docker_stdout.length - 1)}]`);
-    let sentry_session_docker_version = JSON.parse(docker_version.stdout as string);
+    const docker_version = await docker(['version', '-f', 'json'], { stdout: false });
+    const docker_containers = await docker(['ps', '--format', '{"ID":"{{ .ID }}", "Image": "{{ .Image }}", "Name":"{{ .Names }}"},'], { stdout: false });
+
+    const sentry_session_docker_containers = JSON.parse(`[${(docker_containers.stdout as string)
+      .substring(0, (docker_containers.stdout as string).length - 1)}]`);
+    const sentry_session_docker_version = JSON.parse(docker_version.stdout as string);
 
     const sentry_session_metadata = {
       command: this.id || (this.constructor as any).name,
-      environment: env,
+      environment: analytics_env,
       email: auth_user?.email || '',
       config_dir_files: this.getFilenamesFromDirectory(this.app?.config?.getConfigDir()),
       id: auth_login?.id || os.hostname(),
@@ -203,8 +204,7 @@ export default abstract class BaseCommand extends Command {
       }
       else if (api_host === 'api.dev.architect.io') {
         this.oclif_env = 'dev';
-      }
-      else if (this.app.config.api_host?.includes('api.arc.localhost')) {
+      } else {
         this.oclif_env = 'local';
       }
       try {
@@ -236,7 +236,7 @@ export default abstract class BaseCommand extends Command {
     const remove_keys = new Set(['plugins', 'pjson', 'oauth_client_id', 'credentials', '_auth_result']);
     const sentry_history_file_path = path.join(this.app?.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
 
-    let current_output = JSON.parse(JSON.stringify(scope as any, (key, value) => {
+    const current_output = JSON.parse(JSON.stringify(scope as any, (key, value) => {
       return ((value && !remove_keys.has(key) && Object.keys(value).length)) ? value : undefined;
     }));
 
@@ -246,7 +246,7 @@ export default abstract class BaseCommand extends Command {
       return fs.outputJsonSync(sentry_history_file_path, [current_output], { spaces: 2 });
     }
 
-    let history = await JSON.parse(fs.readFileSync(sentry_history_file_path).toString());
+    const history = await JSON.parse(fs.readFileSync(sentry_history_file_path).toString());
     history.push(current_output);
     return fs.outputJsonSync(sentry_history_file_path, history.slice(~Math.min(5, history.length) + 1), { spaces: 2 });
   }
@@ -343,7 +343,7 @@ export default abstract class BaseCommand extends Command {
       }
     }
     if (err.stderr) {
-      err.message += `\nstderr: \n${err.stderr}\n`;
+      err.message += `\nstderr: ${err.stderr}`;
     }
     console.error(chalk.red(err.message));
 
