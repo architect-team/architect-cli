@@ -155,7 +155,7 @@ spec:
       serviceAccountName: ${SERVICE_ACCOUNT_NAME}
       containers:
         - name: agent
-          image: cydrive/agent
+          image: registry.gitlab.com/architect-io/agent/client/client:latest
           env:
           - name: ARCHITECT_TOKEN
             value: "${token}"
