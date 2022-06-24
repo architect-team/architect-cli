@@ -1,10 +1,11 @@
 import isCi from 'is-ci';
 
 export default class PromptUtils {
+
   /**
-   * @description     removes all/any applied ascii color codes from a string
+   * Removes all/any applied ascii color codes from a string, and returns the modified string or empty string.
+   * @param {string} message - a string to modify
    *
-   * @param message   Message to remove ascii color codes from
    */
   public static strip_ascii_color_codes_from_string(message?: string): string {
     if (!message) {

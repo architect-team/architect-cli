@@ -3,6 +3,7 @@ import { Dedupe, ExtraErrorData, RewriteFrames, Transaction } from '@sentry/inte
 import * as Sentry from '@sentry/node';
 import '@sentry/tracing';
 import chalk from 'chalk';
+import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import { ValidationErrors } from './';
@@ -21,6 +22,7 @@ export default abstract class BaseCommand extends Command {
 
   app!: AppService;
   accounts?: any;
+  oclif_env: string = 'local';
 
   async auth_required(): Promise<boolean> {
     return true;
@@ -61,33 +63,34 @@ export default abstract class BaseCommand extends Command {
     return { filtered_sentry_args, filtered_sentry_flags };
   }
 
-  async setupSentryAnalytics(): Promise<void> {
+  async setupAnalytics(env: string = this.oclif_env): Promise<void> {
 
     Sentry.init({
       dsn: CLI_SENTRY_DSN,
       debug: false,
-      environment: this.config?.bin,
+      environment: env,
       release: process.env?.npm_package_version,
       tracesSampleRate: 1.0,
       attachStacktrace: true,
-      maxBreadcrumbs: 50,
       sendClientReports: true,
       integrations: [
         new Dedupe(),
         new RewriteFrames({
-          root: LocalPaths.SENTRY_PATH,
+          root: LocalPaths.SENTRY_ROOT_PATH,
           prefix: `src/`,
         }),
         new ExtraErrorData(),
         new Transaction(),
       ],
       beforeSend(event: any) {
+        if (env === 'local') return null;
         if (event.req?.data?.token) {
           event.req.data.token = '*'.repeat(20);
         }
         return event;
       },
       beforeBreadcrumb(breadcrumb: any) {
+        if (env === 'local') return null;
         if (breadcrumb.category === 'console') {
           breadcrumb.message = PromptUtils.strip_ascii_color_codes_from_string(breadcrumb.message);
         }
@@ -99,6 +102,7 @@ export default abstract class BaseCommand extends Command {
     const auth_login = await this.app?.auth?.checkLogin();
 
     const sentry_session_tags = {
+      environment: env,
       cli: this.app.version,
       node_runtime: process.version,
       os: os.platform(),
@@ -112,14 +116,22 @@ export default abstract class BaseCommand extends Command {
       id: auth_login?.id || os.hostname(),
     };
 
-    const sentry_session_docker_version = await docker(['version'], { stdout: false });
+    let docker_version = await docker(['version', '-f', 'json'], { stdout: false });
+    let docker_containers = await docker(['ps', '--format', '{"ID":"{{ .ID }}", "Image": "{{ .Image }}", "Name":"{{ .Names }}"},'], { stdout: false });
+    let docker_stdout = (docker_containers.stdout as string);
+    let sentry_session_docker_containers = JSON.parse(`[${docker_stdout.substring(0, docker_stdout.length - 1)}]`);
+    let sentry_session_docker_version = JSON.parse(docker_version.stdout as string);
 
     const sentry_session_metadata = {
+      command: this.id || (this.constructor as any).name,
+      environment: env,
       email: auth_user?.email || '',
+      config_dir_files: this.getFilenamesFromDirectory(this.app?.config?.getConfigDir()),
       id: auth_login?.id || os.hostname(),
       config_file: path.join(this.app?.config?.getConfigDir(), LocalPaths.CLI_CONFIG_FILENAME),
       cwd: process.cwd(),
-      docker_info: sentry_session_docker_version.stdout,
+      docker_info: sentry_session_docker_version,
+      docker_containers: sentry_session_docker_containers,
       linked_components: this.app?.linkedComponents,
       log_level: this.app?.config?.log_level,
       node_versions: process.versions,
@@ -179,30 +191,90 @@ export default abstract class BaseCommand extends Command {
         }
       }
     }
-    try {
-      return await this.setupSentryAnalytics();
-    } catch {
-      // avoid cyclical dependency if running itself locally using dev.
+
+    if (this.app && this.app.config) {
+      let api_host = (this.app.config.api_host || 'http://api.arc.localhost').replace(/^https?:\/\//, '');
+      if (!api_host || api_host.length === 0) {
+        return;
+      }
+      api_host = api_host.trim().toLowerCase();
+      if (api_host === 'api.architect.io') {
+        this.oclif_env = 'production';
+      }
+      else if (api_host === 'api.dev.architect.io') {
+        this.oclif_env = 'dev';
+      }
+      else if (this.app.config.api_host?.includes('api.arc.localhost')) {
+        this.oclif_env = 'local';
+      }
+      try {
+        return await this.setupAnalytics();
+      }
+      catch {
+        // nothing to do
+      }
     }
   }
 
+  async readCommandHistoryFromFileSystem(): Promise<any[]> {
+    const sentry_history_file_path = path.join(this.app?.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
+    if (fs.existsSync(sentry_history_file_path)) {
+      return await JSON.parse(fs.readFileSync(sentry_history_file_path).toString());
+    }
+    return [];
+  }
+
+  private getFilenamesFromDirectory(path: any): any[] {
+    const addr = fs.readdirSync(path, { withFileTypes: true });
+    return addr.filter(f => f.isFile()).map(f => ({ name: f.name}));
+  }
+
+  protected async writeCommandHistoryToFileSystem(scope?: Sentry.Scope, error?: Error): Promise<void> {
+    if (!scope) {
+      scope = Sentry.getCurrentHub()?.getScope();
+    }
+    const remove_keys = new Set(['plugins', 'pjson', 'oauth_client_id', 'credentials', '_auth_result']);
+    const sentry_history_file_path = path.join(this.app?.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
+
+    let current_output = JSON.parse(JSON.stringify(scope as any, (key, value) => {
+      return ((value && !remove_keys.has(key) && Object.keys(value).length)) ? value : undefined;
+    }));
+
+    current_output.errorContext = error ? { ...error, config: '' } : undefined;
+
+    if (!fs.existsSync(sentry_history_file_path)) {
+      return fs.outputJsonSync(sentry_history_file_path, [current_output], { spaces: 2 });
+    }
+
+    let history = await JSON.parse(fs.readFileSync(sentry_history_file_path).toString());
+    history.push(current_output);
+    return fs.outputJsonSync(sentry_history_file_path, history.slice(~Math.min(5, history.length) + 1), { spaces: 2 });
+  }
+
   protected async finally(_: Error | undefined): Promise<any> {
+    if (_) {
+      _.stack = PromptUtils.strip_ascii_color_codes_from_string(_.stack || new Error((this.constructor as any).name).stack);
+    }
     const cur_scope = Sentry.getCurrentHub()?.getScope();
+
     try {
       cur_scope?.addBreadcrumb({
         category: 'transaction',
         message: `${cur_scope?.getTransaction()?.name || (this.constructor as any).name} :: end`,
         level: 'info',
       });
-      Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
-      Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
+      await this.writeCommandHistoryToFileSystem(cur_scope, _);
+      if (this.oclif_env !== 'local') {
+        Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
+        Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
+      }
     } catch {
       // nothing to do here
     }
-    if (_) {
+    if (_ && this.oclif_env !== 'local') {
       return Sentry.withScope(scope => Sentry.captureException(_));
     }
-    return await super.finally(void 0);
+    return;
   }
 
   // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
@@ -244,7 +316,10 @@ export default abstract class BaseCommand extends Command {
 
   async catch(err: any): Promise<void> {
     if (err.oclif && err.oclif.exit === 0) return;
-
+    if (err.stack) {
+      err.stack = err.stack.replace(err.message, this.id);
+      err.stack = [...new Set(err.stack.split('\n'))].join("\n");
+    }
     const { filtered_sentry_args, filtered_sentry_flags } = await this._getNonSensitiveSentryMetadata();
     Sentry.configureScope(scope => {
       scope?.setExtra('command_args', filtered_sentry_args);
@@ -252,7 +327,7 @@ export default abstract class BaseCommand extends Command {
     });
 
     if (err instanceof ValidationErrors) {
-      prettyValidationErrors(err);
+      return prettyValidationErrors(err);
     }
 
     if (err.response?.data instanceof Object) {
@@ -267,21 +342,15 @@ export default abstract class BaseCommand extends Command {
         }
       }
     }
-
     if (err.stderr) {
-      err.message += `\nstderr: ${err.stderr}`;
+      err.message += `\nstderr: \n${err.stderr}\n`;
     }
-
     console.error(chalk.red(err.message));
 
     if (err.stack) {
-      console.error(chalk.red(
-        err.stack.replace(err.message, (this.constructor as any).name)
-      ));
+       console.error(chalk.red(err.stack));
     }
 
-    err.stack = PromptUtils.strip_ascii_color_codes_from_string(err.stack);
-
-    return await this.finally(err);
+    return;
   }
 }

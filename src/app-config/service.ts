@@ -146,7 +146,7 @@ export default class AppService {
           }
 
           if (this.errorContext?.stack) {
-            err.stack = this.errorContext.stack;
+            err.stack = `${err.stack}\n${this.errorContext.stack.substring(7)}`;
           }
           // Note: it is okay to rethrow these errors as they are here because the catch block in the basecommand.ts should correctly interpret axios errors.
           throw err;
