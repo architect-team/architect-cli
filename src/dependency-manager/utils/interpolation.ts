@@ -4,9 +4,8 @@ import { ComponentSpec, validateOrRejectSpec } from '../..';
 import { EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { Dictionary } from './dictionary';
 import { ValidationError, ValidationErrors } from './errors';
-import { findPotentialMatch } from './match';
 import { ArchitectParser } from './parser';
-import { escapeRegex, matches } from './regex';
+import { matches } from './regex';
 
 export const replaceBrackets = (value: string): string => {
   return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
@@ -36,7 +35,7 @@ export const buildContextMap = (context: any): any => {
         context_map[prefix] = c;
       }
       for (const [key, value] of Object.entries(c)) {
-        queue.push([prefix ? `${prefix}.${key}` : key, value]);
+        queue.push([prefix ? `${prefix}.${key.replace(/\./g, '--')}` : key.replace(/\./g, '--'), value]);
       }
     } else if (prefix) {
       context_map[prefix] = c;
@@ -60,7 +59,8 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
   obj = deepmerge(obj, {}) as T;
 
   const context_map = buildContextMap(context);
-  const context_keys = Object.keys(context_map);
+  context_map['_path'] = '';
+  context_map['_obj_map'] = buildContextMap(obj);
 
   // Interpolate only keys first to flatten conditionals
   const options = {
@@ -85,7 +85,7 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
         if (key === 'metadata') {
           continue;
         }
-        const current_path_keys = [...path_keys, key];
+        const current_path_keys = [...path_keys, key.replace(/\./g, '--')];
         context_map['_path'] = current_path_keys.join('.');
         delete el[key];
         if (options.keys && IF_EXPRESSION_REGEX.test(key)) {
@@ -112,13 +112,6 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
             to_add.push([value, current_path_keys]);
           }
         }
-        for (const error of parser.errors) {
-          const potential_match = findPotentialMatch(error.value, context_keys);
-          if (potential_match) {
-            error.message += ` - Did you mean \${{ ${potential_match} }}?`;
-          }
-          error.path = current_path_keys.join('.');
-        }
         errors = errors.concat(parser.errors);
         parser.errors = [];
       }
@@ -130,30 +123,9 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
     }
   }
 
-  const validation_regex = options.validation_regex;
-  if (validation_regex) {
-    const obj_keys = Object.keys(buildContextMap(obj));
-
-    // Filter down errors for use cases like register
-    const filtered_errors = [];
-    for (const error of errors) {
-      // Edge case for local environments
-      // TODO:TJ
-      if (error.path.endsWith(`\${{ if architect.environment == 'local' }}`)) {
-        continue;
-      }
-
-      if (validation_regex.test(error.path)) {
-        filtered_errors.push(error);
-      } else if (error.invalid_key) {
-        const regex = new RegExp(escapeRegex(error.path) + validation_regex.source);
-        if (obj_keys.some(key => regex.test(key))) {
-          filtered_errors.push(error);
-        }
-      }
-    }
-
-    errors = filtered_errors;
+  // TODO:TJ
+  if (options.register) {
+    errors = errors.filter(error => !error.message.startsWith('Invalid interpolation ref:'));
   }
 
   return { errors, interpolated_obj: obj };
@@ -179,7 +151,7 @@ export const registerInterpolation = (component_spec: ComponentSpec, context: an
     keys: true,
     values: true,
     file: component_spec.metadata.file,
-    validation_regex,
+    validation_regex, // TODO:TJ remove?
     register: true,
   }));
 

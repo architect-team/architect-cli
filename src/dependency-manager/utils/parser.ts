@@ -7,6 +7,7 @@ import estraverse from 'estraverse';
 import { EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { ValidationError } from './errors';
 import { matches } from './regex';
+import { checkRules } from './rules';
 
 function isIdentifier(node: any): boolean {
   if (node.type === 'Identifier') {
@@ -103,13 +104,9 @@ export class ArchitectParser {
           const context_key = parseIdentifier(node);
           const value = context_map[context_key];
 
-          if (!(context_key in context_map)) {
-            this.errors.push(new ValidationError({
-              component: context_map.name,
-              path: '', // Set in interpolation.ts
-              message: `Invalid interpolation ref: \${{ ${context_key} }}`,
-              value: context_key,
-            }));
+          const maybe_error = checkRules(context_map, context_key);
+          if (maybe_error) {
+            this.errors.push(maybe_error);
             return {
               type: 'Literal',
               value: `<error: ${context_key}>`,
