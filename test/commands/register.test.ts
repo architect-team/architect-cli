@@ -87,8 +87,8 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'examples/fusionauth/architect.yml', '-t', '1.0.0', '--platform', 'amd64', '--platform', 'arm64v8', '--platform', 'windows-amd64', '-a', 'examples'])
-    .it('register component with platform flag', ctx => {
+    .command(['register', 'examples/fusionauth/architect.yml', '-t', '1.0.0', '--architecture', 'amd64', '--architecture', 'arm64v8', '--architecture', 'windows-amd64', '-a', 'examples'])
+    .it('register component with architecture flag', ctx => {
       const getDigest = Docker.getDigest as sinon.SinonStub;
       expect(getDigest.notCalled).to.be.true;
 
@@ -104,11 +104,11 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'examples/database-seeding/architect.yml', '-t', '1.0.0', '--platform', 'incorrect', '-a', 'examples'])
+    .command(['register', 'examples/database-seeding/architect.yml', '-t', '1.0.0', '--architecture', 'incorrect', '-a', 'examples'])
     .catch(err => {
       expect(`${err}`).to.contain('Some internal docker build exception')
     })
-    .it('register component with platform flag failed', ctx => {
+    .it('register component with architecture flag failed', ctx => {
       const getDigest = Docker.getDigest as sinon.SinonStub;
       expect(getDigest.notCalled).to.be.true;
     });

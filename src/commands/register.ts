@@ -36,8 +36,8 @@ export default class ComponentRegister extends Command {
       description: 'Tag to give to the new component',
       default: 'latest',
     }),
-    platform: Flags.string({
-      description: 'Platform(s) you are running on',
+    architecture: Flags.string({
+      description: 'Architecture(s) you are running on',
       default: ['amd64'],
       multiple: true,
     }),
@@ -118,15 +118,15 @@ export default class ComponentRegister extends Command {
           delete service.build.args;
         }
 
-        let platforms: string[];
+        let buildx_platforms: string[];
         try {
-          platforms = DockerBuildXUtils.convertToBuildxPlatforms(flags['platform']);
+          buildx_platforms = DockerBuildXUtils.convertToBuildxPlatforms(flags['architecture']);
         } catch (err: any) {
           this.error(err);
         }
 
         service.build['x-bake'] = {
-          platforms: platforms,
+          platforms: buildx_platforms,
           'cache-from': `type=local,src=${flags['cache-directory']}`,
           'cache-to': `type=local,dest=${flags['cache-directory']}`,
           pull: true,

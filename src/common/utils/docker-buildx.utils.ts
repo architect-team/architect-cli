@@ -18,18 +18,18 @@ export default class DockerBuildXUtils {
     return require('os').cpus()[0].model.includes('Apple M1');
   }
 
-  public static getBuildxPlatform(platform: string): string {
-    if (!PLATFORM_MAP.has(platform)) {
+  public static getBuildxPlatform(architecture: string): string {
+    if (!PLATFORM_MAP.has(architecture)) {
       const keys = Array.from(PLATFORM_MAP.keys()).join(', ');
-      throw new Error(`Platform '${platform}' is not supported. Supported platforms: ` + keys);
+      throw new Error(`Architecture '${architecture}' is not supported. Supported architectures: ` + keys);
     }
-    return PLATFORM_MAP.get(platform) as string;
+    return PLATFORM_MAP.get(architecture) as string;
   }
 
-  public static convertToBuildxPlatforms(platforms: string[]): string[] {
+  public static convertToBuildxPlatforms(architectures: string[]): string[] {
     const buildx_platforms : string[] = [];
-    for (const platform_str of platforms) {
-      buildx_platforms.push(this.getBuildxPlatform(platform_str));
+    for (const architecture of architectures) {
+      buildx_platforms.push(this.getBuildxPlatform(architecture));
     }
     return buildx_platforms;
   }
