@@ -1,25 +1,20 @@
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
-import tmp from 'tmp';
 import untildify from 'untildify';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
-import Command from '../../base-command';
+import SecretUtils from '../../architect/secret/secret.utils';
+import UserUtils from '../../architect/user/user.utils';
+import BaseCommand from '../../base-command';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
 
-tmp.setGracefulCleanup();
-
-export default class SecretsDownload extends Command {
-  async auth_required(): Promise<boolean> {
-    return true;
-  }
-
+export default class SecretsDownload extends BaseCommand {
   static description = 'Download secrets from an account or an environment';
   static aliases = ['secrets', 'secrets/get'];
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
   };
@@ -32,23 +27,14 @@ export default class SecretsDownload extends Command {
 
   async run(): Promise<void> {
     const { flags, args } = await this.parse(SecretsDownload);
-
     const account = await AccountUtils.getAccount(this.app, flags.account);
-    const { data: user } = await this.app.api.get('/users/me');
-    const membership = user.memberships?.find((membership: any) => membership.account.id === account.id);
-    const is_admin = !!membership && membership.role !== 'MEMBER';
+
+    const is_admin = await UserUtils.isAdmin(this.app, account.id);
     if (!is_admin) {
       this.error('You do not have permission to download secrets. Please contact your admin.');
     }
 
-    let secrets = [];
-    if (!flags.environment) {
-      secrets = (await this.app.api.get(`accounts/${account.id}/secrets/values`)).data;
-    } else {
-      const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
-      secrets = (await this.app.api.get(`environments/${environment.id}/secrets/values`, { params: { inherited: true } })).data;
-    }
-
+    const secrets = await SecretUtils.getSecrets(this.app, account, flags.environment, true);
     if (secrets.length === 0) {
       this.log('There are no secrets to download.');
       return;
