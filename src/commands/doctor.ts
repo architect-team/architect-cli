@@ -133,7 +133,7 @@ export default class Doctor extends BaseCommand {
       {
         type: 'confirm',
         name: 'docker',
-        message: `Grant architect access to include running docker container's ID, Image and Name information?`,
+        message: `Grant architect access to include running docker container ID, Image and Name information?`,
         default: flags.docker ? flags.docker : Doctor.properties.DOCKER.DEFAULT_VALUE,
       },
     ]
