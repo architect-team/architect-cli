@@ -39,7 +39,6 @@ export default class Doctor extends BaseCommand {
   };
 
   history: any[] = [];
-  doctorServer?: http.Server;
 
   static description = 'Get debugging information for troubleshooting';
   static usage = 'doctor [FLAGS]';

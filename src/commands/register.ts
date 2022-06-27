@@ -209,8 +209,8 @@ export default class ComponentRegister extends BaseCommand {
     const config = classToPlain(new_spec);
     delete config.metadata;
     const component_dto = {
-      tag: tag,
-      config: config,
+      tag,
+      config,
     };
 
     let previous_config_data;
