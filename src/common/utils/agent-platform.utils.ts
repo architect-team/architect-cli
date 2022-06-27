@@ -134,6 +134,16 @@ export class AgentPlatformUtils {
     };
   }
 
+  public static async waitForAgent(flags: any) {
+    const kubeconfig_path = untildify(flags.kubeconfig);
+    const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', 'default'];
+
+    await execa('kubectl', [
+      ...set_kubeconfig,
+      'rollout', 'status', 'deployment', 'agent-deployment'
+    ]);
+  }
+
   public static async installAgent(flags: any, token: string, host: string, config: AppConfig) {
     const yaml = `
 apiVersion: apps/v1
