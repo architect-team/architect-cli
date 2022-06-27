@@ -20,7 +20,7 @@ interface Secret {
 
 export default class SecretsUpload extends Command {
   async auth_required(): Promise<boolean> {
-    return false;
+    return true;
   }
 
   static description = 'Upload secrets from a file to an account or an environment';
@@ -68,7 +68,8 @@ export default class SecretsUpload extends Command {
     const secrets_file_data = fs.readFileSync(secrets_file);
     const loaded_secret_yml = yaml.load(secrets_file_data.toString('utf-8')) as Dictionary<Dictionary<string>>;
     if (!loaded_secret_yml) {
-      this.error('There are no secrets to be uploaded.');
+      this.log(`There are no secrets found in ${secrets_file}.`);
+      return;
     }
 
     const existing_secret_yml: SecretsDict = {};
@@ -93,6 +94,6 @@ export default class SecretsUpload extends Command {
       await this.app.api.post(`/accounts/${account.id}/secrets/batch`, update_secrets);
     }
 
-    this.log(JSON.stringify(update_secrets, null, 4));
+    this.log(`Successfully uploaded secrets from ${secrets_file}`);
   }
 }

@@ -12,7 +12,7 @@ tmp.setGracefulCleanup();
 
 export default class SecretsDownload extends Command {
   async auth_required(): Promise<boolean> {
-    return false;
+    return true;
   }
 
   static description = 'Download secrets from an account or an environment';
@@ -27,7 +27,7 @@ export default class SecretsDownload extends Command {
   static args = [{
     name: 'secrets_file',
     description: 'Secrets filename to download secrets',
-    default: './secrets.yml',
+    required: true,
   }];
 
   async run(): Promise<void> {
@@ -42,16 +42,16 @@ export default class SecretsDownload extends Command {
     }
 
     let secrets = [];
-    let environment;
     if (!flags.environment) {
       secrets = (await this.app.api.get(`accounts/${account.id}/secrets/values`)).data;
     } else {
-      environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
+      const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
       secrets = (await this.app.api.get(`environments/${environment.id}/secrets/values`, { params: { inherited: true } })).data;
     }
 
     if (secrets.length === 0) {
-      this.error('There are no secrets to be downloaded.');
+      this.log('There are no secrets to download.');
+      return;
     }
 
     const secret_yml: SecretsDict = {};
@@ -67,6 +67,6 @@ export default class SecretsDownload extends Command {
       }
     });
 
-    this.log(JSON.stringify(secret_yml, null, 4));
+    this.log(`Secrets have been downloaded to ${secrets_file}`);
   }
 }
