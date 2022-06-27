@@ -6,6 +6,7 @@ import { Dictionary } from './dictionary';
 import { ValidationError, ValidationErrors } from './errors';
 import { ArchitectParser } from './parser';
 import { matches } from './regex';
+import { RequiredInterpolationRule } from './rules';
 
 export const replaceBrackets = (value: string): string => {
   return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
@@ -48,7 +49,6 @@ export interface InterpolateObjectOptions {
   keys?: boolean;
   values?: boolean;
   file?: { path: string, contents: string };
-  register?: boolean; // TODO:TJ
 }
 
 const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
@@ -65,7 +65,6 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
   const options = {
     keys: false,
     values: true,
-    register: false,
     ..._options,
   };
 
@@ -94,9 +93,9 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
             for (const [key2, value2] of Object.entries(deepmerge(el, value, { arrayMerge: overwriteMerge }))) {
               el[key2] = value2;
             }
-          } else if (parser.errors.length >= 0 && options.register) {
-            el[key] = value; // TODO:TJ
-            to_add.push([value, current_path_keys]); // TODO:TJ
+          } else if (parser.errors.length > 0) {
+            el[key] = value;
+            to_add.push([value, current_path_keys]);
           }
 
           for (const error of parser.errors) {
@@ -122,11 +121,6 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
     }
   }
 
-  // TODO:TJ
-  if (options.register) {
-    errors = errors.filter(error => !error.message.startsWith('Invalid interpolation ref:'));
-  }
-
   return { errors, interpolated_obj: obj };
 };
 
@@ -144,12 +138,19 @@ export const interpolateObjectLoose = <T>(obj: T, context: any, options?: Interp
 };
 
 export const registerInterpolation = (component_spec: ComponentSpec, context: any): ComponentSpec => {
-  const interpolated_spec = plainToClass(ComponentSpec, interpolateObjectOrReject(component_spec, context, {
+  const { interpolated_obj, errors } = interpolateObject(component_spec, context, {
     keys: true,
     values: true,
     file: component_spec.metadata.file,
-    register: true,
-  }));
+  });
+
+  const filtered_errors = errors.filter(error => !error.message.startsWith(RequiredInterpolationRule.PREFIX) && !error.value.startsWith('architect.build.'));
+
+  if (filtered_errors.length) {
+    throw new ValidationErrors(filtered_errors, component_spec.metadata.file);
+  }
+
+  const interpolated_spec = plainToClass(ComponentSpec, interpolated_obj);
 
   return validateOrRejectSpec(classToPlain(interpolated_spec), interpolated_spec.metadata);
 };

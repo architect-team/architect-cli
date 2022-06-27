@@ -75,9 +75,8 @@ export default class ComponentRegister extends Command {
 
     const context = {
       architect: {
-        tag: 'latest',
-        args: {
-          test: 'test2', // TODO:TJ
+        build: {
+          tag: flags.tag,
         },
       },
     };

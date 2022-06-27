@@ -24,7 +24,9 @@ export interface DependencyContext {
 
 export interface ArchitectContext {
   environment: string;
-  tag: string;
+  build: {
+    tag: string;
+  }
 }
 
 export interface ComponentContext {

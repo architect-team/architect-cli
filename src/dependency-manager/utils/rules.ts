@@ -54,10 +54,12 @@ class BuildInterpolationRule extends InterpolationRule {
   }
 }
 
-class RequiredInterpolationRule extends InterpolationRule {
+export class RequiredInterpolationRule extends InterpolationRule {
+  static PREFIX = 'Invalid interpolation ref:';
+
   check(context_map: ContextMap, context_key: string): string | undefined {
     if (!(context_key in context_map)) {
-      let message = `Invalid interpolation ref: \${{ ${context_key} }}`;
+      let message = `${RequiredInterpolationRule.PREFIX} \${{ ${context_key} }}`;
       const potential_match = findPotentialMatch(context_key, Object.keys(context_map));
       if (potential_match) {
         message += ` - Did you mean \${{ ${potential_match} }}?`;
@@ -69,7 +71,6 @@ class RequiredInterpolationRule extends InterpolationRule {
 
 const rules = [
   new BuildInterpolationRule(),
-  // TODO:TJ block volumes host_path
   new RequiredInterpolationRule(),
 ];
 
