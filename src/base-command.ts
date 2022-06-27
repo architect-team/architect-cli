@@ -160,11 +160,6 @@ export default abstract class BaseCommand extends Command {
       scope.setExtras({ ...sentry_session_metadata });
       scope.setTags({ ...sentry_session_tags });
       scope.setUser({ ...sentry_session_user });
-      scope.addBreadcrumb({
-        category: 'transaction',
-        message: `${scope.getTransaction()?.name || (this.constructor as any).name} :: start`,
-        level: 'info',
-      });
     });
   }
 
@@ -226,10 +221,10 @@ export default abstract class BaseCommand extends Command {
 
   private getFilenamesFromDirectory(path: any): any[] {
     const addr = fs.readdirSync(path, { withFileTypes: true });
-    return addr.filter(f => f.isFile()).map(f => ({ name: f.name}));
+    return addr.filter(f => f.isFile()).map(f => ({ name: f.name }));
   }
 
-  protected async writeCommandHistoryToFileSystem(scope?: Sentry.Scope, error?: Error): Promise<void> {
+  protected async writeCommandHistoryToFileSystem(scope?: Sentry.Scope): Promise<void> {
     if (!scope) {
       scope = Sentry.getCurrentHub()?.getScope();
     }
@@ -240,8 +235,6 @@ export default abstract class BaseCommand extends Command {
       return ((value && !remove_keys.has(key) && Object.keys(value).length)) ? value : undefined;
     }));
 
-    current_output.errorContext = error ? { ...error, config: '' } : undefined;
-
     if (!fs.existsSync(sentry_history_file_path)) {
       return fs.outputJsonSync(sentry_history_file_path, [current_output], { spaces: 2 });
     }
@@ -251,30 +244,29 @@ export default abstract class BaseCommand extends Command {
     return fs.outputJsonSync(sentry_history_file_path, history.slice(~Math.min(5, history.length) + 1), { spaces: 2 });
   }
 
-  protected async finally(_: Error | undefined): Promise<any> {
+  async finally(_: Error | undefined): Promise<any> {
+
     if (_) {
-      _.stack = PromptUtils.strip_ascii_color_codes_from_string(_.stack || new Error((this.constructor as any).name).stack);
+      _.stack = PromptUtils.strip_ascii_color_codes_from_string(_.stack);
     }
+
     const cur_scope = Sentry.getCurrentHub()?.getScope();
 
-    try {
-      cur_scope?.addBreadcrumb({
-        category: 'transaction',
-        message: `${cur_scope?.getTransaction()?.name || (this.constructor as any).name} :: end`,
-        level: 'info',
-      });
-      await this.writeCommandHistoryToFileSystem(cur_scope, _);
-      if (this.oclif_env !== 'local') {
-        Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
-        Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
+    await this.writeCommandHistoryToFileSystem(cur_scope);
+
+    if (this.oclif_env !== 'local') {
+      Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
+      Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
+
+      if (_) {
+        if (_.stack) {
+          cur_scope?.setExtra('stack', _.stack);
+        }
+        Sentry.withScope(scope => Sentry.captureException(_));
       }
-    } catch {
-      // nothing to do here
     }
-    if (_ && this.oclif_env !== 'local') {
-      return Sentry.withScope(scope => Sentry.captureException(_));
-    }
-    return;
+
+    return super.finally(_);
   }
 
   // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
@@ -316,11 +308,13 @@ export default abstract class BaseCommand extends Command {
 
   async catch(err: any): Promise<void> {
     if (err.oclif && err.oclif.exit === 0) return;
+
     if (err.stack) {
-      err.stack = err.stack.replace(err.message, this.id);
       err.stack = [...new Set(err.stack.split('\n'))].join("\n");
     }
+
     const { filtered_sentry_args, filtered_sentry_flags } = await this._getNonSensitiveSentryMetadata();
+
     Sentry.configureScope(scope => {
       scope?.setExtra('command_args', filtered_sentry_args);
       scope?.setExtra('command_flags', filtered_sentry_flags);
@@ -342,15 +336,17 @@ export default abstract class BaseCommand extends Command {
         }
       }
     }
+
     if (err.stderr) {
-      err.message += `\nstderr: ${err.stderr}`;
+      err.message += `\nstderr:\n${err.stderr}\n`;
     }
+
     console.error(chalk.red(err.message));
 
-    if (err.stack) {
-       console.error(chalk.red(err.stack));
+    try {
+      return await super.catch(err);
+    } finally {
+      this.finally(err);
     }
-
-    return;
   }
 }
