@@ -91,8 +91,7 @@ export default class ComponentRegister extends Command {
     dependency_manager.environment = 'production';
     dependency_manager.account = selected_account.name;
 
-    // TODO:TJ test dependencies const loaded_spec = await dependency_manager.loadComponentSpec(component_spec.name);
-    const graph = await dependency_manager.getGraph([component_spec], undefined, { interpolate: false, validate: false });
+    const graph = await dependency_manager.getGraph([classToClass(component_spec)], undefined, { interpolate: false, validate: false });
     // Tmp fix to register host overrides
     for (const node of graph.nodes.filter(n => n instanceof ServiceNode) as ServiceNode[]) {
       for (const interface_config of Object.values(node.interfaces)) {
@@ -117,12 +116,6 @@ export default class ComponentRegister extends Command {
         const ref_with_account = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, resource_type, resource_name);
 
         const image = `${this.app.config.registry_host}/${ref_with_account}:${tag}`;
-
-        /* TODO:TJ
-        if (service.build) {
-          delete service.build.args;
-        }
-        */
 
         service.build['x-bake'] = {
           platforms: DockerBuildXUtils.getPlatforms(),

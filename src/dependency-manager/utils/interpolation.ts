@@ -48,7 +48,6 @@ export interface InterpolateObjectOptions {
   keys?: boolean;
   values?: boolean;
   file?: { path: string, contents: string };
-  validation_regex?: RegExp;
   register?: boolean; // TODO:TJ
 }
 
@@ -145,13 +144,10 @@ export const interpolateObjectLoose = <T>(obj: T, context: any, options?: Interp
 };
 
 export const registerInterpolation = (component_spec: ComponentSpec, context: any): ComponentSpec => {
-  const validation_regex = /.*build\..*/; // TODO:TJ fragile
-
   const interpolated_spec = plainToClass(ComponentSpec, interpolateObjectOrReject(component_spec, context, {
     keys: true,
     values: true,
     file: component_spec.metadata.file,
-    validation_regex, // TODO:TJ remove?
     register: true,
   }));
 

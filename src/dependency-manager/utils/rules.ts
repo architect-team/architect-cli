@@ -74,6 +74,9 @@ const rules = [
 ];
 
 export function checkRules(context_map: ContextMap, context_key: string): ValidationError | undefined {
+  if (!context_map._path) {
+    return;
+  }
   for (const rule of rules) {
     const maybe_error = rule.run(context_map, context_key);
     if (maybe_error) {
