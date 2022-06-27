@@ -1,12 +1,9 @@
-import { classToPlain, plainToClass } from 'class-transformer';
 import deepmerge from 'deepmerge';
-import { ComponentSpec, validateOrRejectSpec } from '../..';
 import { EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { Dictionary } from './dictionary';
 import { ValidationError, ValidationErrors } from './errors';
 import { ArchitectParser } from './parser';
 import { matches } from './regex';
-import { RequiredInterpolationRule } from './rules';
 
 export const replaceBrackets = (value: string): string => {
   return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
@@ -137,20 +134,3 @@ export const interpolateObjectLoose = <T>(obj: T, context: any, options?: Interp
   return interpolated_obj;
 };
 
-export const registerInterpolation = (component_spec: ComponentSpec, context: any): ComponentSpec => {
-  const { interpolated_obj, errors } = interpolateObject(component_spec, context, {
-    keys: true,
-    values: true,
-    file: component_spec.metadata.file,
-  });
-
-  const filtered_errors = errors.filter(error => !error.message.startsWith(RequiredInterpolationRule.PREFIX) && !error.value.startsWith('architect.build.'));
-
-  if (filtered_errors.length) {
-    throw new ValidationErrors(filtered_errors, component_spec.metadata.file);
-  }
-
-  const interpolated_spec = plainToClass(ComponentSpec, interpolated_obj);
-
-  return validateOrRejectSpec(classToPlain(interpolated_spec), interpolated_spec.metadata);
-};

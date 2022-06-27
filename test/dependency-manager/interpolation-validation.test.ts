@@ -1,8 +1,10 @@
 import { expect } from 'chai';
 import { buildSpecFromYml, ValidationErrors } from '../../src';
-import { registerInterpolation } from '../../src/dependency-manager/utils/interpolation';
+import ComponentRegister from '../../src/commands/register';
 
 describe('interpolation-validation', () => {
+  const registerInterpolation = ComponentRegister.registerInterpolation;
+
   const context = {
     architect: {
       build: {

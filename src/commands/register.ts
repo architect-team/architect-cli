@@ -1,6 +1,6 @@
 import { CliUx, Flags } from '@oclif/core';
 import chalk from 'chalk';
-import { classToClass, classToPlain } from 'class-transformer';
+import { classToClass, classToPlain, plainToClass } from 'class-transformer';
 import * as Diff from 'diff';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
@@ -8,7 +8,7 @@ import os from 'os';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs } from '../';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, validateOrRejectSpec, ValidationErrors } from '../';
 import AccountUtils from '../architect/account/account.utils';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
@@ -17,7 +17,8 @@ import DockerComposeTemplate from '../common/docker-compose/template';
 import * as Docker from '../common/utils/docker';
 import DockerBuildXUtils from '../common/utils/docker-buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
-import { registerInterpolation } from '../dependency-manager/utils/interpolation';
+import { interpolateObject } from '../dependency-manager/utils/interpolation';
+import { RequiredInterpolationRule } from '../dependency-manager/utils/rules';
 
 tmp.setGracefulCleanup();
 
@@ -81,7 +82,7 @@ export default class ComponentRegister extends Command {
       },
     };
 
-    component_spec = registerInterpolation(component_spec, context);
+    component_spec = ComponentRegister.registerInterpolation(component_spec, context);
 
     const { component_account_name, component_name } = ComponentSlugUtils.parse(component_spec.name);
     const selected_account = await AccountUtils.getAccount(this.app, component_account_name || flags.account);
@@ -252,5 +253,23 @@ export default class ComponentRegister extends Command {
     CliUx.ux.action.stop();
     this.log(chalk.green(`Image verified`));
     return digest;
+  }
+
+  static registerInterpolation(component_spec: ComponentSpec, context: any): ComponentSpec {
+    const { interpolated_obj, errors } = interpolateObject(component_spec, context, {
+      keys: true,
+      values: true,
+      file: component_spec.metadata.file,
+    });
+
+    const filtered_errors = errors.filter(error => !error.message.startsWith(RequiredInterpolationRule.PREFIX) && !error.value.startsWith('architect.build.'));
+
+    if (filtered_errors.length) {
+      throw new ValidationErrors(filtered_errors, component_spec.metadata.file);
+    }
+
+    const interpolated_spec = plainToClass(ComponentSpec, interpolated_obj);
+
+    return validateOrRejectSpec(classToPlain(interpolated_spec), interpolated_spec.metadata);
   }
 }
