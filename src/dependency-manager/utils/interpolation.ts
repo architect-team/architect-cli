@@ -4,6 +4,7 @@ import { Dictionary } from './dictionary';
 import { ValidationError, ValidationErrors } from './errors';
 import { ArchitectParser } from './parser';
 import { matches } from './regex';
+import { CONTEXT_KEY_DELIMITER } from './rules';
 
 export const replaceBrackets = (value: string): string => {
   return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
@@ -33,7 +34,7 @@ export const buildContextMap = (context: any): any => {
         context_map[prefix] = c;
       }
       for (const [key, value] of Object.entries(c)) {
-        queue.push([prefix ? `${prefix}.${key.replace(/\./g, '--')}` : key.replace(/\./g, '--'), value]);
+        queue.push([prefix ? `${prefix}.${key.replace(/\./g, CONTEXT_KEY_DELIMITER)}` : key.replace(/\./g, CONTEXT_KEY_DELIMITER), value]);
       }
     } else if (prefix) {
       context_map[prefix] = c;
@@ -80,7 +81,7 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
         if (key === 'metadata') {
           continue;
         }
-        const current_path_keys = [...path_keys, key.replace(/\./g, '--')];
+        const current_path_keys = [...path_keys, key.replace(/\./g, CONTEXT_KEY_DELIMITER)];
         context_map['_path'] = current_path_keys.join('.');
         delete el[key];
         if (options.keys && IF_EXPRESSION_REGEX.test(key)) {

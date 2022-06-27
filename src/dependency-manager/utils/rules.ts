@@ -9,6 +9,10 @@ interface ContextMap {
   [key: string]: any;
 }
 
+export const CONTEXT_KEY_DELIMITER = '__dot__';
+
+const dot_regex = new RegExp(CONTEXT_KEY_DELIMITER, 'g');
+
 abstract class InterpolationRule {
   abstract check(context_map: ContextMap, context_key: string): string | undefined;
 
@@ -17,7 +21,7 @@ abstract class InterpolationRule {
     if (maybe_message) {
       return new ValidationError({
         component: context_map.name,
-        path: context_map._path,
+        path: context_map._path.replace(dot_regex, '.'),
         message: maybe_message,
         value: context_key,
       });
@@ -36,8 +40,10 @@ class BuildInterpolationRule extends InterpolationRule {
       return;
     }
 
-    // TODO:TJ fragile and comment
-    if (context_map._path.endsWith(`\${{ if architect--environment == 'local' }}`)) {
+
+    // Special case - make exception for "local" environments in/around build block
+    const last_key = context_map._path.split('.').pop()?.replace(/ /g, '').replace(dot_regex, '.');
+    if (context_key === 'architect.environment' && last_key === `\${{ if architect.environment == 'local' }}`.replace(/ /g, '')) {
       return;
     }
 
