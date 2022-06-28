@@ -3,7 +3,6 @@ import { Dedupe, ExtraErrorData, RewriteFrames, Transaction } from '@sentry/inte
 import * as Sentry from '@sentry/node';
 import '@sentry/tracing';
 import chalk from 'chalk';
-import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import { ValidationErrors } from './';
@@ -127,7 +126,6 @@ export default abstract class BaseCommand extends Command {
       command: this.id || (this.constructor as any).name,
       environment: analytics_env,
       email: auth_user?.email || '',
-      config_dir_files: this.getFilenamesFromDirectory(this.app?.config?.getConfigDir()),
       id: auth_login?.id || os.hostname(),
       config_file: path.join(this.app?.config?.getConfigDir(), LocalPaths.CLI_CONFIG_FILENAME),
       cwd: process.cwd(),
@@ -211,39 +209,6 @@ export default abstract class BaseCommand extends Command {
     }
   }
 
-  async readCommandHistoryFromFileSystem(): Promise<any[]> {
-    const sentry_history_file_path = path.join(this.app?.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
-    if (fs.existsSync(sentry_history_file_path)) {
-      return await JSON.parse(fs.readFileSync(sentry_history_file_path).toString());
-    }
-    return [];
-  }
-
-  private getFilenamesFromDirectory(path: any): any[] {
-    const addr = fs.readdirSync(path, { withFileTypes: true });
-    return addr.filter(f => f.isFile()).map(f => ({ name: f.name }));
-  }
-
-  protected async writeCommandHistoryToFileSystem(scope?: Sentry.Scope): Promise<void> {
-    if (!scope) {
-      scope = Sentry.getCurrentHub()?.getScope();
-    }
-    const remove_keys = new Set(['plugins', 'pjson', 'oauth_client_id', 'credentials', '_auth_result']);
-    const sentry_history_file_path = path.join(this.app?.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
-
-    const current_output = JSON.parse(JSON.stringify(scope as any, (key, value) => {
-      return ((value && !remove_keys.has(key) && Object.keys(value).length)) ? value : undefined;
-    }));
-
-    if (!fs.existsSync(sentry_history_file_path)) {
-      return fs.outputJsonSync(sentry_history_file_path, [current_output], { spaces: 2 });
-    }
-
-    const history = await JSON.parse(fs.readFileSync(sentry_history_file_path).toString());
-    history.push(current_output);
-    return fs.outputJsonSync(sentry_history_file_path, history.slice(~Math.min(5, history.length) + 1), { spaces: 2 });
-  }
-
   async finally(_: Error | undefined): Promise<any> {
 
     if (_) {
@@ -251,8 +216,6 @@ export default abstract class BaseCommand extends Command {
     }
 
     const cur_scope = Sentry.getCurrentHub()?.getScope();
-
-    await this.writeCommandHistoryToFileSystem(cur_scope);
 
     if (this.oclif_env !== 'local') {
       Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
