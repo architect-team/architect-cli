@@ -49,13 +49,13 @@ class BuildInterpolationRule extends InterpolationRule {
 
     // Check if the interpolation is inside of a build block
     if (this.checkKey(context_map._path)) {
-      return `Cannot use \${{ ${context_key} }} inside of a build block. Use \${{ if architect.build.tag == 'latest' }}: for build time conditionals.`;
+      return `Cannot use \${{ ${context_key} }} inside a build block. Use \${{ if architect.build.tag == 'local' }}: for build time conditionals.`;
     }
 
     // Check if the interpolation is around a build block
     const maybe_child_key = Object.keys(context_map._obj_map).find(key => key.startsWith(`${context_map._path}.`) && this.checkKey(key));
     if (maybe_child_key) {
-      return `Cannot use \${{ ${context_key} }} around of a build block. Use \${{ if architect.build.tag == 'latest' }}: for build time conditionals.`;
+      return `Cannot use \${{ ${context_key} }} around a build block. Use \${{ if architect.build.tag == 'local' }}: for build time conditionals.`;
     }
   }
 }

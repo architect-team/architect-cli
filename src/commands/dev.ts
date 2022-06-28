@@ -110,7 +110,7 @@ export default class Dev extends BaseCommand {
     tag: Flags.string({
       char: 't',
       description: 'Tag to give to the new component',
-      default: 'latest',
+      default: 'local',
     }),
   };
 
