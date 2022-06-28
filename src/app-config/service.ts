@@ -11,6 +11,13 @@ import LocalPaths from '../paths';
 import AuthClient from './auth';
 import AppConfig from './config';
 
+export enum CLI_ENV {
+  TEST = 'test',
+  PRODUCTION = 'production',
+  DEV = 'dev',
+  LOCAL = 'local',
+}
+
 export default class AppService {
   config: AppConfig;
   auth: AuthClient;
@@ -27,7 +34,6 @@ export default class AppService {
   }
 
   constructor(config_dir: string, version: string) {
-    this.environment = 'production';
     this.config = new AppConfig(config_dir);
     this.version = version;
     if (config_dir) {
@@ -49,14 +55,17 @@ export default class AppService {
 
     const url = new URL(this.config.api_host);
 
-    if (url.hostname.endsWith('mock.api.localhost')) {
-      this.environment = 'test';
+    if (process.env.TEST === '1') {
+      this.environment = CLI_ENV.TEST;
     }
     else if (url.hostname.endsWith('.localhost')) {
-      this.environment = 'local';
+      this.environment = CLI_ENV.LOCAL;
     }
     else if (url.hostname.endsWith('.dev.architect.io')) {
-      this.environment = 'dev';
+      this.environment = CLI_ENV.DEV;
+    }
+    else {
+      this.environment = CLI_ENV.PRODUCTION;
     }
 
     // Set HOST header for local dev

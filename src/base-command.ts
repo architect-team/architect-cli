@@ -7,7 +7,7 @@ import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import { ValidationErrors } from './';
-import AppService from './app-config/service';
+import AppService, { CLI_ENV } from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
 import { docker } from './common/utils/docker';
@@ -30,7 +30,7 @@ export default abstract class BaseCommand extends Command {
   static flags = {};
 
   private _shouldSendToSentry() {
-    return this.app?.environment === 'production' || this.app?.environment === 'dev';
+    return this.app?.environment === CLI_ENV.PRODUCTION || this.app?.environment === CLI_ENV.DEV;
   }
 
   checkFlagDeprecations(flags: any, flag_definitions: any): void {
@@ -234,6 +234,7 @@ export default abstract class BaseCommand extends Command {
   }
 
   async finally(_: Error | undefined): Promise<any> {
+    if (this.app.environment === CLI_ENV.TEST) return super.finally(_);
 
     const cur_scope = Sentry.getCurrentHub()?.getScope();
 
@@ -242,9 +243,9 @@ export default abstract class BaseCommand extends Command {
     }
     else {
       const docker_version = await docker(['version', '-f', 'json'], { stdout: false });
-      const docker_info = JSON.parse(docker_version.stdout as string);
-      Object.assign(docker_info, { Containers: await this.getRunningDockerContainers() });
-      cur_scope?.setExtra('docker_info', docker_info);
+      const docker_info = JSON.parse(docker_version?.stdout as string);
+      const updated_docker_info = Object.assign(docker_info, { Containers: await this.getRunningDockerContainers() });
+      cur_scope?.setExtra('docker_info', updated_docker_info);
       cur_scope?.setExtra('linked_components', this.app?.linkedComponents);
     }
 
@@ -309,20 +310,6 @@ export default abstract class BaseCommand extends Command {
       err.stack = [...new Set(err.stack.split('\n'))].join("\n");
     }
 
-    const docker_version = await docker(['version', '-f', 'json'], { stdout: false });
-
-    const docker_info = JSON.parse(docker_version.stdout as string);
-    Object.assign(docker_info, { Containers: await this.getRunningDockerContainers() });
-
-    const { filtered_sentry_args, filtered_sentry_flags } = await this._getNonSensitiveSentryMetadata();
-
-    Sentry.configureScope(scope => {
-      scope?.setExtra('docker_info', docker_info);
-      scope?.setExtra('linked_components', this.app?.linkedComponents);
-      scope?.setExtra('command_args', filtered_sentry_args);
-      scope?.setExtra('command_flags', filtered_sentry_flags);
-    });
-
     if (err instanceof ValidationErrors) {
       return prettyValidationErrors(err);
     }
@@ -349,6 +336,20 @@ export default abstract class BaseCommand extends Command {
 
     } catch {
       this.warn('Unable to add more context to error message');
+    }
+
+    if (this.app.environment !== CLI_ENV.TEST) {
+      const docker_version = await docker(['version', '-f', 'json'], { stdout: false });
+      const docker_info = JSON.parse(docker_version?.stdout as string);
+      const updated_docker_info = Object.assign(docker_info, { Containers: await this.getRunningDockerContainers() });
+      const { filtered_sentry_args, filtered_sentry_flags } = await this._getNonSensitiveSentryMetadata();
+
+      Sentry.configureScope(scope => {
+        scope?.setExtra('docker_info', updated_docker_info);
+        scope?.setExtra('linked_components', this.app?.linkedComponents);
+        scope?.setExtra('command_args', filtered_sentry_args);
+        scope?.setExtra('command_flags', filtered_sentry_flags);
+      });
     }
 
     try {
