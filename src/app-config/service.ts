@@ -18,6 +18,7 @@ export default class AppService {
   _api: AxiosInstance;
   version: string;
   errorContext?: Error;
+  environment: string;
 
   static async create(config_dir: string, version: string): Promise<AppService> {
     const service = new AppService(config_dir, version);
@@ -26,6 +27,7 @@ export default class AppService {
   }
 
   constructor(config_dir: string, version: string) {
+    this.environment = 'production';
     this.config = new AppConfig(config_dir);
     this.version = version;
     if (config_dir) {
@@ -46,6 +48,17 @@ export default class AppService {
     });
 
     const url = new URL(this.config.api_host);
+
+    if (url.hostname.endsWith('mock.api.localhost')) {
+      this.environment = 'test';
+    }
+    else if (url.hostname.endsWith('.localhost')) {
+      this.environment = 'local';
+    }
+    else if (url.hostname.endsWith('.dev.architect.io')) {
+      this.environment = 'dev';
+    }
+
     // Set HOST header for local dev
     if (url.hostname.endsWith('.localhost') && process.env.TEST !== '1') {
       this._api.defaults.baseURL = `${url.protocol}//localhost:${url.port || (url.protocol === 'http:' ? 80 : 443)}${url.pathname}`;

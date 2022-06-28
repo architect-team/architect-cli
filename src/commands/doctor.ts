@@ -45,6 +45,13 @@ export default class Doctor extends BaseCommand {
   static num_records_hint = `${this.properties.NUM_RECORDS.LOWER_BOUND_INCLUSIVE} to ${this.properties.NUM_RECORDS.UPPER_BOUND_INCLUSIVE} inclusive.`;
   static flags: any = {
     ...BaseCommand.flags,
+    'auto-approve': {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: 'Automatically apply the changes',
+        default: false,
+      }),
+    },
     records: {
       non_sensitive: true,
       ...Flags.integer({
@@ -118,8 +125,8 @@ export default class Doctor extends BaseCommand {
       {
         type: 'number',
         name: 'num_records',
-        searchText: '...',
-        default: await Doctor.numRecordsInputIsValid(flags.records) ? flags.records : Doctor.properties.NUM_RECORDS.DEFAULT_VALUE,
+        when: !flags['auto-approve'] || !await Doctor.numRecordsInputIsValid(flags.records),
+        default: Doctor.properties.NUM_RECORDS.DEFAULT_VALUE,
         emptyText: `Default value: ${Doctor.properties.NUM_RECORDS.DEFAULT_VALUE}`,
         message: `How many historical commands should we retrieve? (${Doctor.num_records_hint})`,
         filter: async (input: any) => await Doctor.numRecordsInputIsValid(Number(input)) ? input : Doctor.properties.NUM_RECORDS.DEFAULT_VALUE,
@@ -127,17 +134,18 @@ export default class Doctor extends BaseCommand {
       {
         type: 'confirm',
         name: 'compose',
+        when: !flags['auto-approve'],
         message: 'Grant architect access to add docker compose filenames?',
-        default: flags.compose ? flags.compose : Doctor.properties.COMPOSE.DEFAULT_VALUE,
+        default: Doctor.properties.COMPOSE.DEFAULT_VALUE,
       },
       {
         type: 'confirm',
         name: 'docker',
+        when: !flags['auto-approve'],
         message: `Grant architect access to include running docker container ID, Image and Name information?`,
-        default: flags.docker ? flags.docker : Doctor.properties.DOCKER.DEFAULT_VALUE,
+        default: Doctor.properties.DOCKER.DEFAULT_VALUE,
       },
-    ]
-    );
+    ]);
 
     const command_metadata = await this.readCommandHistoryFromFileSystem();
     this.history = (command_metadata || []).slice(~Math.min(answers.num_records, command_metadata.length) + 1);

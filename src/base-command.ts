@@ -22,13 +22,16 @@ export default abstract class BaseCommand extends Command {
 
   app!: AppService;
   accounts?: any;
-  oclif_env?: string;
 
   async auth_required(): Promise<boolean> {
     return true;
   }
 
   static flags = {};
+
+  private _shouldSendToSentry() {
+    return this.app?.environment === 'production' || this.app?.environment === 'dev';
+  }
 
   checkFlagDeprecations(flags: any, flag_definitions: any): void {
     Object.keys(flags).forEach((flagName: string) => {
@@ -64,11 +67,11 @@ export default abstract class BaseCommand extends Command {
   }
 
   async setupAnalytics(): Promise<void> {
-    const analytics_env = this.oclif_env;
+    const enable_sentry = this._shouldSendToSentry();
     Sentry.init({
       dsn: CLI_SENTRY_DSN,
       debug: false,
-      environment: analytics_env,
+      environment: this.app.environment,
       release: process.env?.npm_package_version,
       tracesSampleRate: 1.0,
       attachStacktrace: true,
@@ -83,14 +86,14 @@ export default abstract class BaseCommand extends Command {
         new Transaction(),
       ],
       beforeSend(event: any) {
-        if (analytics_env === 'local') return null;
+        if (!enable_sentry) return null;
         if (event.req?.data?.token) {
           event.req.data.token = '*'.repeat(20);
         }
         return event;
       },
       beforeBreadcrumb(breadcrumb: any) {
-        if (analytics_env === 'local') return null;
+        if (!enable_sentry) return null;
         if (breadcrumb.category === 'console') {
           breadcrumb.message = PromptUtils.strip_ascii_color_codes_from_string(breadcrumb.message);
         }
@@ -102,7 +105,7 @@ export default abstract class BaseCommand extends Command {
     const auth_login = await this.app?.auth?.checkLogin();
 
     const sentry_session_tags = {
-      environment: analytics_env,
+      environment: this.app.environment,
       cli: this.app.version,
       node_runtime: process.version,
       os: os.platform(),
@@ -116,24 +119,14 @@ export default abstract class BaseCommand extends Command {
       id: auth_login?.id || os.hostname(),
     };
 
-    const docker_version = await docker(['version', '-f', 'json'], { stdout: false });
-    const docker_containers = await docker(['ps', '--format', '{"ID":"{{ .ID }}", "Image": "{{ .Image }}", "Name":"{{ .Names }}"},'], { stdout: false });
-
-    const sentry_session_docker_containers = JSON.parse(`[${(docker_containers.stdout as string)
-      .substring(0, (docker_containers.stdout as string).length - 1)}]`);
-    const sentry_session_docker_version = JSON.parse(docker_version.stdout as string);
-
     const sentry_session_metadata = {
       command: this.id || (this.constructor as any).name,
-      environment: analytics_env,
+      environment: this.app.environment,
       email: auth_user?.email || '',
       config_dir_files: this.getFilenamesFromDirectory(this.app?.config?.getConfigDir()),
       id: auth_login?.id || os.hostname(),
       config_file: path.join(this.app?.config?.getConfigDir(), LocalPaths.CLI_CONFIG_FILENAME),
       cwd: process.cwd(),
-      docker_info: sentry_session_docker_version,
-      docker_containers: sentry_session_docker_containers,
-      linked_components: this.app?.linkedComponents,
       log_level: this.app?.config?.log_level,
       node_versions: process.versions,
       node_version: process.version,
@@ -187,27 +180,10 @@ export default abstract class BaseCommand extends Command {
         }
       }
     }
-
-    if (this.app && this.app.config) {
-      let api_host = (this.app.config.api_host || 'http://api.arc.localhost').replace(/^https?:\/\//, '');
-      if (!api_host || api_host.length === 0) {
-        return;
-      }
-      api_host = api_host.trim().toLowerCase();
-      if (api_host === 'api.architect.io') {
-        this.oclif_env = 'production';
-      }
-      else if (api_host === 'api.dev.architect.io') {
-        this.oclif_env = 'dev';
-      } else {
-        this.oclif_env = 'local';
-      }
-      try {
-        return await this.setupAnalytics();
-      }
-      catch {
-        // nothing to do
-      }
+    try {
+      this.app && await this.setupAnalytics();
+    } catch (e) {
+      // nothing to do
     }
   }
 
@@ -224,6 +200,15 @@ export default abstract class BaseCommand extends Command {
     return addr.filter(f => f.isFile()).map(f => ({ name: f.name }));
   }
 
+  async getRunningDockerContainers(): Promise<any[]> {
+    const docker_command = await docker(['ps', '--format', '{{json .}}%%'], { stdout: false });
+
+    const docker_stdout = (docker_command.stdout as string).split('%%')
+      .map((str: string) => (str && str.length) ? JSON.parse(str) : undefined);
+
+    return docker_stdout.filter(x => !!x).map((container: any) => ({ ...container, Labels: undefined }));
+  }
+
   protected async writeCommandHistoryToFileSystem(scope?: Sentry.Scope): Promise<void> {
     if (!scope) {
       scope = Sentry.getCurrentHub()?.getScope();
@@ -231,30 +216,41 @@ export default abstract class BaseCommand extends Command {
     const remove_keys = new Set(['plugins', 'pjson', 'oauth_client_id', 'credentials', '_auth_result']);
     const sentry_history_file_path = path.join(this.app?.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
 
-    const current_output = JSON.parse(JSON.stringify(scope as any, (key, value) => {
+    let current_output = JSON.parse(JSON.stringify(scope as any, (key, value) => {
       return ((value && !remove_keys.has(key) && Object.keys(value).length)) ? value : undefined;
     }));
+
+    if (current_output._span) {
+      current_output = { ...current_output, _tags: undefined, _user: undefined };
+    }
 
     if (!fs.existsSync(sentry_history_file_path)) {
       return fs.outputJsonSync(sentry_history_file_path, [current_output], { spaces: 2 });
     }
 
-    const history = await JSON.parse(fs.readFileSync(sentry_history_file_path).toString());
+    const history = JSON.parse(fs.readFileSync(sentry_history_file_path).toString());
     history.push(current_output);
     return fs.outputJsonSync(sentry_history_file_path, history.slice(~Math.min(5, history.length) + 1), { spaces: 2 });
   }
 
   async finally(_: Error | undefined): Promise<any> {
 
+    const cur_scope = Sentry.getCurrentHub()?.getScope();
+
     if (_) {
       _.stack = PromptUtils.strip_ascii_color_codes_from_string(_.stack);
     }
-
-    const cur_scope = Sentry.getCurrentHub()?.getScope();
+    else {
+      const docker_version = await docker(['version', '-f', 'json'], { stdout: false });
+      const docker_info = JSON.parse(docker_version.stdout as string);
+      Object.assign(docker_info, { Containers: await this.getRunningDockerContainers() });
+      cur_scope?.setExtra('docker_info', docker_info);
+      cur_scope?.setExtra('linked_components', this.app?.linkedComponents);
+    }
 
     await this.writeCommandHistoryToFileSystem(cur_scope);
 
-    if (this.oclif_env !== 'local') {
+    if (this._shouldSendToSentry()) {
       Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
       Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
 
@@ -313,9 +309,16 @@ export default abstract class BaseCommand extends Command {
       err.stack = [...new Set(err.stack.split('\n'))].join("\n");
     }
 
+    const docker_version = await docker(['version', '-f', 'json'], { stdout: false });
+
+    const docker_info = JSON.parse(docker_version.stdout as string);
+    Object.assign(docker_info, { Containers: await this.getRunningDockerContainers() });
+
     const { filtered_sentry_args, filtered_sentry_flags } = await this._getNonSensitiveSentryMetadata();
 
     Sentry.configureScope(scope => {
+      scope?.setExtra('docker_info', docker_info);
+      scope?.setExtra('linked_components', this.app?.linkedComponents);
       scope?.setExtra('command_args', filtered_sentry_args);
       scope?.setExtra('command_flags', filtered_sentry_flags);
     });
