@@ -27,7 +27,7 @@ export default class DockerBuildXUtils {
   }
 
   public static convertToBuildxPlatforms(architectures: string[]): string[] {
-    const buildx_platforms : string[] = [];
+    const buildx_platforms: string[] = [];
     for (const architecture of architectures) {
       buildx_platforms.push(this.getBuildxPlatform(architecture));
     }

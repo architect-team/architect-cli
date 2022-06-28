@@ -37,7 +37,7 @@ export default class ComponentRegister extends Command {
       default: 'latest',
     }),
     architecture: Flags.string({
-      description: 'Architecture(s) you are running on',
+      description: 'Architecture(s) to target for Docker image builds',
       default: ['amd64'],
       multiple: true,
     }),
@@ -118,12 +118,7 @@ export default class ComponentRegister extends Command {
           delete service.build.args;
         }
 
-        let buildx_platforms: string[];
-        try {
-          buildx_platforms = DockerBuildXUtils.convertToBuildxPlatforms(flags['architecture']);
-        } catch (err: any) {
-          this.error(err);
-        }
+        const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags['architecture']);
 
         service.build['x-bake'] = {
           platforms: buildx_platforms,
