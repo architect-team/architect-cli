@@ -3,15 +3,35 @@ import fs from 'fs-extra';
 import config from '../../app-config/config';
 import { docker } from './docker';
 
+// Adapted from https://github.com/docker-library/official-images#architectures-other-than-amd64
+const PLATFORM_MAP = new Map<string, string>([
+  ['arm32v6', 'linux/arm/v6'],
+  ['arm32v7', 'linux/arm/v7'],
+  ['arm64v8', 'linux/arm64'],
+  ['amd64', 'linux/amd64'],
+  ['windows-amd64', 'windows/amd64'],
+]);
+
 export default class DockerBuildXUtils {
 
   public static isMacM1Machine(): boolean {
     return require('os').cpus()[0].model.includes('Apple M1');
   }
 
-  public static getPlatforms(): string[] {
-    const platforms: string[] = ['linux/amd64'];
-    return this.isMacM1Machine() ? [...platforms, 'linux/arm64'] : platforms;
+  public static getBuildxPlatform(architecture: string): string {
+    if (!PLATFORM_MAP.has(architecture)) {
+      const keys = Array.from(PLATFORM_MAP.keys()).join(', ');
+      throw new Error(`Architecture '${architecture}' is not supported. Supported architectures: ` + keys);
+    }
+    return PLATFORM_MAP.get(architecture) as string;
+  }
+
+  public static convertToBuildxPlatforms(architectures: string[]): string[] {
+    const buildx_platforms: string[] = [];
+    for (const architecture of architectures) {
+      buildx_platforms.push(this.getBuildxPlatform(architecture));
+    }
+    return buildx_platforms;
   }
 
   public static async writeBuildkitdConfigFile(file_name: string, file_content: string): Promise<void> {

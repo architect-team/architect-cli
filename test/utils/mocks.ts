@@ -29,3 +29,4 @@ export const mockArchitectAuth = test
   .stub(DockerBuildXUtils, 'writeBuildkitdConfigFile', () => { })
   .stub(DockerBuildXUtils, 'dockerBuildX', () => { })
   .stub(DockerBuildXUtils, 'getBuilder', () => { })
+  .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', () => { })
