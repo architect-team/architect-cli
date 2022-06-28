@@ -88,13 +88,6 @@ export default abstract class BaseCommand extends Command {
         }
         return event;
       },
-      beforeBreadcrumb(breadcrumb: any) {
-        if (analytics_env === 'local') return null;
-        if (breadcrumb.category === 'console') {
-          breadcrumb.message = PromptUtils.strip_ascii_color_codes_from_string(breadcrumb.message);
-        }
-        return breadcrumb;
-      },
     });
 
     const auth_user = await this.app?.auth?.getPersistedTokenJSON();
@@ -143,18 +136,7 @@ export default abstract class BaseCommand extends Command {
       os_hostname: os.hostname() || '',
     };
 
-    const sentry_session_transaction = {
-      op: (this.constructor as any).name,
-      status: 'ok',
-      description: sentry_session_user.email,
-      tags: sentry_session_tags,
-      name: (this.constructor as any).name,
-    };
-
-    const transaction = Sentry.startTransaction({ ...sentry_session_transaction });
-
     return Sentry.configureScope(scope => {
-      scope.setSpan(transaction);
       scope.setExtras({ ...sentry_session_metadata });
       scope.setTags({ ...sentry_session_tags });
       scope.setUser({ ...sentry_session_user });
@@ -211,22 +193,12 @@ export default abstract class BaseCommand extends Command {
 
   async finally(_: Error | undefined): Promise<any> {
 
-    if (_) {
-      _.stack = PromptUtils.strip_ascii_color_codes_from_string(_.stack);
-    }
-
-    const cur_scope = Sentry.getCurrentHub()?.getScope();
-
-    if (this.oclif_env !== 'local') {
-      Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
-      Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
-
-      if (_) {
-        if (_.stack) {
-          cur_scope?.setExtra('stack', _.stack);
-        }
-        Sentry.withScope(scope => Sentry.captureException(_));
+    if (this.oclif_env !== 'local' && _) {
+      const cur_scope = Sentry.getCurrentHub()?.getScope();
+      if (_.stack) {
+        cur_scope?.setExtra('stack', _.stack = PromptUtils.strip_ascii_color_codes_from_string(_.stack));
       }
+      Sentry.withScope(scope => Sentry.captureException(_));
     }
 
     return super.finally(_);
