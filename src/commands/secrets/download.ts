@@ -47,11 +47,7 @@ export default class SecretsDownload extends BaseCommand {
     }
 
     const secrets_file = path.resolve(untildify(args.secrets_file));
-    await fs.writeFile(secrets_file, yaml.dump(secret_yml), (err) => {
-      if (err) {
-        this.error('Failed to download secrets!');
-      }
-    });
+    fs.writeFileSync(secrets_file, yaml.dump(secret_yml));
 
     this.log(`Secrets have been downloaded to ${secrets_file}`);
   }

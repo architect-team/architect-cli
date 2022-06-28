@@ -6,10 +6,6 @@ import { Dictionary } from '../../../src';
 import { MOCK_API_HOST } from '../../utils/mocks';
 import UserUtils from '../../../src/architect/user/user.utils';
 
-function delay(time: number) {
-  return new Promise(resolve => setTimeout(resolve, time));
-} 
-
 describe('secrets', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
@@ -80,8 +76,6 @@ describe('secrets', function () {
     .stderr({ print })
     .command(['secrets', '-a', 'examples', `${tmp_dir}/my-secrets.yml`])
     .it('download account secrets successfully', async ctx => {
-      await delay(500);
-
       const expected_account_secrets = {
         'cloud/*': {
           secret: 'secret-val'
@@ -109,8 +103,6 @@ describe('secrets', function () {
     .stderr({ print })
     .command(['secrets', '-a', 'examples', '-e', 'env', `${tmp_dir}/my-secrets.yml`])
     .it('download environment secrets successfully', async ctx => {
-      await delay(500);
-
       const expected_env_secrets = {
         'cloud/*': {
           secret: 'override'
