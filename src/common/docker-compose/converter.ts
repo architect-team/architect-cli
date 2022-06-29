@@ -62,7 +62,7 @@ export class ComposeConverter {
           }
 
           if (converted_props.base) {
-            if (converted_props.base && typeof converted_props.base === 'object' && (architect_service as any)[architect_property_name]) { // TODO: same check for local, convert to func
+            if (converted_props.base && typeof converted_props.base === 'object' && (architect_service as any)[architect_property_name]) {
               for (const [prop, value] of Object.entries(converted_props.base)) {
                 (architect_service as any)[architect_property_name][prop] = value;
               }
@@ -260,12 +260,14 @@ export class ComposeConverter {
   private static convertHealthcheck(compose_healthcheck: DockerComposeHealthCheck): ComposeConversion {
     let liveness_probe_command;
     const command = compose_healthcheck.test;
-    if (command && Array.isArray(command)) { // TODO: check/test other versions https://docs.docker.com/compose/compose-file/compose-file-v3/#healthcheck
+    if (command && Array.isArray(command)) {
       if (command.length >= 2 && command[0] === 'CMD-SHELL') {
         liveness_probe_command = command.slice(1);
-      } else if (command.length && command[0] === 'CMD') { // TODO: test for this version
+      } else if (command.length && command[0] === 'CMD') {
         liveness_probe_command = command.slice(1);
       }
+    } else if (command && typeof command === 'string') {
+      liveness_probe_command = command;
     }
 
     const liveness_probe: Partial<LivenessProbeConfig> = {
@@ -283,7 +285,7 @@ export class ComposeConverter {
     return { base: compose_container_name };
   }
 
-  private static convertEnvironment(compose_environment: Dictionary<string> | string[]): ComposeConversion { // TODO: convert compose service refs in env variables => service urls?
+  private static convertEnvironment(compose_environment: Dictionary<string> | string[]): ComposeConversion {
     if (Array.isArray(compose_environment)) {
       const environment: Dictionary<string> = {};
       const warnings: string[] = [];

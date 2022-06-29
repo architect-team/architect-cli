@@ -308,79 +308,106 @@ services:
 
   mockInit()
     .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
-    .it('converts a healthcheck to a liveness probe', ctx => {
+    .it('converts a healthcheck with cmd-shell to a liveness probe', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
       const component_object: any = yaml.load(writeFileSync.args[0][1]);
       expect(component_object.services['elasticsearch'].liveness_probe).deep.eq({
         command: ["/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P example_123 -Q 'SELECT 1' || exit 1"],
-          interval: '10s',
-          timeout: '3s',
-          failure_threshold: 10,
-          initial_delay: '10s'
-        });
+        interval: '10s',
+        timeout: '3s',
+        failure_threshold: 10,
+        initial_delay: '10s'
       });
+    });
 
-    mockInit()
-      .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
-      .it('converts a container name to a reserved name', ctx => {
-        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
-        expect(writeFileSync.called).to.be.true;
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .it('converts a healthcheck with cmd to a liveness probe', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-        const component_object: any = yaml.load(writeFileSync.args[0][1]);
-        expect(component_object.services['logstash'].reserved_name).eq('logstash-service');
+      const component_object: any = yaml.load(writeFileSync.args[0][1]);
+      expect(component_object.services['logstash'].liveness_probe).deep.eq({
+        command: ["mysqladmin", "ping", "-h", "127.0.0.1", "--silent"],
+        interval: '3s',
+        failure_threshold: 5,
+        initial_delay: '30s'
       });
+    });
 
-    mockInit()
-      .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
-      .it('adds an interface for each exposed port', ctx => {
-        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
-        expect(writeFileSync.called).to.be.true;
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .it('converts a healthcheck string to a liveness probe', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-        const component_object: any = yaml.load(writeFileSync.args[0][1]);
-        expect(component_object.services['elasticsearch'].interfaces.expose.port).eq(5432);
+      const component_object: any = yaml.load(writeFileSync.args[0][1]);
+      expect(component_object.services['kibana'].liveness_probe).deep.eq({
+        command: 'curl google.com',
       });
+    });
 
-    mockInit()
-      .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
-      .it('adding cpu and memory resources', ctx => {
-        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
-        expect(writeFileSync.called).to.be.true;
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .it('converts a container name to a reserved name', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-        const component_object: any = yaml.load(writeFileSync.args[0][1]);
-        expect(component_object.services['logstash'].cpu).eq(0.25);
-        expect(component_object.services['logstash'].memory).eq('1.5G');
-      });
+      const component_object: any = yaml.load(writeFileSync.args[0][1]);
+      expect(component_object.services['logstash'].reserved_name).eq('logstash-service');
+    });
 
-    mockInit()
-      .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
-      .it('converting labels in array format', ctx => {
-        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
-        expect(writeFileSync.called).to.be.true;
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .it('adds an interface for each exposed port', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-        const component_object: any = yaml.load(writeFileSync.args[0][1]);
-        expect(component_object.services['kibana'].labels.enable).eq('true');
-        expect(component_object.services['kibana'].labels.rule).eq('test');
-      });
+      const component_object: any = yaml.load(writeFileSync.args[0][1]);
+      expect(component_object.services['elasticsearch'].interfaces.expose.port).eq(5432);
+    });
 
-    mockInit()
-      .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
-      .it('converting labels in object format', ctx => {
-        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
-        expect(writeFileSync.called).to.be.true;
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .it('adding cpu and memory resources', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-        const component_object: any = yaml.load(writeFileSync.args[0][1]);
-        expect(component_object.services['logstash'].labels.ENABLE).eq('true');
-        expect(component_object.services['logstash'].labels.RULE).eq('test');
-      });
+      const component_object: any = yaml.load(writeFileSync.args[0][1]);
+      expect(component_object.services['logstash'].cpu).eq(0.25);
+      expect(component_object.services['logstash'].memory).eq('1.5G');
+    });
 
-    mockInit()
-      .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
-      .it(`warns the user if a listed label couldn't be converted`, ctx => {
-        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
-        expect(writeFileSync.called).to.be.true;
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .it('converting labels in array format', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-        expect(ctx.stdout).to.contain('Could not convert label key_only');
-      });
+      const component_object: any = yaml.load(writeFileSync.args[0][1]);
+      expect(component_object.services['kibana'].labels.enable).eq('true');
+      expect(component_object.services['kibana'].labels.rule).eq('test');
+    });
+
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .it('converting labels in object format', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+
+      const component_object: any = yaml.load(writeFileSync.args[0][1]);
+      expect(component_object.services['logstash'].labels.ENABLE).eq('true');
+      expect(component_object.services['logstash'].labels.RULE).eq('test');
+    });
+
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .it(`warns the user if a listed label couldn't be converted`, ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+
+      expect(ctx.stdout).to.contain('Could not convert label key_only');
+    });
 });
