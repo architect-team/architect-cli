@@ -1,12 +1,13 @@
 import { classToPlain } from 'class-transformer';
 import yaml from 'js-yaml';
 import { LivenessProbeConfig } from '../../dependency-manager/config/common-config';
+import { ServiceInterfaceConfig } from '../../dependency-manager/config/service-config';
 import { VolumeSpec } from '../../dependency-manager/spec/common-spec';
 import { ComponentSpec } from '../../dependency-manager/spec/component-spec';
 import { BuildSpec } from '../../dependency-manager/spec/resource-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../../dependency-manager/spec/service-spec';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
-import DockerComposeTemplate, { DockerComposeHealthCheck } from './template';
+import DockerComposeTemplate, { DockerComposeDeploy, DockerComposeHealthCheck } from './template';
 
 interface ComposeConversion {
   local?: any
@@ -282,7 +283,7 @@ export class ComposeConverter {
     return { base: compose_container_name };
   }
 
-  private static convertEnvironment(compose_environment: any): ComposeConversion { // TODO: convert compose service refs in env variables => service urls?
+  private static convertEnvironment(compose_environment: Dictionary<string> | string[]): ComposeConversion { // TODO: convert compose service refs in env variables => service urls?
     if (Array.isArray(compose_environment)) {
       const environment: Dictionary<string> = {};
       const warnings: string[] = [];
@@ -300,7 +301,7 @@ export class ComposeConverter {
   }
 
   private static convertExpose(compose_expose: string[]): ComposeConversion {
-    const interfaces: Dictionary<any> = {}; // TODO: type?
+    const interfaces: Dictionary<ServiceInterfaceConfig> = {};
     let counter = 0;
     for (const expose_port of compose_expose) {
       interfaces[!counter ? 'expose' : `expose${counter}`] = { port: expose_port };
@@ -309,15 +310,15 @@ export class ComposeConverter {
     return { base: interfaces };
   }
 
-  private static convertCpu(compose_deploy: any): ComposeConversion {
-    return { base: compose_deploy.resources.limits.cpu };
+  private static convertCpu(compose_deploy: DockerComposeDeploy): ComposeConversion {
+    return { base: compose_deploy.resources?.limits.cpus };
   }
 
-  private static convertMemory(compose_deploy: any): ComposeConversion {
-    return { base: compose_deploy.resources.limits.memory };
+  private static convertMemory(compose_deploy: DockerComposeDeploy): ComposeConversion {
+    return { base: compose_deploy.resources?.limits.memory };
   }
 
-  private static convertLabels(compose_labels: any): ComposeConversion {
+  private static convertLabels(compose_labels: Dictionary<string> | string[]): ComposeConversion {
     let labels: Dictionary<string> = {};
     const warnings = [];
     if (Array.isArray(compose_labels)) {
