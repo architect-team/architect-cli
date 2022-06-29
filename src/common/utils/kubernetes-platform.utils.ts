@@ -10,6 +10,7 @@ import { ArchitectError } from '../../';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 
 const SERVICE_ACCOUNT_NAME = 'architect';
+const SERVICE_ACCOUNT_SECRET_NAME = `${SERVICE_ACCOUNT_NAME}-token`;
 
 export class KubernetesPlatformUtils {
 
@@ -71,10 +72,7 @@ export class KubernetesPlatformUtils {
       kube_context = new_platform_answers.context;
     }
 
-    /**
-     * Currently, we do not support K8 v1.24 or higher
-     * Below checks user's Server version to ensure it's under 1.24
-     */
+    /* We now support k8s v1.24+, but leaving here for future use
     const { stdout } = await execa('kubectl', [
       ...set_kubeconfig,
       'version', '--short=true']);
@@ -87,6 +85,7 @@ export class KubernetesPlatformUtils {
         throw new ArchitectError('Architect currently does not support Kubernetes v1.24 or higher.');
       }
     }
+    */
 
     // Check for existing Service Account
     let use_existing_sa;
@@ -153,21 +152,24 @@ export class KubernetesPlatformUtils {
     }
     const cluster_host = cluster.cluster.server;
 
-    // Retrieve service account token
-    const saRes = await execa('kubectl', [
+    // Support kubernetes 1.24+ by manually creating service account token
+    const secret_yml = `
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${SERVICE_ACCOUNT_SECRET_NAME}
+  annotations:
+    kubernetes.io/service-account.name: ${SERVICE_ACCOUNT_NAME}
+type: kubernetes.io/service-account-token
+`;
+    await execa('kubectl', [
       ...set_kubeconfig,
-      'get', 'sa', SERVICE_ACCOUNT_NAME,
-      '-o', 'json',
-    ]);
+      'apply', '-f', '-',
+    ], { input: secret_yml });
 
-    const secrets = JSON.parse(saRes.stdout).secrets;
-    if (!secrets) {
-      throw new Error('Unable to retrieve service account secret');
-    }
-    const sa_secret_name = secrets[0].name;
     const secret_res = await execa('kubectl', [
       ...set_kubeconfig,
-      'get', 'secrets', sa_secret_name,
+      'get', 'secrets', SERVICE_ACCOUNT_SECRET_NAME,
       '-o', 'json',
     ]);
     const sa_token_buffer = Buffer.from(JSON.parse(secret_res.stdout).data.token, 'base64');
