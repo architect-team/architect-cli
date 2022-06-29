@@ -4,8 +4,8 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import path from 'path';
 import sinon from 'sinon';
-import { InitCommand } from '../../src/commands/init';
 import { buildConfigFromYml } from '../../src';
+import { InitCommand } from '../../src/commands/init';
 import { mockArchitectAuth } from '../utils/mocks';
 
 describe('init', function () {
@@ -83,6 +83,28 @@ services:
       expect(component_config.services['logstash'].environment['ELASTICSEARCH_URL']).eq('${{ services.elasticsearch.interfaces.main.url }}');
       expect(component_config.services['logstash'].environment['KIBANA_URL']).eq('${{ services.kibana.interfaces.main.url }}');
       expect(component_config.services['kibana'].environment['ELASTICSEARCH_URL']).eq('${{ services.elasticsearch.interfaces.main.url }}');
+    });
+
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .it('converts environment variables from compose listed as an array', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+
+      const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
+      expect(component_config.services['kibana'].environment['DB_TYPE']).eq('postgres');
+      expect(component_config.services['kibana'].environment['DB_NAME']).eq('gitea');
+      expect(component_config.services['kibana'].environment['DB_USER']).eq('gitea');
+      expect(component_config.services['kibana'].environment['DB_PASSWD']).eq('gitea');
+    });
+
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .it(`warns the user if a listed environment variable couldn't be converted`, ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+
+      expect(ctx.stdout).to.contain('Could not convert environment variable DB_HOST');
     });
 
   mockInit()
@@ -283,4 +305,40 @@ services:
       expect(err.message).eq(`The Docker Compose file /stack/bad-path/docker-compose.yml couldn't be found.`);
     }
   });
+
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .it('converts a healthcheck to a liveness probe', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+
+      const component_object: any = yaml.load(writeFileSync.args[0][1]);
+      expect(component_object.services['elasticsearch'].liveness_probe).deep.eq({
+        command: ["/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P example_123 -Q 'SELECT 1' || exit 1"],
+          interval: '10s',
+          timeout: '3s',
+          failure_threshold: 10,
+          initial_delay: '10s'
+        });
+      });
+
+    mockInit()
+      .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+      .it('converts a container name to a reserved name', ctx => {
+        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+        expect(writeFileSync.called).to.be.true;
+
+        const component_object: any = yaml.load(writeFileSync.args[0][1]);
+        expect(component_object.services['logstash'].reserved_name).eq('logstash-service');
+      });
+
+    mockInit()
+      .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+      .it('adds an interface for each exposed port', ctx => {
+        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+        expect(writeFileSync.called).to.be.true;
+
+        const component_object: any = yaml.load(writeFileSync.args[0][1]);
+        expect(component_object.services['elasticsearch'].interfaces.expose.port).eq(5432);
+      });
 });

@@ -24,8 +24,16 @@ services:
       ELASTIC_PASSWORD: changeme
       DISCOVERY_TYPE: single-node
       TEST_NUMBER: 3000
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P example_123 -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      retries: 10
+      start_period: 10s
+      timeout: 3s
     networks:
       - elk
+    expose:
+      - 5432
 
   logstash:
     build:
@@ -56,6 +64,7 @@ services:
     entrypoint: entrypoint.sh
     external_links:
       - kibana
+    container_name: logstash-service
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.8.0
@@ -85,6 +94,12 @@ services:
       - elk
     depends_on:
       - elasticsearch
+    environment:
+      - DB_TYPE=postgres
+      - DB_HOST # warning, invalid
+      - DB_NAME=gitea
+      - DB_USER=gitea
+      - DB_PASSWD=gitea
 
 networks:
   elk:

@@ -1,6 +1,7 @@
 import { classToPlain } from 'class-transformer';
 import yaml from 'js-yaml';
 import { LivenessProbeConfig } from '../../dependency-manager/config/common-config';
+import { ComponentInterfaceConfig } from '../../dependency-manager/config/component-config';
 import { VolumeSpec } from '../../dependency-manager/spec/common-spec';
 import { ComponentSpec } from '../../dependency-manager/spec/component-spec';
 import { BuildSpec } from '../../dependency-manager/spec/resource-spec';
@@ -17,7 +18,7 @@ interface ComposeConversion {
 export class ComposeConverter {
 
   private static compose_property_converters: { [key: string]: { architect_property: string, func: (compose_property: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceSpec>) => ComposeConversion } } = {
-    environment: { architect_property: 'environment', func: (environment: any) => { return { base: environment }; } },
+    environment: { architect_property: 'environment', func: this.convertEnvironment },
     command: { architect_property: 'command', func: (command: any) => { return { base: command }; } },
     entrypoint: { architect_property: 'entrypoint', func: (entrypoint: any) => { return { base: entrypoint }; } },
     image: { architect_property: 'image', func: (image: string) => { return { base: image }; } },
@@ -27,6 +28,8 @@ export class ComposeConverter {
     depends_on: { architect_property: 'depends_on', func: this.convertDependsOn },
     external_links: { architect_property: 'depends_on', func: this.convertDependsOn },
     healthcheck: { architect_property: 'liveness_probe', func: this.convertHealthcheck },
+    container_name: { architect_property: 'reserved_name', func: this.convertContainerName },
+    expose: { architect_property: 'interfaces', func: this.convertExpose },
   };
 
   static convert(docker_compose: DockerComposeTemplate, component_name: string): { architect_yml: string, warnings: string[] } {
@@ -49,9 +52,17 @@ export class ComposeConverter {
             }
             (architect_service as any)[local_block_key][architect_property_name] = converted_props.local;
           }
+
           if (converted_props.base) {
-            (architect_service as any)[architect_property_name] = converted_props.base;
+            if (converted_props.base && typeof converted_props.base === 'object' && (architect_service as any)[architect_property_name]) { // TODO: same check for local, convert to func
+              for (const [prop, value] of Object.entries(converted_props.base)) {
+                (architect_service as any)[architect_property_name][prop] = value;
+              }
+            } else {
+              (architect_service as any)[architect_property_name] = converted_props.base;
+            }
           }
+
           if (converted_props.warnings) {
             warnings = warnings.concat(converted_props.warnings);
           }
@@ -59,7 +70,9 @@ export class ComposeConverter {
           warnings.push(`Could not convert ${service_name} property ${property_name}`);
         }
       }
-      architect_service.reserved_name = service_name;
+      if (!architect_service.reserved_name) {
+        architect_service.reserved_name = service_name;
+      }
       architect_component.services[service_name] = architect_service;
     }
 
@@ -253,8 +266,39 @@ export class ComposeConverter {
       timeout: compose_healthcheck.timeout,
       failure_threshold: compose_healthcheck.retries,
       initial_delay: compose_healthcheck.start_period,
-    }
+    };
 
     return { base: liveness_probe };
+  }
+
+  private static convertContainerName(compose_container_name: string): ComposeConversion {
+    return { base: compose_container_name };
+  }
+
+  private static convertEnvironment(compose_environment: any): ComposeConversion {
+    if (Array.isArray(compose_environment)) {
+      const environment: Dictionary<string> = {};
+      const warnings: string[] = [];
+      for (const key_value_pair of compose_environment) {
+        const key_value: string[] = key_value_pair.split('=');
+        if (key_value.length !== 2) {
+          warnings.push(`Could not convert environment variable ${key_value_pair}`);
+          continue;
+        }
+        environment[key_value[0]] = key_value[1];
+      }
+      return { base: environment, warnings };
+    }
+    return { base: compose_environment };
+  }
+
+  private static convertExpose(compose_expose: string[]): ComposeConversion {
+    const interfaces: Dictionary<any> = {}; // TODO: type?
+    let counter = 0;
+    for (const expose_port of compose_expose) {
+      interfaces[!counter ? 'expose' : `expose${counter}`] = { port: expose_port };
+      counter++;
+    }
+    return { base: interfaces };
   }
 }
