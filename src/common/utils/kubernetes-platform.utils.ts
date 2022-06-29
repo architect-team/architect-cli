@@ -10,6 +10,7 @@ import { ArchitectError } from '../../';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 
 const SERVICE_ACCOUNT_NAME = 'architect';
+const SERVICE_ACCOUNT_SECRET_NAME = `${SERVICE_ACCOUNT_NAME}-token`;
 
 export class KubernetesPlatformUtils {
 
@@ -153,21 +154,24 @@ export class KubernetesPlatformUtils {
     }
     const cluster_host = cluster.cluster.server;
 
-    // Retrieve service account token
-    const saRes = await execa('kubectl', [
+    // Support kubernetes 1.24+ by manually creating service account token
+    const secret_yml = `
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${SERVICE_ACCOUNT_SECRET_NAME}
+  annotations:
+    kubernetes.io/service-account.name: ${SERVICE_ACCOUNT_NAME}
+type: kubernetes.io/service-account-token
+`;
+    await execa('kubectl', [
       ...set_kubeconfig,
-      'get', 'sa', SERVICE_ACCOUNT_NAME,
-      '-o', 'json',
-    ]);
+      'apply', '-f', '-',
+    ], { input: secret_yml });
 
-    const secrets = JSON.parse(saRes.stdout).secrets;
-    if (!secrets) {
-      throw new Error('Unable to retrieve service account secret');
-    }
-    const sa_secret_name = secrets[0].name;
     const secret_res = await execa('kubectl', [
       ...set_kubeconfig,
-      'get', 'secrets', sa_secret_name,
+      'get', 'secrets', SERVICE_ACCOUNT_SECRET_NAME,
       '-o', 'json',
     ]);
     const sa_token_buffer = Buffer.from(JSON.parse(secret_res.stdout).data.token, 'base64');
