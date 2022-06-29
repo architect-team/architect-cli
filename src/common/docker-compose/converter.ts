@@ -1,11 +1,12 @@
 import { classToPlain } from 'class-transformer';
 import yaml from 'js-yaml';
+import { LivenessProbeConfig } from '../../dependency-manager/config/common-config';
 import { VolumeSpec } from '../../dependency-manager/spec/common-spec';
 import { ComponentSpec } from '../../dependency-manager/spec/component-spec';
 import { BuildSpec } from '../../dependency-manager/spec/resource-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../../dependency-manager/spec/service-spec';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
-import DockerComposeTemplate from './template';
+import DockerComposeTemplate, { DockerComposeHealthCheck } from './template';
 
 interface ComposeConversion {
   local?: any
@@ -25,6 +26,7 @@ export class ComposeConverter {
     volumes: { architect_property: 'volumes', func: this.convertVolumes },
     depends_on: { architect_property: 'depends_on', func: this.convertDependsOn },
     external_links: { architect_property: 'depends_on', func: this.convertDependsOn },
+    healthcheck: { architect_property: 'liveness_probe', func: this.convertHealthcheck },
   };
 
   static convert(docker_compose: DockerComposeTemplate, component_name: string): { architect_yml: string, warnings: string[] } {
@@ -234,5 +236,25 @@ export class ComposeConverter {
       }
     }
     return { base: depends_on.length ? depends_on : undefined };
+  }
+
+  private static convertHealthcheck(compose_healthcheck: DockerComposeHealthCheck): ComposeConversion {
+    let liveness_probe_command;
+    const command = compose_healthcheck.test;
+    if (command && Array.isArray(command)) { // TODO: check/test other versions https://docs.docker.com/compose/compose-file/compose-file-v3/#healthcheck
+      if (command.length >= 2 && command[0] === 'CMD-SHELL') {
+        liveness_probe_command = command.slice(1);
+      }
+    }
+
+    const liveness_probe: Partial<LivenessProbeConfig> = {
+      command: liveness_probe_command,
+      interval: compose_healthcheck.interval,
+      timeout: compose_healthcheck.timeout,
+      failure_threshold: compose_healthcheck.retries,
+      initial_delay: compose_healthcheck.start_period,
+    }
+
+    return { base: liveness_probe };
   }
 }

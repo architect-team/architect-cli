@@ -35,7 +35,7 @@ services:
       expect(writeFileSync.called).to.be.true;
 
       expect(ctx.stdout).to.contain(`Converted ${compose_file_name} and wrote Architect component config to architect.yml`);
-      expect(ctx.stdout).to.contain('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.');
+      expect(ctx.stdout).to.contain('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://docs.architect.io/components/architect-yml.');
     });
 
   mockInit()
@@ -45,7 +45,7 @@ services:
       expect(writeFileSync.called).to.be.true;
       expect(writeFileSync.args[0][0]).eq('test-directory/architect.yml');
       expect(ctx.stdout).to.contain(`Converted ${compose_file_name} and wrote Architect component config to test-directory/architect.yml`);
-      expect(ctx.stdout).to.contain('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.');
+      expect(ctx.stdout).to.contain('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://docs.architect.io/components/architect-yml.');
     });
 
   mockInit()
