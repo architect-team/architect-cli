@@ -65,6 +65,14 @@ services:
     external_links:
       - kibana
     container_name: logstash-service
+    deploy:
+     resources:
+       limits:
+         memory: 1.5G
+         cpu: 0.25
+    labels:
+      ENABLE: 'true'
+      RULE: test
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.8.0
@@ -100,6 +108,10 @@ services:
       - DB_NAME=gitea
       - DB_USER=gitea
       - DB_PASSWD=gitea
+    labels:
+      - "enable=true"
+      - "rule=test"
+      - 'key_only'
 
 networks:
   elk:

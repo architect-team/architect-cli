@@ -341,4 +341,46 @@ services:
         const component_object: any = yaml.load(writeFileSync.args[0][1]);
         expect(component_object.services['elasticsearch'].interfaces.expose.port).eq(5432);
       });
+
+    mockInit()
+      .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+      .it('adding cpu and memory resources', ctx => {
+        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+        expect(writeFileSync.called).to.be.true;
+
+        const component_object: any = yaml.load(writeFileSync.args[0][1]);
+        expect(component_object.services['logstash'].cpu).eq(0.25);
+        expect(component_object.services['logstash'].memory).eq('1.5G');
+      });
+
+    mockInit()
+      .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+      .it('converting labels in array format', ctx => {
+        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+        expect(writeFileSync.called).to.be.true;
+
+        const component_object: any = yaml.load(writeFileSync.args[0][1]);
+        expect(component_object.services['kibana'].labels.enable).eq('true');
+        expect(component_object.services['kibana'].labels.rule).eq('test');
+      });
+
+    mockInit()
+      .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+      .it('converting labels in object format', ctx => {
+        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+        expect(writeFileSync.called).to.be.true;
+
+        const component_object: any = yaml.load(writeFileSync.args[0][1]);
+        expect(component_object.services['logstash'].labels.ENABLE).eq('true');
+        expect(component_object.services['logstash'].labels.RULE).eq('test');
+      });
+
+    mockInit()
+      .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+      .it(`warns the user if a listed label couldn't be converted`, ctx => {
+        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+        expect(writeFileSync.called).to.be.true;
+
+        expect(ctx.stdout).to.contain('Could not convert label key_only');
+      });
 });
