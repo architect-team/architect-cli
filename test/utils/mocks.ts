@@ -1,10 +1,10 @@
 import { test } from '@oclif/test';
 import path from 'path';
 import AuthClient from '../../src/app-config/auth';
-import { DockerComposeUtils } from '../../src/common/docker-compose';
-import DockerBuildXUtils from '../../src/common/utils/docker-buildx.utils';
-import * as Docker from '../../src/common/utils/docker';
 import SecretUtils from '../../src/architect/secret/secret.utils';
+import { DockerComposeUtils } from '../../src/common/docker-compose';
+import * as Docker from '../../src/common/utils/docker';
+import DockerBuildXUtils from '../../src/common/utils/docker-buildx.utils';
 
 export const MOCK_API_HOST = 'http://mock.api.localhost';
 
@@ -32,3 +32,4 @@ export const mockArchitectAuth = test
   .stub(DockerBuildXUtils, 'getBuilder', () => { })
   .stub(SecretUtils, 'getSecrets', () => [])
   .stub(SecretUtils, 'batchUpdateSecrets', () => [])
+  .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', () => { })
