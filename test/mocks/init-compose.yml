@@ -69,7 +69,7 @@ services:
      resources:
        limits:
          memory: 1.5G
-         cpu: 0.25
+         cpus: 0.25
     labels:
       ENABLE: 'true'
       RULE: test
