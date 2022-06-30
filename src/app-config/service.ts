@@ -11,7 +11,7 @@ import LocalPaths from '../paths';
 import AuthClient from './auth';
 import AppConfig from './config';
 
-export enum CLI_ENV {
+export enum APP_ENV {
   TEST = 'test',
   PRODUCTION = 'production',
   DEV = 'dev',
@@ -56,16 +56,16 @@ export default class AppService {
     const url = new URL(this.config.api_host);
 
     if (process.env.TEST === '1') {
-      this.environment = CLI_ENV.TEST;
+      this.environment = APP_ENV.TEST;
     }
     else if (url.hostname.endsWith('.localhost')) {
-      this.environment = CLI_ENV.LOCAL;
+      this.environment = APP_ENV.LOCAL;
     }
     else if (url.hostname.endsWith('.dev.architect.io')) {
-      this.environment = CLI_ENV.DEV;
+      this.environment = APP_ENV.DEV;
     }
     else {
-      this.environment = CLI_ENV.PRODUCTION;
+      this.environment = APP_ENV.PRODUCTION;
     }
 
     // Set HOST header for local dev

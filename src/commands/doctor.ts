@@ -1,4 +1,3 @@
-import { Flags } from '@oclif/core';
 import fs from 'fs-extra';
 import * as http from 'http';
 import opener from 'opener';
@@ -7,7 +6,7 @@ import BaseCommand from '../base-command';
 import PortUtil from '../common/utils/port';
 
 interface DOCTOR_INPUT_PROPERTIES {
-  NUM_RECORDS: {
+  HISTORY_LENGTH: {
     DEFAULT_VALUE: number;
     LOWER_BOUND_INCLUSIVE: number;
     UPPER_BOUND_INCLUSIVE: number;
@@ -20,73 +19,40 @@ interface DOCTOR_INPUT_PROPERTIES {
   };
 }
 
+const DOCTOR_PROPERTIES: DOCTOR_INPUT_PROPERTIES = {
+  HISTORY_LENGTH: {
+    DEFAULT_VALUE: 5,
+    LOWER_BOUND_INCLUSIVE: 1,
+    UPPER_BOUND_INCLUSIVE: 5,
+  },
+  COMPOSE: {
+    DEFAULT_VALUE: true,
+  },
+  DOCKER: {
+    DEFAULT_VALUE: true,
+  },
+};
+
 export default class Doctor extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
   }
-  protected static readonly properties: DOCTOR_INPUT_PROPERTIES = {
-    NUM_RECORDS: {
-      DEFAULT_VALUE: 5,
-      LOWER_BOUND_INCLUSIVE: 1,
-      UPPER_BOUND_INCLUSIVE: 5,
-    },
-    COMPOSE: {
-      DEFAULT_VALUE: true,
-    },
-    DOCKER: {
-      DEFAULT_VALUE: true,
-    },
-  };
 
   history: any[] = [];
 
   static description = 'Get debugging information for troubleshooting';
-  static usage = 'doctor [FLAGS]';
-  static num_records_hint = `${this.properties.NUM_RECORDS.LOWER_BOUND_INCLUSIVE} to ${this.properties.NUM_RECORDS.UPPER_BOUND_INCLUSIVE} inclusive.`;
+  static usage = 'doctor';
+  static history_length_hint = `${DOCTOR_PROPERTIES.HISTORY_LENGTH.LOWER_BOUND_INCLUSIVE} to ${DOCTOR_PROPERTIES.HISTORY_LENGTH.UPPER_BOUND_INCLUSIVE} inclusive.`;
   static flags: any = {
     ...BaseCommand.flags,
-    'auto-approve': {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: 'Automatically apply the changes',
-        default: false,
-      }),
-    },
-    records: {
-      non_sensitive: true,
-      ...Flags.integer({
-        required: false,
-        char: 'n',
-        description: `Number of command history records for architect to retrieve; ${this.num_records_hint}`,
-        default: this.properties.NUM_RECORDS.DEFAULT_VALUE,
-      }),
-    },
-    compose: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        required: false,
-        char: 'c',
-        description: `Allows architect to include docker compose files in the list of file names residing in the configuration directory`,
-        default: this.properties.COMPOSE.DEFAULT_VALUE,
-      }),
-    },
-    docker: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        required: false,
-        char: 'd',
-        description: `Allows architect to include a list of currently running docker containers`,
-        default: this.properties.DOCKER.DEFAULT_VALUE,
-      }),
-    },
   };
 
-  protected static async numRecordsInputIsValid(num?: any): Promise<boolean> {
+  async numRecordsInputIsValid(num?: any): Promise<boolean> {
     if (!num || isNaN(num)) {
       return false;
     }
-    return (num >= Doctor.properties.NUM_RECORDS.LOWER_BOUND_INCLUSIVE &&
-      num <= Doctor.properties.NUM_RECORDS.UPPER_BOUND_INCLUSIVE);
+    return (num >= DOCTOR_PROPERTIES.HISTORY_LENGTH.LOWER_BOUND_INCLUSIVE &&
+      num <= DOCTOR_PROPERTIES.HISTORY_LENGTH.UPPER_BOUND_INCLUSIVE);
   }
 
   protected async listenForDoctorReportRequest(port: number): Promise<string> {
@@ -120,35 +86,30 @@ export default class Doctor extends BaseCommand {
     const inquirer = require('inquirer');
     const inquirerPrompt = require('inquirer-autocomplete-prompt');
     inquirer.registerPrompt('autocomplete', inquirerPrompt);
-    const { flags } = await this.parse(Doctor);
     const answers: any = await inquirer.prompt([
       {
         type: 'number',
-        name: 'num_records',
-        when: !flags['auto-approve'] || !await Doctor.numRecordsInputIsValid(flags.records),
-        default: Doctor.properties.NUM_RECORDS.DEFAULT_VALUE,
-        emptyText: `Default value: ${Doctor.properties.NUM_RECORDS.DEFAULT_VALUE}`,
-        message: `How many historical commands should we retrieve? (${Doctor.num_records_hint})`,
-        filter: async (input: any) => await Doctor.numRecordsInputIsValid(Number(input)) ? input : Doctor.properties.NUM_RECORDS.DEFAULT_VALUE,
+        name: 'history-length',
+        default: DOCTOR_PROPERTIES.HISTORY_LENGTH.DEFAULT_VALUE,
+        message: `How many historical commands should we include in the report? (${Doctor.history_length_hint})`,
+        filter: async (input: any) => await this.numRecordsInputIsValid(input as number) ? input : DOCTOR_PROPERTIES.HISTORY_LENGTH.DEFAULT_VALUE,
       },
       {
         type: 'confirm',
         name: 'compose',
-        when: !flags['auto-approve'],
-        message: 'Grant architect access to add docker compose filenames?',
-        default: Doctor.properties.COMPOSE.DEFAULT_VALUE,
+        message: 'Include .yml filenames to the report\'s config directory listing?',
+        default: DOCTOR_PROPERTIES.COMPOSE.DEFAULT_VALUE,
       },
       {
         type: 'confirm',
         name: 'docker',
-        when: !flags['auto-approve'],
-        message: `Grant architect access to include running docker container ID, Image and Name information?`,
-        default: Doctor.properties.DOCKER.DEFAULT_VALUE,
+        message: `Include currently running docker container information to the report?`,
+        default: DOCTOR_PROPERTIES.DOCKER.DEFAULT_VALUE,
       },
     ]);
 
-    const command_metadata = await this.readCommandHistoryFromFileSystem();
-    this.history = (command_metadata || []).slice(~Math.min(answers.num_records, command_metadata.length) + 1);
+    const command_metadata = await this.sentry.readCommandHistoryFromFileSystem();
+    this.history = (command_metadata || []).slice(~Math.min(answers.history_length, command_metadata.length) + 1);
 
     // .yaml && .yml files removed from report's config_dir_files
     if (!answers.compose) {
@@ -156,7 +117,7 @@ export default class Doctor extends BaseCommand {
         ...record,
         _extra: {
           ...record._extra,
-          config_dir_files: (record._extra.config_dir_files || []).filter((f: any) => !f.name.includes('.yml')),
+          config_dir_files: (record._extra?.config_dir_files || []).filter((f: any) => !f.name.includes('.yml')),
         },
       }));
     }
@@ -167,7 +128,10 @@ export default class Doctor extends BaseCommand {
         ...record,
         _extra: {
           ...record._extra,
-          docker_containers: undefined,
+          docker_info: {
+            ...record._extra.docker_info,
+            Containers: undefined,
+          },
         },
       }));
     }
