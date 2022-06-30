@@ -107,7 +107,7 @@ export default class Doctor extends BaseCommand {
         default: DOCTOR_PROPERTIES.DOCKER.DEFAULT_VALUE,
       },
     ]);
-    console.log(answers);
+
     const command_metadata = await this.sentry.readCommandHistoryFromFileSystem();
     this.history = (command_metadata || []).slice(~Math.min(answers.history, command_metadata.length) + 1);
 
