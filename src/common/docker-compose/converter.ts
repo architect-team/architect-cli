@@ -6,6 +6,7 @@ import { VolumeSpec } from '../../dependency-manager/spec/common-spec';
 import { ComponentSpec } from '../../dependency-manager/spec/component-spec';
 import { BuildSpec } from '../../dependency-manager/spec/resource-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../../dependency-manager/spec/service-spec';
+import { Slugs } from '../../dependency-manager/spec/utils/slugs';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
 import DockerComposeTemplate, { DockerComposeDeploy, DockerComposeHealthCheck } from './template';
 
@@ -33,6 +34,7 @@ export class ComposeConverter {
     { compose_property: 'deploy', architect_property: 'cpu', func: this.convertCpu },
     { compose_property: 'deploy', architect_property: 'memory', func: this.convertMemory },
     { compose_property: 'labels', architect_property: 'labels', func: this.convertLabels },
+    { compose_property: 'secrets', architect_property: 'volumes', func: this.convertSecrets },
   ];
 
   static convert(docker_compose: DockerComposeTemplate, component_name: string): { architect_yml: string, warnings: string[] } {
@@ -48,7 +50,7 @@ export class ComposeConverter {
 
         const converters = this.compose_property_converters.filter(c => c.compose_property === property_name);
         if (!converters.length) {
-          warnings.push(`Could not convert ${service_name} property ${property_name}`);
+          warnings.push(`Could not convert ${service_name} property "${property_name}"`);
         }
         for (const converter of converters) {
           const architect_property_name = converter.architect_property;
@@ -327,17 +329,24 @@ export class ComposeConverter {
       for (const label of compose_labels) {
         const key_value: string[] = label.split('=');
         if (key_value.length !== 2) {
-          warnings.push(`Could not convert label ${label}`);
+          warnings.push(`Could not convert label ${label} as it is not 2 parts separated by an "=" sign`);
           continue;
         }
-        labels[key_value[0]] = key_value[1];
+        if (!Slugs.LabelKeySlugValidator.test(key_value[0])) {
+          warnings.push(`Label with key ${key_value[0]} could not be converted as it fails validation with regex ${Slugs.LabelKeySlugValidatorString}`);
+        } else if (!Slugs.LabelValueSlugValidator.test(key_value[1])) {
+          warnings.push(`Label with value ${key_value[1]} could not be converted as it fails validation with regex ${Slugs.LabelValueSlugValidatorString}`);
+        } else {
+          labels[key_value[0]] = key_value[1];
+        }
       }
     } else {
       labels = compose_labels;
     }
-
     return { base: labels, warnings };
-  } // TODO: loosen label restrictions? based on need in https://github.com/docker/awesome-compose/blob/master/traefik-golang/compose.yaml
+  }
 
-  // TODO: support compose secrets? ex. https://github.com/docker/awesome-compose/blob/master/nginx-flask-mysql/compose.yaml
+  private static convertSecrets(compose_secrets: Dictionary<string>): ComposeConversion {
+    return { warnings: [`Could not convert property "secrets". See https://docs.architect.io/components/secrets/ for information on adding secrets to an Architect component`] };
+  }
 }

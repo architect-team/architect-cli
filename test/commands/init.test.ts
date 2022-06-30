@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import path from 'path';
 import sinon from 'sinon';
-import { buildConfigFromYml } from '../../src';
+import { buildConfigFromYml, Slugs } from '../../src';
 import { InitCommand } from '../../src/commands/init';
 import { mockArchitectAuth } from '../utils/mocks';
 
@@ -268,9 +268,9 @@ services:
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      expect(ctx.stdout).to.contain(`Could not convert elasticsearch property networks`);
-      expect(ctx.stdout).to.contain(`Could not convert logstash property networks`);
-      expect(ctx.stdout).to.contain(`Could not convert kibana property networks`);
+      expect(ctx.stdout).to.contain(`Could not convert elasticsearch property "networks"`);
+      expect(ctx.stdout).to.contain(`Could not convert logstash property "networks"`);
+      expect(ctx.stdout).to.contain(`Could not convert kibana property "networks"`);
     });
 
   it('finds a compose file in the current directory if one was unspecified', async () => {
@@ -404,10 +404,28 @@ services:
 
   mockInit()
     .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
-    .it(`warns the user if a listed label couldn't be converted`, ctx => {
+    .it(`warns the user if a listed label couldn't be converted because it isn't split by an = sign`, ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      expect(ctx.stdout).to.contain('Could not convert label key_only');
+      expect(ctx.stdout).to.contain('Could not convert label key_only as it is not 2 parts separated by an "=" sign');
+    });
+
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .it(`warns the user if a listed label couldn't be converted because of an invalid key`, ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+
+      expect(ctx.stdout).to.contain(`Label with key rule.invalid&key could not be converted as it fails validation with regex ${Slugs.LabelKeySlugValidatorString}`);
+    });
+
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .it(`warns the user if a listed label couldn't be converted because of an invalid value`, ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+
+      expect(ctx.stdout).to.contain(`Label with value Path(\`/\`) could not be converted as it fails validation with regex ${Slugs.LabelValueSlugValidatorString}`);
     });
 });

@@ -116,6 +116,8 @@ services:
     labels:
       - "enable=true"
       - "rule=test"
+      - "rule.invalid&key=test"
+      - "invalid-rule=Path(`/`)"
       - 'key_only'
     healthcheck:
       test: 'curl google.com'
