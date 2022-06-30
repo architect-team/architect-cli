@@ -42,7 +42,7 @@ export default class Doctor extends BaseCommand {
 
   static description = 'Get debugging information for troubleshooting';
   static usage = 'doctor';
-  static history_length_hint = `${DOCTOR_PROPERTIES.HISTORY_LENGTH.LOWER_BOUND_INCLUSIVE} to ${DOCTOR_PROPERTIES.HISTORY_LENGTH.UPPER_BOUND_INCLUSIVE} inclusive.`;
+  static history_length_hint = `${DOCTOR_PROPERTIES.HISTORY_LENGTH.LOWER_BOUND_INCLUSIVE} to ${DOCTOR_PROPERTIES.HISTORY_LENGTH.UPPER_BOUND_INCLUSIVE} inclusive`;
   static flags: any = {
     ...BaseCommand.flags,
   };
@@ -89,7 +89,7 @@ export default class Doctor extends BaseCommand {
     const answers: any = await inquirer.prompt([
       {
         type: 'number',
-        name: 'history-length',
+        name: 'history',
         default: DOCTOR_PROPERTIES.HISTORY_LENGTH.DEFAULT_VALUE,
         message: `How many historical commands should we include in the report? (${Doctor.history_length_hint})`,
         filter: async (input: any) => await this.numRecordsInputIsValid(input as number) ? input : DOCTOR_PROPERTIES.HISTORY_LENGTH.DEFAULT_VALUE,
@@ -107,9 +107,9 @@ export default class Doctor extends BaseCommand {
         default: DOCTOR_PROPERTIES.DOCKER.DEFAULT_VALUE,
       },
     ]);
-
+    console.log(answers);
     const command_metadata = await this.sentry.readCommandHistoryFromFileSystem();
-    this.history = (command_metadata || []).slice(~Math.min(answers.history_length, command_metadata.length) + 1);
+    this.history = (command_metadata || []).slice(~Math.min(answers.history, command_metadata.length) + 1);
 
     // .yaml && .yml files removed from report's config_dir_files
     if (!answers.compose) {
