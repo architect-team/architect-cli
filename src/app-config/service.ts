@@ -11,6 +11,13 @@ import LocalPaths from '../paths';
 import AuthClient from './auth';
 import AppConfig from './config';
 
+export enum APP_ENV {
+  TEST = 'test',
+  PRODUCTION = 'production',
+  DEV = 'dev',
+  LOCAL = 'local',
+}
+
 export default class AppService {
   config: AppConfig;
   auth: AuthClient;
@@ -18,6 +25,7 @@ export default class AppService {
   _api: AxiosInstance;
   version: string;
   errorContext?: Error;
+  environment: string;
 
   static async create(config_dir: string, version: string): Promise<AppService> {
     const service = new AppService(config_dir, version);
@@ -46,6 +54,20 @@ export default class AppService {
     });
 
     const url = new URL(this.config.api_host);
+
+    if (process.env.TEST === '1') {
+      this.environment = APP_ENV.TEST;
+    }
+    else if (url.hostname.endsWith('.localhost')) {
+      this.environment = APP_ENV.LOCAL;
+    }
+    else if (url.hostname.endsWith('.dev.architect.io')) {
+      this.environment = APP_ENV.DEV;
+    }
+    else {
+      this.environment = APP_ENV.PRODUCTION;
+    }
+
     // Set HOST header for local dev
     if (url.hostname.endsWith('.localhost') && process.env.TEST !== '1') {
       this._api.defaults.baseURL = `${url.protocol}//localhost:${url.port || (url.protocol === 'http:' ? 80 : 443)}${url.pathname}`;
