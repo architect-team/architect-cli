@@ -65,6 +65,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          clean: true
       - uses: actions/setup-node@v2
         with:
           node-version: '16'

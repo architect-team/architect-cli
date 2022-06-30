@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-import execa from 'execa';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import sinon from 'sinon';
@@ -63,6 +62,54 @@ describe('register', function () {
       expect(getDigest.notCalled).to.be.true;
 
       expect(ctx.stdout).to.contain('Successfully registered component');
+    });
+
+  mockArchitectAuth
+    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_architect_account_response)
+    )
+    .nock(MOCK_API_HOST, api => api
+      .post(/\/accounts\/.*\/components/, (body) => {
+        expect(body.tag).to.eq('1.0.0')
+        expect(body.config.name).to.eq('fusionauth')
+        expect(body.config.services.fusionauth.image).to.eq('fusionauth/fusionauth-app:latest')
+        expect(body.config.services.fusionauth.environment.ADMIN_USER_PASSWORD).to.eq('${{ secrets.admin_user_password }}')
+        expect(body.config.services.fusionauth.environment.FUSIONAUTH_KICKSTART).to.eq('/usr/local/fusionauth/kickstart.json')
+
+        const config = fs.readFileSync('examples/fusionauth/config/kickstart.json');
+        expect(body.config.services.fusionauth.environment.KICKSTART_CONTENTS).to.eq(config.toString().trim());
+        return body;
+      })
+      .reply(200, {})
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'examples/fusionauth/architect.yml', '-t', '1.0.0', '--architecture', 'amd64', '--architecture', 'arm64v8', '--architecture', 'windows-amd64', '-a', 'examples'])
+    .it('register component with architecture flag', ctx => {
+      const getDigest = Docker.getDigest as sinon.SinonStub;
+      expect(getDigest.notCalled).to.be.true;
+
+      expect(ctx.stdout).to.contain('Successfully registered component');
+    });
+  
+  mockArchitectAuth
+    .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().throws('Some internal docker build exception'))
+    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'examples/database-seeding/architect.yml', '-t', '1.0.0', '--architecture', 'incorrect', '-a', 'examples'])
+    .catch(err => {
+      expect(`${err}`).to.contain('Some internal docker build exception')
+    })
+    .it('register component with architecture flag failed', ctx => {
+      const getDigest = Docker.getDigest as sinon.SinonStub;
+      expect(getDigest.notCalled).to.be.true;
     });
 
   mockArchitectAuth

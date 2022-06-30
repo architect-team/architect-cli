@@ -122,7 +122,7 @@ export class DockerComposeUtils {
         service.labels = [];
       }
 
-      service.labels.push(`architect.ref=${node.architect_ref}`);
+      service.labels.push(`architect.ref=${node.config.metadata.architect_ref}`);
 
       // Set liveness and healthcheck for services (not supported by Tasks)
       if (node instanceof ServiceNode) {
@@ -169,7 +169,12 @@ export class DockerComposeUtils {
 
           if (build.context || args.length) {
             const compose_build: DockerServiceBuild = {};
-            if (build.context) compose_build.context = path.resolve(component_path, untildify(build.context));
+            if (build.context) {
+              compose_build.context = path.resolve(component_path, untildify(build.context));
+              if (!fs.existsSync(compose_build.context)) {
+                throw new Error(`The path ${compose_build.context} used for the build context of service ${node.config.name} does not exist.`);
+              }
+            }
             if (args.length) compose_build.args = args;
             service.build = compose_build;
           }
