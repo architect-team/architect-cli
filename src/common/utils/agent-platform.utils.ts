@@ -119,6 +119,19 @@ export class AgentPlatformUtils {
     if (!use_existing_sa) {
       CliUx.ux.action.start('Creating the service account');
       await KubernetesPlatformUtils.createKubernetesServiceAccount(untildify(kubeconfig_path), SERVICE_ACCOUNT_NAME);
+      const secret_yml = `
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${SERVICE_ACCOUNT_NAME}
+  annotations:
+    kubernetes.io/service-account.name: ${SERVICE_ACCOUNT_NAME}
+type: kubernetes.io/service-account-token
+`;
+      await execa('kubectl', [
+        ...set_kubeconfig,
+        'apply', '-f', '-',
+      ], { input: secret_yml });
       CliUx.ux.action.stop();
     }
 
@@ -171,6 +184,16 @@ spec:
             value: "${token}"
           - name: AGENT_SERVER
             value: "${host}"
+          - name: KUBERNETES_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: ${SERVICE_ACCOUNT_NAME}
+                key: token
+          - name: KUBERNETES_CERT
+            valueFrom:
+              secretKeyRef:
+                name: ${SERVICE_ACCOUNT_NAME}
+                key: ca.crt
 `;
     const yamlFile = path.join(config.getConfigDir(), 'agent.yml');
     fs.writeFileSync(yamlFile, yaml);
