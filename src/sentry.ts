@@ -3,7 +3,8 @@ import * as Sentry from '@sentry/node';
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
-import AppService, { APP_ENV } from './app-config/service';
+import { ENVIRONMENT } from './app-config/config';
+import AppService from './app-config/service';
 import { docker } from './common/utils/docker';
 import PromptUtils from './common/utils/prompt-utils';
 import LocalPaths from './paths';
@@ -24,7 +25,7 @@ export default class SentryService {
   constructor(app: AppService, child: any) {
     this.app = app;
     this.child = child;
-    this.sentry_out = (app.environment === APP_ENV.PRODUCTION || app.environment === APP_ENV.DEV);
+    this.sentry_out = (app.config.environment === ENVIRONMENT.PRODUCTION || app.config.environment === ENVIRONMENT.DEV);
     this.startSentryTransaction();
   }
 
@@ -45,7 +46,7 @@ export default class SentryService {
     }
 
     const sentry_tags = {
-      environment: this.app.environment,
+      environment: this.app.config.environment,
       cli: this.app.version,
       node_runtime: process.version,
       os: os.platform(),
@@ -57,7 +58,7 @@ export default class SentryService {
     Sentry.init({
       dsn: CLI_SENTRY_DSN,
       debug: false,
-      environment: this.app.environment,
+      environment: this.app.config.environment,
       release: process.env?.npm_package_version,
       tracesSampleRate: 1.0,
       attachStacktrace: true,
@@ -108,7 +109,7 @@ export default class SentryService {
       docker_info: updated_docker_info,
       linked_components: this.app.linkedComponents,
       command: this.child.id || this.child.name,
-      environment: this.app.environment,
+      environment: this.app.config.environment,
       config_dir_files: config_directory_files,
       config_file: path.join(this.app.config?.getConfigDir(), LocalPaths.CLI_CONFIG_FILENAME),
       cwd: process.cwd(),
