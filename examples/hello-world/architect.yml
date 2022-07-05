@@ -7,12 +7,18 @@ keywords:
   - architect
   - examples
 
+secrets:
+  hello_text:
+    default: World
+
 services:
   api:
     build:
       context: .
     interfaces:
       main: 3000
+    environment:
+      HELLO_TEXT: ${{ secrets.hello_text }}
 
 interfaces:
   hello:
