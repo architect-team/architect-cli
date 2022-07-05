@@ -2,7 +2,8 @@ import { Command, Interfaces } from '@oclif/core';
 import '@sentry/tracing';
 import chalk from 'chalk';
 import { ValidationErrors } from './';
-import AppService, { APP_ENV } from './app-config/service';
+import { ENVIRONMENT } from './app-config/config';
+import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
 import SentryService from './sentry';
@@ -64,7 +65,7 @@ export default abstract class BaseCommand extends Command {
   }
 
   async finally(_: Error | undefined): Promise<any> {
-    if (this.app.environment !== APP_ENV.TEST && !_) {
+    if (this.app.config.environment !== ENVIRONMENT.TEST && !_) {
       const { filtered_sentry_args, filtered_sentry_flags } = await this._getNonSensitiveSentryMetadata();
       await this.sentry.setScopeExtra('command_args', filtered_sentry_args);
       await this.sentry.setScopeExtra('command_flags', filtered_sentry_flags);
