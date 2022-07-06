@@ -1,10 +1,11 @@
-import os from 'os';
+import { expect, test } from '@oclif/test';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
-import { expect, test } from '@oclif/test';
+import os from 'os';
 import { Dictionary } from '../../../src';
-import { MOCK_API_HOST } from '../../utils/mocks';
 import UserUtils from '../../../src/architect/user/user.utils';
+import { MOCK_API_HOST } from '../../utils/mocks';
+
 
 describe('secrets', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
@@ -66,7 +67,7 @@ describe('secrets', function () {
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
       .reply(200, account))
-  
+
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
     .nock(MOCK_API_HOST, api => api
@@ -132,11 +133,9 @@ describe('secrets', function () {
     .it('download environment secrets failed when there are no secrets', ctx => {
       expect(ctx.stdout).to.contain('There are no secrets to download');
     })
-  
+
   defaults
-    .nock(MOCK_API_HOST, api => api
-      .get(`/users/me`)
-      .reply(200, member_user))
+    .stub(UserUtils, 'isAdmin', async () => false)
     .stdout({ print })
     .stderr({ print })
     .command(['secrets', '-a', 'examples', `${tmp_dir}/my-secrets.yml`])
