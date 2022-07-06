@@ -25,7 +25,7 @@ export default class SecretsUpload extends BaseCommand {
         description: 'Allow override of existing secrets',
         default: false,
       }),
-    }
+    },
   };
 
   static args = [{
