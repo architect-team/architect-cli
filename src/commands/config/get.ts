@@ -1,8 +1,9 @@
 import AppConfig from '../../app-config/config';
-import Command from '../../base-command';
+import BaseCommand from '../../base-command';
 import InvalidConfigOption from '../../common/errors/invalid-config-option';
 
-export default class ConfigGet extends Command {
+export default class ConfigGet extends BaseCommand {
+
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -10,7 +11,7 @@ export default class ConfigGet extends Command {
   static description = 'Get the value of a CLI config option';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
   };
 
   static args = [{

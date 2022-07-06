@@ -1,7 +1,8 @@
-import Command from '../../base-command';
+import BaseCommand from '../../base-command';
 import Table from '../../base-table';
 
-export default class ConfigView extends Command {
+export default class ConfigView extends BaseCommand {
+
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -10,7 +11,7 @@ export default class ConfigView extends Command {
   static aliases = ['config'];
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
   };
 
   async run(): Promise<void> {

@@ -17,6 +17,7 @@ export default class AppService {
   linkedComponents: Dictionary<string> = {};
   _api: AxiosInstance;
   version: string;
+  errorContext?: Error;
 
   static async create(config_dir: string, version: string): Promise<AppService> {
     const service = new AppService(config_dir, version);
@@ -45,6 +46,7 @@ export default class AppService {
     });
 
     const url = new URL(this.config.api_host);
+
     // Set HOST header for local dev
     if (url.hostname.endsWith('.localhost') && process.env.TEST !== '1') {
       this._api.defaults.baseURL = `${url.protocol}//localhost:${url.port || (url.protocol === 'http:' ? 80 : 443)}${url.pathname}`;
@@ -144,11 +146,19 @@ export default class AppService {
             return this._api.request(error_config);
           }
 
+          if (this.errorContext?.stack) {
+            err.stack = `${err.stack}\n${this.errorContext.stack.substring(7)}`;
+          }
           // Note: it is okay to rethrow these errors as they are here because the catch block in the basecommand.ts should correctly interpret axios errors.
           throw err;
         }
       );
     }
+
+    this._api.interceptors.request.use((config) => {
+      this.errorContext = new Error("Thrown at:");
+      return config;
+    });
 
     return this._api;
   }

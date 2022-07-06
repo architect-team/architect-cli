@@ -13,3 +13,4 @@ oclif.manifest.json
 .DS_Store
 tsconfig.tsbuildinfo
 test/creds.json
+test/sentry-history.json

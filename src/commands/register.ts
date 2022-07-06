@@ -10,7 +10,7 @@ import tmp from 'tmp';
 import untildify from 'untildify';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ResourceSpec, ServiceNode, Slugs } from '../';
 import AccountUtils from '../architect/account/account.utils';
-import Command from '../base-command';
+import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
@@ -20,34 +20,47 @@ import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolat
 
 tmp.setGracefulCleanup();
 
-export default class ComponentRegister extends Command {
+export default class ComponentRegister extends BaseCommand {
   static aliases = ['component:register', 'components:register', 'c:register', 'comp:register'];
   static description = 'Register a new Component with Architect Cloud';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
     ...AccountUtils.flags,
-    arg: Flags.string({
-      description: 'Build arg(s) to pass to docker build',
-      multiple: true,
-    }),
-    tag: Flags.string({
-      char: 't',
-      description: 'Tag to give to the new component',
-      default: 'latest',
-    }),
-    architecture: Flags.string({
-      description: 'Architecture(s) to target for Docker image builds',
-      default: ['amd64'],
-      multiple: true,
-    }),
-    'cache-directory': Flags.string({
-      description: 'Directory to write build cache to',
-      default: path.join(os.tmpdir(), 'architect-build-cache'),
-    }),
+    arg: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: 'Build arg(s) to pass to docker build',
+        multiple: true,
+      }),
+    },
+    tag: {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 't',
+        description: 'Tag to give to the new component',
+        default: 'latest',
+      }),
+    },
+    architecture: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: 'Architecture(s) to target for Docker image builds',
+        default: ['amd64'],
+        multiple: true,
+      }),
+    },
+    'cache-directory': {
+      non_sensitive: true,
+      ...Flags.string({
+        description: 'Directory to write build cache to',
+        default: path.join(os.tmpdir(), 'architect-build-cache'),
+      }),
+    },
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'component',
     description: 'Path to a component to register',
     default: './',
