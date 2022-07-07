@@ -15,7 +15,7 @@ export class Slugs {
 
   public static ArchitectSlugDescription = `must contain only lower alphanumeric and single hyphens or underscores in the middle; max length ${Slugs.SLUG_CHAR_LIMIT}`;
   static CharacterCountLookahead = `(?=.{1,${Slugs.SLUG_CHAR_LIMIT}}(\\${Slugs.NAMESPACE_DELIMITER}|${Slugs.TAG_DELIMITER}|$))`;
-  public static ArchitectSlugRegexBase = `(?!-)(?!.*--)[a-z0-9-]{1,${Slugs.SLUG_CHAR_LIMIT}}(?<!-)`;
+  public static ArchitectSlugRegexBase = `(?!-)(?!.{0,${Slugs.SLUG_CHAR_LIMIT}}--)[a-z0-9-]{1,${Slugs.SLUG_CHAR_LIMIT}}(?<!-)`;
   public static ArchitectSlugValidator = new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`);
 
   public static LabelMax = 63;

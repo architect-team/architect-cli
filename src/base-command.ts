@@ -174,7 +174,7 @@ export default abstract class BaseCommand extends Command {
       const filtered_sentry_flags = await this._filterNonSensitiveSentryMetadata(non_sensitive, _flags || flags);
       return { filtered_sentry_args, filtered_sentry_flags };
     } catch {
-      return { filtered_sentry_args: [], filtered_sentry_flags: []};
+      return { filtered_sentry_args: [], filtered_sentry_flags: [] };
     }
   }
 }

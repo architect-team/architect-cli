@@ -1,8 +1,8 @@
-import { expect, test } from '@oclif/test';
+import { expect } from '@oclif/test';
 import sinon from 'sinon';
 import SecretUtils from '../../../src/architect/secret/secret.utils';
 import UserUtils from '../../../src/architect/user/user.utils';
-import { MOCK_API_HOST } from '../../utils/mocks';
+import { mockArchitectAuth, MOCK_API_HOST } from '../../utils/mocks';
 
 describe('secrets', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
@@ -22,10 +22,10 @@ describe('secrets', function () {
     ],
   }
 
-  const defaults = test
+  const defaults = mockArchitectAuth
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
-      .reply(200, account))
+      .reply(200, account));
 
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)

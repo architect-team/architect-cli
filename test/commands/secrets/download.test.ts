@@ -6,7 +6,6 @@ import { Dictionary } from '../../../src';
 import UserUtils from '../../../src/architect/user/user.utils';
 import { MOCK_API_HOST } from '../../utils/mocks';
 
-
 describe('secrets', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
