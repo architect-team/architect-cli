@@ -32,15 +32,10 @@ abstract class InterpolationRule {
 class BuildInterpolationRule extends InterpolationRule {
   protected checkKey(key: string) {
     const split = key.split('.').filter(key => !key.startsWith('${{'));
-    return split[0] === 'services' && split[2] === 'build';
+    return (split[0] === 'services' || split[0] === 'tasks') && split[2] === 'build';
   }
 
   check(context_map: ContextMap, context_key: string): string | undefined {
-    if (context_key.startsWith('architect.build.')) {
-      return;
-    }
-
-
     // Special case - make exception for "local" environments in/around build block
     const last_key = context_map._path.split('.').pop()?.replace(/ /g, '').replace(dot_regex, '.');
     if (context_key === 'architect.environment' && last_key === `\${{ if architect.environment == 'local' }}`.replace(/ /g, '')) {
@@ -49,13 +44,13 @@ class BuildInterpolationRule extends InterpolationRule {
 
     // Check if the interpolation is inside of a build block
     if (this.checkKey(context_map._path)) {
-      return `Cannot use \${{ ${context_key} }} inside a build block. Use \${{ if architect.build.tag == 'local' }}: for build time conditionals.`;
+      return `Cannot use \${{ ${context_key} }} inside a build block. The build block is immutable. Use architect dev --arg KEY=VALUE for build args.`;
     }
 
     // Check if the interpolation is around a build block
     const maybe_child_key = Object.keys(context_map._obj_map).find(key => key.startsWith(`${context_map._path}.`) && this.checkKey(key));
     if (maybe_child_key) {
-      return `Cannot use \${{ ${context_key} }} around a build block. Use \${{ if architect.build.tag == 'local' }}: for build time conditionals.`;
+      return `Cannot use \${{ ${context_key} }} around a build block. The build block is immutable. Use architect dev --arg KEY=VALUE for build args.`;
     }
   }
 }

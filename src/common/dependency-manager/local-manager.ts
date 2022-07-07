@@ -16,7 +16,6 @@ export default class LocalDependencyManager extends DependencyManager {
   linked_components: Dictionary<string>;
   use_sidecar = false;
   environment = 'local';
-  tag = 'local';
   now = new Date();
 
   loaded_components: Dictionary<ComponentSpec> = {};
@@ -162,9 +161,6 @@ export default class LocalDependencyManager extends DependencyManager {
   getArchitectContext(): ArchitectContext {
     return {
       environment: this.environment,
-      build: {
-        tag: this.tag,
-      },
     };
   }
 }

@@ -86,7 +86,7 @@ export default class ComponentRegister extends BaseCommand {
     const start_time = Date.now();
 
     // here we validate spec and config, but only need to send the spec to the API so we don't need the resulting config
-    let component_spec = buildSpecFromPath(config_path);
+    const component_spec = buildSpecFromPath(config_path);
 
     if (!component_spec.name) {
       throw new Error('Component Config must have a name');
@@ -100,7 +100,7 @@ export default class ComponentRegister extends BaseCommand {
       },
     };
 
-    component_spec = ComponentRegister.registerInterpolation(component_spec, context);
+    ComponentRegister.validateInterpolation(component_spec, context);
 
     const { component_account_name, component_name } = ComponentSlugUtils.parse(component_spec.name);
     const selected_account = await AccountUtils.getAccount(this.app, component_account_name || flags.account);
@@ -275,14 +275,14 @@ export default class ComponentRegister extends BaseCommand {
     return digest;
   }
 
-  static registerInterpolation(component_spec: ComponentSpec, context: any): ComponentSpec {
+  static validateInterpolation(component_spec: ComponentSpec, context: any): ComponentSpec {
     const { interpolated_obj, errors } = interpolateObject(component_spec, context, {
       keys: true,
       values: true,
       file: component_spec.metadata.file,
     });
 
-    const filtered_errors = errors.filter(error => !error.message.startsWith(RequiredInterpolationRule.PREFIX) && !error.value.startsWith('architect.build.'));
+    const filtered_errors = errors.filter(error => !error.message.startsWith(RequiredInterpolationRule.PREFIX));
 
     if (filtered_errors.length) {
       throw new ValidationErrors(filtered_errors, component_spec.metadata.file);

@@ -3,18 +3,12 @@ import { buildSpecFromYml, ValidationErrors } from '../../src';
 import ComponentRegister from '../../src/commands/register';
 
 describe('interpolation-validation', () => {
-  const registerInterpolation = ComponentRegister.registerInterpolation;
+  const validateInterpolation = ComponentRegister.validateInterpolation;
 
-  const context = {
-    architect: {
-      build: {
-        tag: 'latest'
-      }
-    }
-  }
+  const context = {}
 
   describe('validate build block', () => {
-    it('cannot use secret in build block', async () => {
+    it('cannot use secret in build block', () => {
       const component_config = `
         name: hello-world
         secrets:
@@ -29,11 +23,11 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        registerInterpolation(component_spec, context)
+        validateInterpolation(component_spec, context)
       }).to.be.throws(ValidationErrors);
     });
 
-    it('cannot use conditional in build block', async () => {
+    it('cannot use conditional in build block', () => {
       const component_config = `
         name: hello-world
         services:
@@ -47,11 +41,11 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        registerInterpolation(component_spec, context)
+        validateInterpolation(component_spec, context)
       }).to.be.throws(ValidationErrors);
     });
 
-    it('cannot use conditional around build block', async () => {
+    it('cannot use conditional around build block', () => {
       const component_config = `
         name: hello-world
         services:
@@ -65,11 +59,11 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        registerInterpolation(component_spec, context)
+        validateInterpolation(component_spec, context)
       }).to.be.throws(ValidationErrors);
     });
 
-    it('cannot use conditional around service block with build block', async () => {
+    it('cannot use conditional around service block with build block', () => {
       const component_config = `
         name: hello-world
         services:
@@ -83,12 +77,12 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        registerInterpolation(component_spec, context)
+        validateInterpolation(component_spec, context)
       }).to.be.throws(ValidationErrors);
     });
 
     describe('local environment (edge case)', () => {
-      it('can use conditional in build block if local', async () => {
+      it('can use conditional in build block if local', () => {
         const component_config = `
         name: hello-world
         services:
@@ -100,10 +94,10 @@ describe('interpolation-validation', () => {
         `
 
         const component_spec = buildSpecFromYml(component_config)
-        registerInterpolation(component_spec, context)
+        validateInterpolation(component_spec, context)
       });
 
-      it('can use conditional around build block if local', async () => {
+      it('can use conditional around build block if local', () => {
         const component_config = `
         name: hello-world
         services:
@@ -115,10 +109,10 @@ describe('interpolation-validation', () => {
         `
 
         const component_spec = buildSpecFromYml(component_config)
-        registerInterpolation(component_spec, context)
+        validateInterpolation(component_spec, context)
       });
 
-      it('can use conditional around service block with build block if local', async () => {
+      it('can use conditional around service block with build block if local', () => {
         const component_config = `
         name: hello-world
         services:
@@ -130,11 +124,11 @@ describe('interpolation-validation', () => {
         `
 
         const component_spec = buildSpecFromYml(component_config)
-        registerInterpolation(component_spec, context)
+        validateInterpolation(component_spec, context)
       });
     });
 
-    it('can use tag conditional in build block', async () => {
+    it('cannot use tag conditional in build block', () => {
       const component_config = `
         name: hello-world
         services:
@@ -146,10 +140,12 @@ describe('interpolation-validation', () => {
         `
 
       const component_spec = buildSpecFromYml(component_config)
-      registerInterpolation(component_spec, context)
+      expect(() => {
+        validateInterpolation(component_spec, context)
+      }).to.be.throws(ValidationErrors);
     });
 
-    it('can use tag in build block', async () => {
+    it('cannot use tag in build block', () => {
       const component_config = `
         name: hello-world
         services:
@@ -160,10 +156,12 @@ describe('interpolation-validation', () => {
         `
 
       const component_spec = buildSpecFromYml(component_config)
-      registerInterpolation(component_spec, context)
+      expect(() => {
+        validateInterpolation(component_spec, context)
+      }).to.be.throws(ValidationErrors);
     });
 
-    it('can use secret outside build block', async () => {
+    it('can use secret outside build block', () => {
       const component_config = `
         name: hello-world
         secrets:
@@ -176,10 +174,10 @@ describe('interpolation-validation', () => {
         `
 
       const component_spec = buildSpecFromYml(component_config)
-      registerInterpolation(component_spec, context)
+      validateInterpolation(component_spec, context)
     });
 
-    it('can still use conditional without build block', async () => {
+    it('can still use conditional without build block', () => {
       const component_config = `
         name: hello-world
         services:
@@ -190,7 +188,7 @@ describe('interpolation-validation', () => {
         `
 
       const component_spec = buildSpecFromYml(component_config)
-      registerInterpolation(component_spec, context)
+      validateInterpolation(component_spec, context)
     });
   });
 });

@@ -130,14 +130,6 @@ export default class Dev extends BaseCommand {
         char: 'd',
       }),
     },
-    tag: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 't',
-        description: 'Tag to give to the new component',
-        default: 'local',
-      }),
-    },
     arg: Flags.string({
       description: 'Build arg(s) to pass to docker build',
       multiple: true,
@@ -391,8 +383,6 @@ export default class Dev extends BaseCommand {
     } else if (flags.production) {
       dependency_manager.environment = 'local-production';
     }
-
-    dependency_manager.tag = flags.tag;
 
     const component_specs: ComponentSpec[] = [];
 
