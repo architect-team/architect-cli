@@ -108,9 +108,9 @@ export default abstract class BaseCommand extends Command {
     }
 
     const { filtered_sentry_args, filtered_sentry_flags } = await this._getNonSensitiveSentryMetadata();
-    await this.sentry.setScopeExtra('command_args', filtered_sentry_args);
-    await this.sentry.setScopeExtra('command_flags', filtered_sentry_flags);
-    await this.sentry.endSentryTransaction(err);
+    await this.sentry?.setScopeExtra('command_args', filtered_sentry_args);
+    await this.sentry?.setScopeExtra('command_flags', filtered_sentry_flags);
+    await this.sentry?.endSentryTransaction(err);
 
     if (err instanceof ValidationErrors) {
       return prettyValidationErrors(err);
@@ -163,7 +163,7 @@ export default abstract class BaseCommand extends Command {
       const filtered_sentry_flags = await this._filterNonSensitiveSentryMetadata(non_sensitive, _flags || flags);
       return { filtered_sentry_args, filtered_sentry_flags };
     } catch {
-      return { filtered_sentry_args: [], filtered_sentry_flags: []};
+      return { filtered_sentry_args: [], filtered_sentry_flags: [] };
     }
   }
 }
