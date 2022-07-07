@@ -226,7 +226,7 @@ export default class ProjectUtils {
         backend_choices = json_content[INFRASTRUCTURE.BACKEND.toLowerCase()]['choices'] as ProjectRepo[];
       }
 
-      const backend = await this.prompt(backend_choices, 'Select a backend');
+      const backend = await this.prompt(backend_choices, 'This project requires a backend API to function, please pick from the following');
       selections['backend'] = backend;
     } else {
       const frontend = FRONTENDS.find(item => item.name.toLowerCase() === chosen_project.toLowerCase());
@@ -242,7 +242,7 @@ export default class ProjectUtils {
         selections['frontend'] = frontend;
         const json_content = await this.readArchitectTemplateJSON(frontend.project);
         const backend_choices = json_content[INFRASTRUCTURE.BACKEND.toLowerCase()]['choices'] as ProjectRepo[];
-        backend = await this.prompt(backend_choices, 'Select a backend') as ProjectRepo;
+        backend = await this.prompt(backend_choices, 'This project requires a backend API to function, please pick from the following') as ProjectRepo;
       }
       selections['backend'] = backend;
     }
@@ -251,7 +251,7 @@ export default class ProjectUtils {
     const json_content = await this.readArchitectTemplateJSON(selections[INFRASTRUCTURE.BACKEND.toLowerCase()].project);
     if (json_content['database']['required']) {
       const choices = json_content['database']['choices'] as Image[];
-      const database = await this.prompt(choices, 'Select a database');
+      const database = await this.prompt(choices, 'Your backend project requires a database to function, please pick from the following');
       selections['database'] = database;
     }
 
