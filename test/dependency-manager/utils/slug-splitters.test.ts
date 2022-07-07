@@ -11,7 +11,6 @@ describe('slug validators with account', () => {
   const component_slug = `${component_account_name}/${component_name}`;
   const component_version_slug = `${component_account_name}/${component_name}:${tag}`;
   const resource_slug = `${component_account_name}/${component_name}.services.${resource_name}`;
-  const resource_version_slug = `${component_account_name}/${component_name}.services.${resource_name}:${tag}`;
 
   const invalid_slug = 'double--dashes';
   const invalid_tag = '.1.0.0';
@@ -19,7 +18,6 @@ describe('slug validators with account', () => {
   const invalid_component_slug = `${invalid_slug}/${component_name}`;
   const invalid_component_version_slug = `${component_account_name}/${component_name}:${invalid_tag}`;
   const invalid_resource_slug = `${component_account_name}/${component_name}.services.${invalid_slug}`;
-  const invalid_resource_version_slug = `${component_account_name}/${component_name}.services.${resource_name}:${invalid_tag}`;
 
   it(`ComponentSlugUtils.parse accurately splits ${component_slug}`, async () => {
     const result = ComponentSlugUtils.parse(component_slug);
@@ -63,7 +61,6 @@ describe('slug validators without account', () => {
   const component_slug = `${component_name}`;
   const component_version_slug = `${component_name}:${tag}`;
   const resource_slug = `${component_name}.services.${resource_name}`;
-  const resource_version_slug = `${component_name}.services.${resource_name}:${tag}`;
 
   const invalid_slug = 'double--dashes';
   const invalid_tag = '.1.0.0';
@@ -71,7 +68,6 @@ describe('slug validators without account', () => {
   const invalid_component_slug = `${invalid_slug}/${component_name}`;
   const invalid_component_version_slug = `${component_name}:${invalid_tag}`;
   const invalid_resource_slug = `${component_name}.services.${invalid_slug}`;
-  const invalid_resource_version_slug = `${component_name}.services.${resource_name}:${invalid_tag}`;
 
   it(`ComponentSlugUtils.parse accurately splits ${component_slug}`, async () => {
     const result = ComponentSlugUtils.parse(component_slug);
