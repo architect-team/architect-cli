@@ -1,40 +1,66 @@
 import { CliUx, Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
+import { Dictionary, Slugs } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
 import PipelineUtils from '../../architect/pipeline/pipeline.utils';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
-import Command from '../../base-command';
+import BaseCommand from '../../base-command';
 import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.utils';
-import { Dictionary } from '../../';
-import { Slugs } from '../../';
 
-export default class PlatformCreate extends Command {
+export default class PlatformCreate extends BaseCommand {
   static aliases = ['platforms:register', 'platform:create', 'platforms:create'];
   static description = 'Register a new platform with Architect Cloud';
 
   static args = [{
+    non_sensitive: true,
     name: 'platform',
     description: 'Name to give the platform',
     parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
     ...AccountUtils.flags,
-    auto_approve: Flags.boolean({
-      description: `${Command.DEPRECATED} Please use --auto-approve.`,
-      hidden: true,
-    }),
-    ['auto-approve']: Flags.boolean(),
-    type: Flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes'] }),
-    host: Flags.string({ char: 'h' }),
-    kubeconfig: Flags.string({
-      char: 'k',
-      default: '~/.kube/config',
-      exclusive: ['host'],
-    }),
-    flag: Flags.string({ multiple: true, default: [] }),
+    auto_approve: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
+        hidden: true,
+      }),
+    },
+    ['auto-approve']: {
+      non_sensitive: true,
+      ...Flags.boolean(),
+    },
+    type: {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 't',
+        options: ['KUBERNETES', 'kubernetes'],
+      }),
+    },
+    host: {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'h',
+      }),
+    },
+    kubeconfig: {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'k',
+        default: '~/.kube/config',
+        exclusive: ['host'],
+      }),
+    },
+    flag: {
+      non_sensitive: true,
+      ...Flags.string({
+        multiple: true,
+        default: [],
+      }),
+    },
   };
 
   protected async parse<F, A extends {

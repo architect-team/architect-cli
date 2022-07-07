@@ -3,15 +3,15 @@ import chalk from 'chalk';
 import { spawn } from 'child_process';
 import inquirer from 'inquirer';
 import { Readable, Writable } from 'stream';
+import { ArchitectError, parseUnknownSlug, ResourceSlugUtils } from '../';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import Environment from '../architect/environment/environment.entity';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
-import Command from '../base-command';
+import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
-import { ArchitectError, parseUnknownSlug, ResourceSlugUtils } from '../';
 
-export default class Logs extends Command {
+export default class Logs extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -19,33 +19,49 @@ export default class Logs extends Command {
   static description = 'Get logs from services both locally and remote';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    follow: Flags.boolean({
-      description: 'Specify if the logs should be streamed.',
-      char: 'f',
-      default: false,
-    }),
-    since: Flags.string({
-      description: 'Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used.',
-      default: '',
-    }),
-    raw: Flags.boolean({
-      description: 'Show the raw output of the logs.',
-      default: false,
-    }),
-    tail: Flags.integer({
-      description: 'Lines of recent log file to display. Defaults to -1 with no selector, showing all log lines otherwise 10, if a selector is provided.',
-      default: -1,
-    }),
-    timestamps: Flags.boolean({
-      description: 'Include timestamps on each line in the log output.',
-      default: false,
-    }),
+    follow: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: 'Specify if the logs should be streamed.',
+        char: 'f',
+        default: false,
+      }),
+    },
+    since: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: 'Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used.',
+        default: '',
+      }),
+    },
+    raw: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: 'Show the raw output of the logs.',
+        default: false,
+      }),
+    },
+    tail: {
+      non_sensitive: true,
+      ...Flags.integer({
+        description: 'Lines of recent log file to display. Defaults to -1 with no selector, showing all log lines otherwise 10, if a selector is provided.',
+        default: -1,
+      }),
+    },
+    timestamps: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: 'Include timestamps on each line in the log output.',
+        default: false,
+      }),
+    },
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'resource',
     description: 'Name of resource',
     required: false,
@@ -138,6 +154,7 @@ export default class Logs extends Command {
       childProcess.on('close', resolve);
     });
   }
+
 
   async runRemote(account: Account): Promise<void> {
     const { args, flags } = await this.parse(Logs);

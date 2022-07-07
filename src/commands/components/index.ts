@@ -1,6 +1,6 @@
 import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
-import Command from '../../base-command';
+import BaseCommand from '../../base-command';
 import Table from '../../base-table';
 import localizedTimestamp from '../../common/utils/localized-timestamp';
 
@@ -14,16 +14,17 @@ interface Component {
   account: Account;
 }
 
-export default class Components extends Command {
+export default class Components extends BaseCommand {
   static aliases = ['components', 'components:search', 'component:search', 'component:search'];
   static description = 'Search components you have access to';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
     ...AccountUtils.flags,
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'query',
     description: 'Search term used to filter the results',
   }];

@@ -18,11 +18,14 @@ export default class Destroy extends DeployCommand {
     ...DeployCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    components: Flags.string({
-      char: 'c',
-      description: 'Component(s) to destroy',
-      multiple: true,
-    }),
+    components: {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'c',
+        description: 'Component(s) to destroy',
+        multiple: true,
+      }),
+    },
   };
 
   async run(): Promise<void> {

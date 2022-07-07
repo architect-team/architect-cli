@@ -1,6 +1,6 @@
 import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
-import Command from '../../base-command';
+import BaseCommand from '../../base-command';
 import Table from '../../base-table';
 import localizedTimestamp from '../../common/utils/localized-timestamp';
 
@@ -9,17 +9,18 @@ interface ComponentVersion {
   tag: string;
 }
 
-export default class ComponentVersions extends Command {
+export default class ComponentVersions extends BaseCommand {
   static aliases = ['component:versions', 'component:version'];
   static description = 'Search component versions of a particular component';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
     ...AccountUtils.flags,
   };
 
   static args = [{
     name: 'component_name',
+    non_sensitive: true,
   }];
 
   async run(): Promise<void> {

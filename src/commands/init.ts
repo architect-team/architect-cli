@@ -7,11 +7,11 @@ import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
 import { validateOrRejectSpec } from '../';
-import Command from '../base-command';
+import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { ComposeConverter } from '../common/docker-compose/converter';
 
-export abstract class InitCommand extends Command {
+export abstract class InitCommand extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -19,24 +19,39 @@ export abstract class InitCommand extends Command {
   static description = 'Initialize an architect component from an existing docker-compose file';
 
   static flags = {
-    ...Command.flags,
-    component_file: Flags.string({
-      description: `${Command.DEPRECATED} Please use --component-file.`,
-      hidden: true,
-    }),
-    'component-file': Flags.string({
-      char: 'o',
-      description: 'Path where the component file should be written to',
-      default: 'architect.yml',
-    }),
-    name: Flags.string({
-      char: 'n',
-    }),
-    from_compose: Flags.string({
-      description: `${Command.DEPRECATED} Please use --from-compose.`,
-      hidden: true,
-    }),
-    'from-compose': Flags.string({}),
+    ...BaseCommand.flags,
+    component_file: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: `${BaseCommand.DEPRECATED} Please use --component-file.`,
+        hidden: true,
+      }),
+    },
+    'component-file': {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'o',
+        description: 'Path where the component file should be written to',
+        default: 'architect.yml',
+      }),
+    },
+    name: {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'n',
+      }),
+    },
+    from_compose: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: `${BaseCommand.DEPRECATED} Please use --from-compose.`,
+        hidden: true,
+      }),
+    },
+    'from-compose': {
+      non_sensitive: true,
+      ...Flags.string({}),
+    },
   };
 
   protected async parse<F, A extends {
@@ -88,7 +103,7 @@ export abstract class InitCommand extends Command {
 
     fs.writeFileSync(flags['component-file'], architect_yml);
     this.log(chalk.green(`Converted ${path.basename(from_path)} and wrote Architect component config to ${flags['component-file']}`));
-    this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.'));
+    this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://docs.architect.io/components/architect-yml.'));
   }
 
   async getComposeFromPath(flags: any): Promise<string> {

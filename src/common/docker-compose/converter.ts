@@ -1,11 +1,14 @@
 import { classToPlain } from 'class-transformer';
 import yaml from 'js-yaml';
+import { LivenessProbeConfig } from '../../dependency-manager/config/common-config';
+import { ServiceInterfaceConfig } from '../../dependency-manager/config/service-config';
 import { VolumeSpec } from '../../dependency-manager/spec/common-spec';
 import { ComponentSpec } from '../../dependency-manager/spec/component-spec';
 import { BuildSpec } from '../../dependency-manager/spec/resource-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../../dependency-manager/spec/service-spec';
+import { Slugs } from '../../dependency-manager/spec/utils/slugs';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
-import DockerComposeTemplate from './template';
+import DockerComposeTemplate, { DockerComposeDeploy, DockerComposeHealthCheck } from './template';
 
 interface ComposeConversion {
   local?: any
@@ -15,17 +18,24 @@ interface ComposeConversion {
 
 export class ComposeConverter {
 
-  private static compose_property_converters: { [key: string]: { architect_property: string, func: (compose_property: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceSpec>) => ComposeConversion } } = {
-    environment: { architect_property: 'environment', func: (environment: any) => { return { base: environment }; } },
-    command: { architect_property: 'command', func: (command: any) => { return { base: command }; } },
-    entrypoint: { architect_property: 'entrypoint', func: (entrypoint: any) => { return { base: entrypoint }; } },
-    image: { architect_property: 'image', func: (image: string) => { return { base: image }; } },
-    build: { architect_property: 'build', func: this.convertBuild },
-    ports: { architect_property: 'interfaces', func: this.convertPorts },
-    volumes: { architect_property: 'volumes', func: this.convertVolumes },
-    depends_on: { architect_property: 'depends_on', func: this.convertDependsOn },
-    external_links: { architect_property: 'depends_on', func: this.convertDependsOn },
-  };
+  private static compose_property_converters: { compose_property: string, architect_property: string, func: (compose_property: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceSpec>) => ComposeConversion }[] = [
+    { compose_property: 'environment',  architect_property: 'environment', func: this.convertEnvironment },
+    { compose_property: 'command', architect_property: 'command', func: (command: any) => { return { base: command }; } },
+    { compose_property: 'entrypoint', architect_property: 'entrypoint', func: (entrypoint: any) => { return { base: entrypoint }; } },
+    { compose_property: 'image', architect_property: 'image', func: (image: string) => { return { base: image }; } },
+    { compose_property: 'build', architect_property: 'build', func: this.convertBuild },
+    { compose_property: 'ports', architect_property: 'interfaces', func: this.convertPorts },
+    { compose_property: 'volumes', architect_property: 'volumes', func: this.convertVolumes },
+    { compose_property: 'depends_on', architect_property: 'depends_on', func: this.convertDependsOn },
+    { compose_property: 'external_links', architect_property: 'depends_on', func: this.convertDependsOn },
+    { compose_property: 'healthcheck', architect_property: 'liveness_probe', func: this.convertHealthcheck },
+    { compose_property: 'container_name', architect_property: 'reserved_name', func: this.convertContainerName },
+    { compose_property: 'expose', architect_property: 'interfaces', func: this.convertExpose },
+    { compose_property: 'deploy', architect_property: 'cpu', func: this.convertCpu },
+    { compose_property: 'deploy', architect_property: 'memory', func: this.convertMemory },
+    { compose_property: 'labels', architect_property: 'labels', func: this.convertLabels },
+    { compose_property: 'secrets', architect_property: 'volumes', func: this.convertSecrets },
+  ];
 
   static convert(docker_compose: DockerComposeTemplate, component_name: string): { architect_yml: string, warnings: string[] } {
     let warnings: string[] = [];
@@ -37,9 +47,14 @@ export class ComposeConverter {
     for (const [service_name, service_data] of Object.entries(docker_compose.services || {})) {
       const architect_service: Partial<ServiceSpec> = {};
       for (const [property_name, property_data] of Object.entries(service_data || {})) {
-        if (this.compose_property_converters[property_name]) {
-          const architect_property_name = this.compose_property_converters[property_name].architect_property;
-          const converted_props: ComposeConversion = this.compose_property_converters[property_name].func(property_data, docker_compose, architect_service);
+
+        const converters = this.compose_property_converters.filter(c => c.compose_property === property_name);
+        if (!converters.length) {
+          warnings.push(`Could not convert ${service_name} property "${property_name}"`);
+        }
+        for (const converter of converters) {
+          const architect_property_name = converter.architect_property;
+          const converted_props: ComposeConversion = converter.func(property_data, docker_compose, architect_service);
           if (converted_props.local) {
             const local_block_key = "${{ if architect.environment == 'local' }}";
             if (!(architect_service as any)[local_block_key]) {
@@ -47,17 +62,25 @@ export class ComposeConverter {
             }
             (architect_service as any)[local_block_key][architect_property_name] = converted_props.local;
           }
+
           if (converted_props.base) {
-            (architect_service as any)[architect_property_name] = converted_props.base;
+            if (converted_props.base && typeof converted_props.base === 'object' && (architect_service as any)[architect_property_name]) {
+              for (const [prop, value] of Object.entries(converted_props.base)) {
+                (architect_service as any)[architect_property_name][prop] = value;
+              }
+            } else {
+              (architect_service as any)[architect_property_name] = converted_props.base;
+            }
           }
+
           if (converted_props.warnings) {
             warnings = warnings.concat(converted_props.warnings);
           }
-        } else {
-          warnings.push(`Could not convert ${service_name} property ${property_name}`);
         }
       }
-      architect_service.reserved_name = service_name;
+      if (!architect_service.reserved_name) {
+        architect_service.reserved_name = service_name;
+      }
       architect_component.services[service_name] = architect_service;
     }
 
@@ -234,5 +257,96 @@ export class ComposeConverter {
       }
     }
     return { base: depends_on.length ? depends_on : undefined };
+  }
+
+  private static convertHealthcheck(compose_healthcheck: DockerComposeHealthCheck): ComposeConversion {
+    let liveness_probe_command;
+    const command = compose_healthcheck.test;
+    if (command && Array.isArray(command)) {
+      if (command.length >= 2 && command[0] === 'CMD-SHELL') {
+        liveness_probe_command = command.slice(1);
+      } else if (command.length && command[0] === 'CMD') {
+        liveness_probe_command = command.slice(1);
+      }
+    } else if (command && typeof command === 'string') {
+      liveness_probe_command = command;
+    }
+
+    const liveness_probe: Partial<LivenessProbeConfig> = {
+      command: liveness_probe_command,
+      interval: compose_healthcheck.interval,
+      timeout: compose_healthcheck.timeout,
+      failure_threshold: compose_healthcheck.retries,
+      initial_delay: compose_healthcheck.start_period,
+    };
+
+    return { base: liveness_probe };
+  }
+
+  private static convertContainerName(compose_container_name: string): ComposeConversion {
+    return { base: compose_container_name };
+  }
+
+  private static convertEnvironment(compose_environment: Dictionary<string> | string[]): ComposeConversion {
+    if (Array.isArray(compose_environment)) {
+      const environment: Dictionary<string> = {};
+      const warnings: string[] = [];
+      for (const key_value_pair of compose_environment) {
+        const key_value: string[] = key_value_pair.split('=');
+        if (key_value.length !== 2) {
+          warnings.push(`Could not convert environment variable ${key_value_pair}`);
+          continue;
+        }
+        environment[key_value[0]] = key_value[1];
+      }
+      return { base: environment, warnings };
+    }
+    return { base: compose_environment };
+  }
+
+  private static convertExpose(compose_expose: string[]): ComposeConversion {
+    const interfaces: Dictionary<ServiceInterfaceConfig> = {};
+    let counter = 0;
+    for (const expose_port of compose_expose) {
+      interfaces[!counter ? 'expose' : `expose${counter}`] = { port: expose_port };
+      counter++;
+    }
+    return { base: interfaces };
+  }
+
+  private static convertCpu(compose_deploy: DockerComposeDeploy): ComposeConversion {
+    return { base: compose_deploy.resources?.limits.cpus };
+  }
+
+  private static convertMemory(compose_deploy: DockerComposeDeploy): ComposeConversion {
+    return { base: compose_deploy.resources?.limits.memory };
+  }
+
+  private static convertLabels(compose_labels: Dictionary<string> | string[]): ComposeConversion {
+    let labels: Dictionary<string> = {};
+    const warnings = [];
+    if (Array.isArray(compose_labels)) {
+      for (const label of compose_labels) {
+        const key_value: string[] = label.split('=');
+        if (key_value.length !== 2) {
+          warnings.push(`Could not convert label ${label} as it is not 2 parts separated by an "=" sign`);
+          continue;
+        }
+        if (!Slugs.LabelKeySlugValidator.test(key_value[0])) {
+          warnings.push(`Label with key ${key_value[0]} could not be converted as it fails validation with regex ${Slugs.LabelKeySlugValidatorString}`);
+        } else if (!Slugs.LabelValueSlugValidator.test(key_value[1])) {
+          warnings.push(`Label with value ${key_value[1]} could not be converted as it fails validation with regex ${Slugs.LabelValueSlugValidatorString}`);
+        } else {
+          labels[key_value[0]] = key_value[1];
+        }
+      }
+    } else {
+      labels = compose_labels;
+    }
+    return { base: labels, warnings };
+  }
+
+  private static convertSecrets(compose_secrets: Dictionary<string>): ComposeConversion {
+    return { warnings: [`Could not convert property "secrets". See https://docs.architect.io/components/secrets/ for information on adding secrets to an Architect component`] };
   }
 }

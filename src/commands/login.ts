@@ -3,13 +3,13 @@ import chalk from 'chalk';
 import opener from 'opener';
 import { AuthorizationCode } from 'simple-oauth2';
 import AuthClient from '../app-config/auth';
-import Command from '../base-command';
+import BaseCommand from '../base-command';
 import * as Docker from '../common/utils/docker';
 import PortUtil from '../common/utils/port';
 import PromptUtils from '../common/utils/prompt-utils';
 import inquirer = require('inquirer');
 
-export default class Login extends Command {
+export default class Login extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -17,7 +17,7 @@ export default class Login extends Command {
   static description = 'Login to the Architect Cloud platform';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
     email: Flags.string({
       char: 'e',
       description: 'Email',
@@ -91,3 +91,4 @@ export default class Login extends Command {
     await this.app.auth.loginFromCli(answers.email, answers.password);
   }
 }
+

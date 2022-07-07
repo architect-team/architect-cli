@@ -6,12 +6,15 @@ import Account from './account.entity';
 
 export default class AccountUtils {
   static flags = {
-    account: Flags.string({
-      description: 'Architect account',
-      env: 'ARCHITECT_ACCOUNT',
-      char: 'a',
-      parse: async value => value.toLowerCase(),
-    }),
+    account: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: 'Architect account',
+        env: 'ARCHITECT_ACCOUNT',
+        char: 'a',
+        parse: async value => value.toLowerCase(),
+      }),
+    },
   };
 
   static getLocalAccount(): Account {

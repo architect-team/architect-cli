@@ -1,13 +1,13 @@
 import { CliUx, Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
+import { ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils } from '../';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
-import Command from '../base-command';
+import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import * as Docker from '../common/utils/docker';
-import { ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils } from '../';
 
-export default class TaskExec extends Command {
+export default class TaskExec extends BaseCommand {
   static aliases = ['task:exec'];
   static description = 'Execute a task in the given environment';
 
@@ -17,35 +17,46 @@ export default class TaskExec extends Command {
   }
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
 
-    local: Flags.boolean({
-      char: 'l',
-      description: 'Deploy the stack locally instead of via Architect Cloud',
-      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
-    }),
-    compose_file: Flags.string({
-      description: `${Command.DEPRECATED} Please use --compose-file.`,
-      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
-      hidden: true,
-    }),
-    'compose-file': Flags.string({
-      char: 'o',
-      description: 'Path where the compose file should be written to',
-      default: '',
-      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
-    }),
+    local: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        char: 'l',
+        description: 'Deploy the stack locally instead of via Architect Cloud',
+        exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
+      }),
+    },
+    compose_file: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: `${BaseCommand.DEPRECATED} Please use --compose-file.`,
+        exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+        hidden: true,
+      }),
+    },
+    'compose-file': {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'o',
+        description: 'Path where the compose file should be written to',
+        default: '',
+        exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      }),
+    },
   };
 
   static args = [
     {
+      non_sensitive: true,
       name: 'component',
       description: 'The name of the component that contains the task to execute',
       required: true,
     },
     {
+      non_sensitive: true,
       name: 'task',
       description: 'The name of the task to execute',
       required: true,
