@@ -3,8 +3,8 @@ import ProjectUtils from '../../architect/project/project.utils';
 import BaseCommand from '../../base-command';
 
 export default class ProjectCreate extends BaseCommand {
-  static description = 'Upload secrets from a file to an account or an environment';
-  static aliases = ['secrets:set'];
+  static description = 'Create project from existing Architect templates';
+  static aliases = ['project:create'];
 
   static flags = {
     ...BaseCommand.flags,
