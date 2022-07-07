@@ -29,12 +29,6 @@ export const verify = async (): Promise<void> => {
   }
 };
 
-export const getDigest = async (image_ref: string): Promise<string> => {
-  await docker(['pull', image_ref], { stdout: false });
-  const digest = await docker([`inspect`, `--format='{{index .RepoDigests 0}}'`, image_ref], { stdout: false });
-  return digest.stdout.split('@')[1].replace('\'', '');
-};
-
 export const restart = async (container_id: string): Promise<void> => {
   return docker(['restart', container_id]);
 };

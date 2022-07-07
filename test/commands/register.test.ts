@@ -5,10 +5,9 @@ import sinon from 'sinon';
 import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
-import * as Docker from '../../src/common/utils/docker';
 import DockerBuildXUtils from '../../src/common/utils/docker-buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
-import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
+import { mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST } from '../utils/mocks';
 
 describe('register', function () {
 
@@ -35,7 +34,6 @@ describe('register', function () {
   }
 
   mockArchitectAuth
-    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_architect_account_response)
@@ -58,14 +56,10 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'examples/fusionauth/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('test file: replacement', ctx => {
-      const getDigest = Docker.getDigest as sinon.SinonStub;
-      expect(getDigest.notCalled).to.be.true;
-
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
   mockArchitectAuth
-    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_architect_account_response)
@@ -88,15 +82,11 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'examples/fusionauth/architect.yml', '-t', '1.0.0', '--architecture', 'amd64', '--architecture', 'arm64v8', '--architecture', 'windows-amd64', '-a', 'examples'])
     .it('register component with architecture flag', ctx => {
-      const getDigest = Docker.getDigest as sinon.SinonStub;
-      expect(getDigest.notCalled).to.be.true;
-
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
-  
+
   mockArchitectAuth
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().throws('Some internal docker build exception'))
-    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -108,12 +98,14 @@ describe('register', function () {
       expect(`${err}`).to.contain('Some internal docker build exception')
     })
     .it('register component with architecture flag failed', ctx => {
-      const getDigest = Docker.getDigest as sinon.SinonStub;
-      expect(getDigest.notCalled).to.be.true;
     });
 
   mockArchitectAuth
-    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' })
+    )
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
@@ -187,7 +179,6 @@ describe('register', function () {
     });
 
   mockArchitectAuth
-    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -209,9 +200,6 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'examples/gcp-pubsub/pubsub/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('it does not call any docker commands if the image is provided', ctx => {
-      const getDigest = Docker.getDigest as sinon.SinonStub;
-      expect(getDigest.notCalled).to.be.true;
-
       expect(ctx.stderr).to.contain('Registering component examples/gcp-pubsub:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
@@ -253,7 +241,11 @@ describe('register', function () {
     .it('rejects with informative error message if account is unavailable');
 
   mockArchitectAuth
-    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' })
+    )
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -275,19 +267,12 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'examples/database-seeding/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('gives user feedback while running docker commands', ctx => {
-      const getDigest = Docker.getDigest as sinon.SinonStub;
-      expect(getDigest.calledOnce).to.be.true;
-
-      expect(ctx.stderr).to.contain('Running `docker inspect` on the given image: mock.registry.localhost/examples/database-seeding.services.app:1.0.0');
-      expect(ctx.stdout).to.contain('Image verified');
-
       expect(ctx.stderr).to.contain('Registering component database-seeding:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
   mockArchitectAuth
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub().throws('Some internal docker build exception'))
-    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -299,14 +284,15 @@ describe('register', function () {
       expect(`${err}`).to.contain('Some internal docker build exception')
     })
     .it('rejects with informative error message if docker buildx inspect fails', ctx => {
-      const getDigest = Docker.getDigest as sinon.SinonStub;
-      expect(getDigest.notCalled).to.be.true;
-
       expect(ctx.stdout).to.contain("Docker buildx bake failed. Please make sure docker is running.");
     });
 
   mockArchitectAuth
-    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' })
+    )
     .nock(MOCK_API_HOST, api => api
       .persist()
       .get(`/accounts/examples`)
@@ -325,17 +311,17 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'examples/stateless-component/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('gives user feedback for each component in the environment while running docker commands', ctx => {
-      const getDigest = Docker.getDigest as sinon.SinonStub;
-      expect(getDigest.calledOnce).to.be.true;
-
-      expect(ctx.stderr).to.contain('Running `docker inspect` on the given image: mock.registry.localhost/examples/stateless-component.services.stateless-app:1.0.0');
       expect(ctx.stderr).to.contain('Registering component stateless-component:1.0.0 with Architect Cloud');
     });
 
   mockArchitectAuth
-    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' })
+    )
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -366,8 +352,12 @@ describe('register', function () {
     });
 
   mockArchitectAuth
-    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' })
+    )
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
