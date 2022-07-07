@@ -134,4 +134,3 @@ export const interpolateObjectLoose = <T>(obj: T, context: any, options?: Interp
   const { interpolated_obj } = interpolateObject(obj, context, options);
   return interpolated_obj;
 };
-

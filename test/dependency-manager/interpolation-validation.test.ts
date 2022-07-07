@@ -1,9 +1,7 @@
 import { expect } from 'chai';
-import { buildSpecFromYml, ValidationErrors } from '../../src';
-import ComponentRegister from '../../src/commands/register';
+import { buildSpecFromYml, validateInterpolation, ValidationErrors } from '../../src';
 
 describe('interpolation-validation', () => {
-  const validateInterpolation = ComponentRegister.validateInterpolation;
 
   const context = {}
 
@@ -23,7 +21,7 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        validateInterpolation(component_spec, context)
+        validateInterpolation(component_spec)
       }).to.be.throws(ValidationErrors);
     });
 
@@ -41,7 +39,7 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        validateInterpolation(component_spec, context)
+        validateInterpolation(component_spec)
       }).to.be.throws(ValidationErrors);
     });
 
@@ -59,7 +57,7 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        validateInterpolation(component_spec, context)
+        validateInterpolation(component_spec)
       }).to.be.throws(ValidationErrors);
     });
 
@@ -77,7 +75,7 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        validateInterpolation(component_spec, context)
+        validateInterpolation(component_spec)
       }).to.be.throws(ValidationErrors);
     });
 
@@ -94,7 +92,7 @@ describe('interpolation-validation', () => {
         `
 
         const component_spec = buildSpecFromYml(component_config)
-        validateInterpolation(component_spec, context)
+        validateInterpolation(component_spec)
       });
 
       it('can use conditional around build block if local', () => {
@@ -109,7 +107,7 @@ describe('interpolation-validation', () => {
         `
 
         const component_spec = buildSpecFromYml(component_config)
-        validateInterpolation(component_spec, context)
+        validateInterpolation(component_spec)
       });
 
       it('can use conditional around service block with build block if local', () => {
@@ -124,7 +122,7 @@ describe('interpolation-validation', () => {
         `
 
         const component_spec = buildSpecFromYml(component_config)
-        validateInterpolation(component_spec, context)
+        validateInterpolation(component_spec)
       });
     });
 
@@ -141,7 +139,7 @@ describe('interpolation-validation', () => {
 
       const component_spec = buildSpecFromYml(component_config)
       expect(() => {
-        validateInterpolation(component_spec, context)
+        validateInterpolation(component_spec)
       }).to.be.throws(ValidationErrors);
     });
 
@@ -157,7 +155,7 @@ describe('interpolation-validation', () => {
 
       const component_spec = buildSpecFromYml(component_config)
       expect(() => {
-        validateInterpolation(component_spec, context)
+        validateInterpolation(component_spec)
       }).to.be.throws(ValidationErrors);
     });
 
@@ -174,7 +172,7 @@ describe('interpolation-validation', () => {
         `
 
       const component_spec = buildSpecFromYml(component_config)
-      validateInterpolation(component_spec, context)
+      validateInterpolation(component_spec)
     });
 
     it('can still use conditional without build block', () => {
@@ -188,7 +186,7 @@ describe('interpolation-validation', () => {
         `
 
       const component_spec = buildSpecFromYml(component_config)
-      validateInterpolation(component_spec, context)
+      validateInterpolation(component_spec)
     });
   });
 });
