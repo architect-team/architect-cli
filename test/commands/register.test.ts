@@ -107,6 +107,7 @@ describe('register', function () {
       .reply(200, '', { 'docker-content-digest': 'some-digest' })
     )
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
+    .stub(fs, 'move', sinon.stub())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -241,6 +242,7 @@ describe('register', function () {
     .it('rejects with informative error message if account is unavailable');
 
   mockArchitectAuth
+    .stub(fs, 'move', sinon.stub())
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -288,6 +290,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth
+    .stub(fs, 'move', sinon.stub())
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -315,6 +318,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth
+    .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
     .nock(MOCK_REGISTRY_HOST, api => api
@@ -352,6 +356,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth
+    .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
