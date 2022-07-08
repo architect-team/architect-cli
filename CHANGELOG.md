@@ -1,3 +1,10 @@
+## [1.18.2](https://github.com/architect-team/architect-cli/compare/v1.18.1...v1.18.2) (2022-07-08)
+
+
+### Bug Fixes
+
+* **analytics:** fix issue with sentry ([be24cb4](https://github.com/architect-team/architect-cli/commit/be24cb416b4b1087cb699adc71ed65d91c1c4130))
+
 ## [1.18.1](https://github.com/architect-team/architect-cli/compare/v1.18.0...v1.18.1) (2022-07-08)
 
 
