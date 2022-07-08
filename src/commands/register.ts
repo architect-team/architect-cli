@@ -119,7 +119,7 @@ export default class ComponentRegister extends BaseCommand {
     };
     const image_mapping: Dictionary<string | undefined> = {};
 
-    const seen_cache_dir = new Set();
+    const seen_cache_dir = new Set<string>();
 
     // Set image name in compose
     for (const [service_name, service] of Object.entries(full_compose.services)) {
@@ -151,7 +151,7 @@ export default class ComponentRegister extends BaseCommand {
 
         if (!seen_cache_dir.has(cache_dir)) {
           // https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to
-          service.build['x-bake']['cache-to'] = `type=local,dest=${cache_dir},mode=max`;
+          service.build['x-bake']['cache-to'] = `type=local,dest=${cache_dir}-tmp,mode=max`;
         }
         seen_cache_dir.add(cache_dir);
 
@@ -193,6 +193,10 @@ export default class ComponentRegister extends BaseCommand {
       fs.removeSync(compose_file);
       this.log(`Docker buildx bake failed. Please make sure docker is running.`);
       this.error(err);
+    }
+
+    for (const cache_dir of seen_cache_dir) {
+      await fs.move(`${cache_dir}-tmp`, cache_dir, { overwrite: true });
     }
 
     const new_spec = classToClass(component_spec);
