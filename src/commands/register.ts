@@ -82,7 +82,7 @@ export default class ComponentRegister extends BaseCommand {
 
   private async registerComponent(config_path: string, tag: string) {
     const { flags } = await this.parse(ComponentRegister);
-    const start_time = Date.now();
+    console.time('Time');
 
     // here we validate spec and config, but only need to send the spec to the API so we don't need the resulting config
     const component_spec = buildSpecFromPath(config_path);
@@ -137,7 +137,8 @@ export default class ComponentRegister extends BaseCommand {
         service.build['x-bake'] = {
           platforms: buildx_platforms,
           'cache-from': `type=local,src=${flags['cache-directory']}`,
-          'cache-to': `type=local,dest=${flags['cache-directory']}`,
+          // https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to
+          'cache-to': `type=local,dest=${flags['cache-directory']},mode=max`,
           pull: true,
         };
 
@@ -256,7 +257,7 @@ export default class ComponentRegister extends BaseCommand {
     CliUx.ux.action.stop();
     this.log(chalk.green(`Successfully registered component`));
 
-    console.log('Time: ' + (Date.now() - start_time));
+    console.timeEnd('Time');
   }
 
   private async getBuildArgs(resource_spec: ResourceSpec): Promise<string[]> {
