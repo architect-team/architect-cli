@@ -1,9 +1,11 @@
 import { Command, Interfaces } from '@oclif/core';
+import '@sentry/tracing';
 import chalk from 'chalk';
 import { ValidationErrors } from './';
 import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
+import SentryService from './sentry';
 
 const DEPRECATED_LABEL = '[deprecated]';
 
@@ -12,6 +14,7 @@ export default abstract class BaseCommand extends Command {
 
   app!: AppService;
   accounts?: any;
+  sentry!: SentryService;
 
   async auth_required(): Promise<boolean> {
     return true;
@@ -53,10 +56,15 @@ export default abstract class BaseCommand extends Command {
         }
       }
     }
+    try {
+      this.sentry = await SentryService.create(this.app, this.constructor as any);
+    } catch (e) {
+      // nothing to do
+    }
   }
 
   // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
-  protected parse<F, A extends {
+  protected async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const flag_definitions = (this.constructor as any).flags;
@@ -95,6 +103,15 @@ export default abstract class BaseCommand extends Command {
   async catch(err: any): Promise<void> {
     if (err.oclif && err.oclif.exit === 0) return;
 
+    if (err.stack) {
+      err.stack = [...new Set(err.stack.split('\n'))].join("\n");
+    }
+
+    const { filtered_sentry_args, filtered_sentry_flags } = await this._getNonSensitiveSentryMetadata();
+    await this.sentry?.setScopeExtra('command_args', filtered_sentry_args);
+    await this.sentry?.setScopeExtra('command_flags', filtered_sentry_flags);
+    await this.sentry?.endSentryTransaction(err);
+
     if (err instanceof ValidationErrors) {
       return prettyValidationErrors(err);
     }
@@ -114,14 +131,39 @@ export default abstract class BaseCommand extends Command {
       }
 
       if (err.stderr) {
-        err.message += `\nstderr: ${err.stderr}`;
+        err.message += `\nstderr:\n${err.stderr}\n`;
       }
 
-      err.message = chalk.red(err.message);
+      console.error(chalk.red(err.message));
+
     } catch {
       this.warn('Unable to add more context to error message');
     }
 
     return super.catch(err);
+  }
+
+  async _filterNonSensitiveSentryMetadata(non_sensitive: Set<string>, metadata: any): Promise<any> {
+    return Object.entries(metadata)
+      .filter((value,) => !!value[1] && non_sensitive.has(value[0]))
+      .map(key => ({ [key[0]]: key[1] }));
+  }
+
+  async _getNonSensitiveSentryMetadata(_args?: any[], _flags?: any[]): Promise<any> {
+    const calling_class = this.constructor as any;
+
+    const non_sensitive = new Set([
+      ...Object.entries(calling_class.flags || {}).filter(([_, value]) => (value as any).non_sensitive).map(([key, _]) => key),
+      ...Object.entries(calling_class.args || {}).filter(([_, value]) => (value as any).non_sensitive).map(([_, value]) => (value as any).name),
+    ]);
+
+    try {
+      const { args, flags } = await this.parse(calling_class);
+      const filtered_sentry_args = await this._filterNonSensitiveSentryMetadata(non_sensitive, _args || args);
+      const filtered_sentry_flags = await this._filterNonSensitiveSentryMetadata(non_sensitive, _flags || flags);
+      return { filtered_sentry_args, filtered_sentry_flags };
+    } catch {
+      return { filtered_sentry_args: [], filtered_sentry_flags: [] };
+    }
   }
 }

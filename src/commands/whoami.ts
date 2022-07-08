@@ -1,6 +1,6 @@
-import Command from '../base-command';
+import BaseCommand from '../base-command';
 
-export default class WhoAmI extends Command {
+export default class WhoAmI extends BaseCommand {
   static aliases = ['whoami'];
   static description = 'Get the logged in user';
 

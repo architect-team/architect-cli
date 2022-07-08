@@ -3,13 +3,13 @@ import chalk from 'chalk';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import Command from '../base-command';
-import MissingContextError from '../common/errors/missing-build-context';
 import { buildSpecFromPath } from '../';
+import BaseCommand from '../base-command';
+import MissingContextError from '../common/errors/missing-build-context';
 
 tmp.setGracefulCleanup();
 
-export default class ComponentValidate extends Command {
+export default class ComponentValidate extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -18,10 +18,11 @@ export default class ComponentValidate extends Command {
   static description = 'Validate that an architect.yml is syntactically correct.';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'configs_or_components',
     description: 'Path to an architect.yml file or component `account/component:latest`. Multiple components are accepted.',
   }];

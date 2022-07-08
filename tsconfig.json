@@ -12,7 +12,8 @@
     "strict": true,
     "resolveJsonModule": true,
     "target": "es2019",
-    "composite": true
+    "composite": true,
+    "noEmitHelpers": true,
   },
   "include": [
     "./src/**/*"

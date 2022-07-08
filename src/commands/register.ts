@@ -1,4 +1,5 @@
 import { CliUx, Flags } from '@oclif/core';
+import axios from 'axios';
 import chalk from 'chalk';
 import { classToClass, classToPlain } from 'class-transformer';
 import * as Diff from 'diff';
@@ -10,7 +11,7 @@ import tmp from 'tmp';
 import untildify from 'untildify';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ResourceSpec, ServiceNode, Slugs } from '../';
 import AccountUtils from '../architect/account/account.utils';
-import Command from '../base-command';
+import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
@@ -20,29 +21,47 @@ import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolat
 
 tmp.setGracefulCleanup();
 
-export default class ComponentRegister extends Command {
+export default class ComponentRegister extends BaseCommand {
   static aliases = ['component:register', 'components:register', 'c:register', 'comp:register'];
   static description = 'Register a new Component with Architect Cloud';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
     ...AccountUtils.flags,
-    arg: Flags.string({
-      description: 'Build arg(s) to pass to docker build',
-      multiple: true,
-    }),
-    tag: Flags.string({
-      char: 't',
-      description: 'Tag to give to the new component',
-      default: 'latest',
-    }),
-    'cache-directory': Flags.string({
-      description: 'Directory to write build cache to',
-      default: path.join(os.tmpdir(), 'architect-build-cache'),
-    }),
+    arg: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: 'Build arg(s) to pass to docker build',
+        multiple: true,
+      }),
+    },
+    tag: {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 't',
+        description: 'Tag to give to the new component',
+        default: 'latest',
+      }),
+    },
+    architecture: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: 'Architecture(s) to target for Docker image builds',
+        default: ['amd64'],
+        multiple: true,
+      }),
+    },
+    'cache-directory': {
+      non_sensitive: true,
+      ...Flags.string({
+        description: 'Directory to write build cache to',
+        default: path.join(os.tmpdir(), 'architect-build-cache'),
+      }),
+    },
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'component',
     description: 'Path to a component to register',
     default: './',
@@ -113,8 +132,10 @@ export default class ComponentRegister extends Command {
           delete service.build.args;
         }
 
+        const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags['architecture']);
+
         service.build['x-bake'] = {
-          platforms: DockerBuildXUtils.getPlatforms(),
+          platforms: buildx_platforms,
           'cache-from': `type=local,src=${flags['cache-directory']}`,
           'cache-to': `type=local,dest=${flags['cache-directory']}`,
           pull: true,
@@ -253,13 +274,22 @@ export default class ComponentRegister extends Command {
   }
 
   private async getDigest(image: string) {
-    CliUx.ux.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${image}`));
-    const digest = await Docker.getDigest(image).catch(err => {
-      CliUx.ux.action.stop(chalk.red(`Inspect failed`));
-      throw err;
+    const token_json = await this.app.auth.getPersistedTokenJSON();
+
+    const protocol = DockerBuildXUtils.isLocal(this.app.config) ? 'http' : 'https';
+    const registry_client = axios.create({
+      baseURL: `${protocol}://${this.app.config.registry_host}/v2`,
+      headers: {
+        Authorization: `${token_json?.token_type} ${token_json?.access_token}`,
+        Accept: 'application/vnd.docker.distribution.manifest.v2+json',
+      },
+      timeout: 10000,
     });
-    CliUx.ux.action.stop();
-    this.log(chalk.green(`Image verified`));
-    return digest;
+
+    const image_name = image.replace(this.app.config.registry_host, '');
+    const [name, tag] = image_name.split(':');
+
+    const { headers } = await registry_client.head(`${name}/manifests/${tag}`);
+    return headers['docker-content-digest'];
   }
 }
