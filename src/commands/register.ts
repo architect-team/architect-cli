@@ -5,6 +5,7 @@ import { classToClass, classToPlain } from 'class-transformer';
 import * as Diff from 'diff';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
+import hash from 'object-hash';
 import os from 'os';
 import path from 'path';
 import tmp from 'tmp';
@@ -117,6 +118,9 @@ export default class ComponentRegister extends BaseCommand {
       volumes: {},
     };
     const image_mapping: Dictionary<string | undefined> = {};
+
+    const seen_cache_dir = new Set();
+
     // Set image name in compose
     for (const [service_name, service] of Object.entries(full_compose.services)) {
       if (service.build && !service.image && service.labels) {
@@ -134,13 +138,22 @@ export default class ComponentRegister extends BaseCommand {
 
         const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags['architecture']);
 
+        // Cache directory needs to be unique per dockerfile: https://github.com/docker/build-push-action/issues/252#issuecomment-744412763
+        const cache_dir = path.join(flags['cache-directory'], hash(service.build));
+
         service.build['x-bake'] = {
           platforms: buildx_platforms,
-          'cache-from': `type=local,src=${flags['cache-directory']}`,
-          // https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to
-          'cache-to': `type=local,dest=${flags['cache-directory']},mode=max`,
-          pull: true,
+          // To test you need to prune the buildx cache
+          // docker buildx prune --builder architect --force
+          'cache-from': `type=local,src=${cache_dir}`,
+          pull: false,
         };
+
+        if (!seen_cache_dir.has(cache_dir)) {
+          // https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to
+          service.build['x-bake']['cache-to'] = `type=local,dest=${cache_dir},mode=max`;
+        }
+        seen_cache_dir.add(cache_dir);
 
         compose.services[service_name] = {
           build: service.build,
