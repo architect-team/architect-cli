@@ -1,3 +1,10 @@
+## [1.18.1](https://github.com/architect-team/architect-cli/compare/v1.18.0...v1.18.1) (2022-07-08)
+
+
+### Performance Improvements
+
+* **register:** Improve caching for multi-stage builds ([7d354e5](https://github.com/architect-team/architect-cli/commit/7d354e586041e4910b7c949991a73eb19c9c1438))
+
 # [1.18.0](https://github.com/architect-team/architect-cli/compare/v1.17.2...v1.18.0) (2022-07-08)
 
 
