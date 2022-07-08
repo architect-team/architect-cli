@@ -107,10 +107,14 @@ export default abstract class BaseCommand extends Command {
       err.stack = [...new Set(err.stack.split('\n'))].join("\n");
     }
 
-    const { filtered_sentry_args, filtered_sentry_flags } = await this._getNonSensitiveSentryMetadata();
-    await this.sentry?.setScopeExtra('command_args', filtered_sentry_args);
-    await this.sentry?.setScopeExtra('command_flags', filtered_sentry_flags);
-    await this.sentry?.endSentryTransaction(err);
+    try {
+      const { filtered_sentry_args, filtered_sentry_flags } = await this._getNonSensitiveSentryMetadata();
+      await this.sentry?.setScopeExtra('command_args', filtered_sentry_args);
+      await this.sentry?.setScopeExtra('command_flags', filtered_sentry_flags);
+      await this.sentry?.endSentryTransaction(err);
+    } catch {
+      this.warn('Unable to record error');
+    }
 
     if (err instanceof ValidationErrors) {
       return prettyValidationErrors(err);
