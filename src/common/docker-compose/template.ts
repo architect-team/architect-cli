@@ -1,6 +1,6 @@
 interface XBakeConfig {
   platforms: string[];
-  'cache-from': string | string[];
+  'cache-from'?: string | string[];
   'cache-to'?: string | string[];
   pull: boolean;
 }
