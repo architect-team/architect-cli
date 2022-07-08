@@ -1,4 +1,5 @@
 import { CliUx, Flags } from '@oclif/core';
+import axios from 'axios';
 import chalk from 'chalk';
 import { classToClass, classToPlain } from 'class-transformer';
 import * as Diff from 'diff';
@@ -81,7 +82,7 @@ export default class ComponentRegister extends BaseCommand {
 
   private async registerComponent(config_path: string, tag: string) {
     const { flags } = await this.parse(ComponentRegister);
-    const start_time = Date.now();
+    console.time('Time');
 
     // here we validate spec and config, but only need to send the spec to the API so we don't need the resulting config
     const component_spec = buildSpecFromPath(config_path);
@@ -136,7 +137,8 @@ export default class ComponentRegister extends BaseCommand {
         service.build['x-bake'] = {
           platforms: buildx_platforms,
           'cache-from': `type=local,src=${flags['cache-directory']}`,
-          'cache-to': `type=local,dest=${flags['cache-directory']}`,
+          // https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to
+          'cache-to': `type=local,dest=${flags['cache-directory']},mode=max`,
           pull: true,
         };
 
@@ -255,7 +257,7 @@ export default class ComponentRegister extends BaseCommand {
     CliUx.ux.action.stop();
     this.log(chalk.green(`Successfully registered component`));
 
-    console.log('Time: ' + (Date.now() - start_time));
+    console.timeEnd('Time');
   }
 
   private async getBuildArgs(resource_spec: ResourceSpec): Promise<string[]> {
@@ -273,13 +275,22 @@ export default class ComponentRegister extends BaseCommand {
   }
 
   private async getDigest(image: string) {
-    CliUx.ux.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${image}`));
-    const digest = await Docker.getDigest(image).catch(err => {
-      CliUx.ux.action.stop(chalk.red(`Inspect failed`));
-      throw err;
+    const token_json = await this.app.auth.getPersistedTokenJSON();
+
+    const protocol = DockerBuildXUtils.isLocal(this.app.config) ? 'http' : 'https';
+    const registry_client = axios.create({
+      baseURL: `${protocol}://${this.app.config.registry_host}/v2`,
+      headers: {
+        Authorization: `${token_json?.token_type} ${token_json?.access_token}`,
+        Accept: 'application/vnd.docker.distribution.manifest.v2+json',
+      },
+      timeout: 10000,
     });
-    CliUx.ux.action.stop();
-    this.log(chalk.green(`Image verified`));
-    return digest;
+
+    const image_name = image.replace(this.app.config.registry_host, '');
+    const [name, tag] = image_name.split(':');
+
+    const { headers } = await registry_client.head(`${name}/manifests/${tag}`);
+    return headers['docker-content-digest'];
   }
 }
