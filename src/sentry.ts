@@ -105,9 +105,7 @@ export default class SentryService {
 
   async updateSentryTransaction(error?: any): Promise<void> {
 
-    const docker_version = await docker(['version', '-f', 'json'], { stdout: false });
-    const docker_info = JSON.parse(docker_version?.stdout as string);
-    const updated_docker_info = Object.assign(docker_info, { Containers: await this.getRunningDockerContainers() });
+    const updated_docker_info = this.getRunningDockerContainers();
     const config_directory_files = await this.getFilenamesFromDirectory();
 
     if (error) {
@@ -160,11 +158,21 @@ export default class SentryService {
   }
 
   async getRunningDockerContainers(): Promise<any[]> {
-    const docker_command = await docker(['ps', '--format', '{{json .}}%%'], { stdout: false });
-    const docker_stdout = (docker_command.stdout as string).split('%%')
-      .map((str: string) => (str && str.length) ? JSON.parse(str) : undefined);
+    try {
+      const docker_version = await docker(['version', '-f', 'json'], { stdout: false });
+      const docker_info = JSON.parse(docker_version?.stdout as string);
 
-    return docker_stdout.filter(x => !!x).map((container: any) => ({ ...container, Labels: undefined }));
+      const docker_command = await docker(['ps', '--format', '{{json .}}%%'], { stdout: false });
+      const docker_stdout = (docker_command.stdout as string).split('%%')
+        .map((str: string) => (str && str.length) ? JSON.parse(str) : undefined);
+      const docker_containers = docker_stdout.filter(x => !!x).map((container: any) => ({ ...container, Labels: undefined }));
+
+      const updated_docker_info = Object.assign(docker_info, { Containers: docker_containers });
+
+      return updated_docker_info;
+    } catch {
+      return [];
+    }
   }
 
   async getFilenamesFromDirectory(): Promise<any[]> {
