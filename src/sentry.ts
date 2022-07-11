@@ -103,7 +103,7 @@ export default class SentryService {
     });
   }
 
-  async updateSentryTransaction(error?: Error): Promise<void> {
+  async updateSentryTransaction(error?: any): Promise<void> {
 
     const docker_version = await docker(['version', '-f', 'json'], { stdout: false });
     const docker_info = JSON.parse(docker_version?.stdout as string);
@@ -138,7 +138,7 @@ export default class SentryService {
     update_scope?.setExtras(sentry_session_metadata);
   }
 
-  async endSentryTransaction(error?: Error): Promise<void> {
+  async endSentryTransaction(error?: any): Promise<void> {
     if (this.app.config.environment === ENVIRONMENT.TEST) return;
 
     await this.updateSentryTransaction(error);

@@ -60,15 +60,12 @@ export default abstract class BaseCommand extends Command {
     try {
       this.sentry = await SentryService.create(this.app, this.constructor as any);
     } catch (e) {
-      // nothing to do
+      // dont fail when adding metadata
     }
   }
 
   async finally(_: Error | undefined): Promise<any> {
-    if (!_) {
-      await this.sendSentryMetadata();
-    }
-    return super.finally(_);
+    return await this.endSentryTransaction();
   }
 
   // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
@@ -118,8 +115,7 @@ export default abstract class BaseCommand extends Command {
       }
 
       if (err instanceof ValidationErrors) {
-        prettyValidationErrors(err);
-        return await this.sendSentryMetadata(err);
+        return prettyValidationErrors(err);
       }
 
       if (err.response?.data instanceof Object) {
@@ -144,8 +140,11 @@ export default abstract class BaseCommand extends Command {
     } catch {
       this.warn('Unable to add more context to error message');
     }
-
-    return await this.sendSentryMetadata(err);
+    const app_env = this.app?.config?.environment;
+    if (!this.sentry || !app_env || app_env === ENVIRONMENT.TEST) {
+      return super.catch(err);
+    }
+    return await this.endSentryTransaction(err);
   }
 
   async _filterNonSensitiveSentryMetadata(non_sensitive: Set<string>, metadata: any): Promise<any> {
@@ -154,8 +153,11 @@ export default abstract class BaseCommand extends Command {
       .map(key => ({ [key[0]]: key[1] }));
   }
 
-  async sendSentryMetadata(err?: any): Promise<any> {
-    if (!this.sentry || this.app?.config?.environment === ENVIRONMENT.TEST) return;
+  async endSentryTransaction(err?: any): Promise<any> {
+    const app_env = this.app?.config?.environment;
+    if (!this.sentry || !app_env || app_env === ENVIRONMENT.TEST) {
+      return err;
+    }
 
     const calling_class = this.constructor as any;
 
@@ -171,12 +173,16 @@ export default abstract class BaseCommand extends Command {
 
       await this.sentry.setScopeExtra('command_args', filtered_sentry_args);
       await this.sentry.setScopeExtra('command_flags', filtered_sentry_flags);
-      return await this.sentry.endSentryTransaction(err);
     } catch {
-      // don't fail when adding metadata
+      this.warn('Failed to get command metadata');
     }
 
+    await this.sentry.endSentryTransaction(err);
 
+    if (!err) {
+      return await super.finally(err);
+    }
+    return await super.catch(err);
   }
 
 }
