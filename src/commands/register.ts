@@ -1,10 +1,11 @@
 import { CliUx, Flags } from '@oclif/core';
+import axios from 'axios';
 import chalk from 'chalk';
 import { classToClass, classToPlain } from 'class-transformer';
 import * as Diff from 'diff';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
-import os from 'os';
+import hash from 'object-hash';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
@@ -54,7 +55,6 @@ export default class ComponentRegister extends BaseCommand {
       non_sensitive: true,
       ...Flags.string({
         description: 'Directory to write build cache to',
-        default: path.join(os.tmpdir(), 'architect-build-cache'),
       }),
     },
   };
@@ -81,7 +81,7 @@ export default class ComponentRegister extends BaseCommand {
 
   private async registerComponent(config_path: string, tag: string) {
     const { flags } = await this.parse(ComponentRegister);
-    const start_time = Date.now();
+    console.time('Time');
 
     // here we validate spec and config, but only need to send the spec to the API so we don't need the resulting config
     const component_spec = buildSpecFromPath(config_path);
@@ -116,6 +116,9 @@ export default class ComponentRegister extends BaseCommand {
       volumes: {},
     };
     const image_mapping: Dictionary<string | undefined> = {};
+
+    const seen_cache_dir = new Set<string>();
+
     // Set image name in compose
     for (const [service_name, service] of Object.entries(full_compose.services)) {
       if (service.build && !service.image && service.labels) {
@@ -135,10 +138,23 @@ export default class ComponentRegister extends BaseCommand {
 
         service.build['x-bake'] = {
           platforms: buildx_platforms,
-          'cache-from': `type=local,src=${flags['cache-directory']}`,
-          'cache-to': `type=local,dest=${flags['cache-directory']}`,
-          pull: true,
+          pull: false,
         };
+
+        if (flags['cache-directory']) {
+          // Cache directory needs to be unique per dockerfile: https://github.com/docker/build-push-action/issues/252#issuecomment-744412763
+          const cache_dir = path.join(flags['cache-directory'], hash(service.build));
+
+          // To test you need to prune the buildx cache
+          // docker buildx prune --builder architect --force
+          service.build['x-bake']['cache-from'] = `type=local,src=${cache_dir}`;
+
+          if (!seen_cache_dir.has(cache_dir)) {
+            // https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to
+            service.build['x-bake']['cache-to'] = `type=local,dest=${cache_dir}-tmp,mode=max`;
+          }
+          seen_cache_dir.add(cache_dir);
+        }
 
         compose.services[service_name] = {
           build: service.build,
@@ -171,13 +187,17 @@ export default class ComponentRegister extends BaseCommand {
     const builder = await DockerBuildXUtils.getBuilder(this.app.config);
 
     try {
-      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args, '--builder', builder], builder, {
+      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], builder, {
         stdio: 'inherit',
       });
     } catch (err: any) {
       fs.removeSync(compose_file);
       this.log(`Docker buildx bake failed. Please make sure docker is running.`);
       this.error(err);
+    }
+
+    for (const cache_dir of seen_cache_dir) {
+      await fs.move(`${cache_dir}-tmp`, cache_dir, { overwrite: true });
     }
 
     const new_spec = classToClass(component_spec);
@@ -255,7 +275,7 @@ export default class ComponentRegister extends BaseCommand {
     CliUx.ux.action.stop();
     this.log(chalk.green(`Successfully registered component`));
 
-    console.log('Time: ' + (Date.now() - start_time));
+    console.timeEnd('Time');
   }
 
   private async getBuildArgs(resource_spec: ResourceSpec): Promise<string[]> {
@@ -273,13 +293,22 @@ export default class ComponentRegister extends BaseCommand {
   }
 
   private async getDigest(image: string) {
-    CliUx.ux.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${image}`));
-    const digest = await Docker.getDigest(image).catch(err => {
-      CliUx.ux.action.stop(chalk.red(`Inspect failed`));
-      throw err;
+    const token_json = await this.app.auth.getPersistedTokenJSON();
+
+    const protocol = DockerBuildXUtils.isLocal(this.app.config) ? 'http' : 'https';
+    const registry_client = axios.create({
+      baseURL: `${protocol}://${this.app.config.registry_host}/v2`,
+      headers: {
+        Authorization: `${token_json?.token_type} ${token_json?.access_token}`,
+        Accept: 'application/vnd.docker.distribution.manifest.v2+json',
+      },
+      timeout: 10000,
     });
-    CliUx.ux.action.stop();
-    this.log(chalk.green(`Image verified`));
-    return digest;
+
+    const image_name = image.replace(this.app.config.registry_host, '');
+    const [name, tag] = image_name.split(':');
+
+    const { headers } = await registry_client.head(`${name}/manifests/${tag}`);
+    return headers['docker-content-digest'];
   }
 }
