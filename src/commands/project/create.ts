@@ -26,7 +26,7 @@ export default class ProjectCreate extends BaseCommand {
 
     let chosen_project;
     if (!flags.project) {
-      const choices = await ProjectUtils.getGitHubRepos('https://api.github.com/orgs/architect-templates/repos');
+      const choices = await ProjectUtils.getGitHubRepos();
       const project = await ProjectUtils.prompt(choices, 'Select a project');
       chosen_project = project.name;
     } else {
