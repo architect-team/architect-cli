@@ -189,7 +189,7 @@ spec:
               secretKeyRef:
                 name: ${SERVICE_ACCOUNT_NAME}
                 key: token
-          - name: KUBERNETES_CERT
+          - name: KUBERNETES_CA
             valueFrom:
               secretKeyRef:
                 name: ${SERVICE_ACCOUNT_NAME}
