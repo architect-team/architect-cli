@@ -1,4 +1,3 @@
-import inquirer from 'inquirer';
 import { Flags } from '@oclif/core';
 import ProjectUtils from '../../architect/project/project.utils';
 import BaseCommand from '../../base-command';
@@ -27,13 +26,9 @@ export default class ProjectCreate extends BaseCommand {
 
     let chosen_project;
     if (!flags.project) {
-      const answer: { chosen: any } = await inquirer.prompt([
-        {
-          name: 'chosen',
-          message: 'Provide a project name:',
-          type: 'input',
-        }]);
-      chosen_project = answer.chosen;
+      const choices = await ProjectUtils.getGitHubRepos('https://api.github.com/orgs/architect-templates/repos');
+      const project = await ProjectUtils.prompt(choices, 'Select a project');
+      chosen_project = project.name;
     } else {
       chosen_project = flags.project;
     }
