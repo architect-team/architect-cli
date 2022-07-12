@@ -7,15 +7,25 @@ describe('project:create', function () {
   const print = false;
 
   const selections = {
+    database: {
+      name: 'mariadb',
+      architect_yml: { name: 'MariaDB' },
+      depends_on: ''
+    },
     frontend: {
-      name: 'React',
-      project: 'https://github.com/architect-templates/react'
+      name: 'react',
+      architect_yml: {
+        name: 'react',
+      },
+      depends_on: 'backend'
     },
     backend: {
-      name: 'NodeJS',
-      project: 'https://github.com/architect-templates/node-rest-api'
-    },
-    database: { name: 'PostgreSQL', image: 'postgres' }
+      name: 'node-rest-api',
+      architect_yml: {
+        name: 'node-rest-api',
+      },
+      depends_on: 'database'
+    }
   }
 
   test
@@ -23,24 +33,7 @@ describe('project:create', function () {
       return selections;
     })
     .stub(ProjectUtils, 'downloadGitHubRepos', sinon.stub())
-    .stub(ProjectUtils, 'createNewArchitectYaml', sinon.stub())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['project:create', 'my-project'])
-    .it('Create project successfully', async ctx => {
-      expect(ctx.stdout).to.contain('Successfully created project');
-      const download_repos = ProjectUtils.downloadGitHubRepos as sinon.SinonStub;
-      expect(download_repos.callCount).to.eq(1);
-      const create_yml = ProjectUtils.createNewArchitectYaml as sinon.SinonStub;
-      expect(create_yml.callCount).to.eq(1);
-    })
-
-  test
-    .stub(ProjectUtils, 'getSelections', () => {
-      return selections;
-    })
-    .stub(ProjectUtils, 'downloadGitHubRepos', sinon.stub())
-    .stub(ProjectUtils, 'createNewArchitectYaml', sinon.stub())
+    .stub(ProjectUtils, 'createArchitectYaml', sinon.stub())
     .stdout({ print })
     .stderr({ print })
     .command(['project:create', '-p', 'react', 'my-react-project'])
@@ -48,7 +41,7 @@ describe('project:create', function () {
       expect(ctx.stdout).to.contain('Successfully created project');
       const download_repos = ProjectUtils.downloadGitHubRepos as sinon.SinonStub;
       expect(download_repos.callCount).to.eq(1);
-      const create_yml = ProjectUtils.createNewArchitectYaml as sinon.SinonStub;
+      const create_yml = ProjectUtils.createArchitectYaml as sinon.SinonStub;
       expect(create_yml.callCount).to.eq(1);
     })
 });
