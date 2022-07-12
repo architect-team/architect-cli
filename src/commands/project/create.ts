@@ -41,6 +41,6 @@ export default class ProjectCreate extends BaseCommand {
     const selections = await ProjectUtils.getSelections(chosen_project);
     await ProjectUtils.downloadGitHubRepos(selections, args.project_name);
     await ProjectUtils.createArchitectYaml(selections, args.project_name);
-    this.log(`Successfully created project ${args.project_name}. Please run the architect.yml file located in the directory of ${args.project_name}.`);
+    this.log(`Successfully created project ${args.project_name}. To start your project, run the architect.yml file located in the directory of ${args.project_name}.`);
   }
 }
