@@ -257,61 +257,54 @@ export default class ProjectUtils {
       }
     }
 
-    let interfaces: Dictionary<any> = {};
-    let dependencies: Dictionary<any> = {};
-    let secrets: Dictionary<any> = {};
-    let services: Dictionary<any> = {};
+    const combined_yml: Dictionary<any> = {};
+    combined_yml['name'] = project_dir.replace('_', '-');
+    const ignored = ['name', 'description', 'homepage', 'keywords'];
     for (const selection of Object.values(selections)) {
-      const yml = selection.architect_yml;
-      secrets = { ...secrets, ...yml.secrets };
-      if (yml.dependencies) {
-        dependencies = { ...dependencies, ...yml.dependencies};
-      }
-      if (yml.interfaces) {
-        interfaces = { ...interfaces, ...yml.interfaces };
-      }
+      for (const [key, val] of Object.entries(selection.architect_yml as ComponentSpec)) {
+        if (ignored.includes(key)) {
+          continue;
+        }
 
-      const yml_services = yml.services as Dictionary<ServiceSpec>;
-      if (Object.keys(yml_services).length === 1) {
-        const key = Object.keys(yml_services)[0];
-        const service = yml_services[key];
-        if (service.build) {
-          service.build['context'] = './' + selection.name;
+        if (key !== 'services') {
+          combined_yml[key] = combined_yml[key] ? { ...combined_yml[key], ...val } : val;
+          continue;
         }
-        if (selection.depends_on) {
-          yml_services[key]['depends_on'] = [selection.depends_on];
-        }
-        services = { ...services, ...yml_services };
-      } else {
-        for (const [service_name, service] of Object.entries(yml_services)) {
-          if (service.build && !service.image) {
-            services[service_name] = service;
+
+        const yml_services = val as Dictionary<ServiceSpec>;
+        const keys = Object.keys(yml_services);
+        if (keys.length === 1) {
+          const service_key = keys[0];
+          const service = yml_services[service_key];
+          if (service.build) {
             service.build['context'] = './' + selection.name;
-            if (selection.depends_on) {
-              services[service_name]['depends_on'] = [selection.depends_on];
+          }
+          if (selection.depends_on) {
+            yml_services[service_key]['depends_on'] = [selection.depends_on];
+          }
+          combined_yml[key] = combined_yml[key] ? { ...combined_yml[key], ...yml_services } : yml_services;
+        } else {
+          for (const [service_name, service] of Object.entries(yml_services)) {
+            if (service.build && !service.image) {
+              combined_yml[key] = combined_yml[key] ? { ...combined_yml[key], ...{ [service_name]: service } } : { [service_name]: service };
+              service.build['context'] = './' + selection.name;
+              if (selection.depends_on) {
+                combined_yml[key][service_name]['depends_on'] = [selection.depends_on];
+              }
             }
           }
         }
       }
     }
 
-    let reduced_interfaces;
-    const app_key = Object.keys(interfaces).find(key => key === 'app');
+    const app_key = Object.keys(combined_yml['interfaces']).find(key => key === 'app');
     if (app_key) {
-      reduced_interfaces = { [app_key]: interfaces[app_key] };
+      combined_yml['interfaces'] = { [app_key]: combined_yml['interfaces'][app_key] };
     } else {
-      const key = Object.keys(interfaces)[0];
-      reduced_interfaces = { [key]: interfaces[key] };
+      const key = Object.keys(combined_yml['interfaces'])[0];
+      combined_yml['interfaces'] = { [key]: combined_yml['interfaces'][key] };
     }
-
-    const yml = {
-      'name': project_dir.replace('_', '-'),
-      'secrets': secrets,
-      'dependencies': dependencies,
-      'services': services,
-      'interfaces': reduced_interfaces,
-    } as ComponentSpec;
-
-    fs.writeFileSync('./' + project_dir + '/architect.yml', yaml.dump(yml));
+    
+    fs.writeFileSync('./' + project_dir + '/architect.yml', yaml.dump(combined_yml));
   }
 }
