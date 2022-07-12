@@ -50,8 +50,12 @@ class Queue<T> {
 }
 
 export default class ProjectUtils {
+  static queue = new Queue();
+  static type_map: Dictionary<any> = {};
+  static dependency_map: Dictionary<any> = {};
+  static component_map: Dictionary<any> = {};
 
-  static async getGitHubRepos(url: string): Promise<GitHubRepo[]>{
+  static async getGitHubRepos(): Promise<GitHubRepo[]>{
     const res_json = await this.fetchJsonFromGitHub('https://api.github.com/orgs/architect-templates/repos');
     const repos = res_json.map((item: any) => {
       return {
@@ -60,6 +64,16 @@ export default class ProjectUtils {
       };
     });
     return repos;
+  }
+
+  static async getRepoFromGitHub(repo_name: string): Promise<GitHubRepo> {
+    const github_repos = await this.getGitHubRepos();
+    const repo = github_repos.find(item => item.name === repo_name.toLowerCase());
+    if (!repo) {
+      const repo_names = github_repos.map(repo => repo.name).join(', ');
+      throw new Error(`Cannot find project '${repo_name}'. Available projects are: ${repo_names}.`);
+    }
+    return repo;
   }
 
   static async fetchJsonFromGitHub(url: string): Promise<any> {
@@ -81,49 +95,44 @@ export default class ProjectUtils {
     return component_spec;
   }
 
-  static async getSelections(chosen_project: string): Promise<Dictionary<Selection>> {
-    const queue = new Queue();
-    const type_map: Dictionary<any> = {};
-    const dependency_map: Dictionary<any> = {};
-    const component_map: Dictionary<any> = {};
-
-    // find project repository in our GitHub
-    const github_repos = await this.getGitHubRepos('https://api.github.com/orgs/architect-templates/repos');
-    const start_project = github_repos.find(repo => repo.name === chosen_project.toLowerCase());
-    if (!start_project) {
-      const repo_names = github_repos.map(repo => repo.name).join(', ');
-      throw new Error(`Cannot find project '${chosen_project}'. Available projects are: ${repo_names}.`);
-    }
-
-    // store component spec of the chosen project
-    const yaml_url = 'https://raw.githubusercontent.com/' + start_project.full_name + `/${GITHUB_BRANCH}/architect.yml`;
+  static async storeComponentSpec(url: string, project_name: string): Promise<void> {
+    const yaml_url = `${url}/architect.yml`;
     const component_spec = await this.fetchYamlFromGitHub(yaml_url);
-    component_map[start_project.name.toLowerCase()] = component_spec;
+    this.component_map[project_name.toLowerCase()] = component_spec;
+  }
 
-    // store architect-template.json content
-    const url = 'https://raw.githubusercontent.com/' + start_project.full_name + `/${GITHUB_BRANCH}/architect-template.json`;
-    const template_json = await this.fetchJsonFromGitHub(url) as Dictionary<any>;
+  static async storeTemplateContentToQueue(url: string, project_name: string): Promise<void> {
+    const json_url = `${url}/architect-template.json`;
+    const template_json = await this.fetchJsonFromGitHub(json_url) as Dictionary<any>;
     for (const [type, item] of Object.entries(template_json)) {
       if (item.required) {
-        dependency_map[start_project.name] = type;
+        this.dependency_map[project_name] = type;
       }
 
-      if (!queue.hasItem(type)) {
-        queue.enqueue({ [type]: item });
+      if (!this.queue.hasItem(type)) {
+        this.queue.enqueue({ [type]: item });
       }
     }
+  }
 
-    while (queue.size() > 0) {
-      const item = queue.dequeue() as Dictionary<Dictionary<any>>;
+  static async getSelections(chosen_project: string): Promise<Dictionary<Selection>> {
+    const start_project = await this.getRepoFromGitHub(chosen_project);
+
+    const url = `https://raw.githubusercontent.com/${start_project.full_name}/${GITHUB_BRANCH}`;
+    await this.storeComponentSpec(url, start_project.name);
+    await this.storeTemplateContentToQueue(url, start_project.name);
+
+    while (this.queue.size() > 0) {
+      const item = this.queue.dequeue() as Dictionary<Dictionary<any>>;
       const proj_type = Object.keys(item)[0];
       const proj = item[proj_type];
 
-      // check if that type was already asked
+      // check if type already prompted
       if (proj.choices) {
         const choice_names = proj.choices.map((choice: any) => choice.name.toLowerCase());
-        const found = choice_names.find((choice_name: string) => Object.keys(component_map).includes(choice_name));
+        const found = choice_names.find((choice_name: string) => Object.keys(this.component_map).includes(choice_name));
         if (found) {
-          type_map[proj_type] = found;
+          this.type_map[proj_type] = found;
           continue;
         }
       }
@@ -135,76 +144,47 @@ export default class ProjectUtils {
         const answer = await this.prompt(['yes', 'no'], `${proj_type} is optional. Would you like to select a ` + proj_type.toLowerCase() + '?');
         is_prompt = answer === 'yes';
       }
-      
+
       if (is_prompt) {
-        const selected = await this.prompt(proj.choices, 'Select a ' + proj_type.toLowerCase());
-        type_map[proj_type] = selected.name.toLowerCase();
+        const prompt_str = proj.required ? `This project requires a ${proj_type.toLowerCase()} to function, please select from the following` : `Select a ${proj_type.toLowerCase()}`;
+        const selected = await this.prompt(proj.choices, prompt_str);
+        this.type_map[proj_type] = selected.name.toLowerCase();
 
         if (!selected.project) {
-          component_map[selected.name.toLowerCase()] = selected;
+          this.component_map[selected.name.toLowerCase()] = selected;
         } else {
-          // store component spec
-          const yaml_url = selected.project.replace('github.com', 'raw.githubusercontent.com') + `/${GITHUB_BRANCH}/architect.yml`;
-          const component_spec = await this.fetchYamlFromGitHub(yaml_url);
-          component_map[selected.name.toLowerCase()] = component_spec;
-
-          // store template content
-          const url = selected.project.replace('github.com', 'raw.githubusercontent.com') + `/${GITHUB_BRANCH}/architect-template.json`;
-          const template_json = await this.fetchJsonFromGitHub(url) as Dictionary<any>;
-          for (const [type, item] of Object.entries(template_json)) {
-            if (item.required) {
-              dependency_map[selected.name.toLowerCase()] = type;
-            }
-
-            if (!queue.hasItem(type)) {
-              queue.enqueue({ [type]: item });
-            }
-          }
+          const url = selected.project.replace('github.com', 'raw.githubusercontent.com') + `/${GITHUB_BRANCH}`;
+          await this.storeComponentSpec(url, selected.name);
+          await this.storeTemplateContentToQueue(url, selected.name);
         }
       }
     }
+    return this.combine_selections(this.type_map, this.dependency_map, this.component_map);
+  }
 
-    // combine type_map and component_map
+  static combine_selections(type_map: Dictionary<any>, dependency_map: Dictionary<any>, component_map: Dictionary<any>): Dictionary<Selection> {
     const selections: Dictionary<Selection> = {};
     for (const [type, type_name] of Object.entries(type_map)) {
-      const dependency = dependency_map[type_name] ? dependency_map[type_name] : '';
-      
-      if (!component_map[type_name].architect_yml) {
-        selections[type] = {
-          name: type_name,
-          architect_yml: component_map[type_name],
-          depends_on: dependency,
-        };
-      } else {
-        selections[type] = {
-          name: component_map[type_name].name,
-          architect_yml: yaml.load(component_map[type_name].architect_yml.join('\n')) as Dictionary<any>,
-          depends_on: dependency,
-        };
-      }
+      const name = !component_map[type_name].architect_yml ? type_name : component_map[type_name].name;
+      const architect_yml = !component_map[type_name].architect_yml ? component_map[type_name] : yaml.load(component_map[type_name].architect_yml.join('\n')) as Dictionary<any>;
+      selections[type] = {
+        name: name,
+        architect_yml: architect_yml,
+        depends_on: dependency_map[type_name] ? dependency_map[type_name] : '',
+      };
     }
 
     // store any component spec that does not have a type by its name
     for (const [type_name, component_spec] of Object.entries(component_map)) {
       if (!(Object.values(type_map).includes(type_name))) {
-        const dependency = dependency_map[component_spec.name] ? dependency_map[component_spec.name] : '';
-        
-        if (!component_spec.architect_yml) {
-          selections[component_spec.name.toLowerCase()] = {
-            name: component_spec.name,
-            architect_yml: component_spec,
-            depends_on: dependency,
-          };
-        } else {
-          selections[component_spec.name.toLowerCase()] = {
-            name: component_spec.name,
-            architect_yml: yaml.load(component_spec.architect_yml.join('\n')) as Dictionary<any>,
-            depends_on: dependency,
-          };
-        }
+        const spec = !component_spec.architect_yml ? component_spec : yaml.load(component_spec.architect_yml.join('\n')) as Dictionary<any>;
+        selections[component_spec.name.toLowerCase()] = {
+          name: component_spec.name,
+          architect_yml: spec,
+          depends_on: dependency_map[component_spec.name] ? dependency_map[component_spec.name] : '',
+        };
       }
     }
-
     return selections;
   }
 
@@ -272,9 +252,9 @@ export default class ProjectUtils {
         }
 
         const yml_services = val as Dictionary<ServiceSpec>;
-        const keys = Object.keys(yml_services);
-        if (keys.length === 1) {
-          const service_key = keys[0];
+        const service_keys = Object.keys(yml_services);
+        if (service_keys.length === 1) {
+          const service_key = service_keys[0];
           const service = yml_services[service_key];
           if (service.build) {
             service.build['context'] = './' + selection.name;
