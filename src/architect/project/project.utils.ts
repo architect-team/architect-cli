@@ -21,14 +21,14 @@ interface Selection {
 
 const GITHUB_BRANCH = 'main';
 
-class Queue {
+class Queue<T> {
   items: any[];
 
   constructor(...params: any[]) {
     this.items = [...params];
   }
 
-  enqueue(item: any) {
+  enqueue(item: T) {
     this.items.push(item);
   }
 
@@ -72,10 +72,10 @@ export default class ProjectUtils {
 
   static async fetchYamlFromGitHub(url: string): Promise<ComponentSpec> {
     const component_spec = await fetch(url)
-      .then(res => res.blob())
-      .then(blob => blob.text())
-      .then(yaml_as_string => yaml.load(yaml_as_string) as ComponentSpec)
-      .catch(err => {
+      .then((res: any) => res.blob())
+      .then((blob: any) => blob.text())
+      .then((yaml_as_string: any) => yaml.load(yaml_as_string) as ComponentSpec)
+      .catch((err: any) => {
         throw new Error(`Failed to fetch ${url}`);
       });
     return component_spec;
@@ -133,9 +133,7 @@ export default class ProjectUtils {
         is_prompt = true;
       } else {
         const answer = await this.prompt(['yes', 'no'], `${proj_type} is optional. Would you like to select a ` + proj_type.toLowerCase() + '?');
-        if (answer === 'yes') {
-          is_prompt = true;
-        }
+        is_prompt = answer === 'yes';
       }
       
       if (is_prompt) {
