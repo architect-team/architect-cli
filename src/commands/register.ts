@@ -5,7 +5,7 @@ import { classToClass, classToPlain } from 'class-transformer';
 import * as Diff from 'diff';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
-import os from 'os';
+import hash from 'object-hash';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
@@ -55,7 +55,6 @@ export default class ComponentRegister extends BaseCommand {
       non_sensitive: true,
       ...Flags.string({
         description: 'Directory to write build cache to',
-        default: path.join(os.tmpdir(), 'architect-build-cache'),
       }),
     },
   };
@@ -117,6 +116,9 @@ export default class ComponentRegister extends BaseCommand {
       volumes: {},
     };
     const image_mapping: Dictionary<string | undefined> = {};
+
+    const seen_cache_dir = new Set<string>();
+
     // Set image name in compose
     for (const [service_name, service] of Object.entries(full_compose.services)) {
       if (service.build && !service.image && service.labels) {
@@ -136,11 +138,23 @@ export default class ComponentRegister extends BaseCommand {
 
         service.build['x-bake'] = {
           platforms: buildx_platforms,
-          'cache-from': `type=local,src=${flags['cache-directory']}`,
-          // https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to
-          'cache-to': `type=local,dest=${flags['cache-directory']},mode=max`,
-          pull: true,
+          pull: false,
         };
+
+        if (flags['cache-directory']) {
+          // Cache directory needs to be unique per dockerfile: https://github.com/docker/build-push-action/issues/252#issuecomment-744412763
+          const cache_dir = path.join(flags['cache-directory'], hash(service.build));
+
+          // To test you need to prune the buildx cache
+          // docker buildx prune --builder architect --force
+          service.build['x-bake']['cache-from'] = `type=local,src=${cache_dir}`;
+
+          if (!seen_cache_dir.has(cache_dir)) {
+            // https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to
+            service.build['x-bake']['cache-to'] = `type=local,dest=${cache_dir}-tmp,mode=max`;
+          }
+          seen_cache_dir.add(cache_dir);
+        }
 
         compose.services[service_name] = {
           build: service.build,
@@ -173,13 +187,17 @@ export default class ComponentRegister extends BaseCommand {
     const builder = await DockerBuildXUtils.getBuilder(this.app.config);
 
     try {
-      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args, '--builder', builder], builder, {
+      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], builder, {
         stdio: 'inherit',
       });
     } catch (err: any) {
       fs.removeSync(compose_file);
       this.log(`Docker buildx bake failed. Please make sure docker is running.`);
       this.error(err);
+    }
+
+    for (const cache_dir of seen_cache_dir) {
+      await fs.move(`${cache_dir}-tmp`, cache_dir, { overwrite: true });
     }
 
     const new_spec = classToClass(component_spec);
