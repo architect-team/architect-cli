@@ -36,7 +36,7 @@ describe('local dev environment', function () {
             port: 3000
         environment: {}
         liveness_probe:
-          command: curl --fail localhost:3000 || exit 1
+          command: curl --fail localhost:3000
 
     interfaces:
       hello:
@@ -61,7 +61,7 @@ describe('local dev environment', function () {
             port: 3000
         environment: {}
         liveness_probe:
-          command: curl --fail localhost:3000 || exit 1
+          command: curl --fail localhost:3000
 
     interfaces:
       hello:
@@ -465,8 +465,7 @@ describe('local dev environment', function () {
         "image": "heroku/nodejs-hello-world",
         "healthcheck": {
           "test": [
-            "CMD-SHELL",
-            "curl --fail localhost:3000 || exit 1"
+            "CMD", "curl", "--fail", "localhost:3000"
           ],
           "interval": "30s",
           "timeout": "5s",
@@ -931,8 +930,7 @@ describe('local dev environment', function () {
       expect(runCompose.calledOnce).to.be.true;
       expect(compose.services['hello-world--api'].healthcheck).to.deep.equal({
         "test": [
-          "CMD-SHELL",
-          "curl --fail localhost:3000 || exit 1"
+          "CMD", "curl", "--fail", "localhost:3000"
         ],
         "interval": "30s",
         "timeout": "5s",
