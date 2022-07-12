@@ -134,7 +134,6 @@ describe('secrets', function () {
     })
 
   defaults
-
     .stub(UserUtils, 'isAdmin', async () => false)
     .stdout({ print })
     .stderr({ print })
