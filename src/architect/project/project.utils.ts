@@ -3,258 +3,317 @@ import yaml from 'js-yaml';
 import inquirer from 'inquirer';
 import fetch from 'node-fetch';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
-import { buildSpecFromPath, ComponentSpec } from '../../';
+import { ComponentSpec } from '../../';
 import { ServiceSpec } from '../../dependency-manager/spec/service-spec';
 
 const download = require('download-git-repo');
 
-interface ProjectRepo{
+interface GitHubRepo {
   name: string,
-  project: string,
+  full_name: string,
 }
 
-interface Image {
+interface Selection {
   name: string,
-  image: string,
+  architect_yml: Dictionary<any>,
+  depends_on: string,
 }
 
-enum INFRASTRUCTURE {
-  FRONTEND = 'Frontend',
-  BACKEND = 'Backend',
+const GITHUB_BRANCH = 'main';
+
+class Queue {
+  items: any[];
+
+  constructor(...params: any[]) {
+    this.items = [...params];
+  }
+
+  enqueue(item: any) {
+    this.items.push(item);
+  }
+
+  dequeue() {
+    return this.items.shift();
+  }
+
+  getItems() {
+    return this.items;
+  }
+
+  hasItem(key: string) {
+    return this.items.some(item => item.hasOwnProperty(key));
+  }
+
+  size() {
+    return this.items.length;
+  }
 }
-
-const FRONTENDS = [
-  {
-    'name': 'React',
-    'project': 'https://github.com/architect-templates/react',
-  },
-  {
-    'name': 'Nuxt',
-    'project': 'https://github.com/architect-templates/nuxt',
-  },
-];
-
-const BACKENDS = [
-  {
-    'name': 'NodeJS',
-    'project': 'https://github.com/architect-templates/node-rest-api',
-  },
-  {
-    'name': 'Django',
-    'project': 'https://github.com/architect-templates/django',
-  },
-  {
-    'name': 'Flask',
-    'project': 'https://github.com/architect-templates/flask',
-  },
-  {
-    'name': 'NestJS',
-    'project': 'https://github.com/architect-templates/nestjs',
-  },
-];
 
 export default class ProjectUtils {
 
-  static async getDatabaseService(db_name: string): Promise<string> {
-    switch (db_name) {
-      case 'postgres':
-        return `
-        image: postgres:latest
-        interfaces:
-          database:
-            port: \${{ secrets.db_port }}
-            protocol: postgresql
-        environment:
-          POSTGRES_USER: \${{ secrets.db_user }}
-          POSTGRES_PASSWORD: \${{ secrets.db_pass }}
-          POSTGRES_DB: \${{ secrets.db_name }}
-        `;
-      case 'mysql':
-        return `
-          image: mysql:latest
-          interfaces:
-            database:
-              port: 3306
-              username: \${{ secrets.db_user }}
-              password: \${{ secrets.db_pass }}
-              protocol: mysql
-              path: /\${{ secrets.db_name }}
-          environment:
-            MYSQL_ROOT_PASSWORD: \${{ secrets.db_pass }}
-            MYSQL_DATABASE: \${{ secrets.db_name } }
-        `;
-      case 'mariadb':
-        return `
-          image: mariadb:latest
-          interfaces:
-            database:
-              port: 3306
-              username: \${{ secrets.db_user }}
-              password: \${{ secrets.db_pass }}
-              protocol: mysql
-              path: /\${{ secrets.db_name }}
-          environment:
-            MYSQL_ROOT_PASSWORD: \${{ secrets.db_pass }}
-            MYSQL_DATABASE: \${{ secrets.db_name } }
-        `;
-      default:
-        throw new Error(`Database ${db_name} is not supported.`);
-    }
-  }
-  
-  static async promptInfrastructure(): Promise<string> {
-    inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
-    const answers: any = await inquirer.prompt([
-      {
-        type: 'autocomplete',
-        name: 'infrastructure',
-        message: 'Select an infrastructure',
-        source: async (answers_so_far: any, input: string) => {
-          return [INFRASTRUCTURE.FRONTEND, INFRASTRUCTURE.BACKEND];
-        },
-      },
-    ]);
-    return answers.infrastructure;
+  static async getGitHubRepos(url: string): Promise<GitHubRepo[]>{
+    const res_json = await this.fetchJsonFromGitHub('https://api.github.com/orgs/architect-templates/repos');
+    const repos = res_json.map((item: any) => {
+      return {
+        name: item.name,
+        full_name: item.full_name,
+      };
+    });
+    return repos;
   }
 
-  static async prompt(choices: ProjectRepo[] | Image[], message: string): Promise<ProjectRepo | Image> {
+  static async fetchJsonFromGitHub(url: string): Promise<any> {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${url}`);
+    }
+    return await response.json();
+  }
+
+  static async fetchYamlFromGitHub(url: string): Promise<ComponentSpec> {
+    const component_spec = await fetch(url)
+      .then(res => res.blob())
+      .then(blob => blob.text())
+      .then(yaml_as_string => yaml.load(yaml_as_string) as ComponentSpec)
+      .catch(err => {
+        throw new Error(`Failed to fetch ${url}`);
+      });
+    return component_spec;
+  }
+
+  static async getSelections(chosen_project: string): Promise<Dictionary<Selection>> {
+    const queue = new Queue();
+    const type_map: Dictionary<any> = {};
+    const dependency_map: Dictionary<any> = {};
+    const component_map: Dictionary<any> = {};
+
+    // find project repository in our GitHub
+    const github_repos = await this.getGitHubRepos('https://api.github.com/orgs/architect-templates/repos');
+    const start_project = github_repos.find(repo => repo.name === chosen_project.toLowerCase());
+    if (!start_project) {
+      const repo_names = github_repos.map(repo => repo.name).join(', ');
+      throw new Error(`Cannot find project '${chosen_project}'. Available projects are: ${repo_names}.`);
+    }
+
+    // store component spec of the chosen project
+    const yaml_url = 'https://raw.githubusercontent.com/' + start_project.full_name + `/${GITHUB_BRANCH}/architect.yml`;
+    const component_spec = await this.fetchYamlFromGitHub(yaml_url);
+    component_map[start_project.name.toLowerCase()] = component_spec;
+
+    // store architect-template.json content
+    const url = 'https://raw.githubusercontent.com/' + start_project.full_name + `/${GITHUB_BRANCH}/architect-template.json`;
+    const template_json = await this.fetchJsonFromGitHub(url) as Dictionary<any>;
+    for (const [type, item] of Object.entries(template_json)) {
+      if (item.required) {
+        dependency_map[start_project.name] = type;
+      }
+
+      if (!queue.hasItem(type)) {
+        queue.enqueue({ [type]: item });
+      }
+    }
+
+    while (queue.size() > 0) {
+      const item = queue.dequeue() as Dictionary<Dictionary<any>>;
+      const proj_type = Object.keys(item)[0];
+      const proj = item[proj_type];
+
+      // check if that type was already asked
+      if (proj.choices) {
+        const choice_names = proj.choices.map((choice: any) => choice.name.toLowerCase());
+        const found = choice_names.find((choice_name: string) => Object.keys(component_map).includes(choice_name));
+        if (found) {
+          type_map[proj_type] = found;
+          continue;
+        }
+      }
+
+      let is_prompt = false;
+      if (proj.required) { 
+        is_prompt = true;
+      } else {
+        const answer = await this.prompt(['yes', 'no'], `${proj_type} is optional. Would you like to select a ` + proj_type.toLowerCase() + '?');
+        if (answer === 'yes') {
+          is_prompt = true;
+        }
+      }
+      
+      if (is_prompt) {
+        const selected = await this.prompt(proj.choices, 'Select a ' + proj_type.toLowerCase());
+        type_map[proj_type] = selected.name.toLowerCase();
+
+        if (!selected.project) {
+          component_map[selected.name.toLowerCase()] = selected;
+        } else {
+          // store component spec
+          const yaml_url = selected.project.replace('github.com', 'raw.githubusercontent.com') + `/${GITHUB_BRANCH}/architect.yml`;
+          const component_spec = await this.fetchYamlFromGitHub(yaml_url);
+          component_map[selected.name.toLowerCase()] = component_spec;
+
+          // store template content
+          const url = selected.project.replace('github.com', 'raw.githubusercontent.com') + `/${GITHUB_BRANCH}/architect-template.json`;
+          const template_json = await this.fetchJsonFromGitHub(url) as Dictionary<any>;
+          for (const [type, item] of Object.entries(template_json)) {
+            if (item.required) {
+              dependency_map[selected.name.toLowerCase()] = type;
+            }
+
+            if (!queue.hasItem(type)) {
+              queue.enqueue({ [type]: item });
+            }
+          }
+        }
+      }
+    }
+
+    // combine type_map and component_map
+    const selections: Dictionary<Selection> = {};
+    for (const [type, type_name] of Object.entries(type_map)) {
+      const dependency = dependency_map[type_name] ? dependency_map[type_name] : '';
+      
+      if (!component_map[type_name].architect_yml) {
+        selections[type] = {
+          name: type_name,
+          architect_yml: component_map[type_name],
+          depends_on: dependency,
+        };
+      } else {
+        selections[type] = {
+          name: component_map[type_name].name,
+          architect_yml: yaml.load(component_map[type_name].architect_yml.join('\n')) as Dictionary<any>,
+          depends_on: dependency,
+        };
+      }
+    }
+
+    // store any component spec that does not have a type by its name
+    for (const [type_name, component_spec] of Object.entries(component_map)) {
+      if (!(Object.values(type_map).includes(type_name))) {
+        const dependency = dependency_map[component_spec.name] ? dependency_map[component_spec.name] : '';
+        
+        if (!component_spec.architect_yml) {
+          selections[component_spec.name.toLowerCase()] = {
+            name: component_spec.name,
+            architect_yml: component_spec,
+            depends_on: dependency,
+          };
+        } else {
+          selections[component_spec.name.toLowerCase()] = {
+            name: component_spec.name,
+            architect_yml: yaml.load(component_spec.architect_yml.join('\n')) as Dictionary<any>,
+            depends_on: dependency,
+          };
+        }
+      }
+    }
+
+    return selections;
+  }
+
+  static async prompt(choices: any[], message: string): Promise<any> {
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
-    const answers: { projectRepo: ProjectRepo | Image } = await inquirer.prompt([
+    const answers: { selected: any } = await inquirer.prompt([
       {
         type: 'autocomplete',
-        name: 'projectRepo',
+        name: 'selected',
         message: message,
         source: async (answers_so_far: any, input: string) => {
           return choices.map((p) => ({ name: p.name, value: p }));
         },
       },
     ]);
-    return answers.projectRepo;
+    return answers.selected;
   }
 
   static async downloadRepo(url: string, dir_path: string): Promise<void> {
-    await download(url + '#main', dir_path, (err: any) => {
+    await download(url + `#${GITHUB_BRANCH}`, dir_path, (err: any) => {
       if (err) {
         throw new Error(`Failed to download repository ${url}`);
       }
     });
   }
 
-  static async downloadGitHubRepos(selections: Dictionary<any>, project_dir: string): Promise<void> {
-    const frontend = selections[INFRASTRUCTURE.FRONTEND.toLowerCase()];
-    if (frontend) {
-      const url = frontend['project'].replace('https://github.com/', '');
-      await this.downloadRepo(url, project_dir + '/' + frontend['name'].toLowerCase());
+  static async downloadGitHubRepos(selections: Dictionary<Dictionary<any>>, project_dir: string): Promise<void> {
+    // download any selection that has a homepage
+    for (const selection of Object.values(selections)) {
+      if (selection.architect_yml && selection.architect_yml.homepage) {
+        const url = selection.architect_yml.homepage.replace('https://github.com/', '');
+        await this.downloadRepo(url, project_dir + '/' + selection.name.toLowerCase());
+      }
     }
-
-    const backend = selections[INFRASTRUCTURE.BACKEND.toLowerCase()];
-    const url = backend['project'].replace('https://github.com/', '');
-    const backend_path = !frontend ? project_dir : project_dir + '/' + backend['name'].toLowerCase();
-    await this.downloadRepo(url, backend_path);
     await new Promise(resolve => setTimeout(resolve, 2000));
   }
 
-  static async createNewArchitectYaml(selections: Dictionary<any>, project_dir: string): Promise<void> {
-    if (!selections.hasOwnProperty(INFRASTRUCTURE.FRONTEND.toLowerCase())) {
-      return;
-    }
-    
-    // services
-    let backend_service_name = '';
-    const backend = selections[INFRASTRUCTURE.BACKEND.toLowerCase()];
-    const backend_spec = buildSpecFromPath(project_dir + '/' + backend['name'].toLowerCase());
-    for (const [service_name, service] of Object.entries(backend_spec.services as Dictionary<ServiceSpec>)) {
-      if (service.build && !service.image) {
-        service.build['context'] = './' + backend['name'].toLowerCase();
-        backend_service_name = service_name;
-      } else {
-        const selected_db = selections['database']['image'];
-        if (!service.image?.toLowerCase().includes(selections['database']['image'])) {
-          const db_service_yml = yaml.load(await this.getDatabaseService(selected_db)) as ServiceSpec;
-          service.image = db_service_yml.image;
-          service.interfaces = db_service_yml.interfaces;
-          service.environment = db_service_yml.environment;
+  static async createArchitectYaml(selections: Dictionary<any>, project_dir: string): Promise<void> {
+    // get actual service name for depends_on
+    for (const selection of Object.values(selections)) {
+      if (selection.depends_on) {
+        const depends_on_proj = selections[selection.depends_on];
+        const services = depends_on_proj.architect_yml.services;
+        if (Object.keys(services).length === 1) {
+          selection.depends_on = Object.keys(services)[0];
+        } else {
+          const service_name = Object.keys(services).find((name: any) => !services[name].image);
+          selection.depends_on = service_name;
         }
       }
     }
 
-    const frontend = selections[INFRASTRUCTURE.FRONTEND.toLowerCase()];
-    const frontend_spec = buildSpecFromPath(project_dir + '/' + frontend['name'].toLowerCase());
-    for (const service of Object.values(frontend_spec.services as Dictionary<ServiceSpec>)) {
-      if (service.build && !service.image) {
-        service.build['context'] = './' + frontend['name'].toLowerCase();
-        service['depends_on'] = [backend_service_name];
+    let interfaces: Dictionary<any> = {};
+    let dependencies: Dictionary<any> = {};
+    let secrets: Dictionary<any> = {};
+    let services: Dictionary<any> = {};
+    for (const selection of Object.values(selections)) {
+      const yml = selection.architect_yml;
+      secrets = { ...secrets, ...yml.secrets };
+      if (yml.dependencies) {
+        dependencies = { ...dependencies, ...yml.dependencies};
+      }
+      if (yml.interfaces) {
+        interfaces = { ...interfaces, ...yml.interfaces };
+      }
+
+      const yml_services = yml.services as Dictionary<ServiceSpec>;
+      if (Object.keys(yml_services).length === 1) {
+        const key = Object.keys(yml_services)[0];
+        const service = yml_services[key];
+        if (service.build) {
+          service.build['context'] = './' + selection.name;
+        }
+        if (selection.depends_on) {
+          yml_services[key]['depends_on'] = [selection.depends_on];
+        }
+        services = { ...services, ...yml_services };
+      } else {
+        for (const [service_name, service] of Object.entries(yml_services)) {
+          if (service.build && !service.image) {
+            services[service_name] = service;
+            service.build['context'] = './' + selection.name;
+            if (selection.depends_on) {
+              services[service_name]['depends_on'] = [selection.depends_on];
+            }
+          }
+        }
       }
     }
 
-    // combine yaml files
-    const component_name: string = frontend['name'].toLowerCase() + '-' + backend['name'.toLowerCase()];
-    const homepage = frontend_spec.homepage + ' and ' + backend_spec.homepage;
+    let reduced_interfaces;
+    const app_key = Object.keys(interfaces).find(key => key === 'app');
+    if (app_key) {
+      reduced_interfaces = { [app_key]: interfaces[app_key] };
+    } else {
+      const key = Object.keys(interfaces)[0];
+      reduced_interfaces = { [key]: interfaces[key] };
+    }
+
     const yml = {
-      'name': component_name.toLowerCase(),
-      'homepage': homepage,
-      'secrets': { ...backend_spec.secrets, ...frontend_spec.secrets },
-      'dependencies': frontend_spec.dependencies,
-      'services': { ...backend_spec.services, ...frontend_spec.services },
-      'interfaces': frontend_spec.interfaces,
+      'name': project_dir.replace('_', '-'),
+      'secrets': secrets,
+      'dependencies': dependencies,
+      'services': services,
+      'interfaces': reduced_interfaces,
     } as ComponentSpec;
 
     fs.writeFileSync('./' + project_dir + '/architect.yml', yaml.dump(yml));
-  }
-
-  static async readArchitectTemplateJSON(github_repo_url: string): Promise<Dictionary<Dictionary<any>>> {
-    const url = github_repo_url.replace('github.com', 'raw.githubusercontent.com') + '/main/architect-template.json';
-    
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Error! status: ${response.status}`);
-    }
-    return await response.json();
-  }
-
-  static async getSelections(chosen_project?: string): Promise<Dictionary<any>>{
-    const selections: Dictionary<any> = {};
-    if (!chosen_project) {
-      const infrastructure = await this.promptInfrastructure();
-      let backend_choices = BACKENDS as ProjectRepo[];
-
-      let frontend: any;
-      if (infrastructure === INFRASTRUCTURE.FRONTEND) {
-        frontend = await this.prompt(FRONTENDS, 'Select a frontend');
-        selections['frontend'] = frontend;
-        const json_content = await this.readArchitectTemplateJSON(frontend.project);
-        backend_choices = json_content[INFRASTRUCTURE.BACKEND.toLowerCase()]['choices'] as ProjectRepo[];
-      }
-
-      const backend = await this.prompt(backend_choices, 'This project requires a backend API to function, please pick from the following');
-      selections['backend'] = backend;
-    } else {
-      const frontend = FRONTENDS.find(item => item.name.toLowerCase() === chosen_project.toLowerCase());
-      let backend = BACKENDS.find(item => item.name.toLowerCase() === chosen_project.toLowerCase());
-      if (!frontend && !backend) {
-        const err_msg = `The selected project '${chosen_project}' is not supported.\n  `;
-        const supported_frontends = FRONTENDS.map(item => item.name).join(', ');
-        const supported_backends = BACKENDS.map(item => item.name).join(', ');
-        throw new Error(err_msg + `Supported frontends: ${supported_frontends}\n  Supported backends:  ${supported_backends}`);
-      }
-      
-      if (frontend) {
-        selections['frontend'] = frontend;
-        const json_content = await this.readArchitectTemplateJSON(frontend.project);
-        const backend_choices = json_content[INFRASTRUCTURE.BACKEND.toLowerCase()]['choices'] as ProjectRepo[];
-        backend = await this.prompt(backend_choices, 'This project requires a backend API to function, please pick from the following') as ProjectRepo;
-      }
-      selections['backend'] = backend;
-    }
-
-    // prompt database
-    const json_content = await this.readArchitectTemplateJSON(selections[INFRASTRUCTURE.BACKEND.toLowerCase()].project);
-    if (json_content['database']['required']) {
-      const choices = json_content['database']['choices'] as Image[];
-      const database = await this.prompt(choices, 'Your backend project requires a database to function, please pick from the following');
-      selections['database'] = database;
-    }
-
-    return selections;
   }
 }
