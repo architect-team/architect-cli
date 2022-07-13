@@ -1,3 +1,16 @@
+# [1.19.0](https://github.com/architect-team/architect-cli/compare/v1.18.2...v1.19.0) (2022-07-12)
+
+
+### Bug Fixes
+
+* **analytics:** Fixed crash when docker context could not be found ([0a652ed](https://github.com/architect-team/architect-cli/commit/0a652ed06ff3b4c7b0a3c903fcec155ae7d2159d))
+* **register:** Improve cache mechanism when registering components  ([1289b7c](https://github.com/architect-team/architect-cli/commit/1289b7cf0888a267afcc10f03f3241de27e2377e))
+
+
+### Features
+
+* **analytics:** Improve analytics on error ([98cdb62](https://github.com/architect-team/architect-cli/commit/98cdb620af78d5cc31fff16debd89cead034fabc))
+
 ## [1.18.2](https://github.com/architect-team/architect-cli/compare/v1.18.1...v1.18.2) (2022-07-08)
 
 
