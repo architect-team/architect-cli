@@ -131,7 +131,7 @@ export class DockerComposeUtils {
           if (!liveness_probe.command) {
             liveness_probe.command = ['CMD-SHELL', `curl -f http://localhost:${liveness_probe.port}${liveness_probe.path} || exit 1`]; // deprecated
           } else {
-            liveness_probe.command = ['CMD-SHELL', liveness_probe.command.join(' ')];
+            liveness_probe.command = ['CMD', ...liveness_probe.command];
           }
           service.healthcheck = {
             test: liveness_probe.command,
