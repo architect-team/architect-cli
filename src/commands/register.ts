@@ -9,7 +9,7 @@ import hash from 'object-hash';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ResourceSpec, ServiceNode, Slugs } from '../';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, validateInterpolation } from '../';
 import AccountUtils from '../architect/account/account.utils';
 import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
@@ -90,18 +90,24 @@ export default class ComponentRegister extends BaseCommand {
       throw new Error('Component Config must have a name');
     }
 
+    const context = {
+      architect: {
+        build: {
+          tag: flags.tag,
+        },
+      },
+    };
+
+    validateInterpolation(component_spec);
+
     const { component_account_name, component_name } = ComponentSlugUtils.parse(component_spec.name);
     const selected_account = await AccountUtils.getAccount(this.app, component_account_name || flags.account);
 
-    const dependency_manager = new LocalDependencyManager(
-      this.app.api,
-      { [component_spec.name]: config_path }
-    );
+    const dependency_manager = new LocalDependencyManager(this.app.api);
     dependency_manager.environment = 'production';
     dependency_manager.account = selected_account.name;
 
-    const loaded_spec = await dependency_manager.loadComponentSpec(component_spec.name);
-    const graph = await dependency_manager.getGraph([loaded_spec], undefined, { interpolate: false, validate: false });
+    const graph = await dependency_manager.getGraph([classToClass(component_spec)], undefined, { interpolate: false, validate: false });
     // Tmp fix to register host overrides
     for (const node of graph.nodes.filter(n => n instanceof ServiceNode) as ServiceNode[]) {
       for (const interface_config of Object.values(node.interfaces)) {
@@ -129,10 +135,6 @@ export default class ComponentRegister extends BaseCommand {
         const ref_with_account = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, resource_type, resource_name);
 
         const image = `${this.app.config.registry_host}/${ref_with_account}:${tag}`;
-
-        if (service.build) {
-          delete service.build.args;
-        }
 
         const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags['architecture']);
 
@@ -169,14 +171,16 @@ export default class ComponentRegister extends BaseCommand {
 
     await DockerComposeUtils.writeCompose(compose_file, yaml.dump(compose));
 
-    let build_args: string[] = flags.arg || [];
-    for (const service_config of Object.values(component_spec.services || {})) {
-      build_args = build_args.concat((await this.getBuildArgs(service_config)).map(arg => {
-        return `${arg}`;
-      }));
+    const args = flags.arg || [];
+
+    for (const arg of args) {
+      const [key, value] = arg.split(/=([^]+)/);
+      if (!value) {
+        throw new Error(`--arg must be in the format key=value: ${arg}`);
+      }
     }
 
-    build_args = build_args.filter((value, index, self) => {
+    const build_args = args.filter((value, index, self) => {
       return self.indexOf(value) === index;
     }).reduce((arr, value) => {
       arr.push('--set');
@@ -276,20 +280,6 @@ export default class ComponentRegister extends BaseCommand {
     this.log(chalk.green(`Successfully registered component`));
 
     console.timeEnd('Time');
-  }
-
-  private async getBuildArgs(resource_spec: ResourceSpec): Promise<string[]> {
-    const { flags } = await this.parse(ComponentRegister);
-
-    const build_args_map: Dictionary<string | null> = { ...resource_spec.build?.args };
-    for (const arg of flags.arg || []) {
-      const [key, value] = arg.split(/=([^]+)/);
-      if (!value) {
-        throw new Error(`--arg must be in the format key=value: ${arg}`);
-      }
-      build_args_map[key] = value;
-    }
-    return Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
   }
 
   private async getDigest(image: string) {

@@ -58,7 +58,11 @@ export const dumpToYml = (spec: any, options: DumpOptions = {}): string => {
 
 export const buildSpecFromYml = (source_yml: string, metadata?: ComponentInstanceMetadata): ComponentSpec => {
   const parsed_yml = parseSourceYml(source_yml);
-  return validateOrRejectSpec(parsed_yml, metadata);
+  const spec = validateOrRejectSpec(parsed_yml, metadata);
+  if (!metadata?.file) {
+    spec.metadata.file = { contents: source_yml, path: '' };
+  }
+  return spec;
 };
 
 export const buildConfigFromYml = (source_yml: string, metadata?: ComponentInstanceMetadata): ComponentConfig => {

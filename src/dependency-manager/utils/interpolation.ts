@@ -2,9 +2,9 @@ import deepmerge from 'deepmerge';
 import { EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { Dictionary } from './dictionary';
 import { ValidationError, ValidationErrors } from './errors';
-import { findPotentialMatch } from './match';
 import { ArchitectParser } from './parser';
 import { matches } from './regex';
+import { CONTEXT_KEY_DELIMITER } from './rules';
 
 export const replaceBrackets = (value: string): string => {
   return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
@@ -34,7 +34,7 @@ export const buildContextMap = (context: any): any => {
         context_map[prefix] = c;
       }
       for (const [key, value] of Object.entries(c)) {
-        queue.push([prefix ? `${prefix}.${key}` : key, value]);
+        queue.push([prefix ? `${prefix}.${key.replace(/\./g, CONTEXT_KEY_DELIMITER)}` : key.replace(/\./g, CONTEXT_KEY_DELIMITER), value]);
       }
     } else if (prefix) {
       context_map[prefix] = c;
@@ -47,24 +47,23 @@ export interface InterpolateObjectOptions {
   keys?: boolean;
   values?: boolean;
   file?: { path: string, contents: string };
-  ignore_keys?: string[]
 }
 
 const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
 
-export const interpolateObject = <T>(obj: T, context: any, options?: InterpolateObjectOptions): { errors: ValidationError[]; interpolated_obj: T } => {
+export const interpolateObject = <T>(obj: T, context: any, _options?: InterpolateObjectOptions): { errors: ValidationError[]; interpolated_obj: T } => {
   // Clone object
   obj = deepmerge(obj, {}) as T;
 
   const context_map = buildContextMap(context);
-  const context_keys = Object.keys(context_map);
+  context_map['_path'] = '';
+  context_map['_obj_map'] = buildContextMap(obj);
 
   // Interpolate only keys first to flatten conditionals
-  options = {
+  const options = {
     keys: false,
     values: true,
-    ignore_keys: [],
-    ...options,
+    ..._options,
   };
 
   const parser = new ArchitectParser();
@@ -82,35 +81,32 @@ export const interpolateObject = <T>(obj: T, context: any, options?: Interpolate
         if (key === 'metadata') {
           continue;
         }
-        const current_path_keys = [...path_keys, key];
+        const current_path_keys = [...path_keys, key.replace(/\./g, CONTEXT_KEY_DELIMITER)];
         context_map['_path'] = current_path_keys.join('.');
         delete el[key];
         if (options.keys && IF_EXPRESSION_REGEX.test(key)) {
-          const parsed_key = parser.parseString(key, context_map, options.ignore_keys);
+          const parsed_key = parser.parseString(key, context_map);
           if (parsed_key === true) {
             has_conditional = true;
             for (const [key2, value2] of Object.entries(deepmerge(el, value, { arrayMerge: overwriteMerge }))) {
               el[key2] = value2;
             }
+          } else if (parser.errors.length > 0) {
+            el[key] = value;
+            to_add.push([value, current_path_keys]);
           }
+
           for (const error of parser.errors) {
             error.invalid_key = true;
           }
         } else if (options.values && typeof value === 'string') {
-          const parsed_value = parser.parseString(value, context_map, options.ignore_keys);
+          const parsed_value = parser.parseString(value, context_map);
           el[key] = parsed_value;
         } else {
           el[key] = value;
           if (value instanceof Object) {
             to_add.push([value, current_path_keys]);
           }
-        }
-        for (const error of parser.errors) {
-          const potential_match = findPotentialMatch(error.value, context_keys);
-          if (potential_match) {
-            error.message += ` - Did you mean \${{ ${potential_match} }}?`;
-          }
-          error.path = current_path_keys.join('.');
         }
         errors = errors.concat(parser.errors);
         parser.errors = [];

@@ -45,7 +45,6 @@ const changelog = [
 const default_plugins = [
   commitAnalyzer,
   releaseNotesGenerator,
-  exec,
   npm,
   git
 ]
