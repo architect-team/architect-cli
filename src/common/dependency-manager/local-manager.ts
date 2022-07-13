@@ -106,7 +106,6 @@ export default class LocalDependencyManager extends DependencyManager {
     const interfaces_spec = generateIngressesOverrideSpec(spec, ingresses);
     spec = overrideSpec(spec, interfaces_spec);
 
-    // Deprecated: Use if statements instead of debug block
     if (spec.metadata.file?.path && this.environment === 'local') {
       const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
 

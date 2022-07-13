@@ -130,6 +130,13 @@ export default class Dev extends BaseCommand {
         char: 'd',
       }),
     },
+    debug: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: `[default: true] Turn debug mode on (true) or off (false)`,
+        default: 'true',
+      }),
+    },
   };
 
   static args = [{
@@ -365,6 +372,10 @@ export default class Dev extends BaseCommand {
     if (flags.environment) {
       dependency_manager.environment = flags.environment;
     } else if (flags.production) {
+      dependency_manager.environment = 'local-production';
+    }
+
+    if (flags.debug === 'false') {
       dependency_manager.environment = 'local-production';
     }
 
