@@ -5,8 +5,9 @@ import { plainToClass } from 'class-transformer';
 import cron from 'cron-validate';
 import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
-import { buildContextMap, replaceBrackets } from '../../utils/interpolation';
+import { buildContextMap, interpolateObject, replaceBrackets } from '../../utils/interpolation';
 import { findPotentialMatch } from '../../utils/match';
+import { RequiredInterpolationRule } from '../../utils/rules';
 import { ParsedYaml } from '../../utils/types';
 import { ComponentInstanceMetadata, ComponentSpec } from '../component-spec';
 import { findDefinition, getArchitectJSONSchema } from './json-schema';
@@ -235,4 +236,18 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
   }
 
   return component_spec;
+};
+
+export const validateInterpolation = (component_spec: ComponentSpec): void => {
+  const { errors } = interpolateObject(component_spec, {}, {
+    keys: true,
+    values: true,
+    file: component_spec.metadata.file,
+  });
+
+  const filtered_errors = errors.filter(error => !error.message.startsWith(RequiredInterpolationRule.PREFIX));
+
+  if (filtered_errors.length) {
+    throw new ValidationErrors(filtered_errors, component_spec.metadata.file);
+  }
 };
