@@ -1,8 +1,9 @@
 import AppConfig from '../../app-config/config';
-import Command from '../../base-command';
+import BaseCommand from '../../base-command';
 import InvalidConfigOption from '../../common/errors/invalid-config-option';
 
-export default class ConfigSet extends Command {
+export default class ConfigSet extends BaseCommand {
+
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -10,7 +11,7 @@ export default class ConfigSet extends Command {
   static description = 'Set a new value for a CLI configuration option';
 
   static flags = {
-    ...Command.flags,
+    ...BaseCommand.flags,
   };
 
   static args = [{

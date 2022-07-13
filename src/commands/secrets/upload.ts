@@ -19,13 +19,17 @@ export default class SecretsUpload extends BaseCommand {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    override: Flags.boolean({
-      description: 'Allow override of existing secrets',
-      default: false,
-    }),
+    override: {
+      non_sensitive: true,
+      ...Flags.boolean({
+        description: 'Allow override of existing secrets',
+        default: false,
+      }),
+    },
   };
 
   static args = [{
+    non_sensitive: true,
     name: 'secrets_file',
     description: 'Secrets file to be uploaded',
     required: true,

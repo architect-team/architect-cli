@@ -3,6 +3,13 @@ import path from 'path';
 import { Dictionary } from '../';
 import LocalPaths from '../paths';
 
+export enum ENVIRONMENT {
+  TEST = 'test',
+  PRODUCTION = 'production',
+  DEV = 'dev',
+  LOCAL = 'local',
+}
+
 export default class AppConfig {
   private config_dir: string;
   log_level: 'info' | 'debug' | 'test';
@@ -13,6 +20,7 @@ export default class AppConfig {
   oauth_client_id: string;
   account: string;
   agent_server_host: string;
+  environment: string;
 
   constructor(config_dir: string, partial?: Partial<AppConfig>) {
     this.config_dir = config_dir;
@@ -30,6 +38,7 @@ export default class AppConfig {
     this.oauth_client_id = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
     this.account = '';
     this.agent_server_host = 'local';
+    this.environment = process.env.TEST === '1' ? ENVIRONMENT.TEST : ENVIRONMENT.PRODUCTION;
 
     // Override defaults with input values
     Object.assign(this, partial);
@@ -63,6 +72,7 @@ export default class AppConfig {
       oauth_client_id: this.oauth_client_id,
       account: this.account,
       agent_server_host: this.agent_server_host,
+      environment: this.environment,
     };
   }
 }

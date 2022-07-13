@@ -7,6 +7,7 @@ import * as Docker from '../../src/common/utils/docker';
 import DockerBuildXUtils from '../../src/common/utils/docker-buildx.utils';
 
 export const MOCK_API_HOST = 'http://mock.api.localhost';
+export const MOCK_REGISTRY_HOST = 'http://mock.registry.localhost';
 
 export const TMP_DIR = path.join(__dirname, '../tmp')
 
