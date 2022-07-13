@@ -352,12 +352,16 @@ describe('interpolation spec v1', () => {
     const frontend_ref = resourceRefToNodeRef('examples/frontend.services.app');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
     const expected = {
-      INTERNAL_ADDR: '<error: dependencies.examples/backend.interfaces.main.url>',
-      EXTERNAL_API_ADDR: '<error: dependencies.examples/backend.ingresses.main.url>',
+      INTERNAL_ADDR: `\${{ dependencies['examples/backend'].interfaces['main'].url }}`,
+      EXTERNAL_API_ADDR: `\${{ dependencies['examples/backend'].ingresses['main'].url }}`,
     };
     expect(frontend_node.config.environment).to.deep.eq(expected)
     const template = await DockerComposeUtils.generate(graph);
-    expect(template.services[frontend_ref].environment).to.deep.eq(expected)
+    const expected2 = {
+      INTERNAL_ADDR: `\$\${{ dependencies['examples/backend'].interfaces['main'].url }}`,
+      EXTERNAL_API_ADDR: `\$\${{ dependencies['examples/backend'].ingresses['main'].url }}`,
+    };
+    expect(template.services[frontend_ref].environment).to.deep.eq(expected2)
   });
 
   it('ingresses consumers interpolation', async () => {

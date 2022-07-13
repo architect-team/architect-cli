@@ -1,6 +1,7 @@
 import leven from 'leven';
 
 export const findPotentialMatch = (value: string, options: string[], max_distance = 15): string | undefined => {
+  if (!value) { return; }
   let potential_match;
   let shortest_distance = Infinity;
   const value_length = value.length;
