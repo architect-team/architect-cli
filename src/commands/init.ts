@@ -103,7 +103,7 @@ export abstract class InitCommand extends BaseCommand {
 
     fs.writeFileSync(flags['component-file'], architect_yml);
     this.log(chalk.green(`Converted ${path.basename(from_path)} and wrote Architect component config to ${flags['component-file']}`));
-    this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.'));
+    this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://docs.architect.io/components/architect-yml.'));
   }
 
   async getComposeFromPath(flags: any): Promise<string> {

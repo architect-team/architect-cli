@@ -352,12 +352,16 @@ describe('interpolation spec v1', () => {
     const frontend_ref = resourceRefToNodeRef('examples/frontend.services.app');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
     const expected = {
-      INTERNAL_ADDR: '<error: dependencies.examples/backend.interfaces.main.url>',
-      EXTERNAL_API_ADDR: '<error: dependencies.examples/backend.ingresses.main.url>',
+      INTERNAL_ADDR: `\${{ dependencies['examples/backend'].interfaces['main'].url }}`,
+      EXTERNAL_API_ADDR: `\${{ dependencies['examples/backend'].ingresses['main'].url }}`,
     };
     expect(frontend_node.config.environment).to.deep.eq(expected)
     const template = await DockerComposeUtils.generate(graph);
-    expect(template.services[frontend_ref].environment).to.deep.eq(expected)
+    const expected2 = {
+      INTERNAL_ADDR: `\$\${{ dependencies['examples/backend'].interfaces['main'].url }}`,
+      EXTERNAL_API_ADDR: `\$\${{ dependencies['examples/backend'].ingresses['main'].url }}`,
+    };
+    expect(template.services[frontend_ref].environment).to.deep.eq(expected2)
   });
 
   it('ingresses consumers interpolation', async () => {
@@ -1638,5 +1642,52 @@ describe('interpolation spec v1', () => {
       API_PORT: '12345',
       API_ADDR: 'http://127.0.0.1:12345'
     })
+  });
+
+  it('All edges are still found if a double dash exists later in the service config', async () => {
+    const config = `
+    name: examples/test
+
+    secrets:
+      api_port: 8080
+
+    interfaces:
+      api: \${{ services.api.interfaces.main.url }}
+
+    services:
+      app:
+        environment:
+          API_PORT: \${{ services.api.interfaces.main.port }}
+          API_ADDR: \${{ services.api.interfaces.main.url }}
+        liveness_probe:
+          command: curl --fail localhost:3000/users || exit 1
+          interval: 30s
+          failure_threshold: 3
+      api:
+        interfaces:
+          main: \${{ secrets.api_port }}
+        environment:
+          MY_PORT: \${{ services.api.interfaces.main.port }}
+          MY_ADDR: \${{ services.api.interfaces.main.url }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/test': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentSpecs('examples/test')
+    );
+
+    const test_component_ref = resourceRefToNodeRef('examples/test');
+    const app_ref = resourceRefToNodeRef('examples/test.services.app');
+    const api_ref = resourceRefToNodeRef('examples/test.services.api');
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      `${test_component_ref} [api] -> ${api_ref} [main]`,
+      `${app_ref} [service->main] -> ${api_ref} [main]`,
+    ]);
   });
 });

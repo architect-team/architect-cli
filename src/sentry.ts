@@ -18,6 +18,7 @@ export default class SentryService {
   sentry_out: boolean;
   sentry_history_file_path: string;
 
+
   static async create(app: AppService, child: any): Promise<SentryService> {
     const sentry = new SentryService(app, child);
     await sentry.startSentryTransaction();
@@ -29,7 +30,7 @@ export default class SentryService {
     this.child = child;
     this.file_out = app.config.environment !== ENVIRONMENT.TEST;
     this.sentry_history_file_path = path.join(app.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
-    this.sentry_out = (app.config.environment === ENVIRONMENT.PRODUCTION || app.config.environment === ENVIRONMENT.DEV);
+    this.sentry_out = app.config.environment === ENVIRONMENT.PRODUCTION || app.config.environment === ENVIRONMENT.DEV;
     this.startSentryTransaction();
   }
 
@@ -107,11 +108,9 @@ export default class SentryService {
     });
   }
 
-  async updateSentryTransaction(error?: Error): Promise<void> {
+  async updateSentryTransaction(error?: any): Promise<void> {
 
-    const docker_version = await docker(['version', '-f', 'json'], { stdout: false });
-    const docker_info = JSON.parse(docker_version?.stdout as string);
-    const updated_docker_info = Object.assign(docker_info, { Containers: await this.getRunningDockerContainers() });
+    const updated_docker_info = await this.getRunningDockerContainers();
     const config_directory_files = await this.getFilenamesFromDirectory();
 
     if (error) {
@@ -142,14 +141,11 @@ export default class SentryService {
     update_scope?.setExtras(sentry_session_metadata);
   }
 
-  async endSentryTransaction(error?: Error): Promise<void> {
-    if (this.app.config.environment === ENVIRONMENT.TEST) return;
+  async endSentryTransaction(error?: any): Promise<void> {
+    if (!this.file_out) return;
 
     await this.updateSentryTransaction(error);
-
-    if (this.file_out) {
-      await this.writeCommandHistoryToFileSystem();
-    }
+    await this.writeCommandHistoryToFileSystem();
 
     if (this.sentry_out) {
       Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
@@ -159,6 +155,7 @@ export default class SentryService {
       }
     }
   }
+
   /*
   * Helper Functions
   */
@@ -168,23 +165,37 @@ export default class SentryService {
   }
 
   async getRunningDockerContainers(): Promise<any[]> {
-    const docker_command = await docker(['ps', '--format', '{{json .}}%%'], { stdout: false });
-    const docker_stdout = (docker_command.stdout as string).split('%%')
-      .map((str: string) => (str && str.length) ? JSON.parse(str) : undefined);
+    try {
+      const docker_version = await docker(['version', '-f', 'json'], { stdout: false });
+      const docker_info = JSON.parse(docker_version?.stdout as string);
 
-    return docker_stdout.filter(x => !!x).map((container: any) => ({ ...container, Labels: undefined }));
+      const docker_command = await docker(['ps', '--format', '{{json .}}%%'], { stdout: false });
+      const docker_stdout = (docker_command.stdout as string).split('%%')
+        .map((str: string) => (str && str.length) ? JSON.parse(str) : undefined);
+      const docker_containers = docker_stdout.filter(x => !!x).map((container: any) => ({ ...container, Labels: undefined }));
+
+      const updated_docker_info = Object.assign(docker_info, { Containers: docker_containers });
+
+      return updated_docker_info;
+    } catch {
+      return [];
+    }
   }
 
   async getFilenamesFromDirectory(): Promise<any[]> {
     const path = this.app.config?.getConfigDir();
     const addr = fs.readdirSync(path, { withFileTypes: true });
-    return addr.filter(f => f.isFile()).map(f => ({ name: f.name }));
+    return addr.filter(f => f.isFile()).map(f => ({ name: f.name })) || [];
   }
 
   async readCommandHistoryFromFileSystem(): Promise<any[]> {
     let command_history = [];
     if (fs.existsSync(this.sentry_history_file_path)) {
-      command_history = await JSON.parse(fs.readFileSync(this.sentry_history_file_path).toString()) || [];
+      try {
+        command_history = await JSON.parse(fs.readFileSync(this.sentry_history_file_path).toString()) || [];
+      } catch {
+        // If json.parse fails, don't error.
+      }
     }
     return command_history;
   }
@@ -193,10 +204,12 @@ export default class SentryService {
     const scope = Sentry.getCurrentHub()?.getScope();
     const remove_keys = new Set(['plugins', 'pjson', 'oauth_client_id', 'credentials', '_auth_result', 'Authorization']);
 
+    // remove empty objects, empty strings, or key/values from the remove_keys list.
     let current_output = JSON.parse(JSON.stringify(scope as any, (key, value) => {
       return ((value && !remove_keys.has(key) && Object.keys(value).length)) ? value : undefined;
     }));
 
+    // remove duplicate report information if span is present
     if (current_output._span) {
       current_output = { ...current_output, _tags: undefined, _user: undefined };
     }
@@ -207,10 +220,10 @@ export default class SentryService {
 
     const history = await JSON.parse(fs.readFileSync(this.sentry_history_file_path).toString());
     history.push(current_output);
-    // min(defined maximum history length, current history length)
+    // append to end, pop from top the last min(defined maximum history length, current history length) records
+
     const maximum_records = ~Math.min(5, history.length) + 1;
     fs.outputJsonSync(this.sentry_history_file_path, history.slice(maximum_records), { spaces: 2 });
   }
-
 
 }

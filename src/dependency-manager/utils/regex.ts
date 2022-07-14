@@ -11,3 +11,7 @@ export const matches = (text: string, pattern: RegExp): { [Symbol.iterator]: () 
     } while (match);
   },
 });
+
+export function escapeRegex(string: string): string {
+  return string.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+}

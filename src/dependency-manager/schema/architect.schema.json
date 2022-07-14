@@ -5,7 +5,7 @@
   "properties": {
     "name": {
       "type": "string",
-      "pattern": "^(?:(?<component_account_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+      "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
       "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).",
       "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
     },
@@ -156,7 +156,7 @@
     "services": {
       "type": "object",
       "patternProperties": {
-        "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+        "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
           "anyOf": [
             {
               "$ref": "#/definitions/ServiceSpec"
@@ -168,7 +168,7 @@
             {
               "type": "object",
               "patternProperties": {
-                "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                   "anyOf": [
                     {
                       "$ref": "#/definitions/ServiceSpec"
@@ -194,7 +194,7 @@
     "tasks": {
       "type": "object",
       "patternProperties": {
-        "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+        "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
           "anyOf": [
             {
               "$ref": "#/definitions/TaskSpec"
@@ -206,7 +206,7 @@
             {
               "type": "object",
               "patternProperties": {
-                "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                   "anyOf": [
                     {
                       "$ref": "#/definitions/TaskSpec"
@@ -232,7 +232,7 @@
     "dependencies": {
       "type": "object",
       "patternProperties": {
-        "^(?:(?<component_account_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+        "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
           "type": "string",
           "pattern": "^[\\w][\\w\\.-]{0,127}$"
         }
@@ -246,7 +246,7 @@
     "interfaces": {
       "type": "object",
       "patternProperties": {
-        "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+        "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
           "anyOf": [
             {
               "type": "string"
@@ -261,7 +261,7 @@
             {
               "type": "object",
               "patternProperties": {
-                "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                   "anyOf": [
                     {
                       "type": "string"
@@ -309,7 +309,7 @@
           "properties": {
             "name": {
               "type": "string",
-              "pattern": "^(?:(?<component_account_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+              "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
               "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).",
               "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
             },
@@ -460,7 +460,7 @@
             "services": {
               "type": "object",
               "patternProperties": {
-                "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                   "anyOf": [
                     {
                       "$ref": "#/definitions/ServiceSpec"
@@ -472,7 +472,7 @@
                     {
                       "type": "object",
                       "patternProperties": {
-                        "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                        "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                           "anyOf": [
                             {
                               "$ref": "#/definitions/ServiceSpec"
@@ -498,7 +498,7 @@
             "tasks": {
               "type": "object",
               "patternProperties": {
-                "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                   "anyOf": [
                     {
                       "$ref": "#/definitions/TaskSpec"
@@ -510,7 +510,7 @@
                     {
                       "type": "object",
                       "patternProperties": {
-                        "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                        "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                           "anyOf": [
                             {
                               "$ref": "#/definitions/TaskSpec"
@@ -536,7 +536,7 @@
             "dependencies": {
               "type": "object",
               "patternProperties": {
-                "^(?:(?<component_account_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+                "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
                   "type": "string",
                   "pattern": "^[\\w][\\w\\.-]{0,127}$"
                 }
@@ -550,7 +550,7 @@
             "interfaces": {
               "type": "object",
               "patternProperties": {
-                "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                   "anyOf": [
                     {
                       "type": "string"
@@ -565,7 +565,7 @@
                     {
                       "type": "object",
                       "patternProperties": {
-                        "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                        "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                           "anyOf": [
                             {
                               "type": "string"
@@ -1614,7 +1614,7 @@
         },
         "reserved_name": {
           "type": "string",
-          "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+          "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
           "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
           "description": "A specific service name which will override the service name specified in the component."
         }
@@ -1891,7 +1891,7 @@
                 },
                 "reserved_name": {
                   "type": "string",
-                  "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+                  "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
                   "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
                   "description": "A specific service name which will override the service name specified in the component."
                 }
@@ -2533,7 +2533,7 @@
         "interfaces": {
           "type": "object",
           "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
               "anyOf": [
                 {
                   "anyOf": [
@@ -2559,7 +2559,7 @@
                 {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "anyOf": [
@@ -2599,7 +2599,7 @@
         "sidecars": {
           "type": "object",
           "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
               "anyOf": [
                 {
                   "$ref": "#/definitions/SidecarSpec"
@@ -2611,7 +2611,7 @@
                 {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/SidecarSpec"
@@ -2640,7 +2640,7 @@
         "volumes": {
           "type": "object",
           "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
               "anyOf": [
                 {
                   "$ref": "#/definitions/VolumeSpec"
@@ -2655,7 +2655,7 @@
                 {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/VolumeSpec"
@@ -2952,7 +2952,7 @@
         },
         "reserved_name": {
           "type": "string",
-          "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+          "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
           "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
           "description": "A specific service name which will override the service name specified in the component."
         }
@@ -2974,7 +2974,7 @@
                 "interfaces": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "anyOf": [
@@ -3000,7 +3000,7 @@
                         {
                           "type": "object",
                           "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                               "anyOf": [
                                 {
                                   "anyOf": [
@@ -3040,7 +3040,7 @@
                 "sidecars": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/SidecarSpec"
@@ -3052,7 +3052,7 @@
                         {
                           "type": "object",
                           "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                               "anyOf": [
                                 {
                                   "$ref": "#/definitions/SidecarSpec"
@@ -3081,7 +3081,7 @@
                 "volumes": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/VolumeSpec"
@@ -3096,7 +3096,7 @@
                         {
                           "type": "object",
                           "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                               "anyOf": [
                                 {
                                   "$ref": "#/definitions/VolumeSpec"
@@ -3393,7 +3393,7 @@
                 },
                 "reserved_name": {
                   "type": "string",
-                  "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+                  "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
                   "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
                   "description": "A specific service name which will override the service name specified in the component."
                 }
@@ -3687,7 +3687,7 @@
         },
         "reserved_name": {
           "type": "string",
-          "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+          "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
           "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
           "description": "A specific service name which will override the service name specified in the component."
         }
@@ -3978,7 +3978,7 @@
                 },
                 "reserved_name": {
                   "type": "string",
-                  "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+                  "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
                   "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
                   "description": "A specific service name which will override the service name specified in the component."
                 }
@@ -4462,7 +4462,7 @@
       "properties": {
         "name": {
           "type": "string",
-          "pattern": "^(?:(?<component_account_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+          "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
           "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).",
           "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
         },
@@ -4613,7 +4613,7 @@
         "services": {
           "type": "object",
           "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
               "anyOf": [
                 {
                   "$ref": "#/definitions/ServiceSpec"
@@ -4625,7 +4625,7 @@
                 {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/ServiceSpec"
@@ -4651,7 +4651,7 @@
         "tasks": {
           "type": "object",
           "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
               "anyOf": [
                 {
                   "$ref": "#/definitions/TaskSpec"
@@ -4663,7 +4663,7 @@
                 {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/TaskSpec"
@@ -4689,7 +4689,7 @@
         "dependencies": {
           "type": "object",
           "patternProperties": {
-            "^(?:(?<component_account_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+            "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
               "type": "string",
               "pattern": "^[\\w][\\w\\.-]{0,127}$"
             }
@@ -4703,7 +4703,7 @@
         "interfaces": {
           "type": "object",
           "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
               "anyOf": [
                 {
                   "type": "string"
@@ -4718,7 +4718,7 @@
                 {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "type": "string"
@@ -4766,7 +4766,7 @@
               "properties": {
                 "name": {
                   "type": "string",
-                  "pattern": "^(?:(?<component_account_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+                  "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
                   "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).",
                   "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
                 },
@@ -4917,7 +4917,7 @@
                 "services": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/ServiceSpec"
@@ -4929,7 +4929,7 @@
                         {
                           "type": "object",
                           "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                               "anyOf": [
                                 {
                                   "$ref": "#/definitions/ServiceSpec"
@@ -4955,7 +4955,7 @@
                 "tasks": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/TaskSpec"
@@ -4967,7 +4967,7 @@
                         {
                           "type": "object",
                           "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                               "anyOf": [
                                 {
                                   "$ref": "#/definitions/TaskSpec"
@@ -4993,7 +4993,7 @@
                 "dependencies": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?:(?<component_account_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+                    "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
                       "type": "string",
                       "pattern": "^[\\w][\\w\\.-]{0,127}$"
                     }
@@ -5007,7 +5007,7 @@
                 "interfaces": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "type": "string"
@@ -5022,7 +5022,7 @@
                         {
                           "type": "object",
                           "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                               "anyOf": [
                                 {
                                   "type": "string"
@@ -6284,7 +6284,7 @@
         "interfaces": {
           "type": "object",
           "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
               "anyOf": [
                 {
                   "anyOf": [
@@ -6310,7 +6310,7 @@
                 {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "anyOf": [
@@ -6353,7 +6353,7 @@
         "volumes": {
           "type": "object",
           "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
               "anyOf": [
                 {
                   "$ref": "#/definitions/_DebugVolumeSpec"
@@ -6368,7 +6368,7 @@
                 {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/_DebugVolumeSpec"
@@ -6665,7 +6665,7 @@
         },
         "reserved_name": {
           "type": "string",
-          "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+          "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
           "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
           "description": "A specific service name which will override the service name specified in the component."
         }
@@ -6684,7 +6684,7 @@
                 "interfaces": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "anyOf": [
@@ -6710,7 +6710,7 @@
                         {
                           "type": "object",
                           "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                               "anyOf": [
                                 {
                                   "anyOf": [
@@ -6753,7 +6753,7 @@
                 "volumes": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/_DebugVolumeSpec"
@@ -6768,7 +6768,7 @@
                         {
                           "type": "object",
                           "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                               "anyOf": [
                                 {
                                   "$ref": "#/definitions/_DebugVolumeSpec"
@@ -7065,7 +7065,7 @@
                 },
                 "reserved_name": {
                   "type": "string",
-                  "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+                  "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
                   "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
                   "description": "A specific service name which will override the service name specified in the component."
                 }
@@ -7356,7 +7356,7 @@
         },
         "reserved_name": {
           "type": "string",
-          "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+          "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
           "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
           "description": "A specific service name which will override the service name specified in the component."
         }
@@ -7644,7 +7644,7 @@
                 },
                 "reserved_name": {
                   "type": "string",
-                  "pattern": "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$",
+                  "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
                   "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
                   "description": "A specific service name which will override the service name specified in the component."
                 }
@@ -8175,7 +8175,7 @@
       "properties": {
         "name": {
           "type": "string",
-          "pattern": "^(?:(?<component_account_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+          "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
           "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).",
           "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
         },
@@ -8326,7 +8326,7 @@
         "services": {
           "type": "object",
           "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
               "anyOf": [
                 {
                   "$ref": "#/definitions/_DebugServiceSpec"
@@ -8338,7 +8338,7 @@
                 {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/_DebugServiceSpec"
@@ -8364,7 +8364,7 @@
         "tasks": {
           "type": "object",
           "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
               "anyOf": [
                 {
                   "$ref": "#/definitions/_DebugTaskSpec"
@@ -8376,7 +8376,7 @@
                 {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/_DebugTaskSpec"
@@ -8402,7 +8402,7 @@
         "dependencies": {
           "type": "object",
           "patternProperties": {
-            "^(?:(?<component_account_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+            "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
               "type": "string",
               "pattern": "^[\\w][\\w\\.-]{0,127}$"
             }
@@ -8416,7 +8416,7 @@
         "interfaces": {
           "type": "object",
           "patternProperties": {
-            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
               "anyOf": [
                 {
                   "type": "string"
@@ -8431,7 +8431,7 @@
                 {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "type": "string"
@@ -8476,7 +8476,7 @@
               "properties": {
                 "name": {
                   "type": "string",
-                  "pattern": "^(?:(?<component_account_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+                  "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
                   "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).",
                   "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
                 },
@@ -8627,7 +8627,7 @@
                 "services": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/_DebugServiceSpec"
@@ -8639,7 +8639,7 @@
                         {
                           "type": "object",
                           "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                               "anyOf": [
                                 {
                                   "$ref": "#/definitions/_DebugServiceSpec"
@@ -8665,7 +8665,7 @@
                 "tasks": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/_DebugTaskSpec"
@@ -8677,7 +8677,7 @@
                         {
                           "type": "object",
                           "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                               "anyOf": [
                                 {
                                   "$ref": "#/definitions/_DebugTaskSpec"
@@ -8703,7 +8703,7 @@
                 "dependencies": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?:(?<component_account_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+                    "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
                       "type": "string",
                       "pattern": "^[\\w][\\w\\.-]{0,127}$"
                     }
@@ -8717,7 +8717,7 @@
                 "interfaces": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                       "anyOf": [
                         {
                           "type": "string"
@@ -8732,7 +8732,7 @@
                         {
                           "type": "object",
                           "patternProperties": {
-                            "^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$": {
+                            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
                               "anyOf": [
                                 {
                                   "type": "string"
