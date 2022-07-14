@@ -5,6 +5,7 @@ import { Dictionary } from '../../dependency-manager/utils/dictionary';
 import { ComponentSpec } from '../../';
 import { ServiceSpec } from '../../dependency-manager/spec/service-spec';
 import { ProjectGeneration } from '../../common/project-generation';
+import { EnvironmentSpecValue } from '../../dependency-manager/spec/resource-spec';
 
 const download = require('download-git-repo');
 
@@ -133,6 +134,19 @@ export default class ProjectUtils {
     await new Promise(resolve => setTimeout(resolve, 2000));
   }
 
+  static async removeServiceEnvironmentDependencies(service_environment: Dictionary<EnvironmentSpecValue>): Promise<Dictionary<EnvironmentSpecValue>> {
+    const dependencies_regex = new RegExp('dependencies[[A-Za-z\'-_].*\'].', 'g');
+    for (const [env_key, env_val] of Object.entries(service_environment)) {
+      if (typeof env_val === 'string' && env_val.includes('dependencies')) {
+        const matches = dependencies_regex.exec(env_val);
+        if (matches) {
+          service_environment[env_key] = env_val.replace(matches[0], '');
+        }
+      }
+    }
+    return service_environment;
+  }
+
   static async createArchitectYaml(selections: Dictionary<any>, project_dir: string): Promise<void> {
     // get actual service name for depends_on
     for (const selection of Object.values(selections)) {
@@ -150,7 +164,7 @@ export default class ProjectUtils {
 
     const combined_yml: Dictionary<any> = {};
     combined_yml['name'] = project_dir.replace('_', '-');
-    const ignored = ['name', 'description', 'homepage', 'keywords'];
+    const ignored = ['name', 'description', 'homepage', 'keywords', 'dependencies'];
     for (const selection of Object.values(selections)) {
       for (const [key, val] of Object.entries(selection.architect_yml as ComponentSpec)) {
         if (ignored.includes(key)) {
@@ -176,16 +190,11 @@ export default class ProjectUtils {
             const depends_on = service['depends_on'] ? [...service['depends_on'], selection.depends_on] : [selection.depends_on];
             combined_yml[key][service_name]['depends_on'] = depends_on;
           }
+          if (service.environment) {
+            service.environment = await this.removeServiceEnvironmentDependencies(service.environment);
+          }
         }
       }
-    }
-
-    const app_key = Object.keys(combined_yml['interfaces']).find(key => key === 'app');
-    if (app_key) {
-      combined_yml['interfaces'] = { [app_key]: combined_yml['interfaces'][app_key] };
-    } else {
-      const key = Object.keys(combined_yml['interfaces'])[0];
-      combined_yml['interfaces'] = { [key]: combined_yml['interfaces'][key] };
     }
     
     fs.writeFileSync('./' + project_dir + '/architect.yml', yaml.dump(combined_yml));
