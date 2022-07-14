@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <style type="text/css">
     table {
-      font-family: "Arimo", "Surt", "Helvetica", "Lucida Sans", "Lucida Sans Unicode", "Luxi Sans", Tahoma, sans-serif;
+      font-family: Arimo, Surt, Helvetica, ulp-font, -apple-system, BlinkMacSystemFont, Roboto, "Lucida Sans", "Lucida Sans Unicode", "Luxi Sans", Tahoma, sans-serif;
       box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.5);
       border-collapse: collapse;
       border-spacing: 0;
@@ -38,7 +38,11 @@
   <script>
     const history = %% COMMAND_HISTORY %%;
 
-    d3.select("body").selectAll("table").data([history]).enter().append("table")
+    d3
+      .select("body")
+      .selectAll("table")
+      .data([history]).enter()
+      .append("table")
       .call(build_table);
 
     function build_table(sel) {
@@ -47,18 +51,29 @@
 
         let colnames, tds, table = d3.select(this);
 
-        colnames = data.reduce((key_names, col) => key_names.concat(d3.keys(col)), [])
+        colnames = data
+          .reduce((key_names, col) => key_names.concat(d3.keys(col)), [])
           .reduce((key_names, col) => (key_names.set(col, 0), key_names), d3.map())
           .keys();
 
         colnames?.sort();
 
         // create header row
-        table.append("thead").append("tr").selectAll("th").data(colnames).enter().append("th")
+        table
+          .append("thead")
+          .append("tr")
+          .selectAll("th")
+          .data(colnames).enter()
+          .append("th")
           .text((header_text) => header_text);
 
         // create the table cells
-        tds = table.append("tbody").selectAll("tr").data(data).enter().append("tr").selectAll("td")
+        tds = table
+          .append("tbody")
+          .selectAll("tr")
+          .data(data).enter()
+          .append("tr")
+          .selectAll("td")
           .data((table_cell) => colnames.map((data_key) => table_cell[data_key] || "")).enter()
           .append("td");
 
@@ -71,7 +86,6 @@
           .append("table").call(build_table);
       });
     }
-  </script>
   </script>
 
   </html>
