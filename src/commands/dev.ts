@@ -137,6 +137,10 @@ export default class Dev extends BaseCommand {
         default: 'true',
       }),
     },
+    arg: Flags.string({
+      description: 'Build arg(s) to pass to docker build',
+      multiple: true,
+    }),
   };
 
   static args = [{
@@ -193,7 +197,19 @@ export default class Dev extends BaseCommand {
     await fs.writeFile(compose_file, yaml.dump(compose));
     this.log(`Wrote docker-compose file to: ${compose_file}`);
 
-    await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build'], { stdio: 'inherit' });
+    const args = flags.arg || [];
+
+    const build_args = [];
+    for (const arg of args) {
+      const [key, value] = arg.split(/=([^]+)/);
+      if (!value) {
+        throw new Error(`--arg must be in the format key=value: ${arg}`);
+      }
+      build_args.push('--build-arg');
+      build_args.push(arg);
+    }
+
+    await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build', ...build_args], { stdio: 'inherit' });
 
     console.clear();
 

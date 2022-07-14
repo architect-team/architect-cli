@@ -230,16 +230,16 @@ describe('template', () => {
     name: examples/hello-world
 
     interfaces:
-      \${{ if architect.environment === 'local' }}:
+      \${{ if architect.environment == 'local' }}:
         api: \${{ services.api.interfaces.main.url }}
 
     tasks:
-      \${{ if architect.environment === 'local' }}:
+      \${{ if architect.environment == 'local' }}:
         task:
           schedule: ''
 
     services:
-      \${{ if architect.environment === 'local' }}:
+      \${{ if architect.environment == 'local' }}:
         api:
           interfaces:
             main: 8080
