@@ -26,7 +26,7 @@ export default class LocalDependencyManager extends DependencyManager {
     this.linked_components = linked_components;
   }
 
-  async loadComponentSpec(component_string: string, options?: ComponentConfigOpts): Promise<ComponentSpec> {
+  async loadComponentSpec(component_string: string, options?: ComponentConfigOpts, debug?: boolean): Promise<ComponentSpec> {
     const merged_options = {
       ...{
         map_all_interfaces: false,
@@ -109,7 +109,7 @@ export default class LocalDependencyManager extends DependencyManager {
     if (spec.metadata.file?.path && this.environment === 'local') {
       const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
 
-      if (spec.services) {
+      if (debug && spec.services) {
         for (const [sk, sv] of Object.entries(spec.services)) {
           // If debug is enabled merge in debug options ex. debug.command -> command
           if (sv.debug) {
@@ -117,7 +117,7 @@ export default class LocalDependencyManager extends DependencyManager {
           }
         }
       }
-      if (spec.tasks) {
+      if (debug && spec.tasks) {
         for (const [tk, tv] of Object.entries(spec.tasks)) {
           // If debug is enabled merge in debug options ex. debug.command -> command
           if (tv.debug) {

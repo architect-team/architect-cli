@@ -391,10 +391,6 @@ export default class Dev extends BaseCommand {
       dependency_manager.environment = 'local-production';
     }
 
-    if (flags.debug === 'false') {
-      dependency_manager.environment = 'local-production';
-    }
-
     const component_specs: ComponentSpec[] = [];
 
     // Check if multiple instances of the same component are being deployed. This check is needed
@@ -406,8 +402,9 @@ export default class Dev extends BaseCommand {
 
     const component_options: ComponentConfigOpts = { map_all_interfaces: !flags.production && !duplicates, interfaces: interfaces_map };
 
+    const debug = flags.debug === 'true';
     for (const component_version of component_versions) {
-      const component_config = await dependency_manager.loadComponentSpec(component_version, component_options);
+      const component_config = await dependency_manager.loadComponentSpec(component_version, component_options, debug);
 
       if (flags.recursive) {
         const dependency_configs = await dependency_manager.loadComponentSpecs(component_config.metadata.ref);
