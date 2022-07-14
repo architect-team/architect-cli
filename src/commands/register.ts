@@ -156,6 +156,11 @@ export default class ComponentRegister extends BaseCommand {
             service.build['x-bake']['cache-to'] = `type=local,dest=${cache_dir}-tmp,mode=max`;
           }
           seen_cache_dir.add(cache_dir);
+        } else if (process.env.GITHUB_ACTIONS && !process.env.ARC_NO_CACHE) {
+          const scope = service_name;
+          this.log(`Setting up github action caching for scope: ${scope}`);
+          service.build['x-bake']['cache-from'] = `type=gha,scope=${scope}`;
+          service.build['x-bake']['cache-to'] = `type=gha,scope=${scope},mode=max`;
         }
 
         compose.services[service_name] = {
