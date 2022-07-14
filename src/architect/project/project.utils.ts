@@ -164,6 +164,10 @@ export default class ProjectUtils {
 
         const yml_services = val as Dictionary<ServiceSpec>;
         for (const [service_name, service] of Object.entries(yml_services)) {
+          if (Object.keys(yml_services).length > 1 && service.image) {
+            continue;
+          }
+
           combined_yml[key] = combined_yml[key] ? { ...combined_yml[key], ...{ [service_name]: service } } : { [service_name]: service };
           if (service.build) {
             service.build['context'] = './' + selection.name;
