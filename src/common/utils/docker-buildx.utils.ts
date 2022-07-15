@@ -67,7 +67,7 @@ export default class DockerBuildXUtils {
           stdio: 'inherit',
         });
       } else {
-        await this.dockerBuildX(['create', '--name', builder, '--driver', 'docker-container', '--buildkitd-flags', '--allow-insecure-entitlement', 'security.insecure', '--allow-insecure-entitlement', 'network.host', '--use'], builder, {
+        await this.dockerBuildX(['create', '--name', builder, '--driver', 'docker-container', '--buildkitd-flags', '--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host', '--use'], builder, {
           stdio: 'inherit',
         });
       }
