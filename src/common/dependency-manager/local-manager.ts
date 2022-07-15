@@ -106,10 +106,10 @@ export default class LocalDependencyManager extends DependencyManager {
     const interfaces_spec = generateIngressesOverrideSpec(spec, ingresses);
     spec = overrideSpec(spec, interfaces_spec);
 
-    if (spec.metadata.file?.path && this.environment === 'local') {
+    if (spec.metadata.file?.path && debug) {
       const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
 
-      if (debug && spec.services) {
+      if (spec.services) {
         for (const [sk, sv] of Object.entries(spec.services)) {
           // If debug is enabled merge in debug options ex. debug.command -> command
           if (sv.debug) {
@@ -117,7 +117,7 @@ export default class LocalDependencyManager extends DependencyManager {
           }
         }
       }
-      if (debug && spec.tasks) {
+      if (spec.tasks) {
         for (const [tk, tv] of Object.entries(spec.tasks)) {
           // If debug is enabled merge in debug options ex. debug.command -> command
           if (tv.debug) {
