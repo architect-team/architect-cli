@@ -16,6 +16,7 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import * as Docker from '../common/utils/docker';
+import { docker } from '../common/utils/docker';
 import DockerBuildXUtils from '../common/utils/docker-buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
@@ -191,13 +192,17 @@ export default class ComponentRegister extends BaseCommand {
     const builder = await DockerBuildXUtils.getBuilder(this.app.config);
 
     try {
-      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], builder, {
+      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--load', ...build_args], builder, {
         stdio: 'inherit',
       });
     } catch (err: any) {
       fs.removeSync(compose_file);
       this.log(`Docker buildx bake failed. Please make sure docker is running.`);
       this.error(err);
+    }
+
+    for (const image of Object.values(image_mapping) as string[]) {
+      await docker(['push', image]);
     }
 
     for (const cache_dir of seen_cache_dir) {
