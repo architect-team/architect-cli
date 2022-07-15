@@ -12,7 +12,7 @@ import { ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, R
 import LocalPaths from '../../paths';
 import { restart } from '../utils/docker';
 import PortUtil from '../utils/port';
-import DockerComposeTemplate, { DockerService, DockerServiceBuild } from './template';
+import DockerComposeTemplate, { DockerService } from './template';
 
 export class DockerComposeUtils {
 
@@ -161,35 +161,35 @@ export class DockerComposeUtils {
         const component_path = fs.lstatSync(node.local_path).isFile() ? path.dirname(node.local_path) : node.local_path;
         if (!node.config.image) {
           const build = node.config.build;
+
+          if (!service.build) {
+            service.build = {};
+          }
+
+          if (build.context) {
+            service.build.context = path.resolve(component_path, untildify(build.context));
+            if (!fs.existsSync(service.build.context)) {
+              throw new Error(`The path ${service.build.context} used for the build context of service ${node.config.name} does not exist.`);
+            }
+          } else {
+            // Fix bug with buildx using tmp dir
+            service.build.context = path.resolve(component_path);
+          }
+
           const args = [];
           for (const [arg_key, arg] of Object.entries(build.args || {})) {
             args.push(`${arg_key}=${arg}`);
           }
-
-          if (build.context || args.length) {
-            const compose_build: DockerServiceBuild = {};
-            if (build.context) {
-              compose_build.context = path.resolve(component_path, untildify(build.context));
-              if (!fs.existsSync(compose_build.context)) {
-                throw new Error(`The path ${compose_build.context} used for the build context of service ${node.config.name} does not exist.`);
-              }
-            }
-            if (args.length) compose_build.args = args;
-            service.build = compose_build;
+          if (args.length) {
+            service.build.args = args;
           }
 
           if (build.dockerfile) {
-            if (!service.build) {
-              service.build = {};
-            }
-            (service.build as DockerServiceBuild).dockerfile = build.dockerfile;
+            service.build.dockerfile = build.dockerfile;
           }
 
           if (build.target) {
-            if (!service.build) {
-              service.build = {};
-            }
-            (service.build as DockerServiceBuild).target = build.target;
+            service.build.target = build.target;
           }
         } else if (!node.config.build) {
           throw new Error("Either `image` or `build` must be defined");
