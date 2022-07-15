@@ -13,7 +13,7 @@ export const oras = async (args: string[], options?: Options): Promise<any> => {
     try {
       which.sync('oras');
     } catch {
-      throw new Error('Architect requires oras to be installed for custom modules.\nhttps://github.com/deislabs/oras#cli-installation');
+      throw new Error('Architect requires oras to be installed for custom modules.\nhttps://github.com/deislabs/oras#cli-installation trigger');
     }
     throw err;
   }
