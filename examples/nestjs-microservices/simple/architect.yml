@@ -17,12 +17,17 @@ services:
   api:
     build:
       context: ./
+      args:
+        NODE_ENV: production
     interfaces:
       main:
         port: 8080
         protocol: tcp
-    ${{ if architect.environment == 'local' }}:
+    debug:
       command: npm run start:dev
+      build:
+        args:
+          NODE_ENV: development
       volumes:
         src:
           host_path: ./src/

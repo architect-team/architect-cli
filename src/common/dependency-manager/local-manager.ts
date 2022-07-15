@@ -26,7 +26,7 @@ export default class LocalDependencyManager extends DependencyManager {
     this.linked_components = linked_components;
   }
 
-  async loadComponentSpec(component_string: string, options?: ComponentConfigOpts): Promise<ComponentSpec> {
+  async loadComponentSpec(component_string: string, options?: ComponentConfigOpts, debug?: boolean): Promise<ComponentSpec> {
     const merged_options = {
       ...{
         map_all_interfaces: false,
@@ -106,8 +106,7 @@ export default class LocalDependencyManager extends DependencyManager {
     const interfaces_spec = generateIngressesOverrideSpec(spec, ingresses);
     spec = overrideSpec(spec, interfaces_spec);
 
-    // Deprecated: Use if statements instead of debug block
-    if (spec.metadata.file?.path && this.environment === 'local') {
+    if (spec.metadata.file?.path && debug) {
       const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
 
       if (spec.services) {

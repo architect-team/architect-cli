@@ -19,7 +19,7 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_CREATE_TOPICS: architect:1:1
-    ${{ if architect.environment == 'local' }}:
+    debug:
       volumes:
         docker:
           mount_path: /var/run/docker.sock
@@ -36,7 +36,7 @@ services:
       EXTERNAL_KAFKA_ADDR: ${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }}
       TOPIC: architect
       ENVIRONMENT: prod
-    ${{ if architect.environment == 'local' }}:
+    debug:
       environment:
         INTERNAL_KAFKA_ADDR: ${{ services.kafka.interfaces.internal.host }}:${{ services.kafka.interfaces.internal.port }}
         ENVIRONMENT: local
@@ -47,7 +47,7 @@ services:
       EXTERNAL_KAFKA_ADDR: ${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }}
       TOPIC: architect
       ENVIRONMENT: prod
-    ${{ if architect.environment == 'local' }}:
+    debug:
       environment:
         INTERNAL_KAFKA_ADDR: ${{ services.kafka.interfaces.internal.host }}:${{ services.kafka.interfaces.internal.port }}
         ENVIRONMENT: local
