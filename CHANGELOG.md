@@ -1,3 +1,10 @@
+## [1.19.1](https://github.com/architect-team/architect-cli/compare/v1.19.0...v1.19.1) (2022-07-13)
+
+
+### Bug Fixes
+
+* **liveness:** Update liveness probe to better emulate kubernetes locally. ([33a4184](https://github.com/architect-team/architect-cli/commit/33a4184823592c988aff01aff2462d17f0f01b4e))
+
 # [1.19.0](https://github.com/architect-team/architect-cli/compare/v1.18.2...v1.19.0) (2022-07-12)
 
 
