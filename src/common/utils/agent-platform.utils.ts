@@ -180,6 +180,8 @@ spec:
         - name: agent
           image: registry.gitlab.com/architect-io/agent/client/client:latest
           env:
+          - name: KUBERNETES_URL
+            value: https://kubernetes.default.svc
           - name: ARCHITECT_TOKEN
             value: "${token}"
           - name: AGENT_SERVER
