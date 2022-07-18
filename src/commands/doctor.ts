@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import * as http from 'http';
+import inquirer from 'inquirer';
 import opener from 'opener';
 import path from 'path';
 import BaseCommand from '../base-command';
@@ -33,12 +34,81 @@ const DOCTOR_PROPERTIES: DOCTOR_INPUT_PROPERTIES = {
   },
 };
 
+interface SENTRY_HISTORY {
+  _extra?: {
+    docker_info?: {
+      Client?: {
+        Platform?: Record<string, unknown>;
+        CloudIntegration?: string;
+        Version?: string;
+        ApiVersion?: string;
+        DefaultAPIVersion?: string;
+        GitCommit?: string;
+        GoVersion?: string;
+        Os?: string;
+        Arch?: string;
+        BuildTime?: string;
+        Context?: string;
+      };
+      Server?: {
+        Platform?: {
+          Name?: string;
+        };
+        Components?: Record<string, unknown>[];
+        Version?: string;
+        ApiVersion?: string;
+        MinAPIVersion?: string;
+        GitCommit?: string;
+        GoVersion?: string;
+        Os?: string;
+        Arch?: string;
+        KernelVersion?: string;
+        BuildTime?: string;
+      };
+      Containers?: Record<string, unknown>[];
+    }
+    command?: string;
+    environment?: string;
+    config_dir_files?: Record<string, unknown>[];
+    config_file?: string;
+    cwd?: string;
+    log_level?: string;
+    node_versions?: Record<string, unknown>[];
+  };
+  node_version?: string;
+  os_info?: {
+    username?: string;
+    homedir?: string;
+    shell?: string;
+  };
+  os_release?: string;
+  os_type?: string;
+  os_platform?: string;
+  os_arch?: string;
+  os_hostname?: string;
+  _span?: {
+    description?: string;
+    op?: string;
+    span_id?: string;
+    status?: string;
+    tags?: {
+      environment?: string;
+      cli?: string;
+      node_runtime?: string;
+      os?: string;
+      user?: string;
+      'user-email'?: string;
+    },
+    trace_id?: string;
+  };
+}
+
 export default class Doctor extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
   }
 
-  history: any[] = [];
+  history: SENTRY_HISTORY[] = [];
 
   static description = 'Get debugging information for troubleshooting';
   static usage = 'doctor';
@@ -83,9 +153,7 @@ export default class Doctor extends BaseCommand {
   }
 
   async run(): Promise<void> {
-    const inquirer = require('inquirer');
-    const inquirerPrompt = require('inquirer-autocomplete-prompt');
-    inquirer.registerPrompt('autocomplete', inquirerPrompt);
+    inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
     const answers: any = await inquirer.prompt([
       {
         type: 'number',
@@ -129,7 +197,7 @@ export default class Doctor extends BaseCommand {
         _extra: {
           ...record._extra,
           docker_info: {
-            ...record._extra.docker_info,
+            ...record._extra?.docker_info,
             Containers: undefined,
           },
         },
