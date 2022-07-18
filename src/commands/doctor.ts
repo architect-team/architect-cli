@@ -34,7 +34,7 @@ const DOCTOR_PROPERTIES: DOCTOR_INPUT_PROPERTIES = {
   },
 };
 
-interface SENTRY_HISTORY {
+interface SentryHistory {
   _extra?: {
     docker_info?: {
       Client?: {
@@ -108,7 +108,7 @@ export default class Doctor extends BaseCommand {
     return false;
   }
 
-  history: SENTRY_HISTORY[] = [];
+  history: SentryHistory[] = [];
 
   static description = 'Get debugging information for troubleshooting';
   static usage = 'doctor';
