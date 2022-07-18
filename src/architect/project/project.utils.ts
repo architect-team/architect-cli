@@ -1,104 +1,27 @@
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
+import path from 'path';
+import untildify from 'untildify';
+import fetch from 'node-fetch';
 import inquirer from 'inquirer';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
 import { ComponentSpec } from '../../';
-import { ServiceSpec } from '../../dependency-manager/spec/service-spec';
-import { ProjectGeneration } from '../../common/project-generation';
 import { EnvironmentSpecValue } from '../../dependency-manager/spec/resource-spec';
+import AppService from '../../app-config/service';
 
 const download = require('download-git-repo');
 
 interface Selection {
   name: string,
-  architect_yml: Dictionary<any>,
-  depends_on: string,
+  type: string,
+  repository?: string,
+  'architect-file'?: string,
 }
 
 const GITHUB_BRANCH = 'main';
 
 export default class ProjectUtils {
-  static async getSelections(chosen_project?: string): Promise<Dictionary<Selection>> {
-    const project_generation = new ProjectGeneration();
-
-    if (!chosen_project) {
-      const choices = await project_generation.getGitHubRepos();
-      const project = await this.prompt(choices, 'Select a project');
-      chosen_project = project.name as string;
-    }
-    
-    const start_project = await project_generation.getGitHubRepo(chosen_project);
-
-    const url = `https://raw.githubusercontent.com/${start_project.full_name}/${GITHUB_BRANCH}`;
-    await project_generation.storeComponentSpec(url, start_project.name);
-    await project_generation.storeTemplateContentToQueue(url, start_project.name);
-
-    while (project_generation.queue.size() > 0) {
-      const item = project_generation.queue.dequeue() as Dictionary<Dictionary<any>>;
-      const proj_type = Object.keys(item)[0];
-      const proj = item[proj_type];
-
-      // check if type already prompted
-      if (proj.choices) {
-        const choice_names = proj.choices.map((choice: any) => choice.name.toLowerCase());
-        const found = choice_names.find((choice_name: string) => Object.keys(project_generation.component_map).includes(choice_name));
-        if (found) {
-          project_generation.type_map[proj_type] = found;
-          continue;
-        }
-      }
-
-      let is_prompt = false;
-      if (proj.required) { 
-        is_prompt = true;
-      } else {
-        const answer = await this.prompt(['yes', 'no'], `${proj_type} is optional. Would you like to select a ` + proj_type.toLowerCase() + '?');
-        is_prompt = answer === 'yes';
-      }
-
-      if (is_prompt) {
-        const prompt_str = proj.required ? `This project requires a ${proj_type.toLowerCase()} to function, please select from the following` : `Select a ${proj_type.toLowerCase()}`;
-        const selected = await this.prompt(proj.choices, prompt_str);
-        project_generation.type_map[proj_type] = selected.name.toLowerCase();
-
-        if (!selected.project) {
-          project_generation.component_map[selected.name.toLowerCase()] = selected;
-        } else {
-          const url = selected.project.replace('github.com', 'raw.githubusercontent.com') + `/${GITHUB_BRANCH}`;
-          await project_generation.storeComponentSpec(url, selected.name);
-          await project_generation.storeTemplateContentToQueue(url, selected.name);
-        }
-      }
-    }
-    return this.combine_selections(project_generation.type_map, project_generation.dependency_map, project_generation.component_map);
-  }
-
-  static combine_selections(type_map: Dictionary<any>, dependency_map: Dictionary<any>, component_map: Dictionary<any>): Dictionary<Selection> {
-    const selections: Dictionary<Selection> = {};
-    for (const [type, type_name] of Object.entries(type_map)) {
-      const name = !component_map[type_name].architect_yml ? type_name : component_map[type_name].name;
-      const spec = !component_map[type_name].architect_yml ? component_map[type_name] : yaml.load(component_map[type_name].architect_yml.join('\n')) as Dictionary<any>;
-      selections[type] = {
-        name: name,
-        architect_yml: spec,
-        depends_on: dependency_map[type_name.toLowerCase()] ? dependency_map[type_name.toLowerCase()] : '',
-      };
-    }
-
-    // store any component spec that does not have a type by its name
-    for (const [type_name, component_spec] of Object.entries(component_map)) {
-      if (!(Object.values(type_map).includes(type_name))) {
-        const spec = !component_spec.architect_yml ? component_spec : yaml.load(component_spec.architect_yml.join('\n')) as Dictionary<any>;
-        const name = component_spec.name.toLowerCase();
-        selections[component_spec.name.toLowerCase()] = {
-          name: component_spec.name,
-          architect_yml: spec,
-          depends_on: dependency_map[name] ? dependency_map[name] : '',
-        };
-      }
-    }
-    return selections;
-  }
+  static readme: string[] = [];
 
   static async prompt(choices: any[], message: string): Promise<any> {
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
@@ -115,6 +38,25 @@ export default class ProjectUtils {
     return answers.selected;
   }
 
+  static async fetchJsonFromGitHub(url: string): Promise<any> {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${url}`);
+    }
+    return await response.json();
+  }
+
+  static async fetchYamlFromGitHub(url: string): Promise<ComponentSpec> {
+    const component_spec = await fetch(url)
+      .then((res: any) => res.blob())
+      .then((blob: any) => blob.text())
+      .then((yaml_as_string: any) => yaml.load(yaml_as_string) as ComponentSpec)
+      .catch((err: any) => {
+        throw new Error(`Failed to fetch ${url}`);
+      });
+    return component_spec;
+  }
+
   static async downloadRepo(url: string, dir_path: string): Promise<void> {
     await download(url + `#${GITHUB_BRANCH}`, dir_path, (err: any) => {
       if (err) {
@@ -124,79 +66,120 @@ export default class ProjectUtils {
   }
 
   static async downloadGitHubRepos(selections: Dictionary<Dictionary<any>>, project_dir: string): Promise<void> {
-    // download any selection that has a homepage
+    // download any selection that has a repository
     for (const selection of Object.values(selections)) {
-      if (selection.architect_yml && selection.architect_yml.homepage) {
-        const url = selection.architect_yml.homepage.replace('https://github.com/', '');
+      if (selection.repository) {
+        const url = selection.repository.replace('https://github.com/', '');
         await this.downloadRepo(url, project_dir + '/' + selection.name.toLowerCase());
       }
     }
     await new Promise(resolve => setTimeout(resolve, 2000));
   }
 
-  static async removeServiceEnvironmentDependencies(service_environment: Dictionary<EnvironmentSpecValue>): Promise<Dictionary<EnvironmentSpecValue>> {
-    const dependencies_regex = new RegExp('dependencies[[A-Za-z\'-_].*\'].', 'g');
+  static async updateServiceEnvironmentDependencies(service_environment: Dictionary<EnvironmentSpecValue>, dep_key: string): Promise<Dictionary<EnvironmentSpecValue>> {
+    const dependencies_regex = new RegExp("'(.*?)'", 'g');
     for (const [env_key, env_val] of Object.entries(service_environment)) {
       if (typeof env_val === 'string' && env_val.includes('dependencies')) {
         const matches = dependencies_regex.exec(env_val);
         if (matches) {
-          service_environment[env_key] = env_val.replace(matches[0], '');
+          service_environment[env_key] = env_val.replace(matches[0], `'${dep_key.toLowerCase()}'`);
         }
       }
     }
     return service_environment;
   }
 
-  static async createArchitectYaml(selections: Dictionary<any>, project_dir: string): Promise<void> {
-    // get actual service name for depends_on
-    for (const selection of Object.values(selections)) {
-      if (selection.depends_on) {
-        const depends_on_proj = selections[selection.depends_on];
-        const services = depends_on_proj.architect_yml.services;
-        if (Object.keys(services).length === 1) {
-          selection.depends_on = Object.keys(services)[0];
-        } else {
-          const service_name = Object.keys(services).find((name: any) => !services[name].image);
-          selection.depends_on = service_name;
-        }
-      }
-    }
-
-    const combined_yml: Dictionary<any> = {};
-    combined_yml['name'] = project_dir.replace('_', '-');
-    const ignored = ['name', 'description', 'homepage', 'keywords', 'dependencies'];
-    for (const selection of Object.values(selections)) {
-      for (const [key, val] of Object.entries(selection.architect_yml as ComponentSpec)) {
-        if (ignored.includes(key)) {
-          continue;
-        }
-
-        if (key !== 'services') {
-          combined_yml[key] = combined_yml[key] ? { ...combined_yml[key], ...val } : val;
-          continue;
-        }
-
-        const yml_services = val as Dictionary<ServiceSpec>;
-        for (const [service_name, service] of Object.entries(yml_services)) {
-          if (Object.keys(yml_services).length > 1 && service.image) {
-            continue;
-          }
-
-          combined_yml[key] = combined_yml[key] ? { ...combined_yml[key], ...{ [service_name]: service } } : { [service_name]: service };
-          if (service.build) {
-            service.build['context'] = './' + selection.name;
-          }
-          if (selection.depends_on && service_name !== selection.depends_on) {
-            const depends_on = service['depends_on'] ? [...service['depends_on'], selection.depends_on] : [selection.depends_on];
-            combined_yml[key][service_name]['depends_on'] = depends_on;
-          }
-          if (service.environment) {
-            service.environment = await this.removeServiceEnvironmentDependencies(service.environment);
-          }
-        }
-      }
+  static switchDatabase(database_yml: ComponentSpec, backend_yml: ComponentSpec, backend_yml_path: string): void {
+    if (!backend_yml.services || !database_yml.services) {
+      return;
     }
     
-    fs.writeFileSync('./' + project_dir + '/architect.yml', yaml.dump(combined_yml));
+    for (const [service_key, service] of Object.entries(backend_yml.services)) {
+      if (service.image) {
+        backend_yml.secrets = { ...backend_yml.secrets, ...database_yml.secrets };
+        backend_yml.services[service_key] = Object.values(database_yml.services)[0];
+        fs.writeFileSync(path.resolve(untildify(backend_yml_path)), yaml.dump(backend_yml));
+      }
+    }
+  }
+
+  static async updateDependencies(frontend_yml: ComponentSpec, frontend_yml_path: string, backend_component_name: string): Promise<void> {
+    if (!frontend_yml.dependencies) {
+      return;
+    }
+
+    if (frontend_yml.dependencies && frontend_yml.services) {
+      const new_dependencies: Dictionary<string> = {};
+      for (const dep_val of Object.values(frontend_yml.dependencies)) {
+        new_dependencies[backend_component_name] = dep_val;
+      }
+      frontend_yml.dependencies = new_dependencies;
+
+      for (const [service_key, service] of Object.entries(frontend_yml.services)) {
+        if (service.environment) {
+          const service_environment = await this.updateServiceEnvironmentDependencies(service.environment, backend_component_name);
+          frontend_yml.services[service_key].environment = service_environment;
+        }
+      }
+    }
+    fs.writeFileSync(path.resolve(untildify(frontend_yml_path)), yaml.dump(frontend_yml));
+  }
+
+  static async updateArchitectYamls(app: AppService, selections: Dictionary<any>, project_dir: string): Promise<void> {
+    const backend = selections['backend'];
+    const backend_yml_path = `./${project_dir}/${backend.name.toLowerCase()}/architect.yml`;
+    const backend_yml = yaml.load(fs.readFileSync(backend_yml_path).toString('utf-8')) as ComponentSpec;
+    const database_yml = await this.fetchYamlFromGitHub(selections['database']['architect-file']);
+    this.switchDatabase(database_yml, backend_yml, backend_yml_path);
+
+    const frontend = selections['frontend'];
+    const frontend_yml_path = `./${project_dir}/${frontend.name.toLowerCase()}/architect.yml`;
+    const frontend_yml = yaml.load(fs.readFileSync(frontend_yml_path).toString('utf-8')) as ComponentSpec;
+    const backend_component_name = backend.repository.split('/').pop();
+    await this.updateDependencies(frontend_yml, frontend_yml_path, backend_component_name);
+
+    // create readme file
+    this.readme.push('# This project was auto-generated using the Architect CLI.\n');
+
+    this.readme.push(`### To run your project locally:`);
+    this.readme.push(`Go into '${backend.name.toLowerCase()}' and run the link command.`);
+    this.readme.push('  % architect link .\n');
+    this.readme.push(`Change directory to '../${frontend.name.toLowerCase()}', then run the link and dev commands.`);
+    this.readme.push('  % architect link .');
+    this.readme.push('  % architect dev .\n');
+
+    this.readme.push(`### To deploy your project to the Cloud:`);
+    this.readme.push(`Go into '${backend.name.toLowerCase()}' and run the register command.`);
+    this.readme.push('  % architect register .\n');
+    this.readme.push(`Change directory to '../${frontend.name.toLowerCase()}', then run the register and deploy commands`);
+    this.readme.push('  % architect register .');
+    this.readme.push(`  % architect deploy ${frontend.name.toLowerCase()}\n`);
+    fs.writeFileSync(`./${project_dir}/README.md`, this.readme.join('\n'));
+  }
+
+  static async getSelections(chosen_project?: string): Promise<Dictionary<Selection>> {
+    // get choices from template-configs repository
+    const config_file = 'https://raw.githubusercontent.com/architect-team/template-configs/main/config.json';
+    const config_json = await this.fetchJsonFromGitHub(config_file) as Dictionary<any>;
+    const choices = config_json.choices;
+    
+    const selections: Dictionary<Selection> = {};
+    const types = ['Frontend', 'Backend', 'Full stack'];
+    const type = await this.prompt(types, 'Select a type you would like to proceed');
+    if (type.toLowerCase() === 'frontend' || type.toLowerCase() === 'full stack') {
+      const frontend_opts = choices.filter((item: any) => item.type === 'frontend');
+      const frontend = await this.prompt(frontend_opts, 'Select a frontend');
+      selections['frontend'] = frontend;
+    }
+
+    const backend_opts = choices.filter((item: any) => item.type === 'backend');
+    const backend = await this.prompt(backend_opts, 'Select a backend');
+    selections['backend'] = backend;
+
+    const database_opts = choices.filter((item: any) => item.type === 'database');
+    const database = await this.prompt(database_opts, 'Select a database');
+    selections['database'] = database;
+
+    return selections;
   }
 }
