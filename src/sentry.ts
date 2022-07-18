@@ -206,7 +206,12 @@ export default class SentryService {
 
     // remove empty objects, empty strings, or key/values from the remove_keys list.
     let current_output = JSON.parse(JSON.stringify(scope as any, (key, value) => {
-      return ((value && !remove_keys.has(key) && Object.keys(value).length)) ? value : undefined;
+      if (remove_keys.has(key)) {
+        return undefined;
+      }
+      if (typeof value === 'number' || (value && Object.keys(value).length)) {
+        return value;
+      }
     }));
 
     // remove duplicate report information if span is present

@@ -179,7 +179,7 @@ export default class Doctor extends BaseCommand {
     const command_metadata = await this.sentry.readCommandHistoryFromFileSystem();
     this.history = (command_metadata || []).slice(~Math.min(answers.history, command_metadata.length) + 1);
 
-    // .yaml && .yml files removed from report's config_dir_files
+    // .yml files removed from report's config_dir_files
     if (!answers.compose) {
       this.history = this.history.map((record) => ({
         ...record,
