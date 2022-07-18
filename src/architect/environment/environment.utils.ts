@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { Dictionary, ResourceSlugUtils, sortOnKeys } from '../../';
 import Account from '../account/account.entity';
+import Platform from '../platform/platform.entity';
 import Environment from './environment.entity';
 
 export interface Replica {
@@ -12,6 +13,13 @@ export interface Replica {
   resource_ref: string;
   created_at: string;
   display_name?: string;
+}
+
+export interface CreateEnvironmentDto {
+  name: string;
+  description?: string;
+  platform_id: string;
+  ttl?: string;
 }
 
 export class EnvironmentUtils {
@@ -26,6 +34,18 @@ export class EnvironmentUtils {
       }),
     },
   };
+
+  static async createEnvironment(api: AxiosInstance, account: Account, platform: Platform, environment_name: string, description?: string, ttl?: string) {
+    const dto: CreateEnvironmentDto = {
+      name: environment_name,
+      description: description,
+      platform_id: platform.id,
+    };
+    if (ttl) {
+      dto.ttl = ttl;
+    }
+    await api.post(`/accounts/${account.id}/environments`, dto);
+  }
 
   static async getEnvironment(api: AxiosInstance, account: Account, environment_name?: string): Promise<Environment> {
     if (process.env.ARCHITECT_ENVIRONMENT === environment_name && process.env.ARCHITECT_ENVIRONMENT) {

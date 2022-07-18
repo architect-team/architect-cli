@@ -3,15 +3,9 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { Slugs } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
+import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import PlatformUtils from '../../architect/platform/platform.utils';
 import BaseCommand from '../../base-command';
-
-interface CreateEnvironmentDto {
-  name: string;
-  description?: string;
-  platform_id: string;
-  ttl?: string;
-}
 
 export default class EnvironmentCreate extends BaseCommand {
   static aliases = ['environment:create', 'envs:create', 'env:create'];
@@ -68,17 +62,7 @@ export default class EnvironmentCreate extends BaseCommand {
     const platform = await PlatformUtils.getPlatform(this.app.api, account, flags.platform);
 
     CliUx.ux.action.start(chalk.blue('Registering environment with Architect'));
-
-    const dto: CreateEnvironmentDto = {
-      name: environment_name,
-      description: flags.description,
-      platform_id: platform.id,
-    };
-    if (flags.ttl) {
-      dto.ttl = flags.ttl;
-    }
-    await this.app.api.post(`/accounts/${account.id}/environments`, dto);
-
+    await EnvironmentUtils.createEnvironment(this.app.api, account, platform, environment_name, flags.description, flags.ttl);
     const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment_name}`;
     CliUx.ux.action.stop();
     this.log(chalk.green(`Environment created: ${environment_url}`));
