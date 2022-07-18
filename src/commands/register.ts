@@ -151,9 +151,13 @@ export default class ComponentRegister extends BaseCommand {
           // docker buildx prune --builder architect --force
           service.build['x-bake']['cache-from'] = `type=local,src=${cache_dir}`;
 
+          //service.build.cache_from = [`type=local,src=${cache_dir}`];
+
           if (!seen_cache_dir.has(cache_dir)) {
             // https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to
             service.build['x-bake']['cache-to'] = `type=local,dest=${cache_dir}-tmp,mode=max`;
+
+            //service.build.cache_to = [`type=local,dest=${cache_dir}-tmp,mode=max`];
           }
           seen_cache_dir.add(cache_dir);
         }
@@ -188,17 +192,21 @@ export default class ComponentRegister extends BaseCommand {
       return arr;
     }, [] as string[]);
 
-    const builder = await DockerBuildXUtils.getBuilder(this.app.config);
+    //const builder = await DockerBuildXUtils.getBuilder(this.app.config);
 
     try {
-      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], builder, {
-        stdio: 'inherit',
-      });
+      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], 'todo');
     } catch (err: any) {
       fs.removeSync(compose_file);
       this.log(`Docker buildx bake failed. Please make sure docker is running.`);
       this.error(err);
     }
+
+    /*
+    await DockerComposeUtils.dockerCompose(['-f', compose_file, 'build']);
+    console.log('-----');
+    await DockerComposeUtils.dockerCompose(['-f', compose_file, 'push']);
+    */
 
     for (const cache_dir of seen_cache_dir) {
       await fs.move(`${cache_dir}-tmp`, cache_dir, { overwrite: true });

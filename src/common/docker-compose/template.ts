@@ -11,6 +11,8 @@ export interface DockerServiceBuild {
   dockerfile?: string;
   target?: string;
   'x-bake'?: XBakeConfig;
+  cache_from?: string[];
+  cache_to?: string[];
 }
 
 export interface DockerComposeVolume {

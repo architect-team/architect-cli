@@ -81,7 +81,7 @@ export default class DockerBuildXUtils {
     if (use_console) {
       process.stdin.setRawMode(true);
     }
-    const cmd = execa('docker', [`--context=${docker_builder_name}-context`, 'buildx', '--builder', docker_builder_name, ...args], execa_opts);
+    const cmd = execa('docker', ['buildx', ...args], execa_opts);
     if (use_console) {
       cmd.on('exit', () => {
         process.exit();
