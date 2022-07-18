@@ -23,10 +23,11 @@ export default class ProjectCreate extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags, args } = await this.parse(ProjectCreate);
-
+    
     const selections = await ProjectUtils.getSelections(flags.project);
     await ProjectUtils.downloadGitHubRepos(selections, args.project_name);
-    await ProjectUtils.createArchitectYaml(selections, args.project_name);
-    this.log(`Successfully created project ${args.project_name}. To start your project, run the architect.yml file located in the directory of ${args.project_name}.`);
+    await ProjectUtils.updateArchitectYamls(this.app, selections, args.project_name);
+
+    this.log(`Successfully created project ${args.project_name}.`);
   }
 }

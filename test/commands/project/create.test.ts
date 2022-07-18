@@ -33,7 +33,7 @@ describe('project:create', function () {
       return selections;
     })
     .stub(ProjectUtils, 'downloadGitHubRepos', sinon.stub())
-    .stub(ProjectUtils, 'createArchitectYaml', sinon.stub())
+    .stub(ProjectUtils, 'updateArchitectYamls', sinon.stub())
     .stdout({ print })
     .stderr({ print })
     .command(['project:create', '-p', 'react', 'my-react-project'])
@@ -41,7 +41,7 @@ describe('project:create', function () {
       expect(ctx.stdout).to.contain('Successfully created project');
       const download_repos = ProjectUtils.downloadGitHubRepos as sinon.SinonStub;
       expect(download_repos.callCount).to.eq(1);
-      const create_yml = ProjectUtils.createArchitectYaml as sinon.SinonStub;
+      const create_yml = ProjectUtils.updateArchitectYamls as sinon.SinonStub;
       expect(create_yml.callCount).to.eq(1);
     })
 });
