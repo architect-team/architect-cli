@@ -55,9 +55,7 @@ export const transformBuildSpecArgs = (args?: Dictionary<string | null>): Dictio
 
 export const transformBuildSpec = (build: BuildSpec | undefined, image?: string): BuildConfig => {
   if (!build && !image) {
-    build = {
-      context: '.',
-    };
+    build = {};
   } else if (!build) {
     return {};
   }

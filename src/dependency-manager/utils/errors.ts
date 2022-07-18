@@ -1,7 +1,4 @@
-
-function escapeRegex(string: string) {
-  return string.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
-}
+import { escapeRegex } from './regex';
 
 const addLineNumbers = (value: string, errors: ValidationError[]): void => {
   const rows = value.split('\n');
