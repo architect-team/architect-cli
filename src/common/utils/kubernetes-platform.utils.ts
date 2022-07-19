@@ -23,7 +23,7 @@ export class KubernetesPlatformUtils {
     const CONFIG_ENV = {
       XDG_CONFIG_HOME: environment === ENVIRONMENT.PRODUCTION
         ? process.env.XDG_CONFIG_HOME || default_config_directory
-        : default_config_directory
+        : default_config_directory,
       };
 
     let kubeconfig: any;
