@@ -5,6 +5,7 @@ import mock_fs from 'mock-fs';
 import path from 'path';
 import sinon from 'sinon';
 import { buildConfigFromYml, Slugs } from '../../src';
+import ProjectUtils from '../../src/architect/project/project.utils';
 import { InitCommand } from '../../src/commands/init';
 import { mockArchitectAuth } from '../utils/mocks';
 
@@ -29,7 +30,7 @@ services:
   }
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('converts a docker-compose file to an architect component file', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -39,7 +40,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component', '-o', 'test-directory/architect.yml'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component', '-o', 'test-directory/architect.yml'])
     .it('converts a docker-compose file to an architect component file and writes the file to a specified output', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -49,7 +50,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('names the component based on the input args', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -59,7 +60,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('converts all services from the docker compose file to architect services', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -69,7 +70,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds environment variables to each service', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -86,7 +87,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('converts environment variables from compose listed as an array', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -99,7 +100,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it(`warns the user if a listed environment variable couldn't be converted`, ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -108,7 +109,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds command to logstash service', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -118,7 +119,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds entrypoint to logstash service', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -128,7 +129,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds image to kibana service', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -138,7 +139,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds build context and args to elasticsearch service', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -150,7 +151,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds ports of various docker-compose types to kibana service config', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -175,7 +176,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds ports to service component config', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -186,7 +187,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds ports to logstash service config', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -200,7 +201,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds debug and regular volumes to elasticsearch service config', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -214,7 +215,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds debug volumes to logstash service config', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -229,7 +230,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds debug and regular volumes to kibana service config', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -251,7 +252,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds context targets to compose where appropriate', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -263,7 +264,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('prints a warning if a field from the docker compose cannot be converted', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -307,7 +308,7 @@ services:
   });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('converts a healthcheck with cmd-shell to a liveness probe', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -323,7 +324,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('converts a healthcheck with cmd to a liveness probe', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -338,7 +339,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('converts a healthcheck string to a liveness probe', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -350,7 +351,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('converts a container name to a reserved name', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -360,7 +361,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds an interface for each exposed port', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -370,7 +371,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adding cpu and memory resources', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -381,7 +382,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('converting labels in array format', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -392,7 +393,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('converting labels in object format', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -403,7 +404,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it(`warns the user if a listed label couldn't be converted because it isn't split by an = sign`, ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -412,7 +413,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it(`warns the user if a listed label couldn't be converted because of an invalid key`, ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -421,11 +422,28 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it(`warns the user if a listed label couldn't be converted because of an invalid value`, ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
       expect(ctx.stdout).to.contain(`Label with value Path(\`/\`) could not be converted as it fails validation with regex ${Slugs.LabelValueSlugValidatorString}`);
     });
+  
+  mockInit()
+    .stub(ProjectUtils, 'getSelections', () => {
+      return {};
+    })
+    .stub(ProjectUtils, 'downloadGitHubRepos', sinon.stub())
+    .stub(ProjectUtils, 'updateArchitectYamls', sinon.stub())
+    .stdout({ print })
+    .stderr({ print })
+    .command(['init', 'my-react-project'])
+    .it('Create project successfully with project flag', async ctx => {
+      expect(ctx.stdout).to.contain('Successfully created project');
+      const download_repos = ProjectUtils.downloadGitHubRepos as sinon.SinonStub;
+      expect(download_repos.callCount).to.eq(1);
+      const create_yml = ProjectUtils.updateArchitectYamls as sinon.SinonStub;
+      expect(create_yml.callCount).to.eq(1);
+    })
 });
