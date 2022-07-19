@@ -141,12 +141,12 @@ export default class SentryService {
     update_scope?.setExtras(sentry_session_metadata);
   }
 
-  async endSentryTransaction(error?: any): Promise<void> {
+  async endSentryTransaction(write_command_out: boolean, error?: any): Promise<void> {
     if (this.app.config.environment === ENVIRONMENT.TEST) return;
 
     await this.updateSentryTransaction(error);
 
-    if (this.file_out) {
+    if (this.file_out && write_command_out) {
       await this.writeCommandHistoryToFileSystem();
     }
 

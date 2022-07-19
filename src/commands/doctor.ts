@@ -1,10 +1,8 @@
-import fs from 'fs-extra';
-import * as http from 'http';
+import { Flags } from '@oclif/core';
+import { util } from 'chai';
+import * as fs from 'fs';
 import inquirer from 'inquirer';
-import opener from 'opener';
-import path from 'path';
 import BaseCommand from '../base-command';
-import PortUtil from '../common/utils/port';
 
 interface DOCTOR_INPUT_PROPERTIES {
   HISTORY_LENGTH: {
@@ -108,6 +106,10 @@ export default class Doctor extends BaseCommand {
     return false;
   }
 
+  async disable_sentry_recording(): Promise<boolean> {
+    return true;
+  }
+
   history: SentryHistory[] = [];
 
   static description = 'Get debugging information for troubleshooting';
@@ -115,6 +117,13 @@ export default class Doctor extends BaseCommand {
   static history_length_hint = `${DOCTOR_PROPERTIES.HISTORY_LENGTH.LOWER_BOUND_INCLUSIVE} to ${DOCTOR_PROPERTIES.HISTORY_LENGTH.UPPER_BOUND_INCLUSIVE} inclusive`;
   static flags: any = {
     ...BaseCommand.flags,
+    output: {
+      non_sensitive: true,
+      ...Flags.string({
+        description: 'Choose a file to output the debug information to',
+        char: 'o',
+      }),
+    },
   };
 
   async numRecordsInputIsValid(num?: any): Promise<boolean> {
@@ -125,34 +134,8 @@ export default class Doctor extends BaseCommand {
       num <= DOCTOR_PROPERTIES.HISTORY_LENGTH.UPPER_BOUND_INCLUSIVE);
   }
 
-  protected async listenForDoctorReportRequest(port: number): Promise<string> {
-    const doctor_html_template_path = path.join(path.dirname(fs.realpathSync(__filename)), '../static/doctor.html');
-    const doctor_file = fs.readFileSync(doctor_html_template_path).toString();
-
-    return new Promise((_, reject) => {
-      const server = http.createServer();
-      server.on('connection', (socket) => socket.unref());
-      server.on('error', async (err) => reject(err));
-      server.on('listening', async () => opener(`http://localhost:${port}`));
-      server.on('request', async (req, res) => {
-        try {
-          req.connection.ref();
-          res.writeHead(200, { 'Content-Type': 'text/html' });
-          const doctor_html = doctor_file.replace('%% COMMAND_HISTORY %%', JSON.stringify(this.history));
-          res.end(doctor_html, () => req.connection.unref());
-        } finally {
-          try {
-            server.close();
-          } catch {
-            // already closed
-          }
-        }
-      });
-      server.listen(port);
-    });
-  }
-
   async run(): Promise<void> {
+    const { args, flags } = await this.parse(Doctor);
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
     const answers: any = await inquirer.prompt([
       {
@@ -204,7 +187,10 @@ export default class Doctor extends BaseCommand {
       }));
     }
 
-    const port = await PortUtil.getAvailablePort(60000);
-    await this.listenForDoctorReportRequest(port);
+    console.log(util.inspect(this.history, false, 100, true));
+
+    if (flags.output) {
+      fs.writeFileSync(flags.output, util.inspect(this.history, false, 100, true));
+    }
   }
 }
