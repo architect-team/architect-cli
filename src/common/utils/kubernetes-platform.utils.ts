@@ -20,7 +20,7 @@ export class KubernetesPlatformUtils {
     flags: any, environment: string = ENVIRONMENT.PRODUCTION
   ): Promise<CreatePlatformInput> {
     const default_config_directory = path.join(os.homedir(), '.config');
-    const CONFIG_ENV = {
+    const config_env = {
       XDG_CONFIG_HOME: environment === ENVIRONMENT.PRODUCTION
         ? process.env.XDG_CONFIG_HOME || default_config_directory
         : default_config_directory,
@@ -147,7 +147,7 @@ export class KubernetesPlatformUtils {
       await execa('kubectl', [
         ...set_kubeconfig,
         'create', 'sa', SERVICE_ACCOUNT_NAME,
-      ], { env: CONFIG_ENV });
+      ], { env: config_env });
 
       // Bind the service account to the cluster-admin role
       await execa('kubectl', [
@@ -159,7 +159,7 @@ export class KubernetesPlatformUtils {
         'cluster-admin',
         '--serviceaccount',
         `default:${SERVICE_ACCOUNT_NAME}`,
-      ], { env: CONFIG_ENV });
+      ], { env: config_env });
       CliUx.ux.action.stop();
     }
 
@@ -189,13 +189,13 @@ type: kubernetes.io/service-account-token
     await execa('kubectl', [
       ...set_kubeconfig,
       'apply', '-f', '-',
-    ], { input: secret_yml, env: CONFIG_ENV });
+    ], { input: secret_yml, env: config_env });
 
     const secret_res = await execa('kubectl', [
       ...set_kubeconfig,
       'get', 'secrets', SERVICE_ACCOUNT_SECRET_NAME,
       '-o', 'json',
-    ], { env: CONFIG_ENV });
+    ], { env: config_env });
     const sa_token_buffer = Buffer.from(JSON.parse(secret_res.stdout).data.token, 'base64');
     const service_token = sa_token_buffer.toString('utf-8');
 
