@@ -29,7 +29,7 @@ services:
       architect.io/environment: dev
       architect.io/service: api
     liveness_probe:
-      command: curl --fail localhost:8080/health || exit 1
+      command: curl --fail localhost:8080/health
     replicas: 2
     cpu: 1
     memory: 512mb
@@ -152,7 +152,7 @@ This configuration is essentially the health check for the service. It's importa
 ```yaml
 liveness_probe:
   # (required) Command that will be run to check application health
-  command: curl --fail localhost:8080/health || exit 1
+  command: curl --fail localhost:8080/health
   # (deprecated, optional) Port that the http check will run against
   port: 8080
   # (deprecated, optional) Path for the http check
