@@ -24,6 +24,8 @@ export interface ComponentInstanceMetadata {
     path: string;
     contents: string;
   }
+
+  interpolated?: boolean;
 }
 
 @JSONSchema({
