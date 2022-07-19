@@ -145,7 +145,7 @@ export default class ComponentRegister extends BaseCommand {
 
         if (flags['cache-directory']) {
           // Cache directory needs to be unique per dockerfile: https://github.com/docker/build-push-action/issues/252#issuecomment-744412763
-          const cache_dir = path.join(flags['cache-directory'], hash(service.build));
+          const cache_dir = path.join(flags['cache-directory'], service_name, hash(service.build));
 
           // To test you need to prune the buildx cache
           // docker buildx prune --builder architect --force
@@ -173,7 +173,9 @@ export default class ComponentRegister extends BaseCommand {
     const project_name = `register.${resourceRefToNodeRef(component_spec.name)}.${tag}`;
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
 
-    await DockerComposeUtils.writeCompose(compose_file, yaml.dump(compose));
+    await DockerComposeUtils.writeCompose(compose_file, yaml.dump(compose, { indent: 2 }));
+
+    console.log(yaml.dump(compose, { indent: 2 }));
 
     const args = flags.arg || [];
 
@@ -195,7 +197,7 @@ export default class ComponentRegister extends BaseCommand {
     //const builder = await DockerBuildXUtils.getBuilder(this.app.config);
 
     try {
-      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], 'todo');
+      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], 'todo', { stdio: 'inherit' });
     } catch (err: any) {
       fs.removeSync(compose_file);
       this.log(`Docker buildx bake failed. Please make sure docker is running.`);
