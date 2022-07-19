@@ -147,17 +147,44 @@ type: kubernetes.io/service-account-token
     };
   }
 
-  public static async waitForAgent(flags: any) {
+  public static async waitForAgent(flags: any): Promise<void> {
     const kubeconfig_path = untildify(flags.kubeconfig);
     const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', 'default'];
 
     await execa('kubectl', [
       ...set_kubeconfig,
-      'rollout', 'status', 'deployment', 'agent-deployment'
+      'rollout', 'status', 'deployment', 'agent-deployment',
     ]);
   }
 
-  public static async installAgent(flags: any, token: string, host: string, config: AppConfig) {
+  // Certain providers use an external api controller for multiple clusters
+  // this can cause us problems since they add additional proxy layers to
+  // the cluster. These are causing problems and killing our connection. To
+  // bypass them we can use their actual k8s api.
+  // Right now this just supports DigitialOcean
+  private static async getKubernetesUrl(flags: any): Promise<string> {
+    const kubeconfig_path = untildify(flags.kubeconfig);
+    const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', 'kube-system'];
+    try {
+      const kube_proxy_secret = await execa('kubectl', [
+        ...set_kubeconfig,
+        'get', 'secret', 'kube-proxy', '-o', 'jsonpath={.data}',
+      ]);
+      const encoded_data = JSON.parse(kube_proxy_secret.stdout)['kube-proxy.kubeconfig'];
+      const data = Buffer.from(encoded_data, "base64").toString();
+      const yaml_data = yaml.load(data) as any;
+      const server = yaml_data.clusters[0].cluster.server as string || '';
+      if (server.toLowerCase().includes('ondigitalocean')) {
+        return server;
+      }
+    } catch (_) {
+      // Not a real error
+    }
+
+    return 'https://kubernetes.default.svc';
+  }
+
+  public static async installAgent(flags: any, token: string, host: string, config: AppConfig): Promise<void> {
     const yaml = `
 apiVersion: apps/v1
 kind: Deployment
@@ -181,7 +208,7 @@ spec:
           image: registry.gitlab.com/architect-io/agent/client/client:latest
           env:
           - name: KUBERNETES_URL
-            value: https://kubernetes.default.svc
+            value: ${await this.getKubernetesUrl(flags)}
           - name: ARCHITECT_TOKEN
             value: "${token}"
           - name: AGENT_SERVER
@@ -205,7 +232,7 @@ spec:
 
     await execa('kubectl', [
       ...set_kubeconfig,
-      'apply', '-f', yamlFile
+      'apply', '-f', yamlFile,
     ]);
   }
 

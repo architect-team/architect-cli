@@ -133,7 +133,7 @@ export class DockerComposeUtils {
           } else {
             liveness_probe.command = ['CMD', ...liveness_probe.command];
           }
-          console.log(liveness_probe.command)
+          console.log(liveness_probe.command);
           service.healthcheck = {
             test: liveness_probe.command,
             interval: liveness_probe.interval,

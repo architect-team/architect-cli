@@ -103,20 +103,20 @@ export default class PlatformCreate extends BaseCommand {
   }
 
   private getLocalServerAgentIP(): string {
-    const results = execa.sync('dig', ['host.docker.internal', '+short'])
+    const results = execa.sync('dig', ['host.docker.internal', '+short']);
     return results.stdout;
   }
 
   private getLocalServerAgentPort(): string {
     const container_name_results = execa.sync('docker', ['ps', '-f', 'name=agent-server', '--format', '{{.Names}}']);
-    const results = execa.sync('docker', ['port', container_name_results.stdout, '9081/tcp'])
+    const results = execa.sync('docker', ['port', container_name_results.stdout, '9081/tcp']);
     return results.stdout.split(':')[1];
   }
 
   private getLocalServerAgentHost(): string {
     const host = this.app.config.agent_server_host.toLocaleLowerCase().trim();
     if (host[host.length - 1] === ':') {
-      return `${host}${this.getLocalServerAgentPort()}`
+      return `${host}${this.getLocalServerAgentPort()}`;
     }
     if (host !== 'local') {
       return this.app.config.agent_server_host;
@@ -184,7 +184,7 @@ export default class PlatformCreate extends BaseCommand {
         message: 'What type of platform would you like to register?',
         choices: [
           'kubernetes',
-          'agent'
+          'agent',
         ],
       },
     ]);
