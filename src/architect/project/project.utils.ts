@@ -152,12 +152,10 @@ Change directory to '../${root_service}', then run the register and deploy comma
 
   static async updateArchitectYamls(app: AppService, selections: Dictionary<any>, project_dir: string): Promise<void> {
     const backend = selections['backend'];
-    if (backend) {
-      const backend_yml_path = `./${project_dir}/${backend.name.toLowerCase()}/architect.yml`;
-      const backend_yml = yaml.load(fs.readFileSync(backend_yml_path).toString('utf-8')) as ComponentSpec;
-      const database_yml = await this.fetchYamlFromGitHub(selections['database']['architect-file']);
-      this.switchDatabase(database_yml, backend_yml, backend_yml_path);
-    }
+    const backend_yml_path = `./${project_dir}/${backend.name.toLowerCase()}/architect.yml`;
+    const backend_yml = yaml.load(fs.readFileSync(backend_yml_path).toString('utf-8')) as ComponentSpec;
+    const database_yml = await this.fetchYamlFromGitHub(selections['database']['architect-file']);
+    this.switchDatabase(database_yml, backend_yml, backend_yml_path);
 
     // Need better handling for when a frontend requires a backend.
     const frontend = selections['frontend'];
@@ -169,9 +167,7 @@ Change directory to '../${root_service}', then run the register and deploy comma
     }
 
     let readme: string;
-    if (frontend && !backend) {
-      readme = this.generateSingleComponentReadme(frontend.name.toLowerCase());
-    } else if (!frontend && backend) {
+    if (!frontend && backend) {
       readme = this.generateSingleComponentReadme(backend.name.toLowerCase());
     } else {
       readme = this.generateMultiCoponentReadme(frontend.name.toLowerCase(), backend.name.toLowerCase());
@@ -186,23 +182,21 @@ Change directory to '../${root_service}', then run the register and deploy comma
     const choices = config_json.choices;
 
     const selections: Dictionary<Selection> = {};
-    const types = ['Full stack', 'Frontend', 'Backend'];
+    const types = ['Full stack', 'Backend'];
     const type = await this.prompt(types, 'Select a type you would like to proceed');
-    if (type.toLowerCase() === 'frontend' || type.toLowerCase() === 'full stack') {
+    if (type.toLowerCase() === 'full stack') {
       const frontend_opts = choices.filter((item: any) => item.type === 'frontend');
       const frontend = await this.prompt(frontend_opts, 'Select a frontend');
       selections['frontend'] = frontend;
     }
 
-    if (type.toLowerCase() !== 'frontend') {
-      const backend_opts = choices.filter((item: any) => item.type === 'backend');
-      const backend = await this.prompt(backend_opts, 'Select a backend');
-      selections['backend'] = backend;
+    const backend_opts = choices.filter((item: any) => item.type === 'backend');
+    const backend = await this.prompt(backend_opts, 'Select a backend');
+    selections['backend'] = backend;
 
-      const database_opts = choices.filter((item: any) => item.type === 'database');
-      const database = await this.prompt(database_opts, 'Select a database');
-      selections['database'] = database;
-    }
+    const database_opts = choices.filter((item: any) => item.type === 'database');
+    const database = await this.prompt(database_opts, 'Select a database');
+    selections['database'] = database;
 
     return selections;
   }
