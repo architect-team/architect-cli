@@ -142,10 +142,13 @@ export default class SentryService {
   }
 
   async endSentryTransaction(error?: any): Promise<void> {
-    if (!this.file_out) return;
+    if (this.app.config.environment === ENVIRONMENT.TEST) return;
 
     await this.updateSentryTransaction(error);
-    await this.writeCommandHistoryToFileSystem();
+
+    if (this.file_out) {
+      await this.writeCommandHistoryToFileSystem();
+    }
 
     if (this.sentry_out) {
       Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
