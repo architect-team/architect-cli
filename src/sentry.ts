@@ -28,7 +28,7 @@ export default class SentryService {
   constructor(app: AppService, child: any) {
     this.app = app;
     this.child = child;
-    this.file_out = app.config.environment !== ENVIRONMENT.TEST;
+    this.file_out = app.config.environment !== ENVIRONMENT.TEST && app.config.environment !== ENVIRONMENT.PREVIEW;
     this.sentry_history_file_path = path.join(app.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
     this.sentry_out = app.config.environment === ENVIRONMENT.PRODUCTION || app.config.environment === ENVIRONMENT.DEV;
     this.startSentryTransaction();
