@@ -4,6 +4,7 @@ import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import yaml from 'js-yaml';
+import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
 import { ArchitectError } from '../../';
@@ -11,6 +12,7 @@ import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 
 const SERVICE_ACCOUNT_NAME = 'architect';
 const SERVICE_ACCOUNT_SECRET_NAME = `${SERVICE_ACCOUNT_NAME}-token`;
+const CONFIG_ENV = { XDG_CONFIG_HOME: path.join(os.homedir(), '.config') };
 
 export class KubernetesPlatformUtils {
 
@@ -165,13 +167,13 @@ type: kubernetes.io/service-account-token
     await execa('kubectl', [
       ...set_kubeconfig,
       'apply', '-f', '-',
-    ], { input: secret_yml });
+    ], { input: secret_yml, env: CONFIG_ENV });
 
     const secret_res = await execa('kubectl', [
       ...set_kubeconfig,
       'get', 'secrets', SERVICE_ACCOUNT_SECRET_NAME,
       '-o', 'json',
-    ]);
+    ], { env: CONFIG_ENV });
     const sa_token_buffer = Buffer.from(JSON.parse(secret_res.stdout).data.token, 'base64');
     const service_token = sa_token_buffer.toString('utf-8');
 
@@ -216,7 +218,7 @@ type: kubernetes.io/service-account-token
     await execa('kubectl', [
       ...set_kubeconfig,
       'create', 'sa', sa_name,
-    ]);
+    ], { env: CONFIG_ENV });
 
     // Bind the service account to the cluster-admin role
     await execa('kubectl', [
@@ -228,6 +230,6 @@ type: kubernetes.io/service-account-token
       'cluster-admin',
       '--serviceaccount',
       `default:${sa_name}`,
-    ]);
+    ], { env: CONFIG_ENV });
   }
 }
