@@ -1660,7 +1660,7 @@ describe('interpolation spec v1', () => {
           API_PORT: \${{ services.api.interfaces.main.port }}
           API_ADDR: \${{ services.api.interfaces.main.url }}
         liveness_probe:
-          command: curl --fail localhost:3000/users || exit 1
+          command: curl --fail localhost:3000/users
           interval: 30s
           failure_threshold: 3
       api:

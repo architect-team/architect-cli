@@ -47,7 +47,7 @@ services:
         protocol: http
       admin: 8081
     liveness_probe:
-      command: curl --fail localhost:8080/health || exit 1
+      command: curl --fail localhost:8080/health
     environment:
       DB_ADDR: ${{ services.database.interfaces.pg.url }}/${{ secrets.db_name }}
       DB_USER: ${{ secrets.db_user }}
@@ -58,7 +58,7 @@ services:
     interfaces:
       webapp: 3000
     liveness_probe:
-      command: curl --fail localhost:3000/health || exit 1
+      command: curl --fail localhost:3000/health
     environment:
       API_ADDR: ${{ services['my-api'].interfaces.public.url }}
     # Local configuration for my-frontend service
