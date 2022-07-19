@@ -175,7 +175,7 @@ Change directory to '../${root_service}', then run the register and deploy comma
     fs.writeFileSync(`./${project_dir}/README.md`, readme);
   }
 
-  static async getSelections(chosen_project?: string): Promise<Dictionary<Selection>> {
+  static async getSelections(): Promise<Dictionary<Selection>> {
     // get choices from template-configs repository
     const config_file = 'https://raw.githubusercontent.com/architect-team/template-configs/main/config.json';
     const config_json = await this.fetchJsonFromGitHub(config_file) as Dictionary<any>;
