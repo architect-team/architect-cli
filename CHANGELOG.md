@@ -1,3 +1,18 @@
+# [1.20.0](https://github.com/architect-team/architect-cli/compare/v1.19.2...v1.20.0) (2022-07-20)
+
+
+### Bug Fixes
+
+* **examples:** liveness probe update ([#629](https://github.com/architect-team/architect-cli/issues/629)) ([1d94780](https://github.com/architect-team/architect-cli/commit/1d947802fc21dd877f59128960e39571f474d4d8))
+* **exec:** local exec didn't work with multiple cmd args ([fb5ec5b](https://github.com/architect-team/architect-cli/commit/fb5ec5bce5583f1bfa52870527abfc75adc26392))
+* **platform:** Better user authentication support for Kubernetes clusters ([0bb49d0](https://github.com/architect-team/architect-cli/commit/0bb49d05369381efcd74dfb38ac82fe3522df0f4))
+* **volumes:** don't allow for host_path to be specified outside of a debug block ([b9e0b19](https://github.com/architect-team/architect-cli/commit/b9e0b1995dbee32d3916cb46220f7606936bfb7c))
+
+
+### Features
+
+* **doctor:** Add a doctor command that outputs additional information for debugging ([8abe76d](https://github.com/architect-team/architect-cli/commit/8abe76de0932fd50e88ab67b3ca5bf35979c48e2))
+
 ## [1.19.2](https://github.com/architect-team/architect-cli/compare/v1.19.1...v1.19.2) (2022-07-18)
 
 
