@@ -1,3 +1,10 @@
+## [1.20.1](https://github.com/architect-team/architect-cli/compare/v1.20.0...v1.20.1) (2022-07-20)
+
+
+### Bug Fixes
+
+* **cli:** remove chai ref in doctor cmd ([569b2fe](https://github.com/architect-team/architect-cli/commit/569b2fefd21a4f0e990db197f77e85ed44c4667b))
+
 # [1.20.0](https://github.com/architect-team/architect-cli/compare/v1.19.2...v1.20.0) (2022-07-20)
 
 
