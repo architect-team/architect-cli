@@ -1,8 +1,8 @@
 import { Flags } from '@oclif/core';
-import { util } from 'chai';
 import chalk from 'chalk';
 import * as fs from 'fs';
 import inquirer from 'inquirer';
+import util from 'util';
 import BaseCommand from '../base-command';
 
 interface DOCTOR_INPUT_PROPERTIES {
