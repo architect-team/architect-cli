@@ -7,10 +7,10 @@ import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
 import { validateOrRejectSpec } from '../';
+import ProjectUtils from '../architect/project/project.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { ComposeConverter } from '../common/docker-compose/converter';
-import ProjectUtils from '../architect/project/project.utils';
 
 export abstract class InitCommand extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -52,7 +52,13 @@ export abstract class InitCommand extends BaseCommand {
     }),
   };
 
-  async parse<F, A extends {
+  static args = [{
+    name: 'name',
+    description: 'Name of your component or project',
+    required: true,
+  }];
+
+  protected async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
@@ -81,10 +87,15 @@ export abstract class InitCommand extends BaseCommand {
   }
 
   async runProjectCreation(project_name: string): Promise<void> {
+    if (fs.existsSync(`./${project_name}`)) {
+      console.log(chalk.red(`The folder ./${project_name} already exists. Please choose a different project name or remove the folder`));
+      return;
+    }
     this.log(`Start the process to create your project '${project_name}'.`);
     const selections = await ProjectUtils.getSelections();
     await ProjectUtils.downloadGitHubRepos(selections, project_name);
     await ProjectUtils.updateArchitectYamls(this.app, selections, project_name);
+    await ProjectUtils.linkSelections(this.app, selections, project_name);
     this.log(`Successfully created project ${project_name}.`);
   }
 
