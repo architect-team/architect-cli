@@ -196,7 +196,7 @@ export default class Doctor extends BaseCommand {
           name: 'output',
           default: '',
           message: `Enter a file path to save the above information. Leave blank to ignore.`,
-        }
+        },
       ]);
       flags.output = answers.output;
     }
