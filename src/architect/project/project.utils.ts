@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import fetch from 'node-fetch';
 import path from 'path';
 import untildify from 'untildify';
-import { ComponentSpec } from '../../';
+import { buildSpecFromPath, ComponentSpec } from '../../';
 import AppService from '../../app-config/service';
 import { EnvironmentSpecValue } from '../../dependency-manager/spec/resource-spec';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
@@ -21,6 +21,29 @@ interface Selection {
 const GITHUB_BRANCH = 'main';
 
 export default class ProjectUtils {
+
+  private static getRootComponent(selections: Dictionary<Selection>): string {
+    if (selections.frontend) {
+      return selections.frontend.name.toLowerCase();
+    }
+    return selections.backend.name.toLowerCase();
+  }
+
+  static linkSelections(app: AppService, selections: Dictionary<Selection>, project_name: string): void {
+    for (const selection of Object.values(selections)) {
+      if (selection.type.toLowerCase() == 'database') {
+        continue;
+      }
+      const key = selection.name.toLowerCase();
+      const component_path = path.join(project_name, key, 'architect.yml');
+      const component_config = buildSpecFromPath(component_path);
+      console.log(`Linking ${key} with architect cli so it can be used as a dependency.`);
+      console.log(`% architect link ${component_path}`);
+      app.linkComponentPath(component_config.name, component_path);
+    }
+    const root_path = path.join(project_name, this.getRootComponent(selections), 'architect.yml');
+    console.log(`\nTry running your project now: \`architect dev ${root_path}\`\n`);
+  }
 
   static async prompt(choices: any[], message: string): Promise<any> {
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
