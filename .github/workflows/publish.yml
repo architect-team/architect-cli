@@ -22,7 +22,6 @@ jobs:
       - run: rm -r node_modules
       - run: npm ci --omit=dev
       - run: ./bin/run --version
-      - run: ./bin/run --version 2>&1 >/dev/null
       - run: | # Check if stderr is not empty and hard error (captures node warnings)
           error=$(./bin/run --version 2>&1 >/dev/null)
           [ ! -z "$error" ] && echo "$error" && exit 1 || echo "No error"
@@ -57,7 +56,7 @@ jobs:
   publish_cli:
     name: Publish CLI
     if: github.ref_name == 'main' || github.ref_name == 'rc' || startsWith(github.ref_name, 'arc-')
-    needs: [lint, test]
+    needs: [build_run, lint, test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
