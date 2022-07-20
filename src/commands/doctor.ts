@@ -188,8 +188,10 @@ export default class Doctor extends BaseCommand {
       }));
     }
 
+    let seen = false;
     if (!flags.output) {
       console.log(util.inspect(this.history, false, 100, true));
+      seen = true;
       const answers: any = await inquirer.prompt([
         {
           type: 'string',
@@ -206,7 +208,9 @@ export default class Doctor extends BaseCommand {
         fs.writeFileSync(flags.output, util.inspect(this.history, false, 100, true));
         return console.log(chalk.green("Please submit the generated information file with your support ticket at https://support.architect.io/"));
       } catch (e: any) {
-        console.log(util.inspect(this.history, false, 100, true));
+        if (!seen) {
+          console.log(util.inspect(this.history, false, 100, true));
+        }
         console.log(chalk.yellow("Unable to save information file to the specified file path"));
       }
     }
