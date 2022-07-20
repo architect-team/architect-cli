@@ -1,5 +1,6 @@
 import { Flags } from '@oclif/core';
 import { util } from 'chai';
+import chalk from 'chalk';
 import * as fs from 'fs';
 import inquirer from 'inquirer';
 import BaseCommand from '../base-command';
@@ -187,10 +188,23 @@ export default class Doctor extends BaseCommand {
       }));
     }
 
-    console.log(util.inspect(this.history, false, 100, true));
+    if (!flags.output) {
+      console.log(util.inspect(this.history, false, 100, true));
+      const answers: any = await inquirer.prompt([
+        {
+          type: 'string',
+          name: 'output',
+          default: '',
+          message: `Enter a file path to save the above information. Leave blank to ignore.`,
+        }
+      ]);
+      flags.output = answers.output;
+    }
 
     if (flags.output) {
       fs.writeFileSync(flags.output, util.inspect(this.history, false, 100, true));
     }
+
+    console.log(chalk.green("Please submit the information generated here wiith your support ticket at https://support.architect.io/"));
   }
 }
