@@ -14,7 +14,10 @@ const CLI_SENTRY_DSN = 'https://272fd53f577f4729b014701d74fe6c53@o298191.ingest.
 export default class SentryService {
   app: AppService;
   child: any;
+  file_out: boolean;
   sentry_out: boolean;
+  sentry_history_file_path: string;
+
 
   static async create(app: AppService, child: any): Promise<SentryService> {
     const sentry = new SentryService(app, child);
@@ -25,7 +28,9 @@ export default class SentryService {
   constructor(app: AppService, child: any) {
     this.app = app;
     this.child = child;
-    this.sentry_out = (app.config.environment === ENVIRONMENT.PRODUCTION || app.config.environment === ENVIRONMENT.DEV);
+    this.file_out = app.config.environment !== ENVIRONMENT.TEST && app.config.environment !== ENVIRONMENT.PREVIEW;
+    this.sentry_history_file_path = path.join(app.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
+    this.sentry_out = app.config.environment === ENVIRONMENT.PRODUCTION || app.config.environment === ENVIRONMENT.DEV || app.config.environment === ENVIRONMENT.PREVIEW;
     this.startSentryTransaction();
   }
 
@@ -105,7 +110,7 @@ export default class SentryService {
 
   async updateSentryTransaction(error?: any): Promise<void> {
 
-    const updated_docker_info = this.getRunningDockerContainers();
+    const updated_docker_info = await this.getRunningDockerContainers();
     const config_directory_files = await this.getFilenamesFromDirectory();
 
     if (error) {
@@ -136,10 +141,14 @@ export default class SentryService {
     update_scope?.setExtras(sentry_session_metadata);
   }
 
-  async endSentryTransaction(error?: any): Promise<void> {
+  async endSentryTransaction(write_command_out: boolean, error?: any): Promise<void> {
     if (this.app.config.environment === ENVIRONMENT.TEST) return;
 
     await this.updateSentryTransaction(error);
+
+    if (this.file_out && write_command_out) {
+      await this.writeCommandHistoryToFileSystem();
+    }
 
     if (this.sentry_out) {
       Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
@@ -149,6 +158,7 @@ export default class SentryService {
       }
     }
   }
+
   /*
   * Helper Functions
   */
@@ -178,7 +188,50 @@ export default class SentryService {
   async getFilenamesFromDirectory(): Promise<any[]> {
     const path = this.app.config?.getConfigDir();
     const addr = fs.readdirSync(path, { withFileTypes: true });
-    return addr.filter(f => f.isFile()).map(f => ({ name: f.name }));
+    return addr.filter(f => f.isFile()).map(f => ({ name: f.name })) || [];
+  }
+
+  async readCommandHistoryFromFileSystem(): Promise<any[]> {
+    let command_history = [];
+    if (fs.existsSync(this.sentry_history_file_path)) {
+      try {
+        command_history = await JSON.parse(fs.readFileSync(this.sentry_history_file_path).toString()) || [];
+      } catch {
+        // If json.parse fails, don't error.
+      }
+    }
+    return command_history;
+  }
+
+  async writeCommandHistoryToFileSystem(): Promise<void> {
+    const scope = Sentry.getCurrentHub()?.getScope();
+    const remove_keys = new Set(['plugins', 'pjson', 'oauth_client_id', 'credentials', '_auth_result', 'Authorization']);
+
+    // remove empty objects, empty strings, or key/values from the remove_keys list.
+    let current_output = JSON.parse(JSON.stringify(scope as any, (key, value) => {
+      if (remove_keys.has(key)) {
+        return undefined;
+      }
+      if (typeof value === 'number' || (value && Object.keys(value).length)) {
+        return value;
+      }
+    }));
+
+    // remove duplicate report information if span is present
+    if (current_output._span) {
+      current_output = { ...current_output, _tags: undefined, _user: undefined };
+    }
+
+    if (!fs.existsSync(this.sentry_history_file_path)) {
+      return fs.outputJsonSync(this.sentry_history_file_path, [current_output], { spaces: 2 });
+    }
+
+    const history = await JSON.parse(fs.readFileSync(this.sentry_history_file_path).toString());
+    history.push(current_output);
+    // append to end, pop from top the last min(defined maximum history length, current history length) records
+
+    const maximum_records = ~Math.min(5, history.length) + 1;
+    fs.outputJsonSync(this.sentry_history_file_path, history.slice(maximum_records), { spaces: 2 });
   }
 
 }

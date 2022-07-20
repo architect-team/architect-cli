@@ -8,10 +8,11 @@ import pLimit from 'p-limit';
 import path from 'path';
 import untildify from 'untildify';
 import which from 'which';
-import { ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
+import { ArchitectError, ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
 import { restart } from '../utils/docker';
 import PortUtil from '../utils/port';
+import { DockerComposeProject } from './project';
 import DockerComposeTemplate, { DockerService } from './template';
 
 export class DockerComposeUtils {
@@ -374,21 +375,43 @@ export class DockerComposeUtils {
   }
 
   public static async getLocalEnvironment(config_dir: string, environment_name?: string): Promise<string> {
-    const search_directory = path.join(config_dir, LocalPaths.LOCAL_DEPLOY_PATH);
-    const files = await fs.readdir(path.join(search_directory));
-    const local_enviromments = files.map((file) => file.split('.')[0]);
-    const answers: any = await inquirer.prompt([
+
+    const { stdout } = await DockerComposeUtils.dockerCompose(['ls', '--format', 'json']);
+
+    const projects: DockerComposeProject[] = JSON.parse(stdout);
+
+    const architect_projects = projects.filter((project) => path.resolve(project.ConfigFiles).startsWith(path.resolve(config_dir)));
+
+    if (environment_name) {
+      const project = architect_projects.find(project => project.Name === environment_name);
+      if (!project) {
+        throw new ArchitectError(`There is no active environment named: ${environment_name}`);
+      }
+      return environment_name;
+    }
+
+    if (architect_projects.length === 0) {
+      throw new ArchitectError('There are no active dev environments.');
+    }
+
+    if (architect_projects.length === 1) {
+      return architect_projects[0].Name;
+    }
+
+    const answers = await inquirer.prompt([
       {
-        when: !environment_name,
         type: 'autocomplete',
         name: 'environment',
         message: 'Select a environment',
         source: (_: any, input: string) => {
-          return local_enviromments.filter((e) => !input || e.toLowerCase().indexOf(input.toLowerCase()) >= 0);
+          return architect_projects.map(project => ({
+            name: `${project.Name} ${project.Status}`,
+            value: project.Name,
+          }));
         },
       },
     ]);
-    return environment_name || answers.environment;
+    return answers.environment;
   }
 
   public static async getLocalServiceForEnvironment(compose_file: string, service_name?: string): Promise<{ display_name: string, name: string }> {
