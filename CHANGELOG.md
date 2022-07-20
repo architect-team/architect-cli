@@ -1,3 +1,12 @@
+## [1.19.2](https://github.com/architect-team/architect-cli/compare/v1.19.1...v1.19.2) (2022-07-18)
+
+
+### Bug Fixes
+
+* **build:** Fix bug with buildx context ([#626](https://github.com/architect-team/architect-cli/issues/626)) ([892024c](https://github.com/architect-team/architect-cli/commit/892024c42cb9110d6dd0b75f6c94fe06dcc21b45))
+* **debug:** 453 debug block ([#625](https://github.com/architect-team/architect-cli/issues/625)) ([1e449a7](https://github.com/architect-team/architect-cli/commit/1e449a75bbfa70b6736e3ee626eb16c6cf35ddf0))
+* **interpolation:** Register interpolation validation ([#580](https://github.com/architect-team/architect-cli/issues/580)) ([df1c943](https://github.com/architect-team/architect-cli/commit/df1c9433173da0da3d5b110e572ffb367358d7fd))
+
 ## [1.19.1](https://github.com/architect-team/architect-cli/compare/v1.19.0...v1.19.1) (2022-07-13)
 
 
