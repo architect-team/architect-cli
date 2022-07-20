@@ -21,8 +21,8 @@ jobs:
       - run: npm run build
       - run: rm -r node_modules
       - run: npm ci --omit=dev
-      - run: error=$(./bin/run --version 2>&1 >/dev/null) # Write stderr to env
       - run: | # Check if stderr is not empty and hard error (captures node warnings)
+          error=$(./bin/run --version 2>&1 >/dev/null) # Write stderr to env
           [ ! -z "$error" ] && echo "$error" && exit 1
   lint:
     runs-on: ubuntu-latest
