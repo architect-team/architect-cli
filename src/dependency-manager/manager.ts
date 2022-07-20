@@ -720,6 +720,7 @@ export default abstract class DependencyManager {
       }
 
       if (options.validate) {
+        component_spec.metadata.interpolated = true;
         validateOrRejectSpec(classToPlain(plainToClass(ComponentSpec, component_spec)), component_spec.metadata);
       }
 

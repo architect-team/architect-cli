@@ -314,7 +314,7 @@ services:
 
       const component_object: any = yaml.load(writeFileSync.args[0][1]);
       expect(component_object.services['elasticsearch'].liveness_probe).deep.eq({
-        command: ["/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P example_123 -Q 'SELECT 1' || exit 1"],
+        command: ["/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P example_123 -Q 'SELECT 1'"],
         interval: '10s',
         timeout: '3s',
         failure_threshold: 10,

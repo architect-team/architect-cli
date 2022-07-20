@@ -35,7 +35,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (--version)
-@architect-io/cli/1.19.0 linux-x64 node-v16.16.0
+@architect-io/cli/1.20.0-rc.2 linux-x64 node-v16.16.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -68,6 +68,7 @@ USAGE
 * [`architect deploy [CONFIGS_OR_COMPONENTS]`](#architect-deploy-configs_or_components)
 * [`architect destroy`](#architect-destroy)
 * [`architect dev [CONFIGS_OR_COMPONENTS]`](#architect-dev-configs_or_components)
+* [`architect doctor`](#architect-doctor)
 * [`architect env [QUERY]`](#architect-env-query)
 * [`architect env:create [ENVIRONMENT]`](#architect-envcreate-environment)
 * [`architect env:deregister [ENVIRONMENT]`](#architect-envderegister-environment)
@@ -384,7 +385,7 @@ ALIASES
   $ architect component:search
 ```
 
-_See code: [src/commands/components/index.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/components/index.ts)_
+_See code: [src/commands/components/index.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/components/index.ts)_
 
 ## `architect components:register [COMPONENT]`
 
@@ -481,7 +482,7 @@ ALIASES
   $ architect component:version
 ```
 
-_See code: [src/commands/components/versions.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/components/versions.ts)_
+_See code: [src/commands/components/versions.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/components/versions.ts)_
 
 ## `architect config`
 
@@ -513,7 +514,7 @@ DESCRIPTION
   Get the value of a CLI config option
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/config/get.ts)_
 
 ## `architect config:set OPTION VALUE`
 
@@ -531,7 +532,7 @@ DESCRIPTION
   Set a new value for a CLI configuration option
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/config/set.ts)_
 
 ## `architect config:view`
 
@@ -548,7 +549,7 @@ ALIASES
   $ architect config
 ```
 
-_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/config/view.ts)_
+_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/config/view.ts)_
 
 ## `architect deploy [CONFIGS_OR_COMPONENTS]`
 
@@ -582,7 +583,7 @@ DESCRIPTION
   Create a deploy job on Architect Cloud
 ```
 
-_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/deploy.ts)_
+_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/deploy.ts)_
 
 ## `architect destroy`
 
@@ -603,7 +604,7 @@ DESCRIPTION
   Destroy components from an environment
 ```
 
-_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/destroy.ts)_
+_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/destroy.ts)_
 
 ## `architect dev [CONFIGS_OR_COMPONENTS]`
 
@@ -612,7 +613,7 @@ Run your stack locally
 ```
 USAGE
   $ architect dev [CONFIGS_OR_COMPONENTS] [-a <value>] [-o <value> | -e <value> |  |  | ] [-i <value>]
-    [--secret-file <value>] [-s <value>] [-r] [--browser] [--port <value>] [-d]
+    [--secret-file <value>] [-s <value>] [-r] [--browser] [--port <value>] [-d] [--debug <value>] [--arg <value>]
 
 ARGUMENTS
   CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `account/component:latest`. Multiple components are
@@ -626,7 +627,9 @@ FLAGS
   -o, --compose-file=<value>  Path where the compose file should be written to
   -r, --[no-]recursive        [default: true] Toggle to automatically deploy all dependencies
   -s, --secret=<value>...     [default: ] An individual secret key and value in the form SECRET_KEY=SECRET_VALUE
+  --arg=<value>...            Build arg(s) to pass to docker build
   --[no-]browser              [default: true] Automatically open urls in the browser for local deployments
+  --debug=<value>             [default: true] [default: true] Turn debug mode on (true) or off (false)
   --port=<value>              [default: 80] [default: 80] Port for the gateway
   --secret-file=<value>...    [default: ] Path of secrets file
 
@@ -634,7 +637,24 @@ DESCRIPTION
   Run your stack locally
 ```
 
-_See code: [src/commands/dev.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/dev.ts)_
+_See code: [src/commands/dev.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/dev.ts)_
+
+## `architect doctor`
+
+Get debugging information for troubleshooting
+
+```
+USAGE
+  $ architect doctor
+
+FLAGS
+  -o, --output=<value>  Choose a file to output the debug information to
+
+DESCRIPTION
+  Get debugging information for troubleshooting
+```
+
+_See code: [src/commands/doctor.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/doctor.ts)_
 
 ## `architect env [QUERY]`
 
@@ -874,7 +894,7 @@ ALIASES
   $ architect env:search
 ```
 
-_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/environments/index.ts)_
+_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/environments/index.ts)_
 
 ## `architect environments:create [ENVIRONMENT]`
 
@@ -903,7 +923,7 @@ ALIASES
   $ architect env:create
 ```
 
-_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/environments/create.ts)_
+_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/environments/create.ts)_
 
 ## `architect environments:destroy [ENVIRONMENT]`
 
@@ -932,7 +952,7 @@ ALIASES
   $ architect environment:deregister
 ```
 
-_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/environments/destroy.ts)_
+_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/environments/destroy.ts)_
 
 ## `architect environments:search [QUERY]`
 
@@ -1087,7 +1107,7 @@ DESCRIPTION
   Exec into service instances
 ```
 
-_See code: [src/commands/exec.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/exec.ts)_
+_See code: [src/commands/exec.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/exec.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -1126,7 +1146,7 @@ DESCRIPTION
   Initialize an architect component from an existing docker-compose file
 ```
 
-_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/init.ts)_
 
 ## `architect link [COMPONENTPATH]`
 
@@ -1140,7 +1160,7 @@ DESCRIPTION
   Link a local component to the host to be used to power local deployments.
 ```
 
-_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/link.ts)_
+_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/link.ts)_
 
 ## `architect login`
 
@@ -1158,7 +1178,7 @@ DESCRIPTION
   Login to the Architect Cloud platform
 ```
 
-_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/login.ts)_
 
 ## `architect logout`
 
@@ -1172,7 +1192,7 @@ DESCRIPTION
   Logout from the Architect registry
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/logout.ts)_
 
 ## `architect logs [RESOURCE]`
 
@@ -1201,7 +1221,7 @@ DESCRIPTION
   Get logs from services both locally and remote
 ```
 
-_See code: [src/commands/logs.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/logs.ts)_
+_See code: [src/commands/logs.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/logs.ts)_
 
 ## `architect platform [QUERY]`
 
@@ -1329,7 +1349,7 @@ ALIASES
   $ architect platforms:search
 ```
 
-_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/platforms/index.ts)_
+_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/platforms/index.ts)_
 
 ## `architect platforms:create [PLATFORM]`
 
@@ -1360,7 +1380,7 @@ ALIASES
   $ architect platforms:create
 ```
 
-_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/platforms/create.ts)_
+_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/platforms/create.ts)_
 
 ## `architect platforms:deregister [PLATFORM]`
 
@@ -1412,7 +1432,7 @@ ALIASES
   $ architect platforms:destroy
 ```
 
-_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/platforms/destroy.ts)_
+_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/platforms/destroy.ts)_
 
 ## `architect platforms:register [PLATFORM]`
 
@@ -1496,7 +1516,7 @@ ALIASES
   $ architect comp:register
 ```
 
-_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/register.ts)_
+_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/register.ts)_
 
 ## `architect secrets SECRETS_FILE`
 
@@ -1567,7 +1587,7 @@ ALIASES
   $ architect secrets/get
 ```
 
-_See code: [src/commands/secrets/download.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/secrets/download.ts)_
+_See code: [src/commands/secrets/download.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/secrets/download.ts)_
 
 ## `architect secrets:set SECRETS_FILE`
 
@@ -1615,7 +1635,7 @@ ALIASES
   $ architect secrets:set
 ```
 
-_See code: [src/commands/secrets/upload.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/secrets/upload.ts)_
+_See code: [src/commands/secrets/upload.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/secrets/upload.ts)_
 
 ## `architect task COMPONENT TASK`
 
@@ -1642,7 +1662,7 @@ ALIASES
   $ architect task:exec
 ```
 
-_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/task.ts)_
+_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/task.ts)_
 
 ## `architect task:exec COMPONENT TASK`
 
@@ -1684,7 +1704,7 @@ DESCRIPTION
   Unlink a component from the host by path or name
 ```
 
-_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/unlink.ts)_
+_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/unlink.ts)_
 
 ## `architect validate [CONFIGS_OR_COMPONENTS]`
 
@@ -1709,7 +1729,7 @@ ALIASES
   $ architect validate
 ```
 
-_See code: [src/commands/validate.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/validate.ts)_
+_See code: [src/commands/validate.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/validate.ts)_
 
 ## `architect whoami`
 
@@ -1726,5 +1746,5 @@ ALIASES
   $ architect whoami
 ```
 
-_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v1.19.0/src/commands/whoami.ts)_
+_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v1.20.0-rc.2/src/commands/whoami.ts)_
 <!-- commandsstop -->

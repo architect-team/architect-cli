@@ -66,12 +66,19 @@ services:
       main:
         host: ${{ secrets.api_host }}
         port: 8080
+    liveness_probe:
+      command: curl --fail localhost:${{ services.api.interfaces.main.port }}/names
+      interval: 10s
+      failure_threshold: 3
     environment:
       PORT: ${{ services.api.interfaces.main.port }}
       DB_USE_SSL: ${{ secrets.db_use_ssl }}
       DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ secrets.api_db_name }}
-    ${{ if architect.environment == 'local' }}:
+    debug:
       command: npm run start:dev
+      build:
+        args:
+          NODE_ENV: development
       volumes:
         src:
           mount_path: /usr/src/app/src
@@ -86,15 +93,21 @@ services:
         NODE_ENV: production
     interfaces:
       main: &app-port 8080
+    liveness_probe:
+      command: curl --fail localhost:8080/api/names
+      interval: 10s
+      failure_threshold: 3
     replicas: ${{ secrets.app_replicas }}
     environment:
       PORT: *app-port
       API_ADDR: ${{ services.api.interfaces.main.url }}
       WORLD_TEXT: ${{ secrets.world_text }}
-    ${{ if architect.environment == 'local' }}:
+    debug:
       build:
         dockerfile: Dockerfile.dev
         context: ./frontend
+        args:
+          NODE_ENV: development
       volumes:
         src:
           mount_path: /usr/src/app/src
