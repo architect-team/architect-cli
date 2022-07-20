@@ -8,6 +8,7 @@ export enum ENVIRONMENT {
   PRODUCTION = 'production',
   DEV = 'dev',
   LOCAL = 'local',
+  PREVIEW = 'preview',
 }
 
 export default class AppConfig {
