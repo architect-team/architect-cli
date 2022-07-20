@@ -23,10 +23,13 @@ const GITHUB_BRANCH = 'main';
 export default class ProjectUtils {
 
   private static getRootComponent(selections: Dictionary<Selection>): string {
+    console.log(selections);
     if (selections.frontend) {
       return selections.frontend.name.toLowerCase();
+    } else if (selections.backend) {
+      return selections.backend.name.toLowerCase();
     }
-    return selections.backend.name.toLowerCase();
+    return '';
   }
 
   static linkSelections(app: AppService, selections: Dictionary<Selection>, project_name: string): void {
