@@ -11,7 +11,7 @@ const git = [
       "README.md",
       "package.json",
       "package-lock.json",
-      "docs/5-reference/2-architect-yml.md",
+      "architect-yml.md",
       "src/dependency-manager/schema/architect.schema.json",
     ]
   }
