@@ -9,68 +9,64 @@ env:
   NPM_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
 
 jobs:
+  build_run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - run: rm -r node_modules
+      - run: npm ci --omit=dev
+      - run: ./bin/run --version
+      - run: | # Check if stderr is not empty and hard error (captures node warnings)
+          error=$(./bin/run --version 2>&1 >/dev/null)
+          [ ! -z "$error" ] && echo "$error" && exit 1 || echo "No error"
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Get npm cache directory
-        id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
-      - uses: actions/cache@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          path: ${{ steps.npm-cache.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '14'
+          node-version: '16'
+          cache: 'npm'
       - run: npm ci
       - run: npm run lint
       - run: npm run check-circular
   test:
     strategy:
       matrix:
-        node-version: [12.x, 14.x, 16.x]
+        node-version: [14.x, 16.x, 18.x]
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
-      - name: Get npm cache directory
-        if: runner.os != 'Windows'
-        id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
-      - uses: actions/cache@v2
-        if: runner.os != 'Windows' # Must be a bug on windows because its doing more harm than good. Try to cache/load almost a GB.
-        with:
-          path: ${{ steps.npm-cache.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+          cache: 'npm'
       - run: npm ci
-      - run: npm run build
       - run: npm test
   publish_cli:
     name: Publish CLI
     if: github.ref_name == 'main' || github.ref_name == 'rc' || startsWith(github.ref_name, 'arc-')
-    needs: [lint, test]
+    needs: [build_run, lint, test]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           clean: true
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: '16'
-      - run: npm install
+          cache: 'npm'
+      - run: npm ci
       - run: npm run build
       - run: npm run readme
       - run: npm run generate:schema-docs
