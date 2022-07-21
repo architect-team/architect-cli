@@ -1,5 +1,4 @@
 import { Flags } from '@oclif/core';
-import execa from 'execa';
 import inquirer from 'inquirer';
 import stream from 'stream';
 import stringArgv from 'string-argv';
