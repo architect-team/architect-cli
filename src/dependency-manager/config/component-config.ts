@@ -1,5 +1,5 @@
 import { ComponentInstanceMetadata, ComponentSpec } from '../spec/component-spec';
-import { ComponentSlugUtils, ParsedResourceSlug, ResourceSlugUtils, ResourceType, Slugs } from '../spec/utils/slugs';
+import { ComponentSlugUtils, ParsedResourceSlug, ResourceSlugUtils, ResourceType } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
 import { ServiceConfig } from './service-config';
@@ -71,37 +71,7 @@ export interface ComponentConfig {
   artifact_image?: string;
 }
 
-export const ecsResourceRefToNodeRef = (resource_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
-  let parsed;
-  try {
-    parsed = ResourceSlugUtils.parse(resource_ref);
-  } catch {
-    parsed = ComponentSlugUtils.parse(resource_ref);
-  }
-  if (!instance_id) {
-    instance_id = ComponentSlugUtils.build(parsed.component_account_name, parsed.component_name, parsed.instance_name);
-  }
-
-  let friendly_name = `${parsed.component_name}`;
-  if ((parsed as ParsedResourceSlug).resource_name) {
-    friendly_name += `-${(parsed as ParsedResourceSlug).resource_name}`;
-  }
-  if (parsed.instance_name) {
-    friendly_name += `-${parsed.instance_name}`;
-  }
-
-  if (instance_id) {
-    resource_ref = `${resource_ref}${Slugs.INSTANCE_DELIMITER}${instance_id}`;
-  }
-
-  return Refs.safeRef(friendly_name, resource_ref, max_length);
-};
-
-export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH, ecs = false): string => {
-  if (ecs) {
-    return ecsResourceRefToNodeRef(resource_ref, instance_id, max_length);
-  }
-
+export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
   let parsed;
   try {
     parsed = ResourceSlugUtils.parse(resource_ref);
@@ -149,10 +119,10 @@ export const buildNodeRef = (component_config: ComponentConfig, resource_type: R
   const component_ref = component_config.metadata.ref;
   const parsed = ComponentSlugUtils.parse(component_ref);
   const service_ref = ResourceSlugUtils.build(parsed.component_account_name, parsed.component_name, resource_type, resource_name, component_config.metadata?.instance_name);
-  return resourceRefToNodeRef(service_ref, component_config.metadata?.instance_id, max_length, !!component_config.metadata.proxy_port_mapping);
+  return resourceRefToNodeRef(service_ref, component_config.metadata?.instance_id, max_length);
 };
 
 export function buildInterfacesRef(component_config: ComponentSpec | ComponentConfig): string {
   const component_ref = component_config.metadata.ref;
-  return resourceRefToNodeRef(component_ref, component_config.metadata?.instance_id, Refs.DEFAULT_MAX_LENGTH, !!component_config.metadata.proxy_port_mapping);
+  return resourceRefToNodeRef(component_ref, component_config.metadata?.instance_id, Refs.DEFAULT_MAX_LENGTH);
 }
