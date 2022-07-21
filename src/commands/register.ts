@@ -144,6 +144,9 @@ export default class ComponentRegister extends BaseCommand {
         };
 
         if (flags['cache-directory']) {
+          if (process.env.GITHUB_ACTIONS) {
+            this.warn(`--cache-directory is not advised in Github Actions. See how to configure caching for Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs`);
+          }
           // Cache directory needs to be unique per dockerfile: https://github.com/docker/build-push-action/issues/252#issuecomment-744412763
           const cache_dir = path.join(flags['cache-directory'], hash(service.build));
 
@@ -157,10 +160,14 @@ export default class ComponentRegister extends BaseCommand {
           }
           seen_cache_dir.add(cache_dir);
         } else if (process.env.GITHUB_ACTIONS && !process.env.ARC_NO_CACHE) {
-          const scope = `${service_name}--${tag}`;
-          this.log(`CACHE: Setting up github action caching for scope: ${scope}`);
-          service.build['x-bake']['cache-from'] = `type=gha,scope=${scope}`;
-          service.build['x-bake']['cache-to'] = `type=gha,scope=${scope},mode=max`;
+          if (process.env.ACTIONS_CACHE_URL && process.env.ACTIONS_RUNTIME_TOKEN) {
+            const scope = service_name;
+            this.log(`Setting up github action caching for scope: ${scope}. To disable set env ARC_NO_CACHE=1.`);
+            service.build['x-bake']['cache-from'] = `type=gha,scope=${scope}`;
+            service.build['x-bake']['cache-to'] = `type=gha,scope=${scope},mode=max`;
+          } else {
+            this.warn(`Caching not configured. See how to configure caching for Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs`);
+          }
         }
 
         compose.services[service_name] = {
