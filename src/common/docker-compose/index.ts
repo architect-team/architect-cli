@@ -349,7 +349,7 @@ export class DockerComposeUtils {
     }
   }
 
-  public static dockerCompose(args: string[], execa_opts?: Options, use_console = false, on_end?: (cmd: execa.ExecaChildProcess<string>) => void): execa.ExecaChildProcess<string> {
+  public static dockerCompose(args: string[], execa_opts?: Options, use_console = false): execa.ExecaChildProcess<string> {
     this.dockerCommandCheck();
     if (use_console) {
       process.stdin.setRawMode(true);
@@ -357,11 +357,7 @@ export class DockerComposeUtils {
     const cmd = execa('docker', ['compose', ...args], execa_opts);
     if (use_console) {
       cmd.on('exit', () => {
-        if (on_end) {
-          on_end(cmd);
-        } else {
-          process.exit();
-        }
+        process.exit(cmd.exitCode || 0);
       });
     }
     return cmd;

@@ -235,14 +235,7 @@ export default class Exec extends BaseCommand {
       compose_args.push(arg);
     }
 
-    await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' }, true, (cmd: execa.ExecaChildProcess<string>) => {
-      try {
-        this.exit(cmd.exitCode || 0);
-      } catch (_) {
-        // Oclif exit always throws an error for some reason
-        // This is not necessary since the error is not helpful
-      }
-    });
+    await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' }, true);
   }
 
   async run(): Promise<void> {
