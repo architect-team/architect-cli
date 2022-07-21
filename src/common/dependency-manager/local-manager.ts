@@ -14,7 +14,6 @@ export interface ComponentConfigOpts {
 export default class LocalDependencyManager extends DependencyManager {
   api: AxiosInstance;
   linked_components: Dictionary<string>;
-  use_sidecar = false;
   environment = 'local';
   now = new Date();
 
@@ -26,7 +25,7 @@ export default class LocalDependencyManager extends DependencyManager {
     this.linked_components = linked_components;
   }
 
-  async loadComponentSpec(component_string: string, options?: ComponentConfigOpts): Promise<ComponentSpec> {
+  async loadComponentSpec(component_string: string, options?: ComponentConfigOpts, debug?: boolean): Promise<ComponentSpec> {
     const merged_options = {
       ...{
         map_all_interfaces: false,
@@ -49,10 +48,6 @@ export default class LocalDependencyManager extends DependencyManager {
       instance_id: options?.instance_id || component_ref,
       instance_date: this.now,
     };
-
-    if (this.use_sidecar) {
-      metadata.proxy_port_mapping = {};
-    }
 
     const account_name = component_account_name || this.account;
     const linked_component_key = component_ref in this.linked_components ? component_ref : ComponentSlugUtils.build(account_name, component_name);
@@ -106,8 +101,7 @@ export default class LocalDependencyManager extends DependencyManager {
     const interfaces_spec = generateIngressesOverrideSpec(spec, ingresses);
     spec = overrideSpec(spec, interfaces_spec);
 
-    // Deprecated: Use if statements instead of debug block
-    if (spec.metadata.file?.path && this.environment === 'local') {
+    if (spec.metadata.file?.path && debug) {
       const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
 
       if (spec.services) {

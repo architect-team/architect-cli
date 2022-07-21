@@ -156,7 +156,7 @@ export default class PlatformCreate extends BaseCommand {
 
     switch (selected_type) {
       case 'kubernetes':
-        return await KubernetesPlatformUtils.configureKubernetesPlatform(flags);
+        return await KubernetesPlatformUtils.configureKubernetesPlatform(flags, this.app.config.environment);
       case 'architect':
         throw new Error(`You cannot create an Architect platform from the CLI. One Architect platform is registered by default per account.`);
       default:

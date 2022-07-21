@@ -3,10 +3,10 @@ import axios from 'axios';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import path from 'path';
+import { resourceRefToNodeRef, ServiceNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
-import { ecsResourceRefToNodeRef, resourceRefToNodeRef, ServiceNode } from '../../src';
 
 describe('external spec v1', () => {
 
@@ -380,9 +380,9 @@ describe('external spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'architect/component': '/stack/component/architect.yml'
     });
-    manager.use_sidecar = true;
 
-    const core_ref = ecsResourceRefToNodeRef('architect/component.services.core')
+    const core_ref = resourceRefToNodeRef('architect/component.services.core')
+    const db_ref = resourceRefToNodeRef('architect/component.services.db')
 
     // No host override
     const graph = await manager.getGraph([
@@ -390,8 +390,8 @@ describe('external spec v1', () => {
     ], { '*': { MYSQL_DATABASE: 'test' } });
     const test_node = graph.getNodeByRef(core_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
-      MYSQL_DB_URL: `jdbc:mysql://127.0.0.1:12345/test?serverTimezone=UTC`,
-      MYSQL_DB_URL2: `jdbc:mysql://127.0.0.1:12345/test?serverTimezone=UTC`,
+      MYSQL_DB_URL: `jdbc:mysql://${db_ref}:3306/test?serverTimezone=UTC`,
+      MYSQL_DB_URL2: `jdbc:mysql://${db_ref}:3306/test?serverTimezone=UTC`,
     });
 
     // Host override
@@ -433,9 +433,8 @@ describe('external spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'architect/component': '/stack/component/architect.yml'
     });
-    manager.use_sidecar = true;
 
-    const core_ref = ecsResourceRefToNodeRef('architect/component.services.core')
+    const core_ref = resourceRefToNodeRef('architect/component.services.core')
 
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('architect/component:latest')

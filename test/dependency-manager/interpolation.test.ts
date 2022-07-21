@@ -3,7 +3,7 @@ import axios from 'axios';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import path from 'path';
-import { buildInterfacesRef, ComponentNode, ecsResourceRefToNodeRef, IngressEdge, OutputEdge, resourceRefToNodeRef, ServiceNode } from '../../src';
+import { buildInterfacesRef, ComponentNode, IngressEdge, OutputEdge, resourceRefToNodeRef, ServiceNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
@@ -1572,78 +1572,6 @@ describe('interpolation spec v1', () => {
     ])
   });
 
-  it('interpolating service port returns a different value based on context for sidecars', async () => {
-    const config = `
-    name: examples/test
-
-    secrets:
-      api_port: 8080
-
-    interfaces:
-      api: \${{ services.api.interfaces.main.url }}
-
-    services:
-      app:
-        environment:
-          API_PORT: \${{ services.api.interfaces.main.port }}
-          API_ADDR: \${{ services.api.interfaces.main.url }}
-      api:
-        interfaces:
-          main: \${{ secrets.api_port }}
-        environment:
-          MY_PORT: \${{ services.api.interfaces.main.port }}
-          MY_ADDR: \${{ services.api.interfaces.main.url }}
-    `
-
-    const upstream_config = `
-    name: examples/upstream
-
-    dependencies:
-      examples/test: latest
-
-    services:
-      app:
-        environment:
-          API_PORT: \${{ dependencies.examples/test.interfaces.api.port }}
-          API_ADDR: \${{ dependencies.examples/test.interfaces.api.url }}
-    `
-
-    mock_fs({
-      '/stack/architect.yml': config,
-      '/stack/upstream/architect.yml': upstream_config,
-    });
-
-    const manager = new LocalDependencyManager(axios.create(), {
-      'examples/test': '/stack/architect.yml',
-      'examples/upstream': '/stack/upstream/architect.yml'
-    });
-    manager.use_sidecar = true;
-    const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/upstream')
-    );
-
-    const app_ref = ecsResourceRefToNodeRef('examples/test.services.app');
-    const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
-    expect(app_node.config.environment).to.deep.eq({
-      API_PORT: '12345',
-      API_ADDR: 'http://127.0.0.1:12345'
-    })
-
-    const api_ref = ecsResourceRefToNodeRef('examples/test.services.api');
-    const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(api_node.config.environment).to.deep.eq({
-      MY_PORT: '8080',
-      MY_ADDR: 'http://127.0.0.1:8080'
-    })
-
-    const upstream_ref = ecsResourceRefToNodeRef('examples/upstream.services.app');
-    const upstream_node = graph.getNodeByRef(upstream_ref) as ServiceNode;
-    expect(upstream_node.config.environment).to.deep.eq({
-      API_PORT: '12345',
-      API_ADDR: 'http://127.0.0.1:12345'
-    })
-  });
-
   it('All edges are still found if a double dash exists later in the service config', async () => {
     const config = `
     name: examples/test
@@ -1660,7 +1588,7 @@ describe('interpolation spec v1', () => {
           API_PORT: \${{ services.api.interfaces.main.port }}
           API_ADDR: \${{ services.api.interfaces.main.url }}
         liveness_probe:
-          command: curl --fail localhost:3000/users || exit 1
+          command: curl --fail localhost:3000/users
           interval: 30s
           failure_threshold: 3
       api:

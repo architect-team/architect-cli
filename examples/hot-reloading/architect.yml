@@ -11,10 +11,15 @@ services:
   api:
     build:
       context: ./
+      args:
+        NODE_ENV: production
     interfaces:
       main: 8080
-    ${{ if architect.environment == 'local' }}:
+    debug:
       command: npm run dev
+      build:
+        args:
+          NODE_ENV: development
       volumes:
         src:
           description: Mount the src dir when running locally so code changes can be detected

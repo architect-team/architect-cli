@@ -21,6 +21,10 @@ export default abstract class BaseCommand extends Command {
     return true;
   }
 
+  async disable_sentry_recording(): Promise<boolean> {
+    return false;
+  }
+
   static flags = {};
 
   checkFlagDeprecations(flags: any, flag_definitions: any): void {
@@ -177,7 +181,7 @@ export default abstract class BaseCommand extends Command {
       this.warn('Failed to get command metadata');
     }
 
-    await this.sentry.endSentryTransaction(err);
+    await this.sentry.endSentryTransaction(!(await this.disable_sentry_recording()), err);
 
     if (!err) {
       return await super.finally(err);
