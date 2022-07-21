@@ -157,8 +157,8 @@ export default class ComponentRegister extends BaseCommand {
           }
           seen_cache_dir.add(cache_dir);
         } else if (process.env.GITHUB_ACTIONS && !process.env.ARC_NO_CACHE) {
-          const scope = service_name;
-          this.log(`Setting up github action caching for scope: ${scope}`);
+          const scope = `${service_name}--${tag}`;
+          this.log(`CACHE: Setting up github action caching for scope: ${scope}`);
           service.build['x-bake']['cache-from'] = `type=gha,scope=${scope}`;
           service.build['x-bake']['cache-to'] = `type=gha,scope=${scope},mode=max`;
         }
