@@ -8,7 +8,6 @@ import untildify from 'untildify';
 import { ArchitectError } from '../../';
 import AppConfig from '../../app-config/config';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
-import { KubernetesPlatformUtils } from './kubernetes-platform.utils';
 
 const SERVICE_ACCOUNT_NAME = 'architect-agent';
 
@@ -118,7 +117,7 @@ export class AgentPlatformUtils {
 
     if (!use_existing_sa) {
       CliUx.ux.action.start('Creating the service account');
-      await KubernetesPlatformUtils.createKubernetesServiceAccount(untildify(kubeconfig_path), SERVICE_ACCOUNT_NAME);
+      await AgentPlatformUtils.createKubernetesServiceAccount(untildify(kubeconfig_path), SERVICE_ACCOUNT_NAME);
       const secret_yml = `
 apiVersion: v1
 kind: Secret
