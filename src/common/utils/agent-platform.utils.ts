@@ -120,7 +120,6 @@ export class AgentPlatformUtils {
     if (!use_existing_sa) {
       CliUx.ux.action.start('Creating the service account');
       await KubernetesPlatformUtils.createKubernetesServiceAccount(untildify(kubeconfig_path), config_env);
-      CliUx.ux.action.stop();
       const secret_yml = `
 apiVersion: v1
 kind: Secret
