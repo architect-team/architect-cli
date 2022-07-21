@@ -6,7 +6,7 @@ import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
 import { ArchitectError } from '../../';
-import AppConfig from '../../app-config/config';
+import AppConfig, { ENVIRONMENT } from '../../app-config/config';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 import { KubernetesPlatformUtils } from './kubernetes-platform.utils';
 
@@ -15,8 +15,9 @@ const SERVICE_ACCOUNT_NAME = 'architect-agent';
 export class AgentPlatformUtils {
 
   public static async configureAgentPlatform(
-    flags: any,
+    flags: any, environment: string = ENVIRONMENT.PRODUCTION
   ): Promise<CreatePlatformInput> {
+    const config_env = KubernetesPlatformUtils.getConfigEnv(environment);
     let kubeconfig: any;
     const kubeconfig_path = untildify(flags.kubeconfig);
     try {
@@ -118,7 +119,8 @@ export class AgentPlatformUtils {
 
     if (!use_existing_sa) {
       CliUx.ux.action.start('Creating the service account');
-      await KubernetesPlatformUtils.createKubernetesServiceAccount(untildify(kubeconfig_path), SERVICE_ACCOUNT_NAME);
+      await KubernetesPlatformUtils.createKubernetesServiceAccount(untildify(kubeconfig_path), config_env);
+      CliUx.ux.action.stop();
       const secret_yml = `
 apiVersion: v1
 kind: Secret
@@ -131,7 +133,7 @@ type: kubernetes.io/service-account-token
       await execa('kubectl', [
         ...set_kubeconfig,
         'apply', '-f', '-',
-      ], { input: secret_yml });
+      ], { input: secret_yml, env: config_env });
       CliUx.ux.action.stop();
     }
 
@@ -233,28 +235,6 @@ spec:
     await execa('kubectl', [
       ...set_kubeconfig,
       'apply', '-f', yamlFile,
-    ]);
-  }
-
-  public static async createKubernetesServiceAccount(kubeconfig_path: string, sa_name: string): Promise<void> {
-    const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', 'default'];
-
-    // Create the service account
-    await execa('kubectl', [
-      ...set_kubeconfig,
-      'create', 'sa', sa_name,
-    ]);
-
-    // Bind the service account to the cluster-admin role
-    await execa('kubectl', [
-      ...set_kubeconfig,
-      'create',
-      'clusterrolebinding',
-      `${sa_name}-cluster-admin`,
-      '--clusterrole',
-      'cluster-admin',
-      '--serviceaccount',
-      `default:${sa_name}`,
     ]);
   }
 }

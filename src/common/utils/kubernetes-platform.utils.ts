@@ -16,15 +16,19 @@ const SERVICE_ACCOUNT_SECRET_NAME = `${SERVICE_ACCOUNT_NAME}-token`;
 
 export class KubernetesPlatformUtils {
 
-  public static async configureKubernetesPlatform(
-    flags: any, environment: string = ENVIRONMENT.PRODUCTION
-  ): Promise<CreatePlatformInput> {
+  public static getConfigEnv(environment: string) {
     const default_config_directory = path.join(os.homedir(), '.config');
-    const config_env = {
+    return {
       XDG_CONFIG_HOME: environment === ENVIRONMENT.PRODUCTION
         ? process.env.XDG_CONFIG_HOME || default_config_directory
         : default_config_directory,
       };
+  }
+
+  public static async configureKubernetesPlatform(
+    flags: any, environment: string = ENVIRONMENT.PRODUCTION
+  ): Promise<CreatePlatformInput> {
+    const config_env = KubernetesPlatformUtils.getConfigEnv(environment);
 
     let kubeconfig: any;
     const kubeconfig_path = untildify(flags.kubeconfig);
@@ -143,23 +147,7 @@ export class KubernetesPlatformUtils {
 
     if (!use_existing_sa) {
       CliUx.ux.action.start('Creating the service account');
-      // Create the service account
-      await execa('kubectl', [
-        ...set_kubeconfig,
-        'create', 'sa', SERVICE_ACCOUNT_NAME,
-      ], { env: config_env });
-
-      // Bind the service account to the cluster-admin role
-      await execa('kubectl', [
-        ...set_kubeconfig,
-        'create',
-        'clusterrolebinding',
-        `${SERVICE_ACCOUNT_NAME}-cluster-admin`,
-        '--clusterrole',
-        'cluster-admin',
-        '--serviceaccount',
-        `default:${SERVICE_ACCOUNT_NAME}`,
-      ], { env: config_env });
+      KubernetesPlatformUtils.createKubernetesServiceAccount(untildify(kubeconfig_path), config_env);
       CliUx.ux.action.stop();
     }
 
@@ -231,5 +219,27 @@ type: kubernetes.io/service-account-token
         cluster_ca_cert,
       },
     };
+  }
+
+  public static async createKubernetesServiceAccount(kubeconfig_path: string, config_env: { XDG_CONFIG_HOME: string } ): Promise<void> {
+    const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', 'default'];
+
+    /// Create the service account
+    await execa('kubectl', [
+      ...set_kubeconfig,
+      'create', 'sa', SERVICE_ACCOUNT_NAME,
+    ], { env: config_env });
+
+    // Bind the service account to the cluster-admin role
+    await execa('kubectl', [
+      ...set_kubeconfig,
+      'create',
+      'clusterrolebinding',
+      `${SERVICE_ACCOUNT_NAME}-cluster-admin`,
+      '--clusterrole',
+      'cluster-admin',
+      '--serviceaccount',
+      `default:${SERVICE_ACCOUNT_NAME}`,
+    ], { env: config_env });
   }
 }
