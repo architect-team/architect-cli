@@ -14,7 +14,6 @@ export interface ComponentConfigOpts {
 export default class LocalDependencyManager extends DependencyManager {
   api: AxiosInstance;
   linked_components: Dictionary<string>;
-  use_sidecar = false;
   environment = 'local';
   now = new Date();
 
@@ -49,10 +48,6 @@ export default class LocalDependencyManager extends DependencyManager {
       instance_id: options?.instance_id || component_ref,
       instance_date: this.now,
     };
-
-    if (this.use_sidecar) {
-      metadata.proxy_port_mapping = {};
-    }
 
     const account_name = component_account_name || this.account;
     const linked_component_key = component_ref in this.linked_components ? component_ref : ComponentSlugUtils.build(account_name, component_name);

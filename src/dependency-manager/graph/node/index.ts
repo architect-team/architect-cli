@@ -20,8 +20,6 @@ export abstract class DependencyNode implements DependencyNodeOptions {
 
   deployment_id?: string;
 
-  proxy_port_mapping?: Dictionary<number>;
-
   get is_external(): boolean {
     return false;
   }
