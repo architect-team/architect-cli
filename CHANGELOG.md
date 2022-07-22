@@ -1,3 +1,15 @@
+# [1.21.0](https://github.com/architect-team/architect-cli/compare/v1.20.1...v1.21.0) (2022-07-21)
+
+
+### Bug Fixes
+
+* **build:** Add github action to test build/run of cli ([#632](https://github.com/architect-team/architect-cli/issues/632)) ([936c905](https://github.com/architect-team/architect-cli/commit/936c90560fc41aeae71ddab7f18ad5cc05dd92d8))
+
+
+### Features
+
+* **register:** Add support for gha caching ([9ef4063](https://github.com/architect-team/architect-cli/commit/9ef4063f4a86fb6d9beb731a2350d6784d80394a))
+
 ## [1.20.1](https://github.com/architect-team/architect-cli/compare/v1.20.0...v1.20.1) (2022-07-20)
 
 
