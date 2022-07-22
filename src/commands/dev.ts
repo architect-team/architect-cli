@@ -407,7 +407,7 @@ export default class Dev extends BaseCommand {
       const component_config = await dependency_manager.loadComponentSpec(component_version, component_options, debug);
 
       if (flags.recursive) {
-        const dependency_configs = await dependency_manager.loadComponentSpecs(component_config.metadata.ref);
+        const dependency_configs = await dependency_manager.loadComponentSpecs(component_config.metadata.ref, debug);
         component_specs.push(...dependency_configs);
       } else {
         component_specs.push(component_config);

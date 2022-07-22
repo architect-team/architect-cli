@@ -127,7 +127,7 @@ export default class LocalDependencyManager extends DependencyManager {
     return spec;
   }
 
-  async loadComponentSpecs(root_component_ref: string): Promise<ComponentSpec[]> {
+  async loadComponentSpecs(root_component_ref: string, debug = false): Promise<ComponentSpec[]> {
     const component_specs = [];
 
     const seen_component_refs = new Set();
@@ -142,7 +142,7 @@ export default class LocalDependencyManager extends DependencyManager {
       }
       seen_component_refs.add(component_ref);
 
-      const component_spec = await this.loadComponentSpec(component_ref);
+      const component_spec = await this.loadComponentSpec(component_ref, undefined, debug);
       component_specs.push(component_spec);
 
       for (const [dep_name, dep_tag] of Object.entries(component_spec.dependencies || {})) {

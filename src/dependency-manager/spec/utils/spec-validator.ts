@@ -239,6 +239,7 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
             path: `services.${service_name}.volumes.${volume_name}.host_path`,
             message: `services.${service_name}.volumes.${volume_name}.host_path cannot be defined outside of a debug block. https://docs.architect.io/components/local-configuration/#when-is-the-debug-block-used`,
             value: volume_spec.host_path,
+            invalid_key: true,
           });
           errors.push(error);
         }
