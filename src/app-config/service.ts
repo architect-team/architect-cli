@@ -63,9 +63,12 @@ export default class AppService {
 
   private loadLinkedComponents(config_dir: string) {
     const linkedComponentsFile = path.join(config_dir, LocalPaths.LINKED_COMPONENT_MAP_FILENAME);
-    if (fs.existsSync(linkedComponentsFile)) {
+    if (!fs.existsSync(linkedComponentsFile)) {
+      return {};
+    }
+    try {
       return fs.readJSONSync(linkedComponentsFile) as Dictionary<string>;
-    } else {
+    } catch {
       return {};
     }
   }
