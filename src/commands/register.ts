@@ -10,6 +10,7 @@ import tmp from 'tmp';
 import untildify from 'untildify';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, validateInterpolation } from '../';
 import AccountUtils from '../architect/account/account.utils';
+import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
@@ -56,6 +57,13 @@ export default class ComponentRegister extends BaseCommand {
         description: 'Directory to write build cache to. Do not use in Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs',
       }),
     },
+    environment: {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'e',
+        description: 'The name of an environment to register the component version to. If specified, the component version will be removed when the environment is removed',
+      }),
+    },
   };
 
   static args = [{
@@ -78,7 +86,7 @@ export default class ComponentRegister extends BaseCommand {
     await this.registerComponent(config_path, flags.tag);
   }
 
-  public async registerComponent(config_path: string, tag: string) {
+  private async registerComponent(config_path: string, tag: string) {
     const { flags } = await this.parse(ComponentRegister);
     console.time('Time');
 
@@ -93,6 +101,10 @@ export default class ComponentRegister extends BaseCommand {
 
     const { component_account_name, component_name } = ComponentSlugUtils.parse(component_spec.name);
     const selected_account = await AccountUtils.getAccount(this.app, component_account_name || flags.account);
+
+    if (flags.environment) { // will throw an error if a user specifies an environment that doesn't exist
+      await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);
+    }
 
     const dependency_manager = new LocalDependencyManager(this.app.api);
     dependency_manager.environment = 'production';
@@ -248,6 +260,7 @@ export default class ComponentRegister extends BaseCommand {
     delete config.metadata;
     const component_dto = {
       tag,
+      environment_name: flags.environment,
       config,
     };
 

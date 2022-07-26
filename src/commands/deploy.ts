@@ -13,6 +13,7 @@ import Dev from "./dev";
 import ComponentRegister from './register';
 
 export abstract class DeployCommand extends BaseCommand {
+  EPHEMERAL_DELIMITER = 'architect-ephemeral';
 
   static flags = {
     ...BaseCommand.flags,
@@ -241,7 +242,7 @@ export default class Deploy extends DeployCommand {
         component_names.push(component);
       } else {
         // TODO: catch if path/location isn't found?
-        const register = new ComponentRegister([component, '-a', account.name], this.config);
+        const register = new ComponentRegister([component, '-a', account.name, '-e', environment.name, '-t', `${this.EPHEMERAL_DELIMITER}-${environment.name}`], this.config);
         register.app = this.app;
         await register.run();
         const component_spec = buildSpecFromPath(component);
