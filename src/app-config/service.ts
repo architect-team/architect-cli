@@ -69,6 +69,7 @@ export default class AppService {
     try {
       return fs.readJSONSync(linkedComponentsFile) as Dictionary<string>;
     } catch {
+      console.warn('Failed to read linked components file.');
       return {};
     }
   }
