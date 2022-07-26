@@ -242,11 +242,12 @@ export default class Deploy extends DeployCommand {
         component_names.push(component);
       } else {
         // TODO: catch if path/location isn't found?
-        const register = new ComponentRegister([component, '-a', account.name, '-e', environment.name, '-t', `${this.EPHEMERAL_DELIMITER}-${environment.name}`], this.config);
+        const tag = `${this.EPHEMERAL_DELIMITER}-${environment.name}`;
+        const register = new ComponentRegister([component, '-a', account.name, '-e', environment.name, '-t', tag], this.config);
         register.app = this.app;
         await register.run();
         const component_spec = buildSpecFromPath(component);
-        component_names.push(component_spec.name);
+        component_names.push(`${account.name}/${component_spec.name}:${tag}`);
       }
     }
 
