@@ -7,7 +7,10 @@ import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import BaseCommand from '../base-command';
 import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../common/errors/pipeline-errors';
 import DeployUtils from '../common/utils/deploy.utils';
+import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-builder';
+import { ComponentSlugUtils } from '../dependency-manager/spec/utils/slugs';
 import Dev from "./dev";
+import ComponentRegister from './register';
 
 export abstract class DeployCommand extends BaseCommand {
 
@@ -232,8 +235,22 @@ export default class Deploy extends DeployCommand {
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
-    const deployment_dtos = [];
+    const component_names: string[] = [];
     for (const component of components) {
+      if (ComponentSlugUtils.Validator.test(component)) {
+        component_names.push(component);
+      } else {
+        // TODO: catch if path/location isn't found?
+        const register = new ComponentRegister([component, '-a', account.name], this.config);
+        register.app = this.app;
+        await register.run();
+        const component_spec = buildSpecFromPath(component);
+        component_names.push(component_spec.name);
+      }
+    }
+
+    const deployment_dtos = [];
+    for (const component of component_names) {
       const deploy_dto = {
         component: component,
         interfaces: interfaces_map,
