@@ -63,7 +63,7 @@ export default class ComponentRegister extends BaseCommand {
         char: 'e',
         description: 'The name of an environment to register the component version to. If specified, the component version will be removed when the environment is removed',
       }),
-    }
+    },
   };
 
   static args = [{
