@@ -341,7 +341,7 @@ export default abstract class DependencyManager {
       if (!component_spec.metadata) {
         throw new Error(`Metadata has not been set on component`);
       }
-      const dep_component = this.findClosestComponent(dep_components, component_spec.metadata.instance_date || new Date());
+      const dep_component = this.findClosestComponent(dep_components, component_spec.metadata.instance_date);
       if (!dep_component) {
         continue;
       }
@@ -398,27 +398,6 @@ export default abstract class DependencyManager {
         throw new Error(`A service named ${node.ref} is declared in multiple places. The same name can't be used for multiple services.`);
       }
       seen_nodes.push(node);
-    }
-  }
-
-  detectCircularDependencies(component_specs: ComponentSpec[]): void {
-    const component_specs_map: Dictionary<ComponentSpec> = {};
-    for (const component_spec of component_specs) {
-      component_specs_map[component_spec.metadata.ref] = component_spec;
-    }
-    const component_specs_queue = component_specs.map(component_spec => ({ component_spec, seen_refs: [component_spec.metadata.ref] }));
-    while (component_specs_queue.length) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const { component_spec, seen_refs } = component_specs_queue.pop()!;
-      for (const dep_name of Object.keys(component_spec.dependencies || {})) {
-        const dep_ref = this.getComponentRef(dep_name);
-        if (seen_refs.includes(dep_ref)) {
-          throw new ArchitectError(`Circular component dependency detected (${seen_refs.join(' <> ')})`);
-        }
-        if (component_specs_map[dep_ref]) {
-          component_specs_queue.push({ component_spec: component_specs_map[dep_ref], seen_refs: [...seen_refs, dep_ref] });
-        }
-      }
     }
   }
 
@@ -591,7 +570,6 @@ export default abstract class DependencyManager {
     };
 
     if (options.validate) {
-      this.detectCircularDependencies(component_specs);
       SecretsConfig.validate(all_secrets);
     }
 
