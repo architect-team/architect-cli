@@ -185,6 +185,35 @@ describe('register', function () {
       .reply(200, mock_account_response)
     )
     .nock(MOCK_API_HOST, api => api
+      .post(/\/accounts\/.*\/components/, (body) => body)
+      .reply(200, (uri, body: any, cb) => {
+        const contents = yaml.load(fs.readFileSync('examples/gcp-pubsub/pubsub/architect.yml').toString());
+        expect(body.config).to.deep.equal(contents);
+        expect(validateSpec(body.config)).to.have.lengthOf(0);
+        cb(null, body)
+      })
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/gcp-pubsub/versions/1.0.0`)
+      .reply(200)
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account_response.id}/environments/test-env`)
+      .reply(200)
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'examples/gcp-pubsub/pubsub/architect.yml', '-t', '1.0.0', '-a', 'examples', '-e', 'test-env'])
+    .it('registers an ephemeral component with an environment specified', ctx => {
+      expect(ctx.stdout).to.contain('Successfully registered component');
+    });
+
+  mockArchitectAuth
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
+    )
+    .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0')
         expect(body.config.name).to.eq('examples/gcp-pubsub')

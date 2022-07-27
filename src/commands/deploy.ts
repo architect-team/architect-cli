@@ -9,12 +9,12 @@ import BaseCommand from '../base-command';
 import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../common/errors/pipeline-errors';
 import DeployUtils from '../common/utils/deploy.utils';
 import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-builder';
-import { ComponentSlugUtils, ComponentVersionSlugUtils } from '../dependency-manager/spec/utils/slugs';
+import { ComponentVersionSlugUtils } from '../dependency-manager/spec/utils/slugs';
 import Dev from "./dev";
 import ComponentRegister from './register';
 
+export const EPHEMERAL_DELIMITER = 'architect-ephemeral';
 export abstract class DeployCommand extends BaseCommand {
-  EPHEMERAL_DELIMITER = 'architect-ephemeral';
 
   static flags = {
     ...BaseCommand.flags,
@@ -240,7 +240,7 @@ export default class Deploy extends DeployCommand {
     const component_names: string[] = [];
     for (const component of components) {
       if (fs.existsSync(component)) {
-        const tag = `${this.EPHEMERAL_DELIMITER}-${environment.name}`;
+        const tag = `${EPHEMERAL_DELIMITER}-${environment.name}`;
         const register = new ComponentRegister([component, '-a', account.name, '-e', environment.name, '-t', tag], this.config);
         register.app = this.app;
         await register.run();

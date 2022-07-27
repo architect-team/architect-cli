@@ -1,9 +1,12 @@
 import { expect } from '@oclif/test';
 import sinon, { SinonSpy } from 'sinon';
+import { ComponentVersionSlugUtils } from '../../src';
 import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
 import Deploy from '../../src/commands/deploy';
+import ComponentRegister from '../../src/commands/register';
 import DeployUtils from '../../src/common/utils/deploy.utils';
 import * as Docker from '../../src/common/utils/docker';
+import * as ComponentBuilder from '../../src/dependency-manager/spec/utils/component-builder';
 import { app_host } from '../config.json';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
@@ -49,6 +52,42 @@ describe('remote deploy environment', function () {
     .it('Creates a remote deployment when env exists with env and account flags', ctx => {
       expect(ctx.stdout).to.contain('Deployed');
     })
+
+  remoteDeploy
+    .stub(ComponentRegister.prototype, 'run', sinon.stub().returns(Promise.resolve()))
+    .stub(ComponentBuilder, 'buildSpecFromPath', sinon.stub().returns(Promise.resolve()))
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'test/mocks/superset/architect.yml'])
+    .it('Creates a remote deployment with env and account flags and a path to a component', ctx => {
+      expect((ComponentRegister.prototype.run as SinonSpy).getCalls().length).to.equal(1);
+      const build_spec = ComponentBuilder.buildSpecFromPath as SinonSpy;
+      expect(build_spec.getCalls().length).to.equal(1);
+      expect(build_spec.firstCall.args[0]).eq('test/mocks/superset/architect.yml');
+      expect(ctx.stdout).to.contain('Deployed');
+    })
+
+  remoteDeploy
+    .nock(MOCK_API_HOST, api => api
+      .post(`/environments/${environment.id}/deploy`)
+      .reply(200, mock_pipeline))
+    .nock(MOCK_API_HOST, api => api
+      .post(`/pipelines/${mock_pipeline.id}/approve`)
+      .reply(200, {}))
+    .stub(ComponentRegister.prototype, 'run', sinon.stub().returns(Promise.resolve()))
+    .stub(ComponentBuilder, 'buildSpecFromPath', sinon.stub().returns(Promise.resolve()))
+    .stub(ComponentVersionSlugUtils.Validator, 'test', sinon.stub().returns(Promise.resolve()))
+      .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'test/mocks/superset/architect.yml', `${account.name}/superset:latest`])
+      .it('Creates a remote deployment with env and account flags, a path to a component, and a component version', ctx => {
+        expect((ComponentRegister.prototype.run as SinonSpy).getCalls().length).to.equal(1);
+        const build_spec = ComponentBuilder.buildSpecFromPath as SinonSpy;
+        expect(build_spec.getCalls().length).to.equal(1);
+        expect(build_spec.firstCall.args[0]).eq('test/mocks/superset/architect.yml');
+
+        const slug_validator = ComponentVersionSlugUtils.Validator.test as SinonSpy;
+        expect(slug_validator.getCalls().length).to.equal(1);
+        expect(slug_validator.firstCall.args[0]).eq(`${account.name}/superset:latest`);
+
+        expect(ctx.stdout).to.contain('Deployed');
+      })
 
   describe('instance deploys', function () {
     remoteDeploy
