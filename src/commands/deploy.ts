@@ -9,7 +9,7 @@ import BaseCommand from '../base-command';
 import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../common/errors/pipeline-errors';
 import DeployUtils from '../common/utils/deploy.utils';
 import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-builder';
-import { ComponentSlugUtils } from '../dependency-manager/spec/utils/slugs';
+import { ComponentSlugUtils, ComponentVersionSlugUtils } from '../dependency-manager/spec/utils/slugs';
 import Dev from "./dev";
 import ComponentRegister from './register';
 
@@ -246,7 +246,7 @@ export default class Deploy extends DeployCommand {
         await register.run();
         const component_spec = buildSpecFromPath(component);
         component_names.push(`${account.name}/${component_spec.name}:${tag}`);
-      } else if (ComponentSlugUtils.Validator.test(component)) {
+      } else if (ComponentVersionSlugUtils.Validator.test(component)) {
         component_names.push(component);
       } else {
         throw new Error(`${component} isn't either the name of a component or a path to an existing component file.`);
