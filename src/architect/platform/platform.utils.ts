@@ -11,7 +11,7 @@ export interface CreatePlatformInput {
   credentials?: PlatformCredentials;
 }
 
-export type PlatformCredentials = KubernetesPlatformCredentials | EcsPlatformCredentials;
+export type PlatformCredentials = KubernetesPlatformCredentials;
 
 export interface KubernetesPlatformCredentials {
   kind: 'KUBERNETES';
@@ -19,14 +19,6 @@ export interface KubernetesPlatformCredentials {
   host: string;
   cluster_ca_cert: string;
   service_token: string;
-}
-
-export interface EcsPlatformCredentials {
-  kind: 'ECS';
-
-  region: string;
-  access_key: string;
-  access_secret: string;
 }
 
 export default class PlatformUtils {

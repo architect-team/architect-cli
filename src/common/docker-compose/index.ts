@@ -358,7 +358,7 @@ export class DockerComposeUtils {
     const cmd = execa('docker', ['compose', ...args], execa_opts);
     if (use_console) {
       cmd.on('exit', () => {
-        process.exit();
+        process.exit(cmd.exitCode || 0);
       });
     }
     return cmd;
