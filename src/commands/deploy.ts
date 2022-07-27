@@ -1,5 +1,6 @@
 import { CliUx, Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
+import fs from 'fs';
 import inquirer from 'inquirer';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
@@ -238,23 +239,24 @@ export default class Deploy extends DeployCommand {
 
     const component_names: string[] = [];
     for (const component of components) {
-      if (ComponentSlugUtils.Validator.test(component)) {
-        component_names.push(component);
-      } else {
-        // TODO: catch if path/location isn't found?
+      if (fs.existsSync(component)) {
         const tag = `${this.EPHEMERAL_DELIMITER}-${environment.name}`;
         const register = new ComponentRegister([component, '-a', account.name, '-e', environment.name, '-t', tag], this.config);
         register.app = this.app;
         await register.run();
         const component_spec = buildSpecFromPath(component);
         component_names.push(`${account.name}/${component_spec.name}:${tag}`);
+      } else if (ComponentSlugUtils.Validator.test(component)) {
+        component_names.push(component);
+      } else {
+        throw new Error(`${component} isn't either the name of a component or a path to an existing component file.`);
       }
     }
 
     const deployment_dtos = [];
     for (const component of component_names) {
       const deploy_dto = {
-        component: component,
+        component,
         interfaces: interfaces_map,
         recursive: flags.recursive,
         values: all_secrets, // TODO: 404: update
