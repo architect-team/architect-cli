@@ -86,6 +86,9 @@ export class DockerComposeUtils {
         ports.push(`${available_ports.shift()}:${port}`);
       }
       const formatted_environment_variables: Dictionary<string | null> = {};
+      if (process.env.TEST !== '1') {
+        formatted_environment_variables.ARC_DEV = '1';
+      }
       for (const [var_key, var_value] of Object.entries(node.config.environment)) {
         formatted_environment_variables[var_key] = var_value !== null ? var_value.replace(/\$/g, '$$$') : null; // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
       }
