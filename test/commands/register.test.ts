@@ -194,10 +194,6 @@ describe('register', function () {
       })
     )
     .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples/components/gcp-pubsub/versions/1.0.0`)
-      .reply(200)
-    )
-    .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${mock_account_response.id}/environments/test-env`)
       .reply(200)
     )
