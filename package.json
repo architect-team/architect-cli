@@ -150,6 +150,7 @@
     "pack": "oclif pack:tarballs",
     "readme": "./bin/readme",
     "generate:schema-docs": "ts-node --project ./tsconfig.json ./src/dependency-manager/generate.ts",
+    "generate:yarn-lock": "(rm yarn.lock || true) && yarn import",
     "semantic-release": "./node_modules/semantic-release/bin/semantic-release.js"
   },
   "types": "lib/index.d.ts"

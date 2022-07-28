@@ -69,6 +69,7 @@ jobs:
       - run: npm run build
       - run: npm run readme
       - run: npm run generate:schema-docs
+      - run: npm run generate:yarn-lock
       - name: npm publish
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
