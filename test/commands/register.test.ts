@@ -203,7 +203,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'examples/gcp-pubsub/pubsub/architect.yml', '-t', '1.0.0', '-a', 'examples', '-e', 'test-env'])
+    .command(['register', 'examples/gcp-pubsub/pubsub/architect.yml', '-a', 'examples', '-e', 'test-env'])
     .it('registers an ephemeral component with an environment specified', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
