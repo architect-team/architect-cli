@@ -143,19 +143,22 @@ export default class SentryService {
 
   async endSentryTransaction(write_command_out: boolean, error?: any): Promise<void> {
     if (this.app.config.environment === ENVIRONMENT.TEST) return;
+    try {
+      await this.updateSentryTransaction(error);
 
-    await this.updateSentryTransaction(error);
-
-    if (this.file_out && write_command_out) {
-      await this.writeCommandHistoryToFileSystem();
-    }
-
-    if (this.sentry_out) {
-      Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
-      Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
-      if (error) {
-        Sentry.withScope(scope => Sentry.captureException(error));
+      if (this.file_out && write_command_out) {
+        await this.writeCommandHistoryToFileSystem();
       }
+
+      if (this.sentry_out) {
+        Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
+        Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
+        if (error) {
+          Sentry.withScope(scope => Sentry.captureException(error));
+        }
+      }
+    } catch {
+      // If endSentryTransaction fails, don't error.
     }
   }
 
@@ -186,9 +189,13 @@ export default class SentryService {
   }
 
   async getFilenamesFromDirectory(): Promise<any[]> {
-    const path = this.app.config?.getConfigDir();
-    const addr = fs.readdirSync(path, { withFileTypes: true });
-    return addr.filter(f => f.isFile()).map(f => ({ name: f.name })) || [];
+    try {
+      const path = this.app.config?.getConfigDir();
+      const addr = fs.readdirSync(path, { withFileTypes: true });
+      return addr.filter(f => f.isFile()).map(f => ({ name: f.name })) || [];
+    } catch {
+      return [];
+    }
   }
 
   async readCommandHistoryFromFileSystem(): Promise<any[]> {
@@ -204,34 +211,38 @@ export default class SentryService {
   }
 
   async writeCommandHistoryToFileSystem(): Promise<void> {
-    const scope = Sentry.getCurrentHub()?.getScope();
-    const remove_keys = new Set(['plugins', 'pjson', 'oauth_client_id', 'credentials', '_auth_result', 'Authorization']);
+    try {
+      const scope = Sentry.getCurrentHub()?.getScope();
+      const remove_keys = new Set(['plugins', 'pjson', 'oauth_client_id', 'credentials', '_auth_result', 'Authorization']);
 
-    // remove empty objects, empty strings, or key/values from the remove_keys list.
-    let current_output = JSON.parse(JSON.stringify(scope as any, (key, value) => {
-      if (remove_keys.has(key)) {
-        return undefined;
+      // remove empty objects, empty strings, or key/values from the remove_keys list.
+      let current_output = JSON.parse(JSON.stringify(scope as any, (key, value) => {
+        if (remove_keys.has(key)) {
+          return undefined;
+        }
+        if (typeof value === 'number' || (value && Object.keys(value).length)) {
+          return value;
+        }
+      }));
+
+      // remove duplicate report information if span is present
+      if (current_output._span) {
+        current_output = { ...current_output, _tags: undefined, _user: undefined };
       }
-      if (typeof value === 'number' || (value && Object.keys(value).length)) {
-        return value;
+
+      if (!fs.existsSync(this.sentry_history_file_path)) {
+        return fs.outputJsonSync(this.sentry_history_file_path, [current_output], { spaces: 2 });
       }
-    }));
 
-    // remove duplicate report information if span is present
-    if (current_output._span) {
-      current_output = { ...current_output, _tags: undefined, _user: undefined };
+      const history = await JSON.parse(fs.readFileSync(this.sentry_history_file_path).toString());
+      history.push(current_output);
+      // append to end, pop from top the last min(defined maximum history length, current history length) records
+
+      const maximum_records = ~Math.min(5, history.length) + 1;
+      fs.outputJsonSync(this.sentry_history_file_path, history.slice(maximum_records), { spaces: 2 });
+    } catch {
+      // If writeCommandHistoryToFileSystem fails, don't error.
     }
-
-    if (!fs.existsSync(this.sentry_history_file_path)) {
-      return fs.outputJsonSync(this.sentry_history_file_path, [current_output], { spaces: 2 });
-    }
-
-    const history = await JSON.parse(fs.readFileSync(this.sentry_history_file_path).toString());
-    history.push(current_output);
-    // append to end, pop from top the last min(defined maximum history length, current history length) records
-
-    const maximum_records = ~Math.min(5, history.length) + 1;
-    fs.outputJsonSync(this.sentry_history_file_path, history.slice(maximum_records), { spaces: 2 });
   }
 
 }
