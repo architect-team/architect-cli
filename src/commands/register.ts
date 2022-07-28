@@ -323,7 +323,7 @@ export default class ComponentRegister extends BaseCommand {
     return headers['docker-content-digest'];
   }
 
-  public static getTagFromFlags(flags: any) {
+  public static getTagFromFlags(flags: any): string {
     return flags.environment ? `${EPHEMERAL_DELIMITER}-${flags.environment}` : flags.tag;
   }
 }
