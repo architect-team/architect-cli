@@ -103,8 +103,7 @@ export default class PlatformCreate extends BaseCommand {
   }
 
   private getLocalServerAgentIP(): string {
-    const results = execa.sync('dig', ['host.docker.internal', '+short']);
-    return results.stdout;
+    return 'host.docker.internal';
   }
 
   private getLocalServerAgentPort(): string {
