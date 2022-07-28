@@ -21,6 +21,8 @@ import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolat
 
 tmp.setGracefulCleanup();
 
+export const EPHEMERAL_DELIMITER = 'architect-ephemeral';
+
 export default class ComponentRegister extends BaseCommand {
   static aliases = ['component:register', 'components:register', 'c:register', 'comp:register'];
   static description = 'Register a new Component with Architect Cloud';
@@ -41,6 +43,7 @@ export default class ComponentRegister extends BaseCommand {
         char: 't',
         description: 'Tag to give to the new component',
         default: 'latest',
+        exclusive: ['environment'],
       }),
     },
     architecture: {
@@ -62,6 +65,7 @@ export default class ComponentRegister extends BaseCommand {
       ...Flags.string({
         char: 'e',
         description: 'The name of an environment to register the component version to. If specified, the component version will be removed when the environment is removed',
+        exclusive: ['tag'],
       }),
     },
   };
@@ -83,7 +87,7 @@ export default class ComponentRegister extends BaseCommand {
       throw new ArchitectError(Slugs.ComponentTagDescription);
     }
 
-    await this.registerComponent(config_path, flags.tag);
+    await this.registerComponent(config_path, ComponentRegister.getTagFromFlags(flags));
   }
 
   private async registerComponent(config_path: string, tag: string) {
@@ -317,5 +321,9 @@ export default class ComponentRegister extends BaseCommand {
 
     const { headers } = await registry_client.head(`${name}/manifests/${tag}`);
     return headers['docker-content-digest'];
+  }
+
+  public static getTagFromFlags(flags: any) {
+    return flags.environment ? `${EPHEMERAL_DELIMITER}-${flags.environment}` : flags.tag;
   }
 }

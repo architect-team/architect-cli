@@ -13,7 +13,6 @@ import { ComponentVersionSlugUtils } from '../dependency-manager/spec/utils/slug
 import Dev from "./dev";
 import ComponentRegister from './register';
 
-export const EPHEMERAL_DELIMITER = 'architect-ephemeral';
 export abstract class DeployCommand extends BaseCommand {
 
   static flags = {
@@ -240,12 +239,11 @@ export default class Deploy extends DeployCommand {
     const component_names: string[] = [];
     for (const component of components) {
       if (fs.existsSync(component)) {
-        const tag = `${EPHEMERAL_DELIMITER}-${environment.name}`;
-        const register = new ComponentRegister([component, '-a', account.name, '-e', environment.name, '-t', tag], this.config);
+        const register = new ComponentRegister([component, '-a', account.name, '-e', environment.name], this.config);
         register.app = this.app;
         await register.run();
         const component_spec = buildSpecFromPath(component);
-        component_names.push(`${account.name}/${component_spec.name}:${tag}`);
+        component_names.push(`${account.name}/${component_spec.name}:${ComponentRegister.getTagFromFlags({ environment: environment.name })}`);
       } else if (ComponentVersionSlugUtils.Validator.test(component)) {
         component_names.push(component);
       } else {
