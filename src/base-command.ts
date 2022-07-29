@@ -64,7 +64,10 @@ export default abstract class BaseCommand extends Command {
     try {
       this.sentry = await SentryService.create(this.app, this.constructor as any);
     } catch (e) {
-      // dont fail when adding metadata
+      console.debug("SENTRY: an error occurred creating a new instance of SentryService");
+    }
+    if (!this.sentry) {
+      console.debug("SENTRY: SentryService failed to initialize");
     }
   }
 
