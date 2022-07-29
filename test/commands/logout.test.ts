@@ -7,7 +7,7 @@ describe('logout', () => {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
-  describe('deletes local credentails', () => {
+  describe('deletes local credentials', () => {
     const credential_spy = sinon.fake.returns(null);
 
     test
