@@ -333,7 +333,7 @@ describe('components spec v1', function () {
       expect(worker_node.config.metadata.ref).to.eq('ci.services.worker');
     });
 
-    it('circular component dependency is rejected', async () => {
+    it('circular component dependency is not rejected', async () => {
       const component_config = {
         name: 'examples/hello-world',
         services: {
@@ -389,20 +389,14 @@ describe('components spec v1', function () {
       nock('http://localhost').get(`/accounts/examples/components/hello-circular-world/versions/latest`)
         .reply(200, { tag: 'latest', config: circular_component_config, service: { url: 'examples/hello-circular-world:latest' } });
 
-      let manager_error;
-      try {
-        const manager = new LocalDependencyManager(axios.create(), {
-          'examples/hello-world': '/stack/architect.yml',
-        });
-        await manager.getGraph([
-          await manager.loadComponentSpec('examples/hello-world:latest'),
-          await manager.loadComponentSpec('examples/hello-world2:latest'),
-          await manager.loadComponentSpec('examples/hello-circular-world:latest'),
-        ]);
-      } catch (err: any) {
-        manager_error = err.message;
-      }
-      expect(manager_error).eq('Circular component dependency detected (examples/hello-circular-world <> examples/hello-world <> examples/hello-world2)');
+      const manager = new LocalDependencyManager(axios.create(), {
+        'examples/hello-world': '/stack/architect.yml',
+      });
+      await manager.getGraph([
+        await manager.loadComponentSpec('examples/hello-world:latest'),
+        await manager.loadComponentSpec('examples/hello-world2:latest'),
+        await manager.loadComponentSpec('examples/hello-circular-world:latest'),
+      ]);
     });
 
     it('non-circular component dependency is not rejected', async () => {
