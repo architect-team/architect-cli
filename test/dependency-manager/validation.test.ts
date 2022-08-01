@@ -829,6 +829,7 @@ services:
       expect(errors).lengthOf(1);
       expect(err.message).includes(`services.app.labels.environment2`);
       expect(err.message).includes('must match pattern');
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid labels length', async () => {
@@ -1094,6 +1095,7 @@ services:
     const errors = JSON.parse(err.message);
     expect(errors).lengthOf(1);
     expect(errors[0].path).eq(`architect/cloud.TE@ST`);
+    expect(process.exitCode).eq(1);
   });
 
   it('component values are defined in an object', () => {
