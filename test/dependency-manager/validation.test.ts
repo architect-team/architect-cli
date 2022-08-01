@@ -19,9 +19,9 @@ describe('validate spec', () => {
             main: 8080
       interfaces:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
-      buildSpecFromPath('/architect.yml')
+      buildSpecFromPath('/architect.yml');
     });
 
     it('invalid nested debug', async () => {
@@ -37,11 +37,11 @@ services:
       debug:
         environment:
           LOG_LEVEL: debug
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
       let err;
       try {
-        buildSpecFromPath('/architect.yml')
+        buildSpecFromPath('/architect.yml');
       } catch (e: any) {
         err = e;
       }
@@ -54,6 +54,7 @@ services:
       expect(errors[0].start?.column).eq(7);
       expect(errors[0].end?.row).eq(10);
       expect(errors[0].end?.column).eq(12);
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid host_path outside debug block', async () => {
@@ -66,10 +67,10 @@ services:
     volumes:
       test:
         host_path: ./test
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
 
-      expect(() => { buildSpecFromPath('/architect.yml') }).to.throw(ValidationErrors);
+      expect(() => { buildSpecFromPath('/architect.yml'); }).to.throw(ValidationErrors);
     });
 
     it('invalid deploy key', async () => {
@@ -85,11 +86,11 @@ services:
                 inputs:
                   deploy-input-string: some_deploy_input
                   deploy-input-unset:
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
       let err;
       try {
-        buildSpecFromPath('/architect.yml')
+        buildSpecFromPath('/architect.yml');
       } catch (e: any) {
         err = e;
       }
@@ -98,6 +99,7 @@ services:
       expect(errors).lengthOf(1);
       expect(errors[0].path).eq(`services.stateless-app.deploy`);
       expect(errors[0].message).includes(`Invalid key: deploy`);
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid replicas value', async () => {
@@ -106,7 +108,7 @@ services:
       services:
         stateless-app:
           replicas: '1'
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
       const manager = new LocalDependencyManager(axios.create(), {
         'test/component': '/architect.yml',
@@ -120,7 +122,7 @@ services:
         err = e;
       }
 
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message);
       expect(errors).lengthOf(1);
       expect(errors[0].path).eq(`services.stateless-app.replicas`);
@@ -129,6 +131,7 @@ services:
       expect(errors[0].start?.column).eq(22);
       expect(errors[0].end?.row).eq(5);
       expect(errors[0].end?.column).eq(22);
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid service ref', async () => {
@@ -140,7 +143,7 @@ services:
             main: 8080
       interfaces:
         frontend: \${{ services.fake.interfaces.main.url }}
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
       const manager = new LocalDependencyManager(axios.create(), {
         'test/component': '/architect.yml',
@@ -154,11 +157,12 @@ services:
         err = e;
       }
 
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message);
       expect(errors).lengthOf(1);
       expect(errors[0].message).includes(`services.stateless-app.interfaces.main.url`);
       expect(errors[0].path).eq(`interfaces.frontend`);
+      expect(process.exitCode).eq(1);
     });
 
     it('services and tasks can share the same name', async () => {
@@ -172,7 +176,7 @@ services:
         app:
           environment:
             TEST: 1
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
       const manager = new LocalDependencyManager(axios.create(), {
         'component': '/architect.yml',
@@ -181,11 +185,11 @@ services:
       const graph = await manager.getGraph([
         await manager.loadComponentSpec('component'),
       ]);
-      expect(graph.nodes).to.have.lengthOf(2)
+      expect(graph.nodes).to.have.lengthOf(2);
       expect(graph.nodes.map((node) => node.ref)).to.have.members([
         resourceRefToNodeRef('component.services.app'),
-        resourceRefToNodeRef('component.tasks.app')
-      ])
+        resourceRefToNodeRef('component.tasks.app'),
+      ]);
     });
 
     it('valid service depends_on', async () => {
@@ -202,9 +206,9 @@ services:
             main: 5432
       interfaces:
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
-      buildSpecFromPath('/architect.yml')
+      buildSpecFromPath('/architect.yml');
     });
 
     it('invalid task schedule', async () => {
@@ -214,7 +218,7 @@ services:
         some-task:
           schedule: "*/5 * * * ? * * * * *"
           image: ellerbrock/alpine-bash-curl-ssl
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
       const manager = new LocalDependencyManager(axios.create(), {
         'test/component': '/architect.yml',
@@ -227,10 +231,11 @@ services:
       } catch (e: any) {
         err = e;
       }
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message);
       expect(errors).lengthOf(1);
       expect(errors[0].path).eq(`tasks.some-task.schedule`);
+      expect(process.exitCode).eq(1);
     });
 
     it('valid task depends_on', async () => {
@@ -251,9 +256,9 @@ services:
             main: 5432
       interfaces:
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
-      buildSpecFromPath('/architect.yml')
+      buildSpecFromPath('/architect.yml');
     });
 
     it('invalid task depends_on', async () => {
@@ -271,7 +276,7 @@ services:
             main: 8080
       interfaces:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
       const manager = new LocalDependencyManager(axios.create(), {
         'test/component': '/architect.yml',
@@ -284,10 +289,11 @@ services:
       } catch (e: any) {
         err = e;
       }
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message);
       expect(errors).lengthOf(1);
       expect(errors[0].path).eq(`services.stateless-app.depends_on`);
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid service self reference', async () => {
@@ -301,7 +307,7 @@ services:
             main: 8080
       interfaces:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
       const manager = new LocalDependencyManager(axios.create(), {
         'test/component': '/architect.yml',
@@ -314,10 +320,11 @@ services:
       } catch (e: any) {
         err = e;
       }
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message);
       expect(errors).lengthOf(1);
       expect(errors[0].path).eq(`services.stateless-app.depends_on`);
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid service depends_on reference', async () => {
@@ -331,7 +338,7 @@ services:
             main: 8080
       interfaces:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
       const manager = new LocalDependencyManager(axios.create(), {
         'test/component': '/architect.yml',
@@ -344,10 +351,11 @@ services:
       } catch (e: any) {
         err = e;
       }
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message);
       expect(errors).lengthOf(1);
       expect(errors[0].path).eq(`services.stateless-app.depends_on`);
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid circular service reference', async () => {
@@ -366,7 +374,7 @@ services:
             main: 5432
       interfaces:
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
 
       const manager = new LocalDependencyManager(axios.create(), {
@@ -380,13 +388,14 @@ services:
       } catch (e: any) {
         err = e;
       }
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(2);
       expect(errors.map(e => e.path)).members([
         'services.stateful-app.depends_on',
-        'services.backend.depends_on'
-      ])
+        'services.backend.depends_on',
+      ]);
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid deep circular service reference', async () => {
@@ -410,7 +419,7 @@ services:
             main: 5432
       interfaces:
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
-      `
+      `;
       mock_fs({ '/architect.yml': component_config });
       const manager = new LocalDependencyManager(axios.create(), {
         'test/component': '/architect.yml',
@@ -423,22 +432,23 @@ services:
       } catch (e: any) {
         err = e;
       }
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(3);
       expect(errors.map(e => e.path)).members([
         'services.stateful-app.depends_on',
         'services.api.depends_on',
-        'services.backend.depends_on'
-      ])
+        'services.backend.depends_on',
+      ]);
+      expect(process.exitCode).eq(1);
     });
-  })
+  });
 
   describe('component validation', () => {
     it('invalid component name', async () => {
       const component_config = `
       name: test_component
-      `
+      `;
 
       mock_fs({
         '/component.yml': component_config,
@@ -455,18 +465,19 @@ services:
         err = e;
       }
 
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
         'name',
-      ])
+      ]);
       expect(errors[0].message).includes('architect/component-name');
       expect(errors[0].component).eq('test_component');
       expect(errors[0].start?.row).eq(2);
       expect(errors[0].start?.column).eq(12);
       expect(errors[0].end?.row).eq(2);
       expect(errors[0].end?.column).eq(26);
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid key value', async () => {
@@ -479,7 +490,7 @@ services:
           \${{ secrets.environment == 'local' }}:
             environment:
               TEST: 1
-      `
+      `;
 
       mock_fs({
         '/component.yml': component_config,
@@ -496,17 +507,18 @@ services:
         err = e;
       }
 
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
         `services.app.\${{ secrets.environment == 'local' }}`,
-      ])
+      ]);
       expect(errors[0].invalid_key).is.true;
       expect(errors[0].start?.row).eq(7);
       expect(errors[0].start?.column).eq(11);
       expect(errors[0].end?.row).eq(7);
       expect(errors[0].end?.column).eq(48);
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid component secret keys', async () => {
@@ -519,7 +531,7 @@ services:
         test%%%%: test
         test***test:
           default: test
-      `
+      `;
 
       mock_fs({
         '/component.yml': component_config,
@@ -536,14 +548,15 @@ services:
         err = e;
       }
 
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(2);
       expect(errors.map(e => e.path)).members([
         'secrets.test%%%%',
-        'secrets.test***test'
-      ])
+        'secrets.test***test',
+      ]);
       expect(errors[0].message).includes(Slugs.ComponentSecretDescription);
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid secret ref', async () => {
@@ -555,7 +568,7 @@ services:
         api:
           environment:
             TEST: \${{ secret.test }}
-      `
+      `;
 
       mock_fs({
         '/component.yml': component_config,
@@ -572,19 +585,20 @@ services:
         err = e;
       }
 
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
 
       expect(errors.map(e => e.path)).members([
         'services.api.environment.TEST',
-      ])
+      ]);
       expect(errors[0].message).includes('secrets.test');
       expect(errors[0].component).eq('test/component');
       expect(errors[0].start?.row).eq(8);
       expect(errors[0].start?.column).eq(23);
       expect(errors[0].end?.row).eq(8);
       expect(errors[0].end?.column).eq(33);
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid component interfaces ref', async () => {
@@ -597,7 +611,7 @@ services:
             EXT_OTHER_ADDR: \${{ dependencies.test/other.ingresses.fake.url }}
       dependencies:
         test/other: latest
-      `
+      `;
       const other_component_config = `
       name: test/other
       interfaces:
@@ -606,7 +620,7 @@ services:
         api:
           interfaces:
             main: 8080
-      `
+      `;
 
       mock_fs({
         '/component.yml': component_config,
@@ -614,25 +628,26 @@ services:
       });
       const manager = new LocalDependencyManager(axios.create(), {
         'test/component': '/component.yml',
-        'test/other': '/other-component.yml'
+        'test/other': '/other-component.yml',
       });
       let err;
       try {
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
-          await manager.loadComponentSpec('test/other')
+          await manager.loadComponentSpec('test/other'),
         ]);
       } catch (e: any) {
         err = e;
       }
 
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(2);
       expect(errors.map(e => e.path)).members([
         'services.api.environment.OTHER_ADDR',
-        'services.api.environment.EXT_OTHER_ADDR'
-      ])
+        'services.api.environment.EXT_OTHER_ADDR',
+      ]);
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid services interfaces ref', async () => {
@@ -649,7 +664,7 @@ services:
         other-api:
           interfaces:
             not-fake: 8080
-      `
+      `;
 
       mock_fs({
         '/component.yml': component_config,
@@ -665,14 +680,15 @@ services:
       } catch (e: any) {
         err = e;
       }
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(3);
       expect(errors.map(e => e.path)).members([
         'services.api.environment.OTHER_ADDR',
         'services.api.environment.INT_OTHER_ADDR',
-        'services.api.environment.EXT_OTHER_ADDR'
-      ])
+        'services.api.environment.EXT_OTHER_ADDR',
+      ]);
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid services ref', async () => {
@@ -685,7 +701,7 @@ services:
         api:
           interfaces:
             main: 8080
-      `
+      `;
 
       mock_fs({
         '/component.yml': component_config,
@@ -701,15 +717,16 @@ services:
       } catch (e: any) {
         err = e;
       }
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(2);
       expect(errors.map(e => e.path)).members([
         'interfaces.api.url',
-        'interfaces.api2.url'
-      ])
-      expect(errors[0].message).includes('services.api.interfaces.main.url')
-      expect(errors[1].message).includes('services.api.interfaces.main.url')
+        'interfaces.api2.url',
+      ]);
+      expect(errors[0].message).includes('services.api.interfaces.main.url');
+      expect(errors[1].message).includes('services.api.interfaces.main.url');
+      expect(process.exitCode).eq(1);
     });
 
     it('deploy time validation', async () => {
@@ -726,7 +743,7 @@ services:
           liveness_probe:
             path: http://localhost/
             port: 8080
-      `
+      `;
       mock_fs({
         '/component.yml': component_config,
       });
@@ -741,12 +758,13 @@ services:
       } catch (e: any) {
         err = e;
       }
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
         "services.api.liveness_probe.path",
-      ])
+      ]);
+      expect(process.exitCode).eq(1);
     });
 
 
@@ -760,7 +778,7 @@ services:
           labels:
             environment: dev
             environment2: \${{ secrets.environment }}
-      `
+      `;
       mock_fs({
         '/component.yml': component_config,
       });
@@ -790,7 +808,7 @@ services:
             environment: dev
             environment2: \${{ secrets.environment }}
             architect.io/Environment: dev
-      `
+      `;
       mock_fs({
         '/component.yml': component_config,
       });
@@ -822,7 +840,7 @@ services:
         app:
           labels:
             architect.io.architect.io.architect.io.architect.io.architect.io.architect.io/architect.io: architect.io
-      `
+      `;
       mock_fs({
         '/component.yml': component_config,
       });
@@ -841,6 +859,7 @@ services:
       const errors = JSON.parse(err.message);
       expect(errors).lengthOf(1);
       expect(errors[0].message).eq('Invalid key: architect.io.architect.io.architect.io.architect.io.architect.io.architect.io/architect.io');
+      expect(process.exitCode).eq(1);
     });
   });
 
@@ -855,14 +874,14 @@ services:
             OTHER_ADDR: \${{ dependencies.test/other.interfaces.fake.url }}
       dependencies:
         test/other: latest
-      `
+      `;
 
       const other_component_config = `
       name: test/other
       services:
         api:
           image: test
-      `
+      `;
       mock_fs({
         '/test-file.txt': `some file text\non another line`,
         '/component.yml': component_config,
@@ -871,31 +890,32 @@ services:
 
       const manager = new LocalDependencyManager(axios.create(), {
         'test/component': '/component.yml',
-        'test/other': '/other-component.yml'
+        'test/other': '/other-component.yml',
       });
       let err;
       try {
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
-          await manager.loadComponentSpec('test/other')
+          await manager.loadComponentSpec('test/other'),
         ]);
       } catch (e: any) {
         err = e;
       }
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
         'services.api.environment.OTHER_ADDR',
-      ])
+      ]);
       expect(errors[0].start).to.deep.equal({
         row: 7,
-        column: 29
-      })
+        column: 29,
+      });
       expect(errors[0].end).to.deep.equal({
         row: 7,
-        column: 71
-      })
+        column: 71,
+      });
+      expect(process.exitCode).eq(1);
     });
   });
 
@@ -921,7 +941,7 @@ services:
             REQUIRED_IMPLICIT: \${{ secrets.required-implicit }}
             REQUIRED_EXPLICIT: \${{ secrets.required-explicit }}
             NOT_REQUIRED: \${{ secrets.not-required }}
-      `
+      `;
       mock_fs({
         '/component.yml': component_config,
       });
@@ -936,17 +956,18 @@ services:
       } catch (e: any) {
         err = e;
       }
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(3);
       expect(errors.map(e => e.path)).members([
         'secrets.required',
         'secrets.required-implicit',
         'secrets.required-explicit',
-      ])
+      ]);
       expect([...new Set(errors.map(e => e.component))]).members([
         'test/component',
-      ])
+      ]);
+      expect(process.exitCode).eq(1);
     });
 
     it('required dependency secret', async () => {
@@ -965,7 +986,7 @@ services:
       interfaces:
         echo:
           url: \${{ services.api.interfaces.main.url }}
-      `
+      `;
 
       const component_config2 = `
       name: examples/hello-world2
@@ -984,7 +1005,7 @@ services:
       interfaces:
         echo:
           url: \${{ services.api.interfaces.main.url }}
-      `
+      `;
 
       mock_fs({
         '/architect.yml': component_config,
@@ -1004,32 +1025,33 @@ services:
       } catch (e: any) {
         err = e;
       }
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
         'secrets.aws_secret',
-      ])
+      ]);
       expect([...new Set(errors.map(e => e.component))]).members([
         'examples/hello-world2',
-      ])
+      ]);
+      expect(process.exitCode).eq(1);
     });
   });
 
   it('valid component keys in values files pass validation', () => {
     const values_dict = {
       "*": {
-        "POSTGRES_HOST": "172.17.0.1"
+        "POSTGRES_HOST": "172.17.0.1",
       },
       "architect/cloud": {
-        "TEST": "string"
-      }
+        "TEST": "string",
+      },
 
     };
 
     let passed_validation = false;
     try {
-      SecretsConfig.validate(values_dict)
+      SecretsConfig.validate(values_dict);
       passed_validation = true;
     } catch (e: any) { }
     expect(passed_validation).true;
@@ -1038,13 +1060,13 @@ services:
   it('invalid component keys in values files fail validation', () => {
     const values_dict = {
       "architect_cloud:latest": {
-        "TEST": "string"
-      }
+        "TEST": "string",
+      },
     };
 
     let err;
     try {
-      SecretsConfig.validate(values_dict)
+      SecretsConfig.validate(values_dict);
     } catch (e: any) {
       err = e;
     }
@@ -1052,18 +1074,19 @@ services:
     const errors = JSON.parse(err.message);
     expect(errors).lengthOf(1);
     expect(errors[0].path).eq(`architect_cloud:latest`);
+    expect(process.exitCode).eq(1);
   });
 
   it('invalid value keys in values files fail validation', () => {
     const values_dict = {
       "architect/cloud": {
-        "TE@ST": "string"
-      }
+        "TE@ST": "string",
+      },
     };
 
     let err;
     try {
-      SecretsConfig.validate(values_dict)
+      SecretsConfig.validate(values_dict);
     } catch (e: any) {
       err = e;
     }
@@ -1076,12 +1099,12 @@ services:
   it('component values are defined in an object', () => {
     const values_dict = {
       "architect/cloud": [],
-      "architect/cloud@v2": 'string'
+      "architect/cloud@v2": 'string',
     };
 
     let err;
     try {
-      SecretsConfig.validate(values_dict as any)
+      SecretsConfig.validate(values_dict as any);
     } catch (e: any) {
       err = e;
     }
@@ -1090,24 +1113,25 @@ services:
     expect(errors).lengthOf(2);
     expect(errors[0].path).eq(`architect/cloud`);
     expect(errors[1].path).eq(`architect/cloud@v2`);
+    expect(process.exitCode).eq(1);
   });
 
   it('component values are strings only', () => {
     const values_dict = {
       "architect/cloud": {
-        'test': 'test value'
+        'test': 'test value',
       },
       "architect/cloud@v2": {
-        'ANOTHER_test': 'another value'
+        'ANOTHER_test': 'another value',
       },
       "architect/*": {
-        'ANOTHER_test': 'another value'
-      }
+        'ANOTHER_test': 'another value',
+      },
     };
 
     let err;
     try {
-      SecretsConfig.validate(values_dict)
+      SecretsConfig.validate(values_dict);
     } catch (e: any) {
       err = e;
     }
@@ -1125,7 +1149,7 @@ services:
             min_replicas: 1
             max_replicas: 1
             metrics:
-      `
+      `;
     mock_fs({
       '/component.yml': component_config,
     });
@@ -1140,13 +1164,14 @@ services:
     } catch (e: any) {
       err = e;
     }
-    expect(err).instanceOf(ValidationErrors)
+    expect(err).instanceOf(ValidationErrors);
     const errors = JSON.parse(err.message) as ValidationError[];
     expect(errors).lengthOf(1);
     expect(errors.map(e => e.path)).members([
       'services.api.scaling.metrics',
-    ])
-  })
+    ]);
+    expect(process.exitCode).eq(1);
+  });
 
   it('valid interface number', async () => {
     const component_config = `
@@ -1155,7 +1180,7 @@ services:
         app:
           interfaces:
             main: 3000
-      `
+      `;
     mock_fs({
       '/component.yml': component_config,
     });
@@ -1181,7 +1206,7 @@ services:
         app:
           interfaces:
             main: "3000"
-      `
+      `;
     mock_fs({
       '/component.yml': component_config,
     });
@@ -1204,6 +1229,7 @@ services:
     expect(err.message).includes('or must be an interpolation ref ex. ${{ secrets.example }}');
     expect(err.message).includes('or must be number');
     expect(err.message).includes('or must be object');
+    expect(process.exitCode).eq(1);
   });
 
   it('valid interface interpolation reference', async () => {
@@ -1215,7 +1241,7 @@ services:
         app:
           interfaces:
             main: \${{ secrets.app_port }}
-      `
+      `;
     mock_fs({
       '/component.yml': component_config,
     });
@@ -1242,7 +1268,7 @@ services:
         app:
           interfaces:
             main: "3000"
-      `
+      `;
     mock_fs({
       '/component.yml': component_config,
     });
@@ -1265,6 +1291,7 @@ services:
     expect(err.message).includes('or must be an interpolation ref ex. ${{ secrets.example }}');
     expect(err.message).includes('or must be number');
     expect(err.message).includes('or must be object');
+    expect(process.exitCode).eq(1);
   });
 
   it('valid component interface string', async () => {
@@ -1276,7 +1303,7 @@ services:
         app:
           interfaces:
             main: 3000
-      `
+      `;
     mock_fs({
       '/component.yml': component_config,
     });
@@ -1304,7 +1331,7 @@ services:
         app:
           interfaces:
             main: 3000
-      `
+      `;
     mock_fs({
       '/component.yml': component_config,
     });
@@ -1326,6 +1353,7 @@ services:
     expect(err.message).includes(`interfaces.main`);
     expect(err.message).includes('must be object');
     expect(err.message).includes('must be string');
+    expect(process.exitCode).eq(1);
   });
 
   it('invalid component interface number', async () => {
@@ -1336,7 +1364,7 @@ services:
         app:
           interfaces:
             main: 3000
-      `
+      `;
     mock_fs({
       '/component.yml': component_config,
     });
@@ -1357,6 +1385,7 @@ services:
     expect(errors).lengthOf(1);
     expect(err.message).includes(`interfaces`);
     expect(err.message).includes('must be object');
+    expect(process.exitCode).eq(1);
   });
 
   it('valid command', async () => {
@@ -1367,7 +1396,7 @@ services:
       services:
         app:
           command: catalina.sh run -Pprofile=\${{ secrets.SPRING_PROFILE }} --test-string "two words" --test-env $API_KEY
-      `
+      `;
     mock_fs({
       '/component.yml': component_config,
     });
@@ -1379,7 +1408,7 @@ services:
       await manager.loadComponentSpec('test/component'),
     ]);
     const service_node = graph.nodes.find((node) => node instanceof ServiceNode) as ServiceNode;
-    expect(service_node.config.command).to.deep.equal(['catalina.sh', 'run', '-Pprofile=test', '--test-string', 'two words', '--test-env', '$API_KEY'])
+    expect(service_node.config.command).to.deep.equal(['catalina.sh', 'run', '-Pprofile=test', '--test-string', 'two words', '--test-env', '$API_KEY']);
   });
 
   it('liveness_probe rejects command with path', async () => {
@@ -1394,7 +1423,7 @@ services:
               - /bin/bash
               - health.sh
             path: /test
-      `
+      `;
     mock_fs({
       '/component.yml': component_config,
     });
@@ -1409,13 +1438,14 @@ services:
     } catch (e: any) {
       err = e;
     }
-    expect(err).instanceOf(ValidationErrors)
+    expect(err).instanceOf(ValidationErrors);
     const errors = JSON.parse(err.message) as ValidationError[];
     expect(errors).lengthOf(1);
     expect(errors.map(e => e.path)).members([
       'services.api.liveness_probe',
-    ])
-  })
+    ]);
+    expect(process.exitCode).eq(1);
+  });
 
   it('liveness_probe rejects command with port', async () => {
     const component_config = `
@@ -1429,7 +1459,7 @@ services:
               - /bin/bash
               - health.sh
             port: 3000
-      `
+      `;
     mock_fs({
       '/component.yml': component_config,
     });
@@ -1444,13 +1474,14 @@ services:
     } catch (e: any) {
       err = e;
     }
-    expect(err).instanceOf(ValidationErrors)
+    expect(err).instanceOf(ValidationErrors);
     const errors = JSON.parse(err.message) as ValidationError[];
     expect(errors).lengthOf(1);
     expect(errors.map(e => e.path)).members([
       'services.api.liveness_probe',
     ]);
-  })
+    expect(process.exitCode).eq(1);
+  });
 
   it('liveness_probe accepts command', async () => {
     const component_config = `
@@ -1463,7 +1494,7 @@ services:
             command:
               - /bin/bash
               - health.sh
-      `
+      `;
     mock_fs({
       '/component.yml': component_config,
     });
@@ -1480,7 +1511,7 @@ services:
     }
 
     expect(err).to.be.undefined;
-  })
+  });
 
   it('liveness_probe accepts port and path', async () => {
     const component_config = `
@@ -1492,7 +1523,7 @@ services:
           liveness_probe:
             port: 8080
             path: /health
-      `
+      `;
     mock_fs({
       '/component.yml': component_config,
     });
@@ -1509,7 +1540,7 @@ services:
     }
 
     expect(err).to.be.undefined;
-  })
+  });
 
   it('liveness_probe rejects port without path', async () => {
     const component_config = `
@@ -1536,7 +1567,7 @@ services:
       err = e;
     }
 
-    expect(err).instanceOf(ValidationErrors)
+    expect(err).instanceOf(ValidationErrors);
     const errors = JSON.parse(err.message) as ValidationError[];
     expect(errors).lengthOf(1);
     expect(errors.map(e => e.path)).members([
@@ -1545,7 +1576,8 @@ services:
     expect(errors.map(e => e.message)).members([
       `must have required property 'command' or must have required property 'path' or must match exactly one schema in oneOf`,
     ]);
-  })
+    expect(process.exitCode).eq(1);
+  });
 
   it('liveness_probe rejects path without port', async () => {
     const component_config = `
@@ -1556,7 +1588,7 @@ services:
             main: 8080
           liveness_probe:
             path: /health
-      `
+      `;
     mock_fs({
       '/component.yml': component_config,
     });
@@ -1572,7 +1604,7 @@ services:
       err = e;
     }
 
-    expect(err).instanceOf(ValidationErrors)
+    expect(err).instanceOf(ValidationErrors);
     const errors = JSON.parse(err.message) as ValidationError[];
     expect(errors).lengthOf(1);
     expect(errors.map(e => e.path)).members([
@@ -1581,7 +1613,8 @@ services:
     expect(errors.map(e => e.message)).members([
       `must have required property 'command' or must have required property 'port' or must match exactly one schema in oneOf`,
     ]);
-  })
+    expect(process.exitCode).eq(1);
+  });
 
   it('throw error for trying to expose incorrect interface', async () => {
     const yml = `
@@ -1592,7 +1625,7 @@ services:
           main: 8080
     interfaces:
       app: \${{ services.app.interfaces.main.url }}
-    `
+    `;
 
     mock_fs({
       '/stack/architect.yml': yml,
@@ -1611,13 +1644,14 @@ services:
       err = e;
     }
 
-    expect(err).instanceOf(ValidationErrors)
+    expect(err).instanceOf(ValidationErrors);
     const errors = JSON.parse(err.message) as ValidationError[];
     expect(errors).lengthOf(1);
     expect(errors.map(e => e.path)).members([
       'interfaces.appppp',
     ]);
-    expect(errors[0].message).to.include('interfaces.app')
+    expect(errors[0].message).to.include('interfaces.app');
+    expect(process.exitCode).eq(1);
   });
 
   describe('validate if statements', () => {
@@ -1627,7 +1661,7 @@ services:
       \${{ if true }}:
         secrets:
           test: test
-      `
+      `;
 
       let err;
       try {
@@ -1636,13 +1670,14 @@ services:
         err = e;
       }
 
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
         '${{ if true }}',
       ]);
-    })
+      expect(process.exitCode).eq(1);
+    });
 
     it('cannot use if statement in secrets block', async () => {
       const yml = `
@@ -1650,7 +1685,7 @@ services:
       secrets:
         \${{ if true }}:
           test: test
-      `
+      `;
 
       let err;
       try {
@@ -1659,13 +1694,14 @@ services:
         err = e;
       }
 
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
         'secrets.${{ if true }}',
       ]);
-    })
+      expect(process.exitCode).eq(1);
+    });
 
     it('cannot use if statement in secret value block', async () => {
       const yml = `
@@ -1674,7 +1710,7 @@ services:
         test:
           \${{ if true }}:
             default: test
-      `
+      `;
 
       let err;
       try {
@@ -1683,13 +1719,14 @@ services:
         err = e;
       }
 
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
         'secrets.test.${{ if true }}',
       ]);
-    })
+      expect(process.exitCode).eq(1);
+    });
 
     it('cannot use if statement in dependencies block', async () => {
       const yml = `
@@ -1697,7 +1734,7 @@ services:
       dependencies:
         \${{ if true }}:
           test/dependency: latest
-      `
+      `;
 
       let err;
       try {
@@ -1706,13 +1743,14 @@ services:
         err = e;
       }
 
-      expect(err).instanceOf(ValidationErrors)
+      expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
         'dependencies.${{ if true }}',
       ]);
-    })
+      expect(process.exitCode).eq(1);
+    });
 
     it('can use if statement in service block', async () => {
       const yml = `
@@ -1724,8 +1762,8 @@ services:
           \${{ if true }}:
             environment:
               TEST2: 2
-      `
+      `;
       buildSpecFromYml(yml);
-    })
-  })
+    });
+  });
 });
