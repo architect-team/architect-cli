@@ -72,6 +72,9 @@ export default abstract class BaseCommand extends Command {
   }
 
   async finally(_: Error | undefined): Promise<any> {
+    if (_ instanceof ValidationErrors) {
+      process.exitCode = 1;
+    }
     return await this.endSentryTransaction();
   }
 
