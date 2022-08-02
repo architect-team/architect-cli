@@ -8,8 +8,7 @@ import AppService from '../../app-config/service';
 import { EnvironmentSpecValue } from '../../dependency-manager/spec/resource-spec';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
 import axios from 'axios';
-
-const download = require('download-git-repo');
+import execa from 'execa';
 
 interface Selection {
   name: string,
@@ -81,20 +80,11 @@ export default class ProjectUtils {
     return component_spec as ComponentSpec;
   }
 
-  static async downloadRepo(url: string, dir_path: string): Promise<void> {
-    await download(url + `#${GITHUB_BRANCH}`, dir_path, (err: any) => {
-      if (err) {
-        throw new Error(`Failed to download repository ${url}`);
-      }
-    });
-  }
-
   static async downloadGitHubRepos(selections: Dictionary<Dictionary<any>>, project_dir: string): Promise<void> {
     // download any selection that has a repository
     for (const selection of Object.values(selections)) {
       if (selection.repository) {
-        const url = selection.repository.replace('https://github.com/', '');
-        await this.downloadRepo(url, project_dir + '/' + selection.name.toLowerCase());
+        await execa('git', ['clone', selection.repository, project_dir + '/' + selection.name.toLowerCase()]);
       }
     }
     await new Promise(resolve => setTimeout(resolve, 2000));
