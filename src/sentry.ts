@@ -215,13 +215,13 @@ export default class SentryService {
       if (this.sentry_out) {
         if (error) {
           Sentry.withScope(async scope => {
-            Sentry.captureException(error, scope)
-            await Sentry.flush();
+            Sentry.captureException(error, scope);
           });
         }
         Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
         Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
       }
+      await Sentry.getCurrentHub().getClient()?.close();
     } catch {
       console.log("SENTRY: Unable to save and submit the current transaction");
     }

@@ -121,11 +121,7 @@ export default abstract class BaseCommand extends Command {
   async catch(err: any): Promise<void> {
     if (err.oclif && err.oclif.exit === 0) return;
     await this.sentry?.catch(err);
-    // Sentry flush does not seem to work as intended and calling super
-    // here causes errors not to be sent up. This needs to be investigated more
-    // but it should not block the rest of the update. Have brought in the necessary
-    // code from the super below
-    // return super.catch(err);
-    process.exitCode = process.exitCode ?? err.exitCode ?? 1
+    // Oclif supers go as the return
+    return super.catch(err);
   }
 }
