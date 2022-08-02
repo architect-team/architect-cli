@@ -1,6 +1,7 @@
 import { Flags } from '@oclif/core';
 import inquirer from 'inquirer';
 import stream from 'stream';
+import stringArgv from 'string-argv';
 import WebSocket, { createWebSocketStream } from 'ws';
 import { ArchitectError, Dictionary, parseUnknownSlug } from '../';
 import Account from '../architect/account/account.entity';
@@ -89,7 +90,7 @@ export default class Exec extends BaseCommand {
       const protocols = ['v4.channel.k8s.io', 'v3.channel.k8s.io', 'v2.channel.k8s.io', 'channel.k8s.io'];
 
       const headers: Dictionary<string> = {
-        Authorization: `Bearer ${auth_result?.access_token}`,
+        Authorization: `${auth_result?.token_type} ${auth_result?.access_token}`,
       };
 
       const url = new URL(uri);
@@ -207,8 +208,8 @@ export default class Exec extends BaseCommand {
       stdin: flags.stdin.toString(),
       tty: flags.tty.toString(),
     });
-    for (const c of args.command.split(' ')) {
-      query.append('command', c);
+    for (const arg of stringArgv(args.command)) {
+      query.append('command', arg);
     }
 
     const uri = `${this.app.config.api_host}/environments/${environment.id}/ws/exec?${query}`;
@@ -228,7 +229,10 @@ export default class Exec extends BaseCommand {
       compose_args.push('-T');
     }
     compose_args.push(service.name);
-    compose_args.push(args.command);
+
+    for (const arg of stringArgv(args.command)) {
+      compose_args.push(arg);
+    }
 
     await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' }, true);
   }

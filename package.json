@@ -1,7 +1,7 @@
 {
   "name": "@architect-io/cli",
   "description": "Command-line interface for Architect.io",
-  "version": "1.19.2-rc.4",
+  "version": "1.22.0-rc.4",
   "author": "Architect.io",
   "bin": {
     "architect": "./bin/run"
@@ -21,7 +21,7 @@
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^2.1.1",
     "axios": "^0.21.4",
-    "class-transformer": "^0.4.0",
+    "class-transformer": "0.4.0",
     "class-validator": "^0.13.2",
     "class-validator-jsonschema": "^3.1.0",
     "cli-table3": "0.6.0",
@@ -154,6 +154,7 @@
     "pack": "oclif pack:tarballs",
     "readme": "./bin/readme",
     "generate:schema-docs": "ts-node --project ./tsconfig.json ./src/dependency-manager/generate.ts",
+    "generate:yarn-lock": "(rm yarn.lock || true) && yarn import",
     "semantic-release": "./node_modules/semantic-release/bin/semantic-release.js"
   },
   "types": "lib/index.d.ts"

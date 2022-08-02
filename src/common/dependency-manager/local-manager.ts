@@ -14,7 +14,6 @@ export interface ComponentConfigOpts {
 export default class LocalDependencyManager extends DependencyManager {
   api: AxiosInstance;
   linked_components: Dictionary<string>;
-  use_sidecar = false;
   environment = 'local';
   now = new Date();
 
@@ -49,10 +48,6 @@ export default class LocalDependencyManager extends DependencyManager {
       instance_id: options?.instance_id || component_ref,
       instance_date: this.now,
     };
-
-    if (this.use_sidecar) {
-      metadata.proxy_port_mapping = {};
-    }
 
     const account_name = component_account_name || this.account;
     const linked_component_key = component_ref in this.linked_components ? component_ref : ComponentSlugUtils.build(account_name, component_name);
@@ -132,7 +127,7 @@ export default class LocalDependencyManager extends DependencyManager {
     return spec;
   }
 
-  async loadComponentSpecs(root_component_ref: string): Promise<ComponentSpec[]> {
+  async loadComponentSpecs(root_component_ref: string, debug = false): Promise<ComponentSpec[]> {
     const component_specs = [];
 
     const seen_component_refs = new Set();
@@ -147,7 +142,7 @@ export default class LocalDependencyManager extends DependencyManager {
       }
       seen_component_refs.add(component_ref);
 
-      const component_spec = await this.loadComponentSpec(component_ref);
+      const component_spec = await this.loadComponentSpec(component_ref, undefined, debug);
       component_specs.push(component_spec);
 
       for (const [dep_name, dep_tag] of Object.entries(component_spec.dependencies || {})) {

@@ -1,3 +1,46 @@
+# [1.21.0](https://github.com/architect-team/architect-cli/compare/v1.20.1...v1.21.0) (2022-07-21)
+
+
+### Bug Fixes
+
+* **build:** Add github action to test build/run of cli ([#632](https://github.com/architect-team/architect-cli/issues/632)) ([936c905](https://github.com/architect-team/architect-cli/commit/936c90560fc41aeae71ddab7f18ad5cc05dd92d8))
+
+
+### Features
+
+* **register:** Add support for gha caching ([9ef4063](https://github.com/architect-team/architect-cli/commit/9ef4063f4a86fb6d9beb731a2350d6784d80394a))
+
+## [1.20.1](https://github.com/architect-team/architect-cli/compare/v1.20.0...v1.20.1) (2022-07-20)
+
+
+### Bug Fixes
+
+* **cli:** remove chai ref in doctor cmd ([569b2fe](https://github.com/architect-team/architect-cli/commit/569b2fefd21a4f0e990db197f77e85ed44c4667b))
+
+# [1.20.0](https://github.com/architect-team/architect-cli/compare/v1.19.2...v1.20.0) (2022-07-20)
+
+
+### Bug Fixes
+
+* **examples:** liveness probe update ([#629](https://github.com/architect-team/architect-cli/issues/629)) ([1d94780](https://github.com/architect-team/architect-cli/commit/1d947802fc21dd877f59128960e39571f474d4d8))
+* **exec:** local exec didn't work with multiple cmd args ([fb5ec5b](https://github.com/architect-team/architect-cli/commit/fb5ec5bce5583f1bfa52870527abfc75adc26392))
+* **platform:** Better user authentication support for Kubernetes clusters ([0bb49d0](https://github.com/architect-team/architect-cli/commit/0bb49d05369381efcd74dfb38ac82fe3522df0f4))
+* **volumes:** don't allow for host_path to be specified outside of a debug block ([b9e0b19](https://github.com/architect-team/architect-cli/commit/b9e0b1995dbee32d3916cb46220f7606936bfb7c))
+
+
+### Features
+
+* **doctor:** Add a doctor command that outputs additional information for debugging ([8abe76d](https://github.com/architect-team/architect-cli/commit/8abe76de0932fd50e88ab67b3ca5bf35979c48e2))
+
+## [1.19.2](https://github.com/architect-team/architect-cli/compare/v1.19.1...v1.19.2) (2022-07-18)
+
+
+### Bug Fixes
+
+* **build:** Fix bug with buildx context ([#626](https://github.com/architect-team/architect-cli/issues/626)) ([892024c](https://github.com/architect-team/architect-cli/commit/892024c42cb9110d6dd0b75f6c94fe06dcc21b45))
+* **debug:** 453 debug block ([#625](https://github.com/architect-team/architect-cli/issues/625)) ([1e449a7](https://github.com/architect-team/architect-cli/commit/1e449a75bbfa70b6736e3ee626eb16c6cf35ddf0))
+* **interpolation:** Register interpolation validation ([#580](https://github.com/architect-team/architect-cli/issues/580)) ([df1c943](https://github.com/architect-team/architect-cli/commit/df1c9433173da0da3d5b110e572ffb367358d7fd))
+
 ## [1.19.1](https://github.com/architect-team/architect-cli/compare/v1.19.0...v1.19.1) (2022-07-13)
 
 

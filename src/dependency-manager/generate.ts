@@ -8,4 +8,4 @@ fs.writeJSONSync(output_path, getArchitectJSONSchema(), { spaces: 2 });
 
 // use the schema to generate markdown docs and write them to our docs directory
 const markdown = simpleDocs(getArchitectJSONSchema());
-fs.writeFileSync('./docs/5-reference/2-architect-yml.md', markdown);
+fs.writeFileSync('./architect-yml.md', markdown);
