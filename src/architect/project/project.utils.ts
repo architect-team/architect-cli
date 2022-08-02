@@ -17,12 +17,9 @@ interface Selection {
   'architect-file'?: string,
 }
 
-const GITHUB_BRANCH = 'main';
-
 export default class ProjectUtils {
 
   private static getRootComponent(selections: Dictionary<Selection>): string {
-    console.log(selections);
     if (selections.frontend) {
       return selections.frontend.name.toLowerCase();
     } else if (selections.backend) {
@@ -198,7 +195,7 @@ Change directory to '../${root_service}', then run the register and deploy comma
 
     const selections: Dictionary<Selection> = {};
     const types = ['Full stack', 'Backend'];
-    const type = await this.prompt(types, 'Select a type you would like to proceed');
+    const type = await this.prompt(types, 'What type of application are you building?');
     if (type.toLowerCase() === 'full stack') {
       const frontend_opts = choices.filter((item: any) => item.type === 'frontend');
       const frontend = await this.prompt(frontend_opts, 'Select a frontend');
