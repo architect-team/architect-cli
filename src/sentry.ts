@@ -1,10 +1,12 @@
 import { Dedupe, ExtraErrorData, RewriteFrames, Transaction } from '@sentry/integrations';
 import * as Sentry from '@sentry/node';
+import chalk from 'chalk';
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import { ENVIRONMENT } from './app-config/config';
 import AppService from './app-config/service';
+import BaseCommand from './base-command';
 import { docker } from './common/utils/docker';
 import PromptUtils from './common/utils/prompt-utils';
 import LocalPaths from './paths';
@@ -13,25 +15,26 @@ const CLI_SENTRY_DSN = 'https://272fd53f577f4729b014701d74fe6c53@o298191.ingest.
 
 export default class SentryService {
   app: AppService;
+  command: BaseCommand;
   child: any;
   file_out: boolean;
   sentry_out: boolean;
   sentry_history_file_path: string;
 
 
-  static async create(app: AppService, child: any): Promise<SentryService> {
-    const sentry = new SentryService(app, child);
+  static async create(app: AppService, child: any, command: BaseCommand): Promise<SentryService> {
+    const sentry = new SentryService(app, child, command);
     await sentry.startSentryTransaction();
     return sentry;
   }
 
-  constructor(app: AppService, child: any) {
+  constructor(app: AppService, child: any, command: BaseCommand) {
     this.app = app;
     this.child = child;
+    this.command = command;
     this.file_out = app.config.environment !== ENVIRONMENT.TEST && app.config.environment !== ENVIRONMENT.PREVIEW;
     this.sentry_history_file_path = path.join(app.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
-    this.sentry_out = app.config.environment === ENVIRONMENT.PRODUCTION || app.config.environment === ENVIRONMENT.DEV || app.config.environment === ENVIRONMENT.PREVIEW;
-    this.startSentryTransaction();
+    this.sentry_out = true;// app.config.environment === ENVIRONMENT.PRODUCTION || app.config.environment === ENVIRONMENT.DEV || app.config.environment === ENVIRONMENT.PREVIEW;
   }
 
   async startSentryTransaction(): Promise<void> {
@@ -62,7 +65,7 @@ export default class SentryService {
 
       Sentry.init({
         dsn: CLI_SENTRY_DSN,
-        debug: false,
+        debug: true,
         environment: this.app.config.environment,
         release: process.env?.npm_package_version,
         tracesSampleRate: 1.0,
@@ -147,8 +150,61 @@ export default class SentryService {
     }
   }
 
-  async endSentryTransaction(write_command_out: boolean, error?: any): Promise<void> {
-    if (this.app.config.environment === ENVIRONMENT.TEST) return;
+  async catch(error?: any): Promise<void> {
+    try {
+      if (error.stack) {
+        error.stack = [...new Set(error.stack.split('\n'))].join("\n");
+      }
+
+      if (error.response?.data instanceof Object) {
+        error.message += `\nmethod: ${error.config.method}`;
+        for (const [k, v] of Object.entries(error.response.data)) {
+          try {
+            const msg = JSON.parse(v as any).message;
+            if (!msg) { throw new Error('Invalid msg'); }
+            error.message += `\n${k}: ${msg}`;
+          } catch {
+            error.message += `\n${k}: ${v}`;
+          }
+        }
+      }
+
+      if (error.stderr) {
+        error.message += `\nstderr:\n${error.stderr}\n`;
+      }
+
+      console.error(chalk.red(error.message));
+
+    } catch {
+      this.command.warn('Unable to add more context to error message');
+    }
+  }
+
+  private async filterNonSensitiveSentryMetadata(non_sensitive: Set<string>, metadata: any): Promise<any> {
+    return Object.entries(metadata)
+      .filter((value,) => !!value[1] && non_sensitive.has(value[0]))
+      .map(key => ({ [key[0]]: key[1] }));
+  }
+
+  async endSentryTransaction(write_command_out: boolean, inputs: any, calling_class: any, error?: any): Promise<boolean> {
+    if (this.app.config.environment === ENVIRONMENT.TEST) return false;
+    const { args, flags } = inputs;
+
+    const non_sensitive = new Set([
+      ...Object.entries(calling_class.flags || {}).filter(([_, value]) => (value as any).non_sensitive).map(([key, _]) => key),
+      ...Object.entries(calling_class.args || {}).filter(([_, value]) => (value as any).non_sensitive).map(([_, value]) => (value as any).name),
+    ]);
+
+    try {
+      const filtered_sentry_args = await this.filterNonSensitiveSentryMetadata(non_sensitive, args);
+      const filtered_sentry_flags = await this.filterNonSensitiveSentryMetadata(non_sensitive, flags);
+
+      await this.setScopeExtra('command_args', filtered_sentry_args);
+      await this.setScopeExtra('command_flags', filtered_sentry_flags);
+    } catch {
+
+    }
+
     try {
       await this.updateSentryTransaction(error);
 
@@ -157,15 +213,16 @@ export default class SentryService {
       }
 
       if (this.sentry_out) {
+        if (error) {
+          Sentry.withScope(scope => Sentry.captureException(error, scope));
+        }
         Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
         Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
-        if (error) {
-          Sentry.withScope(scope => Sentry.captureException(error));
-        }
       }
     } catch {
-      console.debug("SENTRY: Unable to save and submit the current transaction");
+      console.log("SENTRY: Unable to save and submit the current transaction");
     }
+    return true;
   }
 
   /*

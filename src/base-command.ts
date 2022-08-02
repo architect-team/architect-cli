@@ -1,10 +1,6 @@
 import { Command, Interfaces } from '@oclif/core';
 import '@sentry/tracing';
-import chalk from 'chalk';
-import { ValidationErrors } from './';
-import { ENVIRONMENT } from './app-config/config';
 import AppService from './app-config/service';
-import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
 import SentryService from './sentry';
 
@@ -37,6 +33,19 @@ export default abstract class BaseCommand extends Command {
     });
   }
 
+  private async createSentry() {
+    try {
+      this.sentry = await SentryService.create(this.app, this.constructor as any, this);
+    } catch (e) {
+      console.log('SENTRY: an error occurred creating a new instance of SentryService');
+    }
+  }
+
+  private async loginRequired() {
+    await this.createSentry();
+    throw new LoginRequiredError();
+  }
+
   async init(): Promise<void> {
     const { flags } = await this.parse(this.constructor as any);
     const flag_definitions = (this.constructor as any).flags;
@@ -47,32 +56,22 @@ export default abstract class BaseCommand extends Command {
       if (await this.auth_required()) {
         const token_json = await this.app.auth.getPersistedTokenJSON();
         if (!token_json) {
-          throw new LoginRequiredError();
+          return await this.loginRequired();
         }
         if (token_json.email === 'unknown') {
-          throw new LoginRequiredError();
+          return await this.loginRequired();
         }
         if (token_json.expires_in) {
           const auth_client = this.app.auth.getAuthClient();
           const access_token = auth_client.createToken(token_json);
           if (access_token.expired()) {
-            throw new LoginRequiredError();
+            return await this.loginRequired();
           }
         }
       }
-    }
-    try {
-      this.sentry = await SentryService.create(this.app, this.constructor as any);
-    } catch (e) {
-      console.debug("SENTRY: an error occurred creating a new instance of SentryService");
-    }
-    if (!this.sentry) {
-      console.debug("SENTRY: SentryService failed to initialize");
-    }
-  }
 
-  async finally(_: Error | undefined): Promise<any> {
-    return await this.endSentryTransaction();
+      await this.createSentry();
+    }
   }
 
   // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
@@ -112,85 +111,17 @@ export default abstract class BaseCommand extends Command {
     return super.parse(options, [...args, ...flags]);
   }
 
+  async finally(err: Error | undefined): Promise<any> {
+    const calling_class = this.constructor as any;
+    await this.sentry?.endSentryTransaction(!(await this.disable_sentry_recording()), this.parse(calling_class), calling_class, err)
+    // Oclif supers go as the return
+    return super.finally(err);
+  }
+
   async catch(err: any): Promise<void> {
     if (err.oclif && err.oclif.exit === 0) return;
-    process.exitCode = 1;
-
-    try {
-
-      if (err.stack) {
-        err.stack = [...new Set(err.stack.split('\n'))].join("\n");
-      }
-
-      if (err instanceof ValidationErrors) {
-        return prettyValidationErrors(err);
-      }
-
-      if (err.response?.data instanceof Object) {
-        err.message += `\nmethod: ${err.config.method}`;
-        for (const [k, v] of Object.entries(err.response.data)) {
-          try {
-            const msg = JSON.parse(v as any).message;
-            if (!msg) { throw new Error('Invalid msg'); }
-            err.message += `\n${k}: ${msg}`;
-          } catch {
-            err.message += `\n${k}: ${v}`;
-          }
-        }
-      }
-
-      if (err.stderr) {
-        err.message += `\nstderr:\n${err.stderr}\n`;
-      }
-
-      console.error(chalk.red(err.message));
-
-    } catch {
-      this.warn('Unable to add more context to error message');
-    }
-    const app_env = this.app?.config?.environment;
-    if (!this.sentry || !app_env || app_env === ENVIRONMENT.TEST) {
-      return super.catch(err);
-    }
-    return await this.endSentryTransaction(err);
+    await this.sentry?.catch(err);
+    // Oclif supers go as the return
+    return super.catch(err);
   }
-
-  async _filterNonSensitiveSentryMetadata(non_sensitive: Set<string>, metadata: any): Promise<any> {
-    return Object.entries(metadata)
-      .filter((value,) => !!value[1] && non_sensitive.has(value[0]))
-      .map(key => ({ [key[0]]: key[1] }));
-  }
-
-  async endSentryTransaction(err?: any): Promise<any> {
-    const app_env = this.app?.config?.environment;
-    if (!this.sentry || !app_env || app_env === ENVIRONMENT.TEST) {
-      return err;
-    }
-
-    const calling_class = this.constructor as any;
-
-    const non_sensitive = new Set([
-      ...Object.entries(calling_class.flags || {}).filter(([_, value]) => (value as any).non_sensitive).map(([key, _]) => key),
-      ...Object.entries(calling_class.args || {}).filter(([_, value]) => (value as any).non_sensitive).map(([_, value]) => (value as any).name),
-    ]);
-
-    try {
-      const { args, flags } = await this.parse(calling_class);
-      const filtered_sentry_args = await this._filterNonSensitiveSentryMetadata(non_sensitive, args);
-      const filtered_sentry_flags = await this._filterNonSensitiveSentryMetadata(non_sensitive, flags);
-
-      await this.sentry.setScopeExtra('command_args', filtered_sentry_args);
-      await this.sentry.setScopeExtra('command_flags', filtered_sentry_flags);
-    } catch {
-      this.warn('Failed to get command metadata');
-    }
-
-    await this.sentry.endSentryTransaction(!(await this.disable_sentry_recording()), err);
-
-    if (!err) {
-      return await super.finally(err);
-    }
-    return await super.catch(err);
-  }
-
 }
