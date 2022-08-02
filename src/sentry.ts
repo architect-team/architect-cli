@@ -6,7 +6,6 @@ import os from 'os';
 import path from 'path';
 import { ENVIRONMENT } from './app-config/config';
 import AppService from './app-config/service';
-import BaseCommand from './base-command';
 import { docker } from './common/utils/docker';
 import PromptUtils from './common/utils/prompt-utils';
 import LocalPaths from './paths';
@@ -15,24 +14,24 @@ const CLI_SENTRY_DSN = 'https://272fd53f577f4729b014701d74fe6c53@o298191.ingest.
 
 export default class SentryService {
   app: AppService;
-  command: BaseCommand;
+  debug: (message: string) => void;
   child: any;
   file_out: boolean;
   sentry_out: boolean;
   sentry_history_file_path: string;
 
 
-  static async create(app: AppService, child: any, command: BaseCommand): Promise<SentryService> {
-    command.consoleDebug("SENTRY: Initializing");
-    const sentry = new SentryService(app, child, command);
+  static async create(app: AppService, child: any, debug: (message: string) => void): Promise<SentryService> {
+    debug("SENTRY: Initializing");
+    const sentry = new SentryService(app, child, debug);
     await sentry.startSentryTransaction();
     return sentry;
   }
 
-  constructor(app: AppService, child: any, command: BaseCommand) {
+  constructor(app: AppService, child: any, debug: (message: string) => void) {
     this.app = app;
     this.child = child;
-    this.command = command;
+    this.debug = debug;
     this.file_out = app.config.environment !== ENVIRONMENT.TEST && app.config.environment !== ENVIRONMENT.PREVIEW;
     this.sentry_history_file_path = path.join(app.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
     this.sentry_out = app.config.environment === ENVIRONMENT.PRODUCTION || app.config.environment === ENVIRONMENT.DEV || app.config.environment === ENVIRONMENT.PREVIEW;
@@ -111,7 +110,7 @@ export default class SentryService {
         scope.setTags(sentry_tags);
       });
     } catch {
-      this.command.consoleDebug("SENTRY: Unable to start sentry transaction");
+      this.debug("SENTRY: Unable to start sentry transaction");
     }
   }
 
@@ -147,7 +146,7 @@ export default class SentryService {
       const update_scope = Sentry.getCurrentHub().getScope();
       update_scope?.setExtras(sentry_session_metadata);
     } catch {
-      this.command.consoleDebug("SENTRY: Unable to attach metadata to the current transaction");
+      this.debug("SENTRY: Unable to attach metadata to the current transaction");
     }
   }
 
@@ -177,7 +176,7 @@ export default class SentryService {
       console.error(chalk.red(error.message));
 
     } catch {
-      this.command.warn('Unable to add more context to error message');
+      this.debug('Unable to add more context to error message');
     }
   }
 
@@ -203,7 +202,7 @@ export default class SentryService {
       await this.setScopeExtra('command_args', filtered_sentry_args);
       await this.setScopeExtra('command_flags', filtered_sentry_flags);
     } catch (err) {
-      this.command.consoleDebug("Unable to add extra sentry metadata");
+      this.debug("Unable to add extra sentry metadata");
     }
 
     try {
@@ -224,7 +223,7 @@ export default class SentryService {
       }
       await Sentry.getCurrentHub().getClient()?.close();
     } catch {
-      this.command.consoleDebug("SENTRY: Unable to save and submit the current transaction");
+      this.debug("SENTRY: Unable to save and submit the current transaction");
     }
   }
 
@@ -236,7 +235,7 @@ export default class SentryService {
       const update_scope = Sentry.getCurrentHub().getScope();
       update_scope?.setExtra(key, value);
     } catch {
-      this.command.consoleDebug("SENTRY: Unable to add extra metadata element to the current transaction");
+      this.debug("SENTRY: Unable to add extra metadata element to the current transaction");
     }
   }
 
@@ -254,7 +253,7 @@ export default class SentryService {
 
       return updated_docker_info;
     } catch {
-      this.command.consoleDebug("SENTRY: Unable to retrieve running docker container metadata");
+      this.debug("SENTRY: Unable to retrieve running docker container metadata");
       return [];
     }
   }
@@ -265,7 +264,7 @@ export default class SentryService {
       const addr = fs.readdirSync(path, { withFileTypes: true });
       return addr.filter(f => f.isFile()).map(f => ({ name: f.name })) || [];
     } catch {
-      this.command.consoleDebug("SENTRY: Unable to read list of file names from the architect config directory");
+      this.debug("SENTRY: Unable to read list of file names from the architect config directory");
       return [];
     }
   }
@@ -276,7 +275,7 @@ export default class SentryService {
       try {
         command_history = await JSON.parse(fs.readFileSync(this.sentry_history_file_path).toString()) || [];
       } catch {
-        this.command.consoleDebug("SENTRY: Unable to read command history file from the architect config directory");
+        this.debug("SENTRY: Unable to read command history file from the architect config directory");
       }
     }
     return command_history;
@@ -313,7 +312,7 @@ export default class SentryService {
       const maximum_records = ~Math.min(5, history.length) + 1;
       fs.outputJsonSync(this.sentry_history_file_path, history.slice(maximum_records), { spaces: 2 });
     } catch {
-      this.command.consoleDebug("SENTRY: Unable to write command history file to the architect config directory");
+      this.debug("SENTRY: Unable to write command history file to the architect config directory");
     }
   }
 

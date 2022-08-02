@@ -35,7 +35,7 @@ export default abstract class BaseCommand extends Command {
 
   private async createSentry() {
     try {
-      this.sentry = await SentryService.create(this.app, this.constructor as any, this);
+      this.sentry = await SentryService.create(this.app, this.constructor as any, this.debug.bind(this));
     } catch (e) {
       this.debug('SENTRY: an error occurred creating a new instance of SentryService');
     }
@@ -123,12 +123,5 @@ export default abstract class BaseCommand extends Command {
     await this.sentry?.catch(err);
     // Oclif supers go as the return
     return super.catch(err);
-  }
-
-  // The current debug method is protected and we need a full logger
-  // this is a temporary work around until we implement
-  // https://gitlab.com/architect-io/architect-cli/-/issues/474
-  consoleDebug(message: string): void {
-    this.debug(message);
   }
 }
