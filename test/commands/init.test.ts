@@ -208,9 +208,9 @@ services:
       const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
       const component_object: any = yaml.load(writeFileSync.args[0][1]);
       expect(component_config.services['elasticsearch'].volumes['volume2'].mount_path).eq('/usr/share/elasticsearch/data');
-      expect(component_object.services['elasticsearch']["${{ if architect.environment == 'local' }}"].volumes['volume'].mount_path).eq('/usr/share/elasticsearch/config/elasticsearch.yml');
-      expect(component_object.services['elasticsearch']["${{ if architect.environment == 'local' }}"].volumes['volume'].host_path).eq('./elasticsearch/config/elasticsearch.yml');
-      expect(component_object.services['elasticsearch']["${{ if architect.environment == 'local' }}"].volumes['volume'].readonly).eq(true);
+      expect(component_object.services['elasticsearch'].debug.volumes['volume'].mount_path).eq('/usr/share/elasticsearch/config/elasticsearch.yml');
+      expect(component_object.services['elasticsearch'].debug.volumes['volume'].host_path).eq('./elasticsearch/config/elasticsearch.yml');
+      expect(component_object.services['elasticsearch'].debug.volumes['volume'].readonly).eq(true);
     });
 
   mockInit()
@@ -220,12 +220,12 @@ services:
       expect(writeFileSync.called).to.be.true;
 
       const component_object: any = yaml.load(writeFileSync.args[0][1]);
-      expect(component_object.services['logstash']["${{ if architect.environment == 'local' }}"].volumes['volume'].mount_path).eq('/usr/share/logstash/config/logstash.yml');
-      expect(component_object.services['logstash']["${{ if architect.environment == 'local' }}"].volumes['volume'].host_path).eq('./logstash/config/logstash.yml');
-      expect(component_object.services['logstash']["${{ if architect.environment == 'local' }}"].volumes['volume'].readonly).eq(true);
-      expect(component_object.services['logstash']["${{ if architect.environment == 'local' }}"].volumes['volume2'].mount_path).eq('/usr/share/logstash/pipeline');
-      expect(component_object.services['logstash']["${{ if architect.environment == 'local' }}"].volumes['volume2'].host_path).eq('./logstash/pipeline');
-      expect(component_object.services['logstash']["${{ if architect.environment == 'local' }}"].volumes['volume2'].readonly).eq(true);
+      expect(component_object.services['logstash'].debug.volumes['volume'].mount_path).eq('/usr/share/logstash/config/logstash.yml');
+      expect(component_object.services['logstash'].debug.volumes['volume'].host_path).eq('./logstash/config/logstash.yml');
+      expect(component_object.services['logstash'].debug.volumes['volume'].readonly).eq(true);
+      expect(component_object.services['logstash'].debug.volumes['volume2'].mount_path).eq('/usr/share/logstash/pipeline');
+      expect(component_object.services['logstash'].debug.volumes['volume2'].host_path).eq('./logstash/pipeline');
+      expect(component_object.services['logstash'].debug.volumes['volume2'].readonly).eq(true);
     });
 
   mockInit()
@@ -236,18 +236,18 @@ services:
 
       const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
       const component_object: any = yaml.load(writeFileSync.args[0][1]);
-      expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume'].mount_path).eq('/usr/share/kibana/config/kibana.yml');
-      expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume'].host_path).eq('./kibana/config/kibana.yml');
-      expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume'].readonly).eq(true);
+      expect(component_object.services['kibana'].debug.volumes['volume'].mount_path).eq('/usr/share/kibana/config/kibana.yml');
+      expect(component_object.services['kibana'].debug.volumes['volume'].host_path).eq('./kibana/config/kibana.yml');
+      expect(component_object.services['kibana'].debug.volumes['volume'].readonly).eq(true);
       expect(component_config.services['kibana'].volumes['volume2'].mount_path).eq('/var/lib/mysql');
       expect(component_config.services['kibana'].volumes['volume2'].host_path).is.undefined;
-      expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume3'].mount_path).eq('/var/lib/mysql');
-      expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume3'].host_path).eq('/opt/data');
-      expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume4'].mount_path).eq('/tmp/cache');
-      expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume4'].host_path).eq('./cache');
-      expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume5'].mount_path).eq('/etc/configs/');
-      expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume5'].host_path).eq('~/configs');
-      expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume5'].readonly).eq(true);
+      expect(component_object.services['kibana'].debug.volumes['volume3'].mount_path).eq('/var/lib/mysql');
+      expect(component_object.services['kibana'].debug.volumes['volume3'].host_path).eq('/opt/data');
+      expect(component_object.services['kibana'].debug.volumes['volume4'].mount_path).eq('/tmp/cache');
+      expect(component_object.services['kibana'].debug.volumes['volume4'].host_path).eq('./cache');
+      expect(component_object.services['kibana'].debug.volumes['volume5'].mount_path).eq('/etc/configs/');
+      expect(component_object.services['kibana'].debug.volumes['volume5'].host_path).eq('~/configs');
+      expect(component_object.services['kibana'].debug.volumes['volume5'].readonly).eq(true);
     });
 
   mockInit()
