@@ -37,7 +37,7 @@ export default abstract class BaseCommand extends Command {
     try {
       this.sentry = await SentryService.create(this.app, this.constructor as any, this);
     } catch (e) {
-      console.log('SENTRY: an error occurred creating a new instance of SentryService');
+      this.debug('SENTRY: an error occurred creating a new instance of SentryService');
     }
   }
 

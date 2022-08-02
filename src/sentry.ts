@@ -23,6 +23,7 @@ export default class SentryService {
 
 
   static async create(app: AppService, child: any, command: BaseCommand): Promise<SentryService> {
+    command.consoleDebug("SENTRY: Initializing");
     const sentry = new SentryService(app, child, command);
     await sentry.startSentryTransaction();
     return sentry;
