@@ -65,7 +65,7 @@ export default class SentryService {
 
       Sentry.init({
         dsn: CLI_SENTRY_DSN,
-        debug: true,
+        debug: false,
         environment: this.app.config.environment,
         release: process.env?.npm_package_version,
         tracesSampleRate: 1.0,
@@ -201,8 +201,8 @@ export default class SentryService {
 
       await this.setScopeExtra('command_args', filtered_sentry_args);
       await this.setScopeExtra('command_flags', filtered_sentry_flags);
-    } catch {
-
+    } catch (err) {
+      console.debug("Unable to add extra sentry metadata");
     }
 
     try {

@@ -112,13 +112,15 @@ export default abstract class BaseCommand extends Command {
   }
 
   async finally(err: Error | undefined): Promise<any> {
+    console.log("FINALLY");
     const calling_class = this.constructor as any;
-    await this.sentry?.endSentryTransaction(!(await this.disable_sentry_recording()), this.parse(calling_class), calling_class, err)
+    await this.sentry?.endSentryTransaction(!(await this.disable_sentry_recording()), await this.parse(calling_class), calling_class, err)
     // Oclif supers go as the return
     return super.finally(err);
   }
 
   async catch(err: any): Promise<void> {
+    console.log("CATCH");
     if (err.oclif && err.oclif.exit === 0) return;
     await this.sentry?.catch(err);
     // Oclif supers go as the return
