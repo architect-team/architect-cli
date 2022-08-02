@@ -11,6 +11,7 @@ import ProjectUtils from '../architect/project/project.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { ComposeConverter } from '../common/docker-compose/converter';
+import { ComponentSlugUtils } from '../dependency-manager/spec/utils/slugs';
 
 export abstract class InitCommand extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -52,7 +53,7 @@ export abstract class InitCommand extends BaseCommand {
   static args = [{
     name: 'name',
     description: 'Name of your component or project',
-    required: true,
+    required: false,
   }];
 
   protected async parse<F, A extends {
@@ -61,13 +62,6 @@ export abstract class InitCommand extends BaseCommand {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
     const args: any = parsed.args;
-
-    if (!(new RegExp('^[a-z][a-z-]+[a-z]$').test(args.name))) {
-      if (flags['from-compose']) {
-        throw new Error(`Component name can only contain lowercase letters and dashes, and must start and end with a letter.`);
-      }
-      throw new Error(`Project name can only contain lowercase letters and dashes, and must start and end with a letter.`);
-    }
 
     // Merge any values set via deprecated flags into their supported counterparts
     flags['component-file'] = flags.component_file ? flags.component_file : flags['component-file'];
@@ -94,6 +88,7 @@ export abstract class InitCommand extends BaseCommand {
     await ProjectUtils.updateArchitectYamls(this.app, selections, project_name);
     await ProjectUtils.linkSelections(this.app, selections, project_name);
     this.log(`Successfully created project ${project_name}.`);
+    this.log(chalk.blue(`Now try running your project using the instructions in ${project_name}/README.md.`));
   }
 
   async runArchitectYamlConversion(from_path: string, component_name: string, component_file: string): Promise<void> {
@@ -119,6 +114,24 @@ export abstract class InitCommand extends BaseCommand {
   async run(): Promise<void> {
     const { flags, args } = await this.parse(InitCommand);
 
+    const compose_exist = await this.doesDockerComposeYmlExist();
+    if (!args.name) {
+      const answer: { chosen: any } = await inquirer.prompt([
+        {
+          name: 'chosen',
+          message: `Please provide a name for your ${ compose_exist ? 'component' : 'project' }:`,
+          type: 'input',
+        }]);
+        args.name = answer.chosen;
+    }
+
+    if (!ComponentSlugUtils.Validator.test(args.name)) {
+      if (flags['from-compose']) {
+        throw new Error(`Component name can only contain lowercase letters and dashes, and must start and end with a letter.`);
+      }
+      throw new Error(`Project name can only contain lowercase letters and dashes, and must start and end with a letter.`);
+    }
+
     let from_path = await this.getComposeFromPath(flags);
     if (flags['from-compose']) {
       if (!from_path) {
@@ -128,7 +141,6 @@ export abstract class InitCommand extends BaseCommand {
       return;
     }
 
-    const compose_exist = await this.doesDockerComposeYmlExist();
     if (compose_exist) {
       const init_comp = await ProjectUtils.prompt(['yes', 'no'], `Would you like to convert from ${from_path}?`);
       if (init_comp === 'yes') {
