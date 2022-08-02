@@ -128,7 +128,7 @@ export default abstract class BaseCommand extends Command {
   // The current debug method is protected and we need a full logger
   // this is a temporary work around until we implement
   // https://gitlab.com/architect-io/architect-cli/-/issues/474
-  consoleDebug(message: string) {
+  consoleDebug(message: string): void {
     this.debug(message);
   }
 }
