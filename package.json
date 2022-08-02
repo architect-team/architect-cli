@@ -39,7 +39,6 @@
     "js-yaml": "4.1.0",
     "leven": "^3.1.0",
     "matcher": "^4.0.0",
-    "node-fetch": "^2.6.1",
     "opener": "^1.5.2",
     "p-limit": "^3.1.0",
     "patch-package": "^6.4.7",
