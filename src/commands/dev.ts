@@ -88,7 +88,7 @@ export default class Dev extends BaseCommand {
     port: {
       non_sensitive: true,
       ...Flags.integer({
-        default: 80,
+        default: 443,
         description: '[default: 80] Port for the gateway',
       }),
     },
@@ -258,7 +258,7 @@ export default class Dev extends BaseCommand {
         const promises: Promise<AxiosResponse<any>>[] = [];
         for (const exposed_interface of exposed_interfaces) {
           const [host_name, port] = exposed_interface.replace('http://', '').split(':');
-          promises.push(axios.get(`http://localhost:${port}`, {
+          promises.push(axios.get(`https://localhost:${port}`, {
             headers: {
               Host: host_name,
             },
@@ -373,7 +373,7 @@ export default class Dev extends BaseCommand {
     if (!port_available) {
       this.error(`Could not run architect on port ${flags.port}.\nPlease stop an existing process or specify --port to choose a different port.`);
     }
-    dependency_manager.external_addr = `arc.localhost:${flags.port}`;
+    dependency_manager.external_addr = `muesch.dev:${flags.port}`;
 
     if (flags.account) {
       const account = await AccountUtils.getAccount(this.app, flags.account);

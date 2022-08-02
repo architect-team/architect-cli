@@ -25,7 +25,7 @@ import { interpolateObjectLoose, interpolateObjectOrReject, replaceInterpolation
 export default abstract class DependencyManager {
 
   account?: string;
-  external_addr = 'arc.localhost:80';
+  external_addr = 'muesch.dev:80';
 
   getComponentNodes(component: ComponentConfig): DependencyNode[] {
     const nodes = [];
@@ -507,7 +507,7 @@ export default abstract class DependencyManager {
     // Set component interfaces
     const [external_host, external_port_string] = this.external_addr.split(':');
     const external_port = parseInt(external_port_string);
-    const external_protocol = external_host === 'arc.localhost' ? 'http' : 'https';
+    const external_protocol = external_host === 'muesch.dev' ? 'http' : 'https';
     for (const [interface_name, interface_config] of Object.entries(component_config.interfaces)) {
       const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
       const matches = url_regex.exec(interface_config.url);

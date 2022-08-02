@@ -46,23 +46,13 @@ export class DockerComposeUtils {
     if (gateway_node) {
       for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
         for (const { interface_from } of edge.interface_mappings) {
-          const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
+          const host = interface_from === '@' ? 'muesch.dev' : `${interface_from}.muesch.dev`;
           gateway_links.add(`${gateway_node.ref}:${host}`);
         }
       }
 
       compose.services[gateway_node.ref] = {
         image: 'traefik:v2.6.2',
-        command: [
-          '--api.insecure=true',
-          '--pilot.dashboard=false',
-          '--accesslog=true',
-          '--accesslog.filters.statusCodes=400-599',
-          `--entryPoints.web.address=:${gateway_port}`,
-          '--providers.docker=true',
-          '--providers.docker.exposedByDefault=false',
-          `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
-        ],
         ports: [
           // The HTTP port
           `${gateway_port}:${gateway_port}`,
@@ -71,6 +61,9 @@ export class DockerComposeUtils {
         ],
         volumes: [
           '/var/run/docker.sock:/var/run/docker.sock:ro',
+          '~/tmp/ssl/traefik-arc.yml:/etc/traefik/traefik.yaml',
+          // Need to download this dynamically
+          '~/tmp/ssl/certs/:/certs/',
         ],
       };
     }
@@ -261,7 +254,7 @@ export class DockerComposeUtils {
             service_to.labels.push(`traefik.port=${gateway_port}`);
           }
 
-          const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
+          const host = interface_from === '@' ? 'muesch.dev' : `${interface_from}.muesch.dev`;
           const traefik_service = `${node_to.ref}-${interface_to}`;
 
           const component_node = graph.getNodeByRef(edge.to) as ComponentNode;
@@ -278,6 +271,8 @@ export class DockerComposeUtils {
           if (node_to_interface.sticky) {
             service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadBalancer.sticky.cookie=true`);
           }
+          service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=websecure`);
+          service_to.labels.push(`traefik.http.routers.${traefik_service}.tls=true`);
         }
       }
     }
