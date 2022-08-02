@@ -124,4 +124,11 @@ export default abstract class BaseCommand extends Command {
     // Oclif supers go as the return
     return super.catch(err);
   }
+
+  // The current debug method is protected and we need a full logger
+  // this is a temporary work around until we implement
+  // https://gitlab.com/architect-io/architect-cli/-/issues/474
+  consoleDebug(message: string) {
+    this.debug(message);
+  }
 }

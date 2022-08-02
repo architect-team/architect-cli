@@ -57,7 +57,6 @@ describe('register', function () {
     .command(['register', 'examples/fusionauth/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('test file: replacement', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
-      expect(process.exitCode).eq(0);
     });
 
   mockArchitectAuth
@@ -84,7 +83,6 @@ describe('register', function () {
     .command(['register', 'examples/fusionauth/architect.yml', '-t', '1.0.0', '--architecture', 'amd64', '--architecture', 'arm64v8', '--architecture', 'windows-amd64', '-a', 'examples'])
     .it('register component with architecture flag', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
-      expect(process.exitCode).eq(0);
     });
 
   mockArchitectAuth
@@ -97,11 +95,10 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'examples/database-seeding/architect.yml', '-t', '1.0.0', '--architecture', 'incorrect', '-a', 'examples'])
     .catch(err => {
+      expect(process.exitCode).eq(1);
       expect(`${err}`).to.contain('Some internal docker build exception');
     })
-    .it('register component with architecture flag failed', ctx => {
-      expect(process.exitCode).eq(1);
-    });
+    .it('register component with architecture flag failed');
 
   mockArchitectAuth
     .nock(MOCK_REGISTRY_HOST, api => api
@@ -139,7 +136,6 @@ describe('register', function () {
     .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('register superset', async ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
-      expect(process.exitCode).eq(0);
       /*
       const writeCompose = DockerComposeUtils.writeCompose as sinon.SinonStub;
       const compose_contents = yaml.load(writeCompose.firstCall.args[1]) as DockerComposeTemplate;
@@ -180,7 +176,6 @@ describe('register', function () {
     .command(['register', 'examples/gcp-pubsub/pubsub/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('it reports to the user that the component was registered successfully', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
-      expect(process.exitCode).eq(0);
     });
 
   mockArchitectAuth
@@ -207,7 +202,6 @@ describe('register', function () {
     .it('it does not call any docker commands if the image is provided', ctx => {
       expect(ctx.stderr).to.contain('Registering component examples/gcp-pubsub:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
-      expect(process.exitCode).eq(0);
     });
 
   mockArchitectAuth
@@ -229,7 +223,6 @@ describe('register', function () {
     .it('it defaults the tag to latest if not supplied', ctx => {
       expect(ctx.stderr).to.contain('Registering component examples/gcp-pubsub:latest with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
-      expect(process.exitCode).eq(0);
     });
 
   mockArchitectAuth
@@ -243,11 +236,10 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'examples/hello-world/architect.yml', '-a', 'examples'])
     .catch(err => {
+      expect(process.exitCode).eq(1);
       expect(err.message).to.contain('Friendly error message from server');
     })
-    .it('rejects with informative error message if account is unavailable', ctx => {
-      expect(process.exitCode).eq(1);
-    });
+    .it('rejects with informative error message if account is unavailable');
 
   mockArchitectAuth
     .stub(fs, 'move', sinon.stub())
@@ -279,7 +271,6 @@ describe('register', function () {
     .it('gives user feedback while running docker commands', ctx => {
       expect(ctx.stderr).to.contain('Registering component database-seeding:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
-      expect(process.exitCode).eq(0);
     });
 
   mockArchitectAuth
@@ -292,11 +283,11 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'examples/database-seeding/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .catch(err => {
+      expect(process.exitCode).eq(1);
       expect(`${err}`).to.contain('Some internal docker build exception');
     })
     .it('rejects with informative error message if docker buildx inspect fails', ctx => {
       expect(ctx.stdout).to.contain("Docker buildx bake failed. Please make sure docker is running.");
-      expect(process.exitCode).eq(1);
     });
 
   mockArchitectAuth
@@ -325,7 +316,6 @@ describe('register', function () {
     .command(['register', 'examples/stateless-component/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('gives user feedback for each component in the environment while running docker commands', ctx => {
       expect(ctx.stderr).to.contain('Registering component stateless-component:1.0.0 with Architect Cloud');
-      expect(process.exitCode).eq(0);
     });
 
   mockArchitectAuth
@@ -364,7 +354,6 @@ describe('register', function () {
         'mock.registry.localhost/examples/react-app.services.api:latest',
         'mock.registry.localhost/examples/react-app.services.app:latest',
       ]);
-      expect(process.exitCode).eq(0);
     });
 
   mockArchitectAuth
@@ -395,6 +384,5 @@ describe('register', function () {
       expect(compose.callCount).to.eq(1);
       expect(compose.firstCall.args[0][5]).to.deep.equal("*.args.NODE_ENV=dev");
       expect(compose.firstCall.args[0][7]).to.deep.equal('*.args.SSH_PUB_KEY="abc==\ntest.architect.io"');
-      expect(process.exitCode).eq(1);
     });
 });
