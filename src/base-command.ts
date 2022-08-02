@@ -72,9 +72,6 @@ export default abstract class BaseCommand extends Command {
   }
 
   async finally(_: Error | undefined): Promise<any> {
-    if (_ instanceof ValidationErrors) {
-      process.exitCode = 1;
-    }
     return await this.endSentryTransaction();
   }
 
@@ -117,6 +114,7 @@ export default abstract class BaseCommand extends Command {
 
   async catch(err: any): Promise<void> {
     if (err.oclif && err.oclif.exit === 0) return;
+    process.exitCode = 1;
 
     try {
 
