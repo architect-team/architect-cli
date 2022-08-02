@@ -1,13 +1,13 @@
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import yaml from 'js-yaml';
-import fetch from 'node-fetch';
 import path from 'path';
 import untildify from 'untildify';
 import { buildSpecFromPath, ComponentSpec } from '../../';
 import AppService from '../../app-config/service';
 import { EnvironmentSpecValue } from '../../dependency-manager/spec/resource-spec';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
+import axios from 'axios';
 
 const download = require('download-git-repo');
 
@@ -64,22 +64,21 @@ export default class ProjectUtils {
   }
 
   static async fetchJsonFromGitHub(url: string): Promise<any> {
-    const response = await fetch(url);
-    if (!response.ok) {
+    const response = await axios.get(url)
+    .then((res: any) => res.data)
+    .catch((err: any) => {
       throw new Error(`Failed to fetch ${url}`);
-    }
-    return await response.json();
+    });
+    return response;
   }
 
   static async fetchYamlFromGitHub(url: string): Promise<ComponentSpec> {
-    const component_spec = await fetch(url)
-      .then((res: any) => res.blob())
-      .then((blob: any) => blob.text())
-      .then((yaml_as_string: any) => yaml.load(yaml_as_string) as ComponentSpec)
+    const component_spec = await axios.get(url)
+      .then((res: any) => res.data)
       .catch((err: any) => {
         throw new Error(`Failed to fetch ${url}`);
       });
-    return component_spec;
+    return component_spec as ComponentSpec;
   }
 
   static async downloadRepo(url: string, dir_path: string): Promise<void> {
