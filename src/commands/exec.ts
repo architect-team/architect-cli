@@ -90,7 +90,7 @@ export default class Exec extends BaseCommand {
       const protocols = ['v4.channel.k8s.io', 'v3.channel.k8s.io', 'v2.channel.k8s.io', 'channel.k8s.io'];
 
       const headers: Dictionary<string> = {
-        Authorization: `Bearer ${auth_result?.access_token}`,
+        Authorization: `${auth_result?.token_type} ${auth_result?.access_token}`,
       };
 
       const url = new URL(uri);
