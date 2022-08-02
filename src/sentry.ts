@@ -186,8 +186,8 @@ export default class SentryService {
       .map(key => ({ [key[0]]: key[1] }));
   }
 
-  async endSentryTransaction(write_command_out: boolean, inputs: any, calling_class: any, error?: any): Promise<boolean> {
-    if (this.app.config.environment === ENVIRONMENT.TEST) return false;
+  async endSentryTransaction(write_command_out: boolean, inputs: any, calling_class: any, error?: any): Promise<void> {
+    if (this.app.config.environment === ENVIRONMENT.TEST) return;
     const { args, flags } = inputs;
 
     const non_sensitive = new Set([
@@ -214,7 +214,10 @@ export default class SentryService {
 
       if (this.sentry_out) {
         if (error) {
-          Sentry.withScope(scope => Sentry.captureException(error, scope));
+          Sentry.withScope(async scope => {
+            Sentry.captureException(error, scope)
+            await Sentry.flush();
+          });
         }
         Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
         Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
@@ -222,7 +225,6 @@ export default class SentryService {
     } catch {
       console.log("SENTRY: Unable to save and submit the current transaction");
     }
-    return true;
   }
 
   /*

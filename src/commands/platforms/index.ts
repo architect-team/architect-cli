@@ -21,7 +21,6 @@ export default class Platforms extends BaseCommand {
   }];
 
   async run(): Promise<void> {
-    throw new Error("TEST");
     const { args, flags } = await this.parse(Platforms);
 
     let account: Account | undefined = undefined;

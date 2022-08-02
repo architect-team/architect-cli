@@ -112,7 +112,6 @@ export default abstract class BaseCommand extends Command {
   }
 
   async finally(err: Error | undefined): Promise<any> {
-    console.log("FINALLY");
     const calling_class = this.constructor as any;
     await this.sentry?.endSentryTransaction(!(await this.disable_sentry_recording()), await this.parse(calling_class), calling_class, err)
     // Oclif supers go as the return
@@ -120,10 +119,13 @@ export default abstract class BaseCommand extends Command {
   }
 
   async catch(err: any): Promise<void> {
-    console.log("CATCH");
     if (err.oclif && err.oclif.exit === 0) return;
     await this.sentry?.catch(err);
-    // Oclif supers go as the return
-    return super.catch(err);
+    // Sentry flush does not seem to work as intended and calling super
+    // here causes errors not to be sent up. This needs to be investigated more
+    // but it should not block the rest of the update. Have brought in the necessary
+    // code from the super below
+    // return super.catch(err);
+    process.exitCode = process.exitCode ?? err.exitCode ?? 1
   }
 }
