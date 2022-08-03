@@ -56,11 +56,10 @@ export class ComposeConverter {
           const architect_property_name = converter.architect_property;
           const converted_props: ComposeConversion = converter.func(property_data, docker_compose, architect_service);
           if (converted_props.local) {
-            const local_block_key = "${{ if architect.environment == 'local' }}";
-            if (!(architect_service as any)[local_block_key]) {
-              (architect_service as any)[local_block_key] = {};
+            if (!(architect_service as any).debug) {
+              (architect_service as any).debug = {};
             }
-            (architect_service as any)[local_block_key][architect_property_name] = converted_props.local;
+            (architect_service as any).debug[architect_property_name] = converted_props.local;
           }
 
           if (converted_props.base) {
