@@ -1,4 +1,4 @@
-import { Command, Interfaces } from '@oclif/core';
+import { Command, Config, Interfaces } from '@oclif/core';
 import '@sentry/tracing';
 import AppService from './app-config/service';
 import LoginRequiredError from './common/errors/login-required';
@@ -42,14 +42,14 @@ export default abstract class BaseCommand extends Command {
   }
 
   private async createSentry() {
-    await this.ignoreTryCatch(async () => {
-      this.sentry = await SentryService.create(this.app, this.constructor as any, this.debug.bind(this));
+    this.ignoreTryCatch(async () => {
+      this.sentry = await SentryService.create(this.constructor as any, this.debug.bind(this));
     }, 'SENTRY: an error occurred creating a new instance of SentryService');
   }
 
-  private async loginRequired() {
-    await this.createSentry();
-    throw new LoginRequiredError();
+  constructor(argv: string[], config: Config) {
+    super(argv, config);
+    this.createSentry();
   }
 
   async init(): Promise<void> {
@@ -62,22 +62,22 @@ export default abstract class BaseCommand extends Command {
       if (await this.auth_required()) {
         const token_json = await this.app.auth.getPersistedTokenJSON();
         if (!token_json) {
-          return await this.loginRequired();
+          throw new LoginRequiredError();
         }
         if (token_json.email === 'unknown') {
-          return await this.loginRequired();
+          throw new LoginRequiredError();
         }
         if (token_json.expires_in) {
           const auth_client = this.app.auth.getAuthClient();
           const access_token = auth_client.createToken(token_json);
           if (access_token.expired()) {
-            return await this.loginRequired();
+            throw new LoginRequiredError();
           }
         }
       }
-
-      await this.createSentry();
     }
+
+    await this.sentry.startSentryTransaction(this.app);
   }
 
   // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190

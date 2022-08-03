@@ -15,45 +15,86 @@ import LocalPaths from './paths';
 const CLI_SENTRY_DSN = 'https://272fd53f577f4729b014701d74fe6c53@o298191.ingest.sentry.io/6465948';
 
 export default class SentryService {
-  app: AppService;
+  app?: AppService;
   debug: (message: string) => void;
   child: any;
-  file_out: boolean;
-  sentry_out: boolean;
-  sentry_history_file_path: string;
+  file_out?: boolean;
+  sentry_history_file_path?: string;
 
 
-  static async create(app: AppService, child: any, debug: (message: string) => void): Promise<SentryService> {
-    debug("SENTRY: Initializing");
-    const sentry = new SentryService(app, child, debug);
-    await sentry.startSentryTransaction();
+  static create(child: any, debug: (message: string) => void): SentryService {
+    const sentry = new SentryService(child, debug);
+    sentry.initSentry();
     return sentry;
   }
 
-  constructor(app: AppService, child: any, debug: (message: string) => void) {
-    this.app = app;
+  constructor(child: any, debug: (message: string) => void) {
     this.child = child;
     this.debug = debug;
-    this.file_out = app.config.environment !== ENVIRONMENT.TEST && app.config.environment !== ENVIRONMENT.PREVIEW;
-    this.sentry_history_file_path = path.join(app.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
-    this.sentry_out = app.config.environment === ENVIRONMENT.PRODUCTION || app.config.environment === ENVIRONMENT.DEV || app.config.environment === ENVIRONMENT.PREVIEW;
   }
 
-  async startSentryTransaction(): Promise<void> {
+  initSentry(): void {
+    const sentry_out = process.env.TEST !== '1' && process.env.NODE_ENV != ENVIRONMENT.PREVIEW;
+    Sentry.init({
+      dsn: CLI_SENTRY_DSN,
+      debug: false,
+      environment: process.env?.NODE_ENV ?? 'production',
+      release: process.env?.npm_package_version,
+      tracesSampleRate: 1.0,
+      attachStacktrace: true,
+      sendClientReports: true,
+      integrations: [
+        new Dedupe(),
+        new RewriteFrames({
+          root: LocalPaths.SENTRY_ROOT_PATH,
+          prefix: `src/`,
+        }),
+        new ExtraErrorData(),
+        new Transaction(),
+      ],
+      beforeSend(event: any) {
+        if (!sentry_out) return null;
+        if (event.req?.data?.token) {
+          event.req.data.token = '*'.repeat(20);
+        }
+        return event;
+      },
+      beforeBreadcrumb(breadcrumb: any) {
+        if (!sentry_out) return null;
+        if (breadcrumb.category === 'console') {
+          breadcrumb.message = PromptUtils.strip_ascii_color_codes_from_string(breadcrumb.message);
+        }
+        return breadcrumb;
+      },
+    });
+  }
+
+  private async getUser(): Promise<{ email: string, id: string }> {
+    let user;
     try {
-      const sentry_out = this.sentry_out;
-      let sentry_user: any;
-      try {
-        sentry_user = {
-          email: (await this.app.auth?.getPersistedTokenJSON())?.email,
-          id: (await this.app.auth?.checkLogin())?.id,
-        };
-      } catch {
-        sentry_user = {
-          email: os.hostname(),
-          id: os.hostname(),
-        };
-      }
+      user = {
+        email: (await this.app?.auth?.getPersistedTokenJSON())?.email,
+        id: (await this.app?.auth?.checkLogin())?.id,
+      };
+    } catch {
+      this.debug("SENTRY: Unable to load user");
+    }
+    if (user && user.email !== undefined && user.id !== undefined) {
+      return user as any;
+    }
+    return {
+      email: os.hostname(),
+      id: os.hostname(),
+    };
+  }
+
+  async startSentryTransaction(app: AppService): Promise<void> {
+    this.app = app;
+    this.file_out = app.config.environment !== ENVIRONMENT.TEST && app.config.environment !== ENVIRONMENT.PREVIEW;
+    this.sentry_history_file_path = path.join(app.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
+
+    try {
+      const sentry_user = await this.getUser();
 
       const sentry_tags = {
         environment: this.app.config.environment,
@@ -64,39 +105,6 @@ export default class SentryService {
         user: sentry_user?.id || os.hostname(),
         'user-email': sentry_user?.email || os.hostname(),
       };
-
-      Sentry.init({
-        dsn: CLI_SENTRY_DSN,
-        debug: false,
-        environment: this.app.config.environment,
-        release: process.env?.npm_package_version,
-        tracesSampleRate: 1.0,
-        attachStacktrace: true,
-        sendClientReports: true,
-        integrations: [
-          new Dedupe(),
-          new RewriteFrames({
-            root: LocalPaths.SENTRY_ROOT_PATH,
-            prefix: `src/`,
-          }),
-          new ExtraErrorData(),
-          new Transaction(),
-        ],
-        beforeSend(event: any) {
-          if (!sentry_out) return null;
-          if (event.req?.data?.token) {
-            event.req.data.token = '*'.repeat(20);
-          }
-          return event;
-        },
-        beforeBreadcrumb(breadcrumb: any) {
-          if (!sentry_out) return null;
-          if (breadcrumb.category === 'console') {
-            breadcrumb.message = PromptUtils.strip_ascii_color_codes_from_string(breadcrumb.message);
-          }
-          return breadcrumb;
-        },
-      });
 
       const transaction = Sentry.startTransaction({
         op: this.child.id,
@@ -127,13 +135,13 @@ export default class SentryService {
 
       const sentry_session_metadata = await {
         docker_info: updated_docker_info,
-        linked_components: this.app.linkedComponents,
+        linked_components: this.app?.linkedComponents,
         command: this.child.id || this.child.name,
-        environment: this.app.config.environment,
+        environment: this.app?.config.environment,
         config_dir_files: config_directory_files,
-        config_file: path.join(this.app.config?.getConfigDir(), LocalPaths.CLI_CONFIG_FILENAME),
+        config_file: path.join(this.app?.config?.getConfigDir() ?? '', LocalPaths.CLI_CONFIG_FILENAME),
         cwd: process.cwd(),
-        log_level: this.app.config?.log_level,
+        log_level: this.app?.config?.log_level,
         node_versions: process.versions,
         node_version: process.version,
         os_info: os.userInfo() || {},
@@ -193,7 +201,7 @@ export default class SentryService {
   }
 
   async endSentryTransaction(write_command_out: boolean, inputs: any, calling_class: any, error?: any): Promise<void> {
-    if (this.app.config.environment === ENVIRONMENT.TEST) return;
+    if (this.app && this.app?.config.environment === ENVIRONMENT.TEST) return;
     const { args, flags } = inputs;
 
     const non_sensitive = new Set([
@@ -218,15 +226,13 @@ export default class SentryService {
         await this.writeCommandHistoryToFileSystem();
       }
 
-      if (this.sentry_out) {
-        if (error) {
-          Sentry.withScope(async scope => {
-            Sentry.captureException(error, scope);
-          });
-        }
-        Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
-        Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
+      if (error) {
+        Sentry.withScope(async scope => {
+          Sentry.captureException(error, scope);
+        });
       }
+      Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
+      Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
       await Sentry.getCurrentHub().getClient()?.close();
     } catch {
       this.debug("SENTRY: Unable to save and submit the current transaction");
@@ -266,8 +272,8 @@ export default class SentryService {
 
   async getFilenamesFromDirectory(): Promise<any[]> {
     try {
-      const path = this.app.config?.getConfigDir();
-      const addr = fs.readdirSync(path, { withFileTypes: true });
+      const path = this.app?.config?.getConfigDir();
+      const addr = fs.readdirSync(path ?? '', { withFileTypes: true });
       return addr.filter(f => f.isFile()).map(f => ({ name: f.name })) || [];
     } catch {
       this.debug("SENTRY: Unable to read list of file names from the architect config directory");
@@ -276,15 +282,14 @@ export default class SentryService {
   }
 
   async readCommandHistoryFromFileSystem(): Promise<any[]> {
-    let command_history = [];
-    if (fs.existsSync(this.sentry_history_file_path)) {
-      try {
-        command_history = await JSON.parse(fs.readFileSync(this.sentry_history_file_path).toString()) || [];
-      } catch {
-        this.debug("SENTRY: Unable to read command history file from the architect config directory");
+    try {
+      if (fs.existsSync(this.sentry_history_file_path ?? '')) {
+        return await JSON.parse(fs.readFileSync(this.sentry_history_file_path ?? '').toString()) || [];
       }
+    } catch {
+      this.debug("SENTRY: Unable to read command history file from the architect config directory");
     }
-    return command_history;
+    return [];
   }
 
   async writeCommandHistoryToFileSystem(): Promise<void> {
@@ -305,6 +310,10 @@ export default class SentryService {
       // remove duplicate report information if span is present
       if (current_output._span) {
         current_output = { ...current_output, _tags: undefined, _user: undefined };
+      }
+
+      if (!this.sentry_history_file_path) {
+        return;
       }
 
       if (!fs.existsSync(this.sentry_history_file_path)) {
