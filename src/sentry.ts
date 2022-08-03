@@ -6,8 +6,10 @@ import os from 'os';
 import path from 'path';
 import { ENVIRONMENT } from './app-config/config';
 import AppService from './app-config/service';
+import { prettyValidationErrors } from './common/dependency-manager/validation';
 import { docker } from './common/utils/docker';
 import PromptUtils from './common/utils/prompt-utils';
+import { ValidationErrors } from './dependency-manager/utils/errors';
 import LocalPaths from './paths';
 
 const CLI_SENTRY_DSN = 'https://272fd53f577f4729b014701d74fe6c53@o298191.ingest.sentry.io/6465948';
@@ -154,6 +156,10 @@ export default class SentryService {
     try {
       if (error.stack) {
         error.stack = [...new Set(error.stack.split('\n'))].join("\n");
+      }
+
+      if (error instanceof ValidationErrors) {
+        return prettyValidationErrors(error);
       }
 
       if (error.response?.data instanceof Object) {

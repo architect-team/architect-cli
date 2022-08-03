@@ -33,12 +33,18 @@ export default abstract class BaseCommand extends Command {
     });
   }
 
-  private async createSentry() {
+  private async ignoreTryCatch(fn: () => Promise<void>, debug_message: string) {
     try {
-      this.sentry = await SentryService.create(this.app, this.constructor as any, this.debug.bind(this));
-    } catch (e) {
-      this.debug('SENTRY: an error occurred creating a new instance of SentryService');
+      await fn();
+    } catch {
+      this.debug(debug_message);
     }
+  }
+
+  private async createSentry() {
+    await this.ignoreTryCatch(async () => {
+      this.sentry = await SentryService.create(this.app, this.constructor as any, this.debug.bind(this));
+    }, 'SENTRY: an error occurred creating a new instance of SentryService');
   }
 
   private async loginRequired() {
@@ -113,14 +119,18 @@ export default abstract class BaseCommand extends Command {
 
   async finally(err: Error | undefined): Promise<any> {
     const calling_class = this.constructor as any;
-    await this.sentry?.endSentryTransaction(!(await this.disable_sentry_recording()), await this.parse(calling_class), calling_class, err);
+    await this.ignoreTryCatch(async () => {
+      await this.sentry?.endSentryTransaction(!(await this.disable_sentry_recording()), await this.parse(calling_class), calling_class, err);
+    }, 'SENTRY: Error occurred on ending transaction');
     // Oclif supers go as the return
     return super.finally(err);
   }
 
   async catch(err: any): Promise<void> {
     if (err.oclif && err.oclif.exit === 0) return;
-    await this.sentry?.catch(err);
+    await this.ignoreTryCatch(async () => {
+      await this.sentry?.catch(err);
+    }, 'SENTRY: Error occurred on catch');
     // Oclif supers go as the return
     return super.catch(err);
   }
