@@ -21,7 +21,7 @@ import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolat
 
 tmp.setGracefulCleanup();
 
-export const EPHEMERAL_DELIMITER = 'architect-ephemeral';
+export const ENV_TAG_PREFIX = 'architect.environment.';
 
 export default class ComponentRegister extends BaseCommand {
   static aliases = ['component:register', 'components:register', 'c:register', 'comp:register'];
@@ -66,6 +66,7 @@ export default class ComponentRegister extends BaseCommand {
         char: 'e',
         description: 'The name of an environment to register the component version to. If specified, the component version will be removed when the environment is removed',
         exclusive: ['tag'],
+        hidden: true,
       }),
     },
   };
@@ -324,6 +325,6 @@ export default class ComponentRegister extends BaseCommand {
   }
 
   public static getTagFromFlags(flags: any): string {
-    return flags.environment ? `${EPHEMERAL_DELIMITER}-${flags.environment}` : flags.tag;
+    return flags.environment ? `${ENV_TAG_PREFIX}${flags.environment}` : flags.tag;
   }
 }

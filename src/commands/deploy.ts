@@ -243,7 +243,7 @@ export default class Deploy extends DeployCommand {
         register.app = this.app;
         await register.run();
         const component_spec = buildSpecFromPath(component);
-        component_names.push(`${account.name}/${component_spec.name}:${ComponentRegister.getTagFromFlags({ environment: environment.name })}`);
+        component_names.push(`${component_spec.name}:${ComponentRegister.getTagFromFlags({ environment: environment.name })}`); // component_spec.name can be either account-name/component-name or just component-name
       } else if (ComponentVersionSlugUtils.Validator.test(component)) {
         component_names.push(component);
       } else {
