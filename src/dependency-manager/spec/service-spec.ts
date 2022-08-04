@@ -18,7 +18,7 @@ export class ScalingMetricsSpec {
   @JSONSchema({
     ...ExpressionOr({ type: 'number' }),
     description: 'The cpu usage required to trigger scaling.',
-    externalDocs: { url: '/docs/components/services/#cpu--memory' },
+    externalDocs: { url: 'https://docs.architect.io/components/services/#cpu--memory' },
   })
   cpu?: number | string;
 
@@ -26,7 +26,7 @@ export class ScalingMetricsSpec {
   @JSONSchema({
     ...ExpressionOr({ type: 'number' }),
     description: 'The memory usage required to trigger scaling.',
-    externalDocs: { url: '/docs/components/services/#cpu--memory' },
+    externalDocs: { url: 'https://docs.architect.io/components/services/#cpu--memory' },
   })
   memory?: number | string;
 }

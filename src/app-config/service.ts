@@ -19,10 +19,8 @@ export default class AppService {
   version: string;
   errorContext?: Error;
 
-  static async create(config_dir: string, version: string): Promise<AppService> {
-    const service = new AppService(config_dir, version);
-    await service.auth.init();
-    return service;
+  static create(config_dir: string, version: string): AppService {
+    return new AppService(config_dir, version);
   }
 
   constructor(config_dir: string, version: string) {
@@ -63,9 +61,13 @@ export default class AppService {
 
   private loadLinkedComponents(config_dir: string) {
     const linkedComponentsFile = path.join(config_dir, LocalPaths.LINKED_COMPONENT_MAP_FILENAME);
-    if (fs.existsSync(linkedComponentsFile)) {
+    if (!fs.existsSync(linkedComponentsFile)) {
+      return {};
+    }
+    try {
       return fs.readJSONSync(linkedComponentsFile) as Dictionary<string>;
-    } else {
+    } catch {
+      console.warn('Failed to read linked components file.');
       return {};
     }
   }

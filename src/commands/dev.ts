@@ -150,7 +150,7 @@ export default class Dev extends BaseCommand {
   }];
 
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
-  protected async parse<F, A extends {
+  async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     if (!options) {
