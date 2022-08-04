@@ -1,4 +1,5 @@
 import { Flags } from '@oclif/core';
+import chalk from 'chalk';
 import inquirer from 'inquirer';
 import stream from 'stream';
 import stringArgv from 'string-argv';
@@ -9,6 +10,17 @@ import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
+
+
+type ExecFlags = {
+  stdin: boolean;
+  tty: boolean;
+  environment: string | undefined;
+  account: string | undefined;
+  json: boolean | undefined;
+};
+
+type ExecArgs = { [name: string]: any };
 
 export default class Exec extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -34,7 +46,7 @@ export default class Exec extends BaseCommand {
         description: 'Stdin is a TTY.',
         char: 't',
         allowNo: true,
-        default: true,
+        default: undefined,
       }),
     },
   };
@@ -58,9 +70,7 @@ export default class Exec extends BaseCommand {
   public static readonly StderrStream = 2;
   public static readonly StatusStream = 3;
 
-  async exec(uri: string): Promise<void> {
-    const { args, flags } = await this.parse(Exec);
-
+  async exec(uri: string, flags: ExecFlags): Promise<void> {
     const ws = await this.getWebSocket(uri);
 
     await new Promise((resolve, reject) => {
@@ -68,10 +78,9 @@ export default class Exec extends BaseCommand {
       duplex.pipe(this.getOutputTransform());
 
       if (flags.stdin) {
-        if (flags.tty && !process.stdin.isTTY) {
-          throw new ArchitectError('stdin does not support tty');
+        if (flags.tty) {
+          process.stdin.setRawMode(true);
         }
-        process.stdin.setRawMode(true);
         process.stdin.pipe(this.getInputTransform()).pipe(duplex);
       }
 
@@ -169,9 +178,7 @@ export default class Exec extends BaseCommand {
     return transform;
   }
 
-  async runRemote(account: Account): Promise<void> {
-    const { args, flags } = await this.parse(Exec);
-
+  async runRemote(account: Account, args: ExecArgs, flags: ExecFlags): Promise<void> {
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
     let component_account_name: string | undefined;
@@ -213,12 +220,10 @@ export default class Exec extends BaseCommand {
     }
 
     const uri = `${this.app.config.api_host}/environments/${environment.id}/ws/exec?${query}`;
-    await this.exec(uri);
+    await this.exec(uri, flags);
   }
 
-  async runLocal(): Promise<void> {
-    const { args, flags } = await this.parse(Exec);
-
+  async runLocal(args: ExecArgs, flags: ExecFlags): Promise<void> {
     const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
     const service = await DockerComposeUtils.getLocalServiceForEnvironment(compose_file, args.resource);
@@ -240,14 +245,26 @@ export default class Exec extends BaseCommand {
   async run(): Promise<void> {
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
-    const { flags } = await this.parse(Exec);
+    const { args, flags } = await this.parse(Exec);
+
+    // Automatically set tty if the user doesn't supply it based on whether stdin is TTY.
+    if (flags.tty === undefined) {
+      if (process.stdin.isTTY) {
+        flags.tty = true;
+      } else {
+        flags.tty = false;
+        this.log(chalk.yellow('stdin does not support tty and was automatically disabled, --no-tty should be used'));
+      }
+    } else if (flags.tty && !process.stdin.isTTY) {
+      throw new ArchitectError('stdin does not support tty');
+    }
 
     // If no account is default to local first.
     if (!flags.account && flags.environment) {
       // If the env exists locally then just assume local
       const is_local_env = await DockerComposeUtils.isLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
       if (is_local_env) {
-        return await this.runLocal();
+        return await this.runLocal(args, flags);
       }
     }
 
@@ -255,9 +272,9 @@ export default class Exec extends BaseCommand {
     const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: !flags.environment });
 
     if (AccountUtils.isLocalAccount(account)) {
-      return await this.runLocal();
+      return await this.runLocal(args, flags);
     }
 
-    await this.runRemote(account);
+    await this.runRemote(account, args, flags);
   }
 }
