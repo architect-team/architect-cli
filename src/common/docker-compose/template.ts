@@ -59,8 +59,14 @@ export interface DockerService {
   healthcheck?: DockerComposeHealthCheck;
 }
 
+export interface DockerSecret {
+  file?: string;
+  external?: boolean;
+}
+
 export default interface DockerComposeTemplate {
   version: '3';
   services: { [key: string]: DockerService };
   volumes: { [key: string]: { external?: boolean } };
+  secrets?: { [key: string]: DockerSecret };
 }

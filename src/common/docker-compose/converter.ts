@@ -11,7 +11,7 @@ import { Dictionary } from '../../dependency-manager/utils/dictionary';
 import DockerComposeTemplate, { DockerComposeDeploy, DockerComposeHealthCheck } from './template';
 
 interface ComposeConversion {
-  local?: any
+  debug?: any;
   base?: any;
   warnings?: string[];
 }
@@ -43,7 +43,8 @@ export class ComposeConverter {
     const architect_component: Partial<ComponentSpec> = {};
     architect_component.name = component_name;
     architect_component.services = {};
-
+    
+    const compose_secrets = docker_compose.secrets;
     for (const [service_name, service_data] of Object.entries(docker_compose.services || {})) {
       const architect_service: Partial<ServiceSpec> = {};
       for (const [property_name, property_data] of Object.entries(service_data || {})) {
@@ -52,14 +53,34 @@ export class ComposeConverter {
         if (!converters.length) {
           warnings.push(`Could not convert ${service_name} property "${property_name}"`);
         }
+
+        let data = property_data;
         for (const converter of converters) {
           const architect_property_name = converter.architect_property;
-          const converted_props: ComposeConversion = converter.func(property_data, docker_compose, architect_service);
-          if (converted_props.local) {
+          if (converter.compose_property === 'secrets' && compose_secrets) {
+            data = {
+              service_secrets: property_data as any[],
+              compose_secrets: compose_secrets as Dictionary<any>,
+            };
+          }
+          const converted_props = converter.func(data, docker_compose, architect_service);
+
+          if (converted_props.debug) {
             if (!(architect_service as any).debug) {
               (architect_service as any).debug = {};
             }
-            (architect_service as any).debug[architect_property_name] = converted_props.local;
+
+            // concatenate secrets to volumes
+            if (architect_property_name === 'volumes' && architect_service.debug && architect_service.debug[architect_property_name]) {
+              const volumes = architect_service.debug[architect_property_name] as Dictionary<string | VolumeSpec>;
+              let volumes_size = Object.entries(volumes).length;
+              for (const volume of Object.values(converted_props.debug)) {
+                volumes[`volume${volumes_size + 1}`] = volume as Dictionary<any>;
+                volumes_size++;
+              }
+            } else {
+              (architect_service as any).debug[architect_property_name] = converted_props.debug;
+            }
           }
 
           if (converted_props.base) {
@@ -235,7 +256,7 @@ export class ComposeConverter {
 
     const compose_conversion: ComposeConversion = { warnings };
     if (Object.entries(local_volumes).length) {
-      compose_conversion.local = local_volumes;
+      compose_conversion.debug = local_volumes;
     }
     if (Object.entries(volumes).length) {
       compose_conversion.base = volumes;
@@ -345,7 +366,53 @@ export class ComposeConverter {
     return { base: labels, warnings };
   }
 
-  private static convertSecrets(compose_secrets: Dictionary<string>): ComposeConversion {
-    return { warnings: [`Could not convert property "secrets". See https://docs.architect.io/components/secrets/ for information on adding secrets to an Architect component`] };
+  /**
+   * Convert secrets as local volumes
+   */
+  private static convertSecrets(secrets: Dictionary<any>): ComposeConversion {
+    const warnings: string[] = [];
+    const compose_secrets: Dictionary<any> = secrets['compose_secrets'];
+    const not_supported_keys = ['uid', 'gid', 'mode'];
+
+    let volume_index = 0;
+    const service_volumes: Dictionary<any> = {};
+    for (const secret of secrets.service_secrets) {
+      const volume_key = volume_index === 0 ? 'volume' : `volume${volume_index + 1}`;
+      
+      let target;
+      let secret_name;
+      if (typeof secret === 'object') {
+        const keys = Object.keys(secret).filter(k => not_supported_keys.includes(k));
+        if (keys.length > 0) {
+          warnings.push(`Could not convert property ${keys.map(item => `"${item}"`).join(', ')} in "secrets".`);
+        }
+
+        secret_name = secret.source;
+        target = `/run/secrets/${secret.target}`;
+      } else {
+        secret_name = secret;
+        target = `/run/secrets/${secret}`;
+      }
+
+      const compose_secret = compose_secrets[secret_name];
+      if (compose_secret.external) {
+        warnings.push(`Could not convert secret "${secret_name}" due to the unsupported property "external" in "secrets". Please provide a path to a local secret file.`);
+        continue;
+      }
+
+      const service_volume = {
+        host_path: compose_secret['file'],
+        mount_path: target,
+        readonly: true,
+      } as Partial<VolumeSpec>;
+      (service_volumes[volume_key] as Partial<VolumeSpec>) = service_volume;
+      volume_index++;
+    }
+
+    const compose_conversion: ComposeConversion = { warnings };
+    if (Object.entries(service_volumes).length) {
+      compose_conversion.debug = service_volumes;
+    }
+    return compose_conversion;
   }
 }
