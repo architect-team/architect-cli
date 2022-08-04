@@ -6,7 +6,7 @@ import path from 'path';
 import { ENVIRONMENT } from './app-config/config';
 import AppService from './app-config/service';
 import User from './architect/user/user.entity';
-import BaseCommand from './base-command';
+import type BaseCommand from './base-command';
 import { docker } from './common/utils/docker';
 import PromptUtils from './common/utils/prompt-utils';
 import LocalPaths from './paths';
