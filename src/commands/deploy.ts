@@ -1,5 +1,6 @@
 import { CliUx, Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
+import fs from 'fs';
 import inquirer from 'inquirer';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
@@ -7,7 +8,10 @@ import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import BaseCommand from '../base-command';
 import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../common/errors/pipeline-errors';
 import DeployUtils from '../common/utils/deploy.utils';
+import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-builder';
+import { ComponentVersionSlugUtils } from '../dependency-manager/spec/utils/slugs';
 import Dev from "./dev";
+import ComponentRegister from './register';
 
 export abstract class DeployCommand extends BaseCommand {
 
@@ -30,7 +34,7 @@ export abstract class DeployCommand extends BaseCommand {
     },
   };
 
-  protected async parse<F, A extends {
+  async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
@@ -200,7 +204,7 @@ export default class Deploy extends DeployCommand {
   }];
 
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
-  protected async parse<F, A extends {
+  async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     if (!options) {
@@ -232,10 +236,25 @@ export default class Deploy extends DeployCommand {
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
-    const deployment_dtos = [];
+    const component_names: string[] = [];
     for (const component of components) {
+      if (fs.existsSync(component)) {
+        const register = new ComponentRegister([component, '-a', account.name, '-e', environment.name], this.config);
+        register.app = this.app;
+        await register.run();
+        const component_spec = buildSpecFromPath(component);
+        component_names.push(`${component_spec.name}:${ComponentRegister.getTagFromFlags({ environment: environment.name })}`); // component_spec.name can be either account-name/component-name or just component-name
+      } else if (ComponentVersionSlugUtils.Validator.test(component)) {
+        component_names.push(component);
+      } else {
+        throw new Error(`${component} isn't either the name of a component or a path to an existing component file.`);
+      }
+    }
+
+    const deployment_dtos = [];
+    for (const component of component_names) {
       const deploy_dto = {
-        component: component,
+        component,
         interfaces: interfaces_map,
         recursive: flags.recursive,
         values: all_secrets, // TODO: 404: update

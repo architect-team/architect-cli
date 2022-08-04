@@ -10,6 +10,7 @@ import tmp from 'tmp';
 import untildify from 'untildify';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, validateInterpolation } from '../';
 import AccountUtils from '../architect/account/account.utils';
+import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
@@ -19,6 +20,8 @@ import DockerBuildXUtils from '../common/utils/docker-buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
 tmp.setGracefulCleanup();
+
+export const ENV_TAG_PREFIX = 'architect.environment.';
 
 export default class ComponentRegister extends BaseCommand {
   static aliases = ['component:register', 'components:register', 'c:register', 'comp:register'];
@@ -40,6 +43,7 @@ export default class ComponentRegister extends BaseCommand {
         char: 't',
         description: 'Tag to give to the new component',
         default: 'latest',
+        exclusive: ['environment'],
       }),
     },
     architecture: {
@@ -54,6 +58,15 @@ export default class ComponentRegister extends BaseCommand {
       non_sensitive: true,
       ...Flags.string({
         description: 'Directory to write build cache to. Do not use in Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs',
+      }),
+    },
+    environment: {
+      non_sensitive: true,
+      ...Flags.string({
+        char: 'e',
+        description: 'The name of an environment to register the component version to. If specified, the component version will be removed when the environment is removed',
+        exclusive: ['tag'],
+        hidden: true,
       }),
     },
   };
@@ -75,7 +88,7 @@ export default class ComponentRegister extends BaseCommand {
       throw new ArchitectError(Slugs.ComponentTagDescription);
     }
 
-    await this.registerComponent(config_path, flags.tag);
+    await this.registerComponent(config_path, ComponentRegister.getTagFromFlags(flags));
   }
 
   private async registerComponent(config_path: string, tag: string) {
@@ -89,18 +102,14 @@ export default class ComponentRegister extends BaseCommand {
       throw new Error('Component Config must have a name');
     }
 
-    const context = {
-      architect: {
-        build: {
-          tag: flags.tag,
-        },
-      },
-    };
-
     validateInterpolation(component_spec);
 
     const { component_account_name, component_name } = ComponentSlugUtils.parse(component_spec.name);
     const selected_account = await AccountUtils.getAccount(this.app, component_account_name || flags.account);
+
+    if (flags.environment) { // will throw an error if a user specifies an environment that doesn't exist
+      await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);
+    }
 
     const dependency_manager = new LocalDependencyManager(this.app.api);
     dependency_manager.environment = 'production';
@@ -256,6 +265,7 @@ export default class ComponentRegister extends BaseCommand {
     delete config.metadata;
     const component_dto = {
       tag,
+      environment_name: flags.environment,
       config,
     };
 
@@ -312,5 +322,9 @@ export default class ComponentRegister extends BaseCommand {
 
     const { headers } = await registry_client.head(`${name}/manifests/${tag}`);
     return headers['docker-content-digest'];
+  }
+
+  public static getTagFromFlags(flags: any): string {
+    return flags.environment ? `${ENV_TAG_PREFIX}${flags.environment}` : flags.tag;
   }
 }

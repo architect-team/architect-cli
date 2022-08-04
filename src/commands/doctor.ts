@@ -107,10 +107,6 @@ export default class Doctor extends BaseCommand {
     return false;
   }
 
-  async disable_sentry_recording(): Promise<boolean> {
-    return true;
-  }
-
   history: SentryHistory[] = [];
 
   static description = 'Get debugging information for troubleshooting';
