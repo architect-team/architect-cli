@@ -35,7 +35,7 @@ describe('platform:create', function () {
     });
     const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
     fs.writeJSONSync(tmp_config_file, config);
-    const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir, '0.0.1'));
+    const app_config_stub = sinon.stub().returns(new AppService(tmp_dir, '0.0.1'));
     sinon.replace(AppService, 'create', app_config_stub);
   });
 
