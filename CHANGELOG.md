@@ -1,3 +1,12 @@
+## [1.21.1](https://github.com/architect-team/architect-cli/compare/v1.21.0...v1.21.1) (2022-07-22)
+
+
+### Bug Fixes
+
+* **dev:** Fix debug with dependencies ([46ffa85](https://github.com/architect-team/architect-cli/commit/46ffa8555deabb202444768fab5a28e1d292e4b5))
+* **exec:** Add status code on exit for exec local ([#636](https://github.com/architect-team/architect-cli/issues/636)) ([00dd0e2](https://github.com/architect-team/architect-cli/commit/00dd0e27d0fc393871fd301a72448ac45ff99a01))
+* **package:** pin class-transformer to 0.4.0 ([049217f](https://github.com/architect-team/architect-cli/commit/049217fc1013a270c7cedc2fe9a09f1c6694b7e5))
+
 # [1.21.0](https://github.com/architect-team/architect-cli/compare/v1.20.1...v1.21.0) (2022-07-21)
 
 
