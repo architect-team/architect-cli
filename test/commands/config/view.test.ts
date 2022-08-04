@@ -31,7 +31,7 @@ describe('config:view', () => {
     const tmp_config_file = path.join(tmp_config_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
     fs.writeJSONSync(tmp_config_file, config);
 
-    const app_config_spy = sinon.fake.resolves(new AppService(tmp_config_dir, '0.0.1'));
+    const app_config_spy = sinon.fake.returns(new AppService(tmp_config_dir, '0.0.1'));
     const log_spy = sinon.fake.returns(null);
 
     // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
