@@ -1,8 +1,7 @@
-import { Command, Interfaces } from '@oclif/core';
+import { Command, Config, Interfaces } from '@oclif/core';
 import '@sentry/tracing';
 import chalk from 'chalk';
-import { ValidationErrors } from './';
-import { ENVIRONMENT } from './app-config/config';
+import { ValidationErrors } from '.';
 import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
@@ -13,19 +12,12 @@ const DEPRECATED_LABEL = '[deprecated]';
 export default abstract class BaseCommand extends Command {
   static readonly DEPRECATED: string = DEPRECATED_LABEL;
 
-  app!: AppService;
-  accounts?: any;
-  sentry!: SentryService;
+  app: AppService;
+  sentry: SentryService;
 
   async auth_required(): Promise<boolean> {
     return true;
   }
-
-  async disable_sentry_recording(): Promise<boolean> {
-    return false;
-  }
-
-  static flags = {};
 
   checkFlagDeprecations(flags: any, flag_definitions: any): void {
     Object.keys(flags).forEach((flagName: string) => {
@@ -37,49 +29,51 @@ export default abstract class BaseCommand extends Command {
     });
   }
 
+  constructor(argv: string[], config: Config) {
+    super(argv, config);
+    this.app = AppService.create(this.config.configDir, this.config.userAgent.split(/\/|\s/g)[2]);
+    this.sentry = new SentryService(this);
+  }
+
+  // override debug being a protected method on the oclif Command class
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  debug(...args: any[]): void {
+    return super.debug(...args);
+  }
+
   async init(): Promise<void> {
-    const { flags } = await this.parse(this.constructor as any);
-    const flag_definitions = (this.constructor as any).flags;
+    const command_class = this.getClass();
+    const { flags } = await this.parse(command_class);
+    const flag_definitions = command_class.flags;
     this.checkFlagDeprecations(flags, flag_definitions);
 
-    if (!this.app) {
-      this.app = await AppService.create(this.config.configDir, this.config.userAgent.split(/\/|\s/g)[2]);
-      if (await this.auth_required()) {
-        const token_json = await this.app.auth.getPersistedTokenJSON();
-        if (!token_json) {
+    await this.app.auth.init();
+
+    if (await this.auth_required()) {
+      const token_json = await this.app.auth.getPersistedTokenJSON();
+      if (!token_json) {
+        throw new LoginRequiredError();
+      }
+      if (token_json.email === 'unknown') {
+        throw new LoginRequiredError();
+      }
+      if (token_json.expires_in) {
+        const auth_client = this.app.auth.getAuthClient();
+        const access_token = auth_client.createToken(token_json);
+        if (access_token.expired()) {
           throw new LoginRequiredError();
-        }
-        if (token_json.email === 'unknown') {
-          throw new LoginRequiredError();
-        }
-        if (token_json.expires_in) {
-          const auth_client = this.app.auth.getAuthClient();
-          const access_token = auth_client.createToken(token_json);
-          if (access_token.expired()) {
-            throw new LoginRequiredError();
-          }
         }
       }
     }
-    try {
-      this.sentry = await SentryService.create(this.app, this.constructor as any);
-    } catch (e) {
-      console.debug("SENTRY: an error occurred creating a new instance of SentryService");
-    }
-    if (!this.sentry) {
-      console.debug("SENTRY: SentryService failed to initialize");
-    }
-  }
-
-  async finally(_: Error | undefined): Promise<any> {
-    return await this.endSentryTransaction();
+    await this.sentry.startSentryTransaction();
   }
 
   // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
-  protected async parse<F, A extends {
+  async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
-    const flag_definitions = (this.constructor as any).flags;
+    const flag_definitions = this.getClass().flags;
 
     // Support -- input ex. architect exec -- ls -la
     const double_dash_index = argv.indexOf('--');
@@ -112,84 +106,51 @@ export default abstract class BaseCommand extends Command {
     return super.parse(options, [...args, ...flags]);
   }
 
-  async catch(err: any): Promise<void> {
-    if (err.oclif && err.oclif.exit === 0) return;
+  async finally(err: Error | undefined): Promise<any> {
+    await this.sentry.endSentryTransaction(err);
+
+    // Oclif supers go as the return
+    return super.finally(err);
+  }
+
+  async catch(error: any): Promise<void> {
+    if (error.oclif && error.oclif.exit === 0) return;
 
     try {
-
-      if (err.stack) {
-        err.stack = [...new Set(err.stack.split('\n'))].join("\n");
+      if (error.stack) {
+        error.stack = [...new Set(error.stack.split('\n'))].join("\n");
       }
 
-      if (err instanceof ValidationErrors) {
-        return prettyValidationErrors(err);
+      if (error instanceof ValidationErrors) {
+        return prettyValidationErrors(error);
       }
 
-      if (err.response?.data instanceof Object) {
-        err.message += `\nmethod: ${err.config.method}`;
-        for (const [k, v] of Object.entries(err.response.data)) {
+      if (error.response?.data instanceof Object) {
+        error.message += `\nmethod: ${error.config.method}`;
+        for (const [k, v] of Object.entries(error.response.data)) {
           try {
             const msg = JSON.parse(v as any).message;
             if (!msg) { throw new Error('Invalid msg'); }
-            err.message += `\n${k}: ${msg}`;
+            error.message += `\n${k}: ${msg}`;
           } catch {
-            err.message += `\n${k}: ${v}`;
+            error.message += `\n${k}: ${v}`;
           }
         }
       }
 
-      if (err.stderr) {
-        err.message += `\nstderr:\n${err.stderr}\n`;
+      if (error.stderr) {
+        error.message += `\nstderr:\n${error.stderr}\n`;
       }
 
-      console.error(chalk.red(err.message));
-
+      console.error(chalk.red(error.message));
     } catch {
-      this.warn('Unable to add more context to error message');
+      this.debug('Unable to add more context to error message');
     }
-    const app_env = this.app?.config?.environment;
-    if (!this.sentry || !app_env || app_env === ENVIRONMENT.TEST) {
-      return super.catch(err);
-    }
-    return await this.endSentryTransaction(err);
+    // Oclif supers go as the return
+    return super.catch(error);
   }
 
-  async _filterNonSensitiveSentryMetadata(non_sensitive: Set<string>, metadata: any): Promise<any> {
-    return Object.entries(metadata)
-      .filter((value,) => !!value[1] && non_sensitive.has(value[0]))
-      .map(key => ({ [key[0]]: key[1] }));
+  getClass(): typeof BaseCommand {
+    return this.constructor as any;
   }
-
-  async endSentryTransaction(err?: any): Promise<any> {
-    const app_env = this.app?.config?.environment;
-    if (!this.sentry || !app_env || app_env === ENVIRONMENT.TEST) {
-      return err;
-    }
-
-    const calling_class = this.constructor as any;
-
-    const non_sensitive = new Set([
-      ...Object.entries(calling_class.flags || {}).filter(([_, value]) => (value as any).non_sensitive).map(([key, _]) => key),
-      ...Object.entries(calling_class.args || {}).filter(([_, value]) => (value as any).non_sensitive).map(([_, value]) => (value as any).name),
-    ]);
-
-    try {
-      const { args, flags } = await this.parse(calling_class);
-      const filtered_sentry_args = await this._filterNonSensitiveSentryMetadata(non_sensitive, args);
-      const filtered_sentry_flags = await this._filterNonSensitiveSentryMetadata(non_sensitive, flags);
-
-      await this.sentry.setScopeExtra('command_args', filtered_sentry_args);
-      await this.sentry.setScopeExtra('command_flags', filtered_sentry_flags);
-    } catch {
-      this.warn('Failed to get command metadata');
-    }
-
-    await this.sentry.endSentryTransaction(!(await this.disable_sentry_recording()), err);
-
-    if (!err) {
-      return await super.finally(err);
-    }
-    return await super.catch(err);
-  }
-
 }

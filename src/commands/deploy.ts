@@ -30,7 +30,7 @@ export abstract class DeployCommand extends BaseCommand {
     },
   };
 
-  protected async parse<F, A extends {
+  async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
@@ -200,7 +200,7 @@ export default class Deploy extends DeployCommand {
   }];
 
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
-  protected async parse<F, A extends {
+  async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     if (!options) {
