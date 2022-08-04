@@ -4,7 +4,6 @@ import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import { ENVIRONMENT } from './app-config/config';
-import AppService from './app-config/service';
 import User from './architect/user/user.entity';
 import type BaseCommand from './base-command';
 import { docker } from './common/utils/docker';
@@ -80,10 +79,10 @@ export default class SentryService {
     }
   }
 
-  async startSentryTransaction(app: AppService): Promise<void> {
+  async startSentryTransaction(): Promise<void> {
     this.ignoreTryCatch(async () => {
-      this.file_out = app.config.environment !== ENVIRONMENT.TEST && app.config.environment !== ENVIRONMENT.PREVIEW;
-      this.sentry_history_file_path = path.join(app.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
+      this.file_out = this.command.app.config.environment !== ENVIRONMENT.TEST && this.command.app.config.environment !== ENVIRONMENT.PREVIEW;
+      this.sentry_history_file_path = path.join(this.command.app.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
 
       const sentry_user = await this.getUser();
 

@@ -66,7 +66,7 @@ export default abstract class BaseCommand extends Command {
         }
       }
     }
-    await this.sentry.startSentryTransaction(this.app);
+    await this.sentry.startSentryTransaction();
   }
 
   // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
