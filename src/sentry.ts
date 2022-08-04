@@ -6,6 +6,7 @@ import os from 'os';
 import path from 'path';
 import { ENVIRONMENT } from './app-config/config';
 import AppService from './app-config/service';
+import User from './architect/user/user.entity';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import { docker } from './common/utils/docker';
 import PromptUtils from './common/utils/prompt-utils';
@@ -69,23 +70,15 @@ export default class SentryService {
     });
   }
 
-  private async getUser(): Promise<{ email: string, id: string }> {
-    let user;
+  private async getUser(): Promise<User | undefined> {
     try {
-      user = {
-        email: (await this.app?.auth?.getPersistedTokenJSON())?.email,
-        id: (await this.app?.auth?.checkLogin())?.id,
-      };
+      const user = await this.app?.auth?.checkLogin();
+      if (user) {
+        return user;
+      }
     } catch {
       this.debug("SENTRY: Unable to load user");
     }
-    if (user && user.email !== undefined && user.id !== undefined) {
-      return user as any;
-    }
-    return {
-      email: os.hostname(),
-      id: os.hostname(),
-    };
   }
 
   async startSentryTransaction(app: AppService): Promise<void> {
@@ -102,21 +95,22 @@ export default class SentryService {
         node_runtime: process.version,
         os: os.platform(),
         shell: this.child.config?.shell,
-        user: sentry_user?.id || os.hostname(),
-        'user-email': sentry_user?.email || os.hostname(),
+        user: sentry_user?.id,
+        'user-email': sentry_user?.email,
       };
 
       const transaction = Sentry.startTransaction({
         op: this.child.id,
         status: 'ok',
-        description: sentry_user?.email || os.hostname(),
         tags: sentry_tags,
         name: this.child.name,
       });
 
       return Sentry.configureScope(scope => {
         scope.setSpan(transaction);
-        scope.setUser(sentry_user);
+        if (sentry_user) {
+          scope.setUser(sentry_user);
+        }
         scope.setTags(sentry_tags);
       });
     } catch {
