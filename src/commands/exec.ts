@@ -10,6 +10,21 @@ import { EnvironmentUtils, Replica } from '../architect/environment/environment.
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 
+enum RemoteExecCommandOutputStatus {
+  SUCCESS = 'Success',
+  FAILURE = 'Failure',
+}
+
+interface RemoteExecCommandOutcome {
+  metadata: Record<string, undefined>;
+  status: RemoteExecCommandOutputStatus;
+  message?: string;
+  reason?: string;
+  details?: {
+    causes?: Record<string, string>[];
+  }
+}
+
 export default class Exec extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
@@ -140,7 +155,12 @@ export default class Exec extends BaseCommand {
         } else if (stream_num === Exec.StderrStream) {
           process.stderr.write(buffer);
         } else if (stream_num === Exec.StatusStream) {
-          const status = JSON.parse(buffer.toString('utf8'));
+          const outcome: RemoteExecCommandOutcome = JSON.parse(buffer?.toString('utf8'));
+          if (outcome.status === RemoteExecCommandOutputStatus.FAILURE) {
+            const e = outcome.details?.causes?.shift();
+            const error_code = Number(e?.message || 1);
+            process.exit(error_code);
+          }
         } else {
           return done(new ArchitectError(`Unknown stream type: ${stream_num}`));
         }
