@@ -21,8 +21,8 @@ export default class Exec extends BaseCommand {
   static examples = [
     'architect exec -- ls',
     'architect exec -- /bin/sh',
-    'architect exec --account architect --environment example example-component.services.app -- /bin/sh'
-  ]
+    'architect exec --account architect --environment example example-component.services.app -- /bin/sh',
+  ];
 
   static flags = {
     ...BaseCommand.flags,
