@@ -115,6 +115,7 @@ export default abstract class BaseCommand extends Command {
 
   async catch(error: any): Promise<void> {
     if (error.oclif && error.oclif.exit === 0) return;
+    process.exitCode = 1;
 
     try {
       if (error.stack) {
