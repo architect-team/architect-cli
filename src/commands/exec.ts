@@ -1,5 +1,6 @@
 import { Flags } from '@oclif/core';
 import { OutputArgs, OutputFlags } from '@oclif/core/lib/interfaces';
+import chalk from 'chalk';
 import inquirer from 'inquirer';
 import stream from 'stream';
 import stringArgv from 'string-argv';
@@ -21,6 +22,7 @@ interface RemoteExecCommandOutcome {
   status: RemoteExecCommandOutputStatus;
   message?: string;
   reason?: string;
+  code?: number;
   details?: {
     causes?: Record<string, string>[];
   }
@@ -162,8 +164,12 @@ export default class Exec extends BaseCommand {
         } else if (stream_num === Exec.StatusStream) {
           const outcome: RemoteExecCommandOutcome = JSON.parse(buffer?.toString('utf8'));
           if (outcome.status === RemoteExecCommandOutputStatus.FAILURE) {
-            const e = outcome.details?.causes?.shift();
-            const error_code = Number(e?.message || 1);
+            const exit_code_cause = outcome.details?.causes?.find(cause => cause.reason === 'ExitCode');
+            const error_code = Number(exit_code_cause?.message || 1);
+            // Triggers on an invalid command ex. `architect exec -- not-valid`
+            if (outcome.message && outcome.reason !== 'NonZeroExitCode') {
+              process.stderr.write(chalk.red(outcome.message) + '\n');
+            }
             process.exit(error_code);
           }
         } else {
