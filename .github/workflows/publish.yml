@@ -21,6 +21,7 @@ jobs:
       - run: rm -r node_modules
       - run: npm ci --omit=dev
       - run: ./bin/run --version
+      - run: rm -r node_modules/@oclif/plugin-warn-if-update-available/lib/hooks/ # Remove plugin-warn-if-update-available hook from showing warning
       - run: | # Check if stderr is not empty and hard error (captures node warnings)
           error=$(./bin/run --version 2>&1 >/dev/null)
           [ ! -z "$error" ] && echo "$error" && exit 1 || echo "No error"
