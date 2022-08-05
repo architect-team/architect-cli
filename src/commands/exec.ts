@@ -1,4 +1,5 @@
 import { Flags } from '@oclif/core';
+import { OutputArgs, OutputFlags } from '@oclif/core/lib/interfaces';
 import inquirer from 'inquirer';
 import stream from 'stream';
 import stringArgv from 'string-argv';
@@ -9,17 +10,6 @@ import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
-
-
-type ExecFlags = {
-  stdin: boolean;
-  tty: boolean;
-  environment: string | undefined;
-  account: string | undefined;
-  json: boolean | undefined;
-};
-
-type ExecArgs = { [name: string]: any };
 
 export default class Exec extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -69,7 +59,7 @@ export default class Exec extends BaseCommand {
   public static readonly StderrStream = 2;
   public static readonly StatusStream = 3;
 
-  async exec(uri: string, flags: ExecFlags): Promise<void> {
+  async exec(uri: string, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
     const ws = await this.getWebSocket(uri);
 
     await new Promise((resolve, reject) => {
@@ -179,7 +169,7 @@ export default class Exec extends BaseCommand {
     return transform;
   }
 
-  async runRemote(account: Account, args: ExecArgs, flags: ExecFlags): Promise<void> {
+  async runRemote(account: Account, args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
     let component_account_name: string | undefined;
@@ -224,7 +214,7 @@ export default class Exec extends BaseCommand {
     await this.exec(uri, flags);
   }
 
-  async runLocal(args: ExecArgs, flags: ExecFlags): Promise<void> {
+  async runLocal(args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
     const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
     const service = await DockerComposeUtils.getLocalServiceForEnvironment(compose_file, args.resource);
