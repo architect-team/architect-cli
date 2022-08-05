@@ -28,14 +28,14 @@ describe('exec', () => {
 
   defaults
     .stdout()
-    .command(['exec', '-a', account.name, '-e', environment.name, '--no-tty', '--', 'ls', '-la'])
+    .command(['exec', '-a', account.name, '-e', environment.name, '--', 'ls', '-la'])
     .it('exec command with spaces', ctx => {
       expect(ctx.stdout).to.equal('worked\n')
     })
 
   defaults
     .stdout()
-    .command(['exec', '-a', account.name, '-e', environment.name, '--no-tty', 'examples/react-app', '--', 'ls', '-la'])
+    .command(['exec', '-a', account.name, '-e', environment.name, 'examples/react-app', '--', 'ls', '-la'])
     .it('exec component and command with spaces', ctx => {
       expect(ctx.stdout).to.equal('worked\n')
     })

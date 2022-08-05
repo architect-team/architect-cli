@@ -1,5 +1,4 @@
 import { Flags } from '@oclif/core';
-import chalk from 'chalk';
 import inquirer from 'inquirer';
 import stream from 'stream';
 import stringArgv from 'string-argv';
@@ -43,7 +42,7 @@ export default class Exec extends BaseCommand {
     tty: {
       non_sensitive: true,
       ...Flags.boolean({
-        description: 'Stdin is a TTY.',
+        description: 'Stdin is a TTY. If the flag isn\'t supplied, tty or no-tty is automatically detected.',
         char: 't',
         allowNo: true,
         default: undefined,
@@ -79,6 +78,8 @@ export default class Exec extends BaseCommand {
 
       if (flags.stdin) {
         if (flags.tty) {
+          // This method is only available when stdin is a TTY as it's part of the tty.ReadStream class:
+          // https://nodejs.org/api/tty.html#readstreamsetrawmodemode
           process.stdin.setRawMode(true);
         }
         process.stdin.pipe(this.getInputTransform()).pipe(duplex);
@@ -253,7 +254,6 @@ export default class Exec extends BaseCommand {
         flags.tty = true;
       } else {
         flags.tty = false;
-        this.log(chalk.yellow('stdin does not support tty and was automatically disabled, --no-tty should be used'));
       }
     } else if (flags.tty && !process.stdin.isTTY) {
       throw new ArchitectError('stdin does not support tty');
