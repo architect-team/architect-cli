@@ -53,6 +53,7 @@
   },
   "devDependencies": {
     "@oclif/test": "2.0.3",
+    "@saithodev/semantic-release-backmerge": "^2.1.2",
     "@semantic-release/changelog": "^6.0.1",
     "@semantic-release/commit-analyzer": "^9.0.2",
     "@semantic-release/exec": "^6.0.3",
