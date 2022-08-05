@@ -250,11 +250,8 @@ export default class Exec extends BaseCommand {
 
     // Automatically set tty if the user doesn't supply it based on whether stdin is TTY.
     if (flags.tty === undefined) {
-      if (process.stdin.isTTY) {
-        flags.tty = true;
-      } else {
-        flags.tty = false;
-      }
+      // NOTE: stdin.isTTY is undefined if stdin is not a TTY, which is why this is a double negation.
+      flags.tty = !!process.stdin.isTTY;
     } else if (flags.tty && !process.stdin.isTTY) {
       throw new ArchitectError('stdin does not support tty');
     }
