@@ -1,5 +1,6 @@
 import { Flags } from '@oclif/core';
 import { OutputArgs, OutputFlags } from '@oclif/core/lib/interfaces';
+import chalk from 'chalk';
 import inquirer from 'inquirer';
 import stream from 'stream';
 import stringArgv from 'string-argv';
@@ -10,6 +11,22 @@ import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
+
+enum RemoteExecCommandOutputStatus {
+  SUCCESS = 'Success',
+  FAILURE = 'Failure',
+}
+
+interface RemoteExecCommandOutcome {
+  metadata: Record<string, undefined>;
+  status: RemoteExecCommandOutputStatus;
+  message?: string;
+  reason?: string;
+  code?: number;
+  details?: {
+    causes?: Record<string, string>[];
+  }
+}
 
 export default class Exec extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -145,7 +162,16 @@ export default class Exec extends BaseCommand {
         } else if (stream_num === Exec.StderrStream) {
           process.stderr.write(buffer);
         } else if (stream_num === Exec.StatusStream) {
-          const status = JSON.parse(buffer.toString('utf8'));
+          const outcome: RemoteExecCommandOutcome = JSON.parse(buffer?.toString('utf8'));
+          if (outcome.status === RemoteExecCommandOutputStatus.FAILURE) {
+            const exit_code_cause = outcome.details?.causes?.find(cause => cause.reason === 'ExitCode');
+            const error_code = Number(exit_code_cause?.message || 1);
+            // Triggers on an invalid command ex. `architect exec -- not-valid`
+            if (outcome.message && outcome.reason !== 'NonZeroExitCode') {
+              process.stderr.write(chalk.red(outcome.message) + '\n');
+            }
+            process.exit(error_code);
+          }
         } else {
           return done(new ArchitectError(`Unknown stream type: ${stream_num}`));
         }
