@@ -10,6 +10,8 @@ env:
 jobs:
   build_run:
     runs-on: ubuntu-latest
+    env:
+      XDG_CACHE_HOME: ~/.cache/architect
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -21,6 +23,7 @@ jobs:
       - run: rm -r node_modules
       - run: npm ci --omit=dev
       - run: ./bin/run --version
+      - run: rm -rf $XDG_CACHE_HOME # Remove oclif cache to prevent plugin-warn-if-update-available from showing warning
       - run: | # Check if stderr is not empty and hard error (captures node warnings)
           error=$(./bin/run --version 2>&1 >/dev/null)
           [ ! -z "$error" ] && echo "$error" && exit 1 || echo "No error"
