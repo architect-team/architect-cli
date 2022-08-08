@@ -115,7 +115,6 @@ export default abstract class BaseCommand extends Command {
 
   async catch(error: any): Promise<void> {
     if (error.oclif && error.oclif.exit === 0) return;
-    process.exitCode = 1;
 
     try {
       if (error.stack) {
@@ -123,7 +122,8 @@ export default abstract class BaseCommand extends Command {
       }
 
       if (error instanceof ValidationErrors) {
-        return prettyValidationErrors(error);
+        prettyValidationErrors(error);
+        return super.catch({ ...error });
       }
 
       if (error.response?.data instanceof Object) {

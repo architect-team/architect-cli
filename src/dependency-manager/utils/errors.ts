@@ -73,8 +73,9 @@ export class ValidationError {
 
 export class ValidationErrors extends ArchitectError {
   file?: { path: string; contents: string };
+  exitCode: number;
 
-  constructor(errors: ValidationError[], file?: { path: string; contents: string }) {
+  constructor(errors: ValidationError[], file?: { path: string; contents: string }, exitCode?: number) {
     super();
 
     this.name = `ValidationErrors`;
@@ -96,5 +97,6 @@ export class ValidationErrors extends ArchitectError {
 
     this.message = JSON.stringify(errors, null, 2);
     this.file = file;
+    this.exitCode = exitCode || 1;
   }
 }
