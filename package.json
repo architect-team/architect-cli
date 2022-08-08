@@ -1,7 +1,7 @@
 {
   "name": "@architect-io/cli",
   "description": "Command-line interface for Architect.io",
-  "version": "1.22.0-rc.9",
+  "version": "1.22.1-rc.1",
   "author": "Architect.io",
   "bin": {
     "architect": "./bin/run"
@@ -53,6 +53,7 @@
   },
   "devDependencies": {
     "@oclif/test": "2.0.3",
+    "@saithodev/semantic-release-backmerge": "^2.1.2",
     "@semantic-release/changelog": "^6.0.1",
     "@semantic-release/commit-analyzer": "^9.0.2",
     "@semantic-release/exec": "^6.0.3",
