@@ -2,12 +2,9 @@ import { CliUx } from '@oclif/core';
 import chalk from 'chalk';
 import execa from 'execa';
 import fs from 'fs-extra';
-import inquirer from 'inquirer';
-import yaml from 'js-yaml';
 import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
-import { ArchitectError } from '../../';
 import { ENVIRONMENT } from '../../app-config/config';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 
@@ -17,68 +14,19 @@ const SERVICE_ACCOUNT_SECRET_NAME = `${SERVICE_ACCOUNT_NAME}-token`;
 export class KubernetesPlatformUtils {
 
   public static async configureKubernetesPlatform(
-    flags: any, environment: string = ENVIRONMENT.PRODUCTION
+    flags: any, environment: string = ENVIRONMENT.PRODUCTION, kube_context: any
   ): Promise<CreatePlatformInput> {
     const default_config_directory = path.join(os.homedir(), '.config');
     const config_env = {
       XDG_CONFIG_HOME: environment === ENVIRONMENT.PRODUCTION
         ? process.env.XDG_CONFIG_HOME || default_config_directory
         : default_config_directory,
-      };
+    };
 
     let kubeconfig: any;
     const kubeconfig_path = untildify(flags.kubeconfig);
-    try {
-      kubeconfig = await fs.readFile(path.resolve(kubeconfig_path), 'utf-8');
-    } catch {
-      throw new Error(`No kubeconfig found at ${kubeconfig_path}`);
-    }
-
-    try {
-      kubeconfig = yaml.load(kubeconfig);
-    } catch {
-      throw new Error('Invalid kubeconfig format. Did you provide the correct path?');
-    }
 
     const set_kubeconfig = ['--kubeconfig', untildify(kubeconfig_path), '--namespace', 'default'];
-
-    // Get original kubernetes current-context
-    const { stdout: original_kubecontext } = await execa('kubectl', [
-      ...set_kubeconfig,
-      'config', 'current-context',
-    ]);
-
-    let kube_context: any;
-    if (flags['auto-approve']) {
-      if (kubeconfig.contexts.length === 1) {
-        kube_context = kubeconfig.contexts[0];
-      } else if (kubeconfig.contexts.length > 1) {
-        throw new ArchitectError('Multiple kubeconfig contexts detected');
-      } else {
-        throw new ArchitectError('No kubeconfig contexts detected');
-      }
-    } else {
-      const new_platform_answers: any = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'context',
-          message: 'Which kube context points to your cluster?',
-          choices: kubeconfig.contexts.map((ctx: any) => ctx.name),
-          filter: async value => {
-            // Set the context to the one the user selected
-            await execa('kubectl', [
-              ...set_kubeconfig,
-              'config', 'set',
-              'current-context', value,
-            ]);
-
-            // Set the context value to the matching object from the kubeconfig
-            return kubeconfig.contexts.find((ctx: any) => ctx.name === value);
-          },
-        },
-      ]);
-      kube_context = new_platform_answers.context;
-    }
 
     /* We now support k8s v1.24+, but leaving here for future use
     const { stdout } = await execa('kubectl', [
@@ -213,12 +161,6 @@ type: kubernetes.io/service-account-token
       }
       // eslint-disable-next-line no-empty
     } catch (err) { }
-
-    await execa('kubectl', [
-      ...set_kubeconfig,
-      'config', 'set',
-      'current-context', original_kubecontext,
-    ]);
     CliUx.ux.action.stop();
 
     return {
