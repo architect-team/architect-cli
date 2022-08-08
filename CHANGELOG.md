@@ -1,3 +1,29 @@
+# [1.22.0](https://github.com/architect-team/architect-cli/compare/v1.21.1...v1.22.0) (2022-08-04)
+
+
+### Bug Fixes
+
+* **dev:** Add ARC_DEV env for detecting if we are running locally ([85bc88c](https://github.com/architect-team/architect-cli/commit/85bc88cf32047643a8871b9b47caac80ba9ef870))
+* **docs:** fix links to docs by making them absolute ([74ba274](https://github.com/architect-team/architect-cli/commit/74ba274e137878e47cf373bd72e7a300590e2d89))
+* **exec:** Pass the proper auth header when using exec via token_type ([#646](https://github.com/architect-team/architect-cli/issues/646)) ([54861dc](https://github.com/architect-team/architect-cli/commit/54861dcfb181fd32347f5313d5406b129e8b7dab))
+* **init:** debug block instead of interpolation ([#647](https://github.com/architect-team/architect-cli/issues/647)) ([22e811c](https://github.com/architect-team/architect-cli/commit/22e811c6960889505bcf5071e8f9c5ba6e50fe8d))
+* **sentry:** Sentry Refactor and Bug Fix ([#648](https://github.com/architect-team/architect-cli/issues/648)) ([598034b](https://github.com/architect-team/architect-cli/commit/598034bf79cb918308eb2048a615b0cf0904853b))
+
+
+### Features
+
+* **deploy:** Ephemeral component versions ([#642](https://github.com/architect-team/architect-cli/issues/642)) ([6d90449](https://github.com/architect-team/architect-cli/commit/6d904493fd5299413ad3c3906a5b0bad3df874a8))
+* **spec:** support circular dependencies ([#641](https://github.com/architect-team/architect-cli/issues/641)) ([86835ca](https://github.com/architect-team/architect-cli/commit/86835ca1c8af9b3df1bef0eded1e826a11c932e2))
+
+## [1.21.1](https://github.com/architect-team/architect-cli/compare/v1.21.0...v1.21.1) (2022-07-22)
+
+
+### Bug Fixes
+
+* **dev:** Fix debug with dependencies ([46ffa85](https://github.com/architect-team/architect-cli/commit/46ffa8555deabb202444768fab5a28e1d292e4b5))
+* **exec:** Add status code on exit for exec local ([#636](https://github.com/architect-team/architect-cli/issues/636)) ([00dd0e2](https://github.com/architect-team/architect-cli/commit/00dd0e27d0fc393871fd301a72448ac45ff99a01))
+* **package:** pin class-transformer to 0.4.0 ([049217f](https://github.com/architect-team/architect-cli/commit/049217fc1013a270c7cedc2fe9a09f1c6694b7e5))
+
 # [1.21.0](https://github.com/architect-team/architect-cli/compare/v1.20.1...v1.21.0) (2022-07-21)
 
 

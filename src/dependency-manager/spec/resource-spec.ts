@@ -96,7 +96,7 @@ export abstract class ResourceSpec {
       additionalProperties: Slugs.ArchitectSlugDescription,
     },
     description: 'A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.',
-    externalDocs: { url: '/docs/components/services/#local-configuration' },
+    externalDocs: { url: 'https://docs.architect.io/components/services/#local-configuration' },
   })
   environment?: Dictionary<EnvironmentSpecValue>;
 
@@ -108,7 +108,7 @@ export abstract class ResourceSpec {
   @JSONSchema({
     ...ExpressionOr({ type: 'number' }),
     description: 'The cpu required to run a service or a task',
-    externalDocs: { url: '/docs/components/services/#cpu--memory' },
+    externalDocs: { url: 'https://docs.architect.io/components/services/#cpu--memory' },
   })
   cpu?: number | string;
 
@@ -116,7 +116,7 @@ export abstract class ResourceSpec {
   @JSONSchema({
     ...ExpressionOrString(),
     description: 'The memory required to run a service or a task.',
-    externalDocs: { url: '/docs/components/services/#cpu--memory' },
+    externalDocs: { url: 'https://docs.architect.io/components/services/#cpu--memory' },
   })
   memory?: string;
 
@@ -137,7 +137,7 @@ export abstract class ResourceSpec {
       }),
     },
     description: 'A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.',
-    externalDocs: { url: '/docs/components/services/#labels' },
+    externalDocs: { url: 'https://docs.architect.io/components/services/#labels' },
   })
   labels?: Map<string, string>;
 

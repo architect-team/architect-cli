@@ -63,7 +63,7 @@ export default class TaskExec extends BaseCommand {
     },
   ];
 
-  protected async parse<F, A extends {
+  async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;

@@ -1,7 +1,7 @@
 {
   "name": "@architect-io/cli",
   "description": "Command-line interface for Architect.io",
-  "version": "1.21.1-rc.1",
+  "version": "1.22.1-rc.1",
   "author": "Architect.io",
   "bin": {
     "architect": "./bin/run"
@@ -53,6 +53,7 @@
   },
   "devDependencies": {
     "@oclif/test": "2.0.3",
+    "@saithodev/semantic-release-backmerge": "^2.1.2",
     "@semantic-release/changelog": "^6.0.1",
     "@semantic-release/commit-analyzer": "^9.0.2",
     "@semantic-release/exec": "^6.0.3",
@@ -149,7 +150,9 @@
     "test": "mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
     "pack": "oclif pack:tarballs",
     "readme": "./bin/readme",
+    "check": "npm run lint && npm run test && npm run check-circular",
     "generate:schema-docs": "ts-node --project ./tsconfig.json ./src/dependency-manager/generate.ts",
+    "generate:yarn-lock": "(rm yarn.lock || true) && yarn import",
     "semantic-release": "./node_modules/semantic-release/bin/semantic-release.js"
   },
   "types": "lib/index.d.ts"

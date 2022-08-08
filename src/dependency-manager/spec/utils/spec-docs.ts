@@ -82,7 +82,7 @@ const anyOfPropertyTypeToMarkdown = (property: SchemaObject): string => {
       } else if ((prop as SchemaObject)?.type === 'array') {
         types.push(arrayTypeToMarkdown(prop));
       } else if ((prop as SchemaObject)?.type && (prop as SchemaObject)?.pattern === '\\${{\\s*(.*?)\\s*}}') {
-        types.push(`[Expression](/docs/reference/contexts)`);
+        types.push(`[Expression](https://docs.architect.io/reference/contexts)`);
       } else if ((prop as SchemaObject)?.type && (prop as SchemaObject)?.pattern) {
         const primitive = (prop as SchemaObject).type as string;
         types.push(primitive);
@@ -250,7 +250,7 @@ const schemaToMarkdown = (schema: SchemaObject): string => {
 };
 
 const docs_description = () => {
-  return `This document describes the full specification of the [architect.yml](/docs/components/architect-yml) configuration file. The top level of your \`architect.yml\` should be a [ComponentSpec](#componentspec).
+  return `This document describes the full specification of the [architect.yml](https://docs.architect.io/components/architect-yml) configuration file. The top level of your \`architect.yml\` should be a [ComponentSpec](#componentspec).
 
 We've published a formal definition of this specification here: [Architect JSONSchema](https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json).
 

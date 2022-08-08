@@ -11,7 +11,7 @@ import { REF_PREFIX } from './json-schema-annotations';
 
 const SCHEMA_ID = 'https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json';
 const JSONSCHEMA_VERSION = 'http://json-schema.org/draft-07/schema';
-const DOCS_URL = 'https://www.architect.io/docs/reference/architect-yml';
+const DOCS_URL = 'https://docs.architect.io/reference/architect-yml';
 const SCHEMA_TITLE = `Schema for architect.yml. See: ${DOCS_URL}`;
 
 export const DEBUG_PREFIX = '_Debug';
