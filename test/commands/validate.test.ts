@@ -74,7 +74,7 @@ describe('architect validate component', function () {
       const expected = [
         'ValidationErrors\n',
         'component: tests/invalid_schema\n',
-        'file: /Users/devinsag/code/architect/architect-cli/test/mocks/invalidschema/architect.yml:1:6\n',
+        `file: ${path.resolve(`test/mocks/invalidschema/architect.yml`)}:1:6\n`,
         '›  1 | name: tests/invalid_schema\n',
         '     |      ﹋﹋﹋﹋﹋﹋﹋﹋﹋﹋ must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).\n',
         '   2 | \n',
