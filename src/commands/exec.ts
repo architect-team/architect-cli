@@ -85,22 +85,25 @@ export default class Exec extends BaseCommand {
     const ws = await this.getWebSocket(uri);
 
     await new Promise((resolve, reject) => {
-      const duplex = createWebSocketStream(ws, { encoding: 'utf-8' });
-      duplex.pipe(this.getOutputTransform());
+      const websocket = createWebSocketStream(ws, { encoding: 'utf-8' });
+      const inputTransform = this.getInputTransform();
+      websocket.pipe(this.getOutputTransform());
 
-      if (flags.stdin) {
-        if (flags.tty) {
-          // This method is only available when stdin is a TTY as it's part of the tty.ReadStream class:
-          // https://nodejs.org/api/tty.html#readstreamsetrawmodemode
-          process.stdin.setRawMode(true);
-        }
-        process.stdin.pipe(this.getInputTransform()).pipe(duplex);
+      if (process.stdin.isTTY) {
+        // This method is only available when stdin is a TTY as it's part of the tty.ReadStream class:
+        // https://nodejs.org/api/tty.html#readstreamsetrawmodemode
+        process.stdin.setRawMode(true);
+        process.stdin.pipe(inputTransform).pipe(websocket);
+      } else if (flags.stdin) {
+        // If stdin is not a tty, stdin can be closed before data gets received by the websocket.
+        // Passing {end: false} keeps the websocket open until it's closed when we receive the result.
+        process.stdin.pipe(inputTransform, { end: false }).pipe(websocket);
       }
 
-      duplex.on('end', () => {
+      websocket.on('end', () => {
         process.exit();
       });
-      duplex.on('error', (err) => {
+      websocket.on('error', (err) => {
         reject(err);
       });
     });
@@ -234,9 +237,17 @@ export default class Exec extends BaseCommand {
     const query = new URLSearchParams({
       ext_ref: replica.ext_ref,
       container: replica.node_ref,
-      stdin: flags.stdin.toString(),
-      tty: flags.tty.toString(),
     });
+
+    if (flags.stdin && flags.tty) {
+      query.append('stdin', 'true');
+      // 'tty' should only be set true if both stdin and tty are set.
+      // This mimics the behavior of `kubectl exec`.
+      query.append('tty', 'true');
+    } else if (flags.stdin) {
+      query.append('stdin', 'true');
+    }
+
     for (const arg of stringArgv(args.command)) {
       query.append('command', arg);
     }
