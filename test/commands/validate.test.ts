@@ -68,13 +68,10 @@ describe('architect validate component', function () {
     .stderr({ print })
     .command(['validate', 'test/mocks/invalidschema/architect.yml'])
     .catch(err => {
-      expect(err.name).eq(`ValidationErrors\ncomponent: tests/invalid_schema\nfile: ${path.resolve(`test/mocks/invalidschema/architect.yml`)}:1:6`);
+      expect(err.name).to.contain(`ValidationErrors\ncomponent: tests/invalid_schema\nfile: ${path.resolve(`test/mocks/invalidschema/architect.yml`)}:1:`);
     })
     .it('correctly displays prettyValidationErrors error message to screen in place of a stacktrace', ctx => {
       const expected = [
-        'ValidationErrors\n',
-        'component: tests/invalid_schema\n',
-        `file: ${path.resolve(`test/mocks/invalidschema/architect.yml`)}:1:6\n`,
         '›  1 | name: tests/invalid_schema\n',
         '     |      ﹋﹋﹋﹋﹋﹋﹋﹋﹋﹋ must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).\n',
         '   2 | \n',
@@ -89,7 +86,7 @@ describe('architect validate component', function () {
         '     |   ﹋﹋﹋﹋﹋﹋﹋ must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32\n',
         '  10 | \n',
       ];
-      expect(ctx.stderr).to.equal(expected.join(''));
+      expect(ctx.stderr).to.contain(expected.join(''));
       expect(ctx.stdout).to.equal('');
     });
 });
