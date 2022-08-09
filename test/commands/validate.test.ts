@@ -7,7 +7,8 @@ describe('architect validate component', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
-  const escape = new RegExp(/\r\n/, 'g');
+  const cr = new RegExp(/\r/, 'g');
+  const lf = new RegExp(/\n/, 'g');
 
   mockArchitectAuth
     .stdout({ print })
@@ -70,25 +71,30 @@ describe('architect validate component', function () {
     .stderr({ print })
     .command(['validate', 'test/mocks/invalidschema/architect.yml'])
     .catch(err => {
-      expect(err.name.replace(escape, '\n')).contains(`ValidationErrors\ncomponent: tests/invalid_schema\nfile: ${path.resolve(`test/mocks/invalidschema/architect.yml`)}:1:`);
+      const expected_validation_error_name = `ValidationErrorscomponent: tests/invalid_schemafile: ${path.resolve(`test/mocks/invalidschema/architect.yml`)}:1:`;
+      const validation_error_name = err.name.split('\n');
+      const trimmed_validation_error_name = validation_error_name.map(line => line.replace(cr, '').trim());
+      expect(trimmed_validation_error_name.join('')).contains(expected_validation_error_name);
     })
     .it('correctly displays prettyValidationErrors error message to screen in place of a stacktrace', ctx => {
-      const expected = [
-        '›  1 | name: tests/invalid_schema\n',
-        '     |      ﹋﹋﹋﹋﹋﹋﹋﹋﹋﹋ must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).\n',
-        '   2 | \n',
-        '   3 | services:\n',
-        '›  4 |   invalid_schema:\n',
-        '     |   ﹋﹋﹋﹋﹋﹋﹋ must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32\n',
-        '   5 |     interfaces:\n',
-        '   6 |       main: 8080\n',
-        '   7 | \n',
-        '   8 | interfaces:\n',
-        '›  9 |   invalid_schema: ${{ services.invalid_schema.interfaces.main.url }}\n',
-        '     |   ﹋﹋﹋﹋﹋﹋﹋ must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32\n',
-        '  10 | \n',
+      const expected_validation_error_stdout = [
+        '›  1 | name: tests/invalid_schema',
+        '|      ﹋﹋﹋﹋﹋﹋﹋﹋﹋﹋ must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).',
+        '2 |',
+        '3 | services:',
+        '›  4 |   invalid_schema:',
+        '|   ﹋﹋﹋﹋﹋﹋﹋ must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32',
+        '5 |     interfaces:',
+        '6 |       main: 8080',
+        '7 |',
+        '8 | interfaces:',
+        '›  9 |   invalid_schema: ${{ services.invalid_schema.interfaces.main.url }}',
+        '|   ﹋﹋﹋﹋﹋﹋﹋ must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32',
+        '10 |',
       ];
-      expect(ctx.stderr.replace(escape,'\n')).to.contain(expected.join(''));
+      const stdout_error_lines = ctx.stderr.split('\n');
+      const trimmed_stdout_error_lines = stdout_error_lines.map(line => line.replace(cr, '').trim());
+      expect(trimmed_stdout_error_lines.join('')).to.contain(expected_validation_error_stdout.join(''));
       expect(ctx.stdout).to.equal('');
     });
 });
