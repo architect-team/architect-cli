@@ -7,6 +7,8 @@ describe('architect validate component', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
+  const escape = new RegExp(/\r\n/, 'g');
+
   mockArchitectAuth
     .stdout({ print })
     .stderr({ print })
@@ -68,7 +70,7 @@ describe('architect validate component', function () {
     .stderr({ print })
     .command(['validate', 'test/mocks/invalidschema/architect.yml'])
     .catch(err => {
-      expect(err.name).to.contain(`ValidationErrors\ncomponent: tests/invalid_schema\nfile: ${path.resolve(`test/mocks/invalidschema/architect.yml`)}:1:`);
+      expect(err.name.replace(escape, '\n')).contains(`ValidationErrors\ncomponent: tests/invalid_schema\nfile: ${path.resolve(`test/mocks/invalidschema/architect.yml`)}:1:`);
     })
     .it('correctly displays prettyValidationErrors error message to screen in place of a stacktrace', ctx => {
       const expected = [
@@ -86,7 +88,7 @@ describe('architect validate component', function () {
         '     |   ﹋﹋﹋﹋﹋﹋﹋ must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32\n',
         '  10 | \n',
       ];
-      expect(ctx.stderr).to.contain(expected.join(''));
+      expect(ctx.stderr.replace(escape,'\n')).to.contain(expected.join(''));
       expect(ctx.stdout).to.equal('');
     });
 });
