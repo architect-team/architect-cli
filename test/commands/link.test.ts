@@ -1,11 +1,13 @@
-import { expect } from '@oclif/test';
+import { expect, test } from '@oclif/test';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import sinon from 'sinon';
+import { Dictionary } from '../../src';
 import AppConfig from '../../src/app-config/config';
 import AppService from '../../src/app-config/service';
+import BaseTable from '../../src/base-table';
 import Link from '../../src/commands/link';
 import ARCHITECTPATHS from '../../src/paths';
 
@@ -63,4 +65,32 @@ describe('link', () => {
     const linked_components = fs.readJSONSync(linked_components_file);
     expect(linked_components).to.have.property('hello-world', component_path);
   });
+
+  describe('list linked components in a table', async () => {
+    const component_path = path.join(__dirname, '../../examples/hello-world/').replace(/\/$/gi, '').replace(/\\$/gi, '');
+    const log_spy = sinon.fake.returns(null);
+    test
+      .stub(Link.prototype, 'log', log_spy)
+      .stdout()
+      .command(['link', component_path])
+      .it('link a component', () => {
+        expect(log_spy.calledOnce).to.equal(true);
+        expect(log_spy.firstCall.args[0]).to.equal(`Successfully linked ${chalk.green('hello-world')} to local system at ${chalk.green(component_path)}.`);
+      })
+
+    const linked_components_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
+    const linked_components: Dictionary<string> = fs.readJSONSync(linked_components_file);
+    const table = new BaseTable({ head: ['Component', 'Path'] });
+    for (const entry of Object.entries(linked_components)) {
+      table.push(entry);
+    }
+
+    const log_spy_list = sinon.fake.returns(null);
+    test
+      .stub(Link.prototype, 'log', log_spy_list)
+      .command(['link', 'list'])
+      .it('list all linked components', () => {
+        expect(log_spy_list.firstCall.args[0]).to.equal(table.toString());
+      });
+  })
 })
