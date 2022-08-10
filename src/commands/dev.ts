@@ -238,9 +238,13 @@ export default class Dev extends BaseCommand {
         const promises: Promise<AxiosResponse<any>>[] = [];
         for (const exposed_interface of exposed_interfaces) {
           const [host_name, port] = exposed_interface.replace('http://', '').split(':');
-          promises.push(axios.get(`http://localhost:${port}`, {
+          promises.push(axios.options(`http://localhost:${port}`, {
             headers: {
               Host: host_name,
+            },
+            params: {
+              architect: 1,
+              ping: 1,
             },
             maxRedirects: 0,
             timeout: poll_interval,
