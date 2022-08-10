@@ -21,22 +21,18 @@ export default class EnvironmentCreate extends BaseCommand {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...PlatformUtils.flags,
-    description: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: 'Environment Description',
-      }),
-    },
-    ttl: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: 'The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m',
-      }),
-    },
+    description: Flags.string({
+      description: 'Environment Description',
+      sensitive: false,
+    }),
+    ttl: Flags.string({
+      description: 'The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m',
+      sensitive: false,
+    }),
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'environment',
     description: 'Name to give the environment',
     parse: async (value: string): Promise<string> => value.toLowerCase(),

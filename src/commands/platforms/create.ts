@@ -13,7 +13,7 @@ export default class PlatformCreate extends BaseCommand {
   static description = 'Register a new platform with Architect Cloud';
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'platform',
     description: 'Name to give the platform',
     parse: async (value: string): Promise<string> => value.toLowerCase(),
@@ -22,45 +22,32 @@ export default class PlatformCreate extends BaseCommand {
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    auto_approve: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
-        hidden: true,
-      }),
-    },
-    ['auto-approve']: {
-      non_sensitive: true,
-      ...Flags.boolean(),
-    },
-    type: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 't',
-        options: ['KUBERNETES', 'kubernetes'],
-      }),
-    },
-    host: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'h',
-      }),
-    },
-    kubeconfig: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'k',
-        default: '~/.kube/config',
-        exclusive: ['host'],
-      }),
-    },
-    flag: {
-      non_sensitive: true,
-      ...Flags.string({
-        multiple: true,
-        default: [],
-      }),
-    },
+    auto_approve: Flags.boolean({
+      description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
+      hidden: true,
+      sensitive: false,
+    }),
+    ['auto-approve']: Flags.boolean({ sensitive: false }),
+    type: Flags.string({
+      char: 't',
+      options: ['KUBERNETES', 'kubernetes'],
+      sensitive: false,
+    }),
+    host: Flags.string({
+      char: 'h',
+      sensitive: false,
+    }),
+    kubeconfig: Flags.string({
+      char: 'k',
+      default: '~/.kube/config',
+      exclusive: ['host'],
+      sensitive: false,
+    }),
+    flag: Flags.string({
+      multiple: true,
+      default: [],
+      sensitive: false,
+    }),
   };
 
   async parse<F, A extends {
