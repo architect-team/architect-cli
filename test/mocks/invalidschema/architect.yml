@@ -1,9 +1,0 @@
-name: tests/invalid_schema
-
-services:
-  invalid_schema:
-    interfaces:
-      main: 8080
-
-interfaces:
-  invalid_schema: ${{ services.invalid_schema.interfaces.main.url }}
