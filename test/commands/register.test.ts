@@ -540,6 +540,73 @@ describe('register', function () {
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
       expect(compose.callCount).to.eq(2);
       expect(compose.firstCall.args[0][5]).to.deep.equal("*.args.NODE_ENV=dev");
+      expect(compose.secondCall.args[0][5]).to.deep.equal("*.args.NODE_ENV=dev");
+    });
+
+  mockArchitectAuth
+    .stub(fs, 'move', sinon.stub())
+    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
+    .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' })
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .get(/\/accounts\/examples/)
+      .reply(200, mock_account_response)
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .post(/\/accounts\/.*\/components/)
+      .reply(200, {})
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', '-a', 'examples', 'examples/react-app/architect.yml', 'examples/react-app/architect.yml', 'examples/gcp-pubsub/pubsub/architect.yml', '--arg', 'NODE_ENV=dev'])
+    .it('register multiple apps at the same time will only register unique component paths', ctx => {
+      expect(ctx.stderr).to.contain('Registering component react-app:latest with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component examples/gcp-pubsub:latest with Architect Cloud...... done\n');
+      expect(ctx.stdout).to.contain('Successfully registered component');
+      const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
+      expect(compose.callCount).to.eq(2);
+      expect(compose.firstCall.args[0][5]).to.deep.equal("*.args.NODE_ENV=dev");
+      expect(compose.secondCall.args[0][5]).to.deep.equal("*.args.NODE_ENV=dev");
+      expect(compose.thirdCall).null;
+    });
+
+  mockArchitectAuth
+    .stub(fs, 'move', sinon.stub())
+    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
+    .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' })
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .get(/\/accounts\/examples/)
+      .reply(200, mock_account_response)
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .post(/\/accounts\/.*\/components/)
+      .reply(200, {})
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', '-a', 'examples', 'examples/react-app/architect.yml', 'examples/../examples/react-app/architect.yml', 'examples/gcp-pubsub/pubsub/architect.yml', '--arg', 'NODE_ENV=dev'])
+    .it('register multiple apps at the same time will only register only unique component paths if relative pathing is provided', ctx => {
+      expect(ctx.stderr).to.contain('Registering component react-app:latest with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component examples/gcp-pubsub:latest with Architect Cloud...... done\n');
+      expect(ctx.stdout).to.contain('Successfully registered component');
+      const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
+      expect(compose.callCount).to.eq(2);
+      expect(compose.firstCall.args[0][5]).to.deep.equal("*.args.NODE_ENV=dev");
+      expect(compose.secondCall.args[0][5]).to.deep.equal("*.args.NODE_ENV=dev");
+      expect(compose.thirdCall).null;
     });
 
 });

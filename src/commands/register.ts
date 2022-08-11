@@ -33,7 +33,7 @@ export default class ComponentRegister extends BaseCommand {
     arg: {
       non_sensitive: true,
       ...Flags.string({
-        description: 'Build arg(s) to pass to docker build',
+        description: 'Build arg(s) to pass to docker build. If multiple components are specified, the same build arg(s) will be applied to each component.',
         multiple: true,
       }),
     },
@@ -41,7 +41,7 @@ export default class ComponentRegister extends BaseCommand {
       non_sensitive: true,
       ...Flags.string({
         char: 't',
-        description: 'Tag to give to the new component',
+        description: 'Tag to give to the new component. If multiple components are specified, the same tag will be applied to each component.',
         default: 'latest',
         exclusive: ['environment'],
       }),
@@ -49,7 +49,7 @@ export default class ComponentRegister extends BaseCommand {
     architecture: {
       non_sensitive: true,
       ...Flags.string({
-        description: 'Architecture(s) to target for Docker image builds',
+        description: 'Architecture(s) to target for Docker image builds. If multiple components are specified, the same architecture(s) will be applied to each component.',
         default: ['amd64'],
         multiple: true,
       }),
@@ -74,7 +74,7 @@ export default class ComponentRegister extends BaseCommand {
   static args = [{
     non_sensitive: true,
     name: 'component',
-    description: 'Path to a component to register. Multiple components are accepted.',
+    description: 'Path to a component to register. Multiple unique components are accepted. The same component register command options are applied to any and all paths provided.',
     default: './',
   }];
 
@@ -90,9 +90,10 @@ export default class ComponentRegister extends BaseCommand {
       options.args.push({ name: 'filler' });
     }
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
+    const relative_component_path_argv = (parsed.argv || []).map(argv => path.resolve(argv));
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    parsed.args.component = parsed.argv;
+    parsed.args.component = new Set(relative_component_path_argv);
 
     return parsed;
   }
