@@ -171,20 +171,15 @@ export default class Dev extends BaseCommand {
   }
 
   setupSigInt(callback: () => void): void {
-    if (process.platform === "win32") {
-      const rl = require("readline").createInterface({
-        input: process.stdin,
-        output: process.stdout,
-      });
-
-      rl.on("SIGINT", function () {
-        process.emit("SIGINT", "SIGINT");
-      });
-    }
-
-    process.on("SIGINT", function () {
+    process.on('SIGINT', function () {
       callback();
     });
+
+    // This is what happens with Ctrl+Break on Windows. Treat it like a Ctrl+C, otherwise
+    // the user can kill `architect dev` in a "normal" way without the containers stopping.
+    process.on('SIGBREAK', function () {
+      callback();
+    })
   }
 
   async runCompose(compose: DockerComposeTemplate): Promise<void> {
@@ -290,12 +285,22 @@ export default class Dev extends BaseCommand {
     const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args, { stdout: 'pipe', stdin: "ignore" });
 
     let is_exiting = false;
+    let halt_output = false;
     this.setupSigInt(() => {
       if (is_exiting) {
         return;
       }
       is_exiting = true;
-      docker_compose_runnable.kill('SIGTERM');
+
+      if (process.platform === "win32") {
+        // On windows, there's no clean way to send a SIGTERM/SIGINT equivalent because interrupts don't exist.
+        // Instead, we run `docker compose stop` and stop logging output from the containers.
+        halt_output = true;
+        DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'stop']);
+        console.log("Gracefully stopping..... Please Wait.....");
+      } else {
+        docker_compose_runnable.kill('SIGTERM');
+      }
     });
 
     // When docker compose is stopping it will tell the user to hit `ctrl-c` again
@@ -303,6 +308,9 @@ export default class Dev extends BaseCommand {
     const service_colors = new Map<string, chalk.Chalk>();
     const rand = () => Math.floor(Math.random() * 255);
     docker_compose_runnable.stdout?.on('data', (data) => {
+      if (halt_output) {
+        return;
+      }
       for (const line of data.toString().split('\n')) {
         if (line.indexOf('Gracefully stopping...') !== -1) {
           console.log("\nGracefully stopping..... Please Wait.....");
@@ -324,6 +332,7 @@ export default class Dev extends BaseCommand {
         }
       }
     });
+
     DockerComposeUtils.watchContainersHealth(compose_file, project_name, () => { return is_exiting; });
 
     try {
