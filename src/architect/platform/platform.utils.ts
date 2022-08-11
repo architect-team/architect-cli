@@ -23,14 +23,12 @@ export interface KubernetesPlatformCredentials {
 
 export default class PlatformUtils {
   static flags = {
-    platform: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: 'Architect platform',
-        env: 'ARCHITECT_PLATFORM',
-        parse: async value => value.toLowerCase(),
-      }),
-    },
+    platform: Flags.string({
+      description: 'Architect platform',
+      env: 'ARCHITECT_PLATFORM',
+      parse: async value => value.toLowerCase(),
+      sensitive: false,
+    }),
   };
 
   static async getPlatform(api: AxiosInstance, account: Account, platform_name?: string): Promise<Platform> {

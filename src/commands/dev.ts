@@ -28,30 +28,26 @@ export default class Dev extends BaseCommand {
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
 
-    'compose-file': {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'o',
-        description: 'Path where the compose file should be written to',
-        default: '',
-        exclusive: ['environment', 'auto-approve', 'auto_approve', 'refresh'],
-      }),
-    },
+    'compose-file': Flags.string({
+      char: 'o',
+      description: 'Path where the compose file should be written to',
+      default: '',
+      exclusive: ['environment', 'auto-approve', 'auto_approve', 'refresh'],
+      sensitive: false,
+    }),
     parameter: Flags.string({
       char: 'p',
       description: `${Command.DEPRECATED} Please use --secret.`,
       multiple: true,
       hidden: true,
     }),
-    interface: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'i',
-        description: 'Component interfaces',
-        multiple: true,
-        default: [],
-      }),
-    },
+    interface: Flags.string({
+      char: 'i',
+      description: 'Component interfaces',
+      multiple: true,
+      default: [],
+      sensitive: false,
+    }),
     'secret-file': Flags.string({
       description: 'Path of secrets file',
       multiple: true,
@@ -68,75 +64,59 @@ export default class Dev extends BaseCommand {
       multiple: true,
       default: [],
     }),
-    recursive: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        char: 'r',
-        default: true,
-        allowNo: true,
-        description: '[default: true] Toggle to automatically deploy all dependencies',
-      }),
-    },
-    browser: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        default: true,
-        allowNo: true,
-        description: '[default: true] Automatically open urls in the browser for local deployments',
-      }),
-    },
-    port: {
-      non_sensitive: true,
-      ...Flags.integer({
-        default: 80,
-        description: '[default: 80] Port for the gateway',
-      }),
-    },
+    recursive: Flags.boolean({
+      char: 'r',
+      default: true,
+      allowNo: true,
+      description: '[default: true] Toggle to automatically deploy all dependencies',
+      sensitive: false,
+    }),
+    browser: Flags.boolean({
+      default: true,
+      allowNo: true,
+      description: '[default: true] Automatically open urls in the browser for local deployments',
+      sensitive: false,
+    }),
+    port: Flags.integer({
+      default: 80,
+      description: '[default: 80] Port for the gateway',
+      sensitive: false,
+    }),
     // Used for proxy from deploy to dev. These will be removed once --local is deprecated
-    local: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        char: 'l',
-        description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
-        exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
-        hidden: true,
-      }),
-    },
-    production: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: `${Command.DEPRECATED} Please use --environment.`,
-        dependsOn: ['local'],
-        hidden: true,
-      }),
-    },
-    compose_file: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: `${Command.DEPRECATED} Please use --compose-file.`,
-        exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
-        hidden: true,
-      }),
-    },
+    local: Flags.boolean({
+      char: 'l',
+      description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
+      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
+      hidden: true,
+      sensitive: false,
+    }),
+    production: Flags.boolean({
+      description: `${Command.DEPRECATED} Please use --environment.`,
+      dependsOn: ['local'],
+      hidden: true,
+      sensitive: false,
+    }),
+    compose_file: Flags.string({
+      description: `${Command.DEPRECATED} Please use --compose-file.`,
+      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      hidden: true,
+      sensitive: false,
+    }),
     values: Flags.string({
       char: 'v',
       hidden: true,
       description: `${Command.DEPRECATED} Please use --secret-file.`,
     }),
-    detached: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: 'Run in detached mode',
-        char: 'd',
-      }),
-    },
-    debug: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: `[default: true] Turn debug mode on (true) or off (false)`,
-        default: 'true',
-      }),
-    },
+    detached: Flags.boolean({
+      description: 'Run in detached mode',
+      char: 'd',
+      sensitive: false,
+    }),
+    debug: Flags.string({
+      description: `[default: true] Turn debug mode on (true) or off (false)`,
+      default: 'true',
+      sensitive: false,
+    }),
     arg: Flags.string({
       description: 'Build arg(s) to pass to docker build',
       multiple: true,
@@ -144,7 +124,7 @@ export default class Dev extends BaseCommand {
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'configs_or_components',
     description: 'Path to an architect.yml file or component `account/component:latest`. Multiple components are accepted.',
   }];
@@ -258,9 +238,13 @@ export default class Dev extends BaseCommand {
         const promises: Promise<AxiosResponse<any>>[] = [];
         for (const exposed_interface of exposed_interfaces) {
           const [host_name, port] = exposed_interface.replace('http://', '').split(':');
-          promises.push(axios.get(`http://localhost:${port}`, {
+          promises.push(axios.options(`http://localhost:${port}`, {
             headers: {
               Host: host_name,
+            },
+            params: {
+              architect: 1,
+              ping: 1,
             },
             maxRedirects: 0,
             timeout: poll_interval,
