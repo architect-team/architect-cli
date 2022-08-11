@@ -1,4 +1,4 @@
-import { expect, test } from '@oclif/test';
+import { expect } from '@oclif/test';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import os from 'os';
@@ -9,6 +9,7 @@ import AppConfig from '../../src/app-config/config';
 import AppService from '../../src/app-config/service';
 import BaseTable from '../../src/base-table';
 import Link from '../../src/commands/link';
+import ListLinkedComponents from '../../src/commands/link/list';
 import ARCHITECTPATHS from '../../src/paths';
 
 describe('link', () => {
@@ -66,31 +67,25 @@ describe('link', () => {
     expect(linked_components).to.have.property('hello-world', component_path);
   });
 
-  describe('list linked components in a table', async () => {
+  it('list linked components', async () => {
     const component_path = path.join(__dirname, '../../examples/hello-world/').replace(/\/$/gi, '').replace(/\\$/gi, '');
+
     const log_spy = sinon.fake.returns(null);
-    test
-      .stub(Link.prototype, 'log', log_spy)
-      .stdout()
-      .command(['link', component_path])
-      .it('link a component', () => {
-        expect(log_spy.calledOnce).to.equal(true);
-        expect(log_spy.firstCall.args[0]).to.equal(`Successfully linked ${chalk.green('hello-world')} to local system at ${chalk.green(component_path)}.`);
-      })
+    sinon.replace(Link.prototype, 'log', log_spy);
+    await Link.run([component_path]);
+
+    const log_spy_list = sinon.fake.returns(null);
+    sinon.replace(ListLinkedComponents.prototype, 'log', log_spy_list);
+    await ListLinkedComponents.run([]);
 
     const linked_components_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
-    const linked_components: Dictionary<string> = fs.readJSONSync(linked_components_file);
+    const linked_components = fs.readJSONSync(linked_components_file);
     const table = new BaseTable({ head: ['Component', 'Path'] });
-    for (const entry of Object.entries(linked_components)) {
+    for (const entry of Object.entries(linked_components as Dictionary<string>)) {
       table.push(entry);
     }
 
-    const log_spy_list = sinon.fake.returns(null);
-    test
-      .stub(Link.prototype, 'log', log_spy_list)
-      .command(['link', 'list'])
-      .it('list all linked components', () => {
-        expect(log_spy_list.firstCall.args[0]).to.equal(table.toString());
-      });
-  })
+    expect(log_spy_list.calledOnce).to.equal(true);
+    expect(log_spy_list.firstCall.args[0]).to.equal(table.toString());
+  });
 })
