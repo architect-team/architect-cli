@@ -2,6 +2,7 @@ import { Flags } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AppService from '../../app-config/service';
+import * as Docker from '../../common/utils/docker';
 import Account from './account.entity';
 
 export default class AccountUtils {
@@ -21,6 +22,19 @@ export default class AccountUtils {
       id: 'dev',
       name: 'dev (Local Machine)',
     };
+  }
+
+  static async shouldListLocalAccounts(exit_on_failure?: boolean): Promise<boolean> {
+    try {
+      await Docker.verify();
+      return true;
+    } catch (e: any) {
+      console.log(chalk.yellow(`Unable to provide any local accounts to choose from because ${e?.message}`));
+      if (exit_on_failure) {
+        throw e;
+      }
+      return false;
+    }
   }
 
   static isLocalAccount(account: Account): boolean {
@@ -49,7 +63,7 @@ export default class AccountUtils {
     const token_json = await app.auth.getPersistedTokenJSON();
     if (!token_json || token_json.email === 'unknown') {
       console.log(chalk.yellow('In order to access remote accounts you can login by running `architect login`'));
-      let account: Account;
+      await this.shouldListLocalAccounts(true);
       const answers: { account: Account } = await inquirer.prompt([
         {
           type: 'list',
@@ -70,6 +84,7 @@ export default class AccountUtils {
       }
     } else {
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
+      const can_run_local: boolean = await this.shouldListLocalAccounts();
       const answers: { account: Account } = await inquirer.prompt([
         {
           type: 'autocomplete',
@@ -79,7 +94,7 @@ export default class AccountUtils {
           source: async (answers_so_far: any, input: string) => {
             const { data } = await app.api.get('/accounts', { params: { q: input, limit: 10 } });
             const accounts = data.rows as Account[];
-            if (options?.ask_local_account) {
+            if (options?.ask_local_account && can_run_local) {
               accounts.unshift(this.getLocalAccount());
             }
             return accounts.map((a) => ({ name: a.name, value: a }));
