@@ -14,7 +14,7 @@ export default class Environments extends BaseCommand {
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'query',
     description: 'Search term used to filter the results',
   }];

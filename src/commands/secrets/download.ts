@@ -20,7 +20,7 @@ export default class SecretsDownload extends BaseCommand {
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'secrets_file',
     description: 'Secrets filename to download secrets',
     required: true,

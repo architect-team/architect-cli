@@ -57,6 +57,7 @@ export class DockerComposeUtils {
           '--api.insecure=true',
           '--pilot.dashboard=false',
           '--accesslog=true',
+          '--accesslog.filters.minDuration=1s',
           '--accesslog.filters.statusCodes=400-599',
           `--entryPoints.web.address=:${gateway_port}`,
           '--providers.docker=true',

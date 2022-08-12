@@ -51,15 +51,13 @@ export default class Exec extends BaseCommand {
       allowNo: true,
       default: true,
     }),
-    tty: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: 'Stdin is a TTY. If the flag isn\'t supplied, tty or no-tty is automatically detected.',
-        char: 't',
-        allowNo: true,
-        default: undefined,
-      }),
-    },
+    tty: Flags.boolean({
+      description: 'Stdin is a TTY. If the flag isn\'t supplied, tty or no-tty is automatically detected.',
+      char: 't',
+      allowNo: true,
+      default: undefined,
+      sensitive: false,
+    }),
   };
 
   static args = [{
@@ -67,7 +65,7 @@ export default class Exec extends BaseCommand {
     description: 'Command to run',
     required: true,
   }, {
-    non_sensitive: true,
+    sensitive: false,
     name: 'resource',
     description: 'Name of resource',
     required: false,

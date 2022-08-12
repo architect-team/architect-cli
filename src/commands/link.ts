@@ -17,13 +17,11 @@ export default class Link extends BaseCommand {
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'componentPath',
     char: 'p',
     default: '.',
   }];
-
-  static non_sensitive = new Set([...Object.keys({ ...Link.flags }), ...Link.args.map(arg => arg.name)]);
 
   async run(): Promise<void> {
     const { args } = await this.parse(Link);

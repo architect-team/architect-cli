@@ -16,15 +16,13 @@ export interface Replica {
 
 export class EnvironmentUtils {
   static flags = {
-    environment: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: 'Architect environment',
-        char: 'e',
-        env: 'ARCHITECT_ENVIRONMENT',
-        parse: async (value) => value.toLowerCase(),
-      }),
-    },
+    environment: Flags.string({
+      description: 'Architect environment',
+      char: 'e',
+      env: 'ARCHITECT_ENVIRONMENT',
+      parse: async (value) => value.toLowerCase(),
+      sensitive: false,
+    }),
   };
 
   static async getEnvironment(api: AxiosInstance, account: Account, environment_name?: string): Promise<Environment> {
