@@ -3,7 +3,6 @@ import path from 'path';
 import untildify from 'untildify';
 import { buildSpecFromPath } from '../..';
 import BaseCommand from '../../base-command';
-import BaseTable from '../../base-table';
 
 declare const process: NodeJS.Process;
 
@@ -12,28 +11,18 @@ export default class Link extends BaseCommand {
     return false;
   }
 
-  static description = 'Link a local component to the host to be used to power local deployments or list all linked components.';
+  static description = 'Link a local component to the host to be used to power local deployments.';
 
   static flags = {
     ...BaseCommand.flags,
   };
 
   static args = [{
-    sensitive: true,
+    sensitive: false,
     name: 'componentPath',
     description: 'Provide a component path or list all linked components using "architect link list"',
     default: '.',
   }];
-
-  static non_sensitive = new Set([...Object.keys({ ...Link.flags }), ...Link.args.map(arg => arg.name)]);
-
-  listLinkedComponents(): void {
-    const table = new BaseTable({ head: ['Component', 'Path'] });
-    for (const entry of Object.entries(this.app.linkedComponents)) {
-      table.push(entry);
-    }
-    this.log(table.toString());
-  }
 
   async run(): Promise<void> {
     const { args } = await this.parse(Link);

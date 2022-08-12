@@ -6,6 +6,8 @@ export default class ListLinkedComponents extends BaseCommand {
     return false;
   }
 
+  static description = 'List all linked components.';
+
   async run(): Promise<void> {
     const table = new BaseTable({ head: ['Component', 'Path'] });
     for (const entry of Object.entries(this.app.linkedComponents)) {
