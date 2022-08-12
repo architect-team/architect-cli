@@ -272,12 +272,14 @@ export default class Dev extends BaseCommand {
     // On Windows (cmd, powershell), signals don't exist and running in detached mode opens a new window. The
     // "SIGINT" we get on Windows isn't a real signal and isn't automatically passed to child processes,
     // so we don't have to worry about it.
+    const run_compose_detached = process.platform !== 'win32';
+
     const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args,
-      { stdout: 'pipe', stdin: "ignore", detached: process.platform !== 'win32' });
+      { stdout: 'pipe', stdin: 'ignore', detached: run_compose_detached });
 
     let is_exiting = false;
     let seen_container_output = false;
-    this.setupSigInt(() => {
+    this.setupSigInt(async () => {
       // If a user SIGINT's between when docker compose outputs "Attaching to ..." and starts printing logs,
       // the containers will not be stopped and `docker compose stop` won't yet work.
       // We stop SIGINT from doing anything until we know for sure we can stop gracefully.
@@ -286,8 +288,13 @@ export default class Dev extends BaseCommand {
       }
       is_exiting = true;
 
-      DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'stop']);
-      console.log("Gracefully stopping..... Please Wait.....");
+      try {
+        this.log('Gracefully stopping..... Please Wait.....');
+        await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'stop'], {stdin: 'ignore', detached: run_compose_detached});
+      } catch (ex) {
+        is_exiting = false;
+        this.log(chalk.red('Failed to stop cleanly, try again'));
+      }
     });
 
     const service_colors = new Map<string, chalk.Chalk>();
