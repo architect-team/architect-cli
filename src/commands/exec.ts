@@ -3,7 +3,6 @@ import { OutputArgs, OutputFlags } from '@oclif/core/lib/interfaces';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import stream from 'stream';
-import stringArgv from 'string-argv';
 import WebSocket, { createWebSocketStream } from 'ws';
 import { ArchitectError, Dictionary, parseUnknownSlug } from '../';
 import Account from '../architect/account/account.entity';
@@ -246,7 +245,7 @@ export default class Exec extends BaseCommand {
       query.append('stdin', 'true');
     }
 
-    for (const arg of stringArgv(args.command)) {
+    for (const arg of args.command_array) {
       query.append('command', arg);
     }
 
@@ -266,7 +265,7 @@ export default class Exec extends BaseCommand {
     }
     compose_args.push(service.name);
 
-    for (const arg of stringArgv(args.command)) {
+    for (const arg of args.command_array) {
       compose_args.push(arg);
     }
 

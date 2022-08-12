@@ -77,10 +77,11 @@ export default abstract class BaseCommand extends Command {
 
     // Support -- input ex. architect exec -- ls -la
     const double_dash_index = argv.indexOf('--');
+    let command: string[] = [];
     if (double_dash_index >= 0) {
-      const command = argv.slice(double_dash_index + 1, argv.length).join(' ');
+      command = argv.slice(double_dash_index + 1, argv.length);
       argv = argv.slice(0, double_dash_index);
-      argv.unshift(command);
+      argv.unshift(command.join(' '));
     }
 
     const args = [];
@@ -103,7 +104,11 @@ export default abstract class BaseCommand extends Command {
       }
     }
 
-    return super.parse(options, [...args, ...flags]);
+    const parsed = await super.parse(options, [...args, ...flags]) as Interfaces.ParserOutput<F, A>;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    parsed.args.command_array = command;
+    return parsed;
   }
 
   async finally(err: Error | undefined): Promise<any> {
