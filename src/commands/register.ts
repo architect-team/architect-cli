@@ -90,10 +90,10 @@ export default class ComponentRegister extends BaseCommand {
       options.args.push({ name: 'filler' });
     }
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
-    const relative_component_path_argv = (parsed.argv || []).map(argv => path.resolve(argv));
+    const absolute_component_path_argv = (parsed.argv || []).map(argv => path.resolve(argv));
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    parsed.args.component = new Set(relative_component_path_argv);
+    parsed.args.component = new Set(absolute_component_path_argv);
 
     return parsed;
   }
