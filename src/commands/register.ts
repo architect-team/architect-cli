@@ -30,49 +30,39 @@ export default class ComponentRegister extends BaseCommand {
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    arg: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: 'Build arg(s) to pass to docker build. If multiple components are specified, the same build arg(s) will be applied to each component.',
-        multiple: true,
-      }),
-    },
-    tag: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 't',
-        description: 'Tag to give to the new component. If multiple components are specified, the same tag will be applied to each component.',
-        default: 'latest',
-        exclusive: ['environment'],
-      }),
-    },
-    architecture: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: 'Architecture(s) to target for Docker image builds. If multiple components are specified, the same architecture(s) will be applied to each component.',
-        default: ['amd64'],
-        multiple: true,
-      }),
-    },
-    'cache-directory': {
-      non_sensitive: true,
-      ...Flags.string({
-        description: 'Directory to write build cache to. Do not use in Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs',
-      }),
-    },
-    environment: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'e',
-        description: 'The name of an environment to register the component version to. If specified, the component version will be removed when the environment is removed',
-        exclusive: ['tag'],
-        hidden: true,
-      }),
-    },
+    arg: Flags.string({
+      description: 'Build arg(s) to pass to docker build. If multiple components are specified, the same build arg(s) will be applied to each component.',
+      multiple: true,
+      sensitive: false,
+    }),
+    tag: Flags.string({
+      char: 't',
+      description: 'Tag to give to the new component. If multiple components are specified, the same tag will be applied to each component.',
+      default: 'latest',
+      exclusive: ['environment'],
+      sensitive: false,
+    }),
+    architecture: Flags.string({
+      description: 'Architecture(s) to target for Docker image builds. If multiple components are specified, the same architecture(s) will be applied to each component.',
+      default: ['amd64'],
+      multiple: true,
+      sensitive: false,
+    }),
+    'cache-directory': Flags.string({
+      description: 'Directory to write build cache to. Do not use in Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs',
+      sensitive: false,
+    }),
+    environment: Flags.string({
+      char: 'e',
+      description: 'The name of an environment to register the component version to. If specified, the component version will be removed when the environment is removed',
+      exclusive: ['tag'],
+      hidden: true,
+      sensitive: false,
+    }),
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'component',
     description: 'Path to a component to register. Multiple unique components are accepted. The same component register command options are applied to any and all paths provided.',
     default: './',

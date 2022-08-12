@@ -21,42 +21,36 @@ export default class TaskExec extends BaseCommand {
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
 
-    local: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        char: 'l',
-        description: 'Deploy the stack locally instead of via Architect Cloud',
-        exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
-      }),
-    },
-    compose_file: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: `${BaseCommand.DEPRECATED} Please use --compose-file.`,
-        exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
-        hidden: true,
-      }),
-    },
-    'compose-file': {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'o',
-        description: 'Path where the compose file should be written to',
-        default: '',
-        exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
-      }),
-    },
+    local: Flags.boolean({
+      char: 'l',
+      description: 'Deploy the stack locally instead of via Architect Cloud',
+      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
+      sensitive: false,
+    }),
+    compose_file: Flags.string({
+      description: `${BaseCommand.DEPRECATED} Please use --compose-file.`,
+      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      hidden: true,
+      sensitive: false,
+    }),
+    'compose-file': Flags.string({
+      char: 'o',
+      description: 'Path where the compose file should be written to',
+      default: '',
+      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      sensitive: false,
+    }),
   };
 
   static args = [
     {
-      non_sensitive: true,
+      sensitive: false,
       name: 'component',
       description: 'The name of the component that contains the task to execute',
       required: true,
     },
     {
-      non_sensitive: true,
+      sensitive: false,
       name: 'task',
       description: 'The name of the task to execute',
       required: true,
