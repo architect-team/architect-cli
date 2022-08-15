@@ -31,7 +31,7 @@ export default class AccountUtils {
     } catch (e: any) {
       console.log(chalk.yellow(`Unable to provide any local accounts to choose from because ${e?.message}`));
       if (exit_on_failure) {
-        throw e;
+        process.exit();
       }
       return false;
     }
@@ -84,7 +84,7 @@ export default class AccountUtils {
       }
     } else {
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
-      const can_run_local: boolean = await this.shouldListLocalAccounts();
+      const can_run_local = await this.shouldListLocalAccounts();
       const answers: { account: Account } = await inquirer.prompt([
         {
           type: 'autocomplete',
