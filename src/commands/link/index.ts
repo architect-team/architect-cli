@@ -20,7 +20,8 @@ export default class Link extends BaseCommand {
   static args = [{
     sensitive: false,
     name: 'componentPath',
-    description: 'Provide a component path or list all linked components using "architect link list"',
+    char: 'p',
+    description: 'The path of the component to link',
     default: '.',
   }];
 
