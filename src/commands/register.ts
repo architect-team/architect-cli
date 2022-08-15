@@ -124,8 +124,10 @@ export default class ComponentRegister extends BaseCommand {
     const seen_cache_dir = new Set<string>();
 
     // Set image name in compose
+    let service_build = false;
     for (const [service_name, service] of Object.entries(full_compose.services)) {
       if (service.build && !service.image && service.labels) {
+        service_build = true;
         const ref_label = service.labels.find(label => label.startsWith('architect.ref='));
         if (!ref_label) { continue; }
         const ref = ref_label.replace('architect.ref=', '');
@@ -199,16 +201,18 @@ export default class ComponentRegister extends BaseCommand {
       return arr;
     }, [] as string[]);
 
-    const builder = await DockerBuildXUtils.getBuilder(this.app.config);
+    if (service_build) {
+      const builder = await DockerBuildXUtils.getBuilder(this.app.config);
 
-    try {
-      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], builder, {
-        stdio: 'inherit',
-      });
-    } catch (err: any) {
-      fs.removeSync(compose_file);
-      this.log(`Docker buildx bake failed. Please make sure docker is running.`);
-      this.error(err);
+      try {
+        await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], builder, {
+          stdio: 'inherit',
+        });
+      } catch (err: any) {
+        fs.removeSync(compose_file);
+        this.log(`Docker buildx bake failed. Please make sure docker is running.`);
+        this.error(err);
+      }
     }
 
     for (const cache_dir of seen_cache_dir) {
