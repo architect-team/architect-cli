@@ -12,32 +12,26 @@ export default class EnvironmentDestroy extends BaseCommand {
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    auto_approve: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
-        hidden: true,
-      }),
-    },
-    ['auto-approve']: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: 'Automatically apply the changes',
-        default: false,
-      }),
-    },
-    force: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: 'Force the deletion even if the environment is not empty',
-        char: 'f',
-        default: false,
-      }),
-    },
+    auto_approve: Flags.boolean({
+      description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
+      hidden: true,
+      sensitive: false,
+    }),
+    ['auto-approve']: Flags.boolean({
+      description: 'Automatically apply the changes',
+      default: false,
+      sensitive: false,
+    }),
+    force: Flags.boolean({
+      description: 'Force the deletion even if the environment is not empty',
+      char: 'f',
+      default: false,
+      sensitive: false,
+    }),
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'environment',
     description: 'Name of the environment to deregister',
     parse: async (value: string): Promise<string> => value.toLowerCase(),

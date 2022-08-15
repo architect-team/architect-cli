@@ -41,6 +41,12 @@ const changelog = [
     "changelogFile": "CHANGELOG.md"
   }
 ];
+const backmerge = [
+  "@saithodev/semantic-release-backmerge",
+  {
+    "branches": ["rc"],
+  }
+];
 
 
 const default_plugins = [
@@ -57,7 +63,8 @@ const main_plugins = [
   exec,
   npm,
   git,
-  github
+  github,
+  backmerge
 ]
 
 module.exports = {

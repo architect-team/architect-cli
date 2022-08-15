@@ -114,13 +114,11 @@ export default class Doctor extends BaseCommand {
   static history_length_hint = `${DOCTOR_PROPERTIES.HISTORY_LENGTH.LOWER_BOUND_INCLUSIVE} to ${DOCTOR_PROPERTIES.HISTORY_LENGTH.UPPER_BOUND_INCLUSIVE} inclusive`;
   static flags: any = {
     ...BaseCommand.flags,
-    output: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: 'Choose a file to output the debug information to',
-        char: 'o',
-      }),
-    },
+    output: Flags.string({
+      description: 'Choose a file to output the debug information to',
+      char: 'o',
+      sensitive: false,
+    }),
   };
 
   async numRecordsInputIsValid(num?: any): Promise<boolean> {
