@@ -272,10 +272,10 @@ export default class Dev extends BaseCommand {
     // On Windows (cmd, powershell), signals don't exist and running in detached mode opens a new window. The
     // "SIGINT" we get on Windows isn't a real signal and isn't automatically passed to child processes,
     // so we don't have to worry about it.
-    const run_compose_detached = process.platform !== 'win32';
+    const is_windows = process.platform === 'win32';
 
     const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args,
-      { stdout: 'pipe', stdin: 'ignore', detached: run_compose_detached });
+      { stdout: 'pipe', stdin: 'ignore', detached: !is_windows });
 
     let is_exiting = false;
     let seen_container_output = false;
@@ -288,12 +288,13 @@ export default class Dev extends BaseCommand {
       }
       is_exiting = true;
 
-      try {
-        this.log('Gracefully stopping..... Please Wait.....');
-        await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'stop'], {stdin: 'ignore', detached: run_compose_detached});
-      } catch (ex) {
-        is_exiting = false;
-        this.log(chalk.red('Failed to stop cleanly, try again'));
+      this.log('Gracefully stopping..... Please Wait.....');
+      // On non-windows, we can just interrupt the compose process. On windows, we need to run 'stop' to
+      // ensure the containers are stopped.
+      if (is_windows) {
+        await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'stop']);
+      } else {
+        process.kill(-docker_compose_runnable.pid, 'SIGINT');
       }
     });
 
@@ -306,7 +307,7 @@ export default class Dev extends BaseCommand {
       for (const line of data.toString().split('\n')) {
         const lineParts = line.split('|');
         if (lineParts.length > 1) {
-          // At this point we can `docker compose stop` safely.
+          // At this point we can stop the process safely.
           seen_container_output = true;
           const service: string = lineParts[0];
           lineParts.shift();
