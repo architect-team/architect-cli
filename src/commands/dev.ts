@@ -1,5 +1,6 @@
 import { Flags, Interfaces } from '@oclif/core';
 import axios, { AxiosResponse } from 'axios';
+import inquirer from 'inquirer';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import isCi from 'is-ci';
@@ -167,7 +168,7 @@ export default class Dev extends BaseCommand {
     });
   }
 
-  async runCompose(compose: DockerComposeTemplate): Promise<void> {
+  async runCompose(compose: DockerComposeTemplate, gateway_port: number): Promise<void> {
     const { flags } = await this.parse(Dev);
 
     const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
@@ -200,7 +201,6 @@ export default class Dev extends BaseCommand {
 
     const exposed_interfaces: string[] = [];
 
-    const gateway_port = flags.port;
     for (const [service_name, service] of Object.entries(compose.services)) {
       if (service.labels?.includes('traefik.enable=true')) {
         const host_rules = service.labels.filter(label => label.includes('rule=Host'));
@@ -353,9 +353,24 @@ export default class Dev extends BaseCommand {
       linked_components
     );
 
-    const port_available = await PortUtil.isPortAvailable(flags.port);
-    if (!port_available) {
-      this.error(`Could not run architect on port ${flags.port}.\nPlease stop an existing process or specify --port to choose a different port.`);
+    let port_available = await PortUtil.isPortAvailable(flags.port);
+    while (!port_available) {
+      const answers: any = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'port',
+          message: `Trying to listen on port ${flags.port}, but something is already using it. What port would you like us to run the API gateway on (you can use the '--port' flag to skip this message in the future)?`,
+          validate: (value: any) => {
+            if (new RegExp('^[1-9]+[0-9]*$').test(value)) {
+              return true;
+            }
+            return `Port can only be positive number.`;
+          },
+        },
+      ]);
+
+      flags.port = answers.port;
+      port_available = await PortUtil.isPortAvailable(flags.port);
     }
     dependency_manager.external_addr = `arc.localhost:${flags.port}`;
 
@@ -401,7 +416,7 @@ export default class Dev extends BaseCommand {
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
     const graph = await dependency_manager.getGraph(component_specs, all_secrets); // TODO: 404: update
     const compose = await DockerComposeUtils.generate(graph);
-    await this.runCompose(compose);
+    await this.runCompose(compose, flags.port);
   }
 
   async run(): Promise<void> {
