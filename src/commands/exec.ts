@@ -58,6 +58,11 @@ export default class Exec extends BaseCommand {
       default: undefined,
       sensitive: false,
     }),
+    replica: Flags.string({
+      description: 'Replica reference name, e.g. flask--app-abcdefghi-vwxyz. Only works on remote deploys.',
+      char: 'r',
+      sensitive: false,
+    }),
   };
 
   static args = [{
@@ -230,7 +235,15 @@ export default class Exec extends BaseCommand {
     if (!replicas.length)
       throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
-    const replica = await EnvironmentUtils.getReplica(replicas);
+    let replica;
+    if (flags.replica) {
+      replica = replicas.find((replica: Replica) => replica.ext_ref === flags.replica);
+      if (!replica) {
+        throw new ArchitectError(`Replica '${flags.replica}' does not exist.`);
+      }
+    } else {
+      replica = await EnvironmentUtils.getReplica(replicas);
+    }
 
     const query = new URLSearchParams({
       ext_ref: replica.ext_ref,
