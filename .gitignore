@@ -14,3 +14,4 @@ oclif.manifest.json
 tsconfig.tsbuildinfo
 test/creds.json
 test/sentry-history.json
+.npmrc
