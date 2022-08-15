@@ -1,3 +1,11 @@
+## [1.22.1](https://github.com/architect-team/architect-cli/compare/v1.22.0...v1.22.1) (2022-08-05)
+
+
+### Bug Fixes
+
+* **exec:** Automatically detect proper value for flags.tty if not explicitly set ([#651](https://github.com/architect-team/architect-cli/issues/651)) ([9b3de88](https://github.com/architect-team/architect-cli/commit/9b3de8885b935b4f3fd81be271a18983e6c8a2c9))
+* **exec:** exit with remote exec error codes ([#652](https://github.com/architect-team/architect-cli/issues/652)) ([d2f2df4](https://github.com/architect-team/architect-cli/commit/d2f2df471185d61e6b916e061cab7885c888c39b))
+
 # [1.22.0](https://github.com/architect-team/architect-cli/compare/v1.21.1...v1.22.0) (2022-08-04)
 
 
