@@ -1,8 +1,9 @@
 import chalk from 'chalk';
 import path from 'path';
 import untildify from 'untildify';
-import { buildSpecFromPath } from '../';
-import BaseCommand from '../base-command';
+import { buildSpecFromPath } from '../..';
+import BaseCommand from '../../base-command';
+
 declare const process: NodeJS.Process;
 
 export default class Link extends BaseCommand {
@@ -23,6 +24,7 @@ export default class Link extends BaseCommand {
     sensitive: false,
     name: 'componentPath',
     char: 'p',
+    description: 'The path of the component to link',
     default: '.',
   }];
 
