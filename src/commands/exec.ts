@@ -275,6 +275,10 @@ export default class Exec extends BaseCommand {
   async run(): Promise<void> {
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
+    if (this.argv.indexOf('--') === -1) {
+      this.error(chalk.red('Command must be provided after --\n(e.g. "architect exec -- ls")'));
+    }
+
     const { args, flags } = await this.parse(Exec);
 
     // Automatically set tty if the user doesn't supply it based on whether stdin is TTY.
