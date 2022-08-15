@@ -151,18 +151,13 @@ export default class Dev extends BaseCommand {
   }
 
   setupSigInt(callback: () => void): void {
-    if (process.platform === "win32") {
-      const rl = require("readline").createInterface({
-        input: process.stdin,
-        output: process.stdout,
-      });
+    process.on('SIGINT', function () {
+      callback();
+    });
 
-      rl.on("SIGINT", function () {
-        process.emit("SIGINT", "SIGINT");
-      });
-    }
-
-    process.on("SIGINT", function () {
+    // This is what happens with Ctrl+Break on Windows. Treat it like a Ctrl+C, otherwise
+    // the user can kill `architect dev` in a "normal" way without the containers stopping.
+    process.on('SIGBREAK', function () {
       callback();
     });
   }
@@ -271,29 +266,49 @@ export default class Dev extends BaseCommand {
       compose_args.push('-d');
     }
 
-    const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args, { stdout: 'pipe', stdin: "ignore" });
+    // `detached: true` is set for non-windows platforms so that the SIGINT isn't automatically sent to
+    // the `docker compose` process. Signals are automatically sent to the entire process group, but we want to
+    // handle SIGINT in a special way in the `setupSigInt` handler.
+    // On Windows (cmd, powershell), signals don't exist and running in detached mode opens a new window. The
+    // "SIGINT" we get on Windows isn't a real signal and isn't automatically passed to child processes,
+    // so we don't have to worry about it.
+    const is_windows = process.platform === 'win32';
+
+    const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args,
+      { stdout: 'pipe', stdin: 'ignore', detached: !is_windows });
 
     let is_exiting = false;
-    this.setupSigInt(() => {
-      if (is_exiting) {
+    let seen_container_output = false;
+    this.setupSigInt(async () => {
+      // If a user SIGINT's between when docker compose outputs "Attaching to ..." and starts printing logs,
+      // the containers will not be stopped and `docker compose stop` won't yet work.
+      // We stop SIGINT from doing anything until we know for sure we can stop gracefully.
+      if (is_exiting || !seen_container_output) {
         return;
       }
       is_exiting = true;
-      docker_compose_runnable.kill('SIGTERM');
+
+      this.log('Gracefully stopping..... Please Wait.....');
+      // On non-windows, we can just interrupt the compose process. On windows, we need to run 'stop' to
+      // ensure the containers are stopped.
+      if (is_windows) {
+        await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'stop']);
+      } else {
+        process.kill(-docker_compose_runnable.pid, 'SIGINT');
+      }
     });
 
-    // When docker compose is stopping it will tell the user to hit `ctrl-c` again
-    // to cancel. We disabled this functionality so also making the message more clear
     const service_colors = new Map<string, chalk.Chalk>();
     const rand = () => Math.floor(Math.random() * 255);
     docker_compose_runnable.stdout?.on('data', (data) => {
+      if (is_exiting) {
+        return;
+      }
       for (const line of data.toString().split('\n')) {
-        if (line.indexOf('Gracefully stopping...') !== -1) {
-          console.log("\nGracefully stopping..... Please Wait.....");
-          return;
-        }
         const lineParts = line.split('|');
         if (lineParts.length > 1) {
+          // At this point we can stop the process safely.
+          seen_container_output = true;
           const service: string = lineParts[0];
           lineParts.shift();
           const newLine = lineParts.join('|');
@@ -308,6 +323,7 @@ export default class Dev extends BaseCommand {
         }
       }
     });
+
     DockerComposeUtils.watchContainersHealth(compose_file, project_name, () => { return is_exiting; });
 
     try {
