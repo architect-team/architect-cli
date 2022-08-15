@@ -23,6 +23,11 @@ export default class Dev extends BaseCommand {
 
   static description = 'Run your stack locally';
 
+  static examples = [
+    'architect dev ./myComponent/architect.yml',
+    'architect dev --port=81 --browser=false --debug=true --secret-file=./myComponent/mySecrets.yml ./myComponent/architect.yml',
+  ];
+
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
