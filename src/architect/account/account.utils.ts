@@ -29,7 +29,6 @@ export default class AccountUtils {
       await Docker.verify();
       return true;
     } catch (e: any) {
-      console.log(chalk.yellow(`Unable to provide any local accounts to choose from because ${e?.message}`));
       if (exit_on_failure) {
         process.exit();
       }
