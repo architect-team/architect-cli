@@ -64,7 +64,7 @@ const main_plugins = [
   npm,
   git,
   github,
-  backmerge
+  // backmerge
 ]
 
 module.exports = {
