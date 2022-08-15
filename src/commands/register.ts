@@ -15,7 +15,7 @@ import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import * as Docker from '../common/utils/docker';
+import { DockerHelper, stripTagFromImage } from '../common/utils/docker';
 import DockerBuildXUtils from '../common/utils/docker-buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
@@ -77,7 +77,7 @@ export default class ComponentRegister extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags, args } = await this.parse(ComponentRegister);
-    await Docker.verify();
+    await DockerHelper.verifyDaemon();
 
     const config_path = path.resolve(untildify(args.component));
 
@@ -239,7 +239,7 @@ export default class ComponentRegister extends BaseCommand {
       if (image) {
         const digest = await this.getDigest(image);
         // we don't need the tag on our image because we use the digest as the key
-        const image_without_tag = Docker.stripTagFromImage(image);
+        const image_without_tag = stripTagFromImage(image);
         service.image = `${image_without_tag}@${digest}`;
       }
       if (!service.image) {
@@ -256,7 +256,7 @@ export default class ComponentRegister extends BaseCommand {
       if (image) {
         const digest = await this.getDigest(image);
         // we don't need the tag on our image because we use the digest as the key
-        const image_without_tag = Docker.stripTagFromImage(image);
+        const image_without_tag = stripTagFromImage(image);
         task.image = `${image_without_tag}@${digest}`;
       }
       if (!task.image) {

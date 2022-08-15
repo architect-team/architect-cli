@@ -16,8 +16,8 @@ import LocalDependencyManager, { ComponentConfigOpts } from '../common/dependenc
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DeployUtils from '../common/utils/deploy.utils';
-import * as Docker from '../common/utils/docker';
 import { booleanString } from '../common/utils/oclif';
+import { DockerHelper } from '../common/utils/docker';
 import PortUtil from '../common/utils/port';
 
 type TraefikHttpService = {
@@ -520,7 +520,7 @@ export default class Dev extends BaseCommand {
 
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
-    await Docker.verify();
+    await DockerHelper.verifyDaemon();
 
     if (!args.configs_or_components || !args.configs_or_components.length) {
       args.configs_or_components = ['./architect.yml'];

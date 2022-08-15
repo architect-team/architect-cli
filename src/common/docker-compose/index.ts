@@ -10,7 +10,7 @@ import untildify from 'untildify';
 import which from 'which';
 import { ArchitectError, ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
-import { restart } from '../utils/docker';
+import { DockerHelper, restart } from '../utils/docker';
 import PortUtil from '../utils/port';
 import { DockerComposeProject, DockerComposeProjectWithConfig } from './project';
 import DockerComposeTemplate, { DockerService } from './template';
@@ -390,20 +390,9 @@ export class DockerComposeUtils {
     return raw_config;
   }
 
-  private static dockerCommandCheck(): void {
-    try {
-      which.sync('docker');
-    } catch {
-      throw new Error('Architect requires Docker Compose to be installed. Please install it and try again.');
-    }
-    const stdout = execa.sync('docker', ['compose']).stdout;
-    if (!stdout.includes('docker compose COMMAND --help')) {
-      throw new Error("Please update your local version of Docker");
-    }
-  }
-
   public static dockerCompose(args: string[], execa_opts?: Options, use_console = false): execa.ExecaChildProcess<string> {
-    this.dockerCommandCheck();
+    DockerHelper.verifyCompose();
+
     if (use_console) {
       process.stdin.setRawMode(true);
     }

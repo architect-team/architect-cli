@@ -4,7 +4,7 @@ import opener from 'opener';
 import { AuthorizationCode } from 'simple-oauth2';
 import AuthClient from '../app-config/auth';
 import BaseCommand from '../base-command';
-import * as Docker from '../common/utils/docker';
+import { DockerHelper } from '../common/utils/docker';
 import PortUtil from '../common/utils/port';
 import PromptUtils from '../common/utils/prompt-utils';
 import inquirer = require('inquirer');
@@ -35,7 +35,7 @@ export default class Login extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Login);
-    await Docker.verify(); // docker is required for login because we run `docker login`
+    await DockerHelper.verifyDaemon(); // docker is required for login because we run `docker login`
 
     if (flags.email || flags.password) {
       await this.runCliFlow(flags);
