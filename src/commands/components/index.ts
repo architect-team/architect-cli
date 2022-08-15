@@ -17,7 +17,11 @@ interface Component {
 export default class Components extends BaseCommand {
   static aliases = ['components', 'components:search', 'component:search', 'component:search'];
   static description = 'Search components you have access to';
-
+  static components = [
+    'architect components',
+    'architect components --account=myAccount',
+    'architect components myComponent',
+  ];
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,

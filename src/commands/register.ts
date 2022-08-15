@@ -27,6 +27,13 @@ export default class ComponentRegister extends BaseCommand {
   static aliases = ['component:register', 'components:register', 'c:register', 'comp:register'];
   static description = 'Register a new Component with Architect Cloud';
 
+  static examples = [
+    'architect register',
+    'architect register -t latest',
+    'architect register -a myAccount -t latest ./architect.yml ../myOtherComponent/architect.yml',
+    'architect register -a myAccount -t latest --arg NODE_ENV=dev ./architect.yml',
+  ];
+
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,

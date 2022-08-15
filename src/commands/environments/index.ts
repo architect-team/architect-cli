@@ -7,7 +7,11 @@ import localizedTimestamp from '../../common/utils/localized-timestamp';
 export default class Environments extends BaseCommand {
   static aliases = ['environments', 'envs', 'env', 'environments:search', 'envs:search', 'env:search'];
   static description = 'Search environments you have access to';
-
+  static examples = [
+    'architect environments',
+    'architect environments --account=myAccount',
+    'architect environments myEnvironment',
+  ];
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,

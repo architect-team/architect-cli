@@ -9,7 +9,9 @@ export default class ConfigSet extends BaseCommand {
   }
 
   static description = 'Set a new value for a CLI configuration option';
-
+  static examples = [
+    'architect config:set log_level info',
+  ];
   static flags = {
     ...BaseCommand.flags,
   };

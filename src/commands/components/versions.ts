@@ -12,7 +12,10 @@ interface ComponentVersion {
 export default class ComponentVersions extends BaseCommand {
   static aliases = ['component:versions', 'component:version'];
   static description = 'Search component versions of a particular component';
-
+  static examples = [
+    'architect component:versions myComponentName',
+    'architect component:versions --account=myAccount myComponentName',
+  ];
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,

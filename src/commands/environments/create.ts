@@ -16,7 +16,10 @@ interface CreateEnvironmentDto {
 export default class EnvironmentCreate extends BaseCommand {
   static aliases = ['environment:create', 'envs:create', 'env:create'];
   static description = 'Register a new environment with Architect Cloud';
-
+  static examples = [
+    'environment:create --account=myAccount myEnvironment',
+    'environment:create --account=myAccount --ttl=5days --description="My new temporary Architect environment" myEnvironment',
+  ];
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,

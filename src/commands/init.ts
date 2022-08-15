@@ -19,8 +19,9 @@ export abstract class InitCommand extends BaseCommand {
   static description = 'Initialize an architect component from an existing docker-compose file';
 
   static examples = [
+    'architect init',
     'architect init --name=myComponent',
-    'architect init --component-file=architect.yml --from-compose',
+    'architect init --from-compose=compose.yml --component-file=architect.yml',
   ];
 
   static flags = {
