@@ -39,4 +39,11 @@ describe('exec', () => {
     .it('exec component and command with spaces', ctx => {
       expect(ctx.stdout).to.equal('worked\n')
     })
+
+  defaults
+    .stdout()
+    .command(['exec', '-a', account.name, '-e', environment.name, 'examples/react-app', '-r', 'ext', '--', 'ls', '-la'])
+    .it('exec component and command with spaces and replica reference', ctx => {
+      expect(ctx.stdout).to.equal('worked\n')
+    })
 })
