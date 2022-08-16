@@ -20,7 +20,7 @@ export class DockerComposeUtils {
   // used to namespace docker-compose projects so multiple deployments can happen to local
   public static DEFAULT_PROJECT = 'architect';
 
-  public static async generate(graph: DependencyGraph): Promise<DockerComposeTemplate> {
+  public static async generate(graph: DependencyGraph, gateway_admin_port = 8080): Promise<DockerComposeTemplate> {
     const compose: DockerComposeTemplate = {
       version: '3',
       services: {},
@@ -68,7 +68,7 @@ export class DockerComposeUtils {
           // The HTTP port
           `${gateway_port}:${gateway_port}`,
           // The Web UI(enabled by--api.insecure = true)
-          `${await PortUtil.getAvailablePort(8080)}:8080`,
+          `${gateway_admin_port}:8080`,
         ],
         volumes: [
           '/var/run/docker.sock:/var/run/docker.sock:ro',
