@@ -6,52 +6,8 @@ import { LivenessProbeSpec, VolumeSpec } from './common-spec';
 import { ResourceSpec } from './resource-spec';
 import { SidecarSpec } from './sidecar-spec';
 import { transformObject } from './transform/common-transform';
-import { AnyOf, ExclusiveOr, ExpressionOr, ExpressionOrString, RequiredOr } from './utils/json-schema-annotations';
+import { AnyOf, ExclusiveOr, ExpressionOr, ExpressionOrString } from './utils/json-schema-annotations';
 import { Slugs } from './utils/slugs';
-
-@JSONSchema({
-  ...RequiredOr('cpu', 'memory'),
-  description: 'Scaling metrics define the upper bound of resource consumption before spinning up an additional replica.',
-})
-export class ScalingMetricsSpec {
-  @IsOptional()
-  @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
-    description: 'The cpu usage required to trigger scaling.',
-    externalDocs: { url: 'https://docs.architect.io/components/services/#cpu--memory' },
-  })
-  cpu?: number | string;
-
-  @IsOptional()
-  @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
-    description: 'The memory usage required to trigger scaling.',
-    externalDocs: { url: 'https://docs.architect.io/components/services/#cpu--memory' },
-  })
-  memory?: number | string;
-}
-
-@JSONSchema({
-  description: 'Configuration that dictates the scaling behavior of a service.',
-})
-export class ScalingSpec {
-  @Allow()
-  @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
-    description: 'The target minimum number of service replicas.',
-  })
-  min_replicas!: number | string;
-
-  @Allow()
-  @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
-    description: 'The target maximum number of service replicas.',
-  })
-  max_replicas!: number | string;
-
-  @ValidateNested()
-  metrics!: ScalingMetricsSpec;
-}
 
 @JSONSchema({
   ...ExclusiveOr('port', 'url'),
@@ -180,15 +136,5 @@ export class ServiceSpec extends ResourceSpec {
   @Transform(transformObject(VolumeSpec))
   volumes?: Dictionary<VolumeSpec | string>;
 
-  @IsOptional()
-  @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
-    description: 'A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field.',
-  })
-  replicas?: number | string;
-
-  @IsOptional()
-  @ValidateNested()
-  @Transform(transformObject(ScalingSpec))
-  scaling?: ScalingSpec;
+  // TODO: deprecate replicas rather than just removing?
 }

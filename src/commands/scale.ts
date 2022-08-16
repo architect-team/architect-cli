@@ -33,7 +33,7 @@ export default class Scale extends BaseCommand {
       description: 'Create a pipeline that will apply the new scaling settings',
       default: false,
     }),
-  };
+  }; // TODO: add cpu/memory metrics here or just in the UI?
 
   static args = [{
     sensitive: false,
@@ -55,7 +55,7 @@ export default class Scale extends BaseCommand {
 
     const { data: component } = await this.app.api.get(`/accounts/${account.name}/components/${component_name}`);
     const component_version: ComponentVersion = (await this.app.api.get(`/components/${component.component_id}/versions/${tag || 'latest'}`)).data;
-    const component_version_name = ComponentVersionSlugUtils.build(component_account_name, component_name, tag, instance_name).toString();
+    const component_version_name = ComponentVersionSlugUtils.build(component_account_name, component_name, tag, instance_name);
 
     let service_name: string;
     if (flags.service) {
@@ -95,7 +95,7 @@ export default class Scale extends BaseCommand {
       deploy_confirmation = confirmation.deploy;
     }
 
-    if (!flags['auto-approve'] || deploy_confirmation) {
+    if (flags['auto-approve'] || deploy_confirmation) {
       const deploy_flags: any[] = [];
       const valid_deploy_flags: string[] = Object.keys(Deploy.REMOTE_DEPLOY_FLAGS);
       for (const [flag, value] of Object.entries(flags)) {
