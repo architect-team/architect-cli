@@ -64,7 +64,7 @@ export default class ComponentRegister extends BaseCommand {
   static args = [{
     sensitive: false,
     name: 'component',
-    description: 'Path to the component(s) to register.',
+    description: 'Path to the component(s) to register',
     default: './',
   }];
 
