@@ -6,13 +6,13 @@ import { MOCK_API_HOST } from '../utils/mocks';
 describe('exec', () => {
   const account = {
     name: 'examples',
-    id: '1'
-  }
+    id: '1',
+  };
   const environment = {
     name: 'test',
-    id: '1'
-  }
-  const replicas: Replica[] = [{ ext_ref: 'ext', node_ref: 'node-ref', resource_ref: 'resource-ref', created_at: new Date().toUTCString() }]
+    id: '1',
+  };
+  const replicas: Replica[] = [{ ext_ref: 'ext', node_ref: 'node-ref', resource_ref: 'resource-ref', created_at: new Date().toUTCString() }];
 
   const defaults = test
     .nock(MOCK_API_HOST, api => api
@@ -24,14 +24,14 @@ describe('exec', () => {
     .nock(MOCK_API_HOST, api => api
       .get(new RegExp(`/environments/${environment.id}/replicas.*`))
       .reply(200, replicas))
-    .stub(Exec.prototype, 'exec', () => { console.log('worked'); })
+    .stub(Exec.prototype, 'exec', () => { console.log('worked'); });
 
   defaults
     .stdout()
     .command(['exec', '-a', account.name, '-e', environment.name, '--', 'ls', '-la'])
     .it('exec command with spaces', ctx => {
-      expect(ctx.stdout).to.equal('worked\n')
-    })
+      expect(ctx.stdout).to.equal('worked\n');
+    });
 
   defaults
     .stdout()
@@ -46,4 +46,9 @@ describe('exec', () => {
     .it('exec component and command with spaces and replica reference', ctx => {
       expect(ctx.stdout).to.equal('worked\n')
     })
-})
+
+  test
+    .command(['exec', '-a', account.name, '-e', environment.name, 'examples/react-app', 'ls'])
+    .exit(2)
+    .it('exec without -- fails');
+});

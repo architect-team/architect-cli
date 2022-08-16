@@ -528,12 +528,19 @@ export class DockerComposeUtils {
             const service_data = service_data_dictionary[service_ref];
 
             service_data.last_restart_ms = Date.now();
-            console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
-            try {
-              await restart(id);
-            } catch (err) {
-              console.log(chalk.red(`ERROR: ${service_ref} failed to restart.`));
-              continue;
+            // Ensure the containers aren't terminating before we attempt to restart the container.
+            // If the dev command gets killed between the start of this loop and here, the restart will cause the
+            // containers to never stop and leave the command hanging.
+            // Note: It's possible this result has changed because we `await` another Docker command during this
+            // loops execution.
+            if (!should_stop()) {
+              console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
+              try {
+                await restart(id);
+              } catch (err) {
+                console.log(chalk.red(`ERROR: ${service_ref} failed to restart.`));
+                continue;
+              }
             }
             // Docker compose will stop watching when there is a single container and it goes down.
             // If all containers go down at the same time it will wait for the restart and just move on. So only need this

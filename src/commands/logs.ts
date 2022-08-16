@@ -17,7 +17,10 @@ export default class Logs extends BaseCommand {
   }
 
   static description = 'Get logs from services both locally and remote';
-
+  static examples = [
+    'architect logs',
+    'architect logs --follow --raw --timestamps',
+  ];
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,

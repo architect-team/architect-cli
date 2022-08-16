@@ -9,7 +9,9 @@ export default class ConfigGet extends BaseCommand {
   }
 
   static description = 'Get the value of a CLI config option';
-
+  static examples = [
+    'architect config:get log_level',
+  ];
   static flags = {
     ...BaseCommand.flags,
   };

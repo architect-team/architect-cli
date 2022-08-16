@@ -9,7 +9,9 @@ export default class ConfigView extends BaseCommand {
 
   static description = 'View all the CLI configuration settings';
   static aliases = ['config'];
-
+  static examples = [
+    'architect config',
+  ];
   static flags = {
     ...BaseCommand.flags,
   };

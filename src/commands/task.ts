@@ -16,6 +16,10 @@ export default class TaskExec extends BaseCommand {
     return !flags.local;
   }
 
+  static examples = [
+    'architect task --account=myaccount --environment=myenvironment mycomponent:latest mytask',
+  ];
+
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,

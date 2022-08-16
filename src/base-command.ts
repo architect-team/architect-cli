@@ -75,14 +75,6 @@ export default abstract class BaseCommand extends Command {
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const flag_definitions = this.getClass().flags;
 
-    // Support -- input ex. architect exec -- ls -la
-    const double_dash_index = argv.indexOf('--');
-    if (double_dash_index >= 0) {
-      const command = argv.slice(double_dash_index + 1, argv.length).join(' ');
-      argv = argv.slice(0, double_dash_index);
-      argv.unshift(command);
-    }
-
     const args = [];
     const flags = [];
     let flag_option = false;
@@ -122,7 +114,8 @@ export default abstract class BaseCommand extends Command {
       }
 
       if (error instanceof ValidationErrors) {
-        return prettyValidationErrors(error);
+        prettyValidationErrors(error);
+        return super.catch({ ...error, message: '' });
       }
 
       if (error.response?.data instanceof Object) {

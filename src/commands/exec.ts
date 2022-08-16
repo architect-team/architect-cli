@@ -1,9 +1,8 @@
-import { Flags } from '@oclif/core';
+import { Flags, Interfaces } from '@oclif/core';
 import { OutputArgs, OutputFlags } from '@oclif/core/lib/interfaces';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import stream from 'stream';
-import stringArgv from 'string-argv';
 import WebSocket, { createWebSocketStream } from 'ws';
 import { ArchitectError, Dictionary, parseUnknownSlug } from '../';
 import Account from '../architect/account/account.entity';
@@ -38,7 +37,7 @@ export default class Exec extends BaseCommand {
   static examples = [
     'architect exec -- ls',
     'architect exec -- /bin/sh',
-    'architect exec --account architect --environment example example-component.services.app -- /bin/sh',
+    'architect exec --account myaccount --environment myenvironment mycomponent.services.app -- /bin/sh',
   ];
 
   static flags = {
@@ -66,10 +65,6 @@ export default class Exec extends BaseCommand {
   };
 
   static args = [{
-    name: 'command',
-    description: 'Command to run',
-    required: true,
-  }, {
     sensitive: false,
     name: 'resource',
     description: 'Name of resource',
@@ -77,12 +72,32 @@ export default class Exec extends BaseCommand {
     parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
-  //static sensitive = new Set(['stdin', 'command']);
-
   public static readonly StdinStream = 0;
   public static readonly StdoutStream = 1;
   public static readonly StderrStream = 2;
   public static readonly StatusStream = 3;
+
+  async parse<F, A extends {
+    [name: string]: any;
+  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+    const double_dash_index = argv.indexOf('--');
+    if (double_dash_index === -1) {
+      this.error(chalk.red('Command must be provided after --\n(e.g. "architect exec -- ls")'));
+    }
+
+    const command = argv.slice(double_dash_index + 1);
+    if (command.length === 0) {
+      this.error(chalk.red('Missing command argument following --'));
+    }
+
+    const argv_without_command = argv.slice(0, double_dash_index);
+
+     const parsed = await super.parse(options, argv_without_command) as Interfaces.ParserOutput<F, A>;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    parsed.args.command = command;
+    return parsed;
+  }
 
   async exec(uri: string, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
     const ws = await this.getWebSocket(uri);
@@ -259,7 +274,7 @@ export default class Exec extends BaseCommand {
       query.append('stdin', 'true');
     }
 
-    for (const arg of stringArgv(args.command)) {
+    for (const arg of args.command) {
       query.append('command', arg);
     }
 
@@ -279,7 +294,7 @@ export default class Exec extends BaseCommand {
     }
     compose_args.push(service.name);
 
-    for (const arg of stringArgv(args.command)) {
+    for (const arg of args.command) {
       compose_args.push(arg);
     }
 

@@ -15,7 +15,10 @@ export default class Login extends BaseCommand {
   }
 
   static description = 'Login to the Architect Cloud platform';
-
+  static examples = [
+    'architect login',
+    'architect login -e my-email-address@my-email-domain.com',
+  ];
   static flags = {
     ...BaseCommand.flags,
     email: Flags.string({
