@@ -122,7 +122,8 @@ export default abstract class BaseCommand extends Command {
       }
 
       if (error instanceof ValidationErrors) {
-        return prettyValidationErrors(error);
+        prettyValidationErrors(error);
+        return process.exit(1);
       }
 
       if (error.response?.data instanceof Object) {
