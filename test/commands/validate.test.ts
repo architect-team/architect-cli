@@ -7,9 +7,6 @@ describe('architect validate component', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
-  const cr = new RegExp(/\r/, 'g');
-  const lf = new RegExp(/\n/, 'g');
-
   mockArchitectAuth
     .stdout({ print })
     .stderr({ print })
