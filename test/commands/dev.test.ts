@@ -423,6 +423,7 @@ describe('local dev environment', function () {
           "--api.insecure=true",
           "--pilot.dashboard=false",
           "--accesslog=true",
+          "--accesslog.filters.minDuration=1s",
           "--accesslog.filters.statusCodes=400-599",
           "--entryPoints.web.address=:80",
           "--providers.docker=true",
@@ -479,6 +480,7 @@ describe('local dev environment', function () {
           "--api.insecure=true",
           "--pilot.dashboard=false",
           "--accesslog=true",
+          "--accesslog.filters.minDuration=1s",
           "--accesslog.filters.statusCodes=400-599",
           "--entryPoints.web.address=:80",
           "--providers.docker=true",
@@ -939,7 +941,7 @@ describe('local dev environment', function () {
       });
     });
 
-    test
+  test
     .timeout(20000)
     .stub(ComponentBuilder, 'loadFile', () => {
       const config = yaml.load(getHelloComponentConfig()) as ComponentConfig;

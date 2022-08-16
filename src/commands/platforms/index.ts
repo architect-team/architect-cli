@@ -14,7 +14,7 @@ export default class Platforms extends BaseCommand {
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'query',
     description: 'Search query used to filter results',
     required: false,

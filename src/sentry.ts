@@ -115,8 +115,9 @@ export default class SentryService {
 
   async updateSentryTransaction(error?: any): Promise<void> {
     try {
-      const updated_docker_info = await this.getRunningDockerContainers();
-      const config_directory_files = await this.getFilenamesFromDirectory();
+      // Only query for docker containers if there is an error to improve performance of cmds
+      const updated_docker_info = error ? await this.getRunningDockerContainers() : [];
+      const config_directory_files = error ? await this.getFilenamesFromDirectory() : [];
 
       if (error) {
         error.stack = PromptUtils.strip_ascii_color_codes_from_string(error.stack);
@@ -162,8 +163,8 @@ export default class SentryService {
       const command_class = this.command.getClass();
       const { args, flags } = await this.command.parse(command_class);
       const non_sensitive = new Set([
-        ...Object.entries(command_class.flags || {}).filter(([_, value]) => (value as any).non_sensitive).map(([key, _]) => key),
-        ...Object.entries(command_class.args || {}).filter(([_, value]) => (value as any).non_sensitive).map(([_, value]) => (value as any).name),
+        ...Object.entries(command_class.flags || {}).filter(([_, value]) => value.sensitive === false).map(([key, _]) => key),
+        ...Object.entries(command_class.args || {}).filter(([_, value]) => (value as any).sensitive === false).map(([_, value]) => (value as any).name),
       ]);
 
       try {

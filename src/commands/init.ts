@@ -20,38 +20,29 @@ export abstract class InitCommand extends BaseCommand {
 
   static flags = {
     ...BaseCommand.flags,
-    component_file: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: `${BaseCommand.DEPRECATED} Please use --component-file.`,
-        hidden: true,
-      }),
-    },
-    'component-file': {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'o',
-        description: 'Path where the component file should be written to',
-        default: 'architect.yml',
-      }),
-    },
-    name: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'n',
-      }),
-    },
-    from_compose: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: `${BaseCommand.DEPRECATED} Please use --from-compose.`,
-        hidden: true,
-      }),
-    },
-    'from-compose': {
-      non_sensitive: true,
-      ...Flags.string({}),
-    },
+    component_file: Flags.string({
+      description: `${BaseCommand.DEPRECATED} Please use --component-file.`,
+      hidden: true,
+      sensitive: false,
+    }),
+    'component-file': Flags.string({
+      char: 'o',
+      description: 'Path where the component file should be written to',
+      default: 'architect.yml',
+      sensitive: false,
+    }),
+    name: Flags.string({
+      char: 'n',
+      sensitive: false,
+    }),
+    from_compose: Flags.string({
+      description: `${BaseCommand.DEPRECATED} Please use --from-compose.`,
+      hidden: true,
+      sensitive: false,
+    }),
+    'from-compose': Flags.string({
+      sensitive: false,
+    }),
   };
 
   async parse<F, A extends {

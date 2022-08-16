@@ -28,30 +28,26 @@ export default class Dev extends BaseCommand {
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
 
-    'compose-file': {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'o',
-        description: 'Path where the compose file should be written to',
-        default: '',
-        exclusive: ['environment', 'auto-approve', 'auto_approve', 'refresh'],
-      }),
-    },
+    'compose-file': Flags.string({
+      char: 'o',
+      description: 'Path where the compose file should be written to',
+      default: '',
+      exclusive: ['environment', 'auto-approve', 'auto_approve', 'refresh'],
+      sensitive: false,
+    }),
     parameter: Flags.string({
       char: 'p',
       description: `${Command.DEPRECATED} Please use --secret.`,
       multiple: true,
       hidden: true,
     }),
-    interface: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'i',
-        description: 'Component interfaces',
-        multiple: true,
-        default: [],
-      }),
-    },
+    interface: Flags.string({
+      char: 'i',
+      description: 'Component interfaces',
+      multiple: true,
+      default: [],
+      sensitive: false,
+    }),
     'secret-file': Flags.string({
       description: 'Path of secrets file',
       multiple: true,
@@ -68,75 +64,59 @@ export default class Dev extends BaseCommand {
       multiple: true,
       default: [],
     }),
-    recursive: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        char: 'r',
-        default: true,
-        allowNo: true,
-        description: '[default: true] Toggle to automatically deploy all dependencies',
-      }),
-    },
-    browser: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        default: true,
-        allowNo: true,
-        description: '[default: true] Automatically open urls in the browser for local deployments',
-      }),
-    },
-    port: {
-      non_sensitive: true,
-      ...Flags.integer({
-        default: 80,
-        description: '[default: 80] Port for the gateway',
-      }),
-    },
+    recursive: Flags.boolean({
+      char: 'r',
+      default: true,
+      allowNo: true,
+      description: '[default: true] Toggle to automatically deploy all dependencies',
+      sensitive: false,
+    }),
+    browser: Flags.boolean({
+      default: true,
+      allowNo: true,
+      description: '[default: true] Automatically open urls in the browser for local deployments',
+      sensitive: false,
+    }),
+    port: Flags.integer({
+      default: 80,
+      description: '[default: 80] Port for the gateway',
+      sensitive: false,
+    }),
     // Used for proxy from deploy to dev. These will be removed once --local is deprecated
-    local: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        char: 'l',
-        description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
-        exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
-        hidden: true,
-      }),
-    },
-    production: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: `${Command.DEPRECATED} Please use --environment.`,
-        dependsOn: ['local'],
-        hidden: true,
-      }),
-    },
-    compose_file: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: `${Command.DEPRECATED} Please use --compose-file.`,
-        exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
-        hidden: true,
-      }),
-    },
+    local: Flags.boolean({
+      char: 'l',
+      description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
+      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
+      hidden: true,
+      sensitive: false,
+    }),
+    production: Flags.boolean({
+      description: `${Command.DEPRECATED} Please use --environment.`,
+      dependsOn: ['local'],
+      hidden: true,
+      sensitive: false,
+    }),
+    compose_file: Flags.string({
+      description: `${Command.DEPRECATED} Please use --compose-file.`,
+      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      hidden: true,
+      sensitive: false,
+    }),
     values: Flags.string({
       char: 'v',
       hidden: true,
       description: `${Command.DEPRECATED} Please use --secret-file.`,
     }),
-    detached: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: 'Run in detached mode',
-        char: 'd',
-      }),
-    },
-    debug: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: `[default: true] Turn debug mode on (true) or off (false)`,
-        default: 'true',
-      }),
-    },
+    detached: Flags.boolean({
+      description: 'Run in detached mode',
+      char: 'd',
+      sensitive: false,
+    }),
+    debug: Flags.string({
+      description: `[default: true] Turn debug mode on (true) or off (false)`,
+      default: 'true',
+      sensitive: false,
+    }),
     arg: Flags.string({
       description: 'Build arg(s) to pass to docker build',
       multiple: true,
@@ -144,7 +124,7 @@ export default class Dev extends BaseCommand {
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'configs_or_components',
     description: 'Path to an architect.yml file or component `account/component:latest`. Multiple components are accepted.',
   }];
@@ -171,18 +151,13 @@ export default class Dev extends BaseCommand {
   }
 
   setupSigInt(callback: () => void): void {
-    if (process.platform === "win32") {
-      const rl = require("readline").createInterface({
-        input: process.stdin,
-        output: process.stdout,
-      });
+    process.on('SIGINT', function () {
+      callback();
+    });
 
-      rl.on("SIGINT", function () {
-        process.emit("SIGINT", "SIGINT");
-      });
-    }
-
-    process.on("SIGINT", function () {
+    // This is what happens with Ctrl+Break on Windows. Treat it like a Ctrl+C, otherwise
+    // the user can kill `architect dev` in a "normal" way without the containers stopping.
+    process.on('SIGBREAK', function () {
       callback();
     });
   }
@@ -258,9 +233,13 @@ export default class Dev extends BaseCommand {
         const promises: Promise<AxiosResponse<any>>[] = [];
         for (const exposed_interface of exposed_interfaces) {
           const [host_name, port] = exposed_interface.replace('http://', '').split(':');
-          promises.push(axios.get(`http://localhost:${port}`, {
+          promises.push(axios.options(`http://localhost:${port}`, {
             headers: {
               Host: host_name,
+            },
+            params: {
+              architect: 1,
+              ping: 1,
             },
             maxRedirects: 0,
             timeout: poll_interval,
@@ -287,29 +266,49 @@ export default class Dev extends BaseCommand {
       compose_args.push('-d');
     }
 
-    const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args, { stdout: 'pipe', stdin: "ignore" });
+    // `detached: true` is set for non-windows platforms so that the SIGINT isn't automatically sent to
+    // the `docker compose` process. Signals are automatically sent to the entire process group, but we want to
+    // handle SIGINT in a special way in the `setupSigInt` handler.
+    // On Windows (cmd, powershell), signals don't exist and running in detached mode opens a new window. The
+    // "SIGINT" we get on Windows isn't a real signal and isn't automatically passed to child processes,
+    // so we don't have to worry about it.
+    const is_windows = process.platform === 'win32';
+
+    const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args,
+      { stdout: 'pipe', stdin: 'ignore', detached: !is_windows });
 
     let is_exiting = false;
-    this.setupSigInt(() => {
-      if (is_exiting) {
+    let seen_container_output = false;
+    this.setupSigInt(async () => {
+      // If a user SIGINT's between when docker compose outputs "Attaching to ..." and starts printing logs,
+      // the containers will not be stopped and `docker compose stop` won't yet work.
+      // We stop SIGINT from doing anything until we know for sure we can stop gracefully.
+      if (is_exiting || !seen_container_output) {
         return;
       }
       is_exiting = true;
-      docker_compose_runnable.kill('SIGTERM');
+
+      this.log('Gracefully stopping..... Please Wait.....');
+      // On non-windows, we can just interrupt the compose process. On windows, we need to run 'stop' to
+      // ensure the containers are stopped.
+      if (is_windows) {
+        await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'stop']);
+      } else {
+        process.kill(-docker_compose_runnable.pid, 'SIGINT');
+      }
     });
 
-    // When docker compose is stopping it will tell the user to hit `ctrl-c` again
-    // to cancel. We disabled this functionality so also making the message more clear
     const service_colors = new Map<string, chalk.Chalk>();
     const rand = () => Math.floor(Math.random() * 255);
     docker_compose_runnable.stdout?.on('data', (data) => {
+      if (is_exiting) {
+        return;
+      }
       for (const line of data.toString().split('\n')) {
-        if (line.indexOf('Gracefully stopping...') !== -1) {
-          console.log("\nGracefully stopping..... Please Wait.....");
-          return;
-        }
         const lineParts = line.split('|');
         if (lineParts.length > 1) {
+          // At this point we can stop the process safely.
+          seen_container_output = true;
           const service: string = lineParts[0];
           lineParts.shift();
           const newLine = lineParts.join('|');
@@ -324,6 +323,7 @@ export default class Dev extends BaseCommand {
         }
       }
     });
+
     DockerComposeUtils.watchContainersHealth(compose_file, project_name, () => { return is_exiting; });
 
     try {

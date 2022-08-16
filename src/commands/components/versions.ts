@@ -20,7 +20,7 @@ export default class ComponentVersions extends BaseCommand {
 
   static args = [{
     name: 'component_name',
-    non_sensitive: true,
+    sensitive: false,
   }];
 
   async run(): Promise<void> {

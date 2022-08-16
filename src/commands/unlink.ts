@@ -14,16 +14,14 @@ export default class Unlink extends BaseCommand {
 
   static flags = {
     ...BaseCommand.flags,
-    all: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: 'Unlink all components registered locally',
-      }),
-    },
+    all: Flags.boolean({
+      description: 'Unlink all components registered locally',
+      sensitive: false,
+    }),
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'componentPathOrName',
     char: 'p',
     default: '.',
