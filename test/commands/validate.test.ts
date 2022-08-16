@@ -45,60 +45,36 @@ describe('architect validate component', function () {
     })
     .it('correctly fails on a non-existent directory and prints an error message');
 
-  // invalid subdomain test values
-  const invalid_tokens = [
-    'example2.com222',
-    '@example.ru:?',
-    'example22:89',
-    '@jefe@dd.ru@22-',
-    'example.net?1222',
-    'example.com:8080:',
-    '.example.com:8080:',
-    '---test.com',
-    '$dollars$.gb',
-    'sell-.me',
-    'open22.the-door@koll.ru',
-    'mem-.wer().or%:222',
-    'pop().addjocker.lon',
-    'regular-l=.heroes?',
-    ' ecmas cript-8.org ',
-    'example.com::%',
-    'example:8080',
-    'example',
-    'examaple.com:*',
-    '-test.test.com',
-    '-test.com',
-    'dd-.test.com',
-    'dfgdfg.dfgdf33.e',
-    'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
-    'd-.test.com',
-    'test.test.test.test',
-    '..',
-    '@.',
-    '.@',
-    '.',
-    'test.@',
-    '@.test',
-    'tes:t',
-    'test:',
-    'test1',
-    ' test',
-    'test ',
-    't est',
-    'test-',
-    '-test',
-  ];
+  mockArchitectAuth
+    .stdout({ print })
+    .stderr({ print })
+    .command(['validate', 'test/mocks/validationerrors/architect.yml'])
+    .catch(err => {
+      expect(process.exitCode).eq(1);
+    })
+    .it('correctly fails on an invalidation error with exit code 1');
 
-  const invalid_subdomains = invalid_tokens.map(token =>
-`name: geforce
-services:
-  geforce:
-    build:
-      context: .
-interfaces:
-  geforce:
-    url: \${{ services.geforce.interfaces.main.url }}
-    ingress:
-      subdomain: ${token}`
-);
+  mockArchitectAuth
+    .stdout({ print })
+    .stderr({ print })
+    .command(['validate', 'test/mocks/validationerrors/architect.yml'])
+    .catch(err => {
+      expect(err.stack).undefined;
+    })
+    .it('correctly fails on an invalidation error with no stacktrace');
+
+  mockArchitectAuth
+    .stdout({ print })
+    .stderr({ print })
+    .command(['validate', 'test/mocks/validationerrors/architect.yml'])
+    .catch(err => {
+      expect(err.name).to.contain('ValidationErrors');
+      expect(err.name).to.contain('component: tests/validation_errors');
+      expect(err.name).to.contain(`file: ${path.resolve(`test/mocks/validationerrors/architect.yml`)}`);
+    })
+    .it('correctly displays prettyValidationErrors error message to screen in place of a stacktrace', ctx => {
+      expect(ctx.stderr).to.contain('›  1 | name: tests/validation_errors');
+      expect(ctx.stderr).to.contain('must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).');
+      expect(ctx.stdout).to.equal('');
+    });
 });
