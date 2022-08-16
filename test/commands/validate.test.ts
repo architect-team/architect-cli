@@ -44,4 +44,61 @@ describe('architect validate component', function () {
       expect(err.message).to.contain(path.resolve('non-existent/directory/architect.yml'));
     })
     .it('correctly fails on a non-existent directory and prints an error message');
+
+  // invalid subdomain test values
+  const invalid_tokens = [
+    'example2.com222',
+    '@example.ru:?',
+    'example22:89',
+    '@jefe@dd.ru@22-',
+    'example.net?1222',
+    'example.com:8080:',
+    '.example.com:8080:',
+    '---test.com',
+    '$dollars$.gb',
+    'sell-.me',
+    'open22.the-door@koll.ru',
+    'mem-.wer().or%:222',
+    'pop().addjocker.lon',
+    'regular-l=.heroes?',
+    ' ecmas cript-8.org ',
+    'example.com::%',
+    'example:8080',
+    'example',
+    'examaple.com:*',
+    '-test.test.com',
+    '-test.com',
+    'dd-.test.com',
+    'dfgdfg.dfgdf33.e',
+    'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+    'd-.test.com',
+    'test.test.test.test',
+    '..',
+    '@.',
+    '.@',
+    '.',
+    'test.@',
+    '@.test',
+    'tes:t',
+    'test:',
+    'test1',
+    ' test',
+    'test ',
+    't est',
+    'test-',
+    '-test',
+  ];
+
+  const invalid_subdomains = invalid_tokens.map(token =>
+`name: geforce
+services:
+  geforce:
+    build:
+      context: .
+interfaces:
+  geforce:
+    url: \${{ services.geforce.interfaces.main.url }}
+    ingress:
+      subdomain: ${token}`
+);
 });

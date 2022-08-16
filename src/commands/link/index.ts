@@ -14,7 +14,7 @@ export default class Link extends BaseCommand {
   static description = 'Link a local component to the host to be used to power local deployments.';
   static examples = [
     'architect link',
-    'architect link -p ./myComponent/architect.yml',
+    'architect link -p ./mycomponent/architect.yml',
   ];
   static flags = {
     ...BaseCommand.flags,

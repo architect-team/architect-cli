@@ -14,7 +14,7 @@ export default class Unlink extends BaseCommand {
   static examples = [
     'architect unlink',
     'architect unlink -p ../architect.yml',
-    'architect unlink -p myComponent',
+    'architect unlink -p mycomponent',
   ];
   static flags = {
     ...BaseCommand.flags,

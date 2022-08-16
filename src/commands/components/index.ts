@@ -19,8 +19,8 @@ export default class Components extends BaseCommand {
   static description = 'Search components you have access to';
   static examples = [
     'architect components',
-    'architect components --account=myAccount',
-    'architect components myComponent',
+    'architect components --account=myaccount',
+    'architect components mycomponent',
   ];
   static flags = {
     ...BaseCommand.flags,

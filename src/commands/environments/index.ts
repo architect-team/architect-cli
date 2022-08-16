@@ -9,8 +9,8 @@ export default class Environments extends BaseCommand {
   static description = 'Search environments you have access to';
   static examples = [
     'architect environments',
-    'architect environments --account=myAccount',
-    'architect environments myEnvironment',
+    'architect environments --account=myaccount',
+    'architect environments myenvironment',
   ];
   static flags = {
     ...BaseCommand.flags,

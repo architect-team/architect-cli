@@ -9,8 +9,8 @@ export default class PlatformDestroy extends BaseCommand {
   static aliases = ['platforms:deregister', 'platform:destroy', 'platforms:destroy'];
   static description = 'Deregister a platform from Architect';
   static examples = [
-    'architect platform:destroy --account=myAccount architect',
-    'architect platforms:deregister --account=myAccount --auto-approve --force architect',
+    'architect platform:destroy --account=myaccount architect',
+    'architect platforms:deregister --account=myaccount --auto-approve --force architect',
   ];
   static flags = {
     ...BaseCommand.flags,

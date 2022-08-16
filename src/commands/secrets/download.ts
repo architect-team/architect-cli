@@ -14,7 +14,7 @@ export default class SecretsDownload extends BaseCommand {
   static aliases = ['secrets', 'secrets/get'];
   static examples = [
     'architect secrets ./secrets.yml',
-    'architect secrets --account=myAccount --environment=myEnvironment ../secrets.yml',
+    'architect secrets --account=myaccount --environment=myenvironment ../secrets.yml',
   ];
   static flags = {
     ...BaseCommand.flags,
