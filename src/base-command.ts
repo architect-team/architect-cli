@@ -75,15 +75,6 @@ export default abstract class BaseCommand extends Command {
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const flag_definitions = this.getClass().flags;
 
-    // Support -- input ex. architect exec -- ls -la
-    const double_dash_index = argv.indexOf('--');
-    let command: string[] = [];
-    if (double_dash_index >= 0) {
-      command = argv.slice(double_dash_index + 1, argv.length);
-      argv = argv.slice(0, double_dash_index);
-      argv.unshift(command.join(' '));
-    }
-
     const args = [];
     const flags = [];
     let flag_option = false;
@@ -104,11 +95,7 @@ export default abstract class BaseCommand extends Command {
       }
     }
 
-    const parsed = await super.parse(options, [...args, ...flags]) as Interfaces.ParserOutput<F, A>;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    parsed.args.command_array = command;
-    return parsed;
+    return super.parse(options, [...args, ...flags]);
   }
 
   async finally(err: Error | undefined): Promise<any> {

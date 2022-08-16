@@ -1,6 +1,6 @@
 import { Flags } from '@oclif/core';
 import chalk from 'chalk';
-import * as fs from 'fs';
+import * as fs from 'fs-extra';
 import inquirer from 'inquirer';
 import util from 'util';
 import BaseCommand from '../base-command';
@@ -199,7 +199,7 @@ export default class Doctor extends BaseCommand {
 
     if (flags.output) {
       try {
-        fs.writeFileSync(flags.output, util.inspect(this.history, false, 100, true));
+        fs.writeJson(flags.output, this.history, { spaces: 2 });
         return console.log(chalk.green("Please submit the generated information file with your support ticket at https://support.architect.io/"));
       } catch (e: any) {
         if (!seen) {
