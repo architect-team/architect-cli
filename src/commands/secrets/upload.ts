@@ -15,8 +15,8 @@ export default class SecretsUpload extends BaseCommand {
   static description = 'Upload secrets from a file to an account or an environment';
   static aliases = ['secrets:set'];
   static examples = [
-    'architect secrets:set --account=myaccount --environment=myenvironment ./mySecretsFile.yml',
-    'architect secrets:set --account=myaccount --override ./mySecretsFile.yml',
+    'architect secrets:set --account=myaccount --environment=myenvironment ./mysecrets.yml',
+    'architect secrets:set --account=myaccount --override ./mysecrets.yml',
   ];
   static flags = {
     ...BaseCommand.flags,

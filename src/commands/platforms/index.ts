@@ -9,7 +9,7 @@ export default class Platforms extends BaseCommand {
   static description = 'Search for platforms on Architect Cloud';
   static examples = [
     'architect platforms',
-    'architect platforms --account=myaccount myPlatformName',
+    'architect platforms --account=myaccount myplatform',
   ];
   static flags = {
     ...BaseCommand.flags,

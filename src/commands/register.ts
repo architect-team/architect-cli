@@ -30,8 +30,8 @@ export default class ComponentRegister extends BaseCommand {
   static examples = [
     'architect register',
     'architect register -t latest',
-    'architect register -a myAccount -t latest ./architect.yml ../myOtherComponent/architect.yml',
-    'architect register -a myAccount -t latest --arg NODE_ENV=dev ./architect.yml',
+    'architect register -a myaccount -t latest ./architect.yml ../myothercomponent/architect.yml',
+    'architect register -a myaccount -t latest --arg NODE_ENV=dev ./architect.yml',
   ];
 
   static flags = {

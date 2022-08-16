@@ -13,8 +13,8 @@ export default class SecretsDownload extends BaseCommand {
   static description = 'Download secrets from an account or an environment';
   static aliases = ['secrets', 'secrets/get'];
   static examples = [
-    'architect secrets ./secrets.yml',
-    'architect secrets --account=myaccount --environment=myenvironment ../secrets.yml',
+    'architect secrets ./mysecrets.yml',
+    'architect secrets --account=myaccount --environment=myenvironment ../mysecrets.yml',
   ];
   static flags = {
     ...BaseCommand.flags,

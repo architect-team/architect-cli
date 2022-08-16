@@ -18,7 +18,7 @@ export default class ComponentValidate extends BaseCommand {
   static description = 'Validate that an architect.yml is syntactically correct.';
   static examples = [
     'architect validate .',
-    'architect validate ../mycomponent/architect.yml ../myOtherComponent/architect.yml',
+    'architect validate ../mycomponent/architect.yml ../myothercomponent/architect.yml',
   ];
   static flags = {
     ...BaseCommand.flags,

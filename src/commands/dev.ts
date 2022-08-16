@@ -25,7 +25,7 @@ export default class Dev extends BaseCommand {
 
   static examples = [
     'architect dev ./mycomponent/architect.yml',
-    'architect dev --port=81 --no-browser --debug=true --secret-file=./mycomponent/mySecrets.yml ./mycomponent/architect.yml',
+    'architect dev --port=81 --no-browser --debug=true --secret-file=./mycomponent/mysecrets.yml ./mycomponent/architect.yml',
   ];
 
   static flags = {

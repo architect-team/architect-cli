@@ -21,7 +21,7 @@ export abstract class InitCommand extends BaseCommand {
   static examples = [
     'architect init',
     'architect init --name=mycomponent',
-    'architect init --from-compose=compose.yml --component-file=architect.yml',
+    'architect init --from-compose=mycompose.yml --component-file=architect.yml',
   ];
 
   static flags = {

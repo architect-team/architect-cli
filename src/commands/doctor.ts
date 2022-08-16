@@ -114,7 +114,7 @@ export default class Doctor extends BaseCommand {
 
   static examples = [
     'architect doctor',
-    'architect doctor -o ./debugging.yml',
+    'architect doctor -o ./myoutput.yml',
   ];
   static history_length_hint = `${DOCTOR_PROPERTIES.HISTORY_LENGTH.LOWER_BOUND_INCLUSIVE} to ${DOCTOR_PROPERTIES.HISTORY_LENGTH.UPPER_BOUND_INCLUSIVE} inclusive`;
   static flags: any = {

@@ -17,7 +17,7 @@ export default class TaskExec extends BaseCommand {
   }
 
   static examples = [
-    'architect task --account=myaccount --environment=myenvironment mycomponent:latest mytaskname',
+    'architect task --account=myaccount --environment=myenvironment mycomponent:latest mytask',
   ];
 
   static flags = {
