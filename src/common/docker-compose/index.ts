@@ -406,7 +406,7 @@ export class DockerComposeUtils {
       {
         type: 'autocomplete',
         name: 'environment',
-        message: 'Select a environment',
+        message: 'Select an environment',
         source: (_: any, input: string) => {
           return architect_projects.map(project => ({
             name: `${project.Name} ${project.Status}`,

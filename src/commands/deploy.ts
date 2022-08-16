@@ -76,10 +76,59 @@ export default class Deploy extends DeployCommand {
     'architect deploy ./myfolder/architect.yml --secret-file=./mysecrets.yml --environment=myenvironment --account=myaccount --auto-approve',
   ];
 
-  static flags = {
+  static REMOTE_DEPLOY_FLAGS = { // TODO: make remote deploy utils for this?
     ...DeployCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
+    parameter: Flags.string({
+      char: 'p',
+      description: `${BaseCommand.DEPRECATED} Please use --secret.`,
+      multiple: true,
+      hidden: true,
+    }),
+    interface: Flags.string({
+      char: 'i',
+      description: 'Component interfaces',
+      multiple: true,
+      default: [],
+      sensitive: false,
+    }),
+    'secret-file': Flags.string({
+      description: 'Path of secrets file',
+      multiple: true,
+      default: [],
+    }),
+    secret: Flags.string({
+      char: 's',
+      description: 'An individual secret key and value in the form SECRET_KEY=SECRET_VALUE',
+      multiple: true,
+      default: [],
+    }),
+    'deletion-protection': Flags.boolean({
+      default: true,
+      allowNo: true,
+      description: '[default: true] Toggle for deletion protection on deployments',
+      exclusive: ['local'],
+      sensitive: false,
+    }),
+    recursive: Flags.boolean({
+      char: 'r',
+      default: true,
+      allowNo: true,
+      description: '[default: true] Toggle to automatically deploy all dependencies',
+      sensitive: false,
+    }),
+    refresh: Flags.boolean({
+      default: true,
+      hidden: true,
+      allowNo: true,
+      exclusive: ['local', 'compose-file', 'compose_file'],
+      sensitive: false,
+    }),
+  }
+
+  static flags = {
+    ...this.REMOTE_DEPLOY_FLAGS,
     local: Flags.boolean({
       char: 'l',
       description: `${BaseCommand.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
@@ -117,55 +166,16 @@ export default class Deploy extends DeployCommand {
       multiple: true,
       hidden: true,
     }),
-    interface: Flags.string({
-      char: 'i',
-      description: 'Component interfaces',
-      multiple: true,
-      default: [],
-      sensitive: false,
-    }),
-    'secret-file': Flags.string({
-      description: 'Path of secrets file',
-      multiple: true,
-      default: [],
-    }),
     secrets: Flags.string({
       description: `${BaseCommand.DEPRECATED} Please use --secret-file.`,
       multiple: true,
       hidden: true,
-    }),
-    secret: Flags.string({
-      char: 's',
-      description: 'An individual secret key and value in the form SECRET_KEY=SECRET_VALUE',
-      multiple: true,
-      default: [],
     }),
     values: Flags.string({
       char: 'v',
       hidden: true,
       multiple: true,
       description: `${BaseCommand.DEPRECATED} Please use --secret-file.`,
-    }),
-    'deletion-protection': Flags.boolean({
-      default: true,
-      allowNo: true,
-      description: '[default: true] Toggle for deletion protection on deployments',
-      exclusive: ['local'],
-      sensitive: false,
-    }),
-    recursive: Flags.boolean({
-      char: 'r',
-      default: true,
-      allowNo: true,
-      description: '[default: true] Toggle to automatically deploy all dependencies',
-      sensitive: false,
-    }),
-    refresh: Flags.boolean({
-      default: true,
-      hidden: true,
-      allowNo: true,
-      exclusive: ['local', 'compose-file', 'compose_file'],
-      sensitive: false,
     }),
     browser: Flags.boolean({
       default: true,

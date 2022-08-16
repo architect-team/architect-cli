@@ -3,10 +3,12 @@ import AccountUtils from '../../architect/account/account.utils';
 import BaseCommand from '../../base-command';
 import Table from '../../base-table';
 import localizedTimestamp from '../../common/utils/localized-timestamp';
+import { ComponentConfig } from '../../dependency-manager/config/component-config';
 
-interface ComponentVersion {
+export interface ComponentVersion {
   created_at: string;
   tag: string;
+  config: ComponentConfig;
 }
 
 export default class ComponentVersions extends BaseCommand {
@@ -38,6 +40,7 @@ export default class ComponentVersions extends BaseCommand {
 
     const { data: component } = await this.app.api.get(`/accounts/${account.name}/components/${args.component_name}`);
     const { data: { rows: component_versions } } = await this.app.api.get(`/components/${component.component_id}/versions`);
+    console.log(JSON.stringify(component_versions, null, 2))
 
     const table = new Table({ head: ['Tag', 'Created'] });
     for (const component_version of component_versions.sort((cv1: ComponentVersion, cv2: ComponentVersion) => cv1.tag.localeCompare(cv2.tag))) {
