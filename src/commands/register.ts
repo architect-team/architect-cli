@@ -25,7 +25,7 @@ export const ENV_TAG_PREFIX = 'architect.environment.';
 
 export default class ComponentRegister extends BaseCommand {
   static aliases = ['component:register', 'components:register', 'c:register', 'comp:register'];
-  static description = 'Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same build arg(s) and build flag(s) will be applied to each component.';
+  static description = 'Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.';
 
   static flags = {
     ...BaseCommand.flags,
@@ -54,7 +54,7 @@ export default class ComponentRegister extends BaseCommand {
     }),
     environment: Flags.string({
       char: 'e',
-      description: 'The name of an environment to register the components(s) version to. If specified, the component(s) version will be removed when the environment is removed',
+      description: 'The name of an environment to register the component version to. If specified, the component version will be removed when the environment is removed',
       exclusive: ['tag'],
       hidden: true,
       sensitive: false,
@@ -64,7 +64,7 @@ export default class ComponentRegister extends BaseCommand {
   static args = [{
     sensitive: false,
     name: 'component',
-    description: 'Path to any component(s) to register.',
+    description: 'Path to the component(s) to register.',
     default: './',
   }];
 
