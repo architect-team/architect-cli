@@ -321,6 +321,27 @@ export default class Dev extends BaseCommand {
     process.exit();
   }
 
+  private async getAvailablePort(port: number): Promise<number> {
+    while (!(await PortUtil.isPortAvailable(port))) {
+      const answers: any = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'port',
+          message: `Trying to listen on port ${port}, but something is already using it. What port would you like us to run the API gateway on (you can use the '--port' flag to skip this message in the future)?`,
+          validate: (value: any) => {
+            if (new RegExp('^[1-9]+[0-9]*$').test(value)) {
+              return true;
+            }
+            return `Port can only be positive number.`;
+          },
+        },
+      ]);
+
+      port = answers.port;
+    }
+    return port;
+  }
+
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
     await Docker.verify();
@@ -353,25 +374,7 @@ export default class Dev extends BaseCommand {
       linked_components
     );
 
-    let port_available = await PortUtil.isPortAvailable(flags.port);
-    while (!port_available) {
-      const answers: any = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'port',
-          message: `Trying to listen on port ${flags.port}, but something is already using it. What port would you like us to run the API gateway on (you can use the '--port' flag to skip this message in the future)?`,
-          validate: (value: any) => {
-            if (new RegExp('^[1-9]+[0-9]*$').test(value)) {
-              return true;
-            }
-            return `Port can only be positive number.`;
-          },
-        },
-      ]);
-
-      flags.port = answers.port;
-      port_available = await PortUtil.isPortAvailable(flags.port);
-    }
+    flags.port = await this.getAvailablePort(flags.port);
     dependency_manager.external_addr = `arc.localhost:${flags.port}`;
 
     if (flags.account) {
