@@ -25,25 +25,25 @@ export const ENV_TAG_PREFIX = 'architect.environment.';
 
 export default class ComponentRegister extends BaseCommand {
   static aliases = ['component:register', 'components:register', 'c:register', 'comp:register'];
-  static description = 'Register a new Component with Architect Cloud';
+  static description = 'Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same build arg(s) and build flag(s) will be applied to each component.';
 
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     arg: Flags.string({
-      description: 'Build arg(s) to pass to docker build. If multiple components are specified, the same build arg(s) will be applied to each component.',
+      description: 'Build arg(s) to pass to docker build',
       multiple: true,
       sensitive: false,
     }),
     tag: Flags.string({
       char: 't',
-      description: 'Tag to give to the new component. If multiple components are specified, the same tag will be applied to each component.',
+      description: 'Tag to give to the new component',
       default: 'latest',
       exclusive: ['environment'],
       sensitive: false,
     }),
     architecture: Flags.string({
-      description: 'Architecture(s) to target for Docker image builds. If multiple components are specified, the same architecture(s) will be applied to each component.',
+      description: 'Architecture(s) to target for Docker image builds',
       default: ['amd64'],
       multiple: true,
       sensitive: false,
@@ -54,7 +54,7 @@ export default class ComponentRegister extends BaseCommand {
     }),
     environment: Flags.string({
       char: 'e',
-      description: 'The name of an environment to register the component version to. If specified, the component version will be removed when the environment is removed',
+      description: 'The name of an environment to register the components(s) version to. If specified, the component(s) version will be removed when the environment is removed',
       exclusive: ['tag'],
       hidden: true,
       sensitive: false,
@@ -64,7 +64,7 @@ export default class ComponentRegister extends BaseCommand {
   static args = [{
     sensitive: false,
     name: 'component',
-    description: 'Path to a component to register. Multiple unique components are accepted. The same component register command options are applied to any and all paths provided.',
+    description: 'Path to any component(s) to register.',
     default: './',
   }];
 
