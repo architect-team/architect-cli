@@ -21,7 +21,7 @@ export class DockerComposeUtils {
   // used to namespace docker-compose projects so multiple deployments can happen to local
   public static DEFAULT_PROJECT = 'architect';
 
-  public static async generate(graph: DependencyGraph, app_config: AppConfig, use_ssl: boolean): Promise<DockerComposeTemplate> {
+  public static async generate(graph: DependencyGraph, app_config: AppConfig, use_ssl: boolean, gateway_admin_port = 8080): Promise<DockerComposeTemplate> {
     const compose: DockerComposeTemplate = {
       version: '3',
       services: {},
@@ -120,7 +120,7 @@ export class DockerComposeUtils {
           // The HTTP(S) port
           `${gateway_port}:${gateway_port}`,
           // The Web UI(enabled by--api.insecure = true)
-          `${await PortUtil.getAvailablePort(8080)}:8080`,
+          `${gateway_admin_port}:8080`,
         ],
         volumes: [
           `${app_config.getConfigDir()}:/etc/traefik/`,
