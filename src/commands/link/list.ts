@@ -7,7 +7,9 @@ export default class ListLinkedComponents extends BaseCommand {
   }
 
   static description = 'List all linked components.';
-
+  static examples = [
+    'architect link:list',
+  ];
   async run(): Promise<void> {
     const table = new BaseTable({ head: ['Component', 'Path'] });
     for (const entry of Object.entries(this.app.linkedComponents)) {

@@ -13,6 +13,11 @@ export default class Destroy extends DeployCommand {
 
   static description = 'Destroy components from an environment';
 
+  static examples = [
+    'architect destroy --account=myaccount --auto-approve',
+    'architect destroy --account=myaccount --environment=myenvironment --auto-approve',
+  ];
+
   static args = [];
   static flags = {
     ...DeployCommand.flags,

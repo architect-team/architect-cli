@@ -71,6 +71,11 @@ export default class Deploy extends DeployCommand {
 
   static description = 'Create a deploy job on Architect Cloud';
 
+  static examples = [
+    'architect deploy myaccount/mycomponent:latest',
+    'architect deploy ./myfolder/architect.yml --secret-file=./mysecrets.yml --environment=myenvironment --account=myaccount --auto-approve',
+  ];
+
   static flags = {
     ...DeployCommand.flags,
     ...AccountUtils.flags,
