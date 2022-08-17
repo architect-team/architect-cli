@@ -26,7 +26,7 @@ export default abstract class DependencyManager {
 
   account?: string;
   external_addr = 'arc.localhost:80';
-  use_ssl = true;
+  use_ssl = false;
 
   getComponentNodes(component: ComponentConfig): DependencyNode[] {
     const nodes = [];

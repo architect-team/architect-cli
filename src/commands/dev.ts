@@ -94,7 +94,7 @@ export default class Dev extends BaseCommand {
       sensitive: false,
     }),
     port: Flags.integer({
-      default: 443,
+      default: 80,
       description: '[default: 80] Port for the gateway',
       sensitive: false,
     }),
@@ -401,7 +401,7 @@ export default class Dev extends BaseCommand {
       } else {
         resolve();
       }
-    }
+    };
     return new Promise((resolve, reject) => {
       axios({
         method: 'get',

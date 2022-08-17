@@ -21,7 +21,7 @@ export class DockerComposeUtils {
   // used to namespace docker-compose projects so multiple deployments can happen to local
   public static DEFAULT_PROJECT = 'architect';
 
-  public static async generate(graph: DependencyGraph, app_config: AppConfig, use_ssl: boolean, gateway_admin_port = 8080): Promise<DockerComposeTemplate> {
+  public static async generate(graph: DependencyGraph, app_config?: AppConfig, use_ssl = false, gateway_admin_port = 8080): Promise<DockerComposeTemplate> {
     const compose: DockerComposeTemplate = {
       version: '3',
       services: {},
@@ -29,7 +29,7 @@ export class DockerComposeUtils {
     };
 
     const protocol = use_ssl ? 'https' : 'http';
-    const external_addr = use_ssl ? app_config.external_https_address : app_config.external_http_address;
+    const external_addr = (use_ssl ? app_config?.external_https_address : app_config?.external_http_address) || 'arc.localhost';
     const limit = pLimit(5);
     const port_promises = [];
 
@@ -109,7 +109,7 @@ export class DockerComposeUtils {
         ...(use_ssl ? tls_config : {}),
       };
       const traefik_yaml = yaml.dump(traefik_config);
-      fs.writeFileSync(path.join(app_config.getConfigDir(), `traefik-${gateway_port}.yaml`), traefik_yaml);
+      fs.writeFileSync(path.join(app_config?.getConfigDir() || '', `traefik-${gateway_port}.yaml`), traefik_yaml);
 
       compose.services[gateway_node.ref] = {
         image: 'traefik:v2.6.2',
@@ -123,7 +123,7 @@ export class DockerComposeUtils {
           `${gateway_admin_port}:8080`,
         ],
         volumes: [
-          `${app_config.getConfigDir()}:/etc/traefik/`,
+          `${app_config?.getConfigDir()}:/etc/traefik/`,
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
       };
