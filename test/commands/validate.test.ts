@@ -8,8 +8,9 @@ const validation_mocks_path = path.join(__dirname, '../mocks/validationerrors');
 describe('architect validate component', function () {
 
   this.afterAll(() => {
-    if (fs.existsSync(`${validation_mocks_path}/subdomain`)) {
-      fs.rmSync(`${validation_mocks_path}/subdomain`, { recursive: true });
+    const tmp_dir = path.resolve(`${validation_mocks_path}/subdomain`);
+    if (fs.existsSync(tmp_dir)) {
+      fs.rmSync(tmp_dir, { recursive: true });
     }
   });
 
@@ -99,7 +100,7 @@ interfaces:
       expect(ctx.stdout).to.equal('');
     });
 
-  fs.emptyDirSync(`${validation_mocks_path}/subdomain`);
+  fs.emptyDirSync(path.join(validation_mocks_path, '/subdomain'));
 
   describe('expect fail for invalid subdomain', () => {
 
@@ -194,8 +195,8 @@ interfaces:
     ];
 
     for (const invalid_subdomain_token of invalid_subdomain_tokens) {
-      const test_tmp_sub_dir = fs.mkdtempSync(`${validation_mocks_path}/subdomain/`);
-      const tmp_test_file = `${test_tmp_sub_dir}/architect.yml`;
+      const test_tmp_sub_dir = fs.mkdtempSync(path.join(path.join(validation_mocks_path, '/subdomain/')));
+      const tmp_test_file = path.resolve(`${test_tmp_sub_dir}/architect.yml`);
 
       fs.writeFileSync(tmp_test_file, subdomain_token_to_config_yaml_string(invalid_subdomain_token));
 
@@ -240,8 +241,8 @@ interfaces:
     ];
 
     for (const valid_subdomain_token of valid_subdomain_tokens) {
-      const test_tmp_sub_dir = fs.mkdtempSync(`${validation_mocks_path}/subdomain/`);
-      const tmp_test_file = `${test_tmp_sub_dir}/architect.yml`;
+      const test_tmp_sub_dir = fs.mkdtempSync(path.join(path.join(validation_mocks_path, '/subdomain/')));
+      const tmp_test_file = path.resolve(`${test_tmp_sub_dir}/architect.yml`);
 
       fs.writeFileSync(tmp_test_file, subdomain_token_to_config_yaml_string(valid_subdomain_token));
 
