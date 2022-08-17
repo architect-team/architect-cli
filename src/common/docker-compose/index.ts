@@ -53,10 +53,6 @@ export class DockerComposeUtils {
         }
       }
 
-      const traefik_ssl_mounts = [
-        `${app_config.getConfigDir()}:/etc/traefik/`,
-      ];
-
       const tls_config = {
         tls: {
           stores: {
@@ -100,7 +96,7 @@ export class DockerComposeUtils {
           },
           // Required to load the TLS configs
           file: {
-            fileName: '/etc/traefik/traefik.yaml',
+            fileName: `/etc/traefik/traefik-${gateway_port}.yaml`,
             watch: true,
           },
         },
@@ -112,11 +108,13 @@ export class DockerComposeUtils {
         ...(use_ssl ? tls_config : {}),
       }
       const traefik_yaml = yaml.dump(traefik_config);
-      fs.writeFileSync(path.join(app_config.getConfigDir(), 'traefik.yaml'), traefik_yaml);
+      fs.writeFileSync(path.join(app_config.getConfigDir(), `traefik-${gateway_port}.yaml`), traefik_yaml);
 
       compose.services[gateway_node.ref] = {
         image: 'traefik:v2.6.2',
-        command: [],
+        command: [
+          `--configFile=/etc/traefik/traefik-${gateway_port}.yaml`,
+        ],
         ports: [
           // The HTTP(S) port
           `${gateway_port}:${gateway_port}`,
@@ -124,7 +122,7 @@ export class DockerComposeUtils {
           `${await PortUtil.getAvailablePort(8080)}:8080`,
         ],
         volumes: [
-          ...(use_ssl ? traefik_ssl_mounts : []),
+          `${app_config.getConfigDir()}:/etc/traefik/`,
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
       };
