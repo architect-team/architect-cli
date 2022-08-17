@@ -227,7 +227,7 @@ export default class Dev extends BaseCommand {
     for (const svc_name of Object.keys(compose.services)) {
       for (const port_pair of compose.services[svc_name].ports || []) {
         const [exposed_port, internal_port] = port_pair && (port_pair as string).split(':');
-        this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}:${internal_port}`);
+        this.log(`${chalk.blue(`${protocol}://localhost:${exposed_port}/`)} => ${svc_name}:${internal_port}`);
       }
     }
     this.log('');
@@ -372,21 +372,38 @@ export default class Dev extends BaseCommand {
   }
 
   private async downloadFile(url: string, output_location: string): Promise<void> {
+    const handleReject = (resolve: () => void, reject: () => void) => {
+      // These file operations can be sync due to failure state
+      if (!fs.existsSync(output_location)) {
+        return reject();
+      }
+      // If the file is not too old than we can use it instead
+      const stats = fs.statSync(output_location);
+      const diff_in_ms = Math.abs(stats.mtime.getTime() - Date.now());
+      const days = diff_in_ms / (1000 * 60 * 60 * 24);
+      if (days > 30) {
+        reject();
+      } else {
+        resolve();
+      }
+    }
     return new Promise((resolve, reject) => {
-      const writer = createWriteStream(output_location);
       axios({
         method: 'get',
         url: url,
         responseType: 'stream',
       }).then((response) => {
-        if (!response || response.status > 399) {
-          return reject();
+        if (response.status > 399) {
+          return handleReject(resolve, reject);
         }
-        response?.data.pipe(writer);
-        response?.data.on('end', resolve);
-        response?.data.on('error', reject);
+        const writer = createWriteStream(output_location);
+        response.data.pipe(writer);
+        response.data.on('end', resolve);
+        response.data.on('error', () => {
+          return handleReject(resolve, reject);
+        });
       }).catch(err => {
-        return reject(err);
+        return handleReject(resolve, reject);
       });
     });
   }
