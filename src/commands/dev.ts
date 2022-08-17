@@ -1,11 +1,12 @@
 import { Flags, Interfaces } from '@oclif/core';
 import axios, { AxiosResponse } from 'axios';
-import inquirer from 'inquirer';
 import chalk from 'chalk';
-import fs from 'fs-extra';
+import fs, { createWriteStream } from 'fs-extra';
+import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
 import opener from 'opener';
+import path from 'path';
 import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
@@ -84,7 +85,7 @@ export default class Dev extends BaseCommand {
       sensitive: false,
     }),
     port: Flags.integer({
-      default: 80,
+      default: 443,
       description: '[default: 80] Port for the gateway',
       sensitive: false,
     }),
@@ -127,6 +128,12 @@ export default class Dev extends BaseCommand {
       description: 'Build arg(s) to pass to docker build',
       multiple: true,
     }),
+    ssl: Flags.boolean({
+      description: 'Use https for all ingresses',
+      default: true,
+      sensitive: false,
+      allowNo: true,
+    })
   };
 
   static args = [{
@@ -199,6 +206,7 @@ export default class Dev extends BaseCommand {
 
     this.log('Once the containers are running they will be accessible via the following urls:');
 
+    const protocol = flags.ssl ? 'https' : 'http';
     const exposed_interfaces: string[] = [];
 
     for (const [service_name, service] of Object.entries(compose.services)) {
@@ -208,8 +216,8 @@ export default class Dev extends BaseCommand {
           const host = new RegExp(/Host\(`(.*?)`\)/g);
           const host_match = host.exec(host_rule);
           if (host_match) {
-            this.log(`${chalk.blue(`http://${host_match[1]}:${gateway_port}/`)} => ${service_name}`);
-            exposed_interfaces.push(`http://${host_match[1]}:${gateway_port}/`);
+            this.log(`${chalk.blue(`${protocol}://${host_match[1]}:${gateway_port}/`)} => ${service_name}`);
+            exposed_interfaces.push(`${protocol}://${host_match[1]}:${gateway_port}/`);
           }
         }
       }
@@ -237,8 +245,9 @@ export default class Dev extends BaseCommand {
 
         const promises: Promise<AxiosResponse<any>>[] = [];
         for (const exposed_interface of exposed_interfaces) {
-          const [host_name, port] = exposed_interface.replace('http://', '').split(':');
-          promises.push(axios.options(`http://localhost:${port}`, {
+          const [host_name, port] = exposed_interface.replace(`${protocol}://`, '').split(':');
+          console.log(`${protocol}://localhost:${port}`);
+          promises.push(axios.options(`${protocol}://localhost:${port}`, {
             headers: {
               Host: host_name,
             },
@@ -363,12 +372,45 @@ export default class Dev extends BaseCommand {
     return port;
   }
 
+  private async downloadFile(url: string, output_location: string): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      const writer = createWriteStream(output_location);
+      const response = await axios({
+        method: 'get',
+        url: url,
+        responseType: 'stream',
+      }).catch(err => {
+        return reject(err);
+      });
+      if (!response || response.status > 399) {
+        return reject();
+      }
+      response?.data.pipe(writer);
+      response?.data.on('end', resolve);
+      response?.data.on('error', reject);
+    });
+  }
+
+  private async downloadSSLCerts() {
+    return Promise.all([
+      this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/fullchain.pem', path.join(this.app.config.getConfigDir(), 'fullchain.pem')),
+      this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/privkey.pem', path.join(this.app.config.getConfigDir(), 'privkey.pem'))
+    ]).catch(() => {
+      this.warn(chalk.yellow("We are unable to download the neccessary ssl certificates. Please try again or use --ssl=false to temporarily disable ssl"));
+      this.exit(1);
+    });
+  }
+
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
     await Docker.verify();
 
     if (!args.configs_or_components || !args.configs_or_components.length) {
       args.configs_or_components = ['./architect.yml'];
+    }
+
+    if (flags.ssl) {
+      await this.downloadSSLCerts();
     }
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
@@ -396,7 +438,8 @@ export default class Dev extends BaseCommand {
     );
 
     flags.port = await this.getAvailablePort(flags.port);
-    dependency_manager.external_addr = `arc.localhost:${flags.port}`;
+    dependency_manager.use_ssl = flags.ssl;
+    dependency_manager.external_addr = (flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address) + `:${flags.port}`;
 
     if (flags.account) {
       const account = await AccountUtils.getAccount(this.app, flags.account);
@@ -439,7 +482,7 @@ export default class Dev extends BaseCommand {
 
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
     const graph = await dependency_manager.getGraph(component_specs, all_secrets); // TODO: 404: update
-    const compose = await DockerComposeUtils.generate(graph);
+    const compose = await DockerComposeUtils.generate(graph, this.app.config, flags.ssl);
     await this.runCompose(compose, flags.port);
   }
 

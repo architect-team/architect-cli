@@ -9,6 +9,7 @@ import path from 'path';
 import untildify from 'untildify';
 import which from 'which';
 import { ArchitectError, ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
+import AppConfig from '../../app-config/config';
 import LocalPaths from '../../paths';
 import { restart } from '../utils/docker';
 import PortUtil from '../utils/port';
@@ -20,13 +21,14 @@ export class DockerComposeUtils {
   // used to namespace docker-compose projects so multiple deployments can happen to local
   public static DEFAULT_PROJECT = 'architect';
 
-  public static async generate(graph: DependencyGraph): Promise<DockerComposeTemplate> {
+  public static async generate(graph: DependencyGraph, app_config: AppConfig, use_ssl: boolean): Promise<DockerComposeTemplate> {
     const compose: DockerComposeTemplate = {
       version: '3',
       services: {},
       volumes: {},
     };
 
+    const external_addr = use_ssl ? app_config.external_https_address : app_config.external_http_address;
     const limit = pLimit(5);
     const port_promises = [];
 
@@ -40,37 +42,89 @@ export class DockerComposeUtils {
     const available_ports = (await Promise.all(port_promises)).sort();
 
     const gateway_node = graph.nodes.find((node) => node instanceof GatewayNode);
-    const gateway_port = gateway_node?.interfaces._default.port || 80;
+    const gateway_port = gateway_node?.interfaces._default.port || 443;
 
     const gateway_links = new Set<string>();
     if (gateway_node) {
       for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
         for (const { interface_from } of edge.interface_mappings) {
-          const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
+          const host = interface_from === '@' ? external_addr : `${interface_from}.${external_addr}`;
           gateway_links.add(`${gateway_node.ref}:${host}`);
         }
       }
 
+      const traefik_ssl_mounts = [
+        `${app_config.getConfigDir()}:/etc/traefik/`,
+      ];
+
+      const tls_config = {
+        tls: {
+          stores: {
+            default: {
+              defaultCertificate: {
+                certFile: '/etc/traefik/fullchain.pem',
+                keyFile: '/etc/traefik/privkey.pem',
+              },
+            },
+          },
+          certificates: [{
+            certFile: '/etc/traefik/fullchain.pem',
+            keyFile: '/etc/traefik/privkey.pem',
+          }]
+        },
+        options: {
+          default: {
+            sniStrict: true,
+          },
+        },
+      };
+      const traefik_config = {
+        api: {
+          insecure: true,
+          dashboard: true,
+        },
+        log: {
+          // Uncomment to enable debugging
+          //level: 'DEBUG',
+        },
+        accesslog: {
+          filters: {
+            minDuration: '1s',
+            statusCodes: '400-599',
+          }
+        },
+        providers: {
+          docker: {
+            exposedByDefault: false,
+            constraints: `Label(\`traefik.port\`,\`${gateway_port}\`)`
+          },
+          // Required to load the TLS configs
+          file: {
+            fileName: '/etc/traefik/traefik.yaml',
+            watch: true,
+          },
+        },
+        entrypoints: {
+          web: {
+            address: ':' + gateway_port
+          },
+        },
+        ...(use_ssl ? tls_config : {}),
+      }
+      const traefik_yaml = yaml.dump(traefik_config);
+      fs.writeFileSync(path.join(app_config.getConfigDir(), 'traefik.yaml'), traefik_yaml);
+
       compose.services[gateway_node.ref] = {
         image: 'traefik:v2.6.2',
-        command: [
-          '--api.insecure=true',
-          '--pilot.dashboard=false',
-          '--accesslog=true',
-          '--accesslog.filters.minDuration=1s',
-          '--accesslog.filters.statusCodes=400-599',
-          `--entryPoints.web.address=:${gateway_port}`,
-          '--providers.docker=true',
-          '--providers.docker.exposedByDefault=false',
-          `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
-        ],
+        command: [],
         ports: [
-          // The HTTP port
+          // The HTTP(S) port
           `${gateway_port}:${gateway_port}`,
           // The Web UI(enabled by--api.insecure = true)
           `${await PortUtil.getAvailablePort(8080)}:8080`,
         ],
         volumes: [
+          ...(use_ssl ? traefik_ssl_mounts : []),
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
       };
@@ -262,7 +316,7 @@ export class DockerComposeUtils {
             service_to.labels.push(`traefik.port=${gateway_port}`);
           }
 
-          const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
+          const host = interface_from === '@' ? external_addr : `${interface_from}.${external_addr}`;
           const traefik_service = `${node_to.ref}-${interface_to}`;
 
           const component_node = graph.getNodeByRef(edge.to) as ComponentNode;
@@ -278,6 +332,10 @@ export class DockerComposeUtils {
           service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.port=${node_to_interface.port}`);
           if (node_to_interface.sticky) {
             service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadBalancer.sticky.cookie=true`);
+          }
+          if (use_ssl) {
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`);
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.tls=true`);
           }
         }
       }
