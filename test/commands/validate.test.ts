@@ -195,7 +195,7 @@ interfaces:
     ];
 
     for (const invalid_subdomain_token of invalid_subdomain_tokens) {
-      const test_tmp_sub_dir = fs.mkdtempSync(path.join(path.join(validation_mocks_path, '/subdomain/')));
+      const test_tmp_sub_dir = fs.mkdtempSync(path.join(validation_mocks_path, '/subdomain/'));
       const tmp_test_file = path.resolve(`${test_tmp_sub_dir}/architect.yml`);
 
       fs.writeFileSync(tmp_test_file, subdomain_token_to_config_yaml_string(invalid_subdomain_token));
@@ -241,7 +241,7 @@ interfaces:
     ];
 
     for (const valid_subdomain_token of valid_subdomain_tokens) {
-      const test_tmp_sub_dir = fs.mkdtempSync(path.join(path.join(validation_mocks_path, '/subdomain/')));
+      const test_tmp_sub_dir = fs.mkdtempSync(path.join(validation_mocks_path, '/subdomain/'));
       const tmp_test_file = path.resolve(`${test_tmp_sub_dir}/architect.yml`);
 
       fs.writeFileSync(tmp_test_file, subdomain_token_to_config_yaml_string(valid_subdomain_token));
