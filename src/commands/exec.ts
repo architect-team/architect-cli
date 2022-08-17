@@ -98,11 +98,6 @@ export default class Exec extends BaseCommand {
   }
 
   async exec(uri: string, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
-    /*
-    Step 1: Get initial terminal size
-    Step 2: Monitor SIGWINCH signal on non-windows to get resize events
-    */
-
     const ws = await this.getWebSocket(uri);
 
     await new Promise((resolve, reject) => {
@@ -232,18 +227,18 @@ export default class Exec extends BaseCommand {
     return transform;
   }
 
-  setupTermResize(wsStream: stream.Duplex): void {
+  setupTermResize(ws_stream: stream.Duplex): void {
     if (process.stdout.isTTY) {
       // Need to send initial resize event to the stream so the initial window is sized appropriately.
-      this.sendResizeEvent(wsStream);
+      this.sendResizeEvent(ws_stream);
 
       process.stdout.on('resize', () => {
-        this.sendResizeEvent(wsStream);
+        this.sendResizeEvent(ws_stream);
       });
     }
   }
 
-  sendResizeEvent(wsStream: stream.Duplex): void {
+  sendResizeEvent(ws_stream: stream.Duplex): void {
     // This object must mimic the TerminalSize struct that kubectl json encode/decodes for resize messages
     // https://github.com/kubernetes/client-go/blob/master/tools/remotecommand/resize.go#L23
     const terminal_size = {
@@ -255,7 +250,7 @@ export default class Exec extends BaseCommand {
     buffer.writeInt8(Exec.ResizeStream, 0);
 
     Buffer.from(data, 'utf-8').copy(buffer, 1);
-    wsStream.write(buffer);
+    ws_stream.write(buffer);
   }
 
   async runRemote(account: Account, args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
