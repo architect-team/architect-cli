@@ -66,7 +66,7 @@ export class DockerComposeUtils {
           certificates: [{
             certFile: '/etc/traefik/fullchain.pem',
             keyFile: '/etc/traefik/privkey.pem',
-          }]
+          }],
         },
         options: {
           default: {
@@ -87,12 +87,12 @@ export class DockerComposeUtils {
           filters: {
             minDuration: '1s',
             statusCodes: '400-599',
-          }
+          },
         },
         providers: {
           docker: {
             exposedByDefault: false,
-            constraints: `Label(\`traefik.port\`,\`${gateway_port}\`)`
+            constraints: `Label(\`traefik.port\`,\`${gateway_port}\`)`,
           },
           // Required to load the TLS configs
           file: {
@@ -102,11 +102,11 @@ export class DockerComposeUtils {
         },
         entrypoints: {
           web: {
-            address: ':' + gateway_port
+            address: ':' + gateway_port,
           },
         },
         ...(use_ssl ? tls_config : {}),
-      }
+      };
       const traefik_yaml = yaml.dump(traefik_config);
       fs.writeFileSync(path.join(app_config.getConfigDir(), `traefik-${gateway_port}.yaml`), traefik_yaml);
 

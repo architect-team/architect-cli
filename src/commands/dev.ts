@@ -133,7 +133,7 @@ export default class Dev extends BaseCommand {
       default: true,
       sensitive: false,
       allowNo: true,
-    })
+    }),
   };
 
   static args = [{
@@ -246,7 +246,6 @@ export default class Dev extends BaseCommand {
         const promises: Promise<AxiosResponse<any>>[] = [];
         for (const exposed_interface of exposed_interfaces) {
           const [host_name, port] = exposed_interface.replace(`${protocol}://`, '').split(':');
-          console.log(`${protocol}://localhost:${port}`);
           promises.push(axios.options(`${protocol}://localhost:${port}`, {
             headers: {
               Host: host_name,
@@ -373,28 +372,29 @@ export default class Dev extends BaseCommand {
   }
 
   private async downloadFile(url: string, output_location: string): Promise<void> {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const writer = createWriteStream(output_location);
-      const response = await axios({
+      axios({
         method: 'get',
         url: url,
         responseType: 'stream',
+      }).then((response) => {
+        if (!response || response.status > 399) {
+          return reject();
+        }
+        response?.data.pipe(writer);
+        response?.data.on('end', resolve);
+        response?.data.on('error', reject);
       }).catch(err => {
         return reject(err);
       });
-      if (!response || response.status > 399) {
-        return reject();
-      }
-      response?.data.pipe(writer);
-      response?.data.on('end', resolve);
-      response?.data.on('error', reject);
     });
   }
 
   private async downloadSSLCerts() {
     return Promise.all([
       this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/fullchain.pem', path.join(this.app.config.getConfigDir(), 'fullchain.pem')),
-      this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/privkey.pem', path.join(this.app.config.getConfigDir(), 'privkey.pem'))
+      this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/privkey.pem', path.join(this.app.config.getConfigDir(), 'privkey.pem')),
     ]).catch(() => {
       this.warn(chalk.yellow("We are unable to download the neccessary ssl certificates. Please try again or use --ssl=false to temporarily disable ssl"));
       this.exit(1);
