@@ -39,6 +39,12 @@ export abstract class InitCommand extends BaseCommand {
     }),
   };
 
+  static args = [{
+    name: 'name',
+    description: 'Name of your component or project',
+    required: false,
+  }];
+
   async doesDockerComposeYmlExist(): Promise<boolean> {
     const files_in_current_dir = fs.readdirSync('.');
     const default_compose = files_in_current_dir.some(f => f.includes('compose') && (f.endsWith('.yml') || f.endsWith('.yaml')));
