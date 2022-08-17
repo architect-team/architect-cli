@@ -31,5 +31,6 @@ export interface ServiceConfig extends ResourceConfig {
   sidecars: Dictionary<SidecarConfig>;
   liveness_probe?: LivenessProbeConfig;
   volumes: Dictionary<VolumeConfig>;
-  // TODO: deprecate replicas rather than just removing?
+  replicas: number | string; // TODO:290:number
+  scaling?: ScalingConfig;
 }
