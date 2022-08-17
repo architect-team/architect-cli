@@ -100,7 +100,7 @@ export default class Exec extends BaseCommand {
     await new Promise((resolve, reject) => {
       const websocket = createWebSocketStream(ws, { encoding: 'utf-8' });
       const inputTransform = this.getInputTransform();
-      websocket.pipe(this.getOutputTransform());
+      websocket.pipe(this.getOutputStream());
 
       if (process.stdin.isTTY) {
         // This method is only available when stdin is a TTY as it's part of the tty.ReadStream class:
@@ -161,16 +161,16 @@ export default class Exec extends BaseCommand {
     });
   }
 
-  getOutputTransform(): stream.Transform {
-    const transform = new stream.Transform();
-    transform._transform = (data, encoding, done) => {
+  getOutputStream(): stream.Writable {
+    const writeable = new stream.Writable();
+    writeable._write = (data, encoding, done) => {
       if (data instanceof Buffer) {
         const stream_num = data.readInt8(0);
 
         const buffer = data.slice(1);
 
         if (buffer.length < 1) {
-          return done(null, null);
+          return done();
         }
 
         if (stream_num === Exec.StdoutStream) {
@@ -189,15 +189,18 @@ export default class Exec extends BaseCommand {
             process.exit(error_code);
           }
         } else {
-          return done(new ArchitectError(`Unknown stream type: ${stream_num}`));
+          // If we get an unrecognized stream number, continue outputting to stdout.
+          // This can happen when writing binary data, and kubectl seems to handle this by just
+          // writing anyways so we do the same.
+          process.stdout.write(buffer);
         }
 
-        return done(null, buffer);
+        return done();
       } else {
         return done(new ArchitectError(`Unknown data type: ${typeof data}`));
       }
     };
-    return transform;
+    return writeable;
   }
 
   getInputTransform(): stream.Transform {
