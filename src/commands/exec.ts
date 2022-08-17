@@ -67,7 +67,8 @@ export default class Exec extends BaseCommand {
     parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
-  // https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/cri/streaming/remotecommand/websocket.go#L29
+  // These values correspond with the values defined in kubernetes remotecommand websocket handling:
+  // https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/cri/streaming/remotecommand/websocket.go#L30
   public static readonly StdinStream = 0;
   public static readonly StdoutStream = 1;
   public static readonly StderrStream = 2;
@@ -110,37 +111,14 @@ export default class Exec extends BaseCommand {
       const inputTransform = this.getInputTransform();
       websocket.pipe(this.getOutputStream());
 
-
-
-      if (process.stdout.isTTY) {
-
-        const data = JSON.stringify({Width: process.stdout.columns, Height: process.stdout.rows});
-        const buffer = Buffer.alloc(1 + data.length);
-        buffer.writeInt8(Exec.ResizeStream, 0);
-        Buffer.from(data, "utf-8").copy(buffer, 1);
-        websocket.write(buffer);
-
-        // console.log(`StdoutSize: ${process.stdout.columns}x${process.stdout.rows}`);
-
-        process.stdout.on('resize', () => {
-          // console.log('screen size has changed!');
-          // console.log(`${process.stdout.columns}x${process.stdout.rows}`);
-
-          // https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/client-go/tools/remotecommand/resize.go#L23
-          const data = JSON.stringify({Width: process.stdout.columns, Height: process.stdout.rows});
-          const buffer = Buffer.alloc(1 + data.length);
-          buffer.writeInt8(Exec.ResizeStream, 0);
-          Buffer.from(data, "utf-8").copy(buffer, 1);
-          websocket.write(buffer);
-          // console.log(buffer);
-          // console.log('wrote resize');
-        });
-      }
-
       if (process.stdin.isTTY) {
         // This method is only available when stdin is a TTY as it's part of the tty.ReadStream class:
         // https://nodejs.org/api/tty.html#readstreamsetrawmodemode
         process.stdin.setRawMode(true);
+
+        // Kubectl only monitors resize events when stdin.isRaw is true, so we follow that behavior.
+        this.setupTermResize(websocket);
+
         process.stdin.pipe(inputTransform).pipe(websocket);
       } else if (flags.stdin) {
         // If stdin is not a tty, stdin can be closed before data gets received by the websocket.
@@ -252,6 +230,32 @@ export default class Exec extends BaseCommand {
       }
     };
     return transform;
+  }
+
+  setupTermResize(wsStream: stream.Duplex): void {
+    if (process.stdout.isTTY) {
+      // Need to send initial resize event to the stream so the initial window is sized appropriately.
+      this.sendResizeEvent(wsStream);
+
+      process.stdout.on('resize', () => {
+        this.sendResizeEvent(wsStream);
+      });
+    }
+  }
+
+  sendResizeEvent(wsStream: stream.Duplex): void {
+    // This object must mimic the TerminalSize struct that kubectl json encode/decodes for resize messages
+    // https://github.com/kubernetes/client-go/blob/master/tools/remotecommand/resize.go#L23
+    const terminal_size = {
+      Width: process.stdout.columns,
+      Height: process.stdout.rows,
+    };
+    const data = JSON.stringify(terminal_size);
+    const buffer = Buffer.alloc(1 + data.length);
+    buffer.writeInt8(Exec.ResizeStream, 0);
+
+    Buffer.from(data, 'utf-8').copy(buffer, 1);
+    wsStream.write(buffer);
   }
 
   async runRemote(account: Account, args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
