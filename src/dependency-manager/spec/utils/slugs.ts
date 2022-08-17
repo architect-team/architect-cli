@@ -35,8 +35,8 @@ export class Slugs {
   public static ComponentSecretRegexBase = `[a-zA-Z0-9_-]+`;
   public static ComponentSecretValidator = new RegExp(`^${Slugs.ComponentSecretRegexBase}$`);
 
-  public static ComponentSubdomainRegexBase = '([A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])|[\\*|\\@])?';
-  public static ComponentSubdomainDescription = 'must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between.';
+  public static ComponentSubdomainRegexBase = '([A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])|[^\\W\\D\\s\\t\\n\\r\\/]+|[\\@\\*]?)';
+  public static ComponentSubdomainDescription = 'must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between.';
   public static ComponentSubdomainValidator = new RegExp(`^${Slugs.ComponentSubdomainRegexBase}$`);
 }
 
