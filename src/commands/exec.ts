@@ -67,10 +67,12 @@ export default class Exec extends BaseCommand {
     parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
+  // https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/cri/streaming/remotecommand/websocket.go#L29
   public static readonly StdinStream = 0;
   public static readonly StdoutStream = 1;
   public static readonly StderrStream = 2;
   public static readonly StatusStream = 3;
+  public static readonly ResizeStream = 4;
 
   async parse<F, A extends {
     [name: string]: any;
@@ -95,12 +97,45 @@ export default class Exec extends BaseCommand {
   }
 
   async exec(uri: string, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
+    /*
+    Step 1: Get initial terminal size
+    Step 2: Monitor SIGWINCH signal on non-windows to get resize events
+    */
+
     const ws = await this.getWebSocket(uri);
 
     await new Promise((resolve, reject) => {
       const websocket = createWebSocketStream(ws, { encoding: 'utf-8' });
+
       const inputTransform = this.getInputTransform();
       websocket.pipe(this.getOutputStream());
+
+
+
+      if (process.stdout.isTTY) {
+
+        const data = JSON.stringify({Width: process.stdout.columns, Height: process.stdout.rows});
+        const buffer = Buffer.alloc(1 + data.length);
+        buffer.writeInt8(Exec.ResizeStream, 0);
+        Buffer.from(data, "utf-8").copy(buffer, 1);
+        websocket.write(buffer);
+
+        // console.log(`StdoutSize: ${process.stdout.columns}x${process.stdout.rows}`);
+
+        process.stdout.on('resize', () => {
+          // console.log('screen size has changed!');
+          // console.log(`${process.stdout.columns}x${process.stdout.rows}`);
+
+          // https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/client-go/tools/remotecommand/resize.go#L23
+          const data = JSON.stringify({Width: process.stdout.columns, Height: process.stdout.rows});
+          const buffer = Buffer.alloc(1 + data.length);
+          buffer.writeInt8(Exec.ResizeStream, 0);
+          Buffer.from(data, "utf-8").copy(buffer, 1);
+          websocket.write(buffer);
+          // console.log(buffer);
+          // console.log('wrote resize');
+        });
+      }
 
       if (process.stdin.isTTY) {
         // This method is only available when stdin is a TTY as it's part of the tty.ReadStream class:
