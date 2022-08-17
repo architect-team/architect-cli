@@ -1,7 +1,7 @@
 {
   "name": "@architect-io/cli",
   "description": "Command-line interface for Architect.io",
-  "version": "1.22.0-rc.4",
+  "version": "1.23.0-rc.5",
   "author": "Architect.io",
   "bin": {
     "architect": "./bin/run"
@@ -41,6 +41,7 @@
     "object-hash": "^3.0.0",
     "opener": "^1.5.2",
     "p-limit": "^3.1.0",
+    "patch-package": "^6.4.7",
     "readline": "^1.3.0",
     "reflect-metadata": "0.1.13",
     "semver": "^7.3.5",
@@ -54,6 +55,7 @@
   },
   "devDependencies": {
     "@oclif/test": "2.0.3",
+    "@saithodev/semantic-release-backmerge": "^2.1.2",
     "@semantic-release/changelog": "^6.0.1",
     "@semantic-release/commit-analyzer": "^9.0.2",
     "@semantic-release/exec": "^6.0.3",
@@ -150,9 +152,11 @@
     "test": "mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
     "pack": "oclif pack:tarballs",
     "readme": "./bin/readme",
+    "check": "npm run lint && npm run test && npm run check-circular",
     "generate:schema-docs": "ts-node --project ./tsconfig.json ./src/dependency-manager/generate.ts",
     "generate:yarn-lock": "(rm yarn.lock || true) && yarn import",
-    "semantic-release": "./node_modules/semantic-release/bin/semantic-release.js"
+    "semantic-release": "./node_modules/semantic-release/bin/semantic-release.js",
+    "prepare": "git checkout yarn.lock && patch-package"
   },
   "types": "lib/index.d.ts"
 }

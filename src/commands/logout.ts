@@ -8,7 +8,9 @@ export default class Logout extends BaseCommand {
   }
 
   static description = 'Logout from the Architect registry';
-
+  static examples = [
+    'architect logout',
+  ];
   static flags = { ...BaseCommand.flags };
 
   async run(): Promise<void> {

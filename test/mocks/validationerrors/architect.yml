@@ -1,0 +1,9 @@
+name: tests/validation_errors
+
+services:
+  validation_errors:
+    interfaces:
+      main: 8080
+
+interfaces:
+  validation_errors: ${{ services.validation_errors.interfaces.main.url }}

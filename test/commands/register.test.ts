@@ -25,13 +25,13 @@ describe('register', function () {
     location: null,
     website: null,
     is_public: false,
-    default_user_id: null
-  }
+    default_user_id: null,
+  };
 
   const mock_architect_account_response = {
     ...mock_account_response,
-    name: 'architect'
-  }
+    name: 'architect',
+  };
 
   mockArchitectAuth
     .nock(MOCK_API_HOST, api => api
@@ -40,11 +40,11 @@ describe('register', function () {
     )
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
-        expect(body.tag).to.eq('1.0.0')
-        expect(body.config.name).to.eq('fusionauth')
-        expect(body.config.services.fusionauth.image).to.eq('fusionauth/fusionauth-app:latest')
-        expect(body.config.services.fusionauth.environment.ADMIN_USER_PASSWORD).to.eq('${{ secrets.admin_user_password }}')
-        expect(body.config.services.fusionauth.environment.FUSIONAUTH_KICKSTART).to.eq('/usr/local/fusionauth/kickstart.json')
+        expect(body.tag).to.eq('1.0.0');
+        expect(body.config.name).to.eq('fusionauth');
+        expect(body.config.services.fusionauth.image).to.eq('fusionauth/fusionauth-app:latest');
+        expect(body.config.services.fusionauth.environment.ADMIN_USER_PASSWORD).to.eq('${{ secrets.admin_user_password }}');
+        expect(body.config.services.fusionauth.environment.FUSIONAUTH_KICKSTART).to.eq('/usr/local/fusionauth/kickstart.json');
 
         const config = fs.readFileSync('examples/fusionauth/config/kickstart.json');
         expect(body.config.services.fusionauth.environment.KICKSTART_CONTENTS).to.eq(config.toString().trim());
@@ -66,11 +66,11 @@ describe('register', function () {
     )
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
-        expect(body.tag).to.eq('1.0.0')
-        expect(body.config.name).to.eq('fusionauth')
-        expect(body.config.services.fusionauth.image).to.eq('fusionauth/fusionauth-app:latest')
-        expect(body.config.services.fusionauth.environment.ADMIN_USER_PASSWORD).to.eq('${{ secrets.admin_user_password }}')
-        expect(body.config.services.fusionauth.environment.FUSIONAUTH_KICKSTART).to.eq('/usr/local/fusionauth/kickstart.json')
+        expect(body.tag).to.eq('1.0.0');
+        expect(body.config.name).to.eq('fusionauth');
+        expect(body.config.services.fusionauth.image).to.eq('fusionauth/fusionauth-app:latest');
+        expect(body.config.services.fusionauth.environment.ADMIN_USER_PASSWORD).to.eq('${{ secrets.admin_user_password }}');
+        expect(body.config.services.fusionauth.environment.FUSIONAUTH_KICKSTART).to.eq('/usr/local/fusionauth/kickstart.json');
 
         const config = fs.readFileSync('examples/fusionauth/config/kickstart.json');
         expect(body.config.services.fusionauth.environment.KICKSTART_CONTENTS).to.eq(config.toString().trim());
@@ -95,10 +95,10 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'examples/database-seeding/architect.yml', '-t', '1.0.0', '--architecture', 'incorrect', '-a', 'examples'])
     .catch(err => {
-      expect(`${err}`).to.contain('Some internal docker build exception')
+      expect(process.exitCode).eq(1);
+      expect(`${err}`).to.contain('Some internal docker build exception');
     })
-    .it('register component with architecture flag failed', ctx => {
-    });
+    .it('register component with architecture flag failed');
 
   mockArchitectAuth
     .nock(MOCK_REGISTRY_HOST, api => api
@@ -124,7 +124,7 @@ describe('register', function () {
           if (IF_EXPRESSION_REGEX.test(task_name)) { continue; }
           expect(task.image).not.undefined;
         }
-        cb(null, body)
+        cb(null, body);
       })
     )
     .nock(MOCK_API_HOST, api => api
@@ -136,7 +136,6 @@ describe('register', function () {
     .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('register superset', async ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
-
       /*
       const writeCompose = DockerComposeUtils.writeCompose as sinon.SinonStub;
       const compose_contents = yaml.load(writeCompose.firstCall.args[1]) as DockerComposeTemplate;
@@ -165,7 +164,7 @@ describe('register', function () {
         const contents = yaml.load(fs.readFileSync('examples/gcp-pubsub/pubsub/architect.yml').toString());
         expect(body.config).to.deep.equal(contents);
         expect(validateSpec(body.config)).to.have.lengthOf(0);
-        cb(null, body)
+        cb(null, body);
       })
     )
     .nock(MOCK_API_HOST, api => api
@@ -185,10 +184,35 @@ describe('register', function () {
       .reply(200, mock_account_response)
     )
     .nock(MOCK_API_HOST, api => api
+      .post(/\/accounts\/.*\/components/, (body) => body)
+      .reply(200, (uri, body: any, cb) => {
+        const contents = yaml.load(fs.readFileSync('examples/gcp-pubsub/pubsub/architect.yml').toString());
+        expect(body.config).to.deep.equal(contents);
+        expect(validateSpec(body.config)).to.have.lengthOf(0);
+        cb(null, body)
+      })
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account_response.id}/environments/test-env`)
+      .reply(200)
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'examples/gcp-pubsub/pubsub/architect.yml', '-a', 'examples', '-e', 'test-env'])
+    .it('registers an ephemeral component with an environment specified', ctx => {
+      expect(ctx.stdout).to.contain('Successfully registered component');
+    });
+
+  mockArchitectAuth
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
+    )
+    .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
-        expect(body.tag).to.eq('1.0.0')
-        expect(body.config.name).to.eq('examples/gcp-pubsub')
-        expect(body.config.services.pubsub.image).to.eq('gcr.io/google.com/cloudsdktool/cloud-sdk:emulators')
+        expect(body.tag).to.eq('1.0.0');
+        expect(body.config.name).to.eq('examples/gcp-pubsub');
+        expect(body.config.services.pubsub.image).to.eq('gcr.io/google.com/cloudsdktool/cloud-sdk:emulators');
         return body;
       })
       .reply(200, {})
@@ -230,14 +254,15 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .get('/accounts/examples')
       .reply(403, {
-        message: 'Friendly error message from server'
+        message: 'Friendly error message from server',
       })
     )
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'examples/hello-world/architect.yml', '-a', 'examples'])
     .catch(err => {
-      expect(err.message).to.contain('Friendly error message from server')
+      expect(process.exitCode).eq(1);
+      expect(err.message).to.contain('Friendly error message from server');
     })
     .it('rejects with informative error message if account is unavailable');
 
@@ -254,9 +279,9 @@ describe('register', function () {
     )
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
-        expect(body.tag).to.eq('1.0.0')
-        expect(body.config.name).to.eq('database-seeding')
-        expect(body.config.services.app.image).to.eq('mock.registry.localhost/examples/database-seeding.services.app@some-digest')
+        expect(body.tag).to.eq('1.0.0');
+        expect(body.config.name).to.eq('database-seeding');
+        expect(body.config.services.app.image).to.eq('mock.registry.localhost/examples/database-seeding.services.app@some-digest');
         return body;
       })
       .reply(200, {})
@@ -283,7 +308,8 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'examples/database-seeding/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .catch(err => {
-      expect(`${err}`).to.contain('Some internal docker build exception')
+      expect(process.exitCode).eq(1);
+      expect(`${err}`).to.contain('Some internal docker build exception');
     })
     .it('rejects with informative error message if docker buildx inspect fails', ctx => {
       expect(ctx.stdout).to.contain("Docker buildx bake failed. Please make sure docker is running.");

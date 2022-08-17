@@ -1,7 +1,8 @@
-import { Flags } from '@oclif/core';
+import { Flags, Interfaces } from '@oclif/core';
+import { OutputArgs, OutputFlags } from '@oclif/core/lib/interfaces';
+import chalk from 'chalk';
 import inquirer from 'inquirer';
 import stream from 'stream';
-import stringArgv from 'string-argv';
 import WebSocket, { createWebSocketStream } from 'ws';
 import { ArchitectError, Dictionary, parseUnknownSlug } from '../';
 import Account from '../architect/account/account.entity';
@@ -10,6 +11,22 @@ import { EnvironmentUtils, Replica } from '../architect/environment/environment.
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 
+enum RemoteExecCommandOutputStatus {
+  SUCCESS = 'Success',
+  FAILURE = 'Failure',
+}
+
+interface RemoteExecCommandOutcome {
+  metadata: Record<string, undefined>;
+  status: RemoteExecCommandOutputStatus;
+  message?: string;
+  reason?: string;
+  code?: number;
+  details?: {
+    causes?: Record<string, string>[];
+  }
+}
+
 export default class Exec extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
@@ -17,6 +34,11 @@ export default class Exec extends BaseCommand {
 
   static description = 'Exec into service instances';
   static usage = 'exec [RESOURCE] [FLAGS] -- [COMMAND]';
+  static examples = [
+    'architect exec -- ls',
+    'architect exec -- /bin/sh',
+    'architect exec --account myaccount --environment myenvironment mycomponent.services.app -- /bin/sh',
+  ];
 
   static flags = {
     ...BaseCommand.flags,
@@ -28,57 +50,73 @@ export default class Exec extends BaseCommand {
       allowNo: true,
       default: true,
     }),
-    tty: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: 'Stdin is a TTY.',
-        char: 't',
-        allowNo: true,
-        default: true,
-      }),
-    },
+    tty: Flags.boolean({
+      description: 'Stdin is a TTY. If the flag isn\'t supplied, tty or no-tty is automatically detected.',
+      char: 't',
+      allowNo: true,
+      default: undefined,
+      sensitive: false,
+    }),
   };
 
   static args = [{
-    name: 'command',
-    description: 'Command to run',
-    required: true,
-  }, {
-    non_sensitive: true,
+    sensitive: false,
     name: 'resource',
     description: 'Name of resource',
     required: false,
     parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
-  //static sensitive = new Set(['stdin', 'command']);
-
   public static readonly StdinStream = 0;
   public static readonly StdoutStream = 1;
   public static readonly StderrStream = 2;
   public static readonly StatusStream = 3;
 
-  async exec(uri: string): Promise<void> {
-    const { args, flags } = await this.parse(Exec);
+  async parse<F, A extends {
+    [name: string]: any;
+  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+    const double_dash_index = argv.indexOf('--');
+    if (double_dash_index === -1) {
+      this.error(chalk.red('Command must be provided after --\n(e.g. "architect exec -- ls")'));
+    }
 
+    const command = argv.slice(double_dash_index + 1);
+    if (command.length === 0) {
+      this.error(chalk.red('Missing command argument following --'));
+    }
+
+    const argv_without_command = argv.slice(0, double_dash_index);
+
+     const parsed = await super.parse(options, argv_without_command) as Interfaces.ParserOutput<F, A>;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    parsed.args.command = command;
+    return parsed;
+  }
+
+  async exec(uri: string, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
     const ws = await this.getWebSocket(uri);
 
     await new Promise((resolve, reject) => {
-      const duplex = createWebSocketStream(ws, { encoding: 'utf-8' });
-      duplex.pipe(this.getOutputTransform());
+      const websocket = createWebSocketStream(ws, { encoding: 'utf-8' });
+      const inputTransform = this.getInputTransform();
+      websocket.pipe(this.getOutputStream());
 
-      if (flags.stdin) {
-        if (flags.tty && !process.stdin.isTTY) {
-          throw new ArchitectError('stdin does not support tty');
-        }
+      if (process.stdin.isTTY) {
+        // This method is only available when stdin is a TTY as it's part of the tty.ReadStream class:
+        // https://nodejs.org/api/tty.html#readstreamsetrawmodemode
         process.stdin.setRawMode(true);
-        process.stdin.pipe(this.getInputTransform()).pipe(duplex);
+        process.stdin.pipe(inputTransform).pipe(websocket);
+      } else if (flags.stdin) {
+        // If stdin is not a tty, stdin can be closed before data gets received by the websocket.
+        // Passing {end: false} keeps the websocket open until it's closed when we receive the result.
+        process.stdin.pipe(inputTransform, { end: false }).pipe(websocket);
       }
 
-      duplex.on('end', () => {
+      websocket.on('end', () => {
         process.exit();
       });
-      duplex.on('error', (err) => {
+      websocket.on('error', (err) => {
         reject(err);
       });
     });
@@ -123,16 +161,16 @@ export default class Exec extends BaseCommand {
     });
   }
 
-  getOutputTransform(): stream.Transform {
-    const transform = new stream.Transform();
-    transform._transform = (data, encoding, done) => {
+  getOutputStream(): stream.Writable {
+    const writeable = new stream.Writable();
+    writeable._write = (data, encoding, done) => {
       if (data instanceof Buffer) {
         const stream_num = data.readInt8(0);
 
         const buffer = data.slice(1);
 
         if (buffer.length < 1) {
-          return done(null, null);
+          return done();
         }
 
         if (stream_num === Exec.StdoutStream) {
@@ -140,17 +178,29 @@ export default class Exec extends BaseCommand {
         } else if (stream_num === Exec.StderrStream) {
           process.stderr.write(buffer);
         } else if (stream_num === Exec.StatusStream) {
-          const status = JSON.parse(buffer.toString('utf8'));
+          const outcome: RemoteExecCommandOutcome = JSON.parse(buffer?.toString('utf8'));
+          if (outcome.status === RemoteExecCommandOutputStatus.FAILURE) {
+            const exit_code_cause = outcome.details?.causes?.find(cause => cause.reason === 'ExitCode');
+            const error_code = Number(exit_code_cause?.message || 1);
+            // Triggers on an invalid command ex. `architect exec -- not-valid`
+            if (outcome.message && outcome.reason !== 'NonZeroExitCode') {
+              process.stderr.write(chalk.red(outcome.message) + '\n');
+            }
+            process.exit(error_code);
+          }
         } else {
-          return done(new ArchitectError(`Unknown stream type: ${stream_num}`));
+          // If we get an unrecognized stream number, continue outputting to stdout.
+          // This can happen when writing binary data, and kubectl seems to handle this by just
+          // writing anyways so we do the same.
+          process.stdout.write(buffer);
         }
 
-        return done(null, buffer);
+        return done();
       } else {
         return done(new ArchitectError(`Unknown data type: ${typeof data}`));
       }
     };
-    return transform;
+    return writeable;
   }
 
   getInputTransform(): stream.Transform {
@@ -169,9 +219,7 @@ export default class Exec extends BaseCommand {
     return transform;
   }
 
-  async runRemote(account: Account): Promise<void> {
-    const { args, flags } = await this.parse(Exec);
-
+  async runRemote(account: Account, args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
     let component_account_name: string | undefined;
@@ -205,20 +253,26 @@ export default class Exec extends BaseCommand {
     const query = new URLSearchParams({
       ext_ref: replica.ext_ref,
       container: replica.node_ref,
-      stdin: flags.stdin.toString(),
-      tty: flags.tty.toString(),
     });
-    for (const arg of stringArgv(args.command)) {
+
+    if (flags.stdin && flags.tty) {
+      query.append('stdin', 'true');
+      // 'tty' should only be set true if both stdin and tty are set.
+      // This mimics the behavior of `kubectl exec`.
+      query.append('tty', 'true');
+    } else if (flags.stdin) {
+      query.append('stdin', 'true');
+    }
+
+    for (const arg of args.command) {
       query.append('command', arg);
     }
 
     const uri = `${this.app.config.api_host}/environments/${environment.id}/ws/exec?${query}`;
-    await this.exec(uri);
+    await this.exec(uri, flags);
   }
 
-  async runLocal(): Promise<void> {
-    const { args, flags } = await this.parse(Exec);
-
+  async runLocal(args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
     const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
     const service = await DockerComposeUtils.getLocalServiceForEnvironment(compose_file, args.resource);
@@ -230,7 +284,7 @@ export default class Exec extends BaseCommand {
     }
     compose_args.push(service.name);
 
-    for (const arg of stringArgv(args.command)) {
+    for (const arg of args.command) {
       compose_args.push(arg);
     }
 
@@ -240,14 +294,22 @@ export default class Exec extends BaseCommand {
   async run(): Promise<void> {
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
-    const { flags } = await this.parse(Exec);
+    const { args, flags } = await this.parse(Exec);
+
+    // Automatically set tty if the user doesn't supply it based on whether stdin is TTY.
+    if (flags.tty === undefined) {
+      // NOTE: stdin.isTTY is undefined if stdin is not a TTY, which is why this is a double negation.
+      flags.tty = !!process.stdin.isTTY;
+    } else if (flags.tty && !process.stdin.isTTY) {
+      throw new ArchitectError('stdin does not support tty');
+    }
 
     // If no account is default to local first.
     if (!flags.account && flags.environment) {
       // If the env exists locally then just assume local
       const is_local_env = await DockerComposeUtils.isLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
       if (is_local_env) {
-        return await this.runLocal();
+        return await this.runLocal(args, flags);
       }
     }
 
@@ -255,9 +317,9 @@ export default class Exec extends BaseCommand {
     const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: !flags.environment });
 
     if (AccountUtils.isLocalAccount(account)) {
-      return await this.runLocal();
+      return await this.runLocal(args, flags);
     }
 
-    await this.runRemote(account);
+    await this.runRemote(account, args, flags);
   }
 }

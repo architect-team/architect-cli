@@ -11,9 +11,12 @@ import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.
 export default class PlatformCreate extends BaseCommand {
   static aliases = ['platforms:register', 'platform:create', 'platforms:create'];
   static description = 'Register a new platform with Architect Cloud';
-
+  static examples = [
+    'architect platforms:create --account=myaccount',
+    'architect platforms:register --account=myaccount --type=kubernetes --kubeconfig=~/.kube/config --auto-approve',
+  ];
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'platform',
     description: 'Name to give the platform',
     parse: async (value: string): Promise<string> => value.toLowerCase(),
@@ -22,48 +25,35 @@ export default class PlatformCreate extends BaseCommand {
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    auto_approve: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
-        hidden: true,
-      }),
-    },
-    ['auto-approve']: {
-      non_sensitive: true,
-      ...Flags.boolean(),
-    },
-    type: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 't',
-        options: ['KUBERNETES', 'kubernetes'],
-      }),
-    },
-    host: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'h',
-      }),
-    },
-    kubeconfig: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'k',
-        default: '~/.kube/config',
-        exclusive: ['host'],
-      }),
-    },
-    flag: {
-      non_sensitive: true,
-      ...Flags.string({
-        multiple: true,
-        default: [],
-      }),
-    },
+    auto_approve: Flags.boolean({
+      description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
+      hidden: true,
+      sensitive: false,
+    }),
+    ['auto-approve']: Flags.boolean({ sensitive: false }),
+    type: Flags.string({
+      char: 't',
+      options: ['KUBERNETES', 'kubernetes'],
+      sensitive: false,
+    }),
+    host: Flags.string({
+      char: 'h',
+      sensitive: false,
+    }),
+    kubeconfig: Flags.string({
+      char: 'k',
+      default: '~/.kube/config',
+      exclusive: ['host'],
+      sensitive: false,
+    }),
+    flag: Flags.string({
+      multiple: true,
+      default: [],
+      sensitive: false,
+    }),
   };
 
-  protected async parse<F, A extends {
+  async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;

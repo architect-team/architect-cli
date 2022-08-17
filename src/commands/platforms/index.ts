@@ -7,14 +7,17 @@ import localizedTimestamp from '../../common/utils/localized-timestamp';
 export default class Platforms extends BaseCommand {
   static aliases = ['platform', 'platform:search', 'platforms', 'platforms:search'];
   static description = 'Search for platforms on Architect Cloud';
-
+  static examples = [
+    'architect platforms',
+    'architect platforms --account=myaccount myplatform',
+  ];
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'query',
     description: 'Search query used to filter results',
     required: false,

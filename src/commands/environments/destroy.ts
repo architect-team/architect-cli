@@ -8,42 +8,39 @@ import BaseCommand from '../../base-command';
 export default class EnvironmentDestroy extends BaseCommand {
   static aliases = ['environment:destroy', 'envs:destroy', 'env:destroy', 'env:deregister', 'environment:deregister'];
   static description = 'Deregister an environment';
-
+  static examples = [
+    'architect environment:destroy --account=myaccount myenvironment',
+    'architect environment:deregister --account=myaccount --auto-approve --force myenvironment',
+  ];
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    auto_approve: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
-        hidden: true,
-      }),
-    },
-    ['auto-approve']: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: 'Automatically apply the changes',
-        default: false,
-      }),
-    },
-    force: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: 'Force the deletion even if the environment is not empty',
-        char: 'f',
-        default: false,
-      }),
-    },
+    auto_approve: Flags.boolean({
+      description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
+      hidden: true,
+      sensitive: false,
+    }),
+    ['auto-approve']: Flags.boolean({
+      description: 'Automatically apply the changes',
+      default: false,
+      sensitive: false,
+    }),
+    force: Flags.boolean({
+      description: 'Force the deletion even if the environment is not empty',
+      char: 'f',
+      default: false,
+      sensitive: false,
+    }),
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'environment',
     description: 'Name of the environment to deregister',
     parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
-  protected async parse<F, A extends {
+  async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;

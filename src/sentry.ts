@@ -4,7 +4,8 @@ import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import { ENVIRONMENT } from './app-config/config';
-import AppService from './app-config/service';
+import User from './architect/user/user.entity';
+import type BaseCommand from './base-command';
 import { docker } from './common/utils/docker';
 import PromptUtils from './common/utils/prompt-utils';
 import LocalPaths from './paths';
@@ -12,58 +13,30 @@ import LocalPaths from './paths';
 const CLI_SENTRY_DSN = 'https://272fd53f577f4729b014701d74fe6c53@o298191.ingest.sentry.io/6465948';
 
 export default class SentryService {
-  app: AppService;
-  child: any;
-  file_out: boolean;
-  sentry_out: boolean;
-  sentry_history_file_path: string;
+  command: BaseCommand;
+  file_out?: boolean;
+  sentry_history_file_path?: string;
 
-
-  static async create(app: AppService, child: any): Promise<SentryService> {
-    const sentry = new SentryService(app, child);
-    await sentry.startSentryTransaction();
-    return sentry;
+  constructor(command: BaseCommand) {
+    this.command = command;
+    this.initSentry();
   }
 
-  constructor(app: AppService, child: any) {
-    this.app = app;
-    this.child = child;
-    this.file_out = app.config.environment !== ENVIRONMENT.TEST && app.config.environment !== ENVIRONMENT.PREVIEW;
-    this.sentry_history_file_path = path.join(app.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
-    this.sentry_out = app.config.environment === ENVIRONMENT.PRODUCTION || app.config.environment === ENVIRONMENT.DEV || app.config.environment === ENVIRONMENT.PREVIEW;
-    this.startSentryTransaction();
-  }
-
-  async startSentryTransaction(): Promise<void> {
+  private async ignoreTryCatch(fn: () => Promise<void>, debug_message: string) {
     try {
-      const sentry_out = this.sentry_out;
-      let sentry_user: any;
-      try {
-        sentry_user = {
-          email: (await this.app.auth?.getPersistedTokenJSON())?.email,
-          id: (await this.app.auth?.checkLogin())?.id,
-        };
-      } catch {
-        sentry_user = {
-          email: os.hostname(),
-          id: os.hostname(),
-        };
-      }
+      await fn();
+    } catch {
+      this.command.debug(debug_message);
+    }
+  }
 
-      const sentry_tags = {
-        environment: this.app.config.environment,
-        cli: this.app.version,
-        node_runtime: process.version,
-        os: os.platform(),
-        shell: this.child.config?.shell,
-        user: sentry_user?.id || os.hostname(),
-        'user-email': sentry_user?.email || os.hostname(),
-      };
-
+  initSentry(): void {
+    this.ignoreTryCatch(async () => {
+      const sentry_out = process.env.TEST !== '1' && process.env.NODE_ENV != ENVIRONMENT.PREVIEW;
       Sentry.init({
         dsn: CLI_SENTRY_DSN,
         debug: false,
-        environment: this.app.config.environment,
+        environment: process.env?.NODE_ENV ?? 'production',
         release: process.env?.npm_package_version,
         tracesSampleRate: 1.0,
         attachStacktrace: true,
@@ -92,29 +65,59 @@ export default class SentryService {
           return breadcrumb;
         },
       });
+    }, 'SENTRY: an error occurred creating a new instance of SentryService');
+  }
+
+  private async getUser(): Promise<User | undefined> {
+    try {
+      const user = await this.command.app.auth.checkLogin();
+      if (user) {
+        return user;
+      }
+    } catch {
+      this.command.debug("SENTRY: Unable to load user");
+    }
+  }
+
+  async startSentryTransaction(): Promise<void> {
+    this.ignoreTryCatch(async () => {
+      this.file_out = this.command.app.config.environment !== ENVIRONMENT.TEST && this.command.app.config.environment !== ENVIRONMENT.PREVIEW;
+      this.sentry_history_file_path = path.join(this.command.app.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
+
+      const sentry_user = await this.getUser();
+
+      const sentry_tags = {
+        environment: this.command.app.config.environment,
+        cli: this.command.app.version,
+        node_runtime: process.version,
+        os: os.platform(),
+        shell: this.command.config.shell,
+        user: sentry_user?.id,
+        'user-email': sentry_user?.email,
+      };
 
       const transaction = Sentry.startTransaction({
-        op: this.child.id,
+        op: this.command.id,
         status: 'ok',
-        description: sentry_user?.email || os.hostname(),
         tags: sentry_tags,
-        name: this.child.name,
+        name: this.command.constructor.name,
       });
 
       return Sentry.configureScope(scope => {
         scope.setSpan(transaction);
-        scope.setUser(sentry_user);
+        if (sentry_user) {
+          scope.setUser(sentry_user);
+        }
         scope.setTags(sentry_tags);
       });
-    } catch {
-      console.debug("SENTRY: Unable to start sentry transaction");
-    }
+    }, 'SENTRY: an error occurred starting transaction');
   }
 
   async updateSentryTransaction(error?: any): Promise<void> {
     try {
-      const updated_docker_info = await this.getRunningDockerContainers();
-      const config_directory_files = await this.getFilenamesFromDirectory();
+      // Only query for docker containers if there is an error to improve performance of cmds
+      const updated_docker_info = error ? await this.getRunningDockerContainers() : [];
+      const config_directory_files = error ? await this.getFilenamesFromDirectory() : [];
 
       if (error) {
         error.stack = PromptUtils.strip_ascii_color_codes_from_string(error.stack);
@@ -122,13 +125,13 @@ export default class SentryService {
 
       const sentry_session_metadata = await {
         docker_info: updated_docker_info,
-        linked_components: this.app.linkedComponents,
-        command: this.child.id || this.child.name,
-        environment: this.app.config.environment,
+        linked_components: this.command.app.linkedComponents,
+        command: this.command.constructor.name,
+        environment: this.command.app.config.environment,
         config_dir_files: config_directory_files,
-        config_file: path.join(this.app.config?.getConfigDir(), LocalPaths.CLI_CONFIG_FILENAME),
+        config_file: path.join(this.command.app.config?.getConfigDir() ?? '', LocalPaths.CLI_CONFIG_FILENAME),
         cwd: process.cwd(),
-        log_level: this.app.config?.log_level,
+        log_level: this.command.app.config?.log_level,
         node_versions: process.versions,
         node_version: process.version,
         os_info: os.userInfo() || {},
@@ -143,29 +146,52 @@ export default class SentryService {
       const update_scope = Sentry.getCurrentHub().getScope();
       update_scope?.setExtras(sentry_session_metadata);
     } catch {
-      console.debug("SENTRY: Unable to attach metadata to the current transaction");
+      this.command.debug("SENTRY: Unable to attach metadata to the current transaction");
     }
   }
 
-  async endSentryTransaction(write_command_out: boolean, error?: any): Promise<void> {
-    if (this.app.config.environment === ENVIRONMENT.TEST) return;
-    try {
+  private async filterNonSensitiveSentryMetadata(non_sensitive: Set<string>, metadata: any): Promise<any> {
+    return Object.entries(metadata)
+      .filter((value,) => !!value[1] && non_sensitive.has(value[0]))
+      .map(key => ({ [key[0]]: key[1] }));
+  }
+
+  async endSentryTransaction(error?: any): Promise<void> {
+    await this.ignoreTryCatch(async () => {
+      if (this.command.app.config.environment === ENVIRONMENT.TEST) return;
+
+      const command_class = this.command.getClass();
+      const { args, flags } = await this.command.parse(command_class);
+      const non_sensitive = new Set([
+        ...Object.entries(command_class.flags || {}).filter(([_, value]) => value.sensitive === false).map(([key, _]) => key),
+        ...Object.entries(command_class.args || {}).filter(([_, value]) => (value as any).sensitive === false).map(([_, value]) => (value as any).name),
+      ]);
+
+      try {
+        const filtered_sentry_args = await this.filterNonSensitiveSentryMetadata(non_sensitive, args);
+        const filtered_sentry_flags = await this.filterNonSensitiveSentryMetadata(non_sensitive, flags);
+
+        await this.setScopeExtra('command_args', filtered_sentry_args);
+        await this.setScopeExtra('command_flags', filtered_sentry_flags);
+      } catch (err) {
+        this.command.debug("Unable to add extra sentry metadata");
+      }
+
       await this.updateSentryTransaction(error);
 
-      if (this.file_out && write_command_out) {
+      if (this.file_out) {
         await this.writeCommandHistoryToFileSystem();
       }
 
-      if (this.sentry_out) {
-        Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
-        Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
-        if (error) {
-          Sentry.withScope(scope => Sentry.captureException(error));
-        }
+      if (error) {
+        Sentry.withScope(async scope => {
+          Sentry.captureException(error, scope);
+        });
       }
-    } catch {
-      console.debug("SENTRY: Unable to save and submit the current transaction");
-    }
+      Sentry.getCurrentHub().getScope()?.getSpan()?.finish();
+      Sentry.getCurrentHub().getScope()?.getTransaction()?.finish();
+      await Sentry.getCurrentHub().getClient()?.close();
+    }, 'SENTRY: Error occurred on ending transaction');
   }
 
   /*
@@ -176,7 +202,7 @@ export default class SentryService {
       const update_scope = Sentry.getCurrentHub().getScope();
       update_scope?.setExtra(key, value);
     } catch {
-      console.debug("SENTRY: Unable to add extra metadata element to the current transaction");
+      this.command.debug("SENTRY: Unable to add extra metadata element to the current transaction");
     }
   }
 
@@ -194,32 +220,31 @@ export default class SentryService {
 
       return updated_docker_info;
     } catch {
-      console.debug("SENTRY: Unable to retrieve running docker container metadata");
+      this.command.debug("SENTRY: Unable to retrieve running docker container metadata");
       return [];
     }
   }
 
   async getFilenamesFromDirectory(): Promise<any[]> {
     try {
-      const path = this.app.config?.getConfigDir();
-      const addr = fs.readdirSync(path, { withFileTypes: true });
+      const path = this.command.app.config.getConfigDir();
+      const addr = fs.readdirSync(path ?? '', { withFileTypes: true });
       return addr.filter(f => f.isFile()).map(f => ({ name: f.name })) || [];
     } catch {
-      console.debug("SENTRY: Unable to read list of file names from the architect config directory");
+      this.command.debug("SENTRY: Unable to read list of file names from the architect config directory");
       return [];
     }
   }
 
   async readCommandHistoryFromFileSystem(): Promise<any[]> {
-    let command_history = [];
-    if (fs.existsSync(this.sentry_history_file_path)) {
-      try {
-        command_history = await JSON.parse(fs.readFileSync(this.sentry_history_file_path).toString()) || [];
-      } catch {
-        console.debug("SENTRY: Unable to read command history file from the architect config directory");
+    try {
+      if (fs.existsSync(this.sentry_history_file_path ?? '')) {
+        return await JSON.parse(fs.readFileSync(this.sentry_history_file_path ?? '').toString()) || [];
       }
+    } catch {
+      this.command.debug("SENTRY: Unable to read command history file from the architect config directory");
     }
-    return command_history;
+    return [];
   }
 
   async writeCommandHistoryToFileSystem(): Promise<void> {
@@ -242,6 +267,10 @@ export default class SentryService {
         current_output = { ...current_output, _tags: undefined, _user: undefined };
       }
 
+      if (!this.sentry_history_file_path) {
+        return;
+      }
+
       if (!fs.existsSync(this.sentry_history_file_path)) {
         return fs.outputJsonSync(this.sentry_history_file_path, [current_output], { spaces: 2 });
       }
@@ -253,8 +282,7 @@ export default class SentryService {
       const maximum_records = ~Math.min(5, history.length) + 1;
       fs.outputJsonSync(this.sentry_history_file_path, history.slice(maximum_records), { spaces: 2 });
     } catch {
-      console.debug("SENTRY: Unable to write command history file to the architect config directory");
+      this.command.debug("SENTRY: Unable to write command history file to the architect config directory");
     }
   }
-
 }

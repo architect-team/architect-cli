@@ -1,5 +1,5 @@
 /* eslint-disable no-empty */
-import { Flags, Interfaces } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import chalk from 'chalk';
 import fs from 'fs';
 import inquirer from 'inquirer';
@@ -20,56 +20,24 @@ export abstract class InitCommand extends BaseCommand {
 
   static description = 'Initialize an architect component from an existing docker-compose file or create a project from Architect starter projects.';
 
+  static examples = [
+    'architect init',
+    'architect init --name=mycomponent',
+    'architect init --from-compose=mycompose.yml --component-file=architect.yml',
+  ];
+
   static flags = {
     ...BaseCommand.flags,
-    component_file: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: `${BaseCommand.DEPRECATED} Please use --component-file.`,
-        hidden: true,
-      }),
-    },
-    'component-file': {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'o',
-        description: 'Path where the component file should be written to',
-        default: 'architect.yml',
-      }),
-    },
-    from_compose: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: `${BaseCommand.DEPRECATED} Please use --from-compose.`,
-        hidden: true,
-      }),
-    },
-    'from-compose': {
-      non_sensitive: true,
-      ...Flags.string({}),
-    },
+    'component-file': Flags.string({
+      char: 'o',
+      description: 'Path where the component file should be written to',
+      default: 'architect.yml',
+      sensitive: false,
+    }),
+    'from-compose': Flags.string({
+      sensitive: false,
+    }),
   };
-
-  static args = [{
-    name: 'name',
-    description: 'Name of your component or project',
-    required: false,
-  }];
-
-  protected async parse<F, A extends {
-    [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
-    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
-    const flags: any = parsed.flags;
-    const args: any = parsed.args;
-
-    // Merge any values set via deprecated flags into their supported counterparts
-    flags['component-file'] = flags.component_file ? flags.component_file : flags['component-file'];
-    flags['from-compose'] = flags.from_compose ? flags.from_compose : flags['from-compose'];
-    parsed.flags = flags;
-
-    return parsed;
-  }
 
   async doesDockerComposeYmlExist(): Promise<boolean> {
     const files_in_current_dir = fs.readdirSync('.');
@@ -119,10 +87,10 @@ export abstract class InitCommand extends BaseCommand {
       const answer: { chosen: any } = await inquirer.prompt([
         {
           name: 'chosen',
-          message: `Please provide a name for your ${ compose_exist ? 'component' : 'project' }:`,
+          message: `Please provide a name for your ${compose_exist ? 'component' : 'project'}:`,
           type: 'input',
         }]);
-        args.name = answer.chosen;
+      args.name = answer.chosen;
     }
 
     if (!ComponentSlugUtils.Validator.test(args.name)) {
