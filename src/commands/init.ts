@@ -59,21 +59,6 @@ export abstract class InitCommand extends BaseCommand {
     required: false,
   }];
 
-  protected async parse<F, A extends {
-    [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
-    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
-    const flags: any = parsed.flags;
-    const args: any = parsed.args;
-
-    // Merge any values set via deprecated flags into their supported counterparts
-    flags['component-file'] = flags.component_file ? flags.component_file : flags['component-file'];
-    flags['from-compose'] = flags.from_compose ? flags.from_compose : flags['from-compose'];
-    parsed.flags = flags;
-
-    return parsed;
-  }
-
   async doesDockerComposeYmlExist(): Promise<boolean> {
     const files_in_current_dir = fs.readdirSync('.');
     const default_compose = files_in_current_dir.some(f => f.includes('compose') && (f.endsWith('.yml') || f.endsWith('.yaml')));
