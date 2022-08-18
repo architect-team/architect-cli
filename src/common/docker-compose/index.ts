@@ -539,6 +539,10 @@ export class DockerComposeUtils {
                 await restart(id);
               } catch (err) {
                 console.log(chalk.red(`ERROR: ${service_ref} failed to restart.`));
+                // We awaited again and need to re-check `should_stop()`.
+                if (should_stop()) {
+                  return;
+                }
                 continue;
               }
             }

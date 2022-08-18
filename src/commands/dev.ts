@@ -156,7 +156,9 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
     this.configureLogs();
 
     DockerComposeUtils.watchContainersHealth(this.compose_file, this.project_name,
-      () => { return this.is_exiting; });
+      () => { return this.is_exiting; }).finally(async () => {
+        await this.stop();
+      });
 
     try {
       await this.compose_process;
