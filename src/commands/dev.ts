@@ -27,11 +27,11 @@ type TraefikHttpService = {
 
 const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
 
-/** 
- * Handles the logic for managing the `docker compose up` process. 
- * 
+/**
+ * Handles the logic for managing the `docker compose up` process.
+ *
  * Gracefully stops running containers when the process is interrupted, and
- * stops containers when the underlying process returns with an error. 
+ * stops containers when the underlying process returns with an error.
  */
  class UpProcessManager {
   compose_file: string;
@@ -53,6 +53,7 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
     this.can_safely_kill = false;
   }
 
+  /** Spawns a process running `docker compose up` */
   start(): ExecaChildProcess<string> {
     const compose_args = ['-f', this.compose_file, '-p', this.project_name, 'up', '--remove-orphans', '--renew-anon-volumes', '--timeout', '0'];
     if (this.detached) {
@@ -69,16 +70,17 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
       { stdout: 'pipe', stdin: 'ignore', detached: !this.is_windows });
   }
 
-  async stop(callStop: boolean): Promise<void> {
+  /** Spawns a process running `docker compose stop`  */
+  async stop(): Promise<void> {
+    await DockerComposeUtils.dockerCompose(['-f', this.compose_file, '-p', this.project_name, 'stop']);
+  }
+
+  /** Sends the SIGINT signal to the running `docker compose up` process. */
+  interrupt() {
     if (!this.compose_process) {
       throw Error('Must call run() first');
     }
-
-    if (callStop) {
-      await DockerComposeUtils.dockerCompose(['-f', this.compose_file, '-p', this.project_name, 'stop']);
-    } else {
-      process.kill(-this.compose_process.pid, 'SIGINT');
-    }
+    process.kill(-this.compose_process.pid, 'SIGINT');
   }
 
   configureInterrupts() {
@@ -104,9 +106,17 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
     console.log('Gracefully stopping..... Please Wait.....');
     // On non-windows, we can just interrupt the compose process. On windows, we need to run 'stop' to
     // ensure the containers are stopped.
-    this.stop(this.is_windows);
+    if (this.is_windows) {
+      this.stop();
+    } else {
+      this.interrupt();
+    }
   }
 
+  /**
+   * Handles printing logs from the attached docker images.
+   * Stops printing logs once `handleInterrupt` is called and containers are being stopped.
+   */
   configureLogs() {
     if (!this.compose_process) {
       throw Error('Must call run() first');
@@ -156,7 +166,8 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
         // need to call `docker compose stop` to clean up any remaining running containers.
         console.error(chalk.red(ex));
         console.log(chalk.red('\nError detected - Stopping running containers...'));
-        await this.stop(true);
+        this.is_exiting = true;
+        await this.stop();
       }
     }
   }
