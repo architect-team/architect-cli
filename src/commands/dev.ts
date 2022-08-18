@@ -1,6 +1,7 @@
 import { Flags, Interfaces } from '@oclif/core';
 import axios from 'axios';
 import chalk from 'chalk';
+import { ExecaChildProcess } from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
@@ -218,7 +219,7 @@ export default class Dev extends BaseCommand {
     }, poll_interval);
   }
 
-  async runCompose(compose: DockerComposeTemplate, gateway_port: number, gateway_admin_port: number): Promise<void> {
+  async buildImage(compose: DockerComposeTemplate): Promise<[string, string]> {
     const { flags } = await this.parse(Dev);
 
     const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
@@ -241,6 +242,22 @@ export default class Dev extends BaseCommand {
     }
 
     await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build', ...build_args], { stdio: 'inherit' });
+    return [project_name, compose_file];
+  }
+
+  async stopCompose(project_name: string, compose_file: string, docker_compose_runnable: ExecaChildProcess<string>, callStop: boolean): Promise<void> {
+    // On non-windows, we can just interrupt the compose process. On windows, we need to run 'stop' to
+    // ensure the containers are stopped.
+    if (callStop) {
+      await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'stop']);
+    } else {
+      process.kill(-docker_compose_runnable.pid, 'SIGINT');
+    }
+  }
+
+  async runCompose(compose: DockerComposeTemplate, gateway_port: number, gateway_admin_port: number): Promise<void> {
+    const { flags } = await this.parse(Dev);
+    const [project_name, compose_file] = await this.buildImage(compose);
 
     console.clear();
 
@@ -307,15 +324,8 @@ export default class Dev extends BaseCommand {
         return;
       }
       is_exiting = true;
-
       this.log('Gracefully stopping..... Please Wait.....');
-      // On non-windows, we can just interrupt the compose process. On windows, we need to run 'stop' to
-      // ensure the containers are stopped.
-      if (is_windows) {
-        await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'stop']);
-      } else {
-        process.kill(-docker_compose_runnable.pid, 'SIGINT');
-      }
+      this.stopCompose(project_name, compose_file, docker_compose_runnable, is_windows);
     });
 
     const service_colors = new Map<string, chalk.Chalk>();
@@ -350,6 +360,10 @@ export default class Dev extends BaseCommand {
       await docker_compose_runnable;
     } catch (ex) {
       if (!is_exiting) {
+        // Always call `docker compose stop` here - the process died so there's nothing to kill,
+        // need to call `docker compose stop` to clean up any remaining running containers.
+        this.log(chalk.red('Error detected - stopping running containers'));
+        this.stopCompose(project_name, compose_file, docker_compose_runnable, true);
         throw ex;
       }
     }
@@ -476,3 +490,4 @@ export default class Dev extends BaseCommand {
     await this.runLocal();
   }
 }
+
