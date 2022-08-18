@@ -16,6 +16,7 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DeployUtils from '../common/utils/deploy.utils';
 import * as Docker from '../common/utils/docker';
+import { booleanString } from '../common/utils/oclif';
 import PortUtil from '../common/utils/port';
 
 type TraefikHttpService = {
@@ -128,20 +129,19 @@ export default class Dev extends BaseCommand {
       char: 'd',
       sensitive: false,
     }),
-    debug: Flags.string({
+    debug: booleanString({
       description: `[default: true] Turn debug mode on (true) or off (false)`,
-      default: 'true',
+      default: true,
       sensitive: false,
     }),
     arg: Flags.string({
       description: 'Build arg(s) to pass to docker build',
       multiple: true,
     }),
-    ssl: Flags.boolean({
+    ssl: booleanString({
       description: 'Use https for all ingresses',
       default: true,
       sensitive: false,
-      allowNo: true,
     }),
   };
 
@@ -500,12 +500,11 @@ export default class Dev extends BaseCommand {
 
     const component_options: ComponentConfigOpts = { map_all_interfaces: !flags.production && !duplicates, interfaces: interfaces_map };
 
-    const debug = flags.debug === 'true';
     for (const component_version of component_versions) {
-      const component_config = await dependency_manager.loadComponentSpec(component_version, component_options, debug);
+      const component_config = await dependency_manager.loadComponentSpec(component_version, component_options, flags.debug);
 
       if (flags.recursive) {
-        const dependency_configs = await dependency_manager.loadComponentSpecs(component_config.metadata.ref, debug);
+        const dependency_configs = await dependency_manager.loadComponentSpecs(component_config.metadata.ref, flags.debug);
         component_specs.push(...dependency_configs);
       } else {
         component_specs.push(component_config);
