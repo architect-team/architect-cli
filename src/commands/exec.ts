@@ -67,10 +67,13 @@ export default class Exec extends BaseCommand {
     parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
+  // These values correspond with the values defined in kubernetes remotecommand websocket handling:
+  // https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/cri/streaming/remotecommand/websocket.go#L30
   public static readonly StdinStream = 0;
   public static readonly StdoutStream = 1;
   public static readonly StderrStream = 2;
   public static readonly StatusStream = 3;
+  public static readonly ResizeStream = 4;
 
   async parse<F, A extends {
     [name: string]: any;
@@ -99,6 +102,7 @@ export default class Exec extends BaseCommand {
 
     await new Promise((resolve, reject) => {
       const websocket = createWebSocketStream(ws, { encoding: 'utf-8' });
+
       const inputTransform = this.getInputTransform();
       websocket.pipe(this.getOutputStream());
 
@@ -106,6 +110,10 @@ export default class Exec extends BaseCommand {
         // This method is only available when stdin is a TTY as it's part of the tty.ReadStream class:
         // https://nodejs.org/api/tty.html#readstreamsetrawmodemode
         process.stdin.setRawMode(true);
+
+        // Kubectl only monitors resize events when stdin.isRaw is true, so we follow that behavior.
+        this.setupTermResize(websocket);
+
         process.stdin.pipe(inputTransform).pipe(websocket);
       } else if (flags.stdin) {
         // If stdin is not a tty, stdin can be closed before data gets received by the websocket.
@@ -217,6 +225,32 @@ export default class Exec extends BaseCommand {
       }
     };
     return transform;
+  }
+
+  setupTermResize(ws_stream: stream.Duplex): void {
+    if (process.stdout.isTTY) {
+      // Need to send initial resize event to the stream so the initial window is sized appropriately.
+      this.sendResizeEvent(ws_stream);
+
+      process.stdout.on('resize', () => {
+        this.sendResizeEvent(ws_stream);
+      });
+    }
+  }
+
+  sendResizeEvent(ws_stream: stream.Duplex): void {
+    // This object must mimic the TerminalSize struct that kubectl json encode/decodes for resize messages
+    // https://github.com/kubernetes/client-go/blob/master/tools/remotecommand/resize.go#L23
+    const terminal_size = {
+      Width: process.stdout.columns,
+      Height: process.stdout.rows,
+    };
+    const data = JSON.stringify(terminal_size);
+    const buffer = Buffer.alloc(1 + data.length);
+    buffer.writeInt8(Exec.ResizeStream, 0);
+
+    Buffer.from(data, 'utf-8').copy(buffer, 1);
+    ws_stream.write(buffer);
   }
 
   async runRemote(account: Account, args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
