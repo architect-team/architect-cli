@@ -5,6 +5,7 @@ import sinon from 'sinon';
 import { buildSpecFromYml, ComponentConfig, resourceRefToNodeRef } from '../../src';
 import AppService from '../../src/app-config/service';
 import Dev from '../../src/commands/dev';
+import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import DeployUtils from '../../src/common/utils/deploy.utils';
 import * as Docker from '../../src/common/utils/docker';
@@ -420,14 +421,22 @@ describe('local dev environment', function () {
       "gateway": {
         "image": "traefik:v2.6.2",
         "command": [
-          "--configFile=/etc/traefik/traefik-80.yaml",
+          "--api.insecure=true",
+          "--pilot.dashboard=false",
+          "--accesslog=true",
+          "--log.level=DEBUG",
+          "--accesslog.filters.minDuration=1s",
+          "--accesslog.filters.statusCodes=400-599",
+          "--entryPoints.web.address=:80",
+          "--providers.docker=true",
+          "--providers.docker.exposedByDefault=false",
+          "--providers.docker.constraints=Label(`traefik.port`,`80`)",
         ],
         "ports": [
           "80:80",
           "8080:8080"
         ],
         "volumes": [
-          "./test:/etc/traefik/",
           "/var/run/docker.sock:/var/run/docker.sock:ro"
         ]
       }
@@ -470,14 +479,22 @@ describe('local dev environment', function () {
       "gateway": {
         "image": "traefik:v2.6.2",
         "command": [
-          "--configFile=/etc/traefik/traefik-80.yaml",
+          "--api.insecure=true",
+          "--pilot.dashboard=false",
+          "--accesslog=true",
+          "--log.level=DEBUG",
+          "--accesslog.filters.minDuration=1s",
+          "--accesslog.filters.statusCodes=400-599",
+          "--entryPoints.web.address=:80",
+          "--providers.docker=true",
+          "--providers.docker.exposedByDefault=false",
+          "--providers.docker.constraints=Label(`traefik.port`,`80`)",
         ],
         "ports": [
           "80:80",
           "8080:8080"
         ],
         "volumes": [
-          "./test:/etc/traefik/",
           "/var/run/docker.sock:/var/run/docker.sock:ro"
         ]
       }
@@ -520,14 +537,25 @@ describe('local dev environment', function () {
       "gateway": {
         "image": "traefik:v2.6.2",
         "command": [
-          "--configFile=/etc/traefik/traefik-80.yaml",
+          "--api.insecure=true",
+          "--pilot.dashboard=false",
+          "--accesslog=true",
+          "--log.level=DEBUG",
+          "--accesslog.filters.minDuration=1s",
+          "--accesslog.filters.statusCodes=400-599",
+          "--entryPoints.web.address=:80",
+          "--providers.docker=true",
+          "--providers.docker.exposedByDefault=false",
+          "--providers.docker.constraints=Label(`traefik.port`,`80`)",
+          "--providers.file.watch=false",
+          "--providers.file.fileName=/etc/traefik-ssl/traefik.yaml",
         ],
         "ports": [
           "80:80",
           "8080:8080"
         ],
         "volumes": [
-          "./test:/etc/traefik/",
+          "./test:/etc/traefik-ssl/",
           "/var/run/docker.sock:/var/run/docker.sock:ro"
         ]
       }
@@ -560,6 +588,7 @@ describe('local dev environment', function () {
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stub(DockerComposeUtils, 'generateTlsConfig', sinon.stub())
     .stdout({ print })
     .stderr({ print })
     .command(['dev', './examples/hello-world/architect.yml', '-i', 'hello'])

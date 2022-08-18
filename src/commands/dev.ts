@@ -406,6 +406,7 @@ export default class Dev extends BaseCommand {
       axios({
         method: 'get',
         url: url,
+        timeout: 10000, // 10 seconds
         responseType: 'stream',
       }).then((response) => {
         if (response.status > 399) {
@@ -418,7 +419,7 @@ export default class Dev extends BaseCommand {
           return handleReject(resolve, reject);
         });
       }).catch(err => {
-        return handleReject(resolve, reject);
+        return handleReject(resolve, () => { reject(err); });
       });
     });
   }
@@ -427,7 +428,8 @@ export default class Dev extends BaseCommand {
     return Promise.all([
       this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/fullchain.pem', path.join(this.app.config.getConfigDir(), 'fullchain.pem')),
       this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/privkey.pem', path.join(this.app.config.getConfigDir(), 'privkey.pem')),
-    ]).catch(() => {
+    ]).catch((err) => {
+      console.log(err);
       this.warn(chalk.yellow("We are unable to download the neccessary ssl certificates. Please try again or use --ssl=false to temporarily disable ssl"));
       this.exit(1);
     });
@@ -441,8 +443,11 @@ export default class Dev extends BaseCommand {
       args.configs_or_components = ['./architect.yml'];
     }
 
+    flags.port = await this.getAvailablePort(flags.port);
+
     if (flags.ssl) {
       await this.downloadSSLCerts();
+      await DockerComposeUtils.generateTlsConfig(this.app.config.getConfigDir());
     }
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
@@ -469,7 +474,6 @@ export default class Dev extends BaseCommand {
       linked_components
     );
 
-    flags.port = await this.getAvailablePort(flags.port);
     dependency_manager.use_ssl = flags.ssl;
     dependency_manager.external_addr = (flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address) + `:${flags.port}`;
 

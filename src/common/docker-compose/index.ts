@@ -21,6 +21,28 @@ export class DockerComposeUtils {
   // used to namespace docker-compose projects so multiple deployments can happen to local
   public static DEFAULT_PROJECT = 'architect';
 
+  public static async generateTlsConfig(config_path: string): Promise<void> {
+    const traefik_config = {
+      tls: {
+        stores: {
+          default: {
+            defaultCertificate: {
+              certFile: '/etc/traefik-ssl/fullchain.pem',
+              keyFile: '/etc/traefik-ssl/privkey.pem',
+            },
+          },
+        },
+        certificates: [{
+          certFile: '/etc/traefik-ssl/fullchain.pem',
+          keyFile: '/etc/traefik-ssl/privkey.pem',
+        }],
+      },
+    };
+
+    const traefik_yaml = yaml.dump(traefik_config);
+    return fs.writeFile(path.join(config_path, `traefik.yaml`), traefik_yaml);
+  }
+
   public static async generate(graph: DependencyGraph, app_config?: AppConfig, use_ssl = false, gateway_admin_port = 8080): Promise<DockerComposeTemplate> {
     const compose: DockerComposeTemplate = {
       version: '3',
@@ -54,67 +76,23 @@ export class DockerComposeUtils {
         }
       }
 
-      const tls_config = {
-        tls: {
-          stores: {
-            default: {
-              defaultCertificate: {
-                certFile: '/etc/traefik/fullchain.pem',
-                keyFile: '/etc/traefik/privkey.pem',
-              },
-            },
-          },
-          certificates: [{
-            certFile: '/etc/traefik/fullchain.pem',
-            keyFile: '/etc/traefik/privkey.pem',
-          }],
-        },
-        options: {
-          default: {
-            sniStrict: true,
-          },
-        },
-      };
-      const traefik_config = {
-        api: {
-          insecure: true,
-          dashboard: true,
-        },
-        log: {
-          // Uncomment to enable debugging
-          //level: 'DEBUG',
-        },
-        accesslog: {
-          filters: {
-            minDuration: '1s',
-            statusCodes: '400-599',
-          },
-        },
-        providers: {
-          docker: {
-            exposedByDefault: false,
-            constraints: `Label(\`traefik.port\`,\`${gateway_port}\`)`,
-          },
-          // Required to load the TLS configs
-          file: {
-            fileName: `/etc/traefik/traefik-${gateway_port}.yaml`,
-            watch: true,
-          },
-        },
-        entrypoints: {
-          web: {
-            address: ':' + gateway_port,
-          },
-        },
-        ...(use_ssl ? tls_config : {}),
-      };
-      const traefik_yaml = yaml.dump(traefik_config);
-      fs.writeFileSync(path.join(app_config?.getConfigDir() || '', `traefik-${gateway_port}.yaml`), traefik_yaml);
-
       compose.services[gateway_node.ref] = {
         image: 'traefik:v2.6.2',
         command: [
-          `--configFile=/etc/traefik/traefik-${gateway_port}.yaml`,
+          '--api.insecure=true',
+          '--pilot.dashboard=false',
+          '--accesslog=true',
+          '--log.level=DEBUG',
+          '--accesslog.filters.minDuration=1s',
+          '--accesslog.filters.statusCodes=400-599',
+          `--entryPoints.web.address=:${gateway_port}`,
+          '--providers.docker=true',
+          '--providers.docker.exposedByDefault=false',
+          `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
+          ...(use_ssl ? [
+            '--providers.file.watch=false',
+            `--providers.file.fileName=/etc/traefik-ssl/traefik.yaml`,
+          ] : []),
         ],
         ports: [
           // The HTTP(S) port
@@ -123,7 +101,7 @@ export class DockerComposeUtils {
           `${gateway_admin_port}:8080`,
         ],
         volumes: [
-          `${app_config?.getConfigDir()}:/etc/traefik/`,
+          ...(use_ssl ? [`${app_config?.getConfigDir()}:/etc/traefik-ssl/`] : []),
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
       };
