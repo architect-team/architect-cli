@@ -429,7 +429,6 @@ export default class Dev extends BaseCommand {
       this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/fullchain.pem', path.join(this.app.config.getConfigDir(), 'fullchain.pem')),
       this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/privkey.pem', path.join(this.app.config.getConfigDir(), 'privkey.pem')),
     ]).catch((err) => {
-      console.log(err);
       this.warn(chalk.yellow("We are unable to download the neccessary ssl certificates. Please try again or use --ssl=false to temporarily disable ssl"));
       this.exit(1);
     });
