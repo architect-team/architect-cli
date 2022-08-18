@@ -1,12 +1,12 @@
 import { Flags, Interfaces } from '@oclif/core';
-import axios, { AxiosResponse } from 'axios';
-import inquirer from 'inquirer';
+import axios from 'axios';
 import chalk from 'chalk';
 import fs from 'fs-extra';
+import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
 import opener from 'opener';
-import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../';
+import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import { default as BaseCommand, default as Command } from '../base-command';
@@ -16,6 +16,15 @@ import DockerComposeTemplate from '../common/docker-compose/template';
 import DeployUtils from '../common/utils/deploy.utils';
 import * as Docker from '../common/utils/docker';
 import PortUtil from '../common/utils/port';
+
+type TraefikHttpService = {
+  name: string;
+  status: string;
+  serverStatus?: Dictionary<string>;
+  provider: string;
+};
+
+const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
 
 export default class Dev extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -168,7 +177,48 @@ export default class Dev extends BaseCommand {
     });
   }
 
-  async runCompose(compose: DockerComposeTemplate, gateway_port: number): Promise<void> {
+  async healthyTraefikServices(admin_port: number, timeout: number): Promise<TraefikHttpService[]> {
+    const { data: services } = await axios.get<TraefikHttpService[]>(`http://localhost:${admin_port}/api/http/services`, {
+      timeout,
+    });
+    const healthy_services = services.filter((service) => {
+      if (service.status !== 'enabled') return false;
+      if (!service.serverStatus) return false;
+      if (service.provider !== 'docker') return false;
+      return Object.values(service.serverStatus).some(status => status === 'UP');
+    });
+    return healthy_services;
+  }
+
+  async pollTraefik(admin_port: number, traefik_service_map: Dictionary<string | undefined>): Promise<void> {
+    const poll_interval = 5000;
+    let open_browser_attempts = 0;
+
+    const unique_urls = new Set(Object.values(traefik_service_map));
+
+    const seen_urls = new Set();
+    const browser_interval = setInterval(async () => {
+      if (open_browser_attempts > 120 || seen_urls.size >= unique_urls.size) {
+        clearInterval(browser_interval);
+        return;
+      }
+      const healthy_services = await this.healthyTraefikServices(admin_port, poll_interval).catch(() => []);
+      for (const healthy_service of healthy_services) {
+        const url = traefik_service_map[healthy_service.name];
+        if (url && !seen_urls.has(url)) {
+          this.log('Opening', chalk.blue(url));
+          opener(url);
+          if (seen_urls.size === 0) {
+            this.log('(disable with --no-browser)');
+          }
+          seen_urls.add(url);
+        }
+      }
+      open_browser_attempts++;
+    }, poll_interval);
+  }
+
+  async runCompose(compose: DockerComposeTemplate, gateway_port: number, gateway_admin_port: number): Promise<void> {
     const { flags } = await this.parse(Dev);
 
     const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
@@ -199,17 +249,18 @@ export default class Dev extends BaseCommand {
 
     this.log('Once the containers are running they will be accessible via the following urls:');
 
-    const exposed_interfaces: string[] = [];
-
+    const traefik_service_map: Dictionary<string | undefined> = {};
     for (const [service_name, service] of Object.entries(compose.services)) {
       if (service.labels?.includes('traefik.enable=true')) {
         const host_rules = service.labels.filter(label => label.includes('rule=Host'));
         for (const host_rule of host_rules) {
-          const host = new RegExp(/Host\(`(.*?)`\)/g);
-          const host_match = host.exec(host_rule);
+          const host_match = HOST_REGEX.exec(host_rule);
           if (host_match) {
-            this.log(`${chalk.blue(`http://${host_match[1]}:${gateway_port}/`)} => ${service_name}`);
-            exposed_interfaces.push(`http://${host_match[1]}:${gateway_port}/`);
+            const url = `http://${host_match[1]}:${gateway_port}/`;
+            this.log(`${chalk.blue(url)} => ${service_name}`);
+
+            const traefik_service = host_rule.split('.')[3];
+            traefik_service_map[`${traefik_service}-service@docker`] = url;
           }
         }
       }
@@ -226,44 +277,8 @@ export default class Dev extends BaseCommand {
     this.log('Starting containers...');
     this.log('');
 
-    if (!isCi && flags.browser) {
-      let open_browser_attempts = 0;
-      const poll_interval = 2000;
-      const browser_interval = setInterval(async () => {
-        if (open_browser_attempts === 150) {
-          clearInterval(browser_interval);
-          return;
-        }
-
-        const promises: Promise<AxiosResponse<any>>[] = [];
-        for (const exposed_interface of exposed_interfaces) {
-          const [host_name, port] = exposed_interface.replace('http://', '').split(':');
-          promises.push(axios.options(`http://localhost:${port}`, {
-            headers: {
-              Host: host_name,
-            },
-            params: {
-              architect: 1,
-              ping: 1,
-            },
-            maxRedirects: 0,
-            timeout: poll_interval,
-            validateStatus: (status: number) => { return status < 500 && status !== 404; },
-          }));
-        }
-
-        Promise.all(promises).then(() => {
-          for (const exposed_interface of exposed_interfaces) {
-            this.log('Opening', chalk.blue(exposed_interface));
-            opener(exposed_interface);
-          }
-          this.log('(disable with --no-browser)');
-          clearInterval(browser_interval);
-        }).catch(err => {
-          // at least one exposed service is not yet ready
-        });
-        open_browser_attempts++;
-      }, poll_interval);
+    if (!isCi && flags.browser && Object.keys(traefik_service_map).length > 0) {
+      this.pollTraefik(gateway_admin_port, traefik_service_map);
     }
 
     const compose_args = ['-f', compose_file, '-p', project_name, 'up', '--remove-orphans', '--renew-anon-volumes', '--timeout', '0'];
@@ -439,8 +454,10 @@ export default class Dev extends BaseCommand {
 
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
     const graph = await dependency_manager.getGraph(component_specs, all_secrets); // TODO: 404: update
-    const compose = await DockerComposeUtils.generate(graph);
-    await this.runCompose(compose, flags.port);
+
+    const gateway_admin_port = await PortUtil.getAvailablePort(8080);
+    const compose = await DockerComposeUtils.generate(graph, gateway_admin_port);
+    await this.runCompose(compose, flags.port, gateway_admin_port);
   }
 
   async run(): Promise<void> {
