@@ -157,10 +157,8 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
     this.configureInterrupts();
     this.configureLogs();
 
-    DockerComposeUtils.watchContainersHealth(this.compose_file, this.project_name,
-      () => { return this.is_exiting; }).finally(async () => {
-        await this.stop();
-      });
+    const container_health = DockerComposeUtils.watchContainersHealth(this.compose_file, this.project_name,
+      () => { return this.is_exiting; });
 
     try {
       await this.compose_process;
@@ -171,6 +169,14 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
         console.error(chalk.red(ex));
         console.log(chalk.red('\nError detected - Stopping running containers...'));
         this.is_exiting = true;
+        await this.stop();
+      }
+    } finally {
+      // If the process is interrupted or dies of some other means _right after_ a container was restarted,
+      // we can end up in a state where that singular container is still running and the others have been stopped.
+      // This checks for that case and will call `docker compose stop` if it happened to ensure the container is taken down.
+      const restarted = await container_health;
+      if (restarted) {
         await this.stop();
       }
     }

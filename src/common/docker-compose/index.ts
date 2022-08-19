@@ -525,7 +525,7 @@ export class DockerComposeUtils {
     await fs.writeFile(compose_file, compose);
   }
 
-  public static async watchContainersHealth(compose_file: string, environment_name: string, should_stop: () => boolean): Promise<void> {
+  public static async watchContainersHealth(compose_file: string, environment_name: string, should_stop: () => boolean): Promise<boolean> {
     // To better emulate kubernetes we will always restart a failed container.
     // Kubernetes has 3 modes for Restart. Always, OnFailure and Never. If a liveness probe exists
     // then we will assume a Never policy is not expected. In this instance OnFailure and Always mean pretty
@@ -541,8 +541,13 @@ export class DockerComposeUtils {
     }
 
     const service_data_dictionary: Dictionary<{ last_restart_ms: number }> = {};
+
+    // If the last time this loop runs, a container was restarted, we may have to run `docker compose stop`
+    // because the restart can happen after the compose process was killed.
+    let restarted = false;
     while (!should_stop()) {
       try {
+        restarted = false;
         const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
         for (const container_state of container_states) {
           const id = container_state.ID;
@@ -585,14 +590,12 @@ export class DockerComposeUtils {
             // loops execution.
             if (!should_stop()) {
               console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
+              // Even if the restart itself is interrupted, the restarted container can still be running.
+              restarted = true;
               try {
                 await restart(id);
               } catch (err) {
                 console.log(chalk.red(`ERROR: ${service_ref} failed to restart.`));
-                // We awaited again and need to re-check `should_stop()`.
-                if (should_stop()) {
-                  return;
-                }
                 continue;
               }
             }
@@ -604,12 +607,22 @@ export class DockerComposeUtils {
             }
           }
         }
-        await new Promise(r => setTimeout(r, 5000));
+
+        // Wait 5 seconds before checking again. Waiting in 1s increments and checking if we should return early
+        // so that awaiting the result of this promise takes at most 1s and not 5s.
+        for (let i = 0; i < 5; i++) {
+          await new Promise(r => setTimeout(r, 1000));
+          if (should_stop()) {
+            break;
+          }
+        }
       } catch (ex) {
         // Ignore any errors. Since this service just watches services health it does
         // not matter if an error occurs we should not stop a running dev instance
         // just because the `watcher` failed.
       }
     }
+
+    return restarted;
   }
 }
