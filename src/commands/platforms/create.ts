@@ -11,7 +11,10 @@ import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.
 export default class PlatformCreate extends BaseCommand {
   static aliases = ['platforms:register', 'platform:create', 'platforms:create'];
   static description = 'Register a new platform with Architect Cloud';
-
+  static examples = [
+    'architect platforms:create --account=myaccount',
+    'architect platforms:register --account=myaccount --type=kubernetes --kubeconfig=~/.kube/config --auto-approve',
+  ];
   static args = [{
     sensitive: false,
     name: 'platform',

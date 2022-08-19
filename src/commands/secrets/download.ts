@@ -12,7 +12,10 @@ import { SecretsDict } from '../../dependency-manager/secrets/type';
 export default class SecretsDownload extends BaseCommand {
   static description = 'Download secrets from an account or an environment';
   static aliases = ['secrets', 'secrets/get'];
-
+  static examples = [
+    'architect secrets ./mysecrets.yml',
+    'architect secrets --account=myaccount --environment=myenvironment ../mysecrets.yml',
+  ];
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,

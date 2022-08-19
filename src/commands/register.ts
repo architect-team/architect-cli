@@ -27,6 +27,13 @@ export default class ComponentRegister extends BaseCommand {
   static aliases = ['component:register', 'components:register', 'c:register', 'comp:register'];
   static description = 'Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.';
 
+  static examples = [
+    'architect register',
+    'architect register -t latest',
+    'architect register -a myaccount -t latest ./architect.yml ../myothercomponent/architect.yml',
+    'architect register -a myaccount -t latest --arg NODE_ENV=dev ./architect.yml',
+  ];
+
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
@@ -133,6 +140,8 @@ export default class ComponentRegister extends BaseCommand {
         delete interface_config?.host;
       }
     }
+
+    // The external address and ssl have no bearing on registration
     const full_compose = await DockerComposeUtils.generate(graph);
 
     const compose: DockerComposeTemplate = {
@@ -145,8 +154,10 @@ export default class ComponentRegister extends BaseCommand {
     const seen_cache_dir = new Set<string>();
 
     // Set image name in compose
+    let service_build = false;
     for (const [service_name, service] of Object.entries(full_compose.services)) {
       if (service.build && !service.image && service.labels) {
+        service_build = true;
         const ref_label = service.labels.find(label => label.startsWith('architect.ref='));
         if (!ref_label) { continue; }
         const ref = ref_label.replace('architect.ref=', '');
@@ -220,16 +231,18 @@ export default class ComponentRegister extends BaseCommand {
       return arr;
     }, [] as string[]);
 
-    const builder = await DockerBuildXUtils.getBuilder(this.app.config);
+    if (service_build) {
+      const builder = await DockerBuildXUtils.getBuilder(this.app.config);
 
-    try {
-      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], builder, {
-        stdio: 'inherit',
-      });
-    } catch (err: any) {
-      fs.removeSync(compose_file);
-      this.log(`Docker buildx bake failed. Please make sure docker is running.`);
-      this.error(err);
+      try {
+        await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], builder, {
+          stdio: 'inherit',
+        });
+      } catch (err: any) {
+        fs.removeSync(compose_file);
+        this.log(`Docker buildx bake failed. Please make sure docker is running.`);
+        this.error(err);
+      }
     }
 
     for (const cache_dir of seen_cache_dir) {

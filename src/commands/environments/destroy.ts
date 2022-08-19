@@ -8,7 +8,10 @@ import BaseCommand from '../../base-command';
 export default class EnvironmentDestroy extends BaseCommand {
   static aliases = ['environment:destroy', 'envs:destroy', 'env:destroy', 'env:deregister', 'environment:deregister'];
   static description = 'Deregister an environment';
-
+  static examples = [
+    'architect environment:destroy --account=myaccount myenvironment',
+    'architect environment:deregister --account=myaccount --auto-approve --force myenvironment',
+  ];
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
