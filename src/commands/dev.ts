@@ -74,7 +74,7 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
 
   /** Spawns a process running `docker compose stop`  */
   async stop(): Promise<void> {
-    await DockerComposeUtils.dockerCompose(['-f', this.compose_file, '-p', this.project_name, 'stop'], { detached: true });
+    await DockerComposeUtils.dockerCompose(['-f', this.compose_file, '-p', this.project_name, 'stop'], { detached: !this.is_windows });
   }
 
   /** Sends the SIGINT signal to the running `docker compose up` process. */
