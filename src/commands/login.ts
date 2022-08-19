@@ -4,7 +4,7 @@ import opener from 'opener';
 import { AuthorizationCode } from 'simple-oauth2';
 import AuthClient from '../app-config/auth';
 import BaseCommand from '../base-command';
-import { DockerHelper } from '../common/utils/docker';
+import { DockerHelper } from '../common/docker/helper';
 import PortUtil from '../common/utils/port';
 import PromptUtils from '../common/utils/prompt-utils';
 import inquirer = require('inquirer');

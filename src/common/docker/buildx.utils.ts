@@ -1,7 +1,8 @@
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import config from '../../app-config/config';
-import { docker, DockerHelper } from './docker';
+import { docker } from './cmd';
+import { DockerHelper } from './helper';
 
 // Adapted from https://github.com/docker-library/official-images#architectures-other-than-amd64
 const PLATFORM_MAP = new Map<string, string>([

@@ -5,7 +5,7 @@ import sinon from 'sinon';
 import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
-import DockerBuildXUtils from '../../src/common/utils/docker-buildx.utils';
+import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
 import { mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST } from '../utils/mocks';
 

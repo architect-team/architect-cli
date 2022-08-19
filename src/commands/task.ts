@@ -5,7 +5,7 @@ import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
-import { DockerHelper } from '../common/utils/docker';
+import { DockerHelper } from '../common/docker/helper';
 
 export default class TaskExec extends BaseCommand {
   static aliases = ['task:exec'];

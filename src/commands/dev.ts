@@ -17,7 +17,7 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DeployUtils from '../common/utils/deploy.utils';
 import { booleanString } from '../common/utils/oclif';
-import { DockerHelper } from '../common/utils/docker';
+import { DockerHelper } from '../common/docker/helper';
 import PortUtil from '../common/utils/port';
 
 type TraefikHttpService = {

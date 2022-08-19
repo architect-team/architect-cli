@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import BaseCommand from '../base-command';
-import { DockerHelper } from '../common/utils/docker';
+import { DockerHelper } from '../common/docker/helper';
 
 export default class Logout extends BaseCommand {
   async auth_required(): Promise<boolean> {

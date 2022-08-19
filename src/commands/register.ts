@@ -15,8 +15,8 @@ import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import { DockerHelper, stripTagFromImage } from '../common/utils/docker';
-import DockerBuildXUtils from '../common/utils/docker-buildx.utils';
+import { DockerHelper, stripTagFromImage } from '../common/docker/helper';
+import DockerBuildXUtils from '../common/docker/buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
 tmp.setGracefulCleanup();

@@ -5,7 +5,7 @@ import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
 import Deploy from '../../src/commands/deploy';
 import ComponentRegister from '../../src/commands/register';
 import DeployUtils from '../../src/common/utils/deploy.utils';
-import * as Docker from '../../src/common/utils/docker';
+import * as Docker from '../../src/common/docker/cmd';
 import * as ComponentBuilder from '../../src/dependency-manager/spec/utils/component-builder';
 import { app_host } from '../config.json';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';

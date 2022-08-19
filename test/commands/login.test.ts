@@ -1,6 +1,6 @@
 import { expect, test } from '@oclif/test';
 import sinon from 'sinon';
-import * as Docker from '../../src/common/utils/docker';
+import * as Docker from '../../src/common/docker/cmd';
 
 describe('login', () => {
 

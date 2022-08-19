@@ -8,7 +8,7 @@ import Dev from '../../src/commands/dev';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import DeployUtils from '../../src/common/utils/deploy.utils';
-import * as Docker from '../../src/common/utils/docker';
+import * as Docker from '../../src/common/docker/cmd';
 import * as ComponentBuilder from '../../src/dependency-manager/spec/utils/component-builder';
 import { MOCK_API_HOST } from '../utils/mocks';
 

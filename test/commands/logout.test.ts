@@ -1,7 +1,7 @@
 import { expect, test } from '@oclif/test';
 import sinon from 'sinon';
 import CredentialManager from '../../src/app-config/credentials';
-import * as Docker from '../../src/common/utils/docker';
+import * as Docker from '../../src/common/docker/cmd';
 
 describe('logout', () => {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
