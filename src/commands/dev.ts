@@ -95,8 +95,7 @@ export default class Dev extends BaseCommand {
       sensitive: false,
     }),
     port: Flags.integer({
-      default: 80,
-      description: '[default: 80] Port for the gateway',
+      description: '[default: 443] Port for the gateway',
       sensitive: false,
     }),
     // Used for proxy from deploy to dev. These will be removed once --local is deprecated
@@ -442,7 +441,7 @@ export default class Dev extends BaseCommand {
       args.configs_or_components = ['./architect.yml'];
     }
 
-    flags.port = await this.getAvailablePort(flags.port);
+    flags.port = await this.getAvailablePort(flags.port || (flags.ssl ? 443 : 80));
 
     if (flags.ssl) {
       await this.downloadSSLCerts();
@@ -517,7 +516,12 @@ export default class Dev extends BaseCommand {
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
     const graph = await dependency_manager.getGraph(component_specs, all_secrets); // TODO: 404: update
     const gateway_admin_port = await PortUtil.getAvailablePort(8080);
-    const compose = await DockerComposeUtils.generate(graph, this.app.config, flags.ssl, gateway_admin_port);
+    const compose = await DockerComposeUtils.generate(graph, {
+      config_dir: this.app.config.getConfigDir(),
+      external_addr: flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address,
+      use_ssl: flags.ssl,
+      gateway_admin_port,
+    });
     await this.runCompose(compose, flags.port, gateway_admin_port);
   }
 

@@ -9,12 +9,18 @@ import path from 'path';
 import untildify from 'untildify';
 import which from 'which';
 import { ArchitectError, ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
-import AppConfig from '../../app-config/config';
 import LocalPaths from '../../paths';
 import { restart } from '../utils/docker';
 import PortUtil from '../utils/port';
 import { DockerComposeProject } from './project';
 import DockerComposeTemplate, { DockerService } from './template';
+
+type GenerateOptions = {
+  external_addr: string;
+  gateway_admin_port: number;
+  use_ssl: boolean;
+  config_dir?: string;
+};
 
 export class DockerComposeUtils {
 
@@ -43,7 +49,12 @@ export class DockerComposeUtils {
     return fs.writeFile(path.join(config_path, `traefik.yaml`), traefik_yaml);
   }
 
-  public static async generate(graph: DependencyGraph, app_config?: AppConfig, use_ssl = false, gateway_admin_port = 8080): Promise<DockerComposeTemplate> {
+  public static async generate(graph: DependencyGraph, options?: GenerateOptions): Promise<DockerComposeTemplate> {
+    if (!options) {
+      options = { gateway_admin_port: 8080, external_addr: 'arc.localhost', use_ssl: false };
+    }
+    const { gateway_admin_port, external_addr, use_ssl, config_dir } = options;
+
     const compose: DockerComposeTemplate = {
       version: '3',
       services: {},
@@ -51,7 +62,6 @@ export class DockerComposeUtils {
     };
 
     const protocol = use_ssl ? 'https' : 'http';
-    const external_addr = (use_ssl ? app_config?.external_https_address : app_config?.external_http_address) || 'arc.localhost';
     const limit = pLimit(5);
     const port_promises = [];
 
@@ -81,8 +91,8 @@ export class DockerComposeUtils {
         command: [
           '--api.insecure=true',
           '--pilot.dashboard=false',
+          // '--log.level=DEBUG',
           '--accesslog=true',
-          '--log.level=DEBUG',
           '--accesslog.filters.minDuration=1s',
           '--accesslog.filters.statusCodes=400-599',
           `--entryPoints.web.address=:${gateway_port}`,
@@ -90,6 +100,11 @@ export class DockerComposeUtils {
           '--providers.docker.exposedByDefault=false',
           `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
           ...(use_ssl ? [
+            // redirect http to https
+            `--entryPoints.web.http.redirections.entryPoint.scheme=https`,
+            `--entryPoints.web.http.redirections.entryPoint.permanent=true`,
+            `--entryPoints.web.http.redirections.entryPoint.to=:${gateway_port}`,
+            // tls certs
             '--providers.file.watch=false',
             `--providers.file.fileName=/etc/traefik-ssl/traefik.yaml`,
           ] : []),
@@ -101,7 +116,7 @@ export class DockerComposeUtils {
           `${gateway_admin_port}:8080`,
         ],
         volumes: [
-          ...(use_ssl ? [`${app_config?.getConfigDir()}:/etc/traefik-ssl/`] : []),
+          ...(use_ssl ? [`${config_dir}:/etc/traefik-ssl/`] : []),
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
       };

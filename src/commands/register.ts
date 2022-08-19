@@ -121,7 +121,7 @@ export default class ComponentRegister extends BaseCommand {
     }
 
     // The external address and ssl have no bearing on registration
-    const full_compose = await DockerComposeUtils.generate(graph, this.app.config, false);
+    const full_compose = await DockerComposeUtils.generate(graph);
 
     const compose: DockerComposeTemplate = {
       version: '3',
