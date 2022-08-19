@@ -16,13 +16,16 @@ export default class ComponentValidate extends BaseCommand {
 
   static aliases = ['component:validate', 'components:validate', 'c:validate', 'comp:validate', 'validate'];
   static description = 'Validate that an architect.yml is syntactically correct.';
-
+  static examples = [
+    'architect validate .',
+    'architect validate ../mycomponent/architect.yml ../myothercomponent/architect.yml',
+  ];
   static flags = {
     ...BaseCommand.flags,
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'configs_or_components',
     description: 'Path to an architect.yml file or component `account/component:latest`. Multiple components are accepted.',
   }];

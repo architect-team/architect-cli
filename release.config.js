@@ -44,6 +44,8 @@ const backmerge = [
   "@saithodev/semantic-release-backmerge",
   {
     "branches": ["rc"],
+    // Makes sure that only pushed changes are backmerged
+    "clearWorkspace": true
   }
 ];
 

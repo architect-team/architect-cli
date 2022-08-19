@@ -27,52 +27,49 @@ export default class ComponentRegister extends BaseCommand {
   static aliases = ['component:register', 'components:register', 'c:register', 'comp:register'];
   static description = 'Register a new Component with Architect Cloud';
 
+  static examples = [
+    'architect register',
+    'architect register -t latest',
+    'architect register -a myaccount -t latest ./architect.yml ../myothercomponent/architect.yml',
+    'architect register -a myaccount -t latest --arg NODE_ENV=dev ./architect.yml',
+  ];
+
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    arg: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: 'Build arg(s) to pass to docker build',
-        multiple: true,
-      }),
-    },
-    tag: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 't',
-        description: 'Tag to give to the new component',
-        default: 'latest',
-        exclusive: ['environment'],
-      }),
-    },
-    architecture: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: 'Architecture(s) to target for Docker image builds',
-        default: ['amd64'],
-        multiple: true,
-      }),
-    },
-    'cache-directory': {
-      non_sensitive: true,
-      ...Flags.string({
-        description: 'Directory to write build cache to. Do not use in Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs',
-      }),
-    },
-    environment: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'e',
-        description: 'The name of an environment to register the component version to. If specified, the component version will be removed when the environment is removed',
-        exclusive: ['tag'],
-        hidden: true,
-      }),
-    },
+    arg: Flags.string({
+      description: 'Build arg(s) to pass to docker build',
+      multiple: true,
+      sensitive: false,
+    }),
+    tag: Flags.string({
+      char: 't',
+      description: 'Tag to give to the new component',
+      default: 'latest',
+      exclusive: ['environment'],
+      sensitive: false,
+    }),
+    architecture: Flags.string({
+      description: 'Architecture(s) to target for Docker image builds',
+      default: ['amd64'],
+      multiple: true,
+      sensitive: false,
+    }),
+    'cache-directory': Flags.string({
+      description: 'Directory to write build cache to. Do not use in Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs',
+      sensitive: false,
+    }),
+    environment: Flags.string({
+      char: 'e',
+      description: 'The name of an environment to register the component version to. If specified, the component version will be removed when the environment is removed',
+      exclusive: ['tag'],
+      hidden: true,
+      sensitive: false,
+    }),
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'component',
     description: 'Path to a component to register',
     default: './',
@@ -122,6 +119,8 @@ export default class ComponentRegister extends BaseCommand {
         delete interface_config?.host;
       }
     }
+
+    // The external address and ssl have no bearing on registration
     const full_compose = await DockerComposeUtils.generate(graph);
 
     const compose: DockerComposeTemplate = {
@@ -134,8 +133,10 @@ export default class ComponentRegister extends BaseCommand {
     const seen_cache_dir = new Set<string>();
 
     // Set image name in compose
+    let service_build = false;
     for (const [service_name, service] of Object.entries(full_compose.services)) {
       if (service.build && !service.image && service.labels) {
+        service_build = true;
         const ref_label = service.labels.find(label => label.startsWith('architect.ref='));
         if (!ref_label) { continue; }
         const ref = ref_label.replace('architect.ref=', '');
@@ -209,16 +210,18 @@ export default class ComponentRegister extends BaseCommand {
       return arr;
     }, [] as string[]);
 
-    const builder = await DockerBuildXUtils.getBuilder(this.app.config);
+    if (service_build) {
+      const builder = await DockerBuildXUtils.getBuilder(this.app.config);
 
-    try {
-      await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], builder, {
-        stdio: 'inherit',
-      });
-    } catch (err: any) {
-      fs.removeSync(compose_file);
-      this.log(`Docker buildx bake failed. Please make sure docker is running.`);
-      this.error(err);
+      try {
+        await DockerBuildXUtils.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], builder, {
+          stdio: 'inherit',
+        });
+      } catch (err: any) {
+        fs.removeSync(compose_file);
+        this.log(`Docker buildx bake failed. Please make sure docker is running.`);
+        this.error(err);
+      }
     }
 
     for (const cache_dir of seen_cache_dir) {

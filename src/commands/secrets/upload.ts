@@ -14,22 +14,23 @@ import { SecretsDict } from '../../dependency-manager/secrets/type';
 export default class SecretsUpload extends BaseCommand {
   static description = 'Upload secrets from a file to an account or an environment';
   static aliases = ['secrets:set'];
-
+  static examples = [
+    'architect secrets:set --account=myaccount --environment=myenvironment ./mysecrets.yml',
+    'architect secrets:set --account=myaccount --override ./mysecrets.yml',
+  ];
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    override: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: 'Allow override of existing secrets',
-        default: false,
-      }),
-    },
+    override: Flags.boolean({
+      description: 'Allow override of existing secrets',
+      default: false,
+      sensitive: false,
+    }),
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'secrets_file',
     description: 'Secrets file to be uploaded',
     required: true,

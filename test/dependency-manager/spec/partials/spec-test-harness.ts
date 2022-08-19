@@ -55,11 +55,11 @@ const recursiveMergeTree = (tree: RecursivePartialsTree): object[] => {
     }).reduce((accumulator, value) => accumulator.concat(value), []);
 }
 
-const cache = {};
-const stateCache = {};
+const cache: { [key: string]: any } = {};
+const stateCache: { [key: string]: boolean } = {};
 const readFiles = (directory: string): string[] => {
   return fs.readdirSync(directory)
-    .filter(f => {
+    .filter((f: string) => {
       // if (stateCache[f]) {
       //   return stateCache[f];
       // }
@@ -67,7 +67,7 @@ const readFiles = (directory: string): string[] => {
       stateCache[f] = isFile;
       return isFile;
     })
-    .map(f => {
+    .map((f: string) => {
       // if (cache[f]) {
       //   return cache[f];
       // }

@@ -22,6 +22,8 @@ export default class AppConfig {
   account: string;
   agent_server_host: string;
   environment: string;
+  external_https_address: string;
+  external_http_address: string;
 
   constructor(config_dir: string, partial?: Partial<AppConfig>) {
     this.config_dir = config_dir;
@@ -40,6 +42,8 @@ export default class AppConfig {
     this.account = '';
     this.agent_server_host = 'local';
     this.environment = process.env.TEST === '1' ? ENVIRONMENT.TEST : ENVIRONMENT.PRODUCTION;
+    this.external_https_address = 'localhost.architect.sh';
+    this.external_http_address = 'arc.localhost';
 
     // Override defaults with input values
     Object.assign(this, partial);
@@ -74,6 +78,8 @@ export default class AppConfig {
       account: this.account,
       agent_server_host: this.agent_server_host,
       environment: this.environment,
+      external_https_address: this.external_https_address,
+      external_http_address: this.external_http_address,
     };
   }
 }

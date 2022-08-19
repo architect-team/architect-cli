@@ -11,19 +11,21 @@ export default class Unlink extends BaseCommand {
   }
 
   static description = 'Unlink a component from the host by path or name';
-
+  static examples = [
+    'architect unlink',
+    'architect unlink -p ../architect.yml',
+    'architect unlink -p mycomponent',
+  ];
   static flags = {
     ...BaseCommand.flags,
-    all: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: 'Unlink all components registered locally',
-      }),
-    },
+    all: Flags.boolean({
+      description: 'Unlink all components registered locally',
+      sensitive: false,
+    }),
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'componentPathOrName',
     char: 'p',
     default: '.',

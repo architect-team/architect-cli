@@ -1,11 +1,13 @@
 import { Flags, Interfaces } from '@oclif/core';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import chalk from 'chalk';
-import fs from 'fs-extra';
+import fs, { createWriteStream } from 'fs-extra';
+import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
 import opener from 'opener';
-import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../';
+import path from 'path';
+import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import { default as BaseCommand, default as Command } from '../base-command';
@@ -14,7 +16,17 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DeployUtils from '../common/utils/deploy.utils';
 import * as Docker from '../common/utils/docker';
+import { booleanString } from '../common/utils/oclif';
 import PortUtil from '../common/utils/port';
+
+type TraefikHttpService = {
+  name: string;
+  status: string;
+  serverStatus?: Dictionary<string>;
+  provider: string;
+};
+
+const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
 
 export default class Dev extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -23,35 +35,36 @@ export default class Dev extends BaseCommand {
 
   static description = 'Run your stack locally';
 
+  static examples = [
+    'architect dev ./mycomponent/architect.yml',
+    'architect dev --port=81 --no-browser --debug=true --secret-file=./mycomponent/mysecrets.yml ./mycomponent/architect.yml',
+  ];
+
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
 
-    'compose-file': {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'o',
-        description: 'Path where the compose file should be written to',
-        default: '',
-        exclusive: ['environment', 'auto-approve', 'auto_approve', 'refresh'],
-      }),
-    },
+    'compose-file': Flags.string({
+      char: 'o',
+      description: 'Path where the compose file should be written to',
+      default: '',
+      exclusive: ['environment', 'auto-approve', 'auto_approve', 'refresh'],
+      sensitive: false,
+    }),
     parameter: Flags.string({
       char: 'p',
       description: `${Command.DEPRECATED} Please use --secret.`,
       multiple: true,
       hidden: true,
     }),
-    interface: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'i',
-        description: 'Component interfaces',
-        multiple: true,
-        default: [],
-      }),
-    },
+    interface: Flags.string({
+      char: 'i',
+      description: 'Component interfaces',
+      multiple: true,
+      default: [],
+      sensitive: false,
+    }),
     'secret-file': Flags.string({
       description: 'Path of secrets file',
       multiple: true,
@@ -68,83 +81,71 @@ export default class Dev extends BaseCommand {
       multiple: true,
       default: [],
     }),
-    recursive: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        char: 'r',
-        default: true,
-        allowNo: true,
-        description: '[default: true] Toggle to automatically deploy all dependencies',
-      }),
-    },
-    browser: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        default: true,
-        allowNo: true,
-        description: '[default: true] Automatically open urls in the browser for local deployments',
-      }),
-    },
-    port: {
-      non_sensitive: true,
-      ...Flags.integer({
-        default: 80,
-        description: '[default: 80] Port for the gateway',
-      }),
-    },
+    recursive: Flags.boolean({
+      char: 'r',
+      default: true,
+      allowNo: true,
+      description: '[default: true] Toggle to automatically deploy all dependencies',
+      sensitive: false,
+    }),
+    browser: Flags.boolean({
+      default: true,
+      allowNo: true,
+      description: '[default: true] Automatically open urls in the browser for local deployments',
+      sensitive: false,
+    }),
+    port: Flags.integer({
+      description: '[default: 443] Port for the gateway',
+      sensitive: false,
+    }),
     // Used for proxy from deploy to dev. These will be removed once --local is deprecated
-    local: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        char: 'l',
-        description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
-        exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
-        hidden: true,
-      }),
-    },
-    production: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: `${Command.DEPRECATED} Please use --environment.`,
-        dependsOn: ['local'],
-        hidden: true,
-      }),
-    },
-    compose_file: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: `${Command.DEPRECATED} Please use --compose-file.`,
-        exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
-        hidden: true,
-      }),
-    },
+    local: Flags.boolean({
+      char: 'l',
+      description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
+      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
+      hidden: true,
+      sensitive: false,
+    }),
+    production: Flags.boolean({
+      description: `${Command.DEPRECATED} Please use --environment.`,
+      dependsOn: ['local'],
+      hidden: true,
+      sensitive: false,
+    }),
+    compose_file: Flags.string({
+      description: `${Command.DEPRECATED} Please use --compose-file.`,
+      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      hidden: true,
+      sensitive: false,
+    }),
     values: Flags.string({
       char: 'v',
       hidden: true,
       description: `${Command.DEPRECATED} Please use --secret-file.`,
     }),
-    detached: {
-      non_sensitive: true,
-      ...Flags.boolean({
-        description: 'Run in detached mode',
-        char: 'd',
-      }),
-    },
-    debug: {
-      non_sensitive: true,
-      ...Flags.string({
-        description: `[default: true] Turn debug mode on (true) or off (false)`,
-        default: 'true',
-      }),
-    },
+    detached: Flags.boolean({
+      description: 'Run in detached mode',
+      char: 'd',
+      sensitive: false,
+    }),
+    debug: booleanString({
+      description: `[default: true] Turn debug mode on (true) or off (false)`,
+      default: true,
+      sensitive: false,
+    }),
     arg: Flags.string({
       description: 'Build arg(s) to pass to docker build',
       multiple: true,
     }),
+    ssl: booleanString({
+      description: 'Use https for all ingresses',
+      default: true,
+      sensitive: false,
+    }),
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'configs_or_components',
     description: 'Path to an architect.yml file or component `account/component:latest`. Multiple components are accepted.',
   }];
@@ -171,23 +172,59 @@ export default class Dev extends BaseCommand {
   }
 
   setupSigInt(callback: () => void): void {
-    if (process.platform === "win32") {
-      const rl = require("readline").createInterface({
-        input: process.stdin,
-        output: process.stdout,
-      });
+    process.on('SIGINT', function () {
+      callback();
+    });
 
-      rl.on("SIGINT", function () {
-        process.emit("SIGINT", "SIGINT");
-      });
-    }
-
-    process.on("SIGINT", function () {
+    // This is what happens with Ctrl+Break on Windows. Treat it like a Ctrl+C, otherwise
+    // the user can kill `architect dev` in a "normal" way without the containers stopping.
+    process.on('SIGBREAK', function () {
       callback();
     });
   }
 
-  async runCompose(compose: DockerComposeTemplate): Promise<void> {
+  async healthyTraefikServices(admin_port: number, timeout: number): Promise<TraefikHttpService[]> {
+    const { data: services } = await axios.get<TraefikHttpService[]>(`http://localhost:${admin_port}/api/http/services`, {
+      timeout,
+    });
+    const healthy_services = services.filter((service) => {
+      if (service.status !== 'enabled') return false;
+      if (!service.serverStatus) return false;
+      if (service.provider !== 'docker') return false;
+      return Object.values(service.serverStatus).some(status => status === 'UP');
+    });
+    return healthy_services;
+  }
+
+  async pollTraefik(admin_port: number, traefik_service_map: Dictionary<string | undefined>): Promise<void> {
+    const poll_interval = 5000;
+    let open_browser_attempts = 0;
+
+    const unique_urls = new Set(Object.values(traefik_service_map));
+
+    const seen_urls = new Set();
+    const browser_interval = setInterval(async () => {
+      if (open_browser_attempts > 120 || seen_urls.size >= unique_urls.size) {
+        clearInterval(browser_interval);
+        return;
+      }
+      const healthy_services = await this.healthyTraefikServices(admin_port, poll_interval).catch(() => []);
+      for (const healthy_service of healthy_services) {
+        const url = traefik_service_map[healthy_service.name];
+        if (url && !seen_urls.has(url)) {
+          this.log('Opening', chalk.blue(url));
+          opener(url);
+          if (seen_urls.size === 0) {
+            this.log('(disable with --no-browser)');
+          }
+          seen_urls.add(url);
+        }
+      }
+      open_browser_attempts++;
+    }, poll_interval);
+  }
+
+  async runCompose(compose: DockerComposeTemplate, gateway_port: number, gateway_admin_port: number): Promise<void> {
     const { flags } = await this.parse(Dev);
 
     const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
@@ -218,18 +255,19 @@ export default class Dev extends BaseCommand {
 
     this.log('Once the containers are running they will be accessible via the following urls:');
 
-    const exposed_interfaces: string[] = [];
-
-    const gateway_port = flags.port;
+    const protocol = flags.ssl ? 'https' : 'http';
+    const traefik_service_map: Dictionary<string | undefined> = {};
     for (const [service_name, service] of Object.entries(compose.services)) {
       if (service.labels?.includes('traefik.enable=true')) {
         const host_rules = service.labels.filter(label => label.includes('rule=Host'));
         for (const host_rule of host_rules) {
-          const host = new RegExp(/Host\(`(.*?)`\)/g);
-          const host_match = host.exec(host_rule);
+          const host_match = HOST_REGEX.exec(host_rule);
           if (host_match) {
-            this.log(`${chalk.blue(`http://${host_match[1]}:${gateway_port}/`)} => ${service_name}`);
-            exposed_interfaces.push(`http://${host_match[1]}:${gateway_port}/`);
+            const url = `${protocol}://${host_match[1]}:${gateway_port}/`;
+            this.log(`${chalk.blue(url)} => ${service_name}`);
+
+            const traefik_service = host_rule.split('.')[3];
+            traefik_service_map[`${traefik_service}-service@docker`] = url;
           }
         }
       }
@@ -239,47 +277,15 @@ export default class Dev extends BaseCommand {
     for (const svc_name of Object.keys(compose.services)) {
       for (const port_pair of compose.services[svc_name].ports || []) {
         const [exposed_port, internal_port] = port_pair && (port_pair as string).split(':');
-        this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}:${internal_port}`);
+        this.log(`${chalk.blue(`${protocol}://localhost:${exposed_port}/`)} => ${svc_name}:${internal_port}`);
       }
     }
     this.log('');
     this.log('Starting containers...');
     this.log('');
 
-    if (!isCi && flags.browser) {
-      let open_browser_attempts = 0;
-      const poll_interval = 2000;
-      const browser_interval = setInterval(async () => {
-        if (open_browser_attempts === 150) {
-          clearInterval(browser_interval);
-          return;
-        }
-
-        const promises: Promise<AxiosResponse<any>>[] = [];
-        for (const exposed_interface of exposed_interfaces) {
-          const [host_name, port] = exposed_interface.replace('http://', '').split(':');
-          promises.push(axios.get(`http://localhost:${port}`, {
-            headers: {
-              Host: host_name,
-            },
-            maxRedirects: 0,
-            timeout: poll_interval,
-            validateStatus: (status: number) => { return status < 500 && status !== 404; },
-          }));
-        }
-
-        Promise.all(promises).then(() => {
-          for (const exposed_interface of exposed_interfaces) {
-            this.log('Opening', chalk.blue(exposed_interface));
-            opener(exposed_interface);
-          }
-          this.log('(disable with --no-browser)');
-          clearInterval(browser_interval);
-        }).catch(err => {
-          // at least one exposed service is not yet ready
-        });
-        open_browser_attempts++;
-      }, poll_interval);
+    if (!isCi && flags.browser && Object.keys(traefik_service_map).length > 0) {
+      this.pollTraefik(gateway_admin_port, traefik_service_map);
     }
 
     const compose_args = ['-f', compose_file, '-p', project_name, 'up', '--remove-orphans', '--renew-anon-volumes', '--timeout', '0'];
@@ -287,29 +293,49 @@ export default class Dev extends BaseCommand {
       compose_args.push('-d');
     }
 
-    const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args, { stdout: 'pipe', stdin: "ignore" });
+    // `detached: true` is set for non-windows platforms so that the SIGINT isn't automatically sent to
+    // the `docker compose` process. Signals are automatically sent to the entire process group, but we want to
+    // handle SIGINT in a special way in the `setupSigInt` handler.
+    // On Windows (cmd, powershell), signals don't exist and running in detached mode opens a new window. The
+    // "SIGINT" we get on Windows isn't a real signal and isn't automatically passed to child processes,
+    // so we don't have to worry about it.
+    const is_windows = process.platform === 'win32';
+
+    const docker_compose_runnable = DockerComposeUtils.dockerCompose(compose_args,
+      { stdout: 'pipe', stdin: 'ignore', detached: !is_windows });
 
     let is_exiting = false;
-    this.setupSigInt(() => {
-      if (is_exiting) {
+    let seen_container_output = false;
+    this.setupSigInt(async () => {
+      // If a user SIGINT's between when docker compose outputs "Attaching to ..." and starts printing logs,
+      // the containers will not be stopped and `docker compose stop` won't yet work.
+      // We stop SIGINT from doing anything until we know for sure we can stop gracefully.
+      if (is_exiting || !seen_container_output) {
         return;
       }
       is_exiting = true;
-      docker_compose_runnable.kill('SIGTERM');
+
+      this.log('Gracefully stopping..... Please Wait.....');
+      // On non-windows, we can just interrupt the compose process. On windows, we need to run 'stop' to
+      // ensure the containers are stopped.
+      if (is_windows) {
+        await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'stop']);
+      } else {
+        process.kill(-docker_compose_runnable.pid, 'SIGINT');
+      }
     });
 
-    // When docker compose is stopping it will tell the user to hit `ctrl-c` again
-    // to cancel. We disabled this functionality so also making the message more clear
     const service_colors = new Map<string, chalk.Chalk>();
     const rand = () => Math.floor(Math.random() * 255);
     docker_compose_runnable.stdout?.on('data', (data) => {
+      if (is_exiting) {
+        return;
+      }
       for (const line of data.toString().split('\n')) {
-        if (line.indexOf('Gracefully stopping...') !== -1) {
-          console.log("\nGracefully stopping..... Please Wait.....");
-          return;
-        }
         const lineParts = line.split('|');
         if (lineParts.length > 1) {
+          // At this point we can stop the process safely.
+          seen_container_output = true;
           const service: string = lineParts[0];
           lineParts.shift();
           const newLine = lineParts.join('|');
@@ -324,6 +350,7 @@ export default class Dev extends BaseCommand {
         }
       }
     });
+
     DockerComposeUtils.watchContainersHealth(compose_file, project_name, () => { return is_exiting; });
 
     try {
@@ -337,12 +364,88 @@ export default class Dev extends BaseCommand {
     process.exit();
   }
 
+  private async getAvailablePort(port: number): Promise<number> {
+    while (!(await PortUtil.isPortAvailable(port))) {
+      const answers: any = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'port',
+          message: `Trying to listen on port ${port}, but something is already using it. What port would you like us to run the API gateway on (you can use the '--port' flag to skip this message in the future)?`,
+          validate: (value: any) => {
+            if (new RegExp('^[1-9]+[0-9]*$').test(value)) {
+              return true;
+            }
+            return `Port can only be positive number.`;
+          },
+        },
+      ]);
+
+      port = answers.port;
+    }
+    return port;
+  }
+
+  private async downloadFile(url: string, output_location: string): Promise<void> {
+    const handleReject = (resolve: () => void, reject: () => void) => {
+      // These file operations can be sync due to failure state
+      if (!fs.existsSync(output_location)) {
+        return reject();
+      }
+      // If the file is not too old than we can use it instead
+      const stats = fs.statSync(output_location);
+      const diff_in_ms = Math.abs(stats.mtime.getTime() - Date.now());
+      const days = diff_in_ms / (1000 * 60 * 60 * 24);
+      if (days > 30) {
+        reject();
+      } else {
+        resolve();
+      }
+    };
+    return new Promise((resolve, reject) => {
+      axios({
+        method: 'get',
+        url: url,
+        timeout: 10000, // 10 seconds
+        responseType: 'stream',
+      }).then((response) => {
+        if (response.status > 399) {
+          return handleReject(resolve, reject);
+        }
+        const writer = createWriteStream(output_location);
+        response.data.pipe(writer);
+        response.data.on('end', resolve);
+        response.data.on('error', () => {
+          return handleReject(resolve, reject);
+        });
+      }).catch(err => {
+        return handleReject(resolve, () => { reject(err); });
+      });
+    });
+  }
+
+  private async downloadSSLCerts() {
+    return Promise.all([
+      this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/fullchain.pem', path.join(this.app.config.getConfigDir(), 'fullchain.pem')),
+      this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/privkey.pem', path.join(this.app.config.getConfigDir(), 'privkey.pem')),
+    ]).catch((err) => {
+      this.warn(chalk.yellow("We are unable to download the neccessary ssl certificates. Please try again or use --ssl=false to temporarily disable ssl"));
+      this.exit(1);
+    });
+  }
+
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
     await Docker.verify();
 
     if (!args.configs_or_components || !args.configs_or_components.length) {
       args.configs_or_components = ['./architect.yml'];
+    }
+
+    flags.port = await this.getAvailablePort(flags.port || (flags.ssl ? 443 : 80));
+
+    if (flags.ssl) {
+      await this.downloadSSLCerts();
+      await DockerComposeUtils.generateTlsConfig(this.app.config.getConfigDir());
     }
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
@@ -369,11 +472,8 @@ export default class Dev extends BaseCommand {
       linked_components
     );
 
-    const port_available = await PortUtil.isPortAvailable(flags.port);
-    if (!port_available) {
-      this.error(`Could not run architect on port ${flags.port}.\nPlease stop an existing process or specify --port to choose a different port.`);
-    }
-    dependency_manager.external_addr = `arc.localhost:${flags.port}`;
+    dependency_manager.use_ssl = flags.ssl;
+    dependency_manager.external_addr = (flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address) + `:${flags.port}`;
 
     if (flags.account) {
       const account = await AccountUtils.getAccount(this.app, flags.account);
@@ -402,12 +502,11 @@ export default class Dev extends BaseCommand {
 
     const component_options: ComponentConfigOpts = { map_all_interfaces: !flags.production && !duplicates, interfaces: interfaces_map };
 
-    const debug = flags.debug === 'true';
     for (const component_version of component_versions) {
-      const component_config = await dependency_manager.loadComponentSpec(component_version, component_options, debug);
+      const component_config = await dependency_manager.loadComponentSpec(component_version, component_options, flags.debug);
 
       if (flags.recursive) {
-        const dependency_configs = await dependency_manager.loadComponentSpecs(component_config.metadata.ref, debug);
+        const dependency_configs = await dependency_manager.loadComponentSpecs(component_config.metadata.ref, flags.debug);
         component_specs.push(...dependency_configs);
       } else {
         component_specs.push(component_config);
@@ -416,8 +515,14 @@ export default class Dev extends BaseCommand {
 
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
     const graph = await dependency_manager.getGraph(component_specs, all_secrets); // TODO: 404: update
-    const compose = await DockerComposeUtils.generate(graph);
-    await this.runCompose(compose);
+    const gateway_admin_port = await PortUtil.getAvailablePort(8080);
+    const compose = await DockerComposeUtils.generate(graph, {
+      config_dir: this.app.config.getConfigDir(),
+      external_addr: flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address,
+      use_ssl: flags.ssl,
+      gateway_admin_port,
+    });
+    await this.runCompose(compose, flags.port, gateway_admin_port);
   }
 
   async run(): Promise<void> {

@@ -13,19 +13,22 @@ export default class Destroy extends DeployCommand {
 
   static description = 'Destroy components from an environment';
 
+  static examples = [
+    'architect destroy --account=myaccount --auto-approve',
+    'architect destroy --account=myaccount --environment=myenvironment --auto-approve',
+  ];
+
   static args = [];
   static flags = {
     ...DeployCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    components: {
-      non_sensitive: true,
-      ...Flags.string({
-        char: 'c',
-        description: 'Component(s) to destroy',
-        multiple: true,
-      }),
-    },
+    components: Flags.string({
+      char: 'c',
+      description: 'Component(s) to destroy',
+      multiple: true,
+      sensitive: false,
+    }),
   };
 
   async run(): Promise<void> {

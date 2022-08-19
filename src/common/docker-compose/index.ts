@@ -15,12 +15,46 @@ import PortUtil from '../utils/port';
 import { DockerComposeProject } from './project';
 import DockerComposeTemplate, { DockerService } from './template';
 
+type GenerateOptions = {
+  external_addr: string;
+  gateway_admin_port: number;
+  use_ssl: boolean;
+  config_dir?: string;
+};
+
 export class DockerComposeUtils {
 
   // used to namespace docker-compose projects so multiple deployments can happen to local
   public static DEFAULT_PROJECT = 'architect';
 
-  public static async generate(graph: DependencyGraph): Promise<DockerComposeTemplate> {
+  public static async generateTlsConfig(config_path: string): Promise<void> {
+    const traefik_config = {
+      tls: {
+        stores: {
+          default: {
+            defaultCertificate: {
+              certFile: '/etc/traefik-ssl/fullchain.pem',
+              keyFile: '/etc/traefik-ssl/privkey.pem',
+            },
+          },
+        },
+        certificates: [{
+          certFile: '/etc/traefik-ssl/fullchain.pem',
+          keyFile: '/etc/traefik-ssl/privkey.pem',
+        }],
+      },
+    };
+
+    const traefik_yaml = yaml.dump(traefik_config);
+    return fs.writeFile(path.join(config_path, `traefik.yaml`), traefik_yaml);
+  }
+
+  public static async generate(graph: DependencyGraph, options?: GenerateOptions): Promise<DockerComposeTemplate> {
+    if (!options) {
+      options = { gateway_admin_port: 8080, external_addr: 'arc.localhost', use_ssl: false };
+    }
+    const { gateway_admin_port, external_addr, use_ssl, config_dir } = options;
+
     const compose: DockerComposeTemplate = {
       version: '3',
       services: {},
@@ -40,13 +74,13 @@ export class DockerComposeUtils {
     const available_ports = (await Promise.all(port_promises)).sort();
 
     const gateway_node = graph.nodes.find((node) => node instanceof GatewayNode);
-    const gateway_port = gateway_node?.interfaces._default.port || 80;
+    const gateway_port = gateway_node?.interfaces._default.port || 443;
 
     const gateway_links = new Set<string>();
     if (gateway_node) {
       for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
         for (const { interface_from } of edge.interface_mappings) {
-          const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
+          const host = interface_from === '@' ? external_addr : `${interface_from}.${external_addr}`;
           gateway_links.add(`${gateway_node.ref}:${host}`);
         }
       }
@@ -56,20 +90,32 @@ export class DockerComposeUtils {
         command: [
           '--api.insecure=true',
           '--pilot.dashboard=false',
+          // '--log.level=DEBUG',
           '--accesslog=true',
+          '--accesslog.filters.minDuration=1s',
           '--accesslog.filters.statusCodes=400-599',
           `--entryPoints.web.address=:${gateway_port}`,
           '--providers.docker=true',
           '--providers.docker.exposedByDefault=false',
           `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
+          ...(use_ssl ? [
+            // redirect http to https
+            `--entryPoints.web.http.redirections.entryPoint.scheme=https`,
+            `--entryPoints.web.http.redirections.entryPoint.permanent=true`,
+            `--entryPoints.web.http.redirections.entryPoint.to=:${gateway_port}`,
+            // tls certs
+            '--providers.file.watch=false',
+            `--providers.file.fileName=/etc/traefik-ssl/traefik.yaml`,
+          ] : []),
         ],
         ports: [
-          // The HTTP port
+          // The HTTP(S) port
           `${gateway_port}:${gateway_port}`,
           // The Web UI(enabled by--api.insecure = true)
-          `${await PortUtil.getAvailablePort(8080)}:8080`,
+          `${gateway_admin_port}:8080`,
         ],
         volumes: [
+          ...(use_ssl ? [`${config_dir}:/etc/traefik-ssl/`] : []),
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
       };
@@ -262,7 +308,7 @@ export class DockerComposeUtils {
             service_to.labels.push(`traefik.port=${gateway_port}`);
           }
 
-          const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
+          const host = interface_from === '@' ? external_addr : `${interface_from}.${external_addr}`;
           const traefik_service = `${node_to.ref}-${interface_to}`;
 
           const component_node = graph.getNodeByRef(edge.to) as ComponentNode;
@@ -278,6 +324,10 @@ export class DockerComposeUtils {
           service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.port=${node_to_interface.port}`);
           if (node_to_interface.sticky) {
             service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadBalancer.sticky.cookie=true`);
+          }
+          if (use_ssl) {
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`);
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.tls=true`);
           }
         }
       }
@@ -528,14 +578,19 @@ export class DockerComposeUtils {
             const service_data = service_data_dictionary[service_ref];
 
             service_data.last_restart_ms = Date.now();
-            console.log("State: " + state + " health: " + health);
-            console.log(container_state);
-            console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
-            try {
-              await restart(id);
-            } catch (err) {
-              console.log(chalk.red(`ERROR: ${service_ref} failed to restart.`));
-              continue;
+            // Ensure the containers aren't terminating before we attempt to restart the container.
+            // If the dev command gets killed between the start of this loop and here, the restart will cause the
+            // containers to never stop and leave the command hanging.
+            // Note: It's possible this result has changed because we `await` another Docker command during this
+            // loops execution.
+            if (!should_stop()) {
+              console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
+              try {
+                await restart(id);
+              } catch (err) {
+                console.log(chalk.red(`ERROR: ${service_ref} failed to restart.`));
+                continue;
+              }
             }
             // Docker compose will stop watching when there is a single container and it goes down.
             // If all containers go down at the same time it will wait for the restart and just move on. So only need this

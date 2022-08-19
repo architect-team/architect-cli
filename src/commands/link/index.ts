@@ -1,8 +1,9 @@
 import chalk from 'chalk';
 import path from 'path';
 import untildify from 'untildify';
-import { buildSpecFromPath } from '../';
-import BaseCommand from '../base-command';
+import { buildSpecFromPath } from '../..';
+import BaseCommand from '../../base-command';
+
 declare const process: NodeJS.Process;
 
 export default class Link extends BaseCommand {
@@ -11,19 +12,21 @@ export default class Link extends BaseCommand {
   }
 
   static description = 'Link a local component to the host to be used to power local deployments.';
-
+  static examples = [
+    'architect link',
+    'architect link -p ./mycomponent/architect.yml',
+  ];
   static flags = {
     ...BaseCommand.flags,
   };
 
   static args = [{
-    non_sensitive: true,
+    sensitive: false,
     name: 'componentPath',
     char: 'p',
+    description: 'The path of the component to link',
     default: '.',
   }];
-
-  static non_sensitive = new Set([...Object.keys({ ...Link.flags }), ...Link.args.map(arg => arg.name)]);
 
   async run(): Promise<void> {
     const { args } = await this.parse(Link);
