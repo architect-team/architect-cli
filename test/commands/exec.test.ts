@@ -43,7 +43,14 @@ describe('exec', () => {
   defaults
     .stdout()
     .command(['exec', '-a', account.name, '-e', environment.name, '-r', 'app:0', '--', 'ls', '-la'])
-    .it('exec component and command with spaces and replica', ctx => {
+    .it('exec component and replica of the form <service-name>:<replica-index>', ctx => {
+      expect(ctx.stdout).to.equal('worked\n');
+    });
+  
+  defaults
+    .stdout()
+    .command(['exec', '-a', account.name, '-e', environment.name, '-r', '0', '--', 'ls', '-la'])
+    .it('exec component and replica of the form <replica-index> when there is only one service', ctx => {
       expect(ctx.stdout).to.equal('worked\n');
     });
 
