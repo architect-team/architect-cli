@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import stream from 'stream';
 import WebSocket, { createWebSocketStream } from 'ws';
-import { ArchitectError, Dictionary, parseUnknownSlug } from '../';
+import { ArchitectError, Dictionary, parseUnknownSlug, ResourceSlugUtils } from '../';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
@@ -58,7 +58,7 @@ export default class Exec extends BaseCommand {
       sensitive: false,
     }),
     replica: Flags.string({
-      description: 'Replica reference name, e.g. flask--app-abcdefghi-vwxyz. Only works on remote deploys.',
+      description: `Replica using service name and replica index, e.g. 'app:1' means the service name to exec into is 'app' and the service replica index is 1. Only works on remote deploys.`,
       char: 'r',
       sensitive: false,
     }),
@@ -258,6 +258,34 @@ export default class Exec extends BaseCommand {
     ws_stream.write(buffer);
   }
 
+  getServiceReplica(replica_flag: string, replicas: Replica[]): Replica {
+    if (!(new RegExp('[a-z]+[a-zA-Z0-9_-]+:[0-9]+$').test(replica_flag))) {
+      throw new ArchitectError('Replica must be of the form <service-name>:<replica-index>.');
+    }
+
+    const [service_name, replica_idx] = replica_flag.split(':');
+
+    const resources: Dictionary<any> = {};
+    for (const rep of replicas) {
+      const { resource_name } = ResourceSlugUtils.parse(rep.resource_ref);
+      if (resources.hasOwnProperty(resource_name)) {
+        resources[resource_name].push(rep);
+      } else {
+        resources[resource_name] = [rep];
+      }
+    }
+
+    if (!resources.hasOwnProperty(service_name)) {
+      throw new ArchitectError(`No service name found for '${service_name}'. Try ${Object.keys(resources).join(', ')}.`);
+    }
+    const service_replicas = resources[service_name];
+    if (parseInt(replica_idx) > service_replicas.length - 1 || parseInt(replica_idx) < 0) {
+      throw new ArchitectError(`No replica found at index ${replica_idx}. Try index between 0 and ${service_replicas.length - 1}.`);
+    }
+
+    return service_replicas[replica_idx];
+  }
+
   async runRemote(account: Account, args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
@@ -265,6 +293,10 @@ export default class Exec extends BaseCommand {
     let component_name: string | undefined;
     let resource_name: string | undefined;
     let instance_name: string | undefined;
+    if (args.resource && flags.replica) {
+      throw new ArchitectError(`Both replica and resource are found. Please provide only one.`);
+    }
+
     if (args.resource) {
       const parsed = parseUnknownSlug(args.resource);
       component_account_name = parsed.component_account_name;
@@ -287,15 +319,7 @@ export default class Exec extends BaseCommand {
     if (!replicas.length)
       throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
-    let replica;
-    if (flags.replica) {
-      replica = replicas.find((replica: Replica) => replica.ext_ref === flags.replica);
-      if (!replica) {
-        throw new ArchitectError(`Replica '${flags.replica}' does not exist.`);
-      }
-    } else {
-      replica = await EnvironmentUtils.getReplica(replicas);
-    }
+    const replica = flags.replica ? this.getServiceReplica(flags.replica, replicas) : await EnvironmentUtils.getReplica(replicas);
 
     const query = new URLSearchParams({
       ext_ref: replica.ext_ref,
