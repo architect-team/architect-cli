@@ -15,7 +15,7 @@ import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import { DockerHelper, stripTagFromImage } from '../common/docker/helper';
+import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
 import DockerBuildXUtils from '../common/docker/buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
@@ -75,9 +75,9 @@ export default class ComponentRegister extends BaseCommand {
     default: './',
   }];
 
+  @RequiresDocker({ buildx: true })
   async run(): Promise<void> {
     const { flags, args } = await this.parse(ComponentRegister);
-    await DockerHelper.verifyDaemon();
 
     const config_path = path.resolve(untildify(args.component));
 
@@ -219,7 +219,6 @@ export default class ComponentRegister extends BaseCommand {
         });
       } catch (err: any) {
         fs.removeSync(compose_file);
-        this.log(`Docker buildx bake failed. Please make sure docker is running.`);
         this.error(err);
       }
     }

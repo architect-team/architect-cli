@@ -2,7 +2,6 @@ import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import config from '../../app-config/config';
 import { docker } from './cmd';
-import { DockerHelper } from './helper';
 
 // Adapted from https://github.com/docker-library/official-images#architectures-other-than-amd64
 const PLATFORM_MAP = new Map<string, string>([
@@ -79,7 +78,6 @@ export default class DockerBuildXUtils {
   }
 
   public static async dockerBuildX(args: string[], docker_builder_name: string, execa_opts?: Options, use_console = false): Promise<execa.ExecaChildProcess<string>> {
-    DockerHelper.verifyBuildX();
     if (use_console) {
       process.stdin.setRawMode(true);
     }

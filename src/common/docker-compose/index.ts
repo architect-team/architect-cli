@@ -9,7 +9,6 @@ import path from 'path';
 import untildify from 'untildify';
 import { ArchitectError, ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
-import { DockerHelper } from '../docker/helper';
 import { restart } from '../docker/cmd';
 import PortUtil from '../utils/port';
 import { DockerComposeProject, DockerComposeProjectWithConfig } from './project';
@@ -391,8 +390,6 @@ export class DockerComposeUtils {
   }
 
   public static dockerCompose(args: string[], execa_opts?: Options, use_console = false): execa.ExecaChildProcess<string> {
-    DockerHelper.verifyCompose();
-
     if (use_console) {
       process.stdin.setRawMode(true);
     }

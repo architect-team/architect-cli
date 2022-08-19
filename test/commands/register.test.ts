@@ -311,9 +311,7 @@ describe('register', function () {
       expect(process.exitCode).eq(1);
       expect(`${err}`).to.contain('Some internal docker build exception');
     })
-    .it('rejects with informative error message if docker buildx inspect fails', ctx => {
-      expect(ctx.stdout).to.contain("Docker buildx bake failed. Please make sure docker is running.");
-    });
+    .it('rejects with the original error message if docker buildx inspect fails');
 
   mockArchitectAuth
     .stub(fs, 'move', sinon.stub())

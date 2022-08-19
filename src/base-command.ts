@@ -6,19 +6,11 @@ import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
 import SentryService from './sentry';
-import { DockerHelper } from './common/docker/helper';
 
 const DEPRECATED_LABEL = '[deprecated]';
 
 export default abstract class BaseCommand extends Command {
   static readonly DEPRECATED: string = DEPRECATED_LABEL;
-
-  // Docker requirements for various commands
-  // TODO: Do we want to split them up like this or combine some?
-  static readonly DOCKER_REQUIRED: boolean = false;
-  static readonly DOCKER_DAEMON_REQUIRED: boolean = false;
-  static readonly DOCKER_COMPOSE_REQUIRED: boolean = false;
-  static readonly DOCKER_BUILDX_REQUIRED: boolean = false;
 
   app: AppService;
   sentry: SentryService;
