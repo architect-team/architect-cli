@@ -40,7 +40,6 @@ export default class ComponentVersions extends BaseCommand {
 
     const { data: component } = await this.app.api.get(`/accounts/${account.name}/components/${args.component_name}`);
     const { data: { rows: component_versions } } = await this.app.api.get(`/components/${component.component_id}/versions`);
-    console.log(JSON.stringify(component_versions, null, 2))
 
     const table = new Table({ head: ['Tag', 'Created'] });
     for (const component_version of component_versions.sort((cv1: ComponentVersion, cv2: ComponentVersion) => cv1.tag.localeCompare(cv2.tag))) {

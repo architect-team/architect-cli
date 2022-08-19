@@ -35,9 +35,10 @@ export default class Scale extends BaseCommand {
       description: 'Max number of service replicas',
       sensitive: false,
     }),
-    deploy: Flags.boolean({
+    'create-pipeline': Flags.boolean({
       description: 'Create a pipeline that will apply the new scaling settings',
       default: false,
+      exclusive: ['auto-approve'],
     }),
   }; // TODO: add cpu/memory metrics here or just in the UI?
 
@@ -83,19 +84,15 @@ export default class Scale extends BaseCommand {
     await this.app.api.put(`/environments/${environment.id}`, { scaling_settings });
     this.log(chalk.green(`Updated scaling settings for service ${service_name} of component ${component_name} in environment ${environment.name}`));
 
-    // const confirmation = await inquirer.prompt({
-    //   type: 'confirm',
-    //   name: 'deploy',
-    //   message: 'Would you like to create a pipeline to apply the new scaling settings?',
-    //   when: !flags['auto-approve'],
-    // });
-    // if (!confirmation.deploy && !flags['auto-approve']) {
-    //   this.warn(`Did not create pipeline`);
-    //   return;
-    // }
-    // TODO: prompt to deploy?
+    let pipeline_confirmation: boolean | undefined = false;
+    if (!flags['auto-approve'] && !flags['create-pipeline']) {
+      pipeline_confirmation = await this.getCreatePipelineConfirmation();
+      if (pipeline_confirmation === undefined) {
+        return;
+      }
+    }
 
-    if (flags['auto-approve'] || flags.deploy) {
+    if (flags['auto-approve'] || flags['create-pipeline'] || pipeline_confirmation) {
       const deploy_flags: any[] = [];
       const valid_deploy_flags: string[] = Object.keys(Deploy.REMOTE_DEPLOY_FLAGS);
       for (const [flag, value] of Object.entries(flags)) {
@@ -119,5 +116,21 @@ export default class Scale extends BaseCommand {
       deploy.app = this.app;
       await deploy.run();
     }
+  }
+
+  async getCreatePipelineConfirmation(): Promise<boolean | undefined> {
+    let pipeline_confirmation = false;
+
+      const confirmation = await inquirer.prompt({
+        type: 'confirm',
+        name: 'deploy',
+        message: 'Would you like to create a pipeline to apply the new scaling settings?',
+      });
+      if (!confirmation.deploy) {
+        this.warn(`Did not create pipeline`);
+        return;
+      }
+      pipeline_confirmation = confirmation.deploy;
+    return pipeline_confirmation;
   }
 }

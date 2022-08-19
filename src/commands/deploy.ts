@@ -125,7 +125,7 @@ export default class Deploy extends DeployCommand {
       exclusive: ['local', 'compose-file', 'compose_file'],
       sensitive: false,
     }),
-  }
+  };
 
   static flags = {
     ...this.REMOTE_DEPLOY_FLAGS,
