@@ -47,6 +47,32 @@ describe('local dev environment', function () {
     `
   }
 
+  function getHelloComponentConfigWithPortPathHealthcheck(): any {
+    return `
+    name: hello-world
+
+    secrets:
+      hello_ingress: hello
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main:
+            port: 3000
+        environment: {}
+        liveness_probe:
+          port: 3000
+          path: /status
+
+    interfaces:
+      hello:
+        ingress:
+          subdomain: \${{ secrets.hello_ingress }}
+        url: \${{ services.api.interfaces.main.url }}
+    `
+  }
+
   function getDeprecatedHelloComponentConfig(): any { // TODO: 404: remove
     return `
     name: hello-world
@@ -1034,6 +1060,33 @@ describe('local dev environment', function () {
       expect(compose.services['hello-world--api'].healthcheck).to.deep.equal({
         "test": [
           "CMD", "curl", "--fail", "localhost:3000"
+        ],
+        "interval": "30s",
+        "timeout": "5s",
+        "retries": 3,
+        "start_period": "0s"
+      });
+    });
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return getHelloComponentConfigWithPortPathHealthcheck();
+    })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'hello'])
+    .it('Path/port healthcheck converted to http path', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      const compose = runCompose.firstCall.args[0];
+      expect(runCompose.calledOnce).to.be.true;
+      expect(compose.services['hello-world--api'].healthcheck).to.deep.equal({
+        "test": [
+          'CMD-SHELL',
+          'curl -f http://localhost:3000/status || exit 1',
         ],
         "interval": "30s",
         "timeout": "5s",
