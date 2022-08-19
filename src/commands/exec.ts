@@ -60,7 +60,7 @@ export default class Exec extends BaseCommand {
       sensitive: false,
     }),
     replica: Flags.string({
-      description: `Pass replica by <service-name>:<replica-index> or <replica-index> if only 1 service deployed. Only works on remote deploys.`,
+      description: `Pass replica by <service-name>:<replica-index> or <replica-index> if only 1 service is deployed. Only works on remote deploys.`,
       char: 'r',
       sensitive: false,
     }),
@@ -274,15 +274,16 @@ export default class Exec extends BaseCommand {
 
     let service_replicas = [];
     let replica_idx;
-    if (new RegExp('^[0-9]+$').test(replica_flag)) {
+    const replica_parts = replica_flag.split(':');
+    if (replica_parts.length === 1 && !isNaN(parseInt(replica_parts[0]))) {
       if (resource_names.length > 1) {
-        throw new ArchitectError(`More than one service is found [${resource_names.join(', ')}]. Please specify the replica in the form of <service-name>:<replica-index>.`);
+        throw new ArchitectError(`More than one service is found [${resource_names.join(', ')}]. Please specify replica in the form of <service-name>:<replica-index>.`);
       }
 
       service_replicas = replicas;
       replica_idx = parseInt(replica_flag);
-    } else if (new RegExp('^[a-z]+[a-zA-Z0-9_-]+:[0-9]+$').test(replica_flag)) {
-      const [service_name, service_replica_idx] = replica_flag.split(':');
+    } else if (replica_parts.length === 2 && !isNaN(parseInt(replica_parts[1]))) {
+      const [service_name, service_replica_idx] = replica_parts;
       if (!resources.hasOwnProperty(service_name)) {
         throw new ArchitectError(`No service name found for '${service_name}'. Try ${resource_names.join(', ')}.`);
       }
