@@ -2,11 +2,12 @@ import { Flags, Interfaces } from '@oclif/core';
 import axios from 'axios';
 import chalk from 'chalk';
 import { ExecaChildProcess } from 'execa';
-import fs from 'fs-extra';
+import fs, { createWriteStream } from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
 import opener from 'opener';
+import path from 'path';
 import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
@@ -16,6 +17,7 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DeployUtils from '../common/utils/deploy.utils';
 import * as Docker from '../common/utils/docker';
+import { booleanString } from '../common/utils/oclif';
 import PortUtil from '../common/utils/port';
 
 type TraefikHttpService = {
@@ -242,8 +244,7 @@ export default class Dev extends BaseCommand {
       sensitive: false,
     }),
     port: Flags.integer({
-      default: 80,
-      description: '[default: 80] Port for the gateway',
+      description: '[default: 443] Port for the gateway',
       sensitive: false,
     }),
     // Used for proxy from deploy to dev. These will be removed once --local is deprecated
@@ -276,14 +277,19 @@ export default class Dev extends BaseCommand {
       char: 'd',
       sensitive: false,
     }),
-    debug: Flags.string({
+    debug: booleanString({
       description: `[default: true] Turn debug mode on (true) or off (false)`,
-      default: 'true',
+      default: true,
       sensitive: false,
     }),
     arg: Flags.string({
       description: 'Build arg(s) to pass to docker build',
       multiple: true,
+    }),
+    ssl: booleanString({
+      description: 'Use https for all ingresses',
+      default: true,
+      sensitive: false,
     }),
   };
 
@@ -327,9 +333,10 @@ export default class Dev extends BaseCommand {
     return healthy_services;
   }
 
-  setupTraefikServiceMap(compose: DockerComposeTemplate, gateway_port: number): Dictionary<string | undefined> {
+  setupTraefikServiceMap(compose: DockerComposeTemplate, gateway_port: number, ssl: boolean): Dictionary<string | undefined> {
     this.log('Once the containers are running they will be accessible via the following urls:');
 
+    const protocol = ssl ? 'https' : 'http';
     const traefik_service_map: Dictionary<string | undefined> = {};
     for (const [service_name, service] of Object.entries(compose.services)) {
       if (service.labels?.includes('traefik.enable=true')) {
@@ -337,7 +344,7 @@ export default class Dev extends BaseCommand {
         for (const host_rule of host_rules) {
           const host_match = HOST_REGEX.exec(host_rule);
           if (host_match) {
-            const url = `http://${host_match[1]}:${gateway_port}/`;
+            const url = `${protocol}://${host_match[1]}:${gateway_port}/`;
             this.log(`${chalk.blue(url)} => ${service_name}`);
 
             const traefik_service = host_rule.split('.')[3];
@@ -351,7 +358,7 @@ export default class Dev extends BaseCommand {
     for (const svc_name of Object.keys(compose.services)) {
       for (const port_pair of compose.services[svc_name].ports || []) {
         const [exposed_port, internal_port] = port_pair && (port_pair as string).split(':');
-        this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}:${internal_port}`);
+        this.log(`${chalk.blue(`${protocol}://localhost:${exposed_port}/`)} => ${svc_name}:${internal_port}`);
       }
     }
 
@@ -421,7 +428,7 @@ export default class Dev extends BaseCommand {
     this.log('Building containers...', chalk.green('done'));
     this.log('');
 
-    const traefik_service_map = this.setupTraefikServiceMap(compose, gateway_port);
+    const traefik_service_map = this.setupTraefikServiceMap(compose, gateway_port, flags.ssl);
 
     this.log('');
     this.log('Starting containers...');
@@ -457,12 +464,67 @@ export default class Dev extends BaseCommand {
     return port;
   }
 
+  private async downloadFile(url: string, output_location: string): Promise<void> {
+    const handleReject = (resolve: () => void, reject: () => void) => {
+      // These file operations can be sync due to failure state
+      if (!fs.existsSync(output_location)) {
+        return reject();
+      }
+      // If the file is not too old than we can use it instead
+      const stats = fs.statSync(output_location);
+      const diff_in_ms = Math.abs(stats.mtime.getTime() - Date.now());
+      const days = diff_in_ms / (1000 * 60 * 60 * 24);
+      if (days > 30) {
+        reject();
+      } else {
+        resolve();
+      }
+    };
+    return new Promise((resolve, reject) => {
+      axios({
+        method: 'get',
+        url: url,
+        timeout: 10000, // 10 seconds
+        responseType: 'stream',
+      }).then((response) => {
+        if (response.status > 399) {
+          return handleReject(resolve, reject);
+        }
+        const writer = createWriteStream(output_location);
+        response.data.pipe(writer);
+        response.data.on('end', resolve);
+        response.data.on('error', () => {
+          return handleReject(resolve, reject);
+        });
+      }).catch(err => {
+        return handleReject(resolve, () => { reject(err); });
+      });
+    });
+  }
+
+  private async downloadSSLCerts() {
+    return Promise.all([
+      this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/fullchain.pem', path.join(this.app.config.getConfigDir(), 'fullchain.pem')),
+      this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/privkey.pem', path.join(this.app.config.getConfigDir(), 'privkey.pem')),
+    ]).catch((err) => {
+      this.warn(chalk.yellow("We are unable to download the neccessary ssl certificates. Please try again or use --ssl=false to temporarily disable ssl"));
+      this.exit(1);
+    });
+  }
+
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
     await Docker.verify();
 
     if (!args.configs_or_components || !args.configs_or_components.length) {
       args.configs_or_components = ['./architect.yml'];
+    }
+
+    flags.port = await this.getAvailablePort(flags.port || (flags.ssl ? 443 : 80));
+
+    if (flags.ssl) {
+      await this.downloadSSLCerts();
+      await DockerComposeUtils.generateTlsConfig(this.app.config.getConfigDir());
     }
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
@@ -489,8 +551,8 @@ export default class Dev extends BaseCommand {
       linked_components
     );
 
-    flags.port = await this.getAvailablePort(flags.port);
-    dependency_manager.external_addr = `arc.localhost:${flags.port}`;
+    dependency_manager.use_ssl = flags.ssl;
+    dependency_manager.external_addr = (flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address) + `:${flags.port}`;
 
     if (flags.account) {
       const account = await AccountUtils.getAccount(this.app, flags.account);
@@ -519,12 +581,11 @@ export default class Dev extends BaseCommand {
 
     const component_options: ComponentConfigOpts = { map_all_interfaces: !flags.production && !duplicates, interfaces: interfaces_map };
 
-    const debug = flags.debug === 'true';
     for (const component_version of component_versions) {
-      const component_config = await dependency_manager.loadComponentSpec(component_version, component_options, debug);
+      const component_config = await dependency_manager.loadComponentSpec(component_version, component_options, flags.debug);
 
       if (flags.recursive) {
-        const dependency_configs = await dependency_manager.loadComponentSpecs(component_config.metadata.ref, debug);
+        const dependency_configs = await dependency_manager.loadComponentSpecs(component_config.metadata.ref, flags.debug);
         component_specs.push(...dependency_configs);
       } else {
         component_specs.push(component_config);
@@ -533,9 +594,13 @@ export default class Dev extends BaseCommand {
 
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
     const graph = await dependency_manager.getGraph(component_specs, all_secrets); // TODO: 404: update
-
     const gateway_admin_port = await PortUtil.getAvailablePort(8080);
-    const compose = await DockerComposeUtils.generate(graph, gateway_admin_port);
+    const compose = await DockerComposeUtils.generate(graph, {
+      config_dir: this.app.config.getConfigDir(),
+      external_addr: flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address,
+      use_ssl: flags.ssl,
+      gateway_admin_port,
+    });
     await this.runCompose(compose, flags.port, gateway_admin_port);
   }
 
