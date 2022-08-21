@@ -161,6 +161,7 @@ describe('Scale', function () {
 
   describe('Scale services followed by deployments', function() {
     const scale_and_deploy = mockArchitectAuth
+      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .nock(MOCK_API_HOST, api => api
         .get(`/accounts/${account.name}`)
         .reply(200, account))
@@ -173,6 +174,18 @@ describe('Scale', function () {
       .nock(MOCK_API_HOST, api => api
         .get(`/components/${component_version.component.component_id}/versions/${component_version.tag}`)
         .reply(200, component_version))
+      .nock(MOCK_API_HOST, api => api
+        .put(`/environments/${environment.id}`, replica_scaling_settings)
+        .reply(200))
+      .nock(MOCK_API_HOST, api => api
+        .get(`/accounts/${account.name}`)
+        .reply(200, account))
+      .nock(MOCK_API_HOST, api => api
+        .get(`/accounts/${account.id}/environments/${environment.name}`)
+        .reply(200, environment))
+      .nock(MOCK_API_HOST, api => api
+        .post(`/environments/${environment.id}/deploy`)
+        .reply(200, mock_pipeline))
       .stdout({ print })
       .stderr({ print })
 
@@ -191,20 +204,7 @@ describe('Scale', function () {
     replica_scaling_settings.scaling_settings[component_version_name][service_to_scale] = { replicas: scaling_settings.replicas };
 
     scale_and_deploy
-      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
-      .nock(MOCK_API_HOST, api => api
-        .put(`/environments/${environment.id}`, replica_scaling_settings)
-        .reply(200))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.name}`)
-        .reply(200, account))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.id}/environments/${environment.name}`)
-        .reply(200, environment))
-      .nock(MOCK_API_HOST, api => api
-        .post(`/environments/${environment.id}/deploy`)
-        .reply(200, mock_pipeline))
       .nock(MOCK_API_HOST, api => api
         .post(`/pipelines/${mock_pipeline.id}/approve`)
         .reply(200, {}))
@@ -215,24 +215,7 @@ describe('Scale', function () {
       });
 
     scale_and_deploy
-      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve(false)))
-      // .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
-      .nock(MOCK_API_HOST, api => api
-        .put(`/environments/${environment.id}`, replica_scaling_settings)
-        .reply(200))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.name}`)
-        .reply(200, account))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.id}/environments/${environment.name}`)
-        .reply(200, environment))
-      .nock(MOCK_API_HOST, api => api
-        .post(`/environments/${environment.id}/deploy`) // TODO: consolidate all of these nock calls between tests
-        .reply(200, mock_pipeline))
-      // .nock(MOCK_API_HOST, api => api
-      //   .post(`/pipelines/${mock_pipeline.id}/approve`)
-      //   .reply(200, {}))
       .command(['scale', '-e', environment.name, '-a', account.name, `${component_version_name}`, '--service', service_to_scale, '--replicas', scaling_settings.replicas.toString(), '--create-pipeline'])
       .it(`Sets service scaling settings, then creates pipelines for the component but doesn't approve`, ctx => {
         expect(ctx.stdout).to.contain(`Updated scaling settings for service app of component ${component_version.component.name} in environment ${environment.name}`);
@@ -241,21 +224,8 @@ describe('Scale', function () {
       });
 
     scale_and_deploy
-      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve(true)))
       .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
-      .nock(MOCK_API_HOST, api => api
-        .put(`/environments/${environment.id}`, replica_scaling_settings)
-        .reply(200))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.name}`)
-        .reply(200, account))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.id}/environments/${environment.name}`)
-        .reply(200, environment))
-      .nock(MOCK_API_HOST, api => api
-        .post(`/environments/${environment.id}/deploy`) // TODO: consolidate all of these nock calls between tests
-        .reply(200, mock_pipeline))
       .command(['scale', '-e', environment.name, '-a', account.name, `${component_version_name}`, '--service', service_to_scale, '--replicas', scaling_settings.replicas.toString(), '--auto-approve'])
       .it(`Sets service scaling settings, creates pipelines for the component, and approves`, ctx => {
         expect(ctx.stdout).to.contain(`Updated scaling settings for service app of component ${component_version.component.name} in environment ${environment.name}`);
