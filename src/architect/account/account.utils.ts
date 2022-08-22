@@ -2,7 +2,7 @@ import { Flags } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AppService from '../../app-config/service';
-import * as Docker from '../../common/utils/docker';
+import { DockerHelper } from '../../common/docker/helper';
 import Account from './account.entity';
 
 export default class AccountUtils {
@@ -24,16 +24,12 @@ export default class AccountUtils {
     };
   }
 
-  static async shouldListLocalAccounts(exit_on_failure?: boolean): Promise<boolean> {
-    try {
-      await Docker.verify();
-      return true;
-    } catch (e: any) {
-      if (exit_on_failure) {
-        process.exit();
-      }
-      return false;
+  static shouldListLocalAccounts(exit_on_failure?: boolean): boolean {
+    const daemon_running = DockerHelper.daemonRunning();
+    if (exit_on_failure && !daemon_running) {
+      process.exit();
     }
+    return daemon_running;
   }
 
   static isLocalAccount(account: Account): boolean {
@@ -62,7 +58,7 @@ export default class AccountUtils {
     const token_json = await app.auth.getPersistedTokenJSON();
     if (!token_json || token_json.email === 'unknown') {
       console.log(chalk.yellow('In order to access remote accounts you can login by running `architect login`'));
-      await this.shouldListLocalAccounts(true);
+      this.shouldListLocalAccounts(true);
       const answers: { account: Account } = await inquirer.prompt([
         {
           type: 'list',
@@ -83,7 +79,7 @@ export default class AccountUtils {
       }
     } else {
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
-      const can_run_local = await this.shouldListLocalAccounts();
+      const can_run_local = this.shouldListLocalAccounts();
       const answers: { account: Account } = await inquirer.prompt([
         {
           type: 'autocomplete',

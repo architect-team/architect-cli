@@ -27,29 +27,40 @@ export const stripTagFromImage: (i: string) => string = (image: string) => {
   }
 };
 
+interface DockerInfoJSON {
+  ClientInfo: {
+    Debug: boolean,
+    Context: string,
+    Plugins: [{
+      SchemaVersion: string;
+      Vendor: string;
+      Version: string;
+      ShortDescription: string;
+      Name: string;
+      Path: string;
+    }],
+    Warnings: null
+  };
+
+  ServerErrors?: string[];
+}
+
 interface DockerInfo {
   daemon_running: boolean;
   has_buildx: boolean;
   has_compose: boolean;
-  plugins: Set<string>
+  plugins: string[];
 }
 class _DockerHelper {
   docker_installed: boolean;
   docker_info: DockerInfo;
 
   constructor() {
-    // TODO: May want to include this w/ true for everything?
-    /*
-    if (process.env.TEST === '1') {
-      return;
-    }
-    */
-
     this.docker_info = {
       daemon_running: false,
       has_buildx: false,
       has_compose: false,
-      plugins: new Set(),
+      plugins: [],
     };
 
     this.docker_installed = this.checkDockerInstalled();
@@ -68,55 +79,24 @@ class _DockerHelper {
   }
 
   getDockerInfo(): DockerInfo {
-    let daemon_running = true;
-    let docker_info: string;
-    try {
-      docker_info = execa.sync('docker', ['info']).stdout;
-    } catch (ex) {
-      docker_info = (ex as ExecaSyncError).stdout;
-      daemon_running = false;
-    }
+    const docker_info = execa.sync('docker', ['info', '--format', '{{json .}}']).stdout;
 
-    //  The data output by `docker info` looks like:
-    /*
-    Client:
-      Context:    default
-      Debug Mode: false
-      Plugins:
-        buildx: Docker Buildx (Docker Inc., v0.8.2)
-        compose: Docker Compose (Docker Inc., v2.7.0)
-        extension: Manages Docker extensions (Docker Inc., v0.2.8)
-        sbom: View the packaged-based Software Bill Of Materials (SBOM) for an image (Anchore Inc., 0.6.0)
-        scan: Docker Scan (Docker Inc., v0.17.0)
-
-    Server:
-       ...
-    */
-    // We only care about the client plugin section, and the server section is empty if the daemon isn't running
-
-
-    const docker_info_lines = docker_info.split('\n');
-
-    const plugin_location = docker_info_lines.indexOf(' Plugins:');
-    const plugins: Set<string> = new Set();
-    if (plugin_location >= 0) {
-      for (let i = plugin_location + 1; i < docker_info_lines.length; i++) {
-        if (!docker_info_lines[i].startsWith('  ')) {
-          break;
-        }
-        const plugin_name = docker_info_lines[i].trimLeft().split(':')[0];
-        plugins.add(plugin_name);
-      }
-    }
+    const docker_json: DockerInfoJSON = JSON.parse(docker_info);
+    const plugins = docker_json.ClientInfo.Plugins.map((plugin) => plugin.Name);
 
     return {
-      daemon_running,
-      has_buildx: plugins.has('buildx'),
-      has_compose: plugins.has('compose'),
+      daemon_running: !docker_json.ServerErrors,
+      has_buildx: plugins.includes('buildx'),
+      has_compose: plugins.includes('compose'),
       plugins,
     };
   }
 
+  daemonRunning(): boolean {
+    return this.docker_info.daemon_running;
+  }
+
+  // TODO: Improve these error messages.
   verifyDocker(): void {
     if (!this.docker_installed) {
        throw new Error('Architect requires Docker to be installed. Please install it and try again.');
@@ -136,14 +116,14 @@ class _DockerHelper {
   }
 
   verifyDaemon() {
-    if (!this.docker_info.daemon_running) {
+    if (!this.daemonRunning()) {
       throw new Error('Docker daemon is not running. Please start it and try again.');
     }
   }
 }
 
 // Create a singleton DockerHelper
-const DockerHelper = new _DockerHelper();
+export const DockerHelper = new _DockerHelper();
 
 interface RequiresDockerOptions {
   buildx?: boolean,
