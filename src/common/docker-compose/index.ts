@@ -12,7 +12,7 @@ import { ArchitectError, ComponentNode, DependencyGraph, Dictionary, GatewayNode
 import LocalPaths from '../../paths';
 import { restart } from '../utils/docker';
 import PortUtil from '../utils/port';
-import { DockerComposeProject } from './project';
+import { DockerComposeProject, DockerComposeProjectWithConfig } from './project';
 import DockerComposeTemplate, { DockerService } from './template';
 
 type GenerateOptions = {
@@ -433,7 +433,28 @@ export class DockerComposeUtils {
 
     const projects: DockerComposeProject[] = JSON.parse(stdout);
 
-    const architect_projects = projects.filter((project) => path.resolve(project.ConfigFiles).startsWith(path.resolve(config_dir)));
+    let architect_projects: DockerComposeProjectWithConfig[] = [];
+    if (projects.length > 0) {
+      if (projects[0].ConfigFiles !== undefined) {
+        architect_projects = (projects as DockerComposeProjectWithConfig[]).filter((project) =>
+          path.resolve(project.ConfigFiles).startsWith(path.resolve(config_dir)));
+      } else {
+        // Older versions of compose do not have a ConfigFiles key. We need to look at the compose file(s) written
+        // to the local deploy path and compare them to the DockerComposeProject.Name
+        const search_directory = path.join(config_dir, LocalPaths.LOCAL_DEPLOY_PATH);
+        const files = await fs.readdir(path.join(search_directory));
+        const local_enviromments = files.map((file) => file.split('.')[0]);
+
+        architect_projects = projects.reduce((filtered: DockerComposeProjectWithConfig[], project) => {
+          const env_index = local_enviromments.indexOf(project.Name);
+          if (env_index >= 0) {
+            project.ConfigFiles = path.join(search_directory, files[env_index]);
+            filtered.push(project as DockerComposeProjectWithConfig);
+          }
+          return filtered;
+        }, []);
+      }
+    }
 
     if (environment_name) {
       const project = architect_projects.find(project => project.Name === environment_name);
