@@ -80,12 +80,12 @@ export default class Exec extends BaseCommand {
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const double_dash_index = argv.indexOf('--');
     if (double_dash_index === -1) {
-      let missing_dash_error_msg = 'Command must be provided after --\n(e.g. "architect exec -- ls")'
+      let missing_dash_error_msg = 'Command must be provided after --\n(e.g. "architect exec -- ls")';
       if (process.platform === 'win32') {
         missing_dash_error_msg += `\n
 If using PowerShell, -- must be escaped with quotes or \`
 (e.g. "architect exec \`-- ls", "architect exec '--' ls)
-Alternatively, running "architect --% exec -- ls" will prevent the PowerShell parser from changing the meaning of --.`
+Alternatively, running "architect --% exec -- ls" will prevent the PowerShell parser from changing the meaning of --.`;
       }
       this.error(chalk.red(missing_dash_error_msg));
     }
