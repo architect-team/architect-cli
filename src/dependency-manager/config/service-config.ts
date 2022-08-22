@@ -11,7 +11,7 @@ export interface ScalingMetricsConfig {
 export interface ScalingConfig {
   min_replicas: number | string; // TODO:290:number
   max_replicas: number | string; // TODO:290:number
-  metrics: ScalingMetricsConfig;
+  metrics: ScalingMetricsConfig; // TODO: require or set reasonable defaults on the backend?
 }
 
 export interface ServiceInterfaceConfig {

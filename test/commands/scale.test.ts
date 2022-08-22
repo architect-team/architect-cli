@@ -1,9 +1,9 @@
 import { expect } from '@oclif/test';
 import sinon, { SinonSpy } from 'sinon';
-import { ComponentVersionSlugUtils } from '../../src';
+import { ComponentVersionSlugUtils, Dictionary } from '../../src';
 import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
 import Deploy from '../../src/commands/deploy';
-import Scale from '../../src/commands/scale';
+import Scale, { ScalingSettings } from '../../src/commands/scale';
 import * as Docker from '../../src/common/utils/docker';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
@@ -160,6 +160,19 @@ describe('Scale', function () {
   });
 
   describe('Scale services followed by deployments', function() {
+    const service_to_scale = 'app';
+    const scaling_settings = {
+      replicas: 5,
+      min: 1,
+      max: 10,
+    };
+    const replica_scaling_settings: Dictionary<ScalingSettings> = {
+      scaling_settings: {},
+    };
+    replica_scaling_settings.scaling_settings[component_version_name] = {};
+    replica_scaling_settings.scaling_settings[component_version_name][service_to_scale] = {};
+    replica_scaling_settings.scaling_settings[component_version_name][service_to_scale] = { replicas: scaling_settings.replicas };
+
     const scale_and_deploy = mockArchitectAuth
       .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .nock(MOCK_API_HOST, api => api
@@ -189,31 +202,6 @@ describe('Scale', function () {
       .stdout({ print })
       .stderr({ print })
 
-    const service_to_scale = 'app';
-    const scaling_settings = {
-      replicas: 5,
-      min: 1,
-      max: 10,
-    };
-
-    const replica_scaling_settings: any = { // TODO: type ScalingSettings?
-      scaling_settings: {},
-    };
-    replica_scaling_settings.scaling_settings[component_version_name] = {};
-    replica_scaling_settings.scaling_settings[component_version_name][service_to_scale] = {};
-    replica_scaling_settings.scaling_settings[component_version_name][service_to_scale] = { replicas: scaling_settings.replicas };
-
-    scale_and_deploy
-      .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
-      .nock(MOCK_API_HOST, api => api
-        .post(`/pipelines/${mock_pipeline.id}/approve`)
-        .reply(200, {}))
-      .command(['scale', '-e', environment.name, '-a', account.name, `${component_version_name}`, '--service', service_to_scale, '--replicas', scaling_settings.replicas.toString(), '--auto-approve'])
-      .it('Sets service scaling settings, then deploys the component', ctx => {
-        expect(ctx.stdout).to.contain(`Updated scaling settings for service app of component ${component_version.component.name} in environment ${environment.name}`);
-        expect(ctx.stdout).to.contain(`${component_version_name} Deployed`);
-      });
-
     scale_and_deploy
       .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve(false)))
       .command(['scale', '-e', environment.name, '-a', account.name, `${component_version_name}`, '--service', service_to_scale, '--replicas', scaling_settings.replicas.toString(), '--create-pipeline'])
@@ -227,11 +215,10 @@ describe('Scale', function () {
       .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve(true)))
       .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
       .command(['scale', '-e', environment.name, '-a', account.name, `${component_version_name}`, '--service', service_to_scale, '--replicas', scaling_settings.replicas.toString(), '--auto-approve'])
-      .it(`Sets service scaling settings, creates pipelines for the component, and approves`, ctx => {
+      .it(`Sets service scaling settings, creates pipelines for the component, and auto approves`, ctx => {
         expect(ctx.stdout).to.contain(`Updated scaling settings for service app of component ${component_version.component.name} in environment ${environment.name}`);
         expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
-        expect(ctx.stdout).to.contain('Deployed');
+        expect(ctx.stdout).to.contain(`${component_version_name} Deployed`);
       });
   });
 });
-

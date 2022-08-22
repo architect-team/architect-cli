@@ -34,7 +34,7 @@ export default class Scale extends BaseCommand {
     max: Flags.integer({
       description: 'Max number of service replicas',
       sensitive: false,
-    }),
+    }), // TODO: cpu and memory scaling metrics + add tests for them
     'create-pipeline': Flags.boolean({
       description: 'Create a pipeline that will apply the new scaling settings',
       default: false,
@@ -59,7 +59,7 @@ export default class Scale extends BaseCommand {
     const { data: component } = await this.app.api.get(`/accounts/${account.name}/components/${component_name}`);
     const component_version: ComponentVersion = (await this.app.api.get(`/components/${component.component_id}/versions/${tag || 'latest'}`)).data;
     const component_version_name = ComponentVersionSlugUtils.build(component_account_name, component_name, tag, instance_name);
-
+// TODO: test that a valid component version must be supplied
     let service_name: string;
     if (flags.service) {
       service_name = flags.service;
