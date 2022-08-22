@@ -105,22 +105,21 @@ class _DockerHelper {
     return this.docker_info.daemon_running;
   }
 
-  // TODO: Improve these error messages.
   verifyDocker(): void {
     if (!this.docker_installed) {
-       throw new Error('Architect requires Docker to be installed. Please install it and try again.');
+       throw new Error('Architect requires Docker to be installed.\nPlease install docker and try again: https://docs.docker.com/engine/install/');
     }
   }
 
   verifyBuildX(): void {
     if (!this.docker_info.has_buildx) {
-      throw new Error("docker buildx is not available. Please update your local version of Docker");
+      throw new Error("'docker buildx' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.");
     }
   }
 
   verifyCompose(): void {
     if (!this.docker_info.has_compose) {
-      throw new Error("docker compose is not available. Please update your local version of Docker");
+      throw new Error("'docker compose' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.");
     }
   }
 
