@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import stream from 'stream';
 import WebSocket, { createWebSocketStream } from 'ws';
-import { ArchitectError, Dictionary, parseUnknownSlug } from '../';
+import { ArchitectError, Dictionary, parseUnknownSlug, ResourceSlugUtils } from '../';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
@@ -38,6 +38,8 @@ export default class Exec extends BaseCommand {
     'architect exec -- ls',
     'architect exec -- /bin/sh',
     'architect exec --account myaccount --environment myenvironment mycomponent.services.app -- /bin/sh',
+    'architect exec --account myaccount --environment myenvironment --replica servicename:0 -- /bin/sh',
+    'architect exec --account myaccount --environment myenvironment --replica 0 -- /bin/sh',
   ];
 
   static flags = {
@@ -55,6 +57,11 @@ export default class Exec extends BaseCommand {
       char: 't',
       allowNo: true,
       default: undefined,
+      sensitive: false,
+    }),
+    replica: Flags.string({
+      description: `Pass replica by <service-name>:<replica-index> or <replica-index> if only 1 service is deployed. Only works on remote deploys.`,
+      char: 'r',
       sensitive: false,
     }),
   };
@@ -260,6 +267,48 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     ws_stream.write(buffer);
   }
 
+  getServiceReplica(replica_flag: string, replicas: Replica[]): Replica {
+    const resources: Dictionary<any> = {};
+    for (const rep of replicas) {
+      const { resource_name } = ResourceSlugUtils.parse(rep.resource_ref);
+      if (resources.hasOwnProperty(resource_name)) {
+        resources[resource_name].push(rep);
+      } else {
+        resources[resource_name] = [rep];
+      }
+    }
+    const resource_names = Object.keys(resources);
+
+    let service_replicas = [];
+    let replica_idx;
+    const replica_parts = replica_flag.split(':');
+    if (replica_parts.length === 1 && !isNaN(parseInt(replica_parts[0]))) {
+      if (resource_names.length > 1) {
+        throw new ArchitectError(`More than one service is found [${resource_names.join(', ')}]. Please specify replica in the form of <service-name>:<replica-index>.`);
+      }
+
+      service_replicas = replicas;
+      replica_idx = parseInt(replica_flag);
+    } else if (replica_parts.length === 2 && !isNaN(parseInt(replica_parts[1]))) {
+      const [service_name, service_replica_idx] = replica_parts;
+      if (!resources.hasOwnProperty(service_name)) {
+        throw new ArchitectError(`No service name found for '${service_name}'. Try ${resource_names.join(', ')}.`);
+      }
+
+      service_replicas = resources[service_name];
+      replica_idx = parseInt(service_replica_idx);
+    } else {
+      throw new ArchitectError('Replica must be of the form <service-name>:<replica-index> or <replica-index>.');
+    }
+
+    if (replica_idx > service_replicas.length - 1 || replica_idx < 0) {
+      const msg = service_replicas.length > 1 ? `between 0 and ${service_replicas.length - 1}` : '0';
+      throw new ArchitectError(`No replica found at index ${replica_idx}. Try index ${msg}.`);
+    }
+
+    return service_replicas[replica_idx];
+  }
+
   async runRemote(account: Account, args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
@@ -267,6 +316,10 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     let component_name: string | undefined;
     let resource_name: string | undefined;
     let instance_name: string | undefined;
+    if (args.resource && flags.replica) {
+      throw new ArchitectError(`Both replica and resource are found. Please provide only one.`);
+    }
+
     if (args.resource) {
       const parsed = parseUnknownSlug(args.resource);
       component_account_name = parsed.component_account_name;
@@ -289,7 +342,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     if (!replicas.length)
       throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
-    const replica = await EnvironmentUtils.getReplica(replicas);
+    const replica = flags.replica ? this.getServiceReplica(flags.replica, replicas) : await EnvironmentUtils.getReplica(replicas);
 
     const query = new URLSearchParams({
       ext_ref: replica.ext_ref,
