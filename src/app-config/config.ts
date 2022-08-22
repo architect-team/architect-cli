@@ -21,6 +21,8 @@ export default class AppConfig {
   oauth_client_id: string;
   account: string;
   environment: string;
+  external_https_address: string;
+  external_http_address: string;
 
   constructor(config_dir: string, partial?: Partial<AppConfig>) {
     this.config_dir = config_dir;
@@ -38,6 +40,8 @@ export default class AppConfig {
     this.oauth_client_id = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
     this.account = '';
     this.environment = process.env.TEST === '1' ? ENVIRONMENT.TEST : ENVIRONMENT.PRODUCTION;
+    this.external_https_address = 'localhost.architect.sh';
+    this.external_http_address = 'arc.localhost';
 
     // Override defaults with input values
     Object.assign(this, partial);
@@ -71,6 +75,8 @@ export default class AppConfig {
       oauth_client_id: this.oauth_client_id,
       account: this.account,
       environment: this.environment,
+      external_https_address: this.external_https_address,
+      external_http_address: this.external_http_address,
     };
   }
 }

@@ -1,3 +1,20 @@
+# [1.23.0](https://github.com/architect-team/architect-cli/compare/v1.22.1...v1.23.0) (2022-08-15)
+
+
+### Bug Fixes
+
+* **cli:** Switch from postinstall to prepare ([ffac972](https://github.com/architect-team/architect-cli/commit/ffac972ec4ab75e596ffe4154e03f87a6139c34a))
+* **dev:** Don't show ping access logs unless they fail ([33dc9b4](https://github.com/architect-team/architect-cli/commit/33dc9b4d038ca06234b0641a5fc0fc69878f54cd))
+* **dev:** Make `architect dev` more robust ([#661](https://github.com/architect-team/architect-cli/issues/661)) ([eda1cff](https://github.com/architect-team/architect-cli/commit/eda1cffe3bce6344929724d2daec64d34d58b1cc))
+* **exec:** Fix issue with commands run in no-tty but with stdin available exiting prematurely due to stdin closing ([#656](https://github.com/architect-team/architect-cli/issues/656)) ([06ef0df](https://github.com/architect-team/architect-cli/commit/06ef0df0cf49fd11c0139fae57003a4f087f7cf6))
+* **exec:** no local selection when docker is unavailable ([#662](https://github.com/architect-team/architect-cli/issues/662)) ([e3bf33b](https://github.com/architect-team/architect-cli/commit/e3bf33b1a47c23c1dae17c6fc492e687297209e9))
+* **register:** Allow register without build ([#660](https://github.com/architect-team/architect-cli/issues/660)) ([033f261](https://github.com/architect-team/architect-cli/commit/033f2612f83439f0c30cee8f770b577d0b0de5d1))
+
+
+### Features
+
+* **link:** 473 list linked components ([#658](https://github.com/architect-team/architect-cli/issues/658)) ([b40c347](https://github.com/architect-team/architect-cli/commit/b40c347e4a3f14e61428271811ad5af87ff19a56))
+
 ## [1.22.1](https://github.com/architect-team/architect-cli/compare/v1.22.0...v1.22.1) (2022-08-05)
 
 

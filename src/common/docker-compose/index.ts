@@ -12,15 +12,49 @@ import { ArchitectError, ComponentNode, DependencyGraph, Dictionary, GatewayNode
 import LocalPaths from '../../paths';
 import { restart } from '../utils/docker';
 import PortUtil from '../utils/port';
-import { DockerComposeProject } from './project';
+import { DockerComposeProject, DockerComposeProjectWithConfig } from './project';
 import DockerComposeTemplate, { DockerService } from './template';
+
+type GenerateOptions = {
+  external_addr: string;
+  gateway_admin_port: number;
+  use_ssl: boolean;
+  config_dir?: string;
+};
 
 export class DockerComposeUtils {
 
   // used to namespace docker-compose projects so multiple deployments can happen to local
   public static DEFAULT_PROJECT = 'architect';
 
-  public static async generate(graph: DependencyGraph, gateway_admin_port = 8080): Promise<DockerComposeTemplate> {
+  public static async generateTlsConfig(config_path: string): Promise<void> {
+    const traefik_config = {
+      tls: {
+        stores: {
+          default: {
+            defaultCertificate: {
+              certFile: '/etc/traefik-ssl/fullchain.pem',
+              keyFile: '/etc/traefik-ssl/privkey.pem',
+            },
+          },
+        },
+        certificates: [{
+          certFile: '/etc/traefik-ssl/fullchain.pem',
+          keyFile: '/etc/traefik-ssl/privkey.pem',
+        }],
+      },
+    };
+
+    const traefik_yaml = yaml.dump(traefik_config);
+    return fs.writeFile(path.join(config_path, `traefik.yaml`), traefik_yaml);
+  }
+
+  public static async generate(graph: DependencyGraph, options?: GenerateOptions): Promise<DockerComposeTemplate> {
+    if (!options) {
+      options = { gateway_admin_port: 8080, external_addr: 'arc.localhost', use_ssl: false };
+    }
+    const { gateway_admin_port, external_addr, use_ssl, config_dir } = options;
+
     const compose: DockerComposeTemplate = {
       version: '3',
       services: {},
@@ -40,13 +74,13 @@ export class DockerComposeUtils {
     const available_ports = (await Promise.all(port_promises)).sort();
 
     const gateway_node = graph.nodes.find((node) => node instanceof GatewayNode);
-    const gateway_port = gateway_node?.interfaces._default.port || 80;
+    const gateway_port = gateway_node?.interfaces._default.port || 443;
 
     const gateway_links = new Set<string>();
     if (gateway_node) {
       for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
         for (const { interface_from } of edge.interface_mappings) {
-          const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
+          const host = interface_from === '@' ? external_addr : `${interface_from}.${external_addr}`;
           gateway_links.add(`${gateway_node.ref}:${host}`);
         }
       }
@@ -56,6 +90,7 @@ export class DockerComposeUtils {
         command: [
           '--api.insecure=true',
           '--pilot.dashboard=false',
+          // '--log.level=DEBUG',
           '--accesslog=true',
           '--accesslog.filters.minDuration=1s',
           '--accesslog.filters.statusCodes=400-599',
@@ -63,14 +98,24 @@ export class DockerComposeUtils {
           '--providers.docker=true',
           '--providers.docker.exposedByDefault=false',
           `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
+          ...(use_ssl ? [
+            // redirect http to https
+            `--entryPoints.web.http.redirections.entryPoint.scheme=https`,
+            `--entryPoints.web.http.redirections.entryPoint.permanent=true`,
+            `--entryPoints.web.http.redirections.entryPoint.to=:${gateway_port}`,
+            // tls certs
+            '--providers.file.watch=false',
+            `--providers.file.fileName=/etc/traefik-ssl/traefik.yaml`,
+          ] : []),
         ],
         ports: [
-          // The HTTP port
+          // The HTTP(S) port
           `${gateway_port}:${gateway_port}`,
           // The Web UI(enabled by--api.insecure = true)
           `${gateway_admin_port}:8080`,
         ],
         volumes: [
+          ...(use_ssl ? [`${config_dir}:/etc/traefik-ssl/`] : []),
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
       };
@@ -262,7 +307,7 @@ export class DockerComposeUtils {
             service_to.labels.push(`traefik.port=${gateway_port}`);
           }
 
-          const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
+          const host = interface_from === '@' ? external_addr : `${interface_from}.${external_addr}`;
           const traefik_service = `${node_to.ref}-${interface_to}`;
 
           const component_node = graph.getNodeByRef(edge.to) as ComponentNode;
@@ -278,6 +323,10 @@ export class DockerComposeUtils {
           service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.port=${node_to_interface.port}`);
           if (node_to_interface.sticky) {
             service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadBalancer.sticky.cookie=true`);
+          }
+          if (use_ssl) {
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`);
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.tls=true`);
           }
         }
       }
@@ -384,7 +433,28 @@ export class DockerComposeUtils {
 
     const projects: DockerComposeProject[] = JSON.parse(stdout);
 
-    const architect_projects = projects.filter((project) => path.resolve(project.ConfigFiles).startsWith(path.resolve(config_dir)));
+    let architect_projects: DockerComposeProjectWithConfig[] = [];
+    if (projects.length > 0) {
+      if (projects[0].ConfigFiles !== undefined) {
+        architect_projects = (projects as DockerComposeProjectWithConfig[]).filter((project) =>
+          path.resolve(project.ConfigFiles).startsWith(path.resolve(config_dir)));
+      } else {
+        // Older versions of compose do not have a ConfigFiles key. We need to look at the compose file(s) written
+        // to the local deploy path and compare them to the DockerComposeProject.Name
+        const search_directory = path.join(config_dir, LocalPaths.LOCAL_DEPLOY_PATH);
+        const files = await fs.readdir(path.join(search_directory));
+        const local_enviromments = files.map((file) => file.split('.')[0]);
+
+        architect_projects = projects.reduce((filtered: DockerComposeProjectWithConfig[], project) => {
+          const env_index = local_enviromments.indexOf(project.Name);
+          if (env_index >= 0) {
+            project.ConfigFiles = path.join(search_directory, files[env_index]);
+            filtered.push(project as DockerComposeProjectWithConfig);
+          }
+          return filtered;
+        }, []);
+      }
+    }
 
     if (environment_name) {
       const project = architect_projects.find(project => project.Name === environment_name);
@@ -475,7 +545,7 @@ export class DockerComposeUtils {
     await fs.writeFile(compose_file, compose);
   }
 
-  public static async watchContainersHealth(compose_file: string, environment_name: string, should_stop: () => boolean): Promise<void> {
+  public static async watchContainersHealth(compose_file: string, environment_name: string, should_stop: () => boolean): Promise<boolean> {
     // To better emulate kubernetes we will always restart a failed container.
     // Kubernetes has 3 modes for Restart. Always, OnFailure and Never. If a liveness probe exists
     // then we will assume a Never policy is not expected. In this instance OnFailure and Always mean pretty
@@ -491,8 +561,13 @@ export class DockerComposeUtils {
     }
 
     const service_data_dictionary: Dictionary<{ last_restart_ms: number }> = {};
+
+    // If the last time this loop runs, a container was restarted, we may have to run `docker compose stop`
+    // because the restart can happen after the compose process was killed.
+    let restarted = false;
     while (!should_stop()) {
       try {
+        restarted = false;
         const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
         for (const container_state of container_states) {
           const id = container_state.ID;
@@ -535,6 +610,8 @@ export class DockerComposeUtils {
             // loops execution.
             if (!should_stop()) {
               console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
+              // Even if the restart itself is interrupted, the restarted container can still be running.
+              restarted = true;
               try {
                 await restart(id);
               } catch (err) {
@@ -550,12 +627,22 @@ export class DockerComposeUtils {
             }
           }
         }
-        await new Promise(r => setTimeout(r, 5000));
+
+        // Wait 5 seconds before checking again. Waiting in 1s increments and checking if we should return early
+        // so that awaiting the result of this promise takes at most 1s and not 5s.
+        for (let i = 0; i < 5; i++) {
+          await new Promise(r => setTimeout(r, 1000));
+          if (should_stop()) {
+            break;
+          }
+        }
       } catch (ex) {
         // Ignore any errors. Since this service just watches services health it does
         // not matter if an error occurs we should not stop a running dev instance
         // just because the `watcher` failed.
       }
     }
+
+    return restarted;
   }
 }

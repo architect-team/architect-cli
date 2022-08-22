@@ -119,6 +119,8 @@ export default class ComponentRegister extends BaseCommand {
         delete interface_config?.host;
       }
     }
+
+    // The external address and ssl have no bearing on registration
     const full_compose = await DockerComposeUtils.generate(graph);
 
     const compose: DockerComposeTemplate = {
