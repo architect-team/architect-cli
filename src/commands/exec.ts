@@ -80,7 +80,14 @@ export default class Exec extends BaseCommand {
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const double_dash_index = argv.indexOf('--');
     if (double_dash_index === -1) {
-      this.error(chalk.red('Command must be provided after --\n(e.g. "architect exec -- ls")'));
+      let missing_dash_error_msg = 'Command must be provided after --\n(e.g. "architect exec -- ls")'
+      if (process.platform === 'win32') {
+        missing_dash_error_msg += `\n
+If using PowerShell, -- must be escaped with quotes or \`
+(e.g. "architect exec \`-- ls", "architect exec '--' ls)
+Alternatively, running "architect --% exec -- ls" will prevent the PowerShell parser from changing the meaning of --.`
+      }
+      this.error(chalk.red(missing_dash_error_msg));
     }
 
     const command = argv.slice(double_dash_index + 1);
@@ -90,7 +97,7 @@ export default class Exec extends BaseCommand {
 
     const argv_without_command = argv.slice(0, double_dash_index);
 
-     const parsed = await super.parse(options, argv_without_command) as Interfaces.ParserOutput<F, A>;
+    const parsed = await super.parse(options, argv_without_command) as Interfaces.ParserOutput<F, A>;
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     parsed.args.command = command;
