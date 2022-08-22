@@ -35,7 +35,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (--version)
-@architect-io/cli/1.24.0-rc.6 linux-x64 node-v16.16.0
+@architect-io/cli/1.24.0-rc.7 linux-x64 node-v16.16.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -146,7 +146,7 @@ _See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomp
 
 ## `architect c:register [COMPONENT]`
 
-Register a new Component with Architect Cloud
+Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.
 
 ```
 USAGE
@@ -154,7 +154,7 @@ USAGE
     [--cache-directory <value>]
 
 ARGUMENTS
-  COMPONENT  [default: ./] Path to a component to register
+  COMPONENT  [default: ./] Path to the component(s) to register
 
 FLAGS
   -a, --account=<value>      Architect account
@@ -165,7 +165,8 @@ FLAGS
                              https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs
 
 DESCRIPTION
-  Register a new Component with Architect Cloud
+  Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified,
+  the same command arg(s) and flag(s) will be applied to each component.
 
 ALIASES
   $ architect component:register
@@ -213,7 +214,7 @@ EXAMPLES
 
 ## `architect comp:register [COMPONENT]`
 
-Register a new Component with Architect Cloud
+Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.
 
 ```
 USAGE
@@ -221,7 +222,7 @@ USAGE
     [--cache-directory <value>]
 
 ARGUMENTS
-  COMPONENT  [default: ./] Path to a component to register
+  COMPONENT  [default: ./] Path to the component(s) to register
 
 FLAGS
   -a, --account=<value>      Architect account
@@ -232,7 +233,8 @@ FLAGS
                              https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs
 
 DESCRIPTION
-  Register a new Component with Architect Cloud
+  Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified,
+  the same command arg(s) and flag(s) will be applied to each component.
 
 ALIASES
   $ architect component:register
@@ -280,7 +282,7 @@ EXAMPLES
 
 ## `architect component:register [COMPONENT]`
 
-Register a new Component with Architect Cloud
+Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.
 
 ```
 USAGE
@@ -288,7 +290,7 @@ USAGE
     [--cache-directory <value>]
 
 ARGUMENTS
-  COMPONENT  [default: ./] Path to a component to register
+  COMPONENT  [default: ./] Path to the component(s) to register
 
 FLAGS
   -a, --account=<value>      Architect account
@@ -299,7 +301,8 @@ FLAGS
                              https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs
 
 DESCRIPTION
-  Register a new Component with Architect Cloud
+  Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified,
+  the same command arg(s) and flag(s) will be applied to each component.
 
 ALIASES
   $ architect component:register
@@ -455,11 +458,11 @@ EXAMPLES
   $ architect components mycomponent
 ```
 
-_See code: [src/commands/components/index.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/components/index.ts)_
+_See code: [src/commands/components/index.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/components/index.ts)_
 
 ## `architect components:register [COMPONENT]`
 
-Register a new Component with Architect Cloud
+Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.
 
 ```
 USAGE
@@ -467,7 +470,7 @@ USAGE
     [--cache-directory <value>]
 
 ARGUMENTS
-  COMPONENT  [default: ./] Path to a component to register
+  COMPONENT  [default: ./] Path to the component(s) to register
 
 FLAGS
   -a, --account=<value>      Architect account
@@ -478,7 +481,8 @@ FLAGS
                              https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs
 
 DESCRIPTION
-  Register a new Component with Architect Cloud
+  Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified,
+  the same command arg(s) and flag(s) will be applied to each component.
 
 ALIASES
   $ architect component:register
@@ -579,7 +583,7 @@ EXAMPLES
   $ architect component:versions --account=myaccount mycomponent
 ```
 
-_See code: [src/commands/components/versions.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/components/versions.ts)_
+_See code: [src/commands/components/versions.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/components/versions.ts)_
 
 ## `architect config`
 
@@ -617,7 +621,7 @@ EXAMPLES
   $ architect config:get log_level
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/config/get.ts)_
 
 ## `architect config:set OPTION VALUE`
 
@@ -638,7 +642,7 @@ EXAMPLES
   $ architect config:set log_level info
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/config/set.ts)_
 
 ## `architect config:view`
 
@@ -658,7 +662,7 @@ EXAMPLES
   $ architect config
 ```
 
-_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/config/view.ts)_
+_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/config/view.ts)_
 
 ## `architect deploy [CONFIGS_OR_COMPONENTS]`
 
@@ -697,7 +701,7 @@ EXAMPLES
   $ architect deploy ./myfolder/architect.yml --secret-file=./mysecrets.yml --environment=myenvironment --account=myaccount --auto-approve
 ```
 
-_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/deploy.ts)_
+_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/deploy.ts)_
 
 ## `architect destroy`
 
@@ -723,7 +727,7 @@ EXAMPLES
   $ architect destroy --account=myaccount --environment=myenvironment --auto-approve
 ```
 
-_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/destroy.ts)_
+_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/destroy.ts)_
 
 ## `architect dev [CONFIGS_OR_COMPONENTS]`
 
@@ -763,7 +767,7 @@ EXAMPLES
   $ architect dev --port=81 --no-browser --debug=true --secret-file=./mycomponent/mysecrets.yml ./mycomponent/architect.yml
 ```
 
-_See code: [src/commands/dev.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/dev.ts)_
+_See code: [src/commands/dev.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/dev.ts)_
 
 ## `architect doctor`
 
@@ -785,7 +789,7 @@ EXAMPLES
   $ architect doctor -o ./myoutput.yml
 ```
 
-_See code: [src/commands/doctor.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/doctor.ts)_
+_See code: [src/commands/doctor.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/doctor.ts)_
 
 ## `architect env [QUERY]`
 
@@ -1076,7 +1080,7 @@ EXAMPLES
   $ architect environments myenvironment
 ```
 
-_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/environments/index.ts)_
+_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/environments/index.ts)_
 
 ## `architect environments:create [ENVIRONMENT]`
 
@@ -1110,7 +1114,7 @@ EXAMPLES
   environment:create --account=myaccount --ttl=5days --description="My new temporary Architect environment" myenvironment
 ```
 
-_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/environments/create.ts)_
+_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/environments/create.ts)_
 
 ## `architect environments:destroy [ENVIRONMENT]`
 
@@ -1144,7 +1148,7 @@ EXAMPLES
   $ architect environment:deregister --account=myaccount --auto-approve --force myenvironment
 ```
 
-_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/environments/destroy.ts)_
+_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/environments/destroy.ts)_
 
 ## `architect environments:search [QUERY]`
 
@@ -1323,6 +1327,8 @@ FLAGS
   -a, --account=<value>      Architect account
   -e, --environment=<value>  Architect environment
   -i, --[no-]stdin           Pass stdin to the container. Only works on remote deploys.
+  -r, --replica=<value>      Pass replica by <service-name>:<replica-index> or <replica-index> if only 1 service is
+                             deployed. Only works on remote deploys.
   -t, --[no-]tty             Stdin is a TTY. If the flag isn't supplied, tty or no-tty is automatically detected.
 
 DESCRIPTION
@@ -1334,9 +1340,13 @@ EXAMPLES
   $ architect exec -- /bin/sh
 
   $ architect exec --account myaccount --environment myenvironment mycomponent.services.app -- /bin/sh
+
+  $ architect exec --account myaccount --environment myenvironment --replica servicename:0 -- /bin/sh
+
+  $ architect exec --account myaccount --environment myenvironment --replica 0 -- /bin/sh
 ```
 
-_See code: [src/commands/exec.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/exec.ts)_
+_See code: [src/commands/exec.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/exec.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -1382,7 +1392,7 @@ EXAMPLES
   $ architect init --from-compose=mycompose.yml --component-file=architect.yml
 ```
 
-_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/init.ts)_
 
 ## `architect link [COMPONENTPATH]`
 
@@ -1404,7 +1414,7 @@ EXAMPLES
   $ architect link -p ./mycomponent/architect.yml
 ```
 
-_See code: [src/commands/link/index.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/link/index.ts)_
+_See code: [src/commands/link/index.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/link/index.ts)_
 
 ## `architect link:list`
 
@@ -1421,7 +1431,7 @@ EXAMPLES
   $ architect link:list
 ```
 
-_See code: [src/commands/link/list.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/link/list.ts)_
+_See code: [src/commands/link/list.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/link/list.ts)_
 
 ## `architect login`
 
@@ -1444,7 +1454,7 @@ EXAMPLES
   $ architect login -e my-email-address@my-email-domain.com
 ```
 
-_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/login.ts)_
 
 ## `architect logout`
 
@@ -1461,7 +1471,7 @@ EXAMPLES
   $ architect logout
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/logout.ts)_
 
 ## `architect logs [RESOURCE]`
 
@@ -1495,7 +1505,7 @@ EXAMPLES
   $ architect logs --follow --raw --timestamps
 ```
 
-_See code: [src/commands/logs.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/logs.ts)_
+_See code: [src/commands/logs.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/logs.ts)_
 
 ## `architect platform [QUERY]`
 
@@ -1648,7 +1658,7 @@ EXAMPLES
   $ architect platforms --account=myaccount myplatform
 ```
 
-_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/platforms/index.ts)_
+_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/platforms/index.ts)_
 
 ## `architect platforms:create [PLATFORM]`
 
@@ -1684,7 +1694,7 @@ EXAMPLES
   $ architect platforms:register --account=myaccount --type=kubernetes --kubeconfig=~/.kube/config --auto-approve
 ```
 
-_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/platforms/create.ts)_
+_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/platforms/create.ts)_
 
 ## `architect platforms:deregister [PLATFORM]`
 
@@ -1746,7 +1756,7 @@ EXAMPLES
   $ architect platforms:deregister --account=myaccount --auto-approve --force architect
 ```
 
-_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/platforms/destroy.ts)_
+_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/platforms/destroy.ts)_
 
 ## `architect platforms:register [PLATFORM]`
 
@@ -1813,7 +1823,7 @@ EXAMPLES
 
 ## `architect register [COMPONENT]`
 
-Register a new Component with Architect Cloud
+Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.
 
 ```
 USAGE
@@ -1821,7 +1831,7 @@ USAGE
     [--cache-directory <value>]
 
 ARGUMENTS
-  COMPONENT  [default: ./] Path to a component to register
+  COMPONENT  [default: ./] Path to the component(s) to register
 
 FLAGS
   -a, --account=<value>      Architect account
@@ -1832,7 +1842,8 @@ FLAGS
                              https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs
 
 DESCRIPTION
-  Register a new Component with Architect Cloud
+  Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified,
+  the same command arg(s) and flag(s) will be applied to each component.
 
 ALIASES
   $ architect component:register
@@ -1850,7 +1861,7 @@ EXAMPLES
   $ architect register -a myaccount -t latest --arg NODE_ENV=dev ./architect.yml
 ```
 
-_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/register.ts)_
+_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/register.ts)_
 
 ## `architect secrets SECRETS_FILE`
 
@@ -1936,7 +1947,7 @@ EXAMPLES
   $ architect secrets --account=myaccount --environment=myenvironment ../mysecrets.yml
 ```
 
-_See code: [src/commands/secrets/download.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/secrets/download.ts)_
+_See code: [src/commands/secrets/download.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/secrets/download.ts)_
 
 ## `architect secrets:set SECRETS_FILE`
 
@@ -1994,7 +2005,7 @@ EXAMPLES
   $ architect secrets:set --account=myaccount --override ./mysecrets.yml
 ```
 
-_See code: [src/commands/secrets/upload.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/secrets/upload.ts)_
+_See code: [src/commands/secrets/upload.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/secrets/upload.ts)_
 
 ## `architect task COMPONENT TASK`
 
@@ -2024,7 +2035,7 @@ EXAMPLES
   $ architect task --account=myaccount --environment=myenvironment mycomponent:latest mytask
 ```
 
-_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/task.ts)_
+_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/task.ts)_
 
 ## `architect task:exec COMPONENT TASK`
 
@@ -2076,7 +2087,7 @@ EXAMPLES
   $ architect unlink -p mycomponent
 ```
 
-_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/unlink.ts)_
+_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/unlink.ts)_
 
 ## `architect validate [CONFIGS_OR_COMPONENTS]`
 
@@ -2106,7 +2117,7 @@ EXAMPLES
   $ architect validate ../mycomponent/architect.yml ../myothercomponent/architect.yml
 ```
 
-_See code: [src/commands/validate.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/validate.ts)_
+_See code: [src/commands/validate.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/validate.ts)_
 
 ## `architect whoami`
 
@@ -2126,5 +2137,5 @@ EXAMPLES
   $ architect whoami
 ```
 
-_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.6/src/commands/whoami.ts)_
+_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.7/src/commands/whoami.ts)_
 <!-- commandsstop -->
