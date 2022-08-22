@@ -69,6 +69,15 @@ class _DockerHelper {
     }
   }
 
+  static getTestHelper(): _DockerHelper {
+    const helper = new _DockerHelper();
+    helper.docker_installed = true;
+    helper.docker_info.daemon_running = true;
+    helper.docker_info.has_buildx = true;
+    helper.docker_info.has_compose = true;
+    return helper;
+  }
+
   checkDockerInstalled(): boolean {
     try {
       which.sync('docker');
@@ -123,7 +132,7 @@ class _DockerHelper {
 }
 
 // Create a singleton DockerHelper
-export const DockerHelper = new _DockerHelper();
+export const DockerHelper = process.env.TEST === '1' ? _DockerHelper.getTestHelper() : new _DockerHelper();
 
 interface RequiresDockerOptions {
   buildx?: boolean,
