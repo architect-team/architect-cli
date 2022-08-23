@@ -10,6 +10,7 @@ import Environment from '../architect/environment/environment.entity';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
+import { booleanString } from '../common/utils/oclif';
 
 export default class Logs extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -25,7 +26,7 @@ export default class Logs extends BaseCommand {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    follow: Flags.boolean({
+    follow: booleanString({
       description: 'Specify if the logs should be streamed.',
       char: 'f',
       default: false,
@@ -36,7 +37,7 @@ export default class Logs extends BaseCommand {
       default: '',
       sensitive: false,
     }),
-    raw: Flags.boolean({
+    raw: booleanString({
       description: 'Show the raw output of the logs.',
       default: false,
       sensitive: false,
@@ -46,7 +47,7 @@ export default class Logs extends BaseCommand {
       default: -1,
       sensitive: false,
     }),
-    timestamps: Flags.boolean({
+    timestamps: booleanString({
       description: 'Include timestamps on each line in the log output.',
       default: false,
       sensitive: false,
