@@ -5,7 +5,7 @@ app.set('port', (process.env.PORT || 3000));
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', (request, response) => {
-  response.send(`Hello ${process.env.HELLO_TEXT}!`);
+  response.send('Hello World!');
 });
 
 app.listen(app.get('port'), () => {

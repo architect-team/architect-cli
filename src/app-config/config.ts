@@ -40,7 +40,7 @@ export default class AppConfig {
     this.oauth_host = 'https://auth.architect.io';
     this.oauth_client_id = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
     this.account = '';
-    this.agent_server_host = 'local';
+    this.agent_server_host = 'https://agent-client.dev.architect.io';
     this.environment = process.env.TEST === '1' ? ENVIRONMENT.TEST : ENVIRONMENT.PRODUCTION;
     this.external_https_address = 'localhost.architect.sh';
     this.external_http_address = 'arc.localhost';

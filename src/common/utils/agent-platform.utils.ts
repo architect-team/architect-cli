@@ -11,6 +11,27 @@ const SERVICE_ACCOUNT_NAME = 'architect-agent';
 
 export class AgentPlatformUtils {
 
+  private static getLocalServerAgentIP(): string {
+    return 'host.docker.internal';
+  }
+
+  private static getLocalServerAgentPort(): string {
+    const container_name_results = execa.sync('docker', ['ps', '-f', 'name=agent-server', '--format', '{{.Names}}']);
+    const results = execa.sync('docker', ['port', container_name_results.stdout, '9081/tcp']);
+    return results.stdout.split(':')[1];
+  }
+
+  public static getServerAgentHost(agent_server_host: string): string {
+    const host = agent_server_host.toLocaleLowerCase().trim();
+    if (host[host.length - 1] === ':') {
+      return `${host}${this.getLocalServerAgentPort()}`;
+    }
+    if (host !== 'local') {
+      return agent_server_host;
+    }
+    return `https://${this.getLocalServerAgentIP()}:${this.getLocalServerAgentPort()}`;
+  }
+
   public static async configureAgentPlatform(
     flags: any,
     description: string,

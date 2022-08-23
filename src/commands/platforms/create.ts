@@ -96,27 +96,6 @@ export default class PlatformCreate extends BaseCommand {
     CliUx.ux.action.stop();
   }
 
-  private getLocalServerAgentIP(): string {
-    return 'host.docker.internal';
-  }
-
-  private getLocalServerAgentPort(): string {
-    const container_name_results = execa.sync('docker', ['ps', '-f', 'name=agent-server', '--format', '{{.Names}}']);
-    const results = execa.sync('docker', ['port', container_name_results.stdout, '9081/tcp']);
-    return results.stdout.split(':')[1];
-  }
-
-  private getServerAgentHost(): string {
-    const host = this.app.config.agent_server_host.toLocaleLowerCase().trim();
-    if (host[host.length - 1] === ':') {
-      return `${host}${this.getLocalServerAgentPort()}`;
-    }
-    if (host !== 'local') {
-      return this.app.config.agent_server_host;
-    }
-    return `https://${this.getLocalServerAgentIP()}:${this.getLocalServerAgentPort()}`;
-  }
-
   private async createPlatform() {
     const { args, flags } = await this.parse(PlatformCreate);
 
@@ -160,7 +139,7 @@ export default class PlatformCreate extends BaseCommand {
 
       if (flags.type?.toLowerCase() == 'agent') {
         CliUx.ux.action.start(chalk.blue('Installing the agent'));
-        await AgentPlatformUtils.installAgent(flags, created_platform.token.access_token, this.getServerAgentHost(), this.app.config);
+        await AgentPlatformUtils.installAgent(flags, created_platform.token.access_token, AgentPlatformUtils.getServerAgentHost(this.app.config.agent_server_host), this.app.config);
         await AgentPlatformUtils.waitForAgent(flags);
         CliUx.ux.action.stop();
         await this.installAppliations(flags, created_platform, account.name, platform_name);
