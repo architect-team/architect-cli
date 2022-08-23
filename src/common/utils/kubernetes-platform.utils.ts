@@ -2,6 +2,7 @@ import { CliUx } from '@oclif/core';
 import chalk from 'chalk';
 import execa from 'execa';
 import fs from 'fs-extra';
+import * as yaml from 'js-yaml';
 import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
@@ -23,8 +24,9 @@ export class KubernetesPlatformUtils {
         : default_config_directory,
     };
 
-    let kubeconfig: any;
     const kubeconfig_path = untildify(flags.kubeconfig);
+    const kube_contents = (await fs.readFile(kubeconfig_path)).toString();
+    const kube_config = yaml.load(kube_contents) as any;
 
     const set_kubeconfig = ['--kubeconfig', untildify(kubeconfig_path), '--namespace', 'default'];
 
@@ -114,7 +116,7 @@ export class KubernetesPlatformUtils {
     CliUx.ux.action.start('Loading kubernetes configuration info');
 
     // Retrieve cluster host and ca certificate
-    const cluster = kubeconfig.clusters.find((cluster: any) => cluster.name === kube_context.context.cluster);
+    const cluster = kube_config.clusters.find((cluster: any) => cluster.name === kube_context.context.cluster);
     let cluster_ca_cert: string;
     if ('certificate-authority-data' in cluster.cluster) {
       const ca_cert_buffer = Buffer.from(cluster.cluster['certificate-authority-data'], 'base64');

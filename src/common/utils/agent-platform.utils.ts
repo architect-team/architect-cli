@@ -127,7 +127,6 @@ type: kubernetes.io/service-account-token
   }
 
   public static async installAgent(flags: any, token: string, host: string, config: AppConfig): Promise<void> {
-    console.log(`TOKEN: ${token}`);
     const yaml = `
 apiVersion: apps/v1
 kind: Deployment
