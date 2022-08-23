@@ -45,6 +45,7 @@ describe('platform:create', function () {
       context: 'minikube',
       service_account_name: 'architect',
       use_existing_sa: true,
+      application_install: true,
     });
 
     const test_platform_id = 'test-platform-id';
@@ -73,7 +74,7 @@ describe('platform:create', function () {
     const kubernetes_configuration_fake = sinon.fake.returns({ name: 'new_k8s_platform', type: 'KUBERNETES' });
     sinon.replace(KubernetesPlatformUtils, 'configureKubernetesPlatform', kubernetes_configuration_fake);
 
-    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve']);
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
     expect(kubernetes_configuration_fake.calledOnce).true;
