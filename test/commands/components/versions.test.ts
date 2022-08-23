@@ -3,6 +3,7 @@ import sinon, { SinonSpy } from 'sinon';
 import AccountUtils from '../../../src/architect/account/account.utils';
 import BaseTable from '../../../src/base-table';
 import ComponentVersions from '../../../src/commands/components/versions';
+import * as LocalizedTimestamp from '../../../src/common/utils/localized-timestamp';
 import { mockArchitectAuth, MOCK_API_HOST } from '../../utils/mocks';
 
 describe('list component versions', () => {
@@ -14,18 +15,19 @@ describe('list component versions', () => {
     component_id: 'component-id',
   };
 
+  const date = '5/2/22, 12:38:32 AM UTC';
   const component_versions = [
     {
       tag: '0.0.1',
-      created_at: '5/2/22, 12:38:32 AM EDT',
+      created_at: date,
     },
     {
       tag: '0.0.2',
-      created_at: '5/2/22, 11:38:51 AM EDT',
+      created_at: date,
     },
     {
       tag: 'latest',
-      created_at: '5/2/22, 11:38:32 AM EDT',
+      created_at: date,
     },
   ];
 
@@ -37,6 +39,7 @@ describe('list component versions', () => {
 
   mockArchitectAuth
     .stub(AccountUtils, 'getAccount', sinon.stub().returns(component.account))
+    .stub(LocalizedTimestamp, 'default', sinon.stub().returns(date))
     .stub(ComponentVersions.prototype, 'log', sinon.fake.returns(null))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${component.account.name}/components/${component.name}`)
