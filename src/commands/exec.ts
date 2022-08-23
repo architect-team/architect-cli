@@ -1,4 +1,4 @@
-import { Interfaces } from '@oclif/core';
+import { Flags, Interfaces } from '@oclif/core';
 import { OutputArgs, OutputFlags } from '@oclif/core/lib/interfaces';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
