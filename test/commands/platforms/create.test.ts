@@ -38,6 +38,13 @@ describe('platform:create', function () {
     fs.writeJSONSync(tmp_config_file, config);
     const app_config_stub = sinon.stub().returns(new AppService(tmp_dir, '0.0.1'));
     sinon.replace(AppService, 'create', app_config_stub);
+    sinon.replace(PlatformCreate.prototype, <any>'setupKubeContext', async () => {
+      return {
+        original_context: "original_context",
+        current_context: "current_context",
+      }
+    });
+    sinon.replace(PlatformCreate.prototype, <any>'setContext', async () => { });
   });
 
   it('Creates a Kubernetes platform with input', async () => {
