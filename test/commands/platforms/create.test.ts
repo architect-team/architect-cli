@@ -9,6 +9,7 @@ import AppConfig from '../../../src/app-config/config';
 import AppService from '../../../src/app-config/service';
 import PipelineUtils from '../../../src/architect/pipeline/pipeline.utils';
 import PlatformCreate from '../../../src/commands/platforms/create';
+import { AgentPlatformUtils } from '../../../src/common/utils/agent-platform.utils';
 import { KubernetesPlatformUtils } from '../../../src/common/utils/kubernetes-platform.utils';
 import ARCHITECTPATHS from '../../../src/paths';
 
@@ -79,5 +80,56 @@ describe('platform:create', function () {
     expect(post_to_api_spy.calledOnce).true;
     expect(kubernetes_configuration_fake.calledOnce).true;
     expect(create_platform_applications_spy.calledOnce).true;
+  });
+
+  it('Creates an Agent platform with input', async () => {
+    const inquirerStub = sinon.stub(inquirer, 'prompt');
+    inquirerStub.resolves({
+      context: 'minikube',
+      service_account_name: 'architect',
+      use_existing_sa: true,
+      application_install: true,
+      platform_type: 'agent (BETA)',
+    });
+
+    const test_platform_id = 'test-platform-id-agent';
+    const test_pipeline_id = 'test-pipeline-id-agent';
+    const access_token = 'access_token';
+
+    nock('https://api.architect.io').get(`/accounts/${account.name}`)
+      .reply(200, account);
+
+    nock('https://api.architect.io').post(`/accounts/${account.id}/platforms`)
+      .reply(200, {
+        id: test_platform_id,
+        account: account,
+        token: {
+          access_token: access_token,
+        },
+      });
+
+    nock('https://api.architect.io').post(`/platforms/${test_platform_id}/apps`)
+      .reply(200, {
+        id: 'test-deployment-id',
+        pipeline: {
+          id: test_pipeline_id,
+        },
+      });
+
+    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
+    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
+    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'postPlatformToApi');
+    const agent_configuration_fake = sinon.fake.returns({ name: 'new_k8s_platform', type: 'KUBERNETES' });
+    sinon.replace(AgentPlatformUtils, 'configureAgentPlatform', agent_configuration_fake);
+    sinon.replace(AgentPlatformUtils, 'installAgent', async () => { });
+    sinon.replace(AgentPlatformUtils, 'waitForAgent', async () => { });
+    const install_agent_spy = sinon.spy(AgentPlatformUtils, 'installAgent');
+
+    await PlatformCreate.run(['platform-name-agent', '-a', 'test-account-name']);
+    expect(create_platform_spy.calledOnce).true;
+    expect(post_to_api_spy.calledOnce).true;
+    expect(create_platform_applications_spy.calledOnce).true;
+    expect(install_agent_spy.calledOnce).true;
+    expect(install_agent_spy.getCall(0).args[1]).equals(access_token);
   });
 });

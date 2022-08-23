@@ -182,10 +182,13 @@ export default class PlatformCreate extends BaseCommand {
         message: 'What type of platform would you like to register?',
         choices: [
           'kubernetes',
-          'agent',
+          'agent (BETA)',
         ],
       },
     ]);
+    if (!flags.type && platform_type_answers.platform_type.indexOf('agent') === 0) {
+      platform_type_answers.platform_type = 'agent';
+    }
 
     const selected_type = (flags.type || platform_type_answers.platform_type).toLowerCase();
 
@@ -271,7 +274,7 @@ export default class PlatformCreate extends BaseCommand {
     return {
       original_context: original_kubecontext,
       current_context: kube_context,
-    }
+    };
   }
 
   private async setContext(flags: any, context: any) {
