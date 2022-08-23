@@ -53,6 +53,7 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm test
+      - run: npm e2e-test
   publish_cli:
     name: Publish CLI
     if: github.ref_name == 'main' || github.ref_name == 'rc' || startsWith(github.ref_name, 'arc-')

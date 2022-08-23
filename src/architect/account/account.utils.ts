@@ -16,10 +16,12 @@ export default class AccountUtils {
     }),
   };
 
+  static DEV_ACCOUNT_NAME = 'dev';
+
   static getLocalAccount(): Account {
     // Account ids are UUID so there is no chance of collision
     return {
-      id: 'dev',
+      id: this.DEV_ACCOUNT_NAME,
       name: 'dev (Local Machine)',
     };
   }
@@ -37,7 +39,7 @@ export default class AccountUtils {
   }
 
   static isLocalAccount(account: Account): boolean {
-    return account.id === "dev";
+    return account.id === this.DEV_ACCOUNT_NAME;
   }
 
   static async getAccount(app: AppService, account_name?: string, options?: { account_message?: string, ask_local_account?: boolean }): Promise<Account> {
@@ -56,6 +58,10 @@ export default class AccountUtils {
       if (user_data.memberships?.length === 1) { // if user only has one account, use it by default
         return user_data.memberships[0].account;
       }
+    }
+
+    if (account_name === this.DEV_ACCOUNT_NAME) {
+      return this.getLocalAccount();
     }
 
     // Checks if the user is logged in; If not logged in, default to LocalAccount

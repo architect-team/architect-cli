@@ -382,7 +382,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
       compose_args.push(arg);
     }
 
-    await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' }, true);
+    await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' }, flags.tty);
   }
 
   async run(): Promise<void> {

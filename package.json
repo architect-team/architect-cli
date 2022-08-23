@@ -149,6 +149,7 @@
     "copy-static": "copyfiles -u 1 \"src/static/*.html\" lib",
     "coverage": "nyc --extension .ts npm test",
     "test": "mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
+    "e2e-test": "ts-node ./test/e2e/dev-exec.ts",
     "pack": "oclif pack:tarballs",
     "readme": "./bin/readme",
     "check": "npm run lint && npm run test && npm run check-circular",
