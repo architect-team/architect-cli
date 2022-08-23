@@ -280,7 +280,7 @@ export default class PlatformCreate extends BaseCommand {
     await execa('kubectl', [
       ...set_kubeconfig,
       'config', 'set',
-      'current-context', context.name,
+      'current-context', context,
     ]);
   }
 }
