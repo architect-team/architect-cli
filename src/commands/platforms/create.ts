@@ -7,6 +7,7 @@ import yaml from 'js-yaml';
 import * as path from 'path';
 import untildify from 'untildify';
 import { ArchitectError, Dictionary, Slugs } from '../../';
+import { ENVIRONMENT } from '../../app-config/config';
 import AccountUtils from '../../architect/account/account.utils';
 import PipelineUtils from '../../architect/pipeline/pipeline.utils';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
@@ -37,9 +38,12 @@ export default class PlatformCreate extends BaseCommand {
       sensitive: false,
     }),
     ['auto-approve']: Flags.boolean({ sensitive: false }),
+    // Flags get loaded before app_config so making sure that
+    // agent can only be installed on non production devices means
+    // we have to not specify it here.
     type: Flags.string({
       char: 't',
-      options: ['KUBERNETES', 'kubernetes', 'AGENT', 'agent'],
+      options: ['KUBERNETES', 'kubernetes'],
       sensitive: false,
     }),
     host: Flags.string({
@@ -161,7 +165,7 @@ export default class PlatformCreate extends BaseCommand {
         message: 'What type of platform would you like to register?',
         choices: [
           'kubernetes',
-          'agent (BETA)',
+          ...(this.app.config.environment !== ENVIRONMENT.PRODUCTION ? ['agent (BETA)'] : []),
         ],
       },
     ]);
