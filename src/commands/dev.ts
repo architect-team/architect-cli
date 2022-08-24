@@ -87,6 +87,7 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
 
   configureInterrupts() {
     process.on('SIGINT', () => {
+      console.log('Received interrupt!');
       this.handleInterrupt();
     });
 
