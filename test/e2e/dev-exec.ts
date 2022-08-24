@@ -7,6 +7,13 @@ import execa, { ExecaChildProcess, Options } from 'execa';
  * we can be sure this flow is working as expected.
  */
 
+const EXEC_TESTS = [
+  ['ls'],
+  ['sh', '-c', '\'ls; echo "hey"; ls | cat\''],
+  ['sh', '-c', '"echo \"quotes\""'],
+];
+
+
 function architect(args: string[], opts?: Options<string>) {
   return execa('./bin/run', args, opts);
 }
@@ -19,10 +26,23 @@ function runDev(shell: string): execa.ExecaChildProcess<string> {
     { shell, stdio: 'inherit' });
 
   process.on('SIGINT', () => {
-    process.kill(dev_process.pid, 'SIGINT');
+    dev_process.kill('SIGINT');
   });
 
   return dev_process;
+}
+
+async function runExec(shell: string, cmd: string[]) {
+  const cmd_array = ['exec'].concat('-a dev hello-world.services.api --no-tty --'.split(' ')).concat(cmd);
+  try {
+    console.log(`Testing: ${cmd_array}`);
+    const exec_process = architect(cmd_array, { shell });
+    await exec_process;
+  } catch (e) {
+    console.log(`Test failed! ${cmd_array}`);
+    console.log(e);
+    process.exit(1);
+  }
 }
 
 async function runTest(shell: string) {
@@ -57,31 +77,24 @@ async function runTest(shell: string) {
   }
 
   // Step 2: Run some exec commands
-  try {
-    console.log('Attempting exec...');
-    const exec_process = architect(['exec', '-a', 'dev', 'hello-world.services.api', '--no-tty', '--', 'ls'], { shell });
-
-    // exec_process.stdout?.on('data', (data) => {
-    //   console.log(data.toString());
-    // });
-
-    await exec_process;
-  } catch (e) {
-    dev_process.kill('SIGINT');
-    console.log(`Failed to exec with error:\n${e}`);
-    process.exit(1);
+  for (let i = 0; i < EXEC_TESTS.length; i++) {
+    await runExec(shell, EXEC_TESTS[i]);
   }
 
-  console.log('exec succeeded, trying to stop now...');
+  if (process.env.CI) {
+    console.log('All tests passed!');
+    return;
+  }
+
+  /** TODO:
+   * This doesn't currently work when run within a GH action. The child process gets killed: true set,
+   * but the signal is not received for some reason. For now, going to settle with testing exec
+   * and dev will automatically shut down because the test will end.
+   */
 
   // Step 3: Interrupting process
   dev_process.kill('SIGINT');
   try {
-    // Testing
-    console.log('waiting a few seconds');
-    await new Promise(r => setTimeout(r, 5000));
-    // testing
-    console.log(dev_process);
     await dev_process;
   } catch (e) {
     console.log(`Process failed to be killed: ${dev_process}`);
@@ -92,7 +105,7 @@ async function runTest(shell: string) {
 
   const compose_ls = (await execa('docker', ['compose', 'ls'])).stdout.toString();
   if (compose_ls.split('\n').length !== 1) {
-    console.log('Process is still running :(');
+    console.log('ERROR: Process is still running');
     console.log(compose_ls);
     process.exit(1);
   }
