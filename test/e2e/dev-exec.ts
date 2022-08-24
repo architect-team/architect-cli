@@ -1,6 +1,4 @@
 import execa, { ExecaChildProcess, Options } from 'execa';
-import { exec } from 'child_process';
-// const exec = util.promisify(require('node:child_process').exec);
 
 /**
  * Goal of this test is to test that the more complicated commands like dev -> exec -> shutdown of dev
@@ -24,29 +22,41 @@ function runDev(shell: string): execa.ExecaChildProcess<string> {
     process.kill(dev_process.pid, 'SIGINT');
   });
 
-  // dev_process.stdout?.on('data', (data) => {
-  //   console.log(data.toString());
-  // });
+ 
 
   return dev_process;
 }
 
 async function runTest(shell: string) {
-  // Step 1: Run `architect dev`
+  console.log(`Running architect dev using ${shell}...`);
   const dev_process = runDev(shell);
 
-  let running = false;
-  while (!running) {
+  let dev_process_output = '';
+  dev_process.stdout?.on('data', (data) => {
+    dev_process_output += data.toString();
+  });
+
+  let attempts = 0;
+  // Hack to make eslint happy, can fix this with an ignore later
+  while (1 > 0 || attempts) {
     const compose_ls = (await execa('docker', ['compose', 'ls'])).stdout.toString();
     if (compose_ls.split('\n').length > 1) {
-      running = true;
+      break;
     }
 
+    attempts += 1;
+    console.log(`Not yet running. compose output:\n${compose_ls}`);
+
+    if (attempts > 30) {
+      console.log('architect dev not running anything after 30 attempts, giving up');
+      console.log('Dumping dev process output:');
+      console.log(dev_process_output);
+      process.exit(1);
+    }
     await new Promise(r => setTimeout(r, 1000));
   }
 
   // Step 2: Run some exec commands
-  let success: boolean;
   try {
     const exec_process = architect(['exec', '-a', 'dev', 'hello-world.services.api', '--no-tty', '--', 'ls'], { shell });
 
@@ -55,10 +65,10 @@ async function runTest(shell: string) {
     // });
 
     await exec_process;
-    success = true;
   } catch (e) {
     process.kill(dev_process.pid, 'SIGINT');
-    success = false;
+    console.log(`Failed to exec with error:\n${e}`);
+    process.exit(1);
   }
 
   // Step 3: Interrupting process
@@ -73,29 +83,18 @@ async function runTest(shell: string) {
     process.exit(1);
   }
 
-  console.log(`Test passed for shell: ${shell}`);
+  console.log(`Test passed for ${shell}`);
 }
 
 async function run() {
-  /*
-   'aix'
-                | 'android'
-                | 'darwin'
-                | 'freebsd'
-                | 'linux'
-                | 'openbsd'
-                | 'sunos'
-                | 'win32'
-                | 'cygwin'
-                | 'netbsd';
-  */
-  
   interface TestShells {
     darwin: string[];
     linux: string[];
     win32: string[];
   }
           
+  // Note: darwin currently isn't tested because docker isn't installed in the macos runner image.
+  // It is used locally though for people using a Mac, so it's still handled in this script.
   const shells: TestShells = {
     darwin: ['sh', 'bash'],
     linux: ['sh', 'bash'],

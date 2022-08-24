@@ -58,7 +58,8 @@ jobs:
       matrix:
         # Note: macos-latest cannot be used for this test as docker isn't installed on the image.
         # This is due to licensing reasons https://github.com/actions/runner-images/issues/2150
-        os: [ubuntu-latest, windows-latest]
+        # os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
