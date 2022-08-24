@@ -16,7 +16,11 @@ function architect(args: string[], opts?: Options<string>) {
 // TODO: write example yml that requires no dependencies to tmpfile
 function runDev(shell: string): execa.ExecaChildProcess<string> {
   const dev_process = architect(['dev', 'examples/hello-world/architect.yml', '--no-browser'], 
-    { shell, detached: true});
+    { shell, detached: true });
+  
+  dev_process.stdout?.on('data', (data) => {
+    console.log(`DEV: ${data.toString().trim()}`);
+  });
     
   process.on('SIGINT', () => {
     process.kill(dev_process.pid, 'SIGINT');
@@ -28,15 +32,11 @@ function runDev(shell: string): execa.ExecaChildProcess<string> {
 async function runTest(shell: string) {
   console.log(`Running architect dev using ${shell}...`);
   const dev_process = runDev(shell);
-
-  let dev_process_output = '';
-  dev_process.stdout?.on('data', (data) => {
-    dev_process_output += data.toString();
-  });
+  console.log(dev_process);
 
   let attempts = 0;
   // Hack to make eslint happy, can fix this with an ignore later
-  while (1 > 0 || attempts) {
+  while (dev_process.exitCode !== null) {
     const compose_ls = (await execa('docker', ['compose', 'ls'])).stdout.toString();
     if (compose_ls.split('\n').length > 1) {
       break;
@@ -47,15 +47,17 @@ async function runTest(shell: string) {
     }
   
     attempts += 1;
-    const MAX_ATTEMPTS = 2;
+    const MAX_ATTEMPTS = 30;
     if (attempts > MAX_ATTEMPTS) {
       console.log(`architect dev not running anything after ${MAX_ATTEMPTS} attempts, giving up`);
-      console.log('Dumping dev process output:');
-      console.log(dev_process_output);
-      console.log(dev_process);
       process.exit(1);
     }
     await new Promise(r => setTimeout(r, 1000));
+  }
+
+  if (dev_process.exitCode !== null) {
+    console.log('Dev process exited early!');
+    process.exit(1);
   }
 
   // Step 2: Run some exec commands
