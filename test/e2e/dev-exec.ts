@@ -16,11 +16,11 @@ function architect(args: string[], opts?: Options<string>) {
 // TODO: write example yml that requires no dependencies to tmpfile
 function runDev(shell: string): execa.ExecaChildProcess<string> {
   const dev_process = architect(['dev', 'examples/hello-world/architect.yml', '--no-browser'], 
-    { shell, detached: true });
+    { shell, stdio: 'inherit' });
   
-  dev_process.stdout?.on('data', (data) => {
-    console.log(`DEV: ${data.toString().trim()}`);
-  });
+  // dev_process.stdout?.on('data', (data) => {
+  //   console.log(`DEV: ${data.toString().trim()}`);
+  // });
     
   process.on('SIGINT', () => {
     process.kill(dev_process.pid, 'SIGINT');
@@ -32,11 +32,10 @@ function runDev(shell: string): execa.ExecaChildProcess<string> {
 async function runTest(shell: string) {
   console.log(`Running architect dev using ${shell}...`);
   const dev_process = runDev(shell);
-  console.log(dev_process);
 
   let attempts = 0;
   // Hack to make eslint happy, can fix this with an ignore later
-  while (dev_process.exitCode !== null) {
+  while (dev_process.exitCode === null) {
     const compose_ls = (await execa('docker', ['compose', 'ls'])).stdout.toString();
     if (compose_ls.split('\n').length > 1) {
       break;
