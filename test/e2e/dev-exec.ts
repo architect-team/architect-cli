@@ -75,7 +75,7 @@ async function runTest(shell: string) {
   console.log('exec succeeded, trying to stop now...');
 
   // Step 3: Interrupting process
-  process.kill(dev_process.pid, 'SIGINT');
+  dev_process.kill('SIGINT');
   try {
     await dev_process;
   } catch (e) {
