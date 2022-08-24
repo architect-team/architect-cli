@@ -16,7 +16,7 @@ function architect(args: string[], opts?: Options<string>) {
 // TODO: write example yml that requires no dependencies to tmpfile
 function runDev(shell: string): execa.ExecaChildProcess<string> {
   const dev_process = architect(['dev', 'examples/hello-world/architect.yml', '--no-browser', '--ssl=false'], 
-    { shell, stdio: 'inherit' });
+    { shell, detached: true });
   
   // dev_process.stdout?.on('data', (data) => {
   //   console.log(`DEV: ${data.toString().trim()}`);
