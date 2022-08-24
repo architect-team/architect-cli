@@ -77,9 +77,15 @@ async function runTest(shell: string) {
   // Step 3: Interrupting process
   dev_process.kill('SIGINT');
   try {
+    // Testing
+    console.log('waiting a few seconds');
+    await new Promise(r => setTimeout(r, 5000));
+    // testing
+    console.log(dev_process);
     await dev_process;
   } catch (e) {
     console.log(`Process failed to be killed: ${dev_process}`);
+    console.log(e);
   }
   
   console.log(`Dev exit code: ${dev_process.exitCode}`);
