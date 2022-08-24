@@ -53,6 +53,23 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm test
+  test-e2e:
+    strategy:
+      matrix:
+        # Note: macos-latest cannot be used for this test as docker isn't installed on the image.
+        # This is due to licensing reasons https://github.com/actions/runner-images/issues/2150
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+      - run: npm ci
       - run: npm run e2e-test
   publish_cli:
     name: Publish CLI
