@@ -71,6 +71,7 @@ jobs:
           node-version: '16'
           cache: 'npm'
       - run: npm ci
+      - run: npm run build
       - run: npm run e2e-test
   publish_cli:
     name: Publish CLI

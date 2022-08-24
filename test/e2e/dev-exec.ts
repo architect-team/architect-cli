@@ -22,8 +22,6 @@ function runDev(shell: string): execa.ExecaChildProcess<string> {
     process.kill(dev_process.pid, 'SIGINT');
   });
 
- 
-
   return dev_process;
 }
 
@@ -44,11 +42,14 @@ async function runTest(shell: string) {
       break;
     }
 
+    if (attempts % 5 == 0) {
+      console.log('Waiting for architect dev to start containers...');
+    }
+  
     attempts += 1;
-    console.log(`Not yet running. compose output:\n${compose_ls}`);
-
-    if (attempts > 30) {
-      console.log('architect dev not running anything after 30 attempts, giving up');
+    const MAX_ATTEMPTS = 30;
+    if (attempts > MAX_ATTEMPTS) {
+      console.log(`architect dev not running anything after ${MAX_ATTEMPTS} attempts, giving up`);
       console.log('Dumping dev process output:');
       console.log(dev_process_output);
       process.exit(1);
