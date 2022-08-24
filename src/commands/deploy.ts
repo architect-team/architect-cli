@@ -8,6 +8,7 @@ import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import BaseCommand from '../base-command';
 import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../common/errors/pipeline-errors';
 import DeployUtils from '../common/utils/deploy.utils';
+import { booleanString } from '../common/utils/oclif';
 import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-builder';
 import { ComponentVersionSlugUtils } from '../dependency-manager/spec/utils/slugs';
 import Dev from "./dev";
@@ -80,17 +81,19 @@ export default class Deploy extends DeployCommand {
     ...DeployCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    local: Flags.boolean({
+    local: booleanString({
       char: 'l',
       description: `${BaseCommand.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
       exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
       hidden: true,
       sensitive: false,
+      default: undefined,
     }),
-    production: Flags.boolean({
+    production: booleanString({
       description: `${BaseCommand.DEPRECATED} Please use --environment.`,
       dependsOn: ['local'],
       sensitive: false,
+      default: undefined,
     }),
     compose_file: Flags.string({
       description: `${BaseCommand.DEPRECATED} Please use --compose-file.`,
@@ -105,11 +108,12 @@ export default class Deploy extends DeployCommand {
       exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
       sensitive: false,
     }),
-    detached: Flags.boolean({
+    detached: booleanString({
       description: 'Run in detached mode',
       char: 'd',
       dependsOn: ['local'],
       sensitive: false,
+      default: undefined,
     }),
     parameter: Flags.string({
       char: 'p',
@@ -146,30 +150,26 @@ export default class Deploy extends DeployCommand {
       multiple: true,
       description: `${BaseCommand.DEPRECATED} Please use --secret-file.`,
     }),
-    'deletion-protection': Flags.boolean({
+    'deletion-protection': booleanString({
       default: true,
-      allowNo: true,
       description: '[default: true] Toggle for deletion protection on deployments',
       exclusive: ['local'],
       sensitive: false,
     }),
-    recursive: Flags.boolean({
+    recursive: booleanString({
       char: 'r',
       default: true,
-      allowNo: true,
       description: '[default: true] Toggle to automatically deploy all dependencies',
       sensitive: false,
     }),
-    refresh: Flags.boolean({
+    refresh: booleanString({
       default: true,
       hidden: true,
-      allowNo: true,
       exclusive: ['local', 'compose-file', 'compose_file'],
       sensitive: false,
     }),
-    browser: Flags.boolean({
+    browser: booleanString({
       default: true,
-      allowNo: true,
       description: '[default: true] Automatically open urls in the browser for local deployments',
       sensitive: false,
     }),

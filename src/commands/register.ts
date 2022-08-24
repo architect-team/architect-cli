@@ -1,4 +1,4 @@
-import { CliUx, Flags } from '@oclif/core';
+import { CliUx, Flags, Interfaces } from '@oclif/core';
 import axios from 'axios';
 import chalk from 'chalk';
 import { classToClass, classToPlain } from 'class-transformer';
@@ -25,7 +25,7 @@ export const ENV_TAG_PREFIX = 'architect.environment.';
 
 export default class ComponentRegister extends BaseCommand {
   static aliases = ['component:register', 'components:register', 'c:register', 'comp:register'];
-  static description = 'Register a new Component with Architect Cloud';
+  static description = 'Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.';
 
   static examples = [
     'architect register',
@@ -71,21 +71,42 @@ export default class ComponentRegister extends BaseCommand {
   static args = [{
     sensitive: false,
     name: 'component',
-    description: 'Path to a component to register',
+    description: 'Path to the component(s) to register',
     default: './',
   }];
 
-  async run(): Promise<void> {
-    const { flags, args } = await this.parse(ComponentRegister);
-    await Docker.verify();
-
-    const config_path = path.resolve(untildify(args.component));
-
-    if (!Slugs.ComponentTagValidator.test(flags.tag)) {
-      throw new ArchitectError(Slugs.ComponentTagDescription);
+  // overrides the oclif default parse to allow for component to be a list of components
+  async parse<F, A extends {
+    [name: string]: any;
+  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+    if (!options) {
+      return super.parse(options, argv);
     }
+    options.args = [];
+    for (const _ of argv) {
+      options.args.push({ name: 'filler' });
+    }
+    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
+    const absolute_component_path_argv = (parsed.argv || []).map(argv => path.resolve(argv));
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    parsed.args.component = new Set(absolute_component_path_argv);
 
-    await this.registerComponent(config_path, ComponentRegister.getTagFromFlags(flags));
+    return parsed;
+  }
+
+  async run(): Promise<void> {
+    const { args, flags } = await this.parse(ComponentRegister);
+    await Docker.verify();
+    for (const component of args.component) {
+      const config_path = path.resolve(untildify(component));
+
+      if (!Slugs.ComponentTagValidator.test(flags.tag)) {
+        throw new ArchitectError(Slugs.ComponentTagDescription);
+      }
+
+      await this.registerComponent(config_path, ComponentRegister.getTagFromFlags(flags));
+    }
   }
 
   private async registerComponent(config_path: string, tag: string) {
@@ -119,6 +140,8 @@ export default class ComponentRegister extends BaseCommand {
         delete interface_config?.host;
       }
     }
+
+    // The external address and ssl have no bearing on registration
     const full_compose = await DockerComposeUtils.generate(graph);
 
     const compose: DockerComposeTemplate = {

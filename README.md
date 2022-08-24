@@ -35,7 +35,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (--version)
-@architect-io/cli/1.23.0-rc.4 linux-x64 node-v16.16.0
+@architect-io/cli/1.24.0-rc.8 linux-x64 node-v16.16.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -146,7 +146,7 @@ _See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomp
 
 ## `architect c:register [COMPONENT]`
 
-Register a new Component with Architect Cloud
+Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.
 
 ```
 USAGE
@@ -154,7 +154,7 @@ USAGE
     [--cache-directory <value>]
 
 ARGUMENTS
-  COMPONENT  [default: ./] Path to a component to register
+  COMPONENT  [default: ./] Path to the component(s) to register
 
 FLAGS
   -a, --account=<value>      Architect account
@@ -165,7 +165,8 @@ FLAGS
                              https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs
 
 DESCRIPTION
-  Register a new Component with Architect Cloud
+  Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified,
+  the same command arg(s) and flag(s) will be applied to each component.
 
 ALIASES
   $ architect component:register
@@ -213,7 +214,7 @@ EXAMPLES
 
 ## `architect comp:register [COMPONENT]`
 
-Register a new Component with Architect Cloud
+Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.
 
 ```
 USAGE
@@ -221,7 +222,7 @@ USAGE
     [--cache-directory <value>]
 
 ARGUMENTS
-  COMPONENT  [default: ./] Path to a component to register
+  COMPONENT  [default: ./] Path to the component(s) to register
 
 FLAGS
   -a, --account=<value>      Architect account
@@ -232,7 +233,8 @@ FLAGS
                              https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs
 
 DESCRIPTION
-  Register a new Component with Architect Cloud
+  Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified,
+  the same command arg(s) and flag(s) will be applied to each component.
 
 ALIASES
   $ architect component:register
@@ -280,7 +282,7 @@ EXAMPLES
 
 ## `architect component:register [COMPONENT]`
 
-Register a new Component with Architect Cloud
+Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.
 
 ```
 USAGE
@@ -288,7 +290,7 @@ USAGE
     [--cache-directory <value>]
 
 ARGUMENTS
-  COMPONENT  [default: ./] Path to a component to register
+  COMPONENT  [default: ./] Path to the component(s) to register
 
 FLAGS
   -a, --account=<value>      Architect account
@@ -299,7 +301,8 @@ FLAGS
                              https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs
 
 DESCRIPTION
-  Register a new Component with Architect Cloud
+  Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified,
+  the same command arg(s) and flag(s) will be applied to each component.
 
 ALIASES
   $ architect component:register
@@ -455,11 +458,11 @@ EXAMPLES
   $ architect components mycomponent
 ```
 
-_See code: [src/commands/components/index.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/components/index.ts)_
+_See code: [src/commands/components/index.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/components/index.ts)_
 
 ## `architect components:register [COMPONENT]`
 
-Register a new Component with Architect Cloud
+Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.
 
 ```
 USAGE
@@ -467,7 +470,7 @@ USAGE
     [--cache-directory <value>]
 
 ARGUMENTS
-  COMPONENT  [default: ./] Path to a component to register
+  COMPONENT  [default: ./] Path to the component(s) to register
 
 FLAGS
   -a, --account=<value>      Architect account
@@ -478,7 +481,8 @@ FLAGS
                              https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs
 
 DESCRIPTION
-  Register a new Component with Architect Cloud
+  Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified,
+  the same command arg(s) and flag(s) will be applied to each component.
 
 ALIASES
   $ architect component:register
@@ -579,7 +583,7 @@ EXAMPLES
   $ architect component:versions --account=myaccount mycomponent
 ```
 
-_See code: [src/commands/components/versions.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/components/versions.ts)_
+_See code: [src/commands/components/versions.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/components/versions.ts)_
 
 ## `architect config`
 
@@ -617,7 +621,7 @@ EXAMPLES
   $ architect config:get log_level
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/config/get.ts)_
 
 ## `architect config:set OPTION VALUE`
 
@@ -638,7 +642,7 @@ EXAMPLES
   $ architect config:set log_level info
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/config/set.ts)_
 
 ## `architect config:view`
 
@@ -658,7 +662,7 @@ EXAMPLES
   $ architect config
 ```
 
-_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/config/view.ts)_
+_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/config/view.ts)_
 
 ## `architect deploy [CONFIGS_OR_COMPONENTS]`
 
@@ -667,26 +671,28 @@ Create a deploy job on Architect Cloud
 ```
 USAGE
   $ architect deploy [CONFIGS_OR_COMPONENTS] [--auto-approve | -o <value> | ] [-a <value>] [-e <value>]
-    [--production ] [-d ] [-i <value>] [--secret-file <value>] [-s <value>] [--deletion-protection | ] [-r] [--browser]
+    [--production <value> ] [-d <value> ] [-i <value>] [--secret-file <value>] [-s <value>] [--deletion-protection
+    <value> | ] [-r <value>] [--browser <value>]
 
 ARGUMENTS
   CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `account/component:latest`. Multiple components are
                          accepted.
 
 FLAGS
-  -a, --account=<value>       Architect account
-  -d, --detached              Run in detached mode
-  -e, --environment=<value>   Architect environment
-  -i, --interface=<value>...  [default: ] Component interfaces
-  -o, --compose-file=<value>  Path where the compose file should be written to
-  -r, --[no-]recursive        [default: true] Toggle to automatically deploy all dependencies
-  -s, --secret=<value>...     [default: ] An individual secret key and value in the form SECRET_KEY=SECRET_VALUE
-  --auto-approve              Automatically approve the deployment without a review step. Used for debugging and CI
-                              flows.
-  --[no-]browser              [default: true] Automatically open urls in the browser for local deployments
-  --[no-]deletion-protection  [default: true] Toggle for deletion protection on deployments
-  --production                [deprecated] Please use --environment.
-  --secret-file=<value>...    [default: ] Path of secrets file
+  -a, --account=<value>          Architect account
+  -d, --detached=<value>         Run in detached mode
+  -e, --environment=<value>      Architect environment
+  -i, --interface=<value>...     [default: ] Component interfaces
+  -o, --compose-file=<value>     Path where the compose file should be written to
+  -r, --recursive=<value>        [default: true] [default: true] Toggle to automatically deploy all dependencies
+  -s, --secret=<value>...        [default: ] An individual secret key and value in the form SECRET_KEY=SECRET_VALUE
+  --auto-approve                 Automatically approve the deployment without a review step. Used for debugging and CI
+                                 flows.
+  --browser=<value>              [default: true] [default: true] Automatically open urls in the browser for local
+                                 deployments
+  --deletion-protection=<value>  [default: true] [default: true] Toggle for deletion protection on deployments
+  --production=<value>           [deprecated] Please use --environment.
+  --secret-file=<value>...       [default: ] Path of secrets file
 
 DESCRIPTION
   Create a deploy job on Architect Cloud
@@ -697,7 +703,7 @@ EXAMPLES
   $ architect deploy ./myfolder/architect.yml --secret-file=./mysecrets.yml --environment=myenvironment --account=myaccount --auto-approve
 ```
 
-_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/deploy.ts)_
+_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/deploy.ts)_
 
 ## `architect destroy`
 
@@ -723,7 +729,7 @@ EXAMPLES
   $ architect destroy --account=myaccount --environment=myenvironment --auto-approve
 ```
 
-_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/destroy.ts)_
+_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/destroy.ts)_
 
 ## `architect dev [CONFIGS_OR_COMPONENTS]`
 
@@ -732,7 +738,8 @@ Run your stack locally
 ```
 USAGE
   $ architect dev [CONFIGS_OR_COMPONENTS] [-a <value>] [-o <value> | -e <value> |  |  | ] [-i <value>]
-    [--secret-file <value>] [-s <value>] [-r] [--browser] [--port <value>] [-d] [--debug <value>] [--arg <value>]
+    [--secret-file <value>] [-s <value>] [-r <value>] [--browser <value>] [--port <value>] [-d <value>] [--debug
+    <value>] [--arg <value>] [--ssl <value>]
 
 ARGUMENTS
   CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `account/component:latest`. Multiple components are
@@ -740,17 +747,19 @@ ARGUMENTS
 
 FLAGS
   -a, --account=<value>       Architect account
-  -d, --detached              Run in detached mode
+  -d, --detached=<value>      Run in detached mode
   -e, --environment=<value>   Architect environment
   -i, --interface=<value>...  [default: ] Component interfaces
   -o, --compose-file=<value>  Path where the compose file should be written to
-  -r, --[no-]recursive        [default: true] Toggle to automatically deploy all dependencies
+  -r, --recursive=<value>     [default: true] [default: true] Toggle to automatically deploy all dependencies
   -s, --secret=<value>...     [default: ] An individual secret key and value in the form SECRET_KEY=SECRET_VALUE
   --arg=<value>...            Build arg(s) to pass to docker build
-  --[no-]browser              [default: true] Automatically open urls in the browser for local deployments
+  --browser=<value>           [default: true] [default: true] Automatically open urls in the browser for local
+                              deployments
   --debug=<value>             [default: true] [default: true] Turn debug mode on (true) or off (false)
-  --port=<value>              [default: 80] [default: 80] Port for the gateway
+  --port=<value>              [default: 443] Port for the gateway
   --secret-file=<value>...    [default: ] Path of secrets file
+  --ssl=<value>               [default: true] Use https for all ingresses
 
 DESCRIPTION
   Run your stack locally
@@ -758,10 +767,10 @@ DESCRIPTION
 EXAMPLES
   $ architect dev ./mycomponent/architect.yml
 
-  $ architect dev --port=81 --no-browser --debug=true --secret-file=./mycomponent/mysecrets.yml ./mycomponent/architect.yml
+  $ architect dev --port=81 --browser=false --debug=true --secret-file=./mycomponent/mysecrets.yml ./mycomponent/architect.yml
 ```
 
-_See code: [src/commands/dev.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/dev.ts)_
+_See code: [src/commands/dev.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/dev.ts)_
 
 ## `architect doctor`
 
@@ -783,7 +792,7 @@ EXAMPLES
   $ architect doctor -o ./myoutput.yml
 ```
 
-_See code: [src/commands/doctor.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/doctor.ts)_
+_See code: [src/commands/doctor.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/doctor.ts)_
 
 ## `architect env [QUERY]`
 
@@ -855,15 +864,15 @@ Deregister an environment
 
 ```
 USAGE
-  $ architect env:deregister [ENVIRONMENT] [-a <value>] [--auto-approve] [-f]
+  $ architect env:deregister [ENVIRONMENT] [-a <value>] [--auto-approve <value>] [-f <value>]
 
 ARGUMENTS
   ENVIRONMENT  Name of the environment to deregister
 
 FLAGS
-  -a, --account=<value>  Architect account
-  -f, --force            Force the deletion even if the environment is not empty
-  --auto-approve         Automatically apply the changes
+  -a, --account=<value>   Architect account
+  -f, --force=<value>     Force the deletion even if the environment is not empty
+  --auto-approve=<value>  Automatically apply the changes
 
 DESCRIPTION
   Deregister an environment
@@ -887,15 +896,15 @@ Deregister an environment
 
 ```
 USAGE
-  $ architect env:destroy [ENVIRONMENT] [-a <value>] [--auto-approve] [-f]
+  $ architect env:destroy [ENVIRONMENT] [-a <value>] [--auto-approve <value>] [-f <value>]
 
 ARGUMENTS
   ENVIRONMENT  Name of the environment to deregister
 
 FLAGS
-  -a, --account=<value>  Architect account
-  -f, --force            Force the deletion even if the environment is not empty
-  --auto-approve         Automatically apply the changes
+  -a, --account=<value>   Architect account
+  -f, --force=<value>     Force the deletion even if the environment is not empty
+  --auto-approve=<value>  Automatically apply the changes
 
 DESCRIPTION
   Deregister an environment
@@ -983,15 +992,15 @@ Deregister an environment
 
 ```
 USAGE
-  $ architect environment:deregister [ENVIRONMENT] [-a <value>] [--auto-approve] [-f]
+  $ architect environment:deregister [ENVIRONMENT] [-a <value>] [--auto-approve <value>] [-f <value>]
 
 ARGUMENTS
   ENVIRONMENT  Name of the environment to deregister
 
 FLAGS
-  -a, --account=<value>  Architect account
-  -f, --force            Force the deletion even if the environment is not empty
-  --auto-approve         Automatically apply the changes
+  -a, --account=<value>   Architect account
+  -f, --force=<value>     Force the deletion even if the environment is not empty
+  --auto-approve=<value>  Automatically apply the changes
 
 DESCRIPTION
   Deregister an environment
@@ -1015,15 +1024,15 @@ Deregister an environment
 
 ```
 USAGE
-  $ architect environment:destroy [ENVIRONMENT] [-a <value>] [--auto-approve] [-f]
+  $ architect environment:destroy [ENVIRONMENT] [-a <value>] [--auto-approve <value>] [-f <value>]
 
 ARGUMENTS
   ENVIRONMENT  Name of the environment to deregister
 
 FLAGS
-  -a, --account=<value>  Architect account
-  -f, --force            Force the deletion even if the environment is not empty
-  --auto-approve         Automatically apply the changes
+  -a, --account=<value>   Architect account
+  -f, --force=<value>     Force the deletion even if the environment is not empty
+  --auto-approve=<value>  Automatically apply the changes
 
 DESCRIPTION
   Deregister an environment
@@ -1074,7 +1083,7 @@ EXAMPLES
   $ architect environments myenvironment
 ```
 
-_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/environments/index.ts)_
+_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/environments/index.ts)_
 
 ## `architect environments:create [ENVIRONMENT]`
 
@@ -1108,7 +1117,7 @@ EXAMPLES
   environment:create --account=myaccount --ttl=5days --description="My new temporary Architect environment" myenvironment
 ```
 
-_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/environments/create.ts)_
+_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/environments/create.ts)_
 
 ## `architect environments:destroy [ENVIRONMENT]`
 
@@ -1116,15 +1125,15 @@ Deregister an environment
 
 ```
 USAGE
-  $ architect environments:destroy [ENVIRONMENT] [-a <value>] [--auto-approve] [-f]
+  $ architect environments:destroy [ENVIRONMENT] [-a <value>] [--auto-approve <value>] [-f <value>]
 
 ARGUMENTS
   ENVIRONMENT  Name of the environment to deregister
 
 FLAGS
-  -a, --account=<value>  Architect account
-  -f, --force            Force the deletion even if the environment is not empty
-  --auto-approve         Automatically apply the changes
+  -a, --account=<value>   Architect account
+  -f, --force=<value>     Force the deletion even if the environment is not empty
+  --auto-approve=<value>  Automatically apply the changes
 
 DESCRIPTION
   Deregister an environment
@@ -1142,7 +1151,7 @@ EXAMPLES
   $ architect environment:deregister --account=myaccount --auto-approve --force myenvironment
 ```
 
-_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/environments/destroy.ts)_
+_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/environments/destroy.ts)_
 
 ## `architect environments:search [QUERY]`
 
@@ -1247,15 +1256,15 @@ Deregister an environment
 
 ```
 USAGE
-  $ architect envs:destroy [ENVIRONMENT] [-a <value>] [--auto-approve] [-f]
+  $ architect envs:destroy [ENVIRONMENT] [-a <value>] [--auto-approve <value>] [-f <value>]
 
 ARGUMENTS
   ENVIRONMENT  Name of the environment to deregister
 
 FLAGS
-  -a, --account=<value>  Architect account
-  -f, --force            Force the deletion even if the environment is not empty
-  --auto-approve         Automatically apply the changes
+  -a, --account=<value>   Architect account
+  -f, --force=<value>     Force the deletion even if the environment is not empty
+  --auto-approve=<value>  Automatically apply the changes
 
 DESCRIPTION
   Deregister an environment
@@ -1320,8 +1329,10 @@ ARGUMENTS
 FLAGS
   -a, --account=<value>      Architect account
   -e, --environment=<value>  Architect environment
-  -i, --[no-]stdin           Pass stdin to the container. Only works on remote deploys.
-  -t, --[no-]tty             Stdin is a TTY. If the flag isn't supplied, tty or no-tty is automatically detected.
+  -i, --stdin=<value>        [default: true] Pass stdin to the container. Only works on remote deploys.
+  -r, --replica=<value>      Pass replica by <service-name>:<replica-index> or <replica-index> if only 1 service is
+                             deployed. Only works on remote deploys.
+  -t, --tty=<value>          Stdin is a TTY. If the flag isn't supplied, tty or no-tty is automatically detected.
 
 DESCRIPTION
   Exec into service instances
@@ -1332,9 +1343,13 @@ EXAMPLES
   $ architect exec -- /bin/sh
 
   $ architect exec --account myaccount --environment myenvironment mycomponent.services.app -- /bin/sh
+
+  $ architect exec --account myaccount --environment myenvironment --replica servicename:0 -- /bin/sh
+
+  $ architect exec --account myaccount --environment myenvironment --replica 0 -- /bin/sh
 ```
 
-_See code: [src/commands/exec.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/exec.ts)_
+_See code: [src/commands/exec.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/exec.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -1380,7 +1395,7 @@ EXAMPLES
   $ architect init --from-compose=mycompose.yml --component-file=architect.yml
 ```
 
-_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/init.ts)_
 
 ## `architect link [COMPONENTPATH]`
 
@@ -1402,7 +1417,7 @@ EXAMPLES
   $ architect link -p ./mycomponent/architect.yml
 ```
 
-_See code: [src/commands/link/index.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/link/index.ts)_
+_See code: [src/commands/link/index.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/link/index.ts)_
 
 ## `architect link:list`
 
@@ -1419,7 +1434,7 @@ EXAMPLES
   $ architect link:list
 ```
 
-_See code: [src/commands/link/list.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/link/list.ts)_
+_See code: [src/commands/link/list.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/link/list.ts)_
 
 ## `architect login`
 
@@ -1442,7 +1457,7 @@ EXAMPLES
   $ architect login -e my-email-address@my-email-domain.com
 ```
 
-_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/login.ts)_
 
 ## `architect logout`
 
@@ -1459,7 +1474,7 @@ EXAMPLES
   $ architect logout
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/logout.ts)_
 
 ## `architect logs [RESOURCE]`
 
@@ -1467,8 +1482,8 @@ Get logs from services both locally and remote
 
 ```
 USAGE
-  $ architect logs [RESOURCE] [-a <value>] [-e <value>] [-f] [--since <value>] [--raw] [--tail <value>]
-    [--timestamps]
+  $ architect logs [RESOURCE] [-a <value>] [-e <value>] [-f <value>] [--since <value>] [--raw <value>]
+    [--tail <value>] [--timestamps <value>]
 
 ARGUMENTS
   RESOURCE  Name of resource
@@ -1476,13 +1491,13 @@ ARGUMENTS
 FLAGS
   -a, --account=<value>      Architect account
   -e, --environment=<value>  Architect environment
-  -f, --follow               Specify if the logs should be streamed.
-  --raw                      Show the raw output of the logs.
+  -f, --follow=<value>       Specify if the logs should be streamed.
+  --raw=<value>              Show the raw output of the logs.
   --since=<value>            Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs.
                              Only one of since-time / since may be used.
   --tail=<value>             [default: -1] Lines of recent log file to display. Defaults to -1 with no selector, showing
                              all log lines otherwise 10, if a selector is provided.
-  --timestamps               Include timestamps on each line in the log output.
+  --timestamps=<value>       Include timestamps on each line in the log output.
 
 DESCRIPTION
   Get logs from services both locally and remote
@@ -1493,7 +1508,7 @@ EXAMPLES
   $ architect logs --follow --raw --timestamps
 ```
 
-_See code: [src/commands/logs.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/logs.ts)_
+_See code: [src/commands/logs.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/logs.ts)_
 
 ## `architect platform [QUERY]`
 
@@ -1530,8 +1545,8 @@ Register a new platform with Architect Cloud
 
 ```
 USAGE
-  $ architect platform:create [PLATFORM] [-a <value>] [--auto-approve] [-t KUBERNETES|kubernetes] [-k <value> | -h
-    <value>] [--flag <value>]
+  $ architect platform:create [PLATFORM] [-a <value>] [--auto-approve <value>] [-t KUBERNETES|kubernetes] [-k <value>
+    | -h <value>] [--flag <value>]
 
 ARGUMENTS
   PLATFORM  Name to give the platform
@@ -1541,7 +1556,7 @@ FLAGS
   -h, --host=<value>
   -k, --kubeconfig=<value>  [default: ~/.kube/config]
   -t, --type=<option>       <options: KUBERNETES|kubernetes>
-  --auto-approve
+  --auto-approve=<value>
   --flag=<value>...         [default: ]
 
 DESCRIPTION
@@ -1564,15 +1579,15 @@ Deregister a platform from Architect
 
 ```
 USAGE
-  $ architect platform:destroy [PLATFORM] [-a <value>] [--auto-approve] [-f]
+  $ architect platform:destroy [PLATFORM] [-a <value>] [--auto-approve <value>] [-f <value>]
 
 ARGUMENTS
   PLATFORM  Name of the platform to deregister
 
 FLAGS
-  -a, --account=<value>  Architect account
-  -f, --force            Force the deletion even if the platform is not empty
-  --auto-approve         Automatically apply the changes
+  -a, --account=<value>   Architect account
+  -f, --force=<value>     Force the deletion even if the platform is not empty
+  --auto-approve=<value>  Automatically apply the changes
 
 DESCRIPTION
   Deregister a platform from Architect
@@ -1646,7 +1661,7 @@ EXAMPLES
   $ architect platforms --account=myaccount myplatform
 ```
 
-_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/platforms/index.ts)_
+_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/platforms/index.ts)_
 
 ## `architect platforms:create [PLATFORM]`
 
@@ -1654,8 +1669,8 @@ Register a new platform with Architect Cloud
 
 ```
 USAGE
-  $ architect platforms:create [PLATFORM] [-a <value>] [--auto-approve] [-t KUBERNETES|kubernetes] [-k <value> | -h
-    <value>] [--flag <value>]
+  $ architect platforms:create [PLATFORM] [-a <value>] [--auto-approve <value>] [-t KUBERNETES|kubernetes] [-k <value>
+    | -h <value>] [--flag <value>]
 
 ARGUMENTS
   PLATFORM  Name to give the platform
@@ -1665,7 +1680,7 @@ FLAGS
   -h, --host=<value>
   -k, --kubeconfig=<value>  [default: ~/.kube/config]
   -t, --type=<option>       <options: KUBERNETES|kubernetes>
-  --auto-approve
+  --auto-approve=<value>
   --flag=<value>...         [default: ]
 
 DESCRIPTION
@@ -1682,7 +1697,7 @@ EXAMPLES
   $ architect platforms:register --account=myaccount --type=kubernetes --kubeconfig=~/.kube/config --auto-approve
 ```
 
-_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/platforms/create.ts)_
+_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/platforms/create.ts)_
 
 ## `architect platforms:deregister [PLATFORM]`
 
@@ -1690,15 +1705,15 @@ Deregister a platform from Architect
 
 ```
 USAGE
-  $ architect platforms:deregister [PLATFORM] [-a <value>] [--auto-approve] [-f]
+  $ architect platforms:deregister [PLATFORM] [-a <value>] [--auto-approve <value>] [-f <value>]
 
 ARGUMENTS
   PLATFORM  Name of the platform to deregister
 
 FLAGS
-  -a, --account=<value>  Architect account
-  -f, --force            Force the deletion even if the platform is not empty
-  --auto-approve         Automatically apply the changes
+  -a, --account=<value>   Architect account
+  -f, --force=<value>     Force the deletion even if the platform is not empty
+  --auto-approve=<value>  Automatically apply the changes
 
 DESCRIPTION
   Deregister a platform from Architect
@@ -1720,15 +1735,15 @@ Deregister a platform from Architect
 
 ```
 USAGE
-  $ architect platforms:destroy [PLATFORM] [-a <value>] [--auto-approve] [-f]
+  $ architect platforms:destroy [PLATFORM] [-a <value>] [--auto-approve <value>] [-f <value>]
 
 ARGUMENTS
   PLATFORM  Name of the platform to deregister
 
 FLAGS
-  -a, --account=<value>  Architect account
-  -f, --force            Force the deletion even if the platform is not empty
-  --auto-approve         Automatically apply the changes
+  -a, --account=<value>   Architect account
+  -f, --force=<value>     Force the deletion even if the platform is not empty
+  --auto-approve=<value>  Automatically apply the changes
 
 DESCRIPTION
   Deregister a platform from Architect
@@ -1744,7 +1759,7 @@ EXAMPLES
   $ architect platforms:deregister --account=myaccount --auto-approve --force architect
 ```
 
-_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/platforms/destroy.ts)_
+_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/platforms/destroy.ts)_
 
 ## `architect platforms:register [PLATFORM]`
 
@@ -1752,8 +1767,8 @@ Register a new platform with Architect Cloud
 
 ```
 USAGE
-  $ architect platforms:register [PLATFORM] [-a <value>] [--auto-approve] [-t KUBERNETES|kubernetes] [-k <value> | -h
-    <value>] [--flag <value>]
+  $ architect platforms:register [PLATFORM] [-a <value>] [--auto-approve <value>] [-t KUBERNETES|kubernetes] [-k <value>
+    | -h <value>] [--flag <value>]
 
 ARGUMENTS
   PLATFORM  Name to give the platform
@@ -1763,7 +1778,7 @@ FLAGS
   -h, --host=<value>
   -k, --kubeconfig=<value>  [default: ~/.kube/config]
   -t, --type=<option>       <options: KUBERNETES|kubernetes>
-  --auto-approve
+  --auto-approve=<value>
   --flag=<value>...         [default: ]
 
 DESCRIPTION
@@ -1811,7 +1826,7 @@ EXAMPLES
 
 ## `architect register [COMPONENT]`
 
-Register a new Component with Architect Cloud
+Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.
 
 ```
 USAGE
@@ -1819,7 +1834,7 @@ USAGE
     [--cache-directory <value>]
 
 ARGUMENTS
-  COMPONENT  [default: ./] Path to a component to register
+  COMPONENT  [default: ./] Path to the component(s) to register
 
 FLAGS
   -a, --account=<value>      Architect account
@@ -1830,7 +1845,8 @@ FLAGS
                              https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs
 
 DESCRIPTION
-  Register a new Component with Architect Cloud
+  Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified,
+  the same command arg(s) and flag(s) will be applied to each component.
 
 ALIASES
   $ architect component:register
@@ -1848,7 +1864,7 @@ EXAMPLES
   $ architect register -a myaccount -t latest --arg NODE_ENV=dev ./architect.yml
 ```
 
-_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/register.ts)_
+_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/register.ts)_
 
 ## `architect secrets SECRETS_FILE`
 
@@ -1934,7 +1950,7 @@ EXAMPLES
   $ architect secrets --account=myaccount --environment=myenvironment ../mysecrets.yml
 ```
 
-_See code: [src/commands/secrets/download.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/secrets/download.ts)_
+_See code: [src/commands/secrets/download.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/secrets/download.ts)_
 
 ## `architect secrets:set SECRETS_FILE`
 
@@ -1942,7 +1958,7 @@ Upload secrets from a file to an account or an environment
 
 ```
 USAGE
-  $ architect secrets:set [SECRETS_FILE] [-a <value>] [-e <value>] [--override]
+  $ architect secrets:set [SECRETS_FILE] [-a <value>] [-e <value>] [--override <value>]
 
 ARGUMENTS
   SECRETS_FILE  Secrets file to be uploaded
@@ -1950,7 +1966,7 @@ ARGUMENTS
 FLAGS
   -a, --account=<value>      Architect account
   -e, --environment=<value>  Architect environment
-  --override                 Allow override of existing secrets
+  --override=<value>         Allow override of existing secrets
 
 DESCRIPTION
   Upload secrets from a file to an account or an environment
@@ -1970,7 +1986,7 @@ Upload secrets from a file to an account or an environment
 
 ```
 USAGE
-  $ architect secrets:upload [SECRETS_FILE] [-a <value>] [-e <value>] [--override]
+  $ architect secrets:upload [SECRETS_FILE] [-a <value>] [-e <value>] [--override <value>]
 
 ARGUMENTS
   SECRETS_FILE  Secrets file to be uploaded
@@ -1978,7 +1994,7 @@ ARGUMENTS
 FLAGS
   -a, --account=<value>      Architect account
   -e, --environment=<value>  Architect environment
-  --override                 Allow override of existing secrets
+  --override=<value>         Allow override of existing secrets
 
 DESCRIPTION
   Upload secrets from a file to an account or an environment
@@ -1992,7 +2008,7 @@ EXAMPLES
   $ architect secrets:set --account=myaccount --override ./mysecrets.yml
 ```
 
-_See code: [src/commands/secrets/upload.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/secrets/upload.ts)_
+_See code: [src/commands/secrets/upload.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/secrets/upload.ts)_
 
 ## `architect task COMPONENT TASK`
 
@@ -2000,7 +2016,8 @@ Execute a task in the given environment
 
 ```
 USAGE
-  $ architect task [COMPONENT] [TASK] [-l | -a <value> |  |  | ] [-o <value> |  | -e <value> |  |  | ]
+  $ architect task [COMPONENT] [TASK] [-l <value> | -a <value> |  |  | ] [-o <value> |  | -e <value> |  | 
+    | ]
 
 ARGUMENTS
   COMPONENT  The name of the component that contains the task to execute
@@ -2009,7 +2026,7 @@ ARGUMENTS
 FLAGS
   -a, --account=<value>       Architect account
   -e, --environment=<value>   Architect environment
-  -l, --local                 Deploy the stack locally instead of via Architect Cloud
+  -l, --local=<value>         Deploy the stack locally instead of via Architect Cloud
   -o, --compose-file=<value>  Path where the compose file should be written to
 
 DESCRIPTION
@@ -2022,7 +2039,7 @@ EXAMPLES
   $ architect task --account=myaccount --environment=myenvironment mycomponent:latest mytask
 ```
 
-_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/task.ts)_
+_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/task.ts)_
 
 ## `architect task:exec COMPONENT TASK`
 
@@ -2030,7 +2047,8 @@ Execute a task in the given environment
 
 ```
 USAGE
-  $ architect task:exec [COMPONENT] [TASK] [-l | -a <value> |  |  | ] [-o <value> |  | -e <value> |  |  | ]
+  $ architect task:exec [COMPONENT] [TASK] [-l <value> | -a <value> |  |  | ] [-o <value> |  | -e <value> |  | 
+    | ]
 
 ARGUMENTS
   COMPONENT  The name of the component that contains the task to execute
@@ -2039,7 +2057,7 @@ ARGUMENTS
 FLAGS
   -a, --account=<value>       Architect account
   -e, --environment=<value>   Architect environment
-  -l, --local                 Deploy the stack locally instead of via Architect Cloud
+  -l, --local=<value>         Deploy the stack locally instead of via Architect Cloud
   -o, --compose-file=<value>  Path where the compose file should be written to
 
 DESCRIPTION
@@ -2058,10 +2076,10 @@ Unlink a component from the host by path or name
 
 ```
 USAGE
-  $ architect unlink [COMPONENTPATHORNAME] [--all]
+  $ architect unlink [COMPONENTPATHORNAME] [--all <value>]
 
 FLAGS
-  --all  Unlink all components registered locally
+  --all=<value>  Unlink all components registered locally
 
 DESCRIPTION
   Unlink a component from the host by path or name
@@ -2074,7 +2092,7 @@ EXAMPLES
   $ architect unlink -p mycomponent
 ```
 
-_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/unlink.ts)_
+_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/unlink.ts)_
 
 ## `architect validate [CONFIGS_OR_COMPONENTS]`
 
@@ -2104,7 +2122,7 @@ EXAMPLES
   $ architect validate ../mycomponent/architect.yml ../myothercomponent/architect.yml
 ```
 
-_See code: [src/commands/validate.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/validate.ts)_
+_See code: [src/commands/validate.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/validate.ts)_
 
 ## `architect whoami`
 
@@ -2124,5 +2142,5 @@ EXAMPLES
   $ architect whoami
 ```
 
-_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v1.23.0-rc.4/src/commands/whoami.ts)_
+_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v1.24.0-rc.8/src/commands/whoami.ts)_
 <!-- commandsstop -->

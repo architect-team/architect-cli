@@ -1,8 +1,30 @@
 import { expect } from 'chai';
+import fs from 'fs-extra';
 import path from 'path';
+import { Slugs } from '../../src/dependency-manager/spec/utils/slugs';
 import { mockArchitectAuth } from '../utils/mocks';
+const validation_mocks_path = path.join(__dirname, '../mocks/validationerrors');
 
 describe('architect validate component', function () {
+
+  this.afterAll(() => {
+    const tmp_dir = path.resolve(`${validation_mocks_path}/subdomain`);
+    if (fs.existsSync(tmp_dir)) {
+      fs.rmSync(tmp_dir, { recursive: true });
+    }
+  });
+
+  const subdomain_token_to_config_yaml_string = (subdomain_token: string): string =>
+    `name: tests/validatesubdomain
+services:
+  validatesubdomain:
+    build:
+      context: .
+interfaces:
+  validatesubdomain:
+    url: \${{ services.validatesubdomain.interfaces.main.url }}
+    ingress:
+      subdomain: '${subdomain_token}'`;
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
@@ -77,4 +99,149 @@ describe('architect validate component', function () {
       expect(ctx.stderr).to.contain('must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).');
       expect(ctx.stdout).to.equal('');
     });
+
+  fs.emptyDirSync(path.join(validation_mocks_path, '/subdomain'));
+
+  describe('expect fail for invalid subdomain', () => {
+
+    const invalid_subdomain_tokens = [
+      '_',
+      '-',
+      '.',
+      '..',
+      '@.',
+      '.@',
+      '_.',
+      '-.',
+      '._',
+      '.-',
+      '@@',
+      ';',
+      ':',
+      '{}',
+      '[]',
+      '&',
+      '%',
+      '$',
+      '#',
+      '!',
+      '~',
+      '()',
+      '<>',
+      '=',
+      '|',
+      '+',
+      ' ',
+      '?',
+      '\\x01',
+      '\\r',
+      '\\t',
+      '\\n',
+      '§¶ªªº•¬åß∆∂øˆå˜ßµøˆ¬ç',
+      '💰🤦‍♂️',
+      '\\',
+      '/',
+      'abcdef2.com222',
+      '@ghijklmn.ru:?',
+      'opqrs22:89',
+      '@tuvwxyzrhrth@dd.dd@22-',
+      'asdrgeth.net?1222',
+      'sdpfps.com:8080:',
+      '.opplmcllz.com:8080:',
+      '---zzzoepo.com',
+      '$yyyopawko$.dd',
+      'llplwokmoe-.dd',
+      'OIADIOd22.POLQO-PLQOKO@OOWPW.wz',
+      'PQOPKoapo-.qqq().w%:222',
+      'pop().fiopqiop.lpo',
+      'poqi0293-d=.ddd?',
+      ' abcs cript-w.org ',
+      'oiqpodf9.com::%',
+      'POICMqiwjp:8080',
+      'ODKOoqkp.com:*',
+      '-pwokd.aaa.com',
+      '-pwoppow.com',
+      'd-.popql.com',
+      'zxncmbpqo.siopqi.e',
+      'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890',
+      'd-.aopskdop.com',
+      'cxcd.qwd.aad.gqs',
+      'op kqpo.@',
+      '@.pijsdfvjn',
+      'qopwkdopk:d',
+      'zxmncb:',
+      ' asjklfh',
+      'qiopjdoi ',
+      'asdk aodwoi',
+      'aoif gois-',
+      '-qoiwdj',
+      'lll_l-i',
+      'D_D',
+      'D_D_D',
+      'd______D',
+    ];
+
+    for (const invalid_subdomain_token of invalid_subdomain_tokens) {
+      const test_tmp_sub_dir = fs.mkdtempSync(path.join(validation_mocks_path, '/subdomain/'));
+      const tmp_test_file = path.resolve(`${test_tmp_sub_dir}/architect.yml`);
+
+      fs.writeFileSync(tmp_test_file, subdomain_token_to_config_yaml_string(invalid_subdomain_token));
+
+      mockArchitectAuth
+        .stdout({ print })
+        .stderr({ print })
+        .command(['validate', tmp_test_file])
+        .catch(err => {
+          expect(err.name).to.contain('ValidationErrors');
+          expect(err.name).to.contain(tmp_test_file);
+          expect(process.exitCode).eq(1);
+          expect(err.stack).undefined;
+        })
+        .it(`'${invalid_subdomain_token}'`, ctx => {
+          expect(ctx.stderr).to.contain(`› 10 |       subdomain: '${invalid_subdomain_token}'`);
+          expect(ctx.stderr).to.contain(Slugs.ComponentSubdomainDescription);
+          expect(ctx.stdout).to.equal('');
+        });
+    }
+  }).timeout(20000);
+
+  describe('expect pass for valid subdomain', () => {
+
+    const valid_subdomain_tokens = [
+      '*',
+      '@',
+      '',
+      'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890',
+      'abc-DEF',
+      'gh-ij-kl-mn',
+      'o-----p',
+      'qrstuv1',
+      '1xwyz',
+      'A1B',
+      'CD4F',
+      'GHI-JKL',
+      'MN-OP-QR-STV',
+      'U--1--V',
+      'W1X',
+      'YZ1',
+      'a-b-c-d-eFG-H',
+    ];
+
+    for (const valid_subdomain_token of valid_subdomain_tokens) {
+      const test_tmp_sub_dir = fs.mkdtempSync(path.join(validation_mocks_path, '/subdomain/'));
+      const tmp_test_file = path.resolve(`${test_tmp_sub_dir}/architect.yml`);
+
+      fs.writeFileSync(tmp_test_file, subdomain_token_to_config_yaml_string(valid_subdomain_token));
+
+      mockArchitectAuth
+        .stdout({ print })
+        .stderr({ print })
+        .command(['validate', tmp_test_file])
+        .it(`'${valid_subdomain_token}'`, ctx => {
+          expect(ctx.stdout).to.contain('tests/validatesubdomain');
+          expect(ctx.stdout).to.contain(tmp_test_file);
+        });
+    }
+  }).timeout(20000);
+
 });
