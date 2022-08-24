@@ -47,11 +47,12 @@ async function runTest(shell: string) {
     }
   
     attempts += 1;
-    const MAX_ATTEMPTS = 30;
+    const MAX_ATTEMPTS = 2;
     if (attempts > MAX_ATTEMPTS) {
       console.log(`architect dev not running anything after ${MAX_ATTEMPTS} attempts, giving up`);
       console.log('Dumping dev process output:');
       console.log(dev_process_output);
+      console.log(dev_process);
       process.exit(1);
     }
     await new Promise(r => setTimeout(r, 1000));
