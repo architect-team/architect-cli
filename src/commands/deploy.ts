@@ -18,16 +18,18 @@ export abstract class DeployCommand extends BaseCommand {
 
   static flags = {
     ...BaseCommand.flags,
-    auto_approve: Flags.boolean({
+    auto_approve: booleanString({
       exclusive: ['compose-file', 'compose_file'],
       description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
       hidden: true,
       sensitive: false,
+      default: undefined,
     }),
-    'auto-approve': Flags.boolean({
+    'auto-approve': booleanString({
       exclusive: ['compose-file', 'compose_file'],
       description: 'Automatically approve the deployment without a review step. Used for debugging and CI flows.',
       sensitive: false,
+      default: false,
     }),
   };
 
