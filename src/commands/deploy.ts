@@ -23,13 +23,13 @@ export abstract class DeployCommand extends BaseCommand {
       description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
       hidden: true,
       sensitive: false,
-      default: undefined,
+      default: false,
     }),
     'auto-approve': booleanString({
       exclusive: ['compose-file', 'compose_file'],
       description: 'Automatically approve the deployment without a review step. Used for debugging and CI flows.',
       sensitive: false,
-      default: undefined,
+      default: false,
     }),
   };
 
@@ -40,12 +40,7 @@ export abstract class DeployCommand extends BaseCommand {
     const flags: any = parsed.flags;
 
     // Merge any values set via deprecated flags into their supported counterparts
-    if (flags.auto_approve === undefined && flags['auto-approve'] === undefined) {
-      flags['auto-approve'] = false;
-
-    } else if (flags.auto_approve !== undefined && flags['auto-approve'] === undefined) {
-      flags['auto-approve'] = flags.auto_approve;
-    }
+    flags['auto-approve'] = flags.auto_approve ? flags.auto_approve : flags['auto-approve'];
 
     parsed.flags = flags;
 
@@ -95,13 +90,13 @@ export default class Deploy extends DeployCommand {
       exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
       hidden: true,
       sensitive: false,
-      default: undefined,
+      default: false,
     }),
     production: booleanString({
       description: `${BaseCommand.DEPRECATED} Please use --environment.`,
       dependsOn: ['local'],
       sensitive: false,
-      default: undefined,
+      default: false,
     }),
     compose_file: Flags.string({
       description: `${BaseCommand.DEPRECATED} Please use --compose-file.`,
@@ -121,7 +116,7 @@ export default class Deploy extends DeployCommand {
       char: 'd',
       dependsOn: ['local'],
       sensitive: false,
-      default: undefined,
+      default: false,
     }),
     parameter: Flags.string({
       char: 'p',

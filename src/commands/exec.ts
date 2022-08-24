@@ -55,7 +55,7 @@ export default class Exec extends BaseCommand {
     tty: booleanString({
       description: 'Stdin is a TTY. If the flag isn\'t supplied, tty or no-tty is automatically detected.',
       char: 't',
-      default: undefined,
+      default: true,
       sensitive: false,
     }),
     replica: Flags.string({

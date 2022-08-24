@@ -35,7 +35,7 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
  * Gracefully stops running containers when the process is interrupted, and
  * stops containers when the underlying process returns with an error.
  */
- class UpProcessManager {
+class UpProcessManager {
   compose_file: string;
   project_name: string;
   detached: boolean;
@@ -258,14 +258,14 @@ export default class Dev extends BaseCommand {
       exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
       hidden: true,
       sensitive: false,
-      default: undefined,
+      default: false,
     }),
     production: booleanString({
       description: `${Command.DEPRECATED} Please use --environment.`,
       dependsOn: ['local'],
       hidden: true,
       sensitive: false,
-      default: undefined,
+      default: false,
     }),
     compose_file: Flags.string({
       description: `${Command.DEPRECATED} Please use --compose-file.`,
