@@ -38,6 +38,7 @@ async function runTest(shell: string) {
   while (dev_process.exitCode === null) {
     const compose_ls = (await execa('docker', ['compose', 'ls'])).stdout.toString();
     if (compose_ls.split('\n').length > 1) {
+      console.log('Containers running!');
       break;
     }
 
@@ -61,6 +62,7 @@ async function runTest(shell: string) {
 
   // Step 2: Run some exec commands
   try {
+    console.log('Attempting exec...');
     const exec_process = architect(['exec', '-a', 'dev', 'hello-world.services.api', '--no-tty', '--', 'ls'], { shell });
 
     // exec_process.stdout?.on('data', (data) => {
@@ -74,9 +76,16 @@ async function runTest(shell: string) {
     process.exit(1);
   }
 
+  console.log('exec succeeded, trying to stop now...');
+
   // Step 3: Interrupting process
   process.kill(dev_process.pid, 'SIGINT');
-  await dev_process;
+  try {
+    await dev_process;
+  } catch (e) {
+    console.log(`Process failed to be killed: ${dev_process}`);
+  }
+  
   console.log(`Dev exit code: ${dev_process.exitCode}`);
 
   const compose_ls = (await execa('docker', ['compose', 'ls'])).stdout.toString();
