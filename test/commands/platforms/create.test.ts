@@ -13,20 +13,20 @@ import { KubernetesPlatformUtils } from '../../../src/common/utils/kubernetes-pl
 import ARCHITECTPATHS from '../../../src/paths';
 
 describe('platform:create', function () {
-  let tmp_dir = os.tmpdir();
+  const tmp_dir = os.tmpdir();
 
   const account = {
     id: 'test-account-id',
-    name: 'test-account-name'
-  }
+    name: 'test-account-name',
+  };
 
   beforeEach(() => {
     // Stub the logger
     sinon.replace(PlatformCreate.prototype, 'log', sinon.stub());
 
     const mock_pipeline = {
-      id: 'test-pipeline-id'
-    }
+      id: 'test-pipeline-id',
+    };
     sinon.replace(PipelineUtils, 'pollPipeline', async () => mock_pipeline);
 
     // Stub the log_level
@@ -39,7 +39,7 @@ describe('platform:create', function () {
     sinon.replace(AppService, 'create', app_config_stub);
   });
 
-  it('Creates a Kubernetes platform with input', async () => {
+  it('Does not auto approve creation when auto-approve flag value is false', async () => {
     const inquirerStub = sinon.stub(inquirer, 'prompt');
     inquirerStub.resolves({
       context: 'minikube',
@@ -56,7 +56,89 @@ describe('platform:create', function () {
     nock('https://api.architect.io').post(`/accounts/${account.id}/platforms`)
       .reply(200, {
         id: test_platform_id,
-        account: account
+        account: account,
+      });
+
+    nock('https://api.architect.io').post(`/platforms/${test_platform_id}/apps`)
+      .reply(200, {
+        id: 'test-deployment-id',
+        pipeline: {
+          id: test_pipeline_id,
+        },
+      });
+
+    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
+    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
+    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'postPlatformToApi');
+    const kubernetes_configuration_fake = sinon.fake.returns({ name: 'new_k8s_platform', type: 'KUBERNETES' });
+    sinon.replace(KubernetesPlatformUtils, 'configureKubernetesPlatform', kubernetes_configuration_fake);
+
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=false']);
+    expect(create_platform_spy.calledOnce).true;
+    expect(post_to_api_spy.calledOnce).true;
+    expect(kubernetes_configuration_fake.calledOnce).true;
+    expect(create_platform_applications_spy.calledOnce).false;
+  });
+
+  it('Auto approve creation when auto-approve flag value is true', async () => {
+    const inquirerStub = sinon.stub(inquirer, 'prompt');
+    inquirerStub.resolves({
+      context: 'minikube',
+      service_account_name: 'architect',
+      use_existing_sa: true,
+    });
+
+    const test_platform_id = 'test-platform-id';
+    const test_pipeline_id = 'test-pipeline-id';
+
+    nock('https://api.architect.io').get(`/accounts/${account.name}`)
+      .reply(200, account);
+
+    nock('https://api.architect.io').post(`/accounts/${account.id}/platforms`)
+      .reply(200, {
+        id: test_platform_id,
+        account: account,
+      });
+
+    nock('https://api.architect.io').post(`/platforms/${test_platform_id}/apps`)
+      .reply(200, {
+        id: 'test-deployment-id',
+        pipeline: {
+          id: test_pipeline_id,
+        },
+      });
+
+    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
+    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
+    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'postPlatformToApi');
+    const kubernetes_configuration_fake = sinon.fake.returns({ name: 'new_k8s_platform', type: 'KUBERNETES' });
+    sinon.replace(KubernetesPlatformUtils, 'configureKubernetesPlatform', kubernetes_configuration_fake);
+
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=true']);
+    expect(create_platform_spy.calledOnce).true;
+    expect(post_to_api_spy.calledOnce).true;
+    expect(kubernetes_configuration_fake.calledOnce).true;
+    expect(create_platform_applications_spy.calledOnce).true;
+  });
+
+  it('Auto approve creation when auto-approve flag value is not specified', async () => {
+    const inquirerStub = sinon.stub(inquirer, 'prompt');
+    inquirerStub.resolves({
+      context: 'minikube',
+      service_account_name: 'architect',
+      use_existing_sa: true,
+    });
+
+    const test_platform_id = 'test-platform-id';
+    const test_pipeline_id = 'test-pipeline-id';
+
+    nock('https://api.architect.io').get(`/accounts/${account.name}`)
+      .reply(200, account);
+
+    nock('https://api.architect.io').post(`/accounts/${account.id}/platforms`)
+      .reply(200, {
+        id: test_platform_id,
+        account: account,
       });
 
     nock('https://api.architect.io').post(`/platforms/${test_platform_id}/apps`)
@@ -78,5 +160,46 @@ describe('platform:create', function () {
     expect(post_to_api_spy.calledOnce).true;
     expect(kubernetes_configuration_fake.calledOnce).true;
     expect(create_platform_applications_spy.calledOnce).true;
+  });
+
+  it('Do not auto approve creation with auto-approve flag default value', async () => {
+    const inquirerStub = sinon.stub(inquirer, 'prompt');
+    inquirerStub.resolves({
+      context: 'minikube',
+      service_account_name: 'architect',
+      use_existing_sa: true,
+    });
+
+    const test_platform_id = 'test-platform-id';
+    const test_pipeline_id = 'test-pipeline-id';
+
+    nock('https://api.architect.io').get(`/accounts/${account.name}`)
+      .reply(200, account);
+
+    nock('https://api.architect.io').post(`/accounts/${account.id}/platforms`)
+      .reply(200, {
+        id: test_platform_id,
+        account: account,
+      });
+
+    nock('https://api.architect.io').post(`/platforms/${test_platform_id}/apps`)
+      .reply(200, {
+        id: 'test-deployment-id',
+        pipeline: {
+          id: test_pipeline_id,
+        },
+      });
+
+    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
+    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
+    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'postPlatformToApi');
+    const kubernetes_configuration_fake = sinon.fake.returns({ name: 'new_k8s_platform', type: 'KUBERNETES' });
+    sinon.replace(KubernetesPlatformUtils, 'configureKubernetesPlatform', kubernetes_configuration_fake);
+
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes']);
+    expect(create_platform_spy.calledOnce).true;
+    expect(post_to_api_spy.calledOnce).true;
+    expect(kubernetes_configuration_fake.calledOnce).true;
+    expect(create_platform_applications_spy.calledOnce).false;
   });
 });

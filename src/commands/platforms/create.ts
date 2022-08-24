@@ -7,6 +7,7 @@ import PipelineUtils from '../../architect/pipeline/pipeline.utils';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 import BaseCommand from '../../base-command';
 import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.utils';
+import { booleanString } from '../../common/utils/oclif';
 
 export default class PlatformCreate extends BaseCommand {
   static aliases = ['platforms:register', 'platform:create', 'platforms:create'];
@@ -25,12 +26,16 @@ export default class PlatformCreate extends BaseCommand {
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    auto_approve: Flags.boolean({
+    auto_approve: booleanString({
       description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
       hidden: true,
       sensitive: false,
+      default: false,
     }),
-    ['auto-approve']: Flags.boolean({ sensitive: false }),
+    ['auto-approve']: booleanString({
+      sensitive: false,
+      default: false,
+    }),
     type: Flags.string({
       char: 't',
       options: ['KUBERNETES', 'kubernetes'],

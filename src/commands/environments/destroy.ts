@@ -1,9 +1,10 @@
-import { CliUx, Flags, Interfaces } from '@oclif/core';
+import { CliUx, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import BaseCommand from '../../base-command';
+import { booleanString } from '../../common/utils/oclif';
 
 export default class EnvironmentDestroy extends BaseCommand {
   static aliases = ['environment:destroy', 'envs:destroy', 'env:destroy', 'env:deregister', 'environment:deregister'];
@@ -15,17 +16,18 @@ export default class EnvironmentDestroy extends BaseCommand {
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    auto_approve: Flags.boolean({
+    auto_approve: booleanString({
       description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
       hidden: true,
       sensitive: false,
+      default: false,
     }),
-    ['auto-approve']: Flags.boolean({
+    ['auto-approve']: booleanString({
       description: 'Automatically apply the changes',
       default: false,
       sensitive: false,
     }),
-    force: Flags.boolean({
+    force: booleanString({
       description: 'Force the deletion even if the environment is not empty',
       char: 'f',
       default: false,

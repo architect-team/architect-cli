@@ -1,9 +1,9 @@
-import { Flags } from '@oclif/core';
 import chalk from 'chalk';
 import path from 'path';
 import untildify from 'untildify';
 import { buildSpecFromPath } from '../';
 import BaseCommand from '../base-command';
+import { booleanString } from '../common/utils/oclif';
 
 export default class Unlink extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -18,9 +18,10 @@ export default class Unlink extends BaseCommand {
   ];
   static flags = {
     ...BaseCommand.flags,
-    all: Flags.boolean({
+    all: booleanString({
       description: 'Unlink all components registered locally',
       sensitive: false,
+      default: false,
     }),
   };
 

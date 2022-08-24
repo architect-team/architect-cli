@@ -10,6 +10,7 @@ import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
+import { booleanString } from '../common/utils/oclif';
 
 enum RemoteExecCommandOutputStatus {
   SUCCESS = 'Success',
@@ -46,16 +47,14 @@ export default class Exec extends BaseCommand {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    stdin: Flags.boolean({
+    stdin: booleanString({
       description: 'Pass stdin to the container. Only works on remote deploys.',
       char: 'i',
-      allowNo: true,
       default: true,
     }),
-    tty: Flags.boolean({
+    tty: booleanString({
       description: 'Stdin is a TTY. If the flag isn\'t supplied, tty or no-tty is automatically detected.',
       char: 't',
-      allowNo: true,
       default: undefined,
       sensitive: false,
     }),
