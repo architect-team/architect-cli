@@ -16,12 +16,8 @@ function architect(args: string[], opts?: Options<string>) {
 // TODO: write example yml that requires no dependencies to tmpfile
 function runDev(shell: string): execa.ExecaChildProcess<string> {
   const dev_process = architect(['dev', 'examples/hello-world/architect.yml', '--no-browser', '--ssl=false'], 
-    { shell, detached: true });
-  
-  // dev_process.stdout?.on('data', (data) => {
-  //   console.log(`DEV: ${data.toString().trim()}`);
-  // });
-    
+    { shell, stdio: 'inherit' });
+
   process.on('SIGINT', () => {
     process.kill(dev_process.pid, 'SIGINT');
   });
@@ -71,7 +67,7 @@ async function runTest(shell: string) {
 
     await exec_process;
   } catch (e) {
-    process.kill(dev_process.pid, 'SIGINT');
+    dev_process.kill('SIGINT');
     console.log(`Failed to exec with error:\n${e}`);
     process.exit(1);
   }
