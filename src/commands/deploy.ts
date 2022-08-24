@@ -29,7 +29,7 @@ export abstract class DeployCommand extends BaseCommand {
       exclusive: ['compose-file', 'compose_file'],
       description: 'Automatically approve the deployment without a review step. Used for debugging and CI flows.',
       sensitive: false,
-      default: false,
+      default: undefined,
     }),
   };
 
@@ -40,7 +40,13 @@ export abstract class DeployCommand extends BaseCommand {
     const flags: any = parsed.flags;
 
     // Merge any values set via deprecated flags into their supported counterparts
-    flags['auto-approve'] = flags.auto_approve ? flags.auto_approve : flags['auto-approve'];
+    if (flags.auto_approve === undefined && flags['auto-approve'] === undefined) {
+      flags['auto-approve'] = false;
+
+    } else if (flags.auto_approve !== undefined && flags['auto-approve'] === undefined) {
+      flags['auto-approve'] = flags.auto_approve;
+    }
+
     parsed.flags = flags;
 
     return parsed;
