@@ -6,6 +6,7 @@ import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import * as Docker from '../common/utils/docker';
+import { booleanString } from '../common/utils/oclif';
 
 export default class TaskExec extends BaseCommand {
   static aliases = ['task:exec'];
@@ -25,11 +26,12 @@ export default class TaskExec extends BaseCommand {
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
 
-    local: Flags.boolean({
+    local: booleanString({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
       exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
       sensitive: false,
+      default: false,
     }),
     compose_file: Flags.string({
       description: `${BaseCommand.DEPRECATED} Please use --compose-file.`,
