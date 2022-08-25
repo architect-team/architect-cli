@@ -158,7 +158,10 @@ export default class SentryService {
 
   async endSentryTransaction(error?: any): Promise<void> {
     await this.ignoreTryCatch(async () => {
-      if (this.command.app.config.environment === ENVIRONMENT.TEST) return;
+      if (this.command.app.config.environment === ENVIRONMENT.TEST) {
+        Sentry.close(0);
+        return;
+      }
 
       const command_class = this.command.getClass();
       const { args, flags } = await this.command.parse(command_class);
