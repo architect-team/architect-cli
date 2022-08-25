@@ -3,7 +3,7 @@ import { mockArchitectAuth, MOCK_API_HOST } from '../../utils/mocks';
 
 describe('environments', () => {
 
-  const print = true;
+  const print = false;
 
   mockArchitectAuth
     .nock(MOCK_API_HOST, api => api
