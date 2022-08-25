@@ -8,7 +8,6 @@ import Dev from '../../src/commands/dev';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import DeployUtils from '../../src/common/utils/deploy.utils';
-import * as Docker from '../../src/common/utils/docker';
 import * as ComponentBuilder from '../../src/dependency-manager/spec/utils/component-builder';
 import { MOCK_API_HOST } from '../utils/mocks';
 
@@ -594,7 +593,6 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'loadFile', () => {
       return getHelloComponentConfig();
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -611,7 +609,6 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'loadFile', () => {
       return getHelloComponentConfig();
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'generateTlsConfig', sinon.stub())
@@ -629,7 +626,6 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'loadFile', () => {
       return getDeprecatedHelloComponentConfig();
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -648,7 +644,6 @@ describe('local dev environment', function () {
       hello_json.services.api.interfaces.main.sticky = true;
       return yaml.dump(hello_json);
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -668,7 +663,6 @@ describe('local dev environment', function () {
       spec.metadata.file = { path: './examples/database-seeding/architect.yml', contents: '' }
       return spec;
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -687,7 +681,6 @@ describe('local dev environment', function () {
       spec.metadata.file = { path: './examples/database-seeding/architect.yml', contents: '' }
       return spec;
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -707,7 +700,6 @@ describe('local dev environment', function () {
     .stub(DeployUtils, 'readSecretsFile', () => {
       return basic_secrets;
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -731,7 +723,6 @@ describe('local dev environment', function () {
     .stub(DeployUtils, 'readSecretsFile', () => {
       return basic_secrets;
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -756,7 +747,6 @@ describe('local dev environment', function () {
     .stub(DeployUtils, 'readSecretsFile', () => {
       return basic_secrets;
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -780,7 +770,6 @@ describe('local dev environment', function () {
     .stub(DeployUtils, 'readSecretsFile', () => {
       return wildcard_secrets;
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -799,7 +788,6 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
       return buildSpecFromYml(local_component_config_with_secrets)
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readSecretsFile', () => {
       return stacked_secrets;
     })
@@ -821,7 +809,6 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
       return buildSpecFromYml(yaml.dump(local_component_config_with_dependency))
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readSecretsFile', () => {
       return component_and_dependency_secrets;
     })
@@ -849,7 +836,6 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
       return buildSpecFromYml(yaml.dump(local_component_config_with_dependency))
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readSecretsFile', () => {
       return component_and_dependency_secrets;
     })
@@ -883,7 +869,6 @@ describe('local dev environment', function () {
     .stub(DeployUtils, 'readSecretsFile', () => {
       return basic_secrets;
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -902,7 +887,6 @@ describe('local dev environment', function () {
       .stub(ComponentBuilder, 'buildSpecFromPath', () => {
         return buildSpecFromYml(getHelloComponentConfig())
       })
-      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
       .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
       .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'hello-world': './examples/hello-world/architect.yml' }))
@@ -925,7 +909,6 @@ describe('local dev environment', function () {
       .stub(ComponentBuilder, 'buildSpecFromPath', () => {
         return buildSpecFromYml(getHelloComponentConfig())
       })
-      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'hello-world': './examples/hello-world/architect.yml' }))
       .stdout({ print })
       .stderr({ print })
@@ -1021,7 +1004,6 @@ describe('local dev environment', function () {
         }
         return buildSpecFromYml(config)
       })
-      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({
         'app': './examples/hello-world/architect.yml',
         'auth': './examples/react-app/architect.yml'
@@ -1047,7 +1029,6 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'loadFile', () => {
       return getHelloComponentConfig();
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -1073,7 +1054,6 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'loadFile', () => {
       return getHelloComponentConfigWithPortPathHealthcheck();
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -1105,7 +1085,6 @@ describe('local dev environment', function () {
       };
       return yaml.dump(config);
     })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
