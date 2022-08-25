@@ -96,7 +96,7 @@ export default class Deploy extends DeployCommand {
       description: `${BaseCommand.DEPRECATED} Please use --environment.`,
       dependsOn: ['local'],
       sensitive: false,
-      default: false,
+      default: undefined,
     }),
     compose_file: Flags.string({
       description: `${BaseCommand.DEPRECATED} Please use --compose-file.`,
@@ -116,7 +116,7 @@ export default class Deploy extends DeployCommand {
       char: 'd',
       dependsOn: ['local'],
       sensitive: false,
-      default: false,
+      default: undefined,
     }),
     parameter: Flags.string({
       char: 'p',

@@ -265,7 +265,7 @@ export default class Dev extends BaseCommand {
       dependsOn: ['local'],
       hidden: true,
       sensitive: false,
-      default: false,
+      default: undefined,
     }),
     compose_file: Flags.string({
       description: `${Command.DEPRECATED} Please use --compose-file.`,
