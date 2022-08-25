@@ -99,11 +99,19 @@ export abstract class InitCommand extends BaseCommand {
       args.name = answer.chosen;
     }
 
-    if (!ComponentSlugUtils.Validator.test(args.name)) {
-      if (flags['from-compose']) {
-        throw new Error(`Component name can only contain lowercase letters and dashes, and must start and end with a letter.`);
-      }
-      throw new Error(`Project name can only contain lowercase letters and dashes, and must start and end with a letter.`);
+    while (!ComponentSlugUtils.Validator.test(args.name)) {
+      const init_type = (compose_exist || flags['from-compose']) ? 'Component' : 'Project';
+      const err_msg = `${init_type} name can only contain lowercase letters and dashes, and must start and end with a letter.`;
+      this.log(chalk.yellow(err_msg));
+
+      const answers: any = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'name',
+          message: `Please provide a new name for your ${init_type.toLowerCase()}:`,
+        },
+      ]);
+      args.name = answers.name;
     }
 
     let from_path = await this.getComposeFromPath(flags);
