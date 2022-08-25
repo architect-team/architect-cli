@@ -1,9 +1,10 @@
 import { expect } from 'chai';
 import path from 'path';
 import sinon from 'sinon';
-import { DockerComposeUtils } from '../../src/common/docker-compose/index';
-import * as Docker from '../../src/common/docker/cmd';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils } from '../../src/';
+import { DockerComposeUtils } from '../../src/common/docker-compose/index';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils } from '../../src/';
+import * as Docker from '../../src/common/utils/docker';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('task:exec', async function () {

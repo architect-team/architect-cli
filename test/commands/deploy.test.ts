@@ -75,19 +75,19 @@ describe('remote deploy environment', function () {
     .stub(ComponentRegister.prototype, 'run', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentBuilder, 'buildSpecFromPath', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentVersionSlugUtils.Validator, 'test', sinon.stub().returns(Promise.resolve()))
-      .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'test/mocks/superset/architect.yml', `${account.name}/superset:latest`])
-      .it('Creates a remote deployment with env and account flags, a path to a component, and a component version', ctx => {
-        expect((ComponentRegister.prototype.run as SinonSpy).getCalls().length).to.equal(1);
-        const build_spec = ComponentBuilder.buildSpecFromPath as SinonSpy;
-        expect(build_spec.getCalls().length).to.equal(1);
-        expect(build_spec.firstCall.args[0]).eq('test/mocks/superset/architect.yml');
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'test/mocks/superset/architect.yml', `${account.name}/superset:latest`])
+    .it('Creates a remote deployment with env and account flags, a path to a component, and a component version', ctx => {
+      expect((ComponentRegister.prototype.run as SinonSpy).getCalls().length).to.equal(1);
+      const build_spec = ComponentBuilder.buildSpecFromPath as SinonSpy;
+      expect(build_spec.getCalls().length).to.equal(1);
+      expect(build_spec.firstCall.args[0]).eq('test/mocks/superset/architect.yml');
 
-        const slug_validator = ComponentVersionSlugUtils.Validator.test as SinonSpy;
-        expect(slug_validator.getCalls().length).to.equal(1);
-        expect(slug_validator.firstCall.args[0]).eq(`${account.name}/superset:latest`);
+      const slug_validator = ComponentVersionSlugUtils.Validator.test as SinonSpy;
+      expect(slug_validator.getCalls().length).to.equal(1);
+      expect(slug_validator.firstCall.args[0]).eq(`${account.name}/superset:latest`);
 
-        expect(ctx.stdout).to.contain('Deployed');
-      })
+      expect(ctx.stdout).to.contain('Deployed');
+    })
 
   describe('instance deploys', function () {
     remoteDeploy
@@ -119,7 +119,14 @@ describe('auto-approve flag with underscore style still works', function () {
 
   remoteDeploy
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
-    .it('works but also emits a deprication warning', ctx => {
+    .it('works but also emits a deprecation warning', ctx => {
+      expect(ctx.stderr).to.contain('Flag --auto_approve is deprecated.');
+      expect(ctx.stdout).to.contain('Deployed');
+    });
+
+  remoteDeploy
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve=true', 'examples/echo:latest'])
+    .it('works but also emits a deprecation warning 2', ctx => {
       expect(ctx.stderr).to.contain('Flag --auto_approve is deprecated.');
       expect(ctx.stdout).to.contain('Deployed');
     });
@@ -286,7 +293,7 @@ describe('deployment secrets', function () {
         expect(body.values['*'].app_replicas).to.eq(4);
         return body;
       })
-    .reply(200, mock_pipeline))
+      .reply(200, mock_pipeline))
     .stdout({ print })
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--secret', 'app_replicas=4'])
@@ -347,8 +354,8 @@ describe('deployment secrets', function () {
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readSecretsFile', () => {
-        return wildcard_secrets;
-      })
+      return wildcard_secrets;
+    })
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
       .reply(200, account))
@@ -376,8 +383,8 @@ describe('deployment secrets', function () {
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readSecretsFile', () => {
-        return wildcard_secrets;
-      })
+      return wildcard_secrets;
+    })
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
       .reply(200, account))
