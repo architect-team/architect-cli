@@ -5,6 +5,7 @@ import { ValidationErrors } from '.';
 import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
+import { isBooleanStringFlag } from './common/utils/oclif';
 import SentryService from './sentry';
 
 const DEPRECATED_LABEL = '[deprecated]';
@@ -78,7 +79,18 @@ export default abstract class BaseCommand extends Command {
     const args = [];
     const flags = [];
     let flag_option = false;
+
+    const new_args = [];
     for (const arg of argv) {
+      if (!arg.startsWith('-')) {
+        new_args.push(arg);
+      } else {
+        const flag = arg.startsWith('--') ? flag_definitions[arg.replace('--', '')] : Object.values(flag_definitions).find((f: any) => f.char === arg.replace('-', ''));
+        new_args.push(isBooleanStringFlag(flag) ? `${arg}=true` : arg);
+      }
+    }
+
+    for (const arg of new_args) {
       const is_flag = arg.startsWith('-');
 
       if (is_flag || flag_option) {
