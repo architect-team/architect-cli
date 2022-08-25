@@ -35,7 +35,7 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
  * Gracefully stops running containers when the process is interrupted, and
  * stops containers when the underlying process returns with an error.
  */
- class UpProcessManager {
+class UpProcessManager {
   compose_file: string;
   project_name: string;
   detached: boolean;
@@ -192,7 +192,7 @@ export default class Dev extends BaseCommand {
 
   static examples = [
     'architect dev ./mycomponent/architect.yml',
-    'architect dev --port=81 --no-browser --debug=true --secret-file=./mycomponent/mysecrets.yml ./mycomponent/architect.yml',
+    'architect dev --port=81 --browser=false --debug=true --secret-file=./mycomponent/mysecrets.yml ./mycomponent/architect.yml',
   ];
 
   static flags = {
@@ -236,16 +236,14 @@ export default class Dev extends BaseCommand {
       multiple: true,
       default: [],
     }),
-    recursive: Flags.boolean({
+    recursive: booleanString({
       char: 'r',
       default: true,
-      allowNo: true,
       description: '[default: true] Toggle to automatically deploy all dependencies',
       sensitive: false,
     }),
-    browser: Flags.boolean({
+    browser: booleanString({
       default: true,
-      allowNo: true,
       description: '[default: true] Automatically open urls in the browser for local deployments',
       sensitive: false,
     }),
@@ -254,18 +252,20 @@ export default class Dev extends BaseCommand {
       sensitive: false,
     }),
     // Used for proxy from deploy to dev. These will be removed once --local is deprecated
-    local: Flags.boolean({
+    local: booleanString({
       char: 'l',
       description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
       exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
       hidden: true,
       sensitive: false,
+      default: false,
     }),
-    production: Flags.boolean({
+    production: booleanString({
       description: `${Command.DEPRECATED} Please use --environment.`,
       dependsOn: ['local'],
       hidden: true,
       sensitive: false,
+      default: undefined,
     }),
     compose_file: Flags.string({
       description: `${Command.DEPRECATED} Please use --compose-file.`,
@@ -278,10 +278,11 @@ export default class Dev extends BaseCommand {
       hidden: true,
       description: `${Command.DEPRECATED} Please use --secret-file.`,
     }),
-    detached: Flags.boolean({
+    detached: booleanString({
       description: 'Run in detached mode',
       char: 'd',
       sensitive: false,
+      default: false,
     }),
     debug: booleanString({
       description: `[default: true] Turn debug mode on (true) or off (false)`,

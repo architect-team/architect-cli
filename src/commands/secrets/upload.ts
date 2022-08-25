@@ -1,4 +1,3 @@
-import { Flags } from '@oclif/core';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
@@ -9,6 +8,7 @@ import { EnvironmentUtils } from '../../architect/environment/environment.utils'
 import SecretUtils, { Secret } from '../../architect/secret/secret.utils';
 import UserUtils from '../../architect/user/user.utils';
 import BaseCommand from '../../base-command';
+import { booleanString } from '../../common/utils/oclif';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
 
 export default class SecretsUpload extends BaseCommand {
@@ -22,7 +22,7 @@ export default class SecretsUpload extends BaseCommand {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    override: Flags.boolean({
+    override: booleanString({
       description: 'Allow override of existing secrets',
       default: false,
       sensitive: false,

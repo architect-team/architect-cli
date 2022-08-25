@@ -23,7 +23,7 @@ export class AgentPlatformUtils {
 
   public static getServerAgentHost(agent_server_host: string): string {
     const host = agent_server_host.toLocaleLowerCase().trim();
-    if (host[host.length - 1] === ':') {
+    if (host.endsWith(':')) {
       return `${host}${this.getLocalServerAgentPort()}`;
     }
     if (host !== 'local') {

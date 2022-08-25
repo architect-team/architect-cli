@@ -10,10 +10,12 @@ import { ArchitectError, Dictionary, Slugs } from '../../';
 import { ENVIRONMENT } from '../../app-config/config';
 import AccountUtils from '../../architect/account/account.utils';
 import PipelineUtils from '../../architect/pipeline/pipeline.utils';
+import Platform from '../../architect/platform/platform.entity';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 import BaseCommand from '../../base-command';
 import { AgentPlatformUtils } from '../../common/utils/agent-platform.utils';
 import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.utils';
+import { booleanString } from '../../common/utils/oclif';
 
 export default class PlatformCreate extends BaseCommand {
   static aliases = ['platforms:register', 'platform:create', 'platforms:create'];
@@ -32,15 +34,17 @@ export default class PlatformCreate extends BaseCommand {
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    auto_approve: Flags.boolean({
+    auto_approve: booleanString({
       description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
       hidden: true,
       sensitive: false,
+      default: false,
     }),
-    ['auto-approve']: Flags.boolean({ sensitive: false }),
-    // Flags get loaded before app_config so making sure that
-    // agent can only be installed on non production devices means
-    // we have to not specify it here.
+    ['auto-approve']: booleanString({
+      sensitive: false,
+      default: false,
+    }),
+    // TODO https://gitlab.com/architect-io/architect-cli/-/issues/514
     type: Flags.string({
       char: 't',
       options: ['KUBERNETES', 'kubernetes'],
@@ -80,7 +84,7 @@ export default class PlatformCreate extends BaseCommand {
     await this.createPlatform();
   }
 
-  private async installAppliations(flags: any, created_platform: any, platform_name: string, account_name: string) {
+  private async installAppliations(flags: any, created_platform: Platform, platform_name: string, account_name: string) {
     if (!flags['auto-approve']) {
       const confirmation = await inquirer.prompt({
         type: 'confirm',
@@ -129,12 +133,14 @@ export default class PlatformCreate extends BaseCommand {
 
     const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the platform with' });
 
-    const contexts = await this.setupKubeContext(flags);
+    const kube_contexts = await this.setupKubeContext(flags);
 
     try {
-      const platform = await this.createArchitectPlatform(flags, contexts.current_context);
-
-      const platform_dto = { name: platform_name, ...platform, flags: flags_map };
+      const platform_dto = {
+        name: platform_name,
+        ...await this.createArchitectPlatform(flags, kube_contexts.current_context)
+        , flags: flags_map,
+      };
 
       CliUx.ux.action.start('Registering platform with Architect');
       const created_platform = await this.postPlatformToApi(platform_dto, account.id);
@@ -152,11 +158,12 @@ export default class PlatformCreate extends BaseCommand {
       }
       return created_platform;
     } finally {
-      await this.setContext(flags, contexts.original_context);
+      await this.setContext(flags, kube_contexts.original_context);
     }
   }
 
   async createArchitectPlatform(flags: any, context: any): Promise<CreatePlatformInput> {
+    const agent_display_name = 'agent (BETA)';
     const platform_type_answers: any = await inquirer.prompt([
       {
         when: !flags.type,
@@ -165,11 +172,11 @@ export default class PlatformCreate extends BaseCommand {
         message: 'What type of platform would you like to register?',
         choices: [
           'kubernetes',
-          ...(this.app.config.environment !== ENVIRONMENT.PRODUCTION ? ['agent (BETA)'] : []),
+          ...(this.app.config.environment !== ENVIRONMENT.PRODUCTION ? [agent_display_name] : []),
         ],
       },
     ]);
-    if (!flags.type && platform_type_answers.platform_type.indexOf('agent') === 0) {
+    if (!flags.type && platform_type_answers.platform_type === agent_display_name) {
       platform_type_answers.platform_type = 'agent';
     }
 
@@ -194,7 +201,7 @@ export default class PlatformCreate extends BaseCommand {
     return deployment.pipeline.id;
   }
 
-  async postPlatformToApi(dto: CreatePlatformInput, account_id: string): Promise<any> {
+  async postPlatformToApi(dto: CreatePlatformInput, account_id: string): Promise<Platform> {
     const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms`, dto);
     return platform;
   }

@@ -1,34 +1,29 @@
-import fs from 'fs-extra';
-import nock from 'nock';
-import os from 'os';
-import path from 'path';
-import sinon from 'sinon';
-import AppConfig from '../../../src/app-config/config';
-import AppService from '../../../src/app-config/service';
-import Environments from '../../../src/commands/environments';
-import ARCHITECTPATHS from '../../../src/paths';
+import { expect } from '@oclif/test';
+import { mockArchitectAuth, MOCK_API_HOST } from '../../utils/mocks';
 
 describe('environments', () => {
-  let tmp_dir = os.tmpdir();
 
-  beforeEach(function () {
-    const config = new AppConfig('', {});
-    const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
-    fs.writeJSONSync(tmp_config_file, config);
-    const app_config_stub = sinon.stub().returns(new AppService(tmp_dir, '0.0.1'));
-    sinon.replace(AppService, 'create', app_config_stub);
-  });
+  const print = false;
 
-  it('lists all environments', () => {
-    nock('http://localhost').get('/environments')
-      .reply(200, []);
-    Environments.run([]);
-  });
+  mockArchitectAuth
+    .nock(MOCK_API_HOST, api => api
+      .get(`/environments?q=`)
+      .reply(200, { rows: [], total: 0 }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['environments'])
+    .it('list environments', ctx => {
+      expect(ctx.stdout).to.contain('You have not configured any environments')
+    });
 
-  it('supports search queries', () => {
-    const search_term = 'architect';
-    nock('http://localhost').get('/environments')
-      .reply(200, []);
-    Environments.run([search_term]);
-  });
+  mockArchitectAuth
+    .nock(MOCK_API_HOST, api => api
+      .get(`/environments?q=architect`)
+      .reply(200, { rows: [], total: 0 }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['environments', 'architect'])
+    .it('list environments for account', ctx => {
+      expect(ctx.stdout).to.contain('No environments found matching architect')
+    });
 })
