@@ -3,8 +3,6 @@ import path from 'path';
 import sinon from 'sinon';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils } from '../../src/';
 import { DockerComposeUtils } from '../../src/common/docker-compose/index';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils } from '../../src/';
-import * as Docker from '../../src/common/utils/docker';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('task:exec', async function () {
@@ -47,7 +45,6 @@ describe('task:exec', async function () {
   const mock_local_env_name = 'local';
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account)
@@ -73,7 +70,6 @@ describe('task:exec', async function () {
     });
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account)
@@ -99,7 +95,6 @@ describe('task:exec', async function () {
     });
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account)
@@ -130,7 +125,6 @@ describe('task:exec', async function () {
   const namespaced_bad_component_name = ComponentSlugUtils.build(mock_account.name, bad_component_name);
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account)
@@ -148,7 +142,6 @@ describe('task:exec', async function () {
     .it('fails with a useful message if given a bad environment name');
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account)
@@ -186,7 +179,6 @@ describe('task:exec', async function () {
   };
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns(mock_docker_compose))
     .stdout({ print })
@@ -203,7 +195,6 @@ describe('task:exec', async function () {
     });
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns(mock_docker_compose))
     .stdout({ print })
@@ -218,7 +209,6 @@ describe('task:exec', async function () {
     });
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns(mock_docker_compose))
     .stdout({ print })
@@ -235,7 +225,6 @@ describe('task:exec', async function () {
     });
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns(mock_docker_compose))
     .stdout({ print })
@@ -252,7 +241,6 @@ describe('task:exec', async function () {
     });
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().throws(new Error('docker compose not found')))
     .stdout({ print })
@@ -264,7 +252,6 @@ describe('task:exec', async function () {
     .it('fails with a useful message if no docker compose file is found');
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().throws(new Error('docker compose not found')))
     .stdout({ print })
@@ -276,7 +263,6 @@ describe('task:exec', async function () {
     .it('fails with a useful message if no docker compose file is found');
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns({ services: {} }))
     .stdout({ print })
@@ -288,7 +274,6 @@ describe('task:exec', async function () {
     .it('fails with a useful message if the specified task is not present in the docker compose');
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns({ services: {} }))
     .stdout({ print })

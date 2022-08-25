@@ -5,7 +5,6 @@ import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
 import Deploy from '../../src/commands/deploy';
 import ComponentRegister from '../../src/commands/register';
 import DeployUtils from '../../src/common/utils/deploy.utils';
-import * as Docker from '../../src/common/docker/cmd';
 import * as ComponentBuilder from '../../src/dependency-manager/spec/utils/component-builder';
 import { app_host } from '../config.json';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
@@ -30,7 +29,6 @@ const mock_pipeline = {
 
 describe('remote deploy environment', function () {
   const remoteDeploy = mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
@@ -100,7 +98,6 @@ describe('remote deploy environment', function () {
 
 describe('auto-approve flag with underscore style still works', function () {
   const remoteDeploy = mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
@@ -173,7 +170,6 @@ describe('pollPipeline handles failed deployments', () => {
   };
 
   const baseRemoteDeploy = mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ pipeline: failed_pipeline }))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
@@ -279,7 +275,6 @@ describe('deployment secrets', function () {
   }
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
     .nock(MOCK_API_HOST, api => api
@@ -302,7 +297,6 @@ describe('deployment secrets', function () {
     });
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
     .nock(MOCK_API_HOST, api => api
@@ -326,7 +320,6 @@ describe('deployment secrets', function () {
     });
 
   mockArchitectAuth // TODO: 404: remove
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
     .nock(MOCK_API_HOST, api => api
@@ -350,7 +343,6 @@ describe('deployment secrets', function () {
     });
 
   mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readSecretsFile', () => {
@@ -379,7 +371,6 @@ describe('deployment secrets', function () {
     });
 
   mockArchitectAuth // TODO: 404: remove
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readSecretsFile', () => {
