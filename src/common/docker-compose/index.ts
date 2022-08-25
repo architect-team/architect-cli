@@ -10,6 +10,7 @@ import untildify from 'untildify';
 import { ArchitectError, ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
 import { restart } from '../docker/cmd';
+import { RequiresDocker } from '../docker/helper';
 import PortUtil from '../utils/port';
 import { DockerComposeProject, DockerComposeProjectWithConfig } from './project';
 import DockerComposeTemplate, { DockerService } from './template';
@@ -389,6 +390,7 @@ export class DockerComposeUtils {
     return raw_config;
   }
 
+  @RequiresDocker({ compose: true })
   public static dockerCompose(args: string[], execa_opts?: Options, use_console = false): execa.ExecaChildProcess<string> {
     if (use_console) {
       process.stdin.setRawMode(true);

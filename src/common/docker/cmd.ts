@@ -1,9 +1,13 @@
 import execa, { Options } from 'execa';
+import { DockerHelper } from './helper';
 
 export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> => {
   if (process.env.TEST === '1') {
     return;
   }
+
+  DockerHelper.verifyDocker();
+
   const cmd = execa('docker', args, execa_opts);
   if (opts.stdout) {
     cmd.stdout?.pipe(process.stdout);
