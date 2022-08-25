@@ -84,7 +84,7 @@ async function runTest(shell: string) {
   if (process.env.CI) {
     console.log('All tests passed!');
     // todo: hardcoded location
-    await execa('docker', ['compose', 'stop', '/home/runner/.config/architect/docker-compose/architect.yml'])
+    await execa('docker', ['compose', '-f', '/home/runner/.config/architect/docker-compose/architect.yml', '-p', 'architect', 'stop']);
     return;
   }
 
