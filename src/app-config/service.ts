@@ -157,11 +157,6 @@ export default class AppService {
       );
     }
 
-    this._api.interceptors.request.use((config) => {
-      this.errorContext = new Error("Thrown at:");
-      return config;
-    });
-
     return this._api;
   }
 }
