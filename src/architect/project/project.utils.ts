@@ -70,7 +70,7 @@ export default class ProjectUtils {
 
   static async fetchYamlFromGitHub(url: string): Promise<ComponentSpec> {
     const component_spec = await axios.get(url)
-      .then((res: any) => res.data)
+      .then((res: any) => yaml.load(res.data))
       .catch((err: any) => {
         throw new Error(`Failed to fetch ${url}`);
       });
