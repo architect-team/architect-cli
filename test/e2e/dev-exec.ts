@@ -13,6 +13,10 @@ const EXEC_TESTS = [
   ['sh', '-c', '"echo \"quotes\""'],
 ];
 
+function wait(seconds: number): Promise<void> {
+  return new Promise(r => setTimeout(r, seconds * 1000));
+}
+
 
 function architect(args: string[], opts?: Options<string>) {
   return execa('./bin/run', args, opts);
@@ -68,13 +72,16 @@ async function runTest(shell: string) {
       console.log(`architect dev not running anything after ${MAX_ATTEMPTS} attempts, giving up`);
       process.exit(1);
     }
-    await new Promise(r => setTimeout(r, 1000));
+    await wait(1);
   }
 
   if (dev_process.exitCode !== null) {
     console.log('Dev process exited early!');
     process.exit(1);
   }
+
+  console.log('waiting 10 seconds before running exec tests..');
+  await wait(10);
 
   // Step 2: Run some exec commands
   for (let i = 0; i < EXEC_TESTS.length; i++) {
@@ -85,6 +92,7 @@ async function runTest(shell: string) {
     console.log('All tests passed!');
     // todo: hardcoded location
     await execa('docker', ['compose', '-f', '/home/runner/.config/architect/docker-compose/architect.yml', '-p', 'architect', 'stop']);
+    wait(5);
     return;
   }
 
@@ -136,6 +144,9 @@ async function run() {
     for (const shell of shells_to_test) {
       await runTest(shell);
     }
+
+    console.log('All tests on all shells finished successfully.');
+    process.exit(0);
   } else {
     console.log('Got unexpected platform');
     process.exit(1);
