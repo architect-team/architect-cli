@@ -5,7 +5,7 @@ import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
-import * as Docker from '../common/utils/docker';
+import { RequiresDocker } from '../common/docker/helper';
 import { booleanString } from '../common/utils/oclif';
 
 export default class TaskExec extends BaseCommand {
@@ -87,9 +87,9 @@ export default class TaskExec extends BaseCommand {
     }
   }
 
+  @RequiresDocker({ compose: true })
   async runLocal(): Promise<void> {
     const { flags, args } = await this.parse(TaskExec);
-    await Docker.verify();
 
     const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
     const compose_file = flags['compose-file'] || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);

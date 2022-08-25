@@ -15,8 +15,8 @@ import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import * as Docker from '../common/utils/docker';
-import DockerBuildXUtils from '../common/utils/docker-buildx.utils';
+import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
+import DockerBuildXUtils from '../common/docker/buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
 tmp.setGracefulCleanup();
@@ -95,9 +95,9 @@ export default class ComponentRegister extends BaseCommand {
     return parsed;
   }
 
+  @RequiresDocker({ buildx: true })
   async run(): Promise<void> {
     const { args, flags } = await this.parse(ComponentRegister);
-    await Docker.verify();
     for (const component of args.component) {
       const config_path = path.resolve(untildify(component));
 
@@ -240,7 +240,6 @@ export default class ComponentRegister extends BaseCommand {
         });
       } catch (err: any) {
         fs.removeSync(compose_file);
-        this.log(`Docker buildx bake failed. Please make sure docker is running.`);
         this.error(err);
       }
     }
@@ -260,7 +259,7 @@ export default class ComponentRegister extends BaseCommand {
       if (image) {
         const digest = await this.getDigest(image);
         // we don't need the tag on our image because we use the digest as the key
-        const image_without_tag = Docker.stripTagFromImage(image);
+        const image_without_tag = stripTagFromImage(image);
         service.image = `${image_without_tag}@${digest}`;
       }
       if (!service.image) {
@@ -277,7 +276,7 @@ export default class ComponentRegister extends BaseCommand {
       if (image) {
         const digest = await this.getDigest(image);
         // we don't need the tag on our image because we use the digest as the key
-        const image_without_tag = Docker.stripTagFromImage(image);
+        const image_without_tag = stripTagFromImage(image);
         task.image = `${image_without_tag}@${digest}`;
       }
       if (!task.image) {

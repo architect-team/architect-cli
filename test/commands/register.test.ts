@@ -5,7 +5,7 @@ import sinon from 'sinon';
 import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
-import DockerBuildXUtils from '../../src/common/utils/docker-buildx.utils';
+import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
 import { mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST } from '../utils/mocks';
 
@@ -311,9 +311,7 @@ describe('register', function () {
       expect(process.exitCode).eq(1);
       expect(`${err}`).to.contain('Some internal docker build exception');
     })
-    .it('rejects with informative error message if docker buildx inspect fails', ctx => {
-      expect(ctx.stdout).to.contain("Docker buildx bake failed. Please make sure docker is running.");
-    });
+    .it('rejects with the original error message if docker buildx inspect fails');
 
   mockArchitectAuth
     .stub(fs, 'move', sinon.stub())

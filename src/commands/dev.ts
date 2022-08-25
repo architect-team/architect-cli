@@ -16,8 +16,8 @@ import LocalDependencyManager, { ComponentConfigOpts } from '../common/dependenc
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DeployUtils from '../common/utils/deploy.utils';
-import * as Docker from '../common/utils/docker';
 import { booleanString } from '../common/utils/oclif';
+import { RequiresDocker } from '../common/docker/helper';
 import PortUtil from '../common/utils/port';
 
 type TraefikHttpService = {
@@ -35,7 +35,7 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
  * Gracefully stops running containers when the process is interrupted, and
  * stops containers when the underlying process returns with an error.
  */
- class UpProcessManager {
+class UpProcessManager {
   compose_file: string;
   project_name: string;
   detached: boolean;
@@ -258,7 +258,7 @@ export default class Dev extends BaseCommand {
       exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
       hidden: true,
       sensitive: false,
-      default: undefined,
+      default: false,
     }),
     production: booleanString({
       description: `${Command.DEPRECATED} Please use --environment.`,
@@ -521,7 +521,6 @@ export default class Dev extends BaseCommand {
 
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
-    await Docker.verify();
 
     if (!args.configs_or_components || !args.configs_or_components.length) {
       args.configs_or_components = ['./architect.yml'];
@@ -611,6 +610,7 @@ export default class Dev extends BaseCommand {
     await this.runCompose(compose, flags.port, gateway_admin_port);
   }
 
+  @RequiresDocker({ compose: true })
   async run(): Promise<void> {
     // Oclif only removes the command name if you are running that command
     if (this.argv[0] && this.argv[0].toLocaleLowerCase() === "deploy") {
