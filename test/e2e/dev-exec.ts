@@ -27,7 +27,7 @@ function architect(args: string[], opts?: Options<string>) {
 // TODO: write example yml that requires no dependencies to tmpfile
 function runDev(shell: string): execa.ExecaChildProcess<string> {
   const dev_process = architect(['dev', 'examples/hello-world/architect.yml', '--no-browser', '--ssl=false'], 
-    { shell, stdio: 'inherit' });
+    { shell, stdio: 'ignore' });
 
   process.on('SIGINT', () => {
     dev_process.kill('SIGINT');
@@ -39,11 +39,11 @@ function runDev(shell: string): execa.ExecaChildProcess<string> {
 async function runExec(shell: string, cmd: string[]) {
   const cmd_array = ['exec'].concat('-a dev hello-world.services.api --no-tty --'.split(' ')).concat(cmd);
   try {
-    console.log(`Testing: ${cmd_array}`);
+    console.log(`Testing: ${cmd_array.join(' ')}`);
     const exec_process = architect(cmd_array, { shell });
     await exec_process;
   } catch (e) {
-    console.log(`Test failed! ${cmd_array}`);
+    console.log(`Test failed! ${cmd_array.join(' ')}`);
     console.log(e);
     process.exit(1);
   }
