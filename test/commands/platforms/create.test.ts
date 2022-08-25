@@ -39,6 +39,10 @@ describe('platform:create', function () {
     sinon.replace(AppService, 'create', app_config_stub);
   });
 
+  afterEach(() => {
+    sinon.restore();
+  });
+
   it('Does not auto approve creation when auto-approve flag value is false', async () => {
     const inquirerStub = sinon.stub(inquirer, 'prompt');
     inquirerStub.resolves({

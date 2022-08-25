@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import BaseCommand from '../base-command';
-import * as Docker from '../common/utils/docker';
+import { RequiresDocker } from '../common/docker/helper';
 
 export default class Logout extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -13,8 +13,8 @@ export default class Logout extends BaseCommand {
   ];
   static flags = { ...BaseCommand.flags };
 
+  @RequiresDocker()  // docker is required for logout because we run `docker logout`
   async run(): Promise<void> {
-    await Docker.verify(); // docker is required for logout because we run `docker logout`
     await this.app.auth.logout();
     this.log(chalk.green('Logout successful'));
   }

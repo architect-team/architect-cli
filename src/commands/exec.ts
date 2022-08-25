@@ -10,6 +10,7 @@ import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
+import { RequiresDocker } from '../common/docker/helper';
 import { booleanString } from '../common/utils/oclif';
 
 enum RemoteExecCommandOutputStatus {
@@ -365,6 +366,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     await this.exec(uri, flags);
   }
 
+  @RequiresDocker({ compose: true })
   async runLocal(args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
     const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);

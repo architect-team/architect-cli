@@ -10,6 +10,7 @@ import Environment from '../architect/environment/environment.entity';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
+import { RequiresDocker } from '../common/docker/helper';
 import { booleanString } from '../common/utils/oclif';
 
 export default class Logs extends BaseCommand {
@@ -96,6 +97,7 @@ export default class Logs extends BaseCommand {
     };
   }
 
+  @RequiresDocker({ compose: true })
   async runLocal(): Promise<void> {
     const { args, flags } = await this.parse(Logs);
 
