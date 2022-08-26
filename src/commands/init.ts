@@ -11,6 +11,8 @@ import ProjectUtils from '../architect/project/project.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { ComposeConverter } from '../common/docker-compose/converter';
+import { RequiresDocker } from '../common/docker/helper';
+import { RequiresGit } from '../common/utils/git/helper';
 import { ComponentSlugUtils } from '../dependency-manager/spec/utils/slugs';
 
 export abstract class InitCommand extends BaseCommand {
@@ -51,6 +53,8 @@ export abstract class InitCommand extends BaseCommand {
     return default_compose;
   }
 
+  @RequiresGit()
+  @RequiresDocker({ compose: true })
   async runProjectCreation(project_name: string): Promise<void> {
     if (fs.existsSync(`./${project_name}`)) {
       console.log(chalk.red(`The folder ./${project_name} already exists. Please choose a different project name or remove the folder`));
