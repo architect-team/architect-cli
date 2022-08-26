@@ -2,7 +2,7 @@ import { AccessToken, AuthorizationCode } from 'simple-oauth2';
 import { URL } from 'url';
 import User from '../architect/user/user.entity';
 import LoginRequiredError from '../common/errors/login-required';
-import { docker } from '../common/utils/docker';
+import { docker } from '../common/docker/cmd';
 import CallbackServer from './callback_server';
 import AppConfig from './config';
 import CredentialManager from './credentials';
