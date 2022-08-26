@@ -1,7 +1,11 @@
 <!-- docs -->
 
 <p align="center">
-  <a href="//architect.io" target="blank"><img src="https://docs.architect.io/img/logo.svg" width="480" alt="Architect Logo" /></a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.architect.io/logo/horizontal-inverted.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://cdn.architect.io/logo/horizontal.png">
+    <img width="320" alt="Architect Logo" src="https://cdn.architect.io/logo/horizontal.png">
+  </picture>
 </p>
 
 <p align="center">
@@ -2016,7 +2020,7 @@ Execute a task in the given environment
 
 ```
 USAGE
-  $ architect task [COMPONENT] [TASK] [-l <value> | -a <value> |  |  | ] [-o <value> |  | -e <value> |  | 
+  $ architect task [COMPONENT] [TASK] [-l <value> | -a <value> |  |  | ] [-o <value> |  | -e <value> |  |
     | ]
 
 ARGUMENTS
@@ -2047,7 +2051,7 @@ Execute a task in the given environment
 
 ```
 USAGE
-  $ architect task:exec [COMPONENT] [TASK] [-l <value> | -a <value> |  |  | ] [-o <value> |  | -e <value> |  | 
+  $ architect task:exec [COMPONENT] [TASK] [-l <value> | -a <value> |  |  | ] [-o <value> |  | -e <value> |  |
     | ]
 
 ARGUMENTS
