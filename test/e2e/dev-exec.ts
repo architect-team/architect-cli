@@ -29,7 +29,7 @@ function architect(args: string[], opts?: Options<string>) {
 // TODO: write example yml that requires no dependencies to tmpfile
 function runDev(shell: string): execa.ExecaChildProcess<string> {
   const architect_yml_path = path.join('examples', 'hello-world', 'architect.yml');
-  const dev_process = architect(['dev', architect_yml_path, '--no-browser', '--ssl=false'], 
+  const dev_process = architect(['dev', architect_yml_path, '--no-browser', '--ssl=false', '--port=1111'], 
     { shell, stdio: 'inherit' });
 
   process.on('SIGINT', () => {
