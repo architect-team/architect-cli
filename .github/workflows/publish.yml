@@ -8,57 +8,58 @@ env:
   NPM_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
 
 jobs:
-  build_run:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run build
-      - run: rm -r node_modules
-      - run: npm ci --omit=dev
-      - run: ./bin/run --version
-      - run: rm -r node_modules/@oclif/plugin-warn-if-update-available/lib/hooks/ # Remove plugin-warn-if-update-available hook from showing warning
-      - run: | # Check if stderr is not empty and hard error (captures node warnings)
-          error=$(./bin/run --version 2>&1 >/dev/null)
-          [ ! -z "$error" ] && echo "$error" && exit 1 || echo "No error"
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run check-circular
-  test:
-    strategy:
-      matrix:
-        node-version: [14.x, 16.x, 18.x]
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-      - run: npm ci
-      - run: npm test
+  # build_run:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '16'
+  #         cache: 'npm'
+  #     - run: npm ci
+  #     - run: npm run build
+  #     - run: rm -r node_modules
+  #     - run: npm ci --omit=dev
+  #     - run: ./bin/run --version
+  #     - run: rm -r node_modules/@oclif/plugin-warn-if-update-available/lib/hooks/ # Remove plugin-warn-if-update-available hook from showing warning
+  #     - run: | # Check if stderr is not empty and hard error (captures node warnings)
+  #         error=$(./bin/run --version 2>&1 >/dev/null)
+  #         [ ! -z "$error" ] && echo "$error" && exit 1 || echo "No error"
+  # lint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '16'
+  #         cache: 'npm'
+  #     - run: npm ci
+  #     - run: npm run lint
+  #     - run: npm run check-circular
+  # test:
+  #   strategy:
+  #     matrix:
+  #       node-version: [14.x, 16.x, 18.x]
+  #       os: [ubuntu-latest, windows-latest, macos-latest]
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         submodules: recursive
+  #     - name: Use Node.js ${{ matrix.node-version }}
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: ${{ matrix.node-version }}
+  #         cache: 'npm'
+  #     - run: npm ci
+  #     - run: npm test
   test-e2e:
     strategy:
       matrix:
         # Note: macos-latest cannot be used for this test as docker isn't installed on the image.
         # This is due to licensing reasons https://github.com/actions/runner-images/issues/2150
-        os: [ubuntu-latest, windows-latest]
+        # os: [ubuntu-latest, windows-latest]
+        os: [windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -72,27 +73,27 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run e2e-test
-  publish_cli:
-    name: Publish CLI
-    if: github.ref_name == 'main' || github.ref_name == 'rc' || startsWith(github.ref_name, 'arc-')
-    needs: [build_run, lint, test]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          clean: true
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run build
-      - run: npm run readme
-      - run: npm run generate:schema-docs
-      - run: npm run generate:yarn-lock
-      - name: npm publish
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
-          GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) npm run semantic-release
-      - name: docs website re-build
-        run: curl -X POST ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+  # publish_cli:
+  #   name: Publish CLI
+  #   if: github.ref_name == 'main' || github.ref_name == 'rc' || startsWith(github.ref_name, 'arc-')
+  #   needs: [build_run, lint, test]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         clean: true
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '16'
+  #         cache: 'npm'
+  #     - run: npm ci
+  #     - run: npm run build
+  #     - run: npm run readme
+  #     - run: npm run generate:schema-docs
+  #     - run: npm run generate:yarn-lock
+  #     - name: npm publish
+  #       run: |
+  #         echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
+  #         GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) npm run semantic-release
+  #     - name: docs website re-build
+  #       run: curl -X POST ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
