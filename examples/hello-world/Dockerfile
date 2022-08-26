@@ -1,4 +1,4 @@
-FROM node:14
+FROM henriqueholtz/node-win:16.17.0 
 
 WORKDIR /usr/src/app
 
