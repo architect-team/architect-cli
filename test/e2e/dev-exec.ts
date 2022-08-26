@@ -1,4 +1,5 @@
 import execa, { ExecaChildProcess, Options } from 'execa';
+import path from 'path';
 
 /**
  * Goal of this test is to test that the more complicated commands like dev -> exec -> shutdown of dev
@@ -19,14 +20,16 @@ function wait(seconds: number): Promise<void> {
 
 
 function architect(args: string[], opts?: Options<string>) {
-  return execa('./bin/run', args, opts);
+  const run_path = path.join('.', 'bin', 'run');
+  return execa(run_path, args, opts);
 }
 
 // make architect.yml in tempdir and run dev, then exec on it
 
 // TODO: write example yml that requires no dependencies to tmpfile
 function runDev(shell: string): execa.ExecaChildProcess<string> {
-  const dev_process = architect(['dev', 'examples/hello-world/architect.yml', '--no-browser', '--ssl=false'], 
+  const architect_yml_path = path.join('examples', 'hello-world', 'architect.yml');
+  const dev_process = architect(['dev', architect_yml_path, '--no-browser', '--ssl=false'], 
     { shell, stdio: 'inherit' });
 
   process.on('SIGINT', () => {
