@@ -70,7 +70,7 @@ async function runTest(shell: string) {
     }
   
     attempts += 1;
-    const MAX_ATTEMPTS = 30;
+    const MAX_ATTEMPTS = 120;
     if (attempts > MAX_ATTEMPTS) {
       console.log(`architect dev not running anything after ${MAX_ATTEMPTS} attempts, giving up`);
       process.exit(1);
