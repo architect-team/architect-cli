@@ -1,7 +1,7 @@
 {
   "name": "@architect-io/cli",
   "description": "Command-line interface for Architect.io",
-  "version": "1.24.0-rc.11",
+  "version": "1.24.0-rc.12",
   "author": "Architect.io",
   "bin": {
     "architect": "./bin/run"
