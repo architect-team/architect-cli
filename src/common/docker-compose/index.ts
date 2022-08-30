@@ -570,22 +570,23 @@ export class DockerComposeUtils {
           const state = container_state.State.toLowerCase();
           const health = container_state.Health.toLowerCase();
 
+          const bad_state = state !== 'running';
+          const bad_health = health === 'unhealthy';
+
           if (!service_data_dictionary[service_ref]) {
             service_data_dictionary[service_ref] = {
               last_restart_ms: Date.now(),
             };
 
             // Docker compose will only exit containers when stopping an up
-            // If we had no service data and the container state was exited
-            // it means that these containers were from an old instance and we
-            // are not yet in a bad state.
-            if (state === 'exited') {
+            // If we had no service data and the container state is bad,
+            // these containers may be from an old instance and we
+            // are not yet in a bad state. If they are still bad after 5s, they
+            // will be restarted.
+            if (bad_state) {
               continue;
             }
           }
-
-          const bad_state = state === 'exited' || state === 'dead';
-          const bad_health = health === 'unhealthy';
 
           if (bad_state || bad_health) {
             const service_data = service_data_dictionary[service_ref];
