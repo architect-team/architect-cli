@@ -68,8 +68,8 @@ export default class PromptUtils {
    * @param {number} spinner_duration_ms - time in ms to display spinner.
    *
    */
-  public static async oclif_timed_spinner(spinner_prefix = '', spinner_loading_postfix = '', spinner_completed_postfix: string = chalk.green('DONE'),
-    spinner_duration_ms = 2500): Promise<void> {
+  public static async oclif_timed_spinner(spinner_prefix = '', spinner_loading_postfix = '', spinner_completed_postfix: string = chalk.green('✓'),
+    spinner_duration_ms = 2000): Promise<void> {
     CliUx.ux.action.start(spinner_prefix, spinner_loading_postfix, { stdout: true });
     await new Promise(resolve => setTimeout(resolve, spinner_duration_ms));
     CliUx.ux.action.stop(spinner_completed_postfix);

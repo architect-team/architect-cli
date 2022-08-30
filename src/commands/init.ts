@@ -13,6 +13,7 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import { ComposeConverter } from '../common/docker-compose/converter';
 import { RequiresDocker } from '../common/docker/helper';
 import { RequiresGit } from '../common/utils/git/helper';
+import PromptUtils from '../common/utils/prompt-utils';
 import { ComponentSlugUtils } from '../dependency-manager/spec/utils/slugs';
 
 export abstract class InitCommand extends BaseCommand {
@@ -62,11 +63,26 @@ export abstract class InitCommand extends BaseCommand {
     }
     this.log(`Start the process to create your project '${project_name}'.`);
     const selections = await ProjectUtils.getSelections();
+
+    this.log(`                                                   7###        s##`);
+    this.log(`    ;####^####           ,###Q                      @##        7%"  ]##b                     @##p`);
+    this.log(`   {####  ####           # @##p    W##pa##  ,s#WW#m @##,###m  *### W@##MWm ,sMWWm,   ,m#WW#pW###MWL`);
+    this.log(`  #####      &####      @\`  @##    j##b^7Y ###    ^ @##  '###  @##~ @##b  ###  '##b ###    \` @##b`);
+    this.log(` WWWWQ,,,   #####      @WWWWW###   j##b   j###      @##   ###  @##~ @##b ]###"T"TTb]###      @##b`);
+    this.log(`     @###b ####b      ]#     @##Q  j##b    @##p   , @##   ###  @##~ @##b  @##p    ,^@##    , @##b`);
+    this.log(`     %888W8888"      *WWW    4WWWW %WWW=    7%W#MT *WWWW 4WWW=*WWWW  %W#W^ ^%WWWWb   7%WWW"   %WWW^\n`);
+
+    await PromptUtils.oclif_timed_spinner('Creating Project directory');
     await ProjectUtils.downloadGitHubRepos(selections, project_name);
+
+    this.log('\n✨ And now, for some Architect Magic ✨\n');
     await ProjectUtils.updateArchitectYamls(this.app, selections, project_name);
     await ProjectUtils.linkSelections(this.app, selections, project_name);
-    this.log(`Successfully created project ${project_name}.`);
-    this.log(chalk.blue(`Now try running your project using the instructions in ${project_name}/README.md.`));
+
+    const root_path = path.join(project_name, ProjectUtils.getRootComponent(selections), 'architect.yml');
+    this.log(chalk.grey('# Visit https://docs.architect.io/deployments/local-environments/#local-registration to learn more about local registration\n'));
+    this.log(chalk.green(`Successfully created project ${project_name}.\n`));
+    this.log(`Your App is ready to be deployed by architect!\nJust run:\n\t$ architect dev ${root_path}\n`);
   }
 
   async runArchitectYamlConversion(from_path: string, component_name: string, component_file: string): Promise<void> {
