@@ -1,3 +1,5 @@
+import { CliUx } from '@oclif/core';
+import chalk from 'chalk';
 import isCi from 'is-ci';
 
 export default class PromptUtils {
@@ -50,5 +52,26 @@ export default class PromptUtils {
     };
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     inquirer.prompt.registerPrompt = function () { };
+  }
+
+  /**
+   * Prints a spinner to stdout with configurable text and thinking time using the following template:
+   *
+   *    `{spinner_prefix}... <spinner> {spinner_loading_postfix | spinner_completed_postfix}`
+   *
+   *     - 'Fetching the list of available application types... Loading...'
+   *     - 'Fetching the list of available application types... DONE'
+   *
+   * @param {string} spinner_prefix - prepended spinner text.
+   * @param {string} spinner_loading_postfix - text appending spinner for amount of time in ms specified in spinner_duration_ms.
+   * @param {string} spinner_completed_postfix - text appending spinner replacing spinner_loading_postfix after spinner_duration_ms has elapsed.
+   * @param {number} spinner_duration_ms - time in ms to display spinner.
+   *
+   */
+  public static async oclif_timed_spinner(spinner_prefix = '', spinner_loading_postfix = '', spinner_completed_postfix: string = chalk.green('DONE'),
+    spinner_duration_ms = 2500): Promise<void> {
+    CliUx.ux.action.start(spinner_prefix, spinner_loading_postfix, { stdout: true });
+    await new Promise(resolve => setTimeout(resolve, spinner_duration_ms));
+    CliUx.ux.action.stop(spinner_completed_postfix);
   }
 }

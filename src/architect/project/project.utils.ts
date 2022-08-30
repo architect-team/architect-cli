@@ -1,3 +1,5 @@
+import axios from 'axios';
+import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import yaml from 'js-yaml';
@@ -5,10 +7,9 @@ import path from 'path';
 import untildify from 'untildify';
 import { buildSpecFromPath, ComponentSpec } from '../../';
 import AppService from '../../app-config/service';
+import PromptUtils from '../../common/utils/prompt-utils';
 import { EnvironmentSpecValue } from '../../dependency-manager/spec/resource-spec';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
-import axios from 'axios';
-import execa from 'execa';
 
 interface Selection {
   name: string,
@@ -195,18 +196,22 @@ Change directory to '../${root_service}', then run the register and deploy comma
 
     const selections: Dictionary<Selection> = {};
     const types = ['Full stack', 'Backend'];
+    await PromptUtils.oclif_timed_spinner('Fetching the list of available application types');
     const type = await this.prompt(types, 'What type of application are you building?');
     if (type.toLowerCase() === 'full stack') {
       const frontend_opts = choices.filter((item: any) => item.type === 'frontend');
+      await PromptUtils.oclif_timed_spinner('Preparing a list of available full-stack frontend options');
       const frontend = await this.prompt(frontend_opts, 'Select a frontend');
       selections['frontend'] = frontend;
     }
 
     const backend_opts = choices.filter((item: any) => item.type === 'backend');
+    await PromptUtils.oclif_timed_spinner('Loading available backend choices');
     const backend = await this.prompt(backend_opts, 'Select a backend');
     selections['backend'] = backend;
 
     const database_opts = choices.filter((item: any) => item.type === 'database');
+    await PromptUtils.oclif_timed_spinner('Retrieving a list of supported databases');
     const database = await this.prompt(database_opts, 'Select a database');
     selections['database'] = database;
 
