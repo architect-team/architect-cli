@@ -27,7 +27,7 @@ type TraefikHttpService = {
   provider: string;
 };
 
-const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/g);
+const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/);
 
 /**
  * Handles the logic for managing the `docker compose up` process.
@@ -391,7 +391,7 @@ export default class Dev extends BaseCommand {
           this.log('Opening', chalk.blue(url));
           opener(url);
           if (seen_urls.size === 0) {
-            this.log('(disable with --no-browser)');
+            this.log('(disable with --browser=false)');
           }
           seen_urls.add(url);
         }
