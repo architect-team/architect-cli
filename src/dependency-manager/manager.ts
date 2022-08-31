@@ -708,6 +708,6 @@ export default abstract class DependencyManager {
       graph.validated = true;
     }
 
-    return graph;
+    return Object.freeze(graph) as DependencyGraph;
   }
 }
