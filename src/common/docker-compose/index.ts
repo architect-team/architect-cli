@@ -24,8 +24,27 @@ type GenerateOptions = {
 
 export class DockerComposeUtils {
 
-  // used to namespace docker-compose projects so multiple deployments can happen to local
-  public static DEFAULT_PROJECT = 'architect';
+  public static getProjectName(config_dir: string, default_project_name: string): string {
+    // 150 is somewhat arbitrary, but the intention is to give a more-than-reasonable max
+    // length while leavning enough room for other things that get added to this (like the service name).
+    // The max total size for this name is 255, but we use this for the file name too,
+    // which can lead to an ENAMETOOLONG issue.
+    // Note that this max is only achievable with a custom project name via `architect dev -e {SUPER LONG NAME}`,
+    // the architect.yml enforces a much shorter max of 32 already, so this just prevents errors if a user tries to
+    // do something interesting.
+    default_project_name = default_project_name.substring(0, 150);
+
+    const compose_dir = path.join(config_dir, LocalPaths.LOCAL_DEPLOY_PATH);
+    const existing_project_count = fs.readdirSync(compose_dir).filter(fname => {
+      return fname.startsWith(default_project_name) && fname.endsWith('.yml');
+    })?.length;
+
+    if (existing_project_count) {
+      return `${default_project_name}-${existing_project_count}`;
+    } else {
+      return default_project_name;
+    }
+  }
 
   public static async generateTlsConfig(config_path: string): Promise<void> {
     const traefik_config = {
