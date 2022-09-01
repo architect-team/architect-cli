@@ -1,0 +1,9 @@
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /etc/traefik-ssl/fullchain.pem
+        keyFile: /etc/traefik-ssl/privkey.pem
+  certificates:
+    - certFile: /etc/traefik-ssl/fullchain.pem
+      keyFile: /etc/traefik-ssl/privkey.pem

@@ -4,12 +4,14 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import stream from 'stream';
 import WebSocket, { createWebSocketStream } from 'ws';
-import { ArchitectError, Dictionary, parseUnknownSlug } from '../';
+import { ArchitectError, Dictionary, parseUnknownSlug, ResourceSlugUtils } from '../';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
+import { RequiresDocker } from '../common/docker/helper';
+import { booleanString } from '../common/utils/oclif';
 
 enum RemoteExecCommandOutputStatus {
   SUCCESS = 'Success',
@@ -38,23 +40,28 @@ export default class Exec extends BaseCommand {
     'architect exec -- ls',
     'architect exec -- /bin/sh',
     'architect exec --account myaccount --environment myenvironment mycomponent.services.app -- /bin/sh',
+    'architect exec --account myaccount --environment myenvironment --replica servicename:0 -- /bin/sh',
+    'architect exec --account myaccount --environment myenvironment --replica 0 -- /bin/sh',
   ];
 
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    stdin: Flags.boolean({
+    stdin: booleanString({
       description: 'Pass stdin to the container. Only works on remote deploys.',
       char: 'i',
-      allowNo: true,
       default: true,
     }),
-    tty: Flags.boolean({
+    tty: booleanString({
       description: 'Stdin is a TTY. If the flag isn\'t supplied, tty or no-tty is automatically detected.',
       char: 't',
-      allowNo: true,
       default: undefined,
+      sensitive: false,
+    }),
+    replica: Flags.string({
+      description: `Pass replica by <service-name>:<replica-index> or <replica-index> if only 1 service is deployed. Only works on remote deploys.`,
+      char: 'r',
       sensitive: false,
     }),
   };
@@ -67,17 +74,27 @@ export default class Exec extends BaseCommand {
     parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
+  // These values correspond with the values defined in kubernetes remotecommand websocket handling:
+  // https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/cri/streaming/remotecommand/websocket.go#L30
   public static readonly StdinStream = 0;
   public static readonly StdoutStream = 1;
   public static readonly StderrStream = 2;
   public static readonly StatusStream = 3;
+  public static readonly ResizeStream = 4;
 
   async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const double_dash_index = argv.indexOf('--');
     if (double_dash_index === -1) {
-      this.error(chalk.red('Command must be provided after --\n(e.g. "architect exec -- ls")'));
+      let missing_dash_error_msg = 'Command must be provided after --\n(e.g. "architect exec -- ls")';
+      if (process.platform === 'win32') {
+        missing_dash_error_msg += `\n
+If using PowerShell, -- must be escaped with quotes or \`
+(e.g. "architect exec \`-- ls", "architect exec '--' ls)
+Alternatively, running "architect --% exec -- ls" will prevent the PowerShell parser from changing the meaning of --.`;
+      }
+      this.error(chalk.red(missing_dash_error_msg));
     }
 
     const command = argv.slice(double_dash_index + 1);
@@ -87,7 +104,7 @@ export default class Exec extends BaseCommand {
 
     const argv_without_command = argv.slice(0, double_dash_index);
 
-     const parsed = await super.parse(options, argv_without_command) as Interfaces.ParserOutput<F, A>;
+    const parsed = await super.parse(options, argv_without_command) as Interfaces.ParserOutput<F, A>;
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     parsed.args.command = command;
@@ -99,6 +116,7 @@ export default class Exec extends BaseCommand {
 
     await new Promise((resolve, reject) => {
       const websocket = createWebSocketStream(ws, { encoding: 'utf-8' });
+
       const inputTransform = this.getInputTransform();
       websocket.pipe(this.getOutputStream());
 
@@ -106,6 +124,10 @@ export default class Exec extends BaseCommand {
         // This method is only available when stdin is a TTY as it's part of the tty.ReadStream class:
         // https://nodejs.org/api/tty.html#readstreamsetrawmodemode
         process.stdin.setRawMode(true);
+
+        // Kubectl only monitors resize events when stdin.isRaw is true, so we follow that behavior.
+        this.setupTermResize(websocket);
+
         process.stdin.pipe(inputTransform).pipe(websocket);
       } else if (flags.stdin) {
         // If stdin is not a tty, stdin can be closed before data gets received by the websocket.
@@ -219,6 +241,74 @@ export default class Exec extends BaseCommand {
     return transform;
   }
 
+  setupTermResize(ws_stream: stream.Duplex): void {
+    if (process.stdout.isTTY) {
+      // Need to send initial resize event to the stream so the initial window is sized appropriately.
+      this.sendResizeEvent(ws_stream);
+
+      process.stdout.on('resize', () => {
+        this.sendResizeEvent(ws_stream);
+      });
+    }
+  }
+
+  sendResizeEvent(ws_stream: stream.Duplex): void {
+    // This object must mimic the TerminalSize struct that kubectl json encode/decodes for resize messages
+    // https://github.com/kubernetes/client-go/blob/master/tools/remotecommand/resize.go#L23
+    const terminal_size = {
+      Width: process.stdout.columns,
+      Height: process.stdout.rows,
+    };
+    const data = JSON.stringify(terminal_size);
+    const buffer = Buffer.alloc(1 + data.length);
+    buffer.writeInt8(Exec.ResizeStream, 0);
+
+    Buffer.from(data, 'utf-8').copy(buffer, 1);
+    ws_stream.write(buffer);
+  }
+
+  getServiceReplica(replica_flag: string, replicas: Replica[]): Replica {
+    const resources: Dictionary<any> = {};
+    for (const rep of replicas) {
+      const { resource_name } = ResourceSlugUtils.parse(rep.resource_ref);
+      if (resources.hasOwnProperty(resource_name)) {
+        resources[resource_name].push(rep);
+      } else {
+        resources[resource_name] = [rep];
+      }
+    }
+    const resource_names = Object.keys(resources);
+
+    let service_replicas = [];
+    let replica_idx;
+    const replica_parts = replica_flag.split(':');
+    if (replica_parts.length === 1 && !isNaN(parseInt(replica_parts[0]))) {
+      if (resource_names.length > 1) {
+        throw new ArchitectError(`More than one service is found [${resource_names.join(', ')}]. Please specify replica in the form of <service-name>:<replica-index>.`);
+      }
+
+      service_replicas = replicas;
+      replica_idx = parseInt(replica_flag);
+    } else if (replica_parts.length === 2 && !isNaN(parseInt(replica_parts[1]))) {
+      const [service_name, service_replica_idx] = replica_parts;
+      if (!resources.hasOwnProperty(service_name)) {
+        throw new ArchitectError(`No service name found for '${service_name}'. Try ${resource_names.join(', ')}.`);
+      }
+
+      service_replicas = resources[service_name];
+      replica_idx = parseInt(service_replica_idx);
+    } else {
+      throw new ArchitectError('Replica must be of the form <service-name>:<replica-index> or <replica-index>.');
+    }
+
+    if (replica_idx > service_replicas.length - 1 || replica_idx < 0) {
+      const msg = service_replicas.length > 1 ? `between 0 and ${service_replicas.length - 1}` : '0';
+      throw new ArchitectError(`No replica found at index ${replica_idx}. Try index ${msg}.`);
+    }
+
+    return service_replicas[replica_idx];
+  }
+
   async runRemote(account: Account, args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
@@ -226,6 +316,10 @@ export default class Exec extends BaseCommand {
     let component_name: string | undefined;
     let resource_name: string | undefined;
     let instance_name: string | undefined;
+    if (args.resource && flags.replica) {
+      throw new ArchitectError(`Both replica and resource are found. Please provide only one.`);
+    }
+
     if (args.resource) {
       const parsed = parseUnknownSlug(args.resource);
       component_account_name = parsed.component_account_name;
@@ -248,7 +342,7 @@ export default class Exec extends BaseCommand {
     if (!replicas.length)
       throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
-    const replica = await EnvironmentUtils.getReplica(replicas);
+    const replica = flags.replica ? this.getServiceReplica(flags.replica, replicas) : await EnvironmentUtils.getReplica(replicas);
 
     const query = new URLSearchParams({
       ext_ref: replica.ext_ref,
@@ -272,6 +366,7 @@ export default class Exec extends BaseCommand {
     await this.exec(uri, flags);
   }
 
+  @RequiresDocker({ compose: true })
   async runLocal(args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
     const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
