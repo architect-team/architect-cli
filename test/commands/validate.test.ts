@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import fs from 'fs-extra';
 import path from 'path';
 import sinon from 'sinon';
+import untildify from 'untildify';
 import { Slugs } from '../../src/dependency-manager/spec/utils/slugs';
 import { mockArchitectAuth } from '../utils/mocks';
 
@@ -171,7 +172,7 @@ interfaces:
       'd______D',
     ];
 
-    const tmp_test_file = "/home/test/some_fake_file.yml";
+    const tmp_test_file = untildify("~/some_fake_file.yml");
     for (const invalid_subdomain_token of invalid_subdomain_tokens) {
       mockArchitectAuth
         .stub(fs, 'readFileSync', sinon.fake.returns(subdomain_token_to_config_yaml_string(invalid_subdomain_token)))
@@ -217,7 +218,7 @@ interfaces:
       'a-b-c-d-eFG-H',
     ];
 
-    const tmp_test_file = "/home/test/some_fake_file.yml";
+    const tmp_test_file = untildify("~/some_fake_file.yml");
     for (const valid_subdomain_token of valid_subdomain_tokens) {
       mockArchitectAuth
         .stub(fs, 'readFileSync', sinon.fake.returns(subdomain_token_to_config_yaml_string(valid_subdomain_token)))
