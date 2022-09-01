@@ -89,8 +89,8 @@ export default class ProjectUtils {
         await execa('git', ['clone', selection.repository, project_dir + '/' + selection.name.toLowerCase()], { stdio: 'ignore' });
         await PromptUtils.oclif_timed_spinner(
           `Pulling down GitHub Repositories (${i}/${Math.max(i, total_repositories_to_clone.length)})`,
-          `${selection.name || 'repository'}...`,
-          `${chalk.green('✓')} ${selection.name || 'repository'}`
+           selection.name.toLowerCase(),
+          `${chalk.green('✓')} ${selection.name.toLowerCase()}`
         );
         i++;
       }
