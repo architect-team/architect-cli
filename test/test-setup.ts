@@ -43,6 +43,7 @@ exports.mochaHooks = {
   afterEach(done: any) {
     sinon.restore();
     mock_fs.restore();
+    nock.cleanAll();
     nock.enableNetConnect();
     done();
   }

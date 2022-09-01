@@ -1,10 +1,7 @@
 import { expect } from '@oclif/test';
-import sinon, { SinonSpy } from 'sinon';
-import { ComponentVersionSlugUtils, Dictionary } from '../../src';
-import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
-import Deploy from '../../src/commands/deploy';
-import Scale, { ScalingSettings } from '../../src/commands/scale';
-import * as Docker from '../../src/common/utils/docker';
+import sinon from 'sinon';
+import { ComponentVersionSlugUtils } from '../../src';
+import Scale from '../../src/commands/scale';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
@@ -52,11 +49,6 @@ const instance_component_version = {
       instance_name: 'instance-name'
     }
   }
-}
-
-const mock_pipeline = {
-  id: 'test-pipeline-id',
-  environment,
 }
 
 const component_version_name = ComponentVersionSlugUtils.build(account.name, component_version.component.name, component_version.tag);
@@ -156,69 +148,6 @@ describe('Scale', function () {
       .command(['scale', '-e', environment.name, '-a', account.name, `${component_version_instance_name}`, '--service', service_to_scale, '--replicas', scaling_settings.replicas.toString()])
       .it('Sets scaling for service with an instance name set', ctx => {
         expect(ctx.stdout).to.contain(`Updated scaling settings for service app of component ${instance_component_version.component.name} in environment ${environment.name}`);
-      });
-  });
-
-  describe('Scale services followed by deployments', function() {
-    const service_to_scale = 'app';
-    const scaling_settings = {
-      replicas: 5,
-      min: 1,
-      max: 10,
-    };
-    const replica_scaling_settings: Dictionary<ScalingSettings> = {
-      scaling_settings: {},
-    };
-    replica_scaling_settings.scaling_settings[component_version_name] = {};
-    replica_scaling_settings.scaling_settings[component_version_name][service_to_scale] = {};
-    replica_scaling_settings.scaling_settings[component_version_name][service_to_scale] = { replicas: scaling_settings.replicas };
-
-    const scale_and_deploy = mockArchitectAuth
-      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.name}`)
-        .reply(200, account))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.id}/environments/${environment.name}`)
-        .reply(200, environment))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.name}/components/${component_version.component.name}`)
-        .reply(200, component_version.component))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/components/${component_version.component.component_id}/versions/${component_version.tag}`)
-        .reply(200, component_version))
-      .nock(MOCK_API_HOST, api => api
-        .put(`/environments/${environment.id}`, replica_scaling_settings)
-        .reply(200))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.name}`)
-        .reply(200, account))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.id}/environments/${environment.name}`)
-        .reply(200, environment))
-      .nock(MOCK_API_HOST, api => api
-        .post(`/environments/${environment.id}/deploy`)
-        .reply(200, mock_pipeline))
-      .stdout({ print })
-      .stderr({ print })
-
-    scale_and_deploy
-      .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve(false)))
-      .command(['scale', '-e', environment.name, '-a', account.name, `${component_version_name}`, '--service', service_to_scale, '--replicas', scaling_settings.replicas.toString(), '--create-pipeline'])
-      .it(`Sets service scaling settings, then creates pipelines for the component but doesn't approve`, ctx => {
-        expect(ctx.stdout).to.contain(`Updated scaling settings for service app of component ${component_version.component.name} in environment ${environment.name}`);
-        expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
-        expect(ctx.stdout).to.contain('Cancelled all pipelines');
-      });
-
-    scale_and_deploy
-      .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve(true)))
-      .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
-      .command(['scale', '-e', environment.name, '-a', account.name, `${component_version_name}`, '--service', service_to_scale, '--replicas', scaling_settings.replicas.toString(), '--auto-approve'])
-      .it(`Sets service scaling settings, creates pipelines for the component, and auto approves`, ctx => {
-        expect(ctx.stdout).to.contain(`Updated scaling settings for service app of component ${component_version.component.name} in environment ${environment.name}`);
-        expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
-        expect(ctx.stdout).to.contain(`${component_version_name} Deployed`);
       });
   });
 });

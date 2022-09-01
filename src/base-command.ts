@@ -1,10 +1,11 @@
 import { Command, Config, Interfaces } from '@oclif/core';
 import '@sentry/tracing';
 import chalk from 'chalk';
-import { ValidationErrors } from '.';
+import { Dictionary, ValidationErrors } from '.';
 import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
+import { isBooleanStringFlag } from './common/utils/oclif';
 import SentryService from './sentry';
 
 const DEPRECATED_LABEL = '[deprecated]';
@@ -17,16 +18,6 @@ export default abstract class BaseCommand extends Command {
 
   async auth_required(): Promise<boolean> {
     return true;
-  }
-
-  checkFlagDeprecations(flags: any, flag_definitions: any): void {
-    Object.keys(flags).forEach((flagName: string) => {
-      const flag_config = flag_definitions[flagName] || {};
-      const description = flag_config.description || '';
-      if (description?.startsWith(DEPRECATED_LABEL)) {
-        this.warn(`Flag --${flagName} is deprecated.${description.split(DEPRECATED_LABEL)[1]}`);
-      }
-    });
   }
 
   constructor(argv: string[], config: Config) {
@@ -43,11 +34,6 @@ export default abstract class BaseCommand extends Command {
   }
 
   async init(): Promise<void> {
-    const command_class = this.getClass();
-    const { flags } = await this.parse(command_class);
-    const flag_definitions = command_class.flags;
-    this.checkFlagDeprecations(flags, flag_definitions);
-
     await this.app.auth.init();
 
     if (await this.auth_required()) {
@@ -75,9 +61,29 @@ export default abstract class BaseCommand extends Command {
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const flag_definitions = this.getClass().flags;
 
+    const flags_map: Dictionary<Interfaces.CompletableFlag<any> | undefined> = {};
+    for (const [flag_name, flag_definition] of Object.entries(flag_definitions)) {
+      flags_map[`--${flag_name}`] = flag_definition;
+      if (flag_definition.char) {
+        flags_map[`-${flag_definition.char}`] = flag_definition;
+      }
+    }
+
+    // Need to handle the following cases: `--auto-approve` `--auto-approve=true` `--auto-approve true`
+    for (const [index, arg] of argv.entries()) {
+      const flag_obj = flags_map[arg];
+      if (isBooleanStringFlag(flag_obj)) {
+        const next_arg = argv[index + 1] as string | undefined;
+        if (!next_arg || next_arg.startsWith('-') || !['true', 'false'].includes(next_arg.toLowerCase())) {
+          argv[index] = `${arg}=true`;
+        }
+      }
+    }
+
     const args = [];
     const flags = [];
     let flag_option = false;
+
     for (const arg of argv) {
       const is_flag = arg.startsWith('-');
 
@@ -88,8 +94,11 @@ export default abstract class BaseCommand extends Command {
       }
 
       if (is_flag) {
-        const flag = arg.startsWith('--') ? flag_definitions[arg.replace('--', '')] : Object.values(flag_definitions).find((f: any) => f.char === arg.replace('-', ''));
-        flag_option = flag?.type === 'option';
+        const flag_obj = flags_map[arg.split('=', 1)[0]];
+        if (flag_obj?.description?.startsWith(DEPRECATED_LABEL)) {
+          this.warn(`Flag ${arg.split('=', 1)[0]} is deprecated.${flag_obj.description.split(DEPRECATED_LABEL)[1]}`);
+        }
+        flag_option = flag_obj?.type === 'option' && !arg.includes('=');
       } else {
         flag_option = false;
       }

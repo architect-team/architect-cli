@@ -8,9 +8,6 @@ interface Component {
   created_at: string;
   updated_at: string;
   name: string;
-  metadata: {
-    tag_count: number;
-  };
   account: Account;
 }
 
@@ -58,12 +55,11 @@ export default class Components extends BaseCommand {
       return;
     }
 
-    const table = new Table({ head: ['Name', 'Account', 'Versions', 'Created', 'Updated'] });
+    const table = new Table({ head: ['Name', 'Account', 'Created', 'Updated'] });
     for (const component of components.sort((c1: Component, c2: Component) => c1.name.localeCompare(c2.name))) {
       table.push([
         component.name,
         component.account.name,
-        component.metadata.tag_count,
         localizedTimestamp(component.created_at),
         localizedTimestamp(component.updated_at),
       ]);

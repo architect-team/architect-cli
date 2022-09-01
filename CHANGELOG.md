@@ -1,3 +1,18 @@
+# [1.24.0](https://github.com/architect-team/architect-cli/compare/v1.23.0...v1.24.0) (2022-08-17)
+
+
+### Bug Fixes
+
+* **dev:** Query traefik api to find healthy services ([2ac6ed0](https://github.com/architect-team/architect-cli/commit/2ac6ed06791451dd9471dbf2782feb81d8be696b))
+* **exec:** Handle multiple arguments after -- without requiring quotes ([#665](https://github.com/architect-team/architect-cli/issues/665)) ([d2859e9](https://github.com/architect-team/architect-cli/commit/d2859e9ee5a4060f6e9ed4bbc9c288c93a05a014))
+* **exec:** Use a stream.Writable instead of stream.Transform - we never read from this stream and eventually the buffer is full ([#671](https://github.com/architect-team/architect-cli/issues/671)) ([4376a21](https://github.com/architect-team/architect-cli/commit/4376a216d9c69ff845a8140916c09ef0ba9e7899))
+* **validate:** set process exit code for validation errors ([#655](https://github.com/architect-team/architect-cli/issues/655)) ([cd93baf](https://github.com/architect-team/architect-cli/commit/cd93baff215f08a7af183d6fffd4bb823b613d2f))
+
+
+### Features
+
+* **dev:** Ask for new gateway port of there is a conflict ([43fbbf2](https://github.com/architect-team/architect-cli/commit/43fbbf2069cc88bab4e2ebe7f28f4b0283c4a753))
+
 # [1.23.0](https://github.com/architect-team/architect-cli/compare/v1.22.1...v1.23.0) (2022-08-15)
 
 
