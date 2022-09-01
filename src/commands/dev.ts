@@ -15,9 +15,9 @@ import { default as BaseCommand, default as Command } from '../base-command';
 import LocalDependencyManager, { ComponentConfigOpts } from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
+import { RequiresDocker } from '../common/docker/helper';
 import DeployUtils from '../common/utils/deploy.utils';
 import { booleanString } from '../common/utils/oclif';
-import { RequiresDocker } from '../common/docker/helper';
 import PortUtil from '../common/utils/port';
 
 type TraefikHttpService = {
@@ -404,7 +404,7 @@ export default class Dev extends BaseCommand {
     const { flags } = await this.parse(Dev);
 
     const config_dir = this.app.config.getConfigDir();
-    const project_name = DockerComposeUtils.getProjectName(config_dir, default_project_name);
+    const project_name = await DockerComposeUtils.getProjectName(default_project_name);
     const compose_file = flags['compose-file'] || DockerComposeUtils.buildComposeFilepath(config_dir, project_name);
 
     await fs.ensureFile(compose_file);

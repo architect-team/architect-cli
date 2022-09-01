@@ -23,8 +23,7 @@ type GenerateOptions = {
 };
 
 export class DockerComposeUtils {
-
-  public static getProjectName(config_dir: string, default_project_name: string): string {
+  public static async getProjectName(default_project_name: string): Promise<string> {
     // 150 is somewhat arbitrary, but the intention is to give a more-than-reasonable max
     // length while leavning enough room for other things that get added to this (like the service name).
     // The max total size for this name is 255, but we use this for the file name too,
@@ -34,9 +33,8 @@ export class DockerComposeUtils {
     // do something interesting.
     default_project_name = default_project_name.substring(0, 150);
 
-    const compose_dir = path.join(config_dir, LocalPaths.LOCAL_DEPLOY_PATH);
-    const existing_project_count = fs.readdirSync(compose_dir).filter(fname => {
-      return fname.startsWith(default_project_name) && fname.endsWith('.yml');
+    const existing_project_count = (await DockerComposeUtils.getLocalEnvironments()).filter(env => {
+      return env.startsWith(default_project_name);
     })?.length;
 
     if (existing_project_count) {
@@ -423,14 +421,34 @@ export class DockerComposeUtils {
     return cmd;
   }
 
-  public static async getLocalEnvironments(config_dir: string): Promise<string[]> {
-    const search_directory = path.join(config_dir, LocalPaths.LOCAL_DEPLOY_PATH);
-    const files = await fs.readdir(path.join(search_directory));
-    return files.map((file) => file.split('.')[0]);
+  public static async getLocalEnvironments(): Promise<string[]> {
+    const running_cmd = await execa('docker', ['compose', 'ls', '--format=json']);
+    const running_projects = JSON.parse(running_cmd.stdout).map((container: any) => {
+      return container.Name;
+    });
+
+    const container_cmd = await execa('docker', ['ps', '-aq']);
+    const containers = container_cmd.stdout.split('\n');
+    const label_cmd = await execa('docker', ['inspect', "--format='{{json .Config.Labels}}'", ...containers]);
+    const labels = label_cmd.stdout.split('\n').map(label => {
+      return JSON.parse(label.substring(1, label.length - 1));
+    });
+    const envs = new Set<string>();
+    for (const label_set of labels) {
+      if (!label_set['architect.ref']) {
+        continue;
+      }
+      const project = label_set['com.docker.compose.project'];
+      if (running_projects.indexOf(project) === -1) {
+        continue;
+      }
+      envs.add(project);
+    }
+    return Array.from(envs);
   }
 
-  public static async isLocalEnvironment(config_dir: string, environment_name: string): Promise<boolean> {
-    const local_enviromments = await DockerComposeUtils.getLocalEnvironments(config_dir);
+  public static async isLocalEnvironment(environment_name: string): Promise<boolean> {
+    const local_enviromments = await DockerComposeUtils.getLocalEnvironments();
     return !!(local_enviromments.find(env => env == environment_name));
   }
 

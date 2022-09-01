@@ -99,7 +99,7 @@ export default class TaskExec extends BaseCommand {
     }
 
     const config_dir = this.app.config.getConfigDir();
-    const project_name = DockerComposeUtils.getProjectName(config_dir, `${parsed_slug.component_name}-task`);
+    const project_name = await DockerComposeUtils.getProjectName(`${parsed_slug.component_name}-task`);
     const compose_file = flags['compose-file'] || DockerComposeUtils.buildComposeFilepath(config_dir, project_name);
 
     let compose;
