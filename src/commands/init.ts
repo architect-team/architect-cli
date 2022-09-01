@@ -64,13 +64,9 @@ export abstract class InitCommand extends BaseCommand {
     this.log(`Start the process to create your project '${project_name}'.`);
     const selections = await ProjectUtils.getSelections();
 
-    this.log(`                                                   7###        s##`);
-    this.log(`    ;####^####           ,###Q                      @##        7%"  ]##b                     @##p`);
-    this.log(`   {####  ####           # @##p    W##pa##  ,s#WW#m @##,###m  *### W@##MWm ,sMWWm,   ,m#WW#pW###MWL`);
-    this.log(`  #####      &####      @\`  @##    j##b^7Y ###    ^ @##  '###  @##~ @##b  ###  '##b ###    \` @##b`);
-    this.log(` WWWWQ,,,   #####      @WWWWW###   j##b   j###      @##   ###  @##~ @##b ]###"T"TTb]###      @##b`);
-    this.log(`     @###b ####b      ]#     @##Q  j##b    @##p   , @##   ###  @##~ @##b  @##p    ,^@##    , @##b`);
-    this.log(`     %888W8888"      *WWW    4WWWW %WWW=    7%W#MT *WWWW 4WWW=*WWWW  %W#W^ ^%WWWWb   7%WWW"   %WWW^\n`);
+    this.log('\n######################################');
+    this.log('##### Let\'s set up your Project! #####');
+    this.log('######################################\n');
 
     await PromptUtils.oclif_timed_spinner('Creating Project directory');
     await ProjectUtils.downloadGitHubRepos(selections, project_name);
@@ -80,9 +76,9 @@ export abstract class InitCommand extends BaseCommand {
     await ProjectUtils.linkSelections(this.app, selections, project_name);
 
     const root_path = path.join(project_name, ProjectUtils.getRootComponent(selections), 'architect.yml');
-    this.log(chalk.grey('# Visit https://docs.architect.io/deployments/local-environments/#local-registration to learn more about local registration\n'));
+    this.log(chalk.grey('# Curious as to why we do this? Check out:\n# https://docs.architect.io/deployments/local-environments/#local-registration\n'));
     this.log(chalk.green(`Successfully created project ${project_name}.\n`));
-    this.log(`Your App is ready to be deployed by architect!\nJust run:\n\t$ architect dev ${root_path}\n`);
+    this.log(`Your App is ready to be deployed by architect!\nTo Deploy locally, run:\n\t$ architect dev ${root_path}\n`);
   }
 
   async runArchitectYamlConversion(from_path: string, component_name: string, component_file: string): Promise<void> {

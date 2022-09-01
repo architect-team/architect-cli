@@ -40,9 +40,9 @@ export default class ProjectUtils {
       const component_config = buildSpecFromPath(component_path);
       app.linkComponentPath(component_config.name, component_path);
       await PromptUtils.oclif_timed_spinner(
-        `Linking ${selection.name} with architect cli`,
-        `${selection.name}...`,
-        `${chalk.green('✓')} ${selection.name}`
+        `$ architect link ${component_path}`,
+        selection.name.toLowerCase(),
+        `${chalk.green('✓')} ${selection.name.toLowerCase()}`
       );
     }
   }
@@ -88,7 +88,7 @@ export default class ProjectUtils {
       if (selection.repository) {
         await execa('git', ['clone', selection.repository, project_dir + '/' + selection.name.toLowerCase()], { stdio: 'ignore' });
         await PromptUtils.oclif_timed_spinner(
-          `Pulling down GitHub Repositories(${i}/${Math.max(i, total_repositories_to_clone.length)})`,
+          `Pulling down GitHub Repositories (${i}/${Math.max(i, total_repositories_to_clone.length)})`,
           `${selection.name || 'repository'}...`,
           `${chalk.green('✓')} ${selection.name || 'repository'}`
         );
@@ -184,7 +184,7 @@ Change directory to '../${root_service}', then run the register and deploy comma
     const backend_yml = yaml.load(fs.readFileSync(backend_yml_path).toString('utf-8')) as ComponentSpec;
     const database_yml = await this.fetchYamlFromGitHub(selections['database']['architect-file']);
     await this.switchDatabase(database_yml, backend_yml, backend_yml_path);
-    console.log(chalk.grey('# Visit https://docs.architect.io/components/services/ to learn more about component services\n'));
+    console.log(chalk.grey('# Why did we do this? Check out - https://docs.architect.io/components/services/\n'));
 
     // Need better handling for when a frontend requires a backend.
     const frontend = selections['frontend'];
