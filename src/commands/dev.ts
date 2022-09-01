@@ -403,9 +403,8 @@ export default class Dev extends BaseCommand {
   async buildImage(compose: DockerComposeTemplate, default_project_name: string): Promise<[string, string]> {
     const { flags } = await this.parse(Dev);
 
-    const config_dir = this.app.config.getConfigDir();
     const project_name = await DockerComposeUtils.getProjectName(default_project_name);
-    const compose_file = flags['compose-file'] || DockerComposeUtils.buildComposeFilepath(config_dir, project_name);
+    const compose_file = flags['compose-file'] || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
 
     await fs.ensureFile(compose_file);
     await fs.writeFile(compose_file, yaml.dump(compose));
@@ -610,8 +609,9 @@ export default class Dev extends BaseCommand {
     });
 
     // By default, the project_name used in `docker compose up -p PROJECT_NAME` is the name of the
-    // first component in the list of components to run.
-    const default_project_name = flags.environment ? flags.environment : component_versions[0];
+    // first component in the list of components to run with 'arc' prepended so it's obvious that it's
+    // coming from us.
+    const default_project_name = flags.environment ? flags.environment : `arc-${component_versions[0]}`;
 
     await this.runCompose(compose, default_project_name, flags.port, gateway_admin_port);
   }

@@ -98,9 +98,8 @@ export default class TaskExec extends BaseCommand {
       throw new Error(`Error parsing component: ${err}`);
     }
 
-    const config_dir = this.app.config.getConfigDir();
-    const project_name = await DockerComposeUtils.getProjectName(`${parsed_slug.component_name}-task`);
-    const compose_file = flags['compose-file'] || DockerComposeUtils.buildComposeFilepath(config_dir, project_name);
+    const project_name = await DockerComposeUtils.getProjectName(`arc-${parsed_slug.component_name}-task`);
+    const compose_file = flags['compose-file'] || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
 
     let compose;
     try {
