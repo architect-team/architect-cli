@@ -39,7 +39,7 @@ export default class ProjectUtils {
       const component_path = path.join(project_name, key, 'architect.yml');
       const component_config = buildSpecFromPath(component_path);
       app.linkComponentPath(component_config.name, component_path);
-      await PromptUtils.oclif_timed_spinner(
+      await PromptUtils.oclifTimedSpinner(
         `$ architect link ${component_path}`,
         selection.name.toLowerCase(),
         `${chalk.green('✓')} ${selection.name.toLowerCase()}`
@@ -87,7 +87,7 @@ export default class ProjectUtils {
     for (const selection of Object.values(selections)) {
       if (selection.repository) {
         await execa('git', ['clone', selection.repository, project_dir + '/' + selection.name.toLowerCase()], { stdio: 'ignore' });
-        await PromptUtils.oclif_timed_spinner(
+        await PromptUtils.oclifTimedSpinner(
           `Pulling down GitHub Repositories (${i}/${Math.max(i, total_repositories_to_clone.length)})`,
            selection.name.toLowerCase(),
           `${chalk.green('✓')} ${selection.name.toLowerCase()}`
@@ -121,7 +121,7 @@ export default class ProjectUtils {
         backend_yml.secrets = { ...backend_yml.secrets, ...database_yml.secrets };
         backend_yml.services[service_key] = Object.values(database_yml.services)[0];
         fs.writeFileSync(path.resolve(untildify(backend_yml_path)), yaml.dump(backend_yml));
-        await PromptUtils.oclif_timed_spinner(
+        await PromptUtils.oclifTimedSpinner(
           `Adding ${service_key} database service to ${backend_yml.name}`,
           `${service_key}...`,
           `${chalk.green('✓')} ${service_key}`

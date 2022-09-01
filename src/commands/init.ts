@@ -68,7 +68,7 @@ export abstract class InitCommand extends BaseCommand {
     this.log('##### Let\'s set up your Project! #####');
     this.log('######################################\n');
 
-    await PromptUtils.oclif_timed_spinner('Creating Project directory');
+    await PromptUtils.oclifTimedSpinner('Creating Project directory');
     await ProjectUtils.downloadGitHubRepos(selections, project_name);
 
     this.log('\n✨ And now, for some Architect Magic ✨\n');
