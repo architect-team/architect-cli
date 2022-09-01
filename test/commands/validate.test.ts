@@ -172,7 +172,7 @@ interfaces:
       'd______D',
     ];
 
-    const tmp_test_file = untildify("~/some_fake_file.yml");
+    const tmp_test_file = path.normalize(untildify("~/some_fake_file.yml"));
     for (const invalid_subdomain_token of invalid_subdomain_tokens) {
       mockArchitectAuth
         .stub(fs, 'readFileSync', sinon.fake.returns(subdomain_token_to_config_yaml_string(invalid_subdomain_token)))
@@ -218,7 +218,7 @@ interfaces:
       'a-b-c-d-eFG-H',
     ];
 
-    const tmp_test_file = untildify("~/some_fake_file.yml");
+    const tmp_test_file = path.normalize(untildify("~/some_fake_file.yml"));
     for (const valid_subdomain_token of valid_subdomain_tokens) {
       mockArchitectAuth
         .stub(fs, 'readFileSync', sinon.fake.returns(subdomain_token_to_config_yaml_string(valid_subdomain_token)))
