@@ -39,7 +39,7 @@ export default class Scale extends BaseCommand {
 
     const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(args.component_name);
     if (!component_account_name || !component_name) {
-      throw new Error(`Couldn't successfully parse the component version name ${args.component_name}. Please specify it in the format account/component:latest`)
+      throw new Error(`Couldn't successfully parse the component version name ${args.component_name}. Please specify it in the format account/component:latest`);
     }
 
     const component_tag = tag || 'latest';
