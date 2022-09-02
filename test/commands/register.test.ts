@@ -86,7 +86,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth
-    .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().throws('Some internal docker build exception'))
+    .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().throws(new Error('Some internal docker build exception')))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -262,7 +262,7 @@ describe('register', function () {
     .command(['register', 'examples/hello-world/architect.yml', '-a', 'examples'])
     .catch(err => {
       expect(process.exitCode).eq(1);
-      expect(err.message).to.contain('Friendly error message from server');
+      expect(`${err}`).to.contain('Friendly error message from server');
     })
     .it('rejects with informative error message if account is unavailable');
 
@@ -299,8 +299,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth
-    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub().throws('Some internal docker build exception'))
-    .stub(process, 'exit', sinon.stub().throws('Process exited'))
+    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub().throws(new Error('Some internal docker build exception')))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -310,9 +309,9 @@ describe('register', function () {
     .command(['register', 'examples/database-seeding/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .catch(err => {
       expect(process.exitCode).eq(1);
-      expect(`${err}`).to.contain('Process exited');
+      expect(err.message).to.contain('Some internal docker build exception');
     })
-    .it('process.exit() is called if docker buildx bake fails');
+    .it('rejects with the original error message if docker buildx inspect fails');
 
   mockArchitectAuth
     .stub(fs, 'move', sinon.stub())

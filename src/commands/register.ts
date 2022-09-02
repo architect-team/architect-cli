@@ -240,8 +240,7 @@ export default class ComponentRegister extends BaseCommand {
         });
       } catch (err: any) {
         fs.removeSync(compose_file);
-        console.log(chalk.red(err));
-        process.exit(err.exitCode || 1);
+        this.error(new ArchitectError(err.message, false));
       }
     }
 

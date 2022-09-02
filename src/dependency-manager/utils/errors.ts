@@ -45,7 +45,17 @@ const addLineNumbers = (value: string, errors: ValidationError[]): void => {
   }
 };
 
-export class ArchitectError extends Error { }
+export class ArchitectError extends Error {
+  // When track is true, the exception will be captured by endSentryTransaction.
+  // Should be set to false when a raised error is an issue on the users end that doesn't have
+  // anything actionable for us to do.
+  track: boolean;
+
+  constructor(msg?: string, track?: boolean) {
+    super(msg);
+    this.track = track === undefined ? true : track;
+  }
+}
 
 export class ValidationError {
   component: string;
