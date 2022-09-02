@@ -51,9 +51,9 @@ export class ArchitectError extends Error {
   // anything actionable for us to do.
   track: boolean;
 
-  constructor(msg?: string, track?: boolean) {
+  constructor(msg?: string, track = true) {
     super(msg);
-    this.track = track === undefined ? true : track;
+    this.track = track;
   }
 }
 
