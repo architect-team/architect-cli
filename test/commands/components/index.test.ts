@@ -48,7 +48,6 @@ describe('list components', () => {
     .nock(MOCK_API_HOST, api => api
       .get(`/components?q=`)
       .reply(200, { rows: components, count: components.length }))
-    .timeout(20000)
     .command(['components'])
     .it('list all components', () => {
       const log_spy_list = Components.prototype.log as SinonSpy;
