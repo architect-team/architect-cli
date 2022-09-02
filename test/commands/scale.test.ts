@@ -76,8 +76,6 @@ describe('Scale', function () {
     const service_to_scale = 'app';
     const scaling_settings = {
       replicas: 5,
-      min: 1,
-      max: 10,
     };
 
     const replica_scaling_settings: any = { // TODO: type ScalingSettings?
@@ -102,15 +100,6 @@ describe('Scale', function () {
     all_scaling_settings.scaling_settings[component_version_name] = {};
     all_scaling_settings.scaling_settings[component_version_name][service_to_scale] = {};
     all_scaling_settings.scaling_settings[component_version_name][service_to_scale] = scaling_settings;
-
-    scale
-      .nock(MOCK_API_HOST, api => api
-        .put(`/environments/${environment.id}`, all_scaling_settings)
-        .reply(200))
-      .command(['scale', '-e', environment.name, '-a', account.name, `${component_version_name}`, '--service', service_to_scale, '--replicas', scaling_settings.replicas.toString(), '--min', scaling_settings.min.toString(), '--max', scaling_settings.max.toString()])
-      .it('Sets scaling for service with min and max set', ctx => {
-        expect(ctx.stdout).to.contain(`Updated scaling settings for service app of component ${component_version.component.name} in environment ${environment.name}`);
-      });
 
     scale
       .command(['scale', '-e', environment.name, '-a', account.name, `${component_version_name}`, '--service', 'unknown', '--replicas', scaling_settings.replicas.toString()])
