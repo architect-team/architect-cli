@@ -73,7 +73,8 @@ export default class Scale extends BaseCommand {
     try {
       await this.app.api.put(`/environments/${environment.id}/scale`, dto);
       this.log(chalk.green(`Scaled service ${service_name} of component ${component_account_name}/${component_name} deployed to environment ${environment.name} to ${flags.replicas} replicas`));
-    } catch(err) {
+    } catch(err: any) {
+      this.log(chalk.yellow(err.response.data.message)); // TODO: too much info?
       const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment.name}`;
       this.log(chalk.yellow(`Did not immediately scale service ${service_name} of component ${component_account_name}/${component_name}.\nIf this was unexpected, check to see that the service is deployed to the environment ${environment.name} at\n${environment_url}.`));
     }
