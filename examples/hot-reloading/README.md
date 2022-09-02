@@ -30,7 +30,7 @@ $ architect link .
 $ architect dev hot-reloading:latest
 ```
 
-Once the deploy has completed, you can reach your new service by going to http://api.arc.localhost/. Whenever you make changes to code in the `./src` directory, you'll see the logs indicating that the service has restart automatically.
+Once the deploy has completed, you can reach your new service by going to https://api.localhost.architect.sh/. Whenever you make changes to code in the `./src` directory, you'll see the logs indicating that the service has restart automatically.
 
 ## Deploying to the cloud
 
