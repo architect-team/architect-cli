@@ -88,7 +88,17 @@ class _DockerHelper {
   }
 
   getDockerInfo(): DockerInfo {
-    const docker_info = execa.sync('docker', ['info', '--format', '{{json .}}']).stdout;
+    let docker_info;
+    try {
+      docker_info = execa.sync('docker', ['info', '--format', '{{json .}}']).stdout;
+    } catch {
+      return {
+        daemon_running: false,
+        has_buildx: false,
+        has_compose: false,
+        plugins: [],
+      };
+    }
 
     const docker_json: DockerInfoJSON = JSON.parse(docker_info);
     const plugins = docker_json.ClientInfo.Plugins.map((plugin) => plugin.Name);
