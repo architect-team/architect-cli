@@ -8,17 +8,17 @@ import isCi from 'is-ci';
 import yaml from 'js-yaml';
 import opener from 'opener';
 import path from 'path';
-import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../';
-import AccountUtils from '../architect/account/account.utils';
-import { EnvironmentUtils } from '../architect/environment/environment.utils';
-import { default as BaseCommand, default as Command } from '../base-command';
-import LocalDependencyManager, { ComponentConfigOpts } from '../common/dependency-manager/local-manager';
-import { DockerComposeUtils } from '../common/docker-compose';
-import DockerComposeTemplate from '../common/docker-compose/template';
-import { RequiresDocker } from '../common/docker/helper';
-import DeployUtils from '../common/utils/deploy.utils';
-import { booleanString } from '../common/utils/oclif';
-import PortUtil from '../common/utils/port';
+import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
+import AccountUtils from '../../architect/account/account.utils';
+import { EnvironmentUtils } from '../../architect/environment/environment.utils';
+import { default as BaseCommand, default as Command } from '../../base-command';
+import LocalDependencyManager, { ComponentConfigOpts } from '../../common/dependency-manager/local-manager';
+import { DockerComposeUtils } from '../../common/docker-compose';
+import DockerComposeTemplate from '../../common/docker-compose/template';
+import { RequiresDocker } from '../../common/docker/helper';
+import DeployUtils from '../../common/utils/deploy.utils';
+import { booleanString } from '../../common/utils/oclif';
+import PortUtil from '../../common/utils/port';
 
 type TraefikHttpService = {
   name: string;

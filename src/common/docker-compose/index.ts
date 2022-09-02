@@ -13,7 +13,7 @@ import { restart } from '../docker/cmd';
 import { RequiresDocker } from '../docker/helper';
 import PortUtil from '../utils/port';
 import { DockerComposeProject, DockerComposeProjectWithConfig } from './project';
-import DockerComposeTemplate, { DockerService } from './template';
+import DockerComposeTemplate, { DockerInspect, DockerService } from './template';
 
 type GenerateOptions = {
   external_addr: string;
@@ -421,30 +421,47 @@ export class DockerComposeUtils {
     return cmd;
   }
 
-  public static async getLocalEnvironments(): Promise<string[]> {
+  /**
+   * Runs `docker inspect` on all containers and returns the resulting json as an array of objects.
+   */
+  public static async getAllContainerInfo(): Promise<DockerInspect[]> {
+    const container_cmd = await execa('docker', ['ps', '-aq']);
+    const containers = container_cmd.stdout.split('\n');
+    const inspect_cmd = await execa('docker', ['inspect', "--format='{{json .}}'", ...containers]);
+    return inspect_cmd.stdout.split('\n').map(data => JSON.parse(data.substring(1, data.length - 1)));
+  }
+
+  /**
+   * Combines the `docker compose ls` information with running container info to build a map of
+   * environment -> container list.
+   */
+  public static async getLocalEnvironmentContainerMap(): Promise<{ [key: string]: DockerInspect[] }> {
     const running_cmd = await execa('docker', ['compose', 'ls', '--format=json']);
     const running_projects = JSON.parse(running_cmd.stdout).map((container: any) => {
       return container.Name;
     });
 
-    const container_cmd = await execa('docker', ['ps', '-aq']);
-    const containers = container_cmd.stdout.split('\n');
-    const label_cmd = await execa('docker', ['inspect', "--format='{{json .Config.Labels}}'", ...containers]);
-    const labels = label_cmd.stdout.split('\n').map(label => {
-      return JSON.parse(label.substring(1, label.length - 1));
-    });
-    const envs = new Set<string>();
-    for (const label_set of labels) {
-      if (!label_set['architect.ref']) {
+    const container_info = await this.getAllContainerInfo();
+    const env_map: { [key: string]: DockerInspect[] } = {};
+    for (const container of container_info) {
+      if (!('architect.ref' in container.Config.Labels)) {
         continue;
       }
-      const project = label_set['com.docker.compose.project'];
+      const project = container.Config.Labels['com.docker.compose.project'];
       if (running_projects.indexOf(project) === -1) {
         continue;
       }
-      envs.add(project);
+
+      if (!(project in env_map)) {
+        env_map[project] = [];
+      }
+      env_map[project].push(container);
     }
-    return Array.from(envs);
+    return env_map;
+  }
+
+  public static async getLocalEnvironments(): Promise<string[]> {
+    return Object.keys(await this.getLocalEnvironmentContainerMap());
   }
 
   public static async isLocalEnvironment(environment_name: string): Promise<boolean> {
