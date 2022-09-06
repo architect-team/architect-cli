@@ -30,7 +30,7 @@ $ architect link .
 $ architect dev hello-world:latest
 ```
 
-Once the deploy has completed, you can reach your new service by going to http://hello.arc.localhost/.
+Once the deploy has completed, you can reach your new service by going to https://hello.localhost.architect.sh/.
 
 ## Deploying to the cloud
 
