@@ -13,6 +13,7 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import { ComposeConverter } from '../common/docker-compose/converter';
 import { RequiresDocker } from '../common/docker/helper';
 import { RequiresGit } from '../common/utils/git/helper';
+import PromptUtils from '../common/utils/prompt-utils';
 import { ComponentSlugUtils } from '../dependency-manager/spec/utils/slugs';
 
 export abstract class InitCommand extends BaseCommand {
@@ -62,11 +63,22 @@ export abstract class InitCommand extends BaseCommand {
     }
     this.log(`Start the process to create your project '${project_name}'.`);
     const selections = await ProjectUtils.getSelections();
+
+    this.log('\n######################################');
+    this.log('##### Let\'s set up your Project! #####');
+    this.log('######################################\n');
+
+    await PromptUtils.oclifTimedSpinner('Creating Project directory');
     await ProjectUtils.downloadGitHubRepos(selections, project_name);
+
+    this.log('\n✨ And now, for some Architect Magic ✨\n');
     await ProjectUtils.updateArchitectYamls(this.app, selections, project_name);
     await ProjectUtils.linkSelections(this.app, selections, project_name);
-    this.log(`Successfully created project ${project_name}.`);
-    this.log(chalk.blue(`Now try running your project using the instructions in ${project_name}/README.md.`));
+
+    const root_path = path.join(project_name, ProjectUtils.getRootComponent(selections), 'architect.yml');
+    this.log(chalk.grey('# Curious as to why we do this? Check out:\n# https://docs.architect.io/deployments/local-environments/#local-registration\n'));
+    this.log(chalk.green(`Successfully created project ${project_name}.\n`));
+    this.log(`Your App is ready to be deployed by architect!\nTo Deploy locally, run:\n\t$ architect dev ${root_path}\n`);
   }
 
   async runArchitectYamlConversion(from_path: string, component_name: string, component_file: string): Promise<void> {

@@ -1,3 +1,6 @@
+import axios from 'axios';
+import chalk from 'chalk';
+import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import yaml from 'js-yaml';
@@ -5,10 +8,9 @@ import path from 'path';
 import untildify from 'untildify';
 import { buildSpecFromPath, ComponentSpec } from '../../';
 import AppService from '../../app-config/service';
+import PromptUtils from '../../common/utils/prompt-utils';
 import { EnvironmentSpecValue } from '../../dependency-manager/spec/resource-spec';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
-import axios from 'axios';
-import execa from 'execa';
 
 interface Selection {
   name: string,
@@ -19,7 +21,7 @@ interface Selection {
 
 export default class ProjectUtils {
 
-  private static getRootComponent(selections: Dictionary<Selection>): string {
+  static getRootComponent(selections: Dictionary<Selection>): string {
     if (selections.frontend) {
       return selections.frontend.name.toLowerCase();
     } else if (selections.backend) {
@@ -28,20 +30,21 @@ export default class ProjectUtils {
     return '';
   }
 
-  static linkSelections(app: AppService, selections: Dictionary<Selection>, project_name: string): void {
+  static async linkSelections(app: AppService, selections: Dictionary<Selection>, project_name: string): Promise<void> {
     for (const selection of Object.values(selections)) {
-      if (selection.type.toLowerCase() == 'database') {
+      if (selection.type.toLowerCase() === 'database') {
         continue;
       }
       const key = selection.name.toLowerCase();
       const component_path = path.join(project_name, key, 'architect.yml');
       const component_config = buildSpecFromPath(component_path);
-      console.log(`Linking ${key} with architect cli so it can be used as a dependency.`);
-      console.log(`% architect link ${component_path}`);
       app.linkComponentPath(component_config.name, component_path);
+      await PromptUtils.oclifTimedSpinner(
+        `$ architect link ${component_path}`,
+        selection.name.toLowerCase(),
+        `${chalk.green('✓')} ${selection.name.toLowerCase()}`
+      );
     }
-    const root_path = path.join(project_name, this.getRootComponent(selections), 'architect.yml');
-    console.log(`\nTry running your project now: \`architect dev ${root_path}\`\n`);
   }
 
   static async prompt(choices: any[], message: string): Promise<any> {
@@ -78,10 +81,18 @@ export default class ProjectUtils {
   }
 
   static async downloadGitHubRepos(selections: Dictionary<Dictionary<any>>, project_dir: string): Promise<void> {
+    const total_repositories_to_clone = Object.values(selections).filter(selection => selection.repository);
+    let i = 1;
     // download any selection that has a repository
     for (const selection of Object.values(selections)) {
       if (selection.repository) {
-        await execa('git', ['clone', selection.repository, project_dir + '/' + selection.name.toLowerCase()]);
+        await execa('git', ['clone', selection.repository, project_dir + '/' + selection.name.toLowerCase()], { stdio: 'ignore' });
+        await PromptUtils.oclifTimedSpinner(
+          `Pulling down GitHub Repositories (${i}/${Math.max(i, total_repositories_to_clone.length)})`,
+           selection.name.toLowerCase(),
+          `${chalk.green('✓')} ${selection.name.toLowerCase()}`
+        );
+        i++;
       }
     }
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -100,7 +111,7 @@ export default class ProjectUtils {
     return service_environment;
   }
 
-  static switchDatabase(database_yml: ComponentSpec, backend_yml: ComponentSpec, backend_yml_path: string): void {
+  static async switchDatabase(database_yml: ComponentSpec, backend_yml: ComponentSpec, backend_yml_path: string): Promise<void> {
     if (!backend_yml.services || !database_yml.services) {
       return;
     }
@@ -110,6 +121,11 @@ export default class ProjectUtils {
         backend_yml.secrets = { ...backend_yml.secrets, ...database_yml.secrets };
         backend_yml.services[service_key] = Object.values(database_yml.services)[0];
         fs.writeFileSync(path.resolve(untildify(backend_yml_path)), yaml.dump(backend_yml));
+        await PromptUtils.oclifTimedSpinner(
+          `Adding ${service_key} database service to ${backend_yml.name}`,
+          `${service_key}...`,
+          `${chalk.green('✓')} ${service_key}`
+        );
       }
     }
   }
@@ -167,7 +183,8 @@ Change directory to '../${root_service}', then run the register and deploy comma
     const backend_yml_path = `./${project_dir}/${backend.name.toLowerCase()}/architect.yml`;
     const backend_yml = yaml.load(fs.readFileSync(backend_yml_path).toString('utf-8')) as ComponentSpec;
     const database_yml = await this.fetchYamlFromGitHub(selections['database']['architect-file']);
-    this.switchDatabase(database_yml, backend_yml, backend_yml_path);
+    await this.switchDatabase(database_yml, backend_yml, backend_yml_path);
+    console.log(chalk.grey('# Why did we do this? Check out - https://docs.architect.io/components/services/\n'));
 
     // Need better handling for when a frontend requires a backend.
     const frontend = selections['frontend'];
