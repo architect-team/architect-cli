@@ -13,7 +13,7 @@ import { restart } from '../docker/cmd';
 import { RequiresDocker } from '../docker/helper';
 import PortUtil from '../utils/port';
 import { DockerComposeProject, DockerComposeProjectWithConfig } from './project';
-import DockerComposeTemplate, { DockerService } from './template';
+import DockerComposeTemplate, { DockerInspect, DockerService } from './template';
 
 type GenerateOptions = {
   external_addr: string;
@@ -23,9 +23,26 @@ type GenerateOptions = {
 };
 
 export class DockerComposeUtils {
+  public static async getProjectName(default_project_name: string): Promise<string> {
+    // 150 is somewhat arbitrary, but the intention is to give a more-than-reasonable max
+    // length while leavning enough room for other things that get added to this (like the service name).
+    // The max total size for this name is 255, but we use this for the file name too,
+    // which can lead to an ENAMETOOLONG issue.
+    // Note that this max is only achievable with a custom project name via `architect dev -e {SUPER LONG NAME}`,
+    // the architect.yml enforces a much shorter max of 32 already, so this just prevents errors if a user tries to
+    // do something interesting.
+    default_project_name = default_project_name.substring(0, 150);
 
-  // used to namespace docker-compose projects so multiple deployments can happen to local
-  public static DEFAULT_PROJECT = 'architect';
+    const existing_project_count = (await DockerComposeUtils.getLocalEnvironments()).filter(env => {
+      return env.startsWith(default_project_name);
+    })?.length;
+
+    if (existing_project_count) {
+      return `${default_project_name}-${existing_project_count}`;
+    } else {
+      return default_project_name;
+    }
+  }
 
   public static async generateTlsConfig(config_path: string): Promise<void> {
     const traefik_config = {
@@ -404,14 +421,51 @@ export class DockerComposeUtils {
     return cmd;
   }
 
-  public static async getLocalEnvironments(config_dir: string): Promise<string[]> {
-    const search_directory = path.join(config_dir, LocalPaths.LOCAL_DEPLOY_PATH);
-    const files = await fs.readdir(path.join(search_directory));
-    return files.map((file) => file.split('.')[0]);
+  /**
+   * Runs `docker inspect` on all containers and returns the resulting json as an array of objects.
+   */
+  public static async getAllContainerInfo(): Promise<DockerInspect[]> {
+    const container_cmd = await execa('docker', ['ps', '-aq']);
+    const containers = container_cmd.stdout.split('\n');
+    const inspect_cmd = await execa('docker', ['inspect', "--format='{{json .}}'", ...containers]);
+    return inspect_cmd.stdout.split('\n').map(data => JSON.parse(data.substring(1, data.length - 1)));
   }
 
-  public static async isLocalEnvironment(config_dir: string, environment_name: string): Promise<boolean> {
-    const local_enviromments = await DockerComposeUtils.getLocalEnvironments(config_dir);
+  /**
+   * Combines the `docker compose ls` information with running container info to build a map of
+   * environment -> container list.
+   */
+  public static async getLocalEnvironmentContainerMap(): Promise<{ [key: string]: DockerInspect[] }> {
+    const running_cmd = await execa('docker', ['compose', 'ls', '--format=json']);
+    const running_projects = JSON.parse(running_cmd.stdout).map((container: any) => {
+      return container.Name;
+    });
+
+    const container_info = await this.getAllContainerInfo();
+    const env_map: { [key: string]: DockerInspect[] } = {};
+    for (const container of container_info) {
+      if (!('architect.ref' in container.Config.Labels)) {
+        continue;
+      }
+      const project = container.Config.Labels['com.docker.compose.project'];
+      if (running_projects.indexOf(project) === -1) {
+        continue;
+      }
+
+      if (!(project in env_map)) {
+        env_map[project] = [];
+      }
+      env_map[project].push(container);
+    }
+    return env_map;
+  }
+
+  public static async getLocalEnvironments(): Promise<string[]> {
+    return Object.keys(await this.getLocalEnvironmentContainerMap());
+  }
+
+  public static async isLocalEnvironment(environment_name: string): Promise<boolean> {
+    const local_enviromments = await DockerComposeUtils.getLocalEnvironments();
     return !!(local_enviromments.find(env => env == environment_name));
   }
 
