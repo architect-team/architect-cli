@@ -1,15 +1,9 @@
 import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
+import { ComponentVersion } from '../../architect/component/component-version.entity';
 import BaseCommand from '../../base-command';
 import Table from '../../base-table';
 import localizedTimestamp from '../../common/utils/localized-timestamp';
-import { ComponentConfig } from '../../dependency-manager/config/component-config';
-
-export interface ComponentVersion {
-  created_at: string;
-  tag: string;
-  config: ComponentConfig;
-}
 
 export default class ComponentVersions extends BaseCommand {
   static aliases = ['component:versions', 'component:version'];
