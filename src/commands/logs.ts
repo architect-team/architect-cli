@@ -259,7 +259,7 @@ export default class Logs extends BaseCommand {
     // If no account is default to local first.
     if (!flags.account && flags.environment) {
       // If the env exists locally then just assume local
-      const is_local_env = await DockerComposeUtils.isLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
+      const is_local_env = await DockerComposeUtils.isLocalEnvironment(flags.environment);
       if (is_local_env) {
         return await this.runLocal();
       }

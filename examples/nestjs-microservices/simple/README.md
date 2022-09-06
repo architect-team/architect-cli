@@ -45,7 +45,7 @@ The REST client service cites the TCP server as a dependency. This means that Ar
 $ architect dev examples/nestjs-simple-client:latest -i main:client
 ```
 
-Once the application is done booting, the REST client will be available on http://app.arc.localhost/hello/Name
+Once the application is done booting, the REST client will be available on https://app.localhost.architect.sh/hello/Name
 
 ## Deploying to the cloud
 

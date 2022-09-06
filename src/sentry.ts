@@ -186,7 +186,8 @@ export default class SentryService {
         await this.writeCommandHistoryToFileSystem();
       }
 
-      if (error) {
+      // If error.track is undefined, assume it's true - only skip capturing exceptions if track is explicitly set to false
+      if (error && error.track !== false) {
         Sentry.withScope(async scope => {
           Sentry.captureException(error, scope);
         });
