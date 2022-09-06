@@ -64,3 +64,13 @@ export default interface DockerComposeTemplate {
   services: { [key: string]: DockerService };
   volumes: { [key: string]: { external?: boolean } };
 }
+
+export interface DockerInspect {
+  State: {
+    Status: string
+  },
+  Name: string,
+  Config: {
+    Labels: { [key: string]: string}
+  }
+}

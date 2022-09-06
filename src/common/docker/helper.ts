@@ -1,5 +1,6 @@
 import execa, { ExecaSyncError } from 'execa';
 import which from 'which';
+import { ArchitectError } from '../../dependency-manager/utils/errors';
 
 
 /**
@@ -51,6 +52,7 @@ interface DockerInfo {
   has_compose: boolean;
   plugins: string[];
 }
+
 class _DockerHelper {
   docker_installed: boolean;
   docker_info: DockerInfo;
@@ -88,7 +90,17 @@ class _DockerHelper {
   }
 
   getDockerInfo(): DockerInfo {
-    const docker_info = execa.sync('docker', ['info', '--format', '{{json .}}']).stdout;
+    let docker_info;
+    try {
+      docker_info = execa.sync('docker', ['info', '--format', '{{json .}}']).stdout;
+    } catch {
+      return {
+        daemon_running: false,
+        has_buildx: false,
+        has_compose: false,
+        plugins: [],
+      };
+    }
 
     const docker_json: DockerInfoJSON = JSON.parse(docker_info);
     const plugins = docker_json.ClientInfo.Plugins.map((plugin) => plugin.Name);
@@ -107,25 +119,25 @@ class _DockerHelper {
 
   verifyDocker(): void {
     if (!this.docker_installed) {
-       throw new Error('Architect requires Docker to be installed.\nPlease install docker and try again: https://docs.docker.com/engine/install/');
+       throw new ArchitectError('Architect requires Docker to be installed.\nPlease install docker and try again: https://docs.docker.com/engine/install/', false);
     }
   }
 
   verifyBuildX(): void {
     if (!this.docker_info.has_buildx) {
-      throw new Error("'docker buildx' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.");
+      throw new ArchitectError("'docker buildx' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.", false);
     }
   }
 
   verifyCompose(): void {
     if (!this.docker_info.has_compose) {
-      throw new Error("'docker compose' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.");
+      throw new ArchitectError("'docker compose' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.", false);
     }
   }
 
   verifyDaemon() {
     if (!this.daemonRunning()) {
-      throw new Error('Docker daemon is not running. Please start it and try again.');
+      throw new ArchitectError('Docker daemon is not running. Please start it and try again.', false);
     }
   }
 }

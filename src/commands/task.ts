@@ -91,7 +91,14 @@ export default class TaskExec extends BaseCommand {
   async runLocal(): Promise<void> {
     const { flags, args } = await this.parse(TaskExec);
 
-    const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
+    let parsed_slug;
+    try {
+      parsed_slug = ComponentVersionSlugUtils.parse(args.component);
+    } catch (err) {
+      throw new Error(`Error parsing component: ${err}`);
+    }
+
+    const project_name = await DockerComposeUtils.getProjectName(`arc-${parsed_slug.component_name}-task`);
     const compose_file = flags['compose-file'] || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
 
     let compose;
@@ -99,13 +106,6 @@ export default class TaskExec extends BaseCommand {
       compose = DockerComposeUtils.loadDockerCompose(compose_file);
     } catch (err) {
       throw new Error(`Could not find docker compose file at ${compose_file}. Please run \`architect dev -e ${project_name} ${args.component}\` before executing any tasks in your local ${project_name} environment.`);
-    }
-
-    let parsed_slug;
-    try {
-      parsed_slug = ComponentVersionSlugUtils.parse(args.component);
-    } catch (err) {
-      throw new Error(`Error parsing component: ${err}`);
     }
 
     const slug = ResourceSlugUtils.build(parsed_slug.component_account_name, parsed_slug.component_name, 'tasks', args.task, parsed_slug.instance_name);
