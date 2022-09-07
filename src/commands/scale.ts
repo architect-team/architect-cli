@@ -47,7 +47,10 @@ export default class Scale extends BaseCommand {
   }];
 
   async run(): Promise<void> {
-    this.log('This feature is in alpha. Please send any comments or questions to support@architect.io.');
+    this.log(chalk.yellow(
+`This feature is in alpha. While the feature should be stable, it may be changed or removed without prior notice. As such we do not recommend using this feature in any automated pipelines.
+During this time we greatly appreciate any feedback as we continue to finalize the implementation. You can reach us at support@architect.io.`
+    ));
     const { args, flags } = await this.parse(Scale);
 
     const account: Account = await AccountUtils.getAccount(this.app, flags.account);
