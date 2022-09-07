@@ -426,6 +426,9 @@ export class DockerComposeUtils {
    */
   public static async getAllContainerInfo(): Promise<DockerInspect[]> {
     const container_cmd = await execa('docker', ['ps', '-aq']);
+    if (!container_cmd.stdout) {
+      return [];
+    }
     const containers = container_cmd.stdout.split('\n');
     const inspect_cmd = await execa('docker', ['inspect', "--format='{{json .}}'", ...containers]);
     return inspect_cmd.stdout.split('\n').map(data => JSON.parse(data.substring(1, data.length - 1)));

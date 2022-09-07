@@ -2,7 +2,7 @@ import { classToPlain, plainToClass, serialize } from 'class-transformer';
 import { isMatch } from 'matcher';
 import { buildInterfacesRef, buildNodeRef, ComponentConfig } from './config/component-config';
 import { ArchitectContext, ComponentContext, SecretValue } from './config/component-context';
-import { DependencyGraph } from './graph';
+import { DependencyGraph, DependencyGraphMutable } from './graph';
 import { IngressEdge } from './graph/edge/ingress';
 import { OutputEdge } from './graph/edge/output';
 import { ServiceEdge } from './graph/edge/service';
@@ -576,7 +576,7 @@ export default abstract class DependencyManager {
 
     const interpolateObject = options.validate ? interpolateObjectOrReject : interpolateObjectLoose;
 
-    const graph = new DependencyGraph();
+    const graph = new DependencyGraphMutable();
 
     const context_map: Dictionary<ComponentContext> = {};
     const dependency_context_map: Dictionary<ComponentContext> = {};
@@ -708,6 +708,6 @@ export default abstract class DependencyManager {
       graph.validated = true;
     }
 
-    return graph;
+    return Object.freeze(graph);
   }
 }
