@@ -12,15 +12,16 @@ import { ComponentVersionSlugUtils, ResourceSlugUtils } from '../dependency-mana
 export default class Scale extends BaseCommand {
   static description = 'Scale a service to a specified number of replicas.';
 
+  static examples = [
+    'architect scale api --component my-component --replicas 4',
+    'architect scale api --component my-component --clear',
+  ];
+
   static flags = {
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
     component: Flags.string({
       description: 'Name of the component with the service to scale',
-      sensitive: false,
-    }),
-    service: Flags.string({
-      description: 'Name of the service to scale',
       sensitive: false,
     }),
     tag: Flags.string({
@@ -37,6 +38,14 @@ export default class Scale extends BaseCommand {
     }),
   };
 
+  static args = [{
+    sensitive: false,
+    name: 'service',
+    description: 'Name of service',
+    required: false,
+    parse: async (value: string): Promise<string> => value.toLowerCase(),
+  }];
+
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Scale);
 
@@ -48,14 +57,14 @@ export default class Scale extends BaseCommand {
       if (flags.tag) {
         component_version = (await this.app.api.get(`/accounts/${account.id}/components/${flags.component}/versions/${tag}`)).data;
       } else { // get latest if no tag specified
-        component_version = (await this.app.api.get(`/accounts/${account.id}/components/${flags.component}`)).data as ComponentVersion;
+        component_version = (await this.app.api.get(`/accounts/${account.id}/components/${flags.component}`)).data;
       }
     } else {
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
       const answers: { component_version: ComponentVersion } = await inquirer.prompt([
         {
           type: 'autocomplete',
-          name: 'component',
+          name: 'component_version',
           message: 'Select a component',
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
@@ -69,11 +78,11 @@ export default class Scale extends BaseCommand {
     }
 
     let service_name: string;
-    if (flags.service) {
-      service_name = flags.service;
+    if (args.service) {
+      service_name = args.service;
       if (!Object.keys(component_version.config.services || {}).includes(service_name)) {
         const component_version_slug = ComponentVersionSlugUtils.build(account.name, component_version.component.name, tag);
-        throw new Error(`Component version ${component_version_slug} does not have a service called ${flags.service}.`);
+        throw new Error(`Component version ${component_version_slug} does not have a service named ${args.service}.`);
       }
     } else {
       const answers = await inquirer.prompt([
@@ -87,13 +96,36 @@ export default class Scale extends BaseCommand {
       service_name = answers.service_name;
     }
 
+    let replicas;
+    if (!flags.clear) {
+      if (flags.replicas) {
+        replicas = flags.replicas;
+      } else {
+        const answers = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'replicas',
+            message: `How many replicas should the service be scaled to?`,
+            validate: (value: any) => {
+              if (isNaN(value) || value % 1 !== 0) {
+                return 'Must be a whole number';
+              }
+              return true;
+            },
+          },
+        ]);
+        replicas = answers.replicas;
+      }
+      replicas = parseInt(replicas);
+    }
+
     const environment: Environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
     // TODO: warning about alpha release
     const resource_slug = ResourceSlugUtils.build(undefined, component_version.component.name, 'services', service_name);
     const scaling_dto = {
       resource_slug,
-      replicas: flags.replicas,
+      replicas,
     };
     const update_env_dto = {
       ...scaling_dto,
@@ -104,7 +136,7 @@ export default class Scale extends BaseCommand {
         await this.app.api.put(`/environments/${environment.id}/scale`, scaling_dto);
         this.log(chalk.green(`Scaled service ${service_name} of component ${account.name}/${component_version.component.name} deployed to environment ${environment.name} to ${flags.replicas} replicas`));
       } catch(err: any) {
-        this.log(chalk.yellow(err.response.data.message)); // TODO: too much info?
+        this.log(chalk.yellow(err.response.data.message));
         const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment.name}`;
         this.log(chalk.yellow(`Did not immediately scale service ${service_name} of component ${account.name}/${component_version.component.name}.\nIf this was unexpected, check to see that the service is deployed to the environment ${environment.name} at\n${environment_url}.`));
       }
