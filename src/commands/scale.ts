@@ -47,6 +47,7 @@ export default class Scale extends BaseCommand {
   }];
 
   async run(): Promise<void> {
+    this.log('This feature is in alpha. Please send any comments or questions to support@architect.io.');
     const { args, flags } = await this.parse(Scale);
 
     const account: Account = await AccountUtils.getAccount(this.app, flags.account);
@@ -121,7 +122,6 @@ export default class Scale extends BaseCommand {
 
     const environment: Environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
-    // TODO: warning about alpha release
     const resource_slug = ResourceSlugUtils.build(undefined, component_version.component.name, 'services', service_name);
     const scaling_dto = {
       resource_slug,
