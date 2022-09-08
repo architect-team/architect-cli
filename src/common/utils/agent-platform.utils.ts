@@ -173,7 +173,7 @@ spec:
       'create', 'secret', 'generic',
       'architect-agent-data',
       `--from-literal=token=${token}`,
-    ])
+    ]);
 
     await execa('kubectl', [
       ...set_kubeconfig,
