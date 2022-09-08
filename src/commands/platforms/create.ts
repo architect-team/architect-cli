@@ -7,7 +7,6 @@ import yaml from 'js-yaml';
 import * as path from 'path';
 import untildify from 'untildify';
 import { ArchitectError, Dictionary, Slugs } from '../../';
-import { ENVIRONMENT } from '../../app-config/config';
 import AccountUtils from '../../architect/account/account.utils';
 import PipelineUtils from '../../architect/pipeline/pipeline.utils';
 import Platform from '../../architect/platform/platform.entity';
@@ -172,7 +171,8 @@ export default class PlatformCreate extends BaseCommand {
         message: 'What type of platform would you like to register?',
         choices: [
           'kubernetes',
-          ...(this.app.config.environment !== ENVIRONMENT.PRODUCTION ? [agent_display_name] : []),
+          agent_display_name,
+          //...(this.app.config.environment !== ENVIRONMENT.PRODUCTION ? [agent_display_name] : []),
         ],
       },
     ]);
