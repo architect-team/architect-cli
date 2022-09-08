@@ -145,7 +145,10 @@ spec:
           - name: KUBERNETES_URL
             value: "https://kubernetes.default.svc"
           - name: ARCHITECT_TOKEN
-            value: "${token}"
+            valueFrom:
+              secretKeyRef:
+                name: architect-agent-data
+                key: token
           - name: AGENT_SERVER
             value: "${host}"
           - name: KUBERNETES_TOKEN
@@ -164,6 +167,13 @@ spec:
 
     const kubeconfig_path = untildify(flags.kubeconfig);
     const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', 'default'];
+
+    await execa('kubectl', [
+      ...set_kubeconfig,
+      'create', 'secret', 'generic',
+      'architect-agent-data',
+      `--from-literal=token=${token}`,
+    ])
 
     await execa('kubectl', [
       ...set_kubeconfig,
