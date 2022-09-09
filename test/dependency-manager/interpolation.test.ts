@@ -178,6 +178,7 @@ describe('interpolation spec v1', () => {
           'build': {
             'context': path.resolve('/stack')
           },
+          image: web_ref,
           labels: ['architect.ref=concourse/web.services.web']
         },
         [worker_ref]: {
@@ -189,6 +190,7 @@ describe('interpolation spec v1', () => {
           'build': {
             'context': path.resolve('/stack')
           },
+          image: worker_ref,
           'depends_on': [
             web_ref
           ],
@@ -240,7 +242,8 @@ describe('interpolation spec v1', () => {
       ],
       'build': {
         'context': path.resolve('/stack')
-      }
+      },
+      image: web_ref
     };
     expect(public_template.services[web_ref]).to.be.deep.equal(expected_web_compose);
     const expected_worker_compose: DockerService = {
@@ -252,6 +255,7 @@ describe('interpolation spec v1', () => {
       'build': {
         'context': path.resolve('/stack')
       },
+      image: worker_ref,
       depends_on: [web_ref],
       external_links: [
         'gateway:public.arc.localhost'

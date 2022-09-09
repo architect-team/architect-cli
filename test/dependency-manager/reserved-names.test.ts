@@ -57,6 +57,7 @@ describe('components with reserved_name field set', function () {
             "build": {
               "context": path.resolve("/stack")
             },
+            image: app_ref,
             labels: ['architect.ref=architect/cloud.services.app']
           },
           [api_ref]: {
@@ -67,6 +68,7 @@ describe('components with reserved_name field set', function () {
             "build": {
               "context": path.resolve("/stack")
             },
+            image: reserved_name,
             labels: [`architect.ref=architect/cloud.services.api`]
           },
         },
@@ -260,6 +262,7 @@ describe('components with reserved_name field set', function () {
             "build": {
               "context": path.resolve("/stack")
             },
+            image: reserved_name,
             labels: [`architect.ref=architect/cloud.services.api`]
           },
           [app_ref]: {
@@ -275,6 +278,7 @@ describe('components with reserved_name field set', function () {
             "build": {
               "context": path.resolve("/stack")
             },
+            image: app_ref,
             labels: ['architect.ref=architect/cloud.services.app']
           },
           [db_ref]: {
@@ -285,6 +289,7 @@ describe('components with reserved_name field set', function () {
             "build": {
               "context": path.resolve("/stack")
             },
+            image: db_ref,
             labels: ['architect.ref=architect/cloud.services.db']
           }
         },
