@@ -118,6 +118,8 @@ export class DockerComposeUtils {
           '--providers.docker.exposedByDefault=false',
           `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
           ...(use_ssl ? [
+            // Ignore local certs being invalid on proxy
+            `--serversTransport.insecureSkipVerify=true`,
             // redirect http to https
             `--entryPoints.web.http.redirections.entryPoint.scheme=https`,
             `--entryPoints.web.http.redirections.entryPoint.permanent=true`,
@@ -372,11 +374,27 @@ export class DockerComposeUtils {
             service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`);
             service_to.labels.push(`traefik.http.routers.${traefik_service}.tls=true`);
           }
+
+          if (component_interface?.protocol) {
+            service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.scheme=${component_interface?.protocol}`);
+          }
         }
       }
     }
 
     return compose;
+  }
+
+  private static getUrlProtocol(url?: string): string | undefined {
+    if (!url) {
+      return undefined;
+    }
+    try {
+      // Slice removes the :
+      return (new URL(url)).protocol.slice(0, -1);
+    } catch {
+      return undefined;
+    }
   }
 
   public static getConfigPaths(input: string): string[] {
