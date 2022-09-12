@@ -4,10 +4,12 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
 import path from 'path';
+import sinon from 'sinon';
 import { IngressEdge, resourceRefToNodeRef, ServiceNode, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
+import { DockerHelper } from '../../src/common/docker/helper';
 
 describe('components with reserved_name field set', function () {
   describe('standard components with reserved name', function () {
@@ -221,6 +223,10 @@ describe('components with reserved_name field set', function () {
         '/stack/architect.yml': yaml.dump(component_config),
       });
 
+      const stub = sinon.stub(DockerHelper, 'buildXVersion').callsFake(() => {
+        return true;
+      });
+
       const manager = new LocalDependencyManager(axios.create(), {
         'architect/cloud': '/stack/architect.yml'
       });
@@ -247,6 +253,9 @@ describe('components with reserved_name field set', function () {
       expect(api_node.config.environment.DB_ADDR).eq(`http://${db_ref}:5432`)
 
       const template = await DockerComposeUtils.generate(graph);
+
+      stub.restore();
+
       const expected_compose: DockerComposeTemplate = {
         "services": {
           [api_ref]: {
@@ -259,9 +268,6 @@ describe('components with reserved_name field set', function () {
             "ports": [
               "50001:8080",
             ],
-            "build": {
-              "context": path.resolve("/stack")
-            },
             image: reserved_name,
             labels: [`architect.ref=architect/cloud.services.api`]
           },
@@ -276,7 +282,12 @@ describe('components with reserved_name field set', function () {
               "50000:8080"
             ],
             "build": {
-              "context": path.resolve("/stack")
+              "context": path.resolve("/stack"),
+              "tags": [
+                app_ref,
+                api_ref,
+                db_ref
+              ],
             },
             image: app_ref,
             labels: ['architect.ref=architect/cloud.services.app']
@@ -286,9 +297,6 @@ describe('components with reserved_name field set', function () {
             "ports": [
               "50002:5432"
             ],
-            "build": {
-              "context": path.resolve("/stack")
-            },
             image: db_ref,
             labels: ['architect.ref=architect/cloud.services.db']
           }
