@@ -366,7 +366,7 @@ export class DockerComposeUtils {
     }
     try {
       // Slice removes the :
-      return (new URL(url)).protocol.slice(0, -1)
+      return (new URL(url)).protocol.slice(0, -1);
     } catch {
       return undefined;
     }
