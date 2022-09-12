@@ -1,4 +1,3 @@
-import { parseUrl } from '@sentry/utils';
 import chalk from 'chalk';
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
@@ -348,7 +347,9 @@ export class DockerComposeUtils {
             service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`);
             service_to.labels.push(`traefik.http.routers.${traefik_service}.tls=true`);
           }
-          const protocol = component_interface?.protocol || parseUrl(component_interface?.url).protocol;
+
+          const url_protocol = this.getUrlProtocol(component_interface?.url);
+          const protocol = component_interface?.protocol || url_protocol;
           if (protocol) {
             service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.scheme=${protocol}`);
           }
@@ -357,6 +358,18 @@ export class DockerComposeUtils {
     }
 
     return compose;
+  }
+
+  private static getUrlProtocol(url?: string): string | undefined {
+    if (!url) {
+      return undefined;
+    }
+    try {
+      // Slice removes the :
+      return (new URL(url)).protocol.slice(0, -1)
+    } catch {
+      return undefined;
+    }
   }
 
   public static getConfigPaths(input: string): string[] {
