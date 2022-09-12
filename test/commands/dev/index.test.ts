@@ -424,6 +424,7 @@ describe('local dev environment', function () {
           "dockerfile": "Dockerfile",
           "target": "production",
         },
+        "image": seed_app_ref,
         "external_links": [
           "gateway:app.arc.localhost"
         ]

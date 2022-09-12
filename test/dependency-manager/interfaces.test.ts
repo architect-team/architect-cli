@@ -408,6 +408,7 @@ describe('interfaces spec v1', () => {
       "build": {
         "context": path.resolve("/stack"),
       },
+      image: api_ref,
     };
     expect(template.services[api_ref]).to.be.deep.equal(expected_compose);
   });
@@ -499,6 +500,7 @@ describe('interfaces spec v1', () => {
       "build": {
         "context": path.resolve("/stack"),
       },
+      image: api_ref,
     };
     expect(template.services[api_ref]).to.be.deep.equal(expected_compose);
   });

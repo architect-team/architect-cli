@@ -53,11 +53,11 @@ export const transformBuildSpecArgs = (args?: Dictionary<string | null>): Dictio
   return output;
 };
 
-export const transformBuildSpec = (build: BuildSpec | undefined, image?: string): BuildConfig => {
+export const transformBuildSpec = (build: BuildSpec | undefined, image?: string): BuildConfig | undefined => {
   if (!build && !image) {
     build = {};
   } else if (!build) {
-    return {};
+    return;
   }
   return {
     context: build.context,

@@ -430,8 +430,6 @@ export default class Dev extends BaseCommand {
     const { flags } = await this.parse(Dev);
     const [project_name, compose_file] = await this.buildImage(compose, default_project_name);
 
-    console.clear();
-
     this.log('Building containers...', chalk.green('done'));
     this.log('');
 

@@ -3,6 +3,7 @@ import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import yaml from 'js-yaml';
+import hash from 'object-hash';
 import os from 'os';
 import pLimit from 'p-limit';
 import path from 'path';
@@ -10,16 +11,17 @@ import untildify from 'untildify';
 import { ArchitectError, ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
 import { restart } from '../docker/cmd';
-import { RequiresDocker } from '../docker/helper';
+import { DockerHelper, RequiresDocker } from '../docker/helper';
 import PortUtil from '../utils/port';
 import { DockerComposeProject, DockerComposeProjectWithConfig } from './project';
-import DockerComposeTemplate, { DockerInspect, DockerService } from './template';
+import DockerComposeTemplate, { DockerInspect, DockerService, DockerServiceBuild } from './template';
 
 type GenerateOptions = {
-  external_addr: string;
-  gateway_admin_port: number;
-  use_ssl: boolean;
+  external_addr?: string;
+  gateway_admin_port?: number;
+  use_ssl?: boolean;
   config_dir?: string;
+  getImage?: (ref: string) => string;
 };
 
 export class DockerComposeUtils {
@@ -140,6 +142,8 @@ export class DockerComposeUtils {
 
     const service_task_nodes = graph.nodes.filter((n) => n instanceof ServiceNode || n instanceof TaskNode) as (ServiceNode | TaskNode)[];
 
+    const seen_build_map: Dictionary<string | undefined> = {};
+
     // Enrich base service details
     for (const node of service_task_nodes) {
       if (node.is_external) continue;
@@ -227,7 +231,7 @@ export class DockerComposeUtils {
       if (node.is_local) {
         const component_path = fs.lstatSync(node.local_path).isFile() ? path.dirname(node.local_path) : node.local_path;
         if (!node.config.image) {
-          const build = node.config.build;
+          const build = node.config.build || {};
 
           if (!service.build) {
             service.build = {};
@@ -258,8 +262,6 @@ export class DockerComposeUtils {
           if (build.target) {
             service.build.target = build.target;
           }
-        } else if (!node.config.build) {
-          throw new Error("Either `image` or `build` must be defined");
         }
 
         // Set volumes only for services (not supported by Tasks)
@@ -293,6 +295,31 @@ export class DockerComposeUtils {
       if (node instanceof TaskNode) {
         if (!service.deploy) { service.deploy = {}; }
         service.deploy.replicas = 0; // set all tasks scale to 0 so they don't start but can be optionally invoked later
+      }
+
+
+
+      if (service.build) {
+        if (!service.image) {
+          const image = options.getImage ? options.getImage(node.config.metadata.ref) : node.ref;
+          service.image = image;
+        }
+
+        // Optimization to check if multiple services share the same dockerfile/build config and avoid building unnecessarily
+        if (DockerHelper.buildXVersion('>=0.9.1')) { // docker-compose build.tags is only supported in >=0.9.1 of buildx
+          const build_hash = hash(service.build);
+          const existing_service = seen_build_map[build_hash];
+          if (!existing_service) {
+            seen_build_map[build_hash] = node.ref;
+            service.build.tags = [service.image];
+          } else {
+            const existing_build = compose.services[existing_service].build as DockerServiceBuild;
+            if (!existing_build.tags) existing_build.tags = [];
+            existing_build.tags.push(service.image);
+
+            delete service.build;
+          }
+        }
       }
 
       compose.services[node.ref] = service;

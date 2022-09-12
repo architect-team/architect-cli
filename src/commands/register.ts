@@ -8,15 +8,15 @@ import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, validateInterpolation } from '../';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, TaskNode, validateInterpolation } from '../';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
 import DockerBuildXUtils from '../common/docker/buildx.utils';
+import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
 tmp.setGracefulCleanup();
@@ -141,8 +141,15 @@ export default class ComponentRegister extends BaseCommand {
       }
     }
 
+    const getImage = (ref: string) => {
+      const { component_account_name, component_name, resource_type, resource_name } = ResourceSlugUtils.parse(ref);
+      const ref_with_account = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, resource_type, resource_name);
+      const image = `${this.app.config.registry_host}/${ref_with_account}:${tag}`;
+      return image;
+    };
+
     // The external address and ssl have no bearing on registration
-    const full_compose = await DockerComposeUtils.generate(graph);
+    const full_compose = await DockerComposeUtils.generate(graph, { getImage });
 
     const compose: DockerComposeTemplate = {
       version: '3',
@@ -156,56 +163,59 @@ export default class ComponentRegister extends BaseCommand {
     // Set image name in compose
     let service_build = false;
     for (const [service_name, service] of Object.entries(full_compose.services)) {
-      if (service.build && !service.image && service.labels) {
+      const node = graph.getNodeByRef(service_name);
+      if ((node instanceof ServiceNode || node instanceof TaskNode) && !node.config.build) continue;
+
+      if (service.labels) {
         service_build = true;
         const ref_label = service.labels.find(label => label.startsWith('architect.ref='));
-        if (!ref_label) { continue; }
+        if (!ref_label) continue;
         const ref = ref_label.replace('architect.ref=', '');
         const { component_account_name, component_name, resource_type, resource_name } = ResourceSlugUtils.parse(ref);
         const ref_with_account = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, resource_type, resource_name);
 
-        const image = `${this.app.config.registry_host}/${ref_with_account}:${tag}`;
-
         const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags['architecture']);
 
-        service.build['x-bake'] = {
-          platforms: buildx_platforms,
-          pull: false,
-        };
+        if (service.build) {
+          service.build['x-bake'] = {
+            platforms: buildx_platforms,
+            pull: false,
+          };
 
-        if (!process.env.ARC_NO_CACHE) {
-          if (flags['cache-directory']) {
-            if (process.env.GITHUB_ACTIONS) {
-              this.warn(`--cache-directory is not advised in Github Actions. See how to configure caching for Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs`);
-            }
-            // Cache directory needs to be unique per dockerfile: https://github.com/docker/build-push-action/issues/252#issuecomment-744412763
-            const cache_dir = path.join(flags['cache-directory'], service_name);
+          if (!process.env.ARC_NO_CACHE) {
+            if (flags['cache-directory']) {
+              if (process.env.GITHUB_ACTIONS) {
+                this.warn(`--cache-directory is not advised in Github Actions. See how to configure caching for Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs`);
+              }
+              // Cache directory needs to be unique per dockerfile: https://github.com/docker/build-push-action/issues/252#issuecomment-744412763
+              const cache_dir = path.join(flags['cache-directory'], service_name);
 
-            // To test you need to prune the buildx cache
-            // docker buildx prune --builder architect --force
-            service.build['x-bake']['cache-from'] = `type=local,src=${cache_dir}`;
-            // https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to
-            service.build['x-bake']['cache-to'] = `type=local,dest=${cache_dir}-tmp,mode=max`;
+              // To test you need to prune the buildx cache
+              // docker buildx prune --builder architect --force
+              service.build['x-bake']['cache-from'] = `type=local,src=${cache_dir}`;
+              // https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to
+              service.build['x-bake']['cache-to'] = `type=local,dest=${cache_dir}-tmp,mode=max`;
 
-            seen_cache_dir.add(cache_dir);
-          } else if (process.env.GITHUB_ACTIONS) {
-            // Need the following action to export internal envs: https://github.com/crazy-max/ghaction-github-runtime
-            if (process.env.ACTIONS_CACHE_URL && process.env.ACTIONS_RUNTIME_TOKEN) {
-              const scope = service_name;
-              this.log(`Setting up github action caching for scope: ${scope}. To disable set env ARC_NO_CACHE=1.`);
-              service.build['x-bake']['cache-from'] = `type=gha,scope=${scope}`;
-              service.build['x-bake']['cache-to'] = `type=gha,scope=${scope},mode=max`;
-            } else {
-              this.warn(`Caching not configured. See how to configure caching for Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs`);
+              seen_cache_dir.add(cache_dir);
+            } else if (process.env.GITHUB_ACTIONS) {
+              // Need the following action to export internal envs: https://github.com/crazy-max/ghaction-github-runtime
+              if (process.env.ACTIONS_CACHE_URL && process.env.ACTIONS_RUNTIME_TOKEN) {
+                const scope = service_name;
+                this.log(`Setting up github action caching for scope: ${scope}. To disable set env ARC_NO_CACHE=1.`);
+                service.build['x-bake']['cache-from'] = `type=gha,scope=${scope}`;
+                service.build['x-bake']['cache-to'] = `type=gha,scope=${scope},mode=max`;
+              } else {
+                this.warn(`Caching not configured. See how to configure caching for Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs`);
+              }
             }
           }
         }
 
         compose.services[service_name] = {
           build: service.build,
-          image: image,
+          image: service.image,
         };
-        image_mapping[ref_with_account] = image;
+        image_mapping[ref_with_account] = compose.services[service_name].image;
       }
     }
 
