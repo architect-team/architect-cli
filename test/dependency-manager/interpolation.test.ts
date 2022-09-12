@@ -231,6 +231,7 @@ describe('interpolation spec v1', () => {
         `traefik.http.routers.${web_ref}-main.rule=Host(\`public.arc.localhost\`)`,
         `traefik.http.routers.${web_ref}-main.service=${web_ref}-main-service`,
         `traefik.http.services.${web_ref}-main-service.loadbalancer.server.port=8080`,
+        `traefik.http.services.${web_ref}-main-service.loadbalancer.server.scheme=http`,
       ],
       external_links: [
         'gateway:public.arc.localhost'
@@ -319,6 +320,7 @@ describe('interpolation spec v1', () => {
       `traefik.http.routers.${backend_interface_ref}.rule=Host(\`main.arc.localhost\`)`,
       `traefik.http.routers.${backend_interface_ref}.service=${backend_interface_ref}-service`,
       `traefik.http.services.${backend_interface_ref}-service.loadbalancer.server.port=8081`,
+      `traefik.http.services.${backend_interface_ref}-service.loadbalancer.server.scheme=http`
     ])
   });
 
