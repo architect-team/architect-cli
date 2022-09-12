@@ -1,3 +1,4 @@
+import { parseUrl } from '@sentry/utils';
 import chalk from 'chalk';
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
@@ -116,6 +117,8 @@ export class DockerComposeUtils {
           '--providers.docker.exposedByDefault=false',
           `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
           ...(use_ssl ? [
+            // Ignore local certs being invalid on proxy
+            `--serversTransport.insecureSkipVerify=true`,
             // redirect http to https
             `--entryPoints.web.http.redirections.entryPoint.scheme=https`,
             `--entryPoints.web.http.redirections.entryPoint.permanent=true`,
@@ -344,6 +347,10 @@ export class DockerComposeUtils {
           if (use_ssl) {
             service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`);
             service_to.labels.push(`traefik.http.routers.${traefik_service}.tls=true`);
+          }
+          const protocol = component_interface?.protocol || parseUrl(component_interface?.url).protocol;
+          if (protocol) {
+            service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.scheme=${protocol}`)
           }
         }
       }
