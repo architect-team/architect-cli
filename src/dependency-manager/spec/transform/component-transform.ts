@@ -49,12 +49,26 @@ export const transformOutputDefinitionSpec = (key: string, output_spec: string |
   }
 };
 
+const getProtocol = (url: string): string | undefined => {
+  try {
+    return (new URL(url)).protocol.slice(0, -1);
+  } catch {
+    return undefined;
+  }
+};
+
 export const transformComponentInterfaceSpec = function (_: string, interface_spec: ComponentInterfaceSpec | string): ComponentInterfaceConfig {
-  return typeof interface_spec === 'string' ? { url: interface_spec } : interface_spec;
+  return typeof interface_spec === 'string' ? {
+    url: interface_spec,
+    protocol: getProtocol(interface_spec),
+  } : {
+    ...interface_spec,
+    protocol: getProtocol(interface_spec.url),
+  };
 };
 
 export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => {
-  const secrets = transformDictionary(transformSecretDefinitionSpec, deepmerge(spec.parameters || {}, spec.secrets ||{})); // TODO: update
+  const secrets = transformDictionary(transformSecretDefinitionSpec, deepmerge(spec.parameters || {}, spec.secrets || {})); // TODO: update
   const outputs = transformDictionary(transformOutputDefinitionSpec, spec.outputs);
   const services = transformDictionary(transformServiceSpec, spec.services, spec.metadata);
   const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.metadata);

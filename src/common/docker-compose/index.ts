@@ -348,10 +348,8 @@ export class DockerComposeUtils {
             service_to.labels.push(`traefik.http.routers.${traefik_service}.tls=true`);
           }
 
-          const url_protocol = this.getUrlProtocol(component_interface?.url);
-          const protocol = component_interface?.protocol || url_protocol;
-          if (protocol) {
-            service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.scheme=${protocol}`);
+          if (component_interface?.protocol) {
+            service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.scheme=${component_interface?.protocol}`);
           }
         }
       }

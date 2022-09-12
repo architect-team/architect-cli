@@ -1314,8 +1314,9 @@ describe('interpolation spec v1', () => {
     expect(node.config.interfaces).to.deep.eq({
       api: {
         url: `http://${api_ref}:8080`,
+        protocol: 'http',
         ingress: {
-          subdomain: 'test'
+          subdomain: 'test',
         }
       }
     });
@@ -1363,12 +1364,14 @@ describe('interpolation spec v1', () => {
     expect(node.config.interfaces).to.deep.eq({
       api: {
         url: `http://${api_ref}:8080`,
+        protocol: 'http',
         ingress: {
           ip_whitelist: ['127.0.0.1']
         }
       },
       api2: {
         url: `http://${api_ref}:8080`,
+        protocol: 'http',
         ingress: {
           ip_whitelist: ['127.0.0.1/32']
         }
@@ -1421,12 +1424,14 @@ describe('interpolation spec v1', () => {
     expect(node.config.interfaces).to.deep.eq({
       api: {
         url: `http://${api_ref}:8080`,
+        protocol: 'http',
         ingress: {
           ip_whitelist: ['1.2.3.4']
         }
       },
       api2: {
         url: `http://${api_ref}:8080`,
+        protocol: 'http',
         ingress: {
           ip_whitelist: ['127.0.0.1/32']
         }
