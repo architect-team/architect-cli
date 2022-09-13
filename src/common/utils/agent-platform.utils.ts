@@ -7,6 +7,7 @@ import AppConfig from '../../app-config/config';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 
 const SERVICE_ACCOUNT_NAME = 'architect-agent';
+const AGENT_NAMESPACE = 'architect-agent';
 
 export class AgentPlatformUtils {
 
@@ -31,13 +32,22 @@ export class AgentPlatformUtils {
     return `https://${this.getLocalServerAgentIP()}:${this.getLocalServerAgentPort()}`;
   }
 
+  private static async createNamespace(kubeconfig_path: string) {
+    const set_kubeconfig = ['--kubeconfig', untildify(kubeconfig_path)];
+    await execa('kubectl', [
+      ...set_kubeconfig,
+      'create', 'namespace', AGENT_NAMESPACE,
+    ]);
+  }
+
   public static async configureAgentPlatform(
     flags: any,
     description: string,
   ): Promise<CreatePlatformInput> {
     const kubeconfig_path = untildify(flags.kubeconfig);
+    await this.createNamespace(kubeconfig_path);
 
-    const set_kubeconfig = ['--kubeconfig', untildify(kubeconfig_path), '--namespace', 'default'];
+    const set_kubeconfig = ['--kubeconfig', untildify(kubeconfig_path), '--namespace', AGENT_NAMESPACE];
 
     let use_existing_sa;
     try {
@@ -79,7 +89,7 @@ export class AgentPlatformUtils {
           '--clusterrole',
           'cluster-admin',
           '--serviceaccount',
-          `default:${SERVICE_ACCOUNT_NAME}`,
+          `${AGENT_NAMESPACE}:${SERVICE_ACCOUNT_NAME}`,
         ]);
       }
     }
@@ -111,7 +121,7 @@ type: kubernetes.io/service-account-token
 
   public static async waitForAgent(flags: any): Promise<void> {
     const kubeconfig_path = untildify(flags.kubeconfig);
-    const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', 'default'];
+    const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', AGENT_NAMESPACE];
 
     await execa('kubectl', [
       ...set_kubeconfig,
@@ -166,7 +176,7 @@ spec:
     fs.writeFileSync(yamlFile, yaml);
 
     const kubeconfig_path = untildify(flags.kubeconfig);
-    const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', 'default'];
+    const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', AGENT_NAMESPACE];
 
     await execa('kubectl', [
       ...set_kubeconfig,
@@ -182,7 +192,7 @@ spec:
   }
 
   public static async createKubernetesServiceAccount(kubeconfig_path: string, sa_name: string): Promise<void> {
-    const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', 'default'];
+    const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', AGENT_NAMESPACE];
 
     // Create the service account
     await execa('kubectl', [
@@ -191,15 +201,30 @@ spec:
     ]);
 
     // Bind the service account to the cluster-admin role
-    await execa('kubectl', [
-      ...set_kubeconfig,
-      'create',
-      'clusterrolebinding',
-      `${sa_name}-cluster-admin`,
-      '--clusterrole',
-      'cluster-admin',
-      '--serviceaccount',
-      `default:${sa_name}`,
-    ]);
+
+    let create_crb;
+    try {
+      await execa('kubectl', [
+        ...set_kubeconfig,
+        'get', 'sa', SERVICE_ACCOUNT_NAME,
+        '-o', 'json',
+      ]);
+      create_crb = false;
+    } catch {
+      create_crb = true;
+    }
+
+    if (create_crb) {
+      await execa('kubectl', [
+        ...set_kubeconfig,
+        'create',
+        'clusterrolebinding',
+        `${sa_name}-cluster-admin`,
+        '--clusterrole',
+        'cluster-admin',
+        '--serviceaccount',
+        `${AGENT_NAMESPACE}:${sa_name}`,
+      ]);
+    }
   }
 }
