@@ -39,5 +39,7 @@ Once the deploy has completed, you can reach your new service by going to https:
 Want to try deploying this to a cloud environment? Architect's got you covered there too! if you've already [created your account](https://cloud.architect.io/signup), you can run the command below to deploy the component to a sample Kubernetes cluster powered by Architect Cloud:
 
 ```sh
+$ architect register ../hello-world/architect.yml
+
 $ architect deploy ./architect.yml -e <environment-name>
 ```
