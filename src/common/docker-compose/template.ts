@@ -10,6 +10,7 @@ export interface DockerServiceBuild {
   args?: string[] | { [s: string]: string };
   dockerfile?: string;
   target?: string;
+  tags?: string[];
   'x-bake'?: XBakeConfig;
 }
 
@@ -71,6 +72,6 @@ export interface DockerInspect {
   },
   Name: string,
   Config: {
-    Labels: { [key: string]: string}
+    Labels: { [key: string]: string }
   }
 }
