@@ -23,25 +23,16 @@ Architect component specs are declarative, so it can be run locally or remotely 
 $ git clone https://github.com/architect-team/architect-cli.git
 $ cd ./architect-cli/examples/hello-world
 
-# Register the component to the local registry
-$ architect link .
-
 # Deploy using the dev command
-$ architect dev hello-world:latest
+$ architect dev ./architect.yml
 ```
 
 Once the deploy has completed, you can reach your new service by going to https://hello.localhost.architect.sh/.
 
 ## Deploying to the cloud
 
-Want to try deploying this to a cloud environment? Architect's got you covered there too! Just click the button below to deploy it to a sample Kubernetes cluster powered by Architect Cloud:
-
-[![Deploy Button](https://docs.architect.io/deploy-button.svg)](https://cloud.architect.io/examples/components/hello-world/deploy?tag=latest&interface=hello%3Ahello)
-
-Alternatively, if you're already familiar with Architect and have your own environment registered, you can use the command below instead:
+Want to try deploying this to a cloud environment? Architect's got you covered there too! if you've already [created your account](https://cloud.architect.io/signup), you can run the command below to deploy the component to a sample Kubernetes cluster powered by Architect Cloud:
 
 ```sh
-$ architect deploy hello-world:latest -a <account-name> -e <environment-name>
+$ architect deploy ./architect.yml -e <environment-name>
 ```
-
-

@@ -1,4 +1,4 @@
-name: examples/gcp-pubsub
+name: gcp-pubsub
 description: Component enabling integration with GCP pub/sub
 keywords:
   - gcp

@@ -1,4 +1,4 @@
-name: examples/publisher
+name: publisher
 
 secrets:
   publish_topic:
@@ -11,13 +11,13 @@ outputs:
     value: ${{ secrets.publish_topic }}
 
 dependencies:
-  examples/gcp-pubsub: latest
+  gcp-pubsub: latest
 
 services:
   api:
     build:
       context: ./
     environment:
-      GCP_PROJECT_ID: ${{ dependencies['examples/gcp-pubsub'].outputs.gcp_project_id }}
-      PUBSUB_ENDPOINT: ${{ dependencies['examples/gcp-pubsub'].interfaces.pubsub.url }}
+      GCP_PROJECT_ID: ${{ dependencies['gcp-pubsub'].outputs.gcp_project_id }}
+      PUBSUB_ENDPOINT: ${{ dependencies['gcp-pubsub'].interfaces.pubsub.url }}
       PUBSUB_TOPIC: ${{ secrets.publish_topic }}
