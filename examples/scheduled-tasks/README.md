@@ -25,5 +25,5 @@ When you run the component locally the task will be configured but won't run on 
 $ architect dev architect.yml
 
 # In another terminal session, execute the task
-$ architect task:exec --local scheduled-tasks curler # TODO: ticket for why this doesn't work as expected
+$ architect task:exec --local scheduled-tasks curler
 ```
