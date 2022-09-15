@@ -22,7 +22,7 @@ $ git clone https://github.com/architect-team/architect-cli.git
 $ cd ./architect-cli/examples/rabbitmq
 
 # Deploy using the dev command
-$ architect dev ./architect.yml -s queue_name=architect
+$ architect dev ./architect.yml
 ```
 
 Once the deploy has completed, you can view the RabbitMQ dashboard at https://admin.localhost.architect.sh/ and log in with username `guest` and password `guest`. Use the sample app at https://app.localhost.architect.sh/ to push messages from the message producer to the queue.
@@ -32,5 +32,5 @@ Once the deploy has completed, you can view the RabbitMQ dashboard at https://ad
 Want to try deploying this to a cloud environment? Architect's got you covered there too! if you've already [created your account](https://cloud.architect.io/signup), you can run the command below to deploy the component to a sample Kubernetes cluster powered by Architect Cloud:
 
 ```sh
-$ architect deploy ./architect.yml -e <environment-name> -s queue_name=architect
+$ architect deploy ./architect.yml -e <environment-name>
 ```

@@ -1,6 +1,6 @@
 name: database-seeding
 description: Example express application using typeorm to seed test data
-homepage: https://github.com/architect-team/architect-cli/tree/master/examples/database-seeding
+homepage: https://github.com/architect-team/architect-cli/tree/main/examples/database-seeding
 keywords:
   - architect
   - examples

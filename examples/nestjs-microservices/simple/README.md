@@ -32,7 +32,7 @@ $ architect link ./architect.yml
 $ architect dev ./client/architect.yml
 ```
 
-Once the deploy has completed, you can reach your new service by going to https://app.localhost.architect.sh/hello/Name.
+Once the deploy has completed, you can reach your new service by going to https://app.localhost.architect.sh/hello or https://app.localhost.architect.sh/hello/Name.
 
 ## Deploying to the cloud
 

@@ -1,6 +1,6 @@
 name: nestjs-simple
 description: Simple NestJS microservice that uses TCP for inter-process communication
-homepage: https://github.com/architect-team/architect-cli/tree/master/examples/nestjs-microservices/simple
+homepage: https://github.com/architect-team/architect-cli/tree/main/examples/nestjs-microservices/simple
 keywords:
   - nestjs
   - examples

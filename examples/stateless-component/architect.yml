@@ -1,6 +1,6 @@
 name: stateless-component
 description: A component without its own database or state. This shows how to connect to dependencies to serve business logic.
-homepage: https://github.com/architect-team/architect-cli/tree/master/examples/stateless-component
+homepage: https://github.com/architect-team/architect-cli/tree/main/examples/stateless-component
 keywords:
   - architect
   - examples
