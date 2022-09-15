@@ -26,7 +26,7 @@ $ architect link ./publisher/architect.yml
 $ architect link ./pubsub/architect.yml
 
 # Deploy using the dev command
-$ architect dev ./subscriber/architect.yml --secret-file secrets.yml
+$ architect dev ./subscriber/architect.yml
 ```
 
 Once the deploy has completed, you can reach your new service by going to https://pubsub.localhost.architect.sh/.
@@ -39,5 +39,5 @@ Want to try deploying this to a cloud environment? Architect's got you covered t
 $ architect register ./publisher/architect.yml
 $ architect register ./pubsub/architect.yml
 
-$ architect deploy ./subscriber/architect.yml -e example-environment --secret-file secrets.yml
+$ architect deploy ./subscriber/architect.yml -e example-environment
 ```

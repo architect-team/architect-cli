@@ -25,7 +25,7 @@ Architect component specs are declarative, so it can be run locally or remotely 
 $ git clone https://github.com/architect-team/architect-cli.git
 $ cd ./architect-cli/examples/stateless-component
 
-# Add the dependent component to the local registry
+# Add the dependency to the local registry
 $ architect link ../hello-world/architect.yml
 
 # Deploy using the dev command
@@ -41,5 +41,5 @@ Want to try deploying this to a cloud environment? Architect's got you covered t
 ```sh
 $ architect register ../hello-world/architect.yml
 
-$ architect deploy ./architect.yml -e <environment-name>
+$ architect deploy ./architect.yml -e example-environment
 ```

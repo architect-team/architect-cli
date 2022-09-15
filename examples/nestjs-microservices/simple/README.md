@@ -41,5 +41,5 @@ Want to try deploying this to a cloud environment? Architect's got you covered t
 ```sh
 $ architect register ./architect.yml
 
-$ architect deploy ./client/architect.yml -e <environment-name>
+$ architect deploy ./client/architect.yml -e example-environment
 ```
