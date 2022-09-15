@@ -677,7 +677,7 @@ export class DockerComposeUtils {
 
           // Stop watching when container exited successfully.
           if (state === 'exited' && container_state.ExitCode === 0) {
-            return true;
+            return restarted;
           }
 
           if (!service_data_dictionary[service_ref]) {
