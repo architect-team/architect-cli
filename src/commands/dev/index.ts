@@ -172,6 +172,9 @@ class UpProcessManager {
         await this.stop();
       }
     } finally {
+      // Mark that we're exiting - in the case that the compose procesas is stopped by the `architect stop` command,
+      // this won't be set, but we do need it to be true so watchContainersHealth exits as desired
+      this.is_exiting = true;
       // If the process is interrupted or dies of some other means _right after_ a container was restarted,
       // we can end up in a state where that singular container is still running and the others have been stopped.
       // This checks for that case and will call `docker compose stop` if it happened to ensure the container is taken down.
