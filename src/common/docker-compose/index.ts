@@ -675,11 +675,6 @@ export class DockerComposeUtils {
           const bad_state = state !== 'running' && container_state.ExitCode !== 0;
           const bad_health = health === 'unhealthy';
 
-          // Stop watching when container exited successfully.
-          if (state === 'exited' && container_state.ExitCode === 0) {
-            return true;
-          }
-
           if (!service_data_dictionary[service_ref]) {
             service_data_dictionary[service_ref] = {
               last_restart_ms: Date.now(),
