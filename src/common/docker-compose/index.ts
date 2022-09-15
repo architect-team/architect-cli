@@ -308,7 +308,7 @@ export class DockerComposeUtils {
         }
 
         // Optimization to check if multiple services share the same dockerfile/build config and avoid building unnecessarily
-        if (DockerHelper.buildXVersion('>=0.9.1')) { // docker-compose build.tags is only supported in >=0.9.1 of buildx
+        if (DockerHelper.composeVersion('>=2.6.0') && DockerHelper.buildXVersion('>=0.9.1')) { // docker-compose build.tags is only supported above these versions
           const build_hash = hash(service.build);
           const existing_service = seen_build_map[build_hash];
           if (!existing_service) {

@@ -1,7 +1,7 @@
 import { expect } from '@oclif/test';
 import sinon, { SinonSpy } from 'sinon';
 import { mockArchitectAuth } from '../utils/mocks';
-import StopLocalDeployment from '../../src/commands/stop';
+import Stop from '../../src/commands/stop';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 
 function createTestContainer(name: string, image_name?: string) {
@@ -42,11 +42,11 @@ describe('stop', () => {
   
   mockArchitectAuth
     .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns(env))
-    .stub(StopLocalDeployment.prototype, 'log', sinon.fake.returns(null))
+    .stub(Stop.prototype, 'log', sinon.fake.returns(null))
     .stub(DockerComposeUtils, 'dockerCompose', sinon.stub().returns(container_states))
     .command(['stop', 'test_env'])
     .it('stop a local deployment', ctx => {
-      const log_spy = StopLocalDeployment.prototype.log as SinonSpy;
+      const log_spy = Stop.prototype.log as SinonSpy;
       expect(log_spy.firstCall.args[0]).to.contain("Successfully stopped local deployment");
 
       const compose = DockerComposeUtils.dockerCompose as sinon.SinonStub;
@@ -56,7 +56,7 @@ describe('stop', () => {
   
   mockArchitectAuth
     .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns({}))
-    .stub(StopLocalDeployment.prototype, 'log', sinon.fake.returns(null))
+    .stub(Stop.prototype, 'log', sinon.fake.returns(null))
     .command(['stop', 'failed_env'])
     .catch(err => {
       expect(process.exitCode).eq(1);
@@ -66,7 +66,7 @@ describe('stop', () => {
   
   mockArchitectAuth
     .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns(env))
-    .stub(StopLocalDeployment.prototype, 'log', sinon.fake.returns(null))
+    .stub(Stop.prototype, 'log', sinon.fake.returns(null))
     .command(['stop', 'failed_env'])
     .catch(err => {
       expect(process.exitCode).eq(1);

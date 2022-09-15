@@ -157,6 +157,16 @@ class _DockerHelper {
     }
   }
 
+  composeVersion(version: string) {
+    const compose = this.docker_info.compose;
+    if (!compose) return false;
+
+    const composeSemver = semver.coerce(compose.Version);
+    if (!composeSemver) return false;
+
+    return semver.satisfies(composeSemver.version, version);
+  }
+
   buildXVersion(version: string) {
     const buildx = this.docker_info.buildx;
     if (!buildx) return false;

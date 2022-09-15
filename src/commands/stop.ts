@@ -2,9 +2,9 @@ import chalk from 'chalk';
 import BaseCommand from "../base-command";
 import { DockerComposeUtils } from "../common/docker-compose";
 import inquirer from 'inquirer';
-import { DockerInspect } from '../common/docker-compose/template';
+import { RequiresDocker } from '../common/docker/helper';
 
-export default class StopLocalDeployment extends BaseCommand {
+export default class Stop extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -25,11 +25,11 @@ export default class StopLocalDeployment extends BaseCommand {
     required: false,
   }];
 
+  @RequiresDocker({ compose: true })
   async run(): Promise<void> {
-    const { args } = await this.parse(StopLocalDeployment);
+    const { args } = await this.parse(Stop);
 
-    const local_env_map = await DockerComposeUtils.getLocalEnvironmentContainerMap();
-    const env_names = Object.keys(local_env_map);
+    const env_names = await DockerComposeUtils.getLocalEnvironments();
     if (env_names.length === 0) {
       throw new Error(chalk.red(`No local deployment found.`));
     }
