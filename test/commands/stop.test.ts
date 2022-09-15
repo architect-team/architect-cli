@@ -4,30 +4,12 @@ import { mockArchitectAuth } from '../utils/mocks';
 import Stop from '../../src/commands/stop';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 
-function createTestContainer(name: string, image_name?: string) {
-  const test_container: any = {
-    Name: image_name || 'image_name_not_used',
-    State: {
-      Status: 'running',
-    },
-    Config: {
-      Labels: {},
-    },
-  };
-
-  if (!image_name) {
-    test_container.Config.Labels['com.docker.compose.service'] = name;
-  }
-
-  return test_container;
-}
-
 describe('stop', () => {
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
-  const env = { 'test_env': [createTestContainer('container_name_1')] };
+  const env_names = ['test_env'];
   
   const container_states = [
     {
@@ -41,7 +23,7 @@ describe('stop', () => {
   ]
   
   mockArchitectAuth
-    .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns(env))
+    .stub(DockerComposeUtils, 'getLocalEnvironments', sinon.stub().returns(env_names))
     .stub(Stop.prototype, 'log', sinon.fake.returns(null))
     .stub(DockerComposeUtils, 'dockerCompose', sinon.stub().returns(container_states))
     .command(['stop', 'test_env'])
@@ -55,7 +37,7 @@ describe('stop', () => {
     });
   
   mockArchitectAuth
-    .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns({}))
+    .stub(DockerComposeUtils, 'getLocalEnvironments', sinon.stub().returns([]))
     .stub(Stop.prototype, 'log', sinon.fake.returns(null))
     .command(['stop', 'failed_env'])
     .catch(err => {
@@ -65,7 +47,7 @@ describe('stop', () => {
     .it('cannot stop a local deployment in empty environment');
   
   mockArchitectAuth
-    .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns(env))
+    .stub(DockerComposeUtils, 'getLocalEnvironments', sinon.stub().returns(env_names))
     .stub(Stop.prototype, 'log', sinon.fake.returns(null))
     .command(['stop', 'failed_env'])
     .catch(err => {
