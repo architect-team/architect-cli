@@ -24,7 +24,7 @@ $ git clone https://github.com/architect-team/architect-cli.git
 $ cd ./architect-cli/examples/database-seeding
 
 # Deploy using the dev command
-$ architect dev architect.yml -p AUTO_DDL=migrate
+$ architect dev architect.yml -s AUTO_DDL=migrate
 ```
 
 Once the deploy has completed, you can reach your new service by going to https://app.localhost.architect.sh/.
@@ -34,5 +34,5 @@ Once the deploy has completed, you can reach your new service by going to https:
 Want to try deploying this to a cloud environment? Architect's got you covered there too! if you've already [created your account](https://cloud.architect.io/signup), you can run the command below to deploy the component to a sample Kubernetes cluster powered by Architect Cloud:
 
 ```sh
-$ architect deploy architect.yml -e example-environment -p AUTO_DDL=migrate
+$ architect deploy architect.yml -e example-environment -s AUTO_DDL=migrate
 ```

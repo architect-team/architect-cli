@@ -38,5 +38,6 @@ Want to try deploying this to a cloud environment? Architect's got you covered t
 ```sh
 $ architect register ./publisher/architect.yml
 $ architect register ./pubsub/architect.yml
-$ architect deploy ./subscriber/architect.yml -e example-environment
+
+$ architect deploy ./subscriber/architect.yml -e example-environment --secret-file secrets.yml
 ```
