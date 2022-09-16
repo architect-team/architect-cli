@@ -137,7 +137,7 @@ During this time we greatly appreciate any feedback as we continue to finalize t
     if (!flags.clear) {
       try {
         await this.app.api.put(`/environments/${environment.id}/scale`, scaling_dto);
-        this.log(chalk.green(`Scaled service ${service_name} of component ${account.name}/${component_version.component.name} deployed to environment ${environment.name} to ${flags.replicas} replicas`));
+        this.log(chalk.green(`Scaled service ${service_name} of component ${account.name}/${component_version.component.name} deployed to environment ${environment.name} to ${replicas} replicas`));
       } catch(err: any) {
         this.log(chalk.yellow(err.response.data.message));
         const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment.name}`;
