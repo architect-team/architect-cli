@@ -32,8 +32,8 @@ export default class SentryService {
 
   initSentry(): void {
     this.ignoreTryCatch(async () => {
-      const sentry_out = process.env.TEST !== '1' && process.env.NODE_ENV != ENVIRONMENT.PREVIEW;
       Sentry.init({
+        enabled: process.env.TEST !== '1' && process.env.NODE_ENV != 'development' && process.env.NODE_ENV != ENVIRONMENT.PREVIEW,
         dsn: CLI_SENTRY_DSN,
         debug: false,
         environment: process.env?.NODE_ENV ?? 'production',
@@ -51,14 +51,12 @@ export default class SentryService {
           new Transaction(),
         ],
         beforeSend(event: any) {
-          if (!sentry_out) return null;
           if (event.req?.data?.token) {
             event.req.data.token = '*'.repeat(20);
           }
           return event;
         },
         beforeBreadcrumb(breadcrumb: any) {
-          if (!sentry_out) return null;
           if (breadcrumb.category === 'console') {
             breadcrumb.message = PromptUtils.strip_ascii_color_codes_from_string(breadcrumb.message);
           }
