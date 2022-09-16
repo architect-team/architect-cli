@@ -1,6 +1,7 @@
 import BaseCommand from '../../base-command';
 import BaseTable from '../../base-table';
 import { DockerComposeUtils } from '../../common/docker-compose';
+import { RequiresDocker } from '../../common/docker/helper';
 
 export default class DevList extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -10,6 +11,7 @@ export default class DevList extends BaseCommand {
   static description = 'List all running dev instances.';
   static examples = ['architect link:list'];
 
+  @RequiresDocker({ compose: true })
   async run(): Promise<void> {
     const local_env_map = await  DockerComposeUtils.getLocalEnvironmentContainerMap();
     const table = new BaseTable({ head: ['Environment', 'Containers', 'Status'] });
