@@ -46,8 +46,8 @@ export class DockerComposeUtils {
     }
   }
 
-  public static generateTlsConfig(): object {
-    return {
+  public static generateTlsConfig(): string {
+    return JSON.stringify({
       tls: {
         stores: {
           default: {
@@ -62,7 +62,7 @@ export class DockerComposeUtils {
           keyFile: '/etc/privkey.pem',
         }],
       },
-    };
+    });
   }
 
   public static async generate(graph: DependencyGraph, options?: GenerateOptions): Promise<DockerComposeTemplate> {
