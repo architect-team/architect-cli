@@ -8,7 +8,7 @@ import isCi from 'is-ci';
 import yaml from 'js-yaml';
 import opener from 'opener';
 import path from 'path';
-import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import { default as BaseCommand, default as Command } from '../../base-command';
@@ -469,7 +469,7 @@ export default class Dev extends BaseCommand {
     return port;
   }
 
-  private async downloadFile(url: string, output_location: string): Promise<void> {
+  private async downloadFileAndCache(url: string, output_location: string): Promise<void> {
     const handleReject = (resolve: () => void, reject: () => void) => {
       // These file operations can be sync due to failure state
       if (!fs.existsSync(output_location)) {
@@ -509,12 +509,16 @@ export default class Dev extends BaseCommand {
 
   private async downloadSSLCerts() {
     return Promise.all([
-      this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/fullchain.pem', path.join(this.app.config.getConfigDir(), 'fullchain.pem')),
-      this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/privkey.pem', path.join(this.app.config.getConfigDir(), 'privkey.pem')),
+      this.downloadFileAndCache('https://storage.googleapis.com/architect-ci-ssl/fullchain.pem', path.join(this.app.config.getConfigDir(), 'fullchain.pem')),
+      this.downloadFileAndCache('https://storage.googleapis.com/architect-ci-ssl/privkey.pem', path.join(this.app.config.getConfigDir(), 'privkey.pem')),
     ]).catch((err) => {
-      this.warn(chalk.yellow("We are unable to download the neccessary ssl certificates. Please try again or use --ssl=false to temporarily disable ssl"));
-      this.exit(1);
+      this.warn(chalk.yellow('We are unable to download the neccessary ssl certificates. Please try again or use --ssl=false to temporarily disable ssl'));
+      this.error(new ArchitectError(err.message, false));
     });
+  }
+
+  private readSSLCert(file: string) {
+    return fs.readFileSync(path.join(this.app.config.getConfigDir(), file)).toString();
   }
 
   private async runLocal() {
@@ -528,7 +532,6 @@ export default class Dev extends BaseCommand {
 
     if (flags.ssl) {
       await this.downloadSSLCerts();
-      await DockerComposeUtils.generateTlsConfig(this.app.config.getConfigDir());
     }
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
@@ -600,10 +603,10 @@ export default class Dev extends BaseCommand {
     const graph = await dependency_manager.getGraph(component_specs, all_secrets); // TODO: 404: update
     const gateway_admin_port = await PortUtil.getAvailablePort(8080);
     const compose = await DockerComposeUtils.generate(graph, {
-      config_dir: this.app.config.getConfigDir(),
       external_addr: flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address,
-      use_ssl: flags.ssl,
       gateway_admin_port,
+      ssl_cert: flags.ssl ? this.readSSLCert('fullchain.pem') : undefined,
+      ssl_key: flags.ssl ? this.readSSLCert('privkey.pem') : undefined,
     });
 
     // By default, the project_name used in `docker compose up -p PROJECT_NAME` is the name of the
