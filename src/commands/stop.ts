@@ -50,7 +50,8 @@ export default class Stop extends BaseCommand {
       throw new Error(chalk.red(`No local deployment named '${args.name}'. Use command 'architect dev:list' to list local deployments.`));
     }
 
-    await DockerComposeUtils.dockerCompose(['-p', args.name, 'stop']);
+    const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), args.name);
+    await DockerComposeUtils.dockerCompose(['-p', args.name, '-f', compose_file, 'stop']);
     this.log(chalk.green(`Successfully stopped local deployment '${args.name}'.`));
   }
 }
