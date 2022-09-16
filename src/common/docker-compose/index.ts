@@ -19,8 +19,8 @@ import DockerComposeTemplate, { DockerInspect, DockerService, DockerServiceBuild
 type GenerateOptions = {
   external_addr?: string;
   gateway_admin_port?: number;
-  use_ssl?: boolean;
-  config_dir?: string;
+  ssl_cert?: string;
+  ssl_key?: string;
   getImage?: (ref: string) => string;
 };
 
@@ -46,33 +46,30 @@ export class DockerComposeUtils {
     }
   }
 
-  public static async generateTlsConfig(config_path: string): Promise<void> {
-    const traefik_config = {
+  public static generateTlsConfig(): string {
+    return JSON.stringify({
       tls: {
         stores: {
           default: {
             defaultCertificate: {
-              certFile: '/etc/traefik-ssl/fullchain.pem',
-              keyFile: '/etc/traefik-ssl/privkey.pem',
+              certFile: '/etc/fullchain.pem',
+              keyFile: '/etc/privkey.pem',
             },
           },
         },
         certificates: [{
-          certFile: '/etc/traefik-ssl/fullchain.pem',
-          keyFile: '/etc/traefik-ssl/privkey.pem',
+          certFile: '/etc/fullchain.pem',
+          keyFile: '/etc/privkey.pem',
         }],
       },
-    };
-
-    const traefik_yaml = yaml.dump(traefik_config);
-    return fs.writeFile(path.join(config_path, `traefik.yaml`), traefik_yaml);
+    });
   }
 
   public static async generate(graph: DependencyGraph, options?: GenerateOptions): Promise<DockerComposeTemplate> {
     if (!options) {
-      options = { gateway_admin_port: 8080, external_addr: 'arc.localhost', use_ssl: false };
+      options = { gateway_admin_port: 8080, external_addr: 'arc.localhost' };
     }
-    const { gateway_admin_port, external_addr, use_ssl, config_dir } = options;
+    const { gateway_admin_port, external_addr, ssl_cert, ssl_key } = options;
 
     const compose: DockerComposeTemplate = {
       version: '3',
@@ -117,7 +114,7 @@ export class DockerComposeUtils {
           '--providers.docker=true',
           '--providers.docker.exposedByDefault=false',
           `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
-          ...(use_ssl ? [
+          ...(ssl_cert && ssl_key ? [
             // Ignore local certs being invalid on proxy
             `--serversTransport.insecureSkipVerify=true`,
             // redirect http to https
@@ -126,7 +123,7 @@ export class DockerComposeUtils {
             `--entryPoints.web.http.redirections.entryPoint.to=:${gateway_port}`,
             // tls certs
             '--providers.file.watch=false',
-            `--providers.file.fileName=/etc/traefik-ssl/traefik.yaml`,
+            `--providers.file.fileName=/etc/traefik.yaml`,
           ] : []),
         ],
         ports: [
@@ -136,9 +133,28 @@ export class DockerComposeUtils {
           `${gateway_admin_port}:8080`,
         ],
         volumes: [
-          ...(use_ssl ? [`${config_dir}:/etc/traefik-ssl/`] : []),
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
+        ...(ssl_cert && ssl_key ? {
+          entrypoint: [
+            '/bin/sh',
+            '-c',
+            `
+            echo "$$TRAEFIK_CONFIG" >> /etc/traefik.yaml;
+            echo "$$TRAEFIK_CERT" >> /etc/fullchain.pem;
+            echo "$$TRAEFIK_KEY" >> /etc/privkey.pem;
+
+            set -- "$$@" "$$0"
+
+            sh ./entrypoint.sh $$@
+            `,
+          ],
+          environment: {
+            TRAEFIK_CONFIG: this.generateTlsConfig(),
+            TRAEFIK_CERT: ssl_cert,
+            TRAEFIK_KEY: ssl_key,
+          },
+        } : {}),
       };
     }
 
@@ -370,7 +386,7 @@ export class DockerComposeUtils {
           if (node_to_interface.sticky) {
             service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadBalancer.sticky.cookie=true`);
           }
-          if (use_ssl) {
+          if (ssl_cert && ssl_key) {
             service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`);
             service_to.labels.push(`traefik.http.routers.${traefik_service}.tls=true`);
           }
