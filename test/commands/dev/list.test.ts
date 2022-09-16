@@ -1,10 +1,10 @@
 import { expect } from '@oclif/test';
 import sinon, { SinonSpy } from 'sinon';
+import * as util from 'util';
 import BaseTable from '../../../src/base-table';
+import DevList from '../../../src/commands/dev/list';
 import { DockerComposeUtils } from '../../../src/common/docker-compose';
 import { mockArchitectAuth } from '../../utils/mocks';
-import DevList from '../../../src/commands/dev/list';
-import { inspect } from 'util';
 
 function createTestContainer(name: string, image_name?: string) {
   const test_container: any = {
@@ -63,6 +63,31 @@ describe('dev:list', () => {
   many_env_many_containers.push([sample_env_1, 'container_name_1\ncontainer_name_2\ncontainer_name_3', 'running\nrunning\nrunning']);
   many_env_many_containers.push([sample_env_2, 'container_name_uno\ncontainer_name_dos\ncontainer_name_tres', 'running\nrunning\nrunning']);
 
+  const many_env_many_containers_json = {
+    [sample_env_1]: {
+      container_name_1: {
+        status: 'running',
+      },
+      container_name_2: {
+        status: 'running',
+      },
+      container_name_3: {
+        status: 'running',
+      }
+    },
+    [sample_env_2]: {
+      container_name_uno: {
+        status: 'running',
+      },
+      container_name_dos: {
+        status: 'running',
+      },
+      container_name_tres: {
+        status: 'running',
+      }
+    }
+  }
+
   const default_image_name_env = { 'test_env': [createTestContainer('container_name_not_used', 'image_name_is_used')] };
   const default_image_name_table = new BaseTable(header);
   default_image_name_table.push(['test_env', 'image_name_is_used', 'running']);
@@ -111,7 +136,16 @@ describe('dev:list', () => {
       const log_spy = DevList.prototype.log as SinonSpy;
       expect(log_spy.firstCall.args[0]).to.equal(many_env_many_containers.toString());
     });
-  
+
+  mockArchitectAuth
+    .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns(fourth_env))
+    .stub(DevList.prototype, 'log', sinon.fake.returns(null))
+    .command(['dev:list', '-f=json'])
+    .it('dev list multiple environments with many containers', ctx => {
+      const log_spy = DevList.prototype.log as SinonSpy;
+      expect(log_spy.firstCall.args[0]).to.equal(util.inspect(many_env_many_containers_json, false, 5));
+    });
+
   mockArchitectAuth
     .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns(default_image_name_env))
     .stub(DevList.prototype, 'log', sinon.fake.returns(null))
