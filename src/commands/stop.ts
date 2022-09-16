@@ -34,24 +34,23 @@ export default class Stop extends BaseCommand {
       throw new Error(chalk.red(`No local deployment found.`));
     }
 
-    if (!args.name) {
-      const answers: { environment: string } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'environment',
-          message: 'Select a local environment',
-          choices: env_names,
-        },
-      ]);
-      args.name = answers.environment;
+    const answers: { name: string } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'name',
+        when: !args.name,
+        message: 'Select a local environment',
+        choices: env_names,
+      },
+    ]);
+
+    const name = args.name || answers.name;
+    if (!env_names.includes(name as string)) {
+      throw new Error(chalk.red(`No local deployment named '${name}'. Use command 'architect dev:list' to list local deployments.`));
     }
 
-    if (!env_names.includes(args.name as string)) {
-      throw new Error(chalk.red(`No local deployment named '${args.name}'. Use command 'architect dev:list' to list local deployments.`));
-    }
-
-    const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), args.name);
-    await DockerComposeUtils.dockerCompose(['-p', args.name, '-f', compose_file, 'stop']);
-    this.log(chalk.green(`Successfully stopped local deployment '${args.name}'.`));
+    const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), name);
+    await DockerComposeUtils.dockerCompose(['-p', name, '-f', compose_file, 'stop']);
+    this.log(chalk.green(`Successfully stopped local deployment '${name}'.`));
   }
 }
