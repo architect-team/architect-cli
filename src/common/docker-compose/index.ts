@@ -144,7 +144,9 @@ export class DockerComposeUtils {
             echo "$$TRAEFIK_CERT" >> /etc/fullchain.pem;
             echo "$$TRAEFIK_KEY" >> /etc/privkey.pem;
 
-            traefik "$$@"
+            set -- "$$@" "$$0"
+
+            sh ./entrypoint.sh $$@
             `,
           ],
           environment: {
