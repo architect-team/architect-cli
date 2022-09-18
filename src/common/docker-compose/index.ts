@@ -454,7 +454,7 @@ export class DockerComposeUtils {
 
   @RequiresDocker({ compose: true })
   public static dockerCompose(args: string[], execa_opts?: Options, use_console = false): execa.ExecaChildProcess<string> {
-    if (use_console) {
+    if (use_console && process.stdin.isTTY) {
       process.stdin.setRawMode(true);
     }
     const cmd = execa('docker', ['compose', ...args], execa_opts);

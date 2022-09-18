@@ -80,7 +80,7 @@ export default class DockerBuildXUtils {
 
   @RequiresDocker({ buildx: true })
   public static async dockerBuildX(args: string[], docker_builder_name: string, execa_opts?: Options, use_console = false): Promise<execa.ExecaChildProcess<string>> {
-    if (use_console) {
+    if (use_console && process.stdin.isTTY) {
       process.stdin.setRawMode(true);
     }
     const cmd = execa('docker', [`--context=${docker_builder_name}-context`, 'buildx', '--builder', docker_builder_name, ...args], execa_opts);
