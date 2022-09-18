@@ -1,5 +1,4 @@
 import { Flags } from '@oclif/core';
-import * as util from 'util';
 import { Dictionary } from '../..';
 import BaseCommand from '../../base-command';
 import BaseTable from '../../base-table';
@@ -62,7 +61,7 @@ export default class DevList extends BaseCommand {
         };
       }
     }
-    this.log(util.inspect(output, false, 5));
+    this.log(JSON.stringify(output, null, 2));
   }
 
   @RequiresDocker({ compose: true })

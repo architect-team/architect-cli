@@ -1,6 +1,5 @@
 import { expect } from '@oclif/test';
 import sinon, { SinonSpy } from 'sinon';
-import * as util from 'util';
 import BaseTable from '../../../src/base-table';
 import DevList from '../../../src/commands/dev/list';
 import { DockerComposeUtils } from '../../../src/common/docker-compose';
@@ -143,7 +142,7 @@ describe('dev:list', () => {
     .command(['dev:list', '-f=json'])
     .it('dev list multiple environments with many containers', ctx => {
       const log_spy = DevList.prototype.log as SinonSpy;
-      expect(log_spy.firstCall.args[0]).to.equal(util.inspect(many_env_many_containers_json, false, 5));
+      expect(log_spy.firstCall.args[0]).to.equal(JSON.stringify(many_env_many_containers_json, null, 2));
     });
 
   mockArchitectAuth
