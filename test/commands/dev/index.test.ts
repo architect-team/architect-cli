@@ -578,16 +578,20 @@ describe('local dev environment', function () {
           "--entryPoints.web.http.redirections.entryPoint.permanent=true",
           "--entryPoints.web.http.redirections.entryPoint.to=:443",
           "--providers.file.watch=false",
-          "--providers.file.fileName=/etc/traefik-ssl/traefik.yaml",
+          "--providers.file.fileName=/etc/traefik.yaml",
         ],
         "ports": [
           "443:443",
           "8080:8080"
         ],
         "volumes": [
-          "./test:/etc/traefik-ssl/",
           "/var/run/docker.sock:/var/run/docker.sock:ro"
-        ]
+        ],
+        "environment": {
+          TRAEFIK_CONFIG: DockerComposeUtils.generateTlsConfig(),
+          TRAEFIK_CERT: 'fake-cert',
+          TRAEFIK_KEY: 'fake-cert'
+        }
       }
     },
     "volumes": {}
@@ -616,13 +620,14 @@ describe('local dev environment', function () {
     })
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .stub(DockerComposeUtils, 'generateTlsConfig', sinon.stub())
+    .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns('fake-cert'))
     .stdout({ print })
     .stderr({ print })
     .command(['dev', './examples/hello-world/architect.yml', '-i', 'hello'])
     .it('Create a local dev with a component and an interface with ssl', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
+      delete runCompose.firstCall.args[0].services.gateway.entrypoint;
       expect(runCompose.firstCall.args[0]).to.deep.equal(ssl_component_expected_compose)
     })
 
@@ -633,12 +638,14 @@ describe('local dev environment', function () {
     })
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
     .command(['dev', './examples/hello-world/architect.yml', '-i', 'hello', '--ssl=false'])
     .it('Create a local dev with a component and an interface (deprecated parameters block)', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
+      delete runCompose.firstCall.args[0].services.gateway.entrypoint;
       expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
     })
 
@@ -1061,6 +1068,7 @@ describe('local dev environment', function () {
     })
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns('fake-cert'))
     .stdout({ print })
     .stderr({ print })
     .command(['dev', './examples/hello-world/architect.yml', '-i', 'hello'])
