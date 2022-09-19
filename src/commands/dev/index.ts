@@ -8,7 +8,7 @@ import isCi from 'is-ci';
 import yaml from 'js-yaml';
 import opener from 'opener';
 import path from 'path';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary, Refs } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import { default as BaseCommand, default as Command } from '../../base-command';
@@ -136,7 +136,8 @@ class UpProcessManager {
         if (lineParts.length > 1) {
           // At this point we can stop the process without leaving containers running.
           this.can_safely_kill = true;
-          const service: string = lineParts[0];
+          const service = (lineParts[0] as string).replace(`${this.project_name}-`, '');
+
           lineParts.shift();
           const newLine = lineParts.join('|');
 
@@ -145,7 +146,7 @@ class UpProcessManager {
           }
 
           const color = service_colors.get(service) as chalk.Chalk;
-          console.log(color(service + "\t| ") + newLine);
+          console.log(color(service + "| ") + newLine);
         }
       }
     });
@@ -615,7 +616,7 @@ export default class Dev extends BaseCommand {
     // By default, the project_name used in `docker compose up -p PROJECT_NAME` is the name of the
     // first component in the list of components to run with 'arc' prepended so it's obvious that it's
     // coming from us.
-    const default_project_name = flags.environment ? flags.environment : `arc-${component_versions[0]}`;
+    const default_project_name = flags.environment ? flags.environment : `arc-${Refs.safeRef(component_versions[0])}`;
 
     await this.runCompose(compose, default_project_name, flags.port, gateway_admin_port);
   }
