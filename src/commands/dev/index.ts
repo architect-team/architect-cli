@@ -323,7 +323,6 @@ export default class Dev extends BaseCommand {
     // @ts-ignore
     parsed.args.configs_or_components = parsed.argv;
 
-
     parsed.flags = DeployUtils.parseFlags(parsed.flags);
 
     return parsed;
