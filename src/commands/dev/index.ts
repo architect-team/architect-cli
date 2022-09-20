@@ -8,7 +8,7 @@ import isCi from 'is-ci';
 import yaml from 'js-yaml';
 import opener from 'opener';
 import path from 'path';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary, Refs } from '../../';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import { default as BaseCommand, default as Command } from '../../base-command';
@@ -522,12 +522,31 @@ export default class Dev extends BaseCommand {
     return fs.readFileSync(path.join(this.app.config.getConfigDir(), file)).toString();
   }
 
+  private async failIfEnvironmentExists(environment: string) {
+    const running_envs = await DockerComposeUtils.getLocalEnvironments();
+    if (running_envs.includes(environment)) {
+      this.log(chalk.red(`The environment \`${environment}\` is already running.`));
+      this.log(chalk.yellow(`To see a list of your currently running environemnts you can run
+$ architect dev:list
+
+To stop the currently running environemnt you can run
+$ architect dev:stop ${environment}
+
+To continue running the other environment and create a new one you can run the \`dev\` command with the \`-e\` flag
+$ architect dev -e new_env_name_here .`));
+      this.error(new ArchitectError("Environment name already in use.", false));
+    }
+  }
+
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
 
     if (!args.configs_or_components || !args.configs_or_components.length) {
       args.configs_or_components = ['./architect.yml'];
     }
+
+    const environment = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
+    await this.failIfEnvironmentExists(environment);
 
     flags.port = await this.getAvailablePort(flags.port || (flags.ssl ? 443 : 80));
 
@@ -610,12 +629,7 @@ export default class Dev extends BaseCommand {
       ssl_key: flags.ssl ? this.readSSLCert('privkey.pem') : undefined,
     });
 
-    // By default, the project_name used in `docker compose up -p PROJECT_NAME` is the name of the
-    // first component in the list of components to run with 'arc' prepended so it's obvious that it's
-    // coming from us.
-    const default_project_name = flags.environment ? flags.environment : `arc-${Refs.safeRef(component_versions[0])}`;
-
-    await this.runCompose(compose, default_project_name, flags.port, gateway_admin_port);
+    await this.runCompose(compose, environment, flags.port, gateway_admin_port);
   }
 
   @RequiresDocker({ compose: true })

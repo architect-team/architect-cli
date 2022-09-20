@@ -602,6 +602,7 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'loadFile', () => {
       return getHelloComponentConfig();
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -618,6 +619,25 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'loadFile', () => {
       return getHelloComponentConfig();
     })
+    .stub(DockerComposeUtils, 'getLocalEnvironments', sinon.stub().returns([DockerComposeUtils.DEFAULT_PROJECT]))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'hello', '--ssl=false'])
+    .catch(err => {
+      expect(err.message).to.include('Environment name already in use.');
+    })
+    .it('Provide error if env name exists', ctx => {
+      expect(ctx.stdout).to.contain('The environment \`architect\` is already running.');
+    })
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return getHelloComponentConfig();
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns('fake-cert'))
@@ -636,6 +656,7 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'loadFile', () => {
       return getDeprecatedHelloComponentConfig();
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns(undefined))
@@ -656,6 +677,7 @@ describe('local dev environment', function () {
       hello_json.services.api.interfaces.main.sticky = true;
       return yaml.dump(hello_json);
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -675,6 +697,7 @@ describe('local dev environment', function () {
       spec.metadata.file = { path: './examples/database-seeding/architect.yml', contents: '' }
       return spec;
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -693,6 +716,7 @@ describe('local dev environment', function () {
       spec.metadata.file = { path: './examples/database-seeding/architect.yml', contents: '' }
       return spec;
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -712,6 +736,7 @@ describe('local dev environment', function () {
     .stub(DeployUtils, 'readSecretsFile', () => {
       return basic_secrets;
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -735,6 +760,7 @@ describe('local dev environment', function () {
     .stub(DeployUtils, 'readSecretsFile', () => {
       return basic_secrets;
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -759,6 +785,7 @@ describe('local dev environment', function () {
     .stub(DeployUtils, 'readSecretsFile', () => {
       return basic_secrets;
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -782,6 +809,7 @@ describe('local dev environment', function () {
     .stub(DeployUtils, 'readSecretsFile', () => {
       return wildcard_secrets;
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -803,6 +831,7 @@ describe('local dev environment', function () {
     .stub(DeployUtils, 'readSecretsFile', () => {
       return stacked_secrets;
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -830,6 +859,7 @@ describe('local dev environment', function () {
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}/components/react-app/versions/latest`)
       .reply(200, local_component_config_dependency))
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -857,6 +887,7 @@ describe('local dev environment', function () {
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples/components/react-app/versions/latest`)
       .reply(200, local_component_config_dependency))
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -881,6 +912,7 @@ describe('local dev environment', function () {
     .stub(DeployUtils, 'readSecretsFile', () => {
       return basic_secrets;
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -899,6 +931,7 @@ describe('local dev environment', function () {
       .stub(ComponentBuilder, 'buildSpecFromPath', () => {
         return buildSpecFromYml(getHelloComponentConfig())
       })
+      .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
       .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
       .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
       .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'hello-world': './examples/hello-world/architect.yml' }))
@@ -921,6 +954,7 @@ describe('local dev environment', function () {
       .stub(ComponentBuilder, 'buildSpecFromPath', () => {
         return buildSpecFromYml(getHelloComponentConfig())
       })
+      .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
       .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'hello-world': './examples/hello-world/architect.yml' }))
       .stdout({ print })
       .stderr({ print })
@@ -1022,6 +1056,7 @@ describe('local dev environment', function () {
       }))
       .stdout({ print })
       .stderr({ print })
+      .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
       .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
       .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
       .command(['dev', 'app', '--ssl=false'])
@@ -1041,6 +1076,7 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'loadFile', () => {
       return getHelloComponentConfig();
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -1066,6 +1102,7 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'loadFile', () => {
       return getHelloComponentConfigWithPortPathHealthcheck();
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns('fake-cert'))
@@ -1098,6 +1135,7 @@ describe('local dev environment', function () {
       };
       return yaml.dump(config);
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
