@@ -25,6 +25,9 @@ type GenerateOptions = {
 };
 
 export class DockerComposeUtils {
+  // used to namespace docker-compose projects so multiple deployments can happen to local
+  public static DEFAULT_PROJECT = 'architect';
+
   public static async getProjectName(default_project_name: string): Promise<string> {
     // 150 is somewhat arbitrary, but the intention is to give a more-than-reasonable max
     // length while leavning enough room for other things that get added to this (like the service name).
