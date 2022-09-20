@@ -9,6 +9,7 @@ import yaml from 'js-yaml';
 import opener from 'opener';
 import path from 'path';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary, Refs } from '../../';
+import AppConfig from '../../app-config/config';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import { default as BaseCommand, default as Command } from '../../base-command';
@@ -36,6 +37,7 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/);
  * stops containers when the underlying process returns with an error.
  */
 class UpProcessManager {
+  app_config: AppConfig;
   compose_file: string;
   project_name: string;
   detached: boolean;
@@ -45,7 +47,8 @@ class UpProcessManager {
   is_exiting: boolean;
   can_safely_kill: boolean;
 
-  constructor(compose_file: string, project_name: string, detached: boolean) {
+  constructor(app_config: AppConfig, compose_file: string, project_name: string, detached: boolean) {
+    this.app_config = app_config;
     this.compose_file = compose_file;
     this.project_name = project_name;
     this.detached = detached;
@@ -95,6 +98,18 @@ class UpProcessManager {
     process.on('SIGBREAK', () => {
       this.handleInterrupt();
     });
+  }
+
+  async watchForStop() {
+    const config_file = path.join(this.app_config.getConfigDir(), 'env_status.json');
+    const interval = setInterval(async () => {
+      const config = (await fs.pathExists(config_file)) ?
+        JSON.parse((await fs.readFile(config_file)).toString()) : {};
+      if (config[this.project_name] === 'stop') {
+        this.handleInterrupt();
+        clearInterval(interval);
+      }
+    }, 5000);
   }
 
   async handleInterrupt() {
@@ -157,6 +172,7 @@ class UpProcessManager {
 
     this.configureInterrupts();
     this.configureLogs();
+    this.watchForStop();
 
     const container_health = DockerComposeUtils.watchContainersHealth(this.compose_file, this.project_name,
       () => { return this.is_exiting; });
@@ -447,7 +463,7 @@ export default class Dev extends BaseCommand {
       this.pollTraefik(gateway_admin_port, traefik_service_map);
     }
 
-    await new UpProcessManager(compose_file, project_name, flags.detached).run();
+    await new UpProcessManager(this.app.config, compose_file, project_name, flags.detached).run();
     fs.removeSync(compose_file);
     process.exit();
   }
@@ -525,11 +541,11 @@ export default class Dev extends BaseCommand {
     return fs.readFileSync(path.join(this.app.config.getConfigDir(), file)).toString();
   }
 
-  private async addEnvPidToFile(environment: string, pid: string) {
-    const config_file = path.join(this.config.configDir, 'env_pids.json');
+  private async addEnvStatusToFile(environment: string, status: string) {
+    const config_file = path.join(this.config.configDir, 'env_status.json');
     const config = (await fs.pathExists(config_file)) ?
       JSON.parse((await fs.readFile(config_file)).toString()) : {};
-    config[environment] = pid;
+    config[environment] = status;
     await fs.writeFile(config_file, JSON.stringify(config));
   }
 
@@ -626,7 +642,7 @@ export default class Dev extends BaseCommand {
     // coming from us.
     const default_project_name = flags.environment ? flags.environment : `arc-${Refs.safeRef(component_versions[0])}`;
 
-    this.addEnvPidToFile(default_project_name, process.pid.toString());
+    this.addEnvStatusToFile(default_project_name, process.pid.toString());
     await this.runCompose(compose, default_project_name, flags.port, gateway_admin_port);
   }
 

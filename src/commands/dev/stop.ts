@@ -46,6 +46,14 @@ export default class DevStop extends BaseCommand {
     return false;
   }
 
+  private async addEnvStatusToFile(environment: string, status: string) {
+    const config_file = path.join(this.config.configDir, 'env_status.json');
+    const config = (await fs.pathExists(config_file)) ?
+      JSON.parse((await fs.readFile(config_file)).toString()) : {};
+    config[environment] = status;
+    await fs.writeFile(config_file, JSON.stringify(config));
+  }
+
   @RequiresDocker({ compose: true })
   async run(): Promise<void> {
     const { args } = await this.parse(DevStop);
@@ -70,10 +78,7 @@ export default class DevStop extends BaseCommand {
       throw new Error(chalk.red(`No local deployment named '${name}'. Use command 'architect dev:list' to list local deployments.`));
     }
 
-    const config_file = path.join(this.config.configDir, 'env_pids.json');
-    const env_pids = JSON.parse((await fs.readFile(config_file)).toString());
-    const pid = env_pids[name];
-    process.kill(pid, 'SIGINT');
+    this.addEnvStatusToFile(name, 'stop');
 
     CliUx.ux.action.start(chalk.blue(`Waiting for ${name} to stop...`));
     const did_stop = await this.waitForEnviromentToStop(name);
