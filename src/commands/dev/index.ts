@@ -525,6 +525,14 @@ export default class Dev extends BaseCommand {
     return fs.readFileSync(path.join(this.app.config.getConfigDir(), file)).toString();
   }
 
+  private async addEnvPidToFile(environment: string, pid: string) {
+    const config_file = path.join(this.config.configDir, 'env_pids.json');
+    const config = (await fs.pathExists(config_file)) ?
+      JSON.parse((await fs.readFile(config_file)).toString()) : {};
+    config[environment] = pid;
+    await fs.writeFile(config_file, JSON.stringify(config));
+  }
+
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
 
@@ -618,6 +626,7 @@ export default class Dev extends BaseCommand {
     // coming from us.
     const default_project_name = flags.environment ? flags.environment : `arc-${Refs.safeRef(component_versions[0])}`;
 
+    this.addEnvPidToFile(default_project_name, process.pid.toString());
     await this.runCompose(compose, default_project_name, flags.port, gateway_admin_port);
   }
 

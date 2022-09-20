@@ -1,10 +1,12 @@
 import { CliUx } from '@oclif/core';
 import chalk from 'chalk';
+import * as fs from 'fs-extra';
 import inquirer from 'inquirer';
-import { ArchitectError } from '../..';
+import path from 'path';
 import BaseCommand from "../../base-command";
 import { DockerComposeUtils } from "../../common/docker-compose";
 import { RequiresDocker } from '../../common/docker/helper';
+import { ArchitectError } from '../../dependency-manager/utils/errors';
 
 export default class DevStop extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -68,8 +70,11 @@ export default class DevStop extends BaseCommand {
       throw new Error(chalk.red(`No local deployment named '${name}'. Use command 'architect dev:list' to list local deployments.`));
     }
 
-    const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), name);
-    await DockerComposeUtils.dockerCompose(['-p', name, '-f', compose_file, 'stop']);
+    const config_file = path.join(this.config.configDir, 'env_pids.json');
+    const env_pids = JSON.parse((await fs.readFile(config_file)).toString());
+    const pid = env_pids[name];
+    process.kill(pid, 'SIGINT');
+
     CliUx.ux.action.start(chalk.blue(`Waiting for ${name} to stop...`));
     const did_stop = await this.waitForEnviromentToStop(name);
     CliUx.ux.action.stop();
