@@ -1,17 +1,19 @@
+import { CliUx } from '@oclif/core';
 import chalk from 'chalk';
-import BaseCommand from "../base-command";
-import { DockerComposeUtils } from "../common/docker-compose";
 import inquirer from 'inquirer';
-import { RequiresDocker } from '../common/docker/helper';
+import { ArchitectError } from '../..';
+import BaseCommand from "../../base-command";
+import { DockerComposeUtils } from "../../common/docker-compose";
+import { RequiresDocker } from '../../common/docker/helper';
 
-export default class Stop extends BaseCommand {
+export default class DevStop extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
   }
 
   static description = 'Stop a local deployment';
   static examples = [
-    'architect stop <local-environment-name>',
+    'architect dev:stop <local-environment-name>',
   ];
 
   static flags = {
@@ -25,9 +27,26 @@ export default class Stop extends BaseCommand {
     required: false,
   }];
 
+  async waitForEnviromentToStop(environment: string): Promise<boolean> {
+    let attempts = 0;
+    // Essentially add a 2 mintue timeout
+    while (attempts < 180) {
+      const environments = await DockerComposeUtils.getLocalEnvironments();
+      if (environments.includes(environment)) {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 1000);
+        });
+      } else {
+        return true;
+      }
+      attempts++;
+    }
+    return false;
+  }
+
   @RequiresDocker({ compose: true })
   async run(): Promise<void> {
-    const { args } = await this.parse(Stop);
+    const { args } = await this.parse(DevStop);
 
     const env_names = await DockerComposeUtils.getLocalEnvironments();
     if (env_names.length === 0) {
@@ -51,6 +70,13 @@ export default class Stop extends BaseCommand {
 
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), name);
     await DockerComposeUtils.dockerCompose(['-p', name, '-f', compose_file, 'stop']);
-    this.log(chalk.green(`Successfully stopped local deployment '${name}'.`));
+    CliUx.ux.action.start(chalk.blue(`Waiting for ${name} to stop...`));
+    const did_stop = await this.waitForEnviromentToStop(name);
+    CliUx.ux.action.stop();
+    if (did_stop) {
+      this.log(chalk.green(`Successfully stopped local deployment '${name}'.`));
+    } else {
+      this.error(new ArchitectError(`Unable to stop ${name}`));
+    }
   }
 }
