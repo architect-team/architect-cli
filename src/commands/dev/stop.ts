@@ -34,7 +34,7 @@ export default class DevStop extends BaseCommand {
 
   async waitForEnviromentToStop(environment: string): Promise<boolean> {
     let attempts = 0;
-    // Essentially add a 2 mintue timeout
+    // Essentially add a 3 mintue timeout
     while (attempts < 180) {
       const environments = await DockerComposeUtils.getLocalEnvironments();
       if (environments.includes(environment)) {
