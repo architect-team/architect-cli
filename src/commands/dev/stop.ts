@@ -1,10 +1,15 @@
 import { CliUx } from '@oclif/core';
 import chalk from 'chalk';
+import fs from 'fs-extra';
 import inquirer from 'inquirer';
+import net from 'net';
+import path from 'path';
+import { socketPath } from '.';
 import { ArchitectError } from '../..';
 import BaseCommand from "../../base-command";
 import { DockerComposeUtils } from "../../common/docker-compose";
 import { RequiresDocker } from '../../common/docker/helper';
+import LocalPaths from '../../paths';
 
 export default class DevStop extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -68,8 +73,19 @@ export default class DevStop extends BaseCommand {
       throw new Error(chalk.red(`No local deployment named '${name}'. Use command 'architect dev:list' to list local deployments.`));
     }
 
-    const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), name);
-    await DockerComposeUtils.dockerCompose(['-p', name, '-f', compose_file, 'stop']);
+    const socket_path = socketPath(path.join(this.app.config.getConfigDir(), LocalPaths.LOCAL_DEPLOY_PATH, name));
+    if (fs.existsSync(socket_path)) {
+      const socket = net.createConnection(socket_path);
+      socket.write('stop', () => {
+        socket.end();
+      });
+    } else {
+      // If there's no socket, dev is running in detached mode and we can stop it with docker compose without
+      // working about the health check restarting anything.
+      const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), name);
+      DockerComposeUtils.dockerCompose(['-p', name, '-f', compose_file, 'stop']);
+    }
+
     CliUx.ux.action.start(chalk.blue(`Waiting for ${name} to stop...`));
     const did_stop = await this.waitForEnviromentToStop(name);
     CliUx.ux.action.stop();
