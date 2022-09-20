@@ -62,7 +62,7 @@ export default class DevList extends BaseCommand {
         };
       }
     }
-    this.log(util.inspect(output, false, 5));
+    this.log(JSON.stringify(output, null, 2));
   }
 
   @RequiresDocker({ compose: true })
