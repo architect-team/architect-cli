@@ -6,6 +6,7 @@ import fs, { createWriteStream } from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
+import net from 'net';
 import opener from 'opener';
 import path from 'path';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
@@ -19,6 +20,7 @@ import { RequiresDocker } from '../../common/docker/helper';
 import DeployUtils from '../../common/utils/deploy.utils';
 import { booleanString } from '../../common/utils/oclif';
 import PortUtil from '../../common/utils/port';
+import LocalPaths from '../../paths';
 
 type TraefikHttpService = {
   name: string;
@@ -30,6 +32,19 @@ type TraefikHttpService = {
 const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/);
 
 /**
+ * Converts a regular filepath into a path that is valid for a Windows socket
+ * See https://nodejs.org/api/net.html#ipc-support for info.
+ */ 
+export function socketPath(path: string): string {
+  if (process.platform === 'win32') {
+    path = path.replace(/^\//, '');
+    path = path.replace(/\//g, '-');
+    path = `\\\\.\\pipe\\${path}`;
+  }
+  return path;
+}
+
+/**
  * Handles the logic for managing the `docker compose up` process.
  *
  * Gracefully stops running containers when the process is interrupted, and
@@ -37,6 +52,8 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/);
  */
 class UpProcessManager {
   compose_file: string;
+  server?: net.Server;
+  socket: string;
   project_name: string;
   detached: boolean;
   is_windows: boolean;
@@ -45,8 +62,9 @@ class UpProcessManager {
   is_exiting: boolean;
   can_safely_kill: boolean;
 
-  constructor(compose_file: string, project_name: string, detached: boolean) {
+  constructor(compose_file: string, socket: string, project_name: string, detached: boolean) {
     this.compose_file = compose_file;
+    this.socket = socket;
     this.project_name = project_name;
     this.detached = detached;
 
@@ -68,8 +86,19 @@ class UpProcessManager {
     // On Windows (cmd, powershell), signals don't exist and running in detached mode opens a new window. The
     // "SIGINT" we get on Windows isn't a real signal and isn't automatically passed to child processes,
     // so we don't have to worry about it.
-    return DockerComposeUtils.dockerCompose(compose_args,
+    const compose_process = DockerComposeUtils.dockerCompose(compose_args,
       { stdout: 'pipe', stdin: 'ignore', detached: !this.is_windows });
+
+    this.server = net.createServer().listen(this.socket);
+    this.server.on('connection', (socket) => {
+      socket.on('data', (d) => {
+        if (d.toString('utf-8') === 'stop') {
+          this.handleInterrupt();
+        }
+      });
+    });
+
+    return compose_process;
   }
 
   /** Spawns a process running `docker compose stop`  */
@@ -173,6 +202,12 @@ class UpProcessManager {
         await this.stop();
       }
     } finally {
+      if (this.server) {
+        this.server.close();
+      }
+      // Mark that we're exiting - in the case that the compose procesas is stopped by the `architect stop` command,
+      // this won't be set, but we do need it to be true so watchContainersHealth exits as desired
+      this.is_exiting = true;
       // If the process is interrupted or dies of some other means _right after_ a container was restarted,
       // we can end up in a state where that singular container is still running and the others have been stopped.
       // This checks for that case and will call `docker compose stop` if it happened to ensure the container is taken down.
@@ -430,6 +465,7 @@ export default class Dev extends BaseCommand {
   async runCompose(compose: DockerComposeTemplate, default_project_name: string, gateway_port: number, gateway_admin_port: number): Promise<void> {
     const { flags } = await this.parse(Dev);
     const [project_name, compose_file] = await this.buildImage(compose, default_project_name);
+    const socket = socketPath(path.join(this.app.config.getConfigDir(), LocalPaths.LOCAL_DEPLOY_PATH, project_name));
 
     this.log('Building containers...', chalk.green('done'));
     this.log('');
@@ -444,7 +480,7 @@ export default class Dev extends BaseCommand {
       this.pollTraefik(gateway_admin_port, traefik_service_map);
     }
 
-    await new UpProcessManager(compose_file, project_name, flags.detached).run();
+    await new UpProcessManager(compose_file, socket, project_name, flags.detached).run();
     fs.removeSync(compose_file);
     process.exit();
   }

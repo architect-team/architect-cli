@@ -691,7 +691,7 @@ export class DockerComposeUtils {
           const state = container_state.State.toLowerCase();
           const health = container_state.Health.toLowerCase();
 
-          const bad_state = state !== 'running';
+          const bad_state = state !== 'running' && container_state.ExitCode !== 0;
           const bad_health = health === 'unhealthy';
 
           if (!service_data_dictionary[service_ref]) {
