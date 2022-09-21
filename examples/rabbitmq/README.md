@@ -12,11 +12,9 @@
 
 ---
 
-# Stateful Architect components
+# RabbitMQ
 
-Almost all microservices or backend stacks require a database or some for of state in order to persist important user or session data. In this example, you'll see how you can describe an `architect.yml` file that includes a frontend webapp, a backend API, and of course a database allocated privately for said API.
-
-[Learn more about the architect.yml file](//docs.architect.io/configuration)
+This example RabbitMQ project will start up a message producer and a message consumer as well as [RabbitMQ](https://www.rabbitmq.com/) to facilitate communication between services. Messages will be passed from the producer, to a RabbitMQ queue, then finally to the consumer on a regular cadence.
 
 ## Running locally
 
@@ -25,13 +23,13 @@ Architect component specs are declarative, so it can be run locally or remotely 
 ```sh
 # Clone the repository and navigate to this directory
 $ git clone https://github.com/architect-team/architect-cli.git
-$ cd ./architect-cli/examples/stateful-component
+$ cd ./architect-cli/examples/rabbitmq
 
 # Deploy using the dev command
 $ architect dev ./architect.yml
 ```
 
-Once the deploy has completed, you can reach your new service by going to https://frontend.localhost.architect.sh/.
+Once the deploy has completed, you can view the RabbitMQ dashboard at https://admin.localhost.architect.sh/ and log in with username `guest` and password `guest`. Use the sample app at https://app.localhost.architect.sh/ to push messages from the message producer to the queue.
 
 ## Deploying to the cloud
 

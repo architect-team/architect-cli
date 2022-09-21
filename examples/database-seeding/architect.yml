@@ -1,6 +1,6 @@
 name: database-seeding
 description: Example express application using typeorm to seed test data
-homepage: https://github.com/architect-team/architect-cli/tree/master/examples/database-seeding
+homepage: https://github.com/architect-team/architect-cli/tree/main/examples/database-seeding
 keywords:
   - architect
   - examples
@@ -11,7 +11,7 @@ keywords:
 secrets:
   auto_ddl:
     description: Options are 'none', 'migrate', and 'seed'; none- no ddl; migrate- runs unrun database migrations at application start; seed- runs unrun migrations and test data seeding script at application start
-    default: none
+    default: migrate
   db_user:
     description: Username used to access the database
     default: postgres

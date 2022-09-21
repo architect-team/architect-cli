@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-import pika, sys, os
+import os
+
+import pika
 
 host = os.environ.get('AMQP_HOST')
 queue = os.environ.get('QUEUE_NAME')
