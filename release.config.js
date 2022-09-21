@@ -1,6 +1,5 @@
 const { GIT_BRANCH: branch } = process.env;
 
-
 const commitAnalyzer = "@semantic-release/commit-analyzer";
 const releaseNotesGenerator = "@semantic-release/release-notes-generator";
 const git = [
@@ -83,6 +82,5 @@ module.exports = {
   ],
   plugins: branch === 'main' ? main_plugins : default_plugins,
 };
-
 
 console.log(module.exports);

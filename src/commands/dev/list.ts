@@ -9,7 +9,7 @@ export default class DevList extends BaseCommand {
   }
 
   static description = 'List all running dev instances.';
-  static examples = ['architect link:list'];
+  static examples = ['architect dev:list'];
 
   @RequiresDocker({ compose: true })
   async run(): Promise<void> {
