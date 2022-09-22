@@ -41,13 +41,8 @@ export default class DevList extends BaseCommand {
   }
 
   getContainerNames(containers: DockerInspect[]): string[] {
-    return containers.map(c => {
-      if ('com.docker.compose.service' in c.Config.Labels) {
-        return c.Config.Labels['com.docker.compose.service'];
-      }
-      // Fallback in case compose label isn't present for some reason - this is the image name
-      return c.Name;
-    });
+    // "Name" has a preceding '/' that we stripe
+    return containers.map(c => c.Name.substring(1));
   }
 
   outputJSON(local_env_map: Dictionary<DockerInspect[]>): void {

@@ -5,20 +5,13 @@ import DevList from '../../../src/commands/dev/list';
 import { DockerComposeUtils } from '../../../src/common/docker-compose';
 import { mockArchitectAuth } from '../../utils/mocks';
 
-function createTestContainer(name: string, image_name?: string) {
+function createTestContainer(name: string) {
   const test_container: any = {
-    Name: image_name || 'image_name_not_used',
+    Name: `/${name}`,
     State: {
       Status: 'running',
     },
-    Config: {
-      Labels: {},
-    },
   };
-
-  if (!image_name) {
-    test_container.Config.Labels['com.docker.compose.service'] = name;
-  }
 
   return test_container;
 }
@@ -87,9 +80,9 @@ describe('dev:list', () => {
     }
   }
 
-  const default_image_name_env = { 'test_env': [createTestContainer('container_name_not_used', 'image_name_is_used')] };
-  const default_image_name_table = new BaseTable(header);
-  default_image_name_table.push(['test_env', 'image_name_is_used', 'running']);
+  const default_container_name_env = { 'test_env': [createTestContainer('container_name')] };
+  const default_container_name_table = new BaseTable(header);
+  default_container_name_table.push(['test_env', 'container_name', 'running']);
 
   mockArchitectAuth
     .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns({}))
@@ -146,11 +139,11 @@ describe('dev:list', () => {
     });
 
   mockArchitectAuth
-    .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns(default_image_name_env))
+    .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns(default_container_name_env))
     .stub(DevList.prototype, 'log', sinon.fake.returns(null))
     .command(['dev:list'])
     .it('dev list fallback to image name works', ctx => {
       const log_spy = DevList.prototype.log as SinonSpy;
-      expect(log_spy.firstCall.args[0]).to.equal(default_image_name_table.toString());
+      expect(log_spy.firstCall.args[0]).to.equal(default_container_name_table.toString());
     });
 });
