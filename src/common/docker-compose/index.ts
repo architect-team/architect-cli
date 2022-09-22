@@ -404,18 +404,6 @@ export class DockerComposeUtils {
     return compose;
   }
 
-  private static getUrlProtocol(url?: string): string | undefined {
-    if (!url) {
-      return undefined;
-    }
-    try {
-      // Slice removes the :
-      return (new URL(url)).protocol.slice(0, -1);
-    } catch {
-      return undefined;
-    }
-  }
-
   public static getConfigPaths(input: string): string[] {
     return [
       input,

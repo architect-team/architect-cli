@@ -4,7 +4,6 @@ import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
 import { LivenessProbeSpec, VolumeSpec } from './common-spec';
 import { ResourceSpec } from './resource-spec';
-import { SidecarSpec } from './sidecar-spec';
 import { transformObject } from './transform/common-transform';
 import { AnyOf, ExclusiveOr, ExpressionOr, ExpressionOrString, RequiredOr } from './utils/json-schema-annotations';
 import { Slugs } from './utils/slugs';
@@ -147,20 +146,6 @@ export class ServiceSpec extends ResourceSpec {
   })
   @Transform(transformObject(ServiceInterfaceSpec))
   interfaces?: Dictionary<ServiceInterfaceSpec | string | number>;
-
-  @IsOptional()
-  @JSONSchema({
-    type: 'object',
-    patternProperties: {
-      [Slugs.ArchitectSlugValidator.source]: AnyOf(SidecarSpec),
-    },
-    errorMessage: {
-      additionalProperties: Slugs.ArchitectSlugDescription,
-    },
-    description: 'A set of services to run as a sidecar for this service.',
-  })
-  @Transform(transformObject(SidecarSpec))
-  sidecars?: Dictionary<SidecarSpec>;
 
   @IsOptional()
   @ValidateNested()
