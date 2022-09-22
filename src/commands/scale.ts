@@ -7,6 +7,7 @@ import { ComponentVersion } from '../architect/component/component-version.entit
 import Environment from '../architect/environment/environment.entity';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
+import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 import { ComponentVersionSlugUtils, ResourceSlugUtils } from '../dependency-manager/spec/utils/slugs';
 
 export default class Scale extends BaseCommand {
@@ -48,7 +49,7 @@ export default class Scale extends BaseCommand {
 
   async run(): Promise<void> {
     this.log(chalk.yellow(
-`This feature is in alpha. While the feature should be stable, it may be changed or removed without prior notice. As such we do not recommend using this feature in any automated pipelines.
+      `This feature is in alpha. While the feature should be stable, it may be changed or removed without prior notice. As such we do not recommend using this feature in any automated pipelines.
 During this time we greatly appreciate any feedback as we continue to finalize the implementation. You can reach us at support@architect.io.`
     ));
     const { args, flags } = await this.parse(Scale);
@@ -94,7 +95,7 @@ During this time we greatly appreciate any feedback as we continue to finalize t
           type: 'list',
           name: 'service_name',
           message: `What is the name of the component's service to scale?`,
-          choices: Object.keys(component_version.config.services || {}),
+          choices: Object.keys(component_version.config.services || {}).filter(name => !IF_EXPRESSION_REGEX.test(name)),
         },
       ]);
       service_name = answers.service_name;
@@ -138,7 +139,7 @@ During this time we greatly appreciate any feedback as we continue to finalize t
       try {
         await this.app.api.put(`/environments/${environment.id}/scale`, scaling_dto);
         this.log(chalk.green(`Scaled service ${service_name} of component ${account.name}/${component_version.component.name} deployed to environment ${environment.name} to ${replicas} replicas`));
-      } catch(err: any) {
+      } catch (err: any) {
         this.log(chalk.yellow(err.response.data.message));
         const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment.name}`;
         this.log(chalk.yellow(`Did not immediately scale service ${service_name} of component ${account.name}/${component_version.component.name}.\nIf this was unexpected, check to see that the service is deployed to the environment ${environment.name} at\n${environment_url}.`));
