@@ -101,11 +101,11 @@ class UpProcessManager {
     let recreated_socket = false;
     this.server.on('error', (e: any) => {
       if (e.code === 'EADDRINUSE' && this.server && !recreated_socket) {
+        recreated_socket = true;
         // Socket already exists (likely from a previous run that didnt get cleaned up properly)
         // Remove it and listen again creating a new socket.
         fs.rmSync(this.socket);
         this.server.listen(this.socket);
-        recreated_socket = true;
       } else {
         throw e;
       }
