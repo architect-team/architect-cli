@@ -1,5 +1,4 @@
 import { Flags } from '@oclif/core';
-import * as util from 'util';
 import { Dictionary } from '../..';
 import BaseCommand from '../../base-command';
 import BaseTable from '../../base-table';
@@ -32,8 +31,11 @@ export default class DevList extends BaseCommand {
       const statuses = this.getContainerStates(containers).join('\n');
       table.push([env_name, container_names, statuses]);
     }
-
-    this.log(table.toString());
+    if (!table.length) {
+      this.log('There have no active dev instances yet. Use `architect dev` to create one.');
+    } else {
+      this.log(table.toString());
+    }
   }
 
   getContainerStates(containers: DockerInspect[]): string[] {
@@ -57,7 +59,11 @@ export default class DevList extends BaseCommand {
         };
       }
     }
-    this.log(JSON.stringify(output, null, 2));
+    if (!Object.keys(output).length) {
+      this.log('There are no active dev instances yet. Use `architect dev` to create one.');
+    } else {
+      this.log(JSON.stringify(output, null, 2));
+    }
   }
 
   @RequiresDocker({ compose: true })
