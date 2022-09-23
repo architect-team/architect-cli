@@ -32,7 +32,7 @@ export default class DevList extends BaseCommand {
       table.push([env_name, container_names, statuses]);
     }
     if (!table.length) {
-      this.log('There have no active dev instances yet. Use `architect dev` to create one.');
+      this.log('There are no active dev instances yet. Use `architect dev` to create one.');
     } else {
       this.log(table.toString());
     }
