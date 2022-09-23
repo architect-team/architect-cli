@@ -89,7 +89,7 @@ class UpProcessManager {
     const compose_process = DockerComposeUtils.dockerCompose(compose_args,
       { stdout: 'pipe', stdin: 'ignore', detached: !this.is_windows });
 
-    this.server = net.createServer().listen(this.socket);
+    this.server = net.createServer();
     this.server.on('connection', (socket) => {
       socket.on('data', (d) => {
         if (d.toString('utf-8') === 'stop') {
@@ -97,6 +97,21 @@ class UpProcessManager {
         }
       });
     });
+
+    let recreated_socket = false;
+    this.server.on('error', (e: any) => {
+      if (e.code === 'EADDRINUSE' && this.server && !recreated_socket) {
+        recreated_socket = true;
+        // Socket already exists (likely from a previous run that didnt get cleaned up properly)
+        // Remove it and listen again creating a new socket.
+        fs.rmSync(this.socket);
+        this.server.listen(this.socket);
+      } else {
+        throw e;
+      }
+    });
+
+    this.server.listen(this.socket);
 
     return compose_process;
   }

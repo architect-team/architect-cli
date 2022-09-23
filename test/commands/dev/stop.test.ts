@@ -28,6 +28,9 @@ describe('dev:stop', () => {
     write: () => {
       return;
     },
+    on: () => {
+      return;
+    }
   };
 
   mockArchitectAuth
