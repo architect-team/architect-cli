@@ -90,7 +90,7 @@ export default class DevStop extends BaseCommand {
           socket.end();
           this.runComposeStop(name);
         } else {
-          throw new Error(e);
+          throw e;
         }
       });
     } else {
