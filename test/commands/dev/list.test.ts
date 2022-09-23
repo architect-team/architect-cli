@@ -65,7 +65,7 @@ describe('dev:list', () => {
       },
       container_name_3: {
         status: 'running',
-      }
+      },
     },
     [sample_env_2]: {
       container_name_uno: {
@@ -76,9 +76,9 @@ describe('dev:list', () => {
       },
       container_name_tres: {
         status: 'running',
-      }
-    }
-  }
+      },
+    },
+  };
 
   const default_container_name_env = { 'test_env': [createTestContainer('container_name')] };
   const default_container_name_table = new BaseTable(header);
@@ -90,7 +90,7 @@ describe('dev:list', () => {
     .command(['dev:list'])
     .it('dev list no environments', ctx => {
       const log_spy = DevList.prototype.log as SinonSpy;
-      expect(log_spy.firstCall.args[0]).to.equal(empty_table.toString());
+      expect(log_spy.firstCall.args[0]).to.equal('There are no active dev instances yet. Use `architect dev` to create one.');
     });
 
   mockArchitectAuth
