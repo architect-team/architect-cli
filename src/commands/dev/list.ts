@@ -59,11 +59,7 @@ export default class DevList extends BaseCommand {
         };
       }
     }
-    if (!Object.keys(output).length) {
-      this.log('There are no active dev instances yet. Use `architect dev` to create one.');
-    } else {
-      this.log(JSON.stringify(output, null, 2));
-    }
+    this.log(JSON.stringify(output, null, 2));
   }
 
   @RequiresDocker({ compose: true })
