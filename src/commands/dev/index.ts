@@ -98,6 +98,15 @@ class UpProcessManager {
       });
     });
 
+    this.server.on('error', (e: any) => {
+      if (e.code === 'EADDRINUSE' && this.server) {
+        // Socket already exists (likely from a previous run that didnt get cleaned up properly)
+        // Remove it and listen again creating a new socket.
+        fs.rmSync(this.socket);
+        this.server.listen(this.socket);
+      }
+    });
+
     return compose_process;
   }
 
