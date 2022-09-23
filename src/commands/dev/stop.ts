@@ -81,9 +81,6 @@ export default class DevStop extends BaseCommand {
     const socket_path = socketPath(path.join(this.app.config.getConfigDir(), LocalPaths.LOCAL_DEPLOY_PATH, name));
     if (fs.existsSync(socket_path)) {
       const socket = net.createConnection(socket_path);
-      socket.write('stop', () => {
-        socket.end();
-      });
 
       socket.on('error', (e: any) => {
         if (e.code === 'ECONNREFUSED') {
@@ -92,6 +89,10 @@ export default class DevStop extends BaseCommand {
         } else {
           throw e;
         }
+      });
+
+      socket.write('stop', () => {
+        socket.end();
       });
     } else {
       // If there's no socket at all, dev is running in detached mode and we can stop it with docker compose without

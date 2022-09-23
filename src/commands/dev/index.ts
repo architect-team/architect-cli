@@ -89,7 +89,7 @@ class UpProcessManager {
     const compose_process = DockerComposeUtils.dockerCompose(compose_args,
       { stdout: 'pipe', stdin: 'ignore', detached: !this.is_windows });
 
-    this.server = net.createServer().listen(this.socket);
+    this.server = net.createServer();
     this.server.on('connection', (socket) => {
       socket.on('data', (d) => {
         if (d.toString('utf-8') === 'stop') {
@@ -110,6 +110,8 @@ class UpProcessManager {
         throw e;
       }
     });
+
+    this.server.listen(this.socket);
 
     return compose_process;
   }
