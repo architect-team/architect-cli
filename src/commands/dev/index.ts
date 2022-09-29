@@ -34,7 +34,7 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/);
 /**
  * Converts a regular filepath into a path that is valid for a Windows socket
  * See https://nodejs.org/api/net.html#ipc-support for info.
- */ 
+ */
 export function socketPath(path: string): string {
   if (process.platform === 'win32') {
     path = path.replace(/^\//, '');
@@ -577,10 +577,10 @@ export default class Dev extends BaseCommand {
     const running_envs = await DockerComposeUtils.getLocalEnvironments();
     if (running_envs.includes(environment)) {
       this.log(chalk.red(`The environment \`${environment}\` is already running.`));
-      this.log(chalk.yellow(`To see a list of your currently running environemnts you can run
+      this.log(chalk.yellow(`To see a list of your currently running environments you can run
 $ architect dev:list
 
-To stop the currently running environemnt you can run
+To stop the currently running environments you can run
 $ architect dev:stop ${environment}
 
 To continue running the other environment and create a new one you can run the \`dev\` command with the \`-e\` flag
