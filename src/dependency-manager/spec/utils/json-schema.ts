@@ -4,7 +4,6 @@ import { Dictionary } from '../../utils/dictionary';
 import { ComponentSpec } from '../component-spec';
 import { ResourceSpec } from '../resource-spec';
 import { ServiceSpec } from '../service-spec';
-import { SidecarSpec } from '../sidecar-spec';
 import { TaskSpec } from '../task-spec';
 import { IF_EXPRESSION_REGEX } from './interpolation';
 import { REF_PREFIX } from './json-schema-annotations';
@@ -103,18 +102,12 @@ const recursivelyReplaceDebugRefs = (obj: SchemaObject) => {
 const mergeDebugSpec = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
 
   const service_spec_name = ServiceSpec.name;
-  const sidecar_spec_name = SidecarSpec.name;
   const task_spec_name = TaskSpec.name;
   const debug_field = 'debug';
 
   const definitions_copy = JSON.parse(JSON.stringify(definitions)) as Record<string, SchemaObject>;
   const debug_definitions: Record<string, SchemaObject> = {};
   for (const [key, definition] of Object.entries(definitions_copy)) {
-    // Don't create or reference a debug version of a sidecar property
-    if (key === sidecar_spec_name) {
-      continue;
-    }
-
     delete definition.required;
     delete definition.oneOf;
     delete definition.anyOf;
@@ -124,7 +117,6 @@ const mergeDebugSpec = (definitions: Record<string, SchemaObject>): Record<strin
 
     if (definition?.properties?.debug && (key === task_spec_name || key === service_spec_name)) {
       delete definition.properties.debug; // delete the debug property if it exists, a debug block is not valid inside a debug block
-      delete definition.properties.sidecars; // delete the sidecars property if it exists (wont for tasks)
     }
   }
 

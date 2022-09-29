@@ -1,5 +1,7 @@
-import execa, { ExecaSyncError } from 'execa';
+import execa from 'execa';
+import semver from 'semver';
 import which from 'which';
+import { ArchitectError } from '../../dependency-manager/utils/errors';
 
 
 /**
@@ -27,18 +29,20 @@ export const stripTagFromImage: (i: string) => string = (image: string) => {
   }
 };
 
+interface DockerInfoPlugin {
+  SchemaVersion: string;
+  Vendor: string;
+  Version: string;
+  ShortDescription: string;
+  Name: string;
+  Path: string;
+}
+
 interface DockerInfoJSON {
   ClientInfo: {
     Debug: boolean,
     Context: string,
-    Plugins: [{
-      SchemaVersion: string;
-      Vendor: string;
-      Version: string;
-      ShortDescription: string;
-      Name: string;
-      Path: string;
-    }],
+    Plugins: DockerInfoPlugin[],
     Warnings: null
   };
 
@@ -47,10 +51,11 @@ interface DockerInfoJSON {
 
 interface DockerInfo {
   daemon_running: boolean;
-  has_buildx: boolean;
-  has_compose: boolean;
+  buildx?: DockerInfoPlugin;
+  compose?: DockerInfoPlugin;
   plugins: string[];
 }
+
 class _DockerHelper {
   docker_installed: boolean;
   docker_info: DockerInfo;
@@ -58,8 +63,8 @@ class _DockerHelper {
   constructor() {
     this.docker_info = {
       daemon_running: false,
-      has_buildx: false,
-      has_compose: false,
+      buildx: undefined,
+      compose: undefined,
       plugins: [],
     };
 
@@ -73,8 +78,22 @@ class _DockerHelper {
     const helper = new _DockerHelper();
     helper.docker_installed = true;
     helper.docker_info.daemon_running = true;
-    helper.docker_info.has_buildx = true;
-    helper.docker_info.has_compose = true;
+    helper.docker_info.buildx = {
+      SchemaVersion: '0.1.0',
+      Vendor: 'Docker Inc.',
+      Version: 'v0.8.1',
+      ShortDescription: 'Docker Buildx',
+      Name: 'buildx',
+      Path: '/usr/local/lib/docker/cli-plugins/docker-buildx',
+    };
+    helper.docker_info.compose = {
+      SchemaVersion: '0.1.0',
+      Vendor: 'Docker Inc.',
+      Version: 'v2.10.2',
+      ShortDescription: 'Docker Compose',
+      Name: 'compose',
+      Path: '/usr/local/lib/docker/cli-plugins/docker-compose',
+    };
     return helper;
   }
 
@@ -88,15 +107,24 @@ class _DockerHelper {
   }
 
   getDockerInfo(): DockerInfo {
-    const docker_info = execa.sync('docker', ['info', '--format', '{{json .}}']).stdout;
+    let docker_info;
+    try {
+      docker_info = execa.sync('docker', ['info', '--format', '{{json .}}']).stdout;
+    } catch {
+      return {
+        daemon_running: false,
+        buildx: undefined,
+        compose: undefined,
+        plugins: [],
+      };
+    }
 
     const docker_json: DockerInfoJSON = JSON.parse(docker_info);
     const plugins = docker_json.ClientInfo.Plugins.map((plugin) => plugin.Name);
-
     return {
       daemon_running: !docker_json.ServerErrors,
-      has_buildx: plugins.includes('buildx'),
-      has_compose: plugins.includes('compose'),
+      buildx: docker_json.ClientInfo.Plugins.find((plugin) => plugin.Name === 'buildx'),
+      compose: docker_json.ClientInfo.Plugins.find((plugin) => plugin.Name === 'compose'),
       plugins,
     };
   }
@@ -107,26 +135,46 @@ class _DockerHelper {
 
   verifyDocker(): void {
     if (!this.docker_installed) {
-       throw new Error('Architect requires Docker to be installed.\nPlease install docker and try again: https://docs.docker.com/engine/install/');
+      throw new ArchitectError('Architect requires Docker to be installed.\nPlease install docker and try again: https://docs.docker.com/engine/install/', false);
     }
   }
 
   verifyBuildX(): void {
-    if (!this.docker_info.has_buildx) {
-      throw new Error("'docker buildx' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.");
+    if (!this.docker_info.buildx) {
+      throw new ArchitectError("'docker buildx' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.", false);
     }
   }
 
   verifyCompose(): void {
-    if (!this.docker_info.has_compose) {
-      throw new Error("'docker compose' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.");
+    if (!this.docker_info.compose) {
+      throw new ArchitectError("'docker compose' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.", false);
     }
   }
 
   verifyDaemon() {
     if (!this.daemonRunning()) {
-      throw new Error('Docker daemon is not running. Please start it and try again.');
+      throw new ArchitectError('Docker daemon is not running. Please start it and try again.', false);
     }
+  }
+
+  composeVersion(version: string) {
+    const compose = this.docker_info.compose;
+    if (!compose) return false;
+
+    const composeSemver = semver.coerce(compose.Version);
+    if (!composeSemver) return false;
+
+    return semver.satisfies(composeSemver.version, version);
+  }
+
+  buildXVersion(version: string) {
+    const buildx = this.docker_info.buildx;
+    if (!buildx) return false;
+
+    const buildXSemver = semver.coerce(buildx.Version);
+    if (!buildXSemver) return false;
+
+    return semver.satisfies(buildXSemver.version, version);
   }
 }
 

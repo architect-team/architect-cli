@@ -168,6 +168,8 @@ services:
     image: heroku/nodejs-hello-world
     interfaces:
       main: ${{ secrets.param_number }}
+    environment:
+      FILE_DATA: file:./filedata.txt
 
 tasks:
   curler:

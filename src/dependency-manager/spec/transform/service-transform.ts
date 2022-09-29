@@ -4,7 +4,6 @@ import { ComponentInstanceMetadata } from '../component-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../service-spec';
 import { transformLivenessProbeSpec, transformVolumeSpec } from './common-transform';
 import { transformResourceSpec } from './resource-transform';
-import { transformSidecarSpec } from './sidecar-transform';
 
 export const transformInterfaceSpec = function (key: string, interface_spec: ServiceInterfaceSpec | string | number): ServiceInterfaceConfig {
   if (interface_spec instanceof Object) {
@@ -21,7 +20,6 @@ export const transformServiceSpec = (key: string, spec: ServiceSpec, metadata: C
     ...resource_config,
     debug: spec.debug ? transformServiceSpec(key, spec.debug, metadata) : undefined,
     interfaces: transformDictionary(transformInterfaceSpec, spec.interfaces),
-    sidecars: transformDictionary(transformSidecarSpec, spec.sidecars, metadata),
     liveness_probe: transformLivenessProbeSpec(spec.liveness_probe, resource_config.environment),
     volumes: transformDictionary(transformVolumeSpec, spec.volumes),
     replicas: spec.replicas || 1,

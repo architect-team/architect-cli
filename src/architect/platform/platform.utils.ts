@@ -8,7 +8,7 @@ import Platform from './platform.entity';
 export interface CreatePlatformInput {
   type: string;
   description: string;
-  credentials: PlatformCredentials;
+  credentials?: PlatformCredentials;
 }
 
 export type PlatformCredentials = KubernetesPlatformCredentials;

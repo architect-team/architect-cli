@@ -1,5 +1,9 @@
 <p align="center">
-  <a href="//architect.io" target="blank"><img src="https://docs.architect.io/img/logo.svg" width="320" alt="Architect Logo" /></a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.architect.io/logo/horizontal-inverted.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://cdn.architect.io/logo/horizontal.png">
+    <img width="320" alt="Architect Logo" src="https://cdn.architect.io/logo/horizontal.png">
+  </picture>
 </p>
 
 <p align="center">
@@ -16,45 +20,30 @@ In addition to traditional (sometimes called monolithic) application architectur
 
 This repository contains the source code for two NestJS microservices: one that uses Nest's native microservices utilities to create a TCP-based microservice, and another that uses the default Nest framework to expose a REST API that proxies to the TCP service.
 
-## Setup
-
-This project uses [Architect](https://architect.io) to deploy and manage our two services simultaneously. Install Architect's CLI to deploy both services:
-
-```bash
-$ npm install -g @architect-io/cli
-```
-
-Architect uses [Components](https://docs.architect.io) to encapsulate servcices allowing them to be deployed and extended. Both our TCP server and HTTP client have component manifest files describing them (`architect.yml` files) so that they can be automatically deployed.
-
-Normally component's would be sourced from Architect's cloud registry, but when developing our components we want them to be run directly from the source. Fortunately, Architect simulates the registry locally by allowing components to be [linked](https://www.architect.io/docs/guides/developing-multiple-components#component-linking) to the local file system. Linking components tells Architect's CLI that the components already exist and don't need to be pulled from the registry.
-
-```bash
-$ cd ./simple
-$ architect link .
-Successfully linked examples/nestjs-simple to local system at /architect-cli/examples/nestjs-microservices/simple
-
-$ architect link ./client/
-Successfully linked examples/nestjs-simple-client to local system at /architect-cli/examples/nestjs-microservices/simple/client
-```
-
 ## Running locally
 
-The REST client service cites the TCP server as a dependency. This means that Architect can automatically deploy and connect to it whenever the client is deployed, and all we have to do is deploy the client component:
+Architect component specs are declarative, so it can be run locally or remotely with a single deploy command:
 
-```bash
-$ architect dev examples/nestjs-simple-client:latest -i main:client
+```sh
+# Clone the repository and navigate to this directory
+$ git clone https://github.com/architect-team/architect-cli.git
+$ cd ./architect-cli/examples/nestjs-microservices/simple
+
+# Register the dependent components to the local registry
+$ architect link ./architect.yml
+
+# Deploy using the dev command
+$ architect dev ./client/architect.yml
 ```
 
-Once the application is done booting, the REST client will be available on https://app.localhost.architect.sh/hello/Name
+Once the deploy has completed, you can reach your new service by going to https://app.localhost.architect.sh/hello or https://app.localhost.architect.sh/hello/Name.
 
 ## Deploying to the cloud
 
-Want to try deploying this to a cloud environment? Architect's got you covered there too! Just click the button below to deploy it to a sample Kubernetes cluster powered by Architect Cloud:
-
-[![Deploy Button](https://docs.architect.io/deploy-button.svg)](https://cloud.architect.io/examples/components/nestjs-simple-client/deploy?tag=latest&interface=main%3Aclient)
-
-Alternatively, if you're already familiar with Architect and have your own environment registered, you can use the command below instead:
+Want to try deploying this to a cloud environment? Architect's got you covered there too! if you've already [created your account](https://cloud.architect.io/signup), you can run the command below to deploy the component to a sample Kubernetes cluster powered by Architect Cloud:
 
 ```sh
-$ architect deploy examples/nestjs-simple-client:latest -a <account-name> -e <environment-name>
+$ architect register ./architect.yml
+
+$ architect deploy ./client/architect.yml -e example-environment
 ```

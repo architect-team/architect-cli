@@ -6,19 +6,21 @@ import fs, { createWriteStream } from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
+import net from 'net';
 import opener from 'opener';
 import path from 'path';
-import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../';
-import AccountUtils from '../architect/account/account.utils';
-import { EnvironmentUtils } from '../architect/environment/environment.utils';
-import { default as BaseCommand, default as Command } from '../base-command';
-import LocalDependencyManager, { ComponentConfigOpts } from '../common/dependency-manager/local-manager';
-import { DockerComposeUtils } from '../common/docker-compose';
-import DockerComposeTemplate from '../common/docker-compose/template';
-import DeployUtils from '../common/utils/deploy.utils';
-import { booleanString } from '../common/utils/oclif';
-import { RequiresDocker } from '../common/docker/helper';
-import PortUtil from '../common/utils/port';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
+import AccountUtils from '../../architect/account/account.utils';
+import { EnvironmentUtils } from '../../architect/environment/environment.utils';
+import { default as BaseCommand, default as Command } from '../../base-command';
+import LocalDependencyManager, { ComponentConfigOpts } from '../../common/dependency-manager/local-manager';
+import { DockerComposeUtils } from '../../common/docker-compose';
+import DockerComposeTemplate from '../../common/docker-compose/template';
+import { RequiresDocker } from '../../common/docker/helper';
+import DeployUtils from '../../common/utils/deploy.utils';
+import { booleanString } from '../../common/utils/oclif';
+import PortUtil from '../../common/utils/port';
+import LocalPaths from '../../paths';
 
 type TraefikHttpService = {
   name: string;
@@ -30,6 +32,19 @@ type TraefikHttpService = {
 const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/);
 
 /**
+ * Converts a regular filepath into a path that is valid for a Windows socket
+ * See https://nodejs.org/api/net.html#ipc-support for info.
+ */ 
+export function socketPath(path: string): string {
+  if (process.platform === 'win32') {
+    path = path.replace(/^\//, '');
+    path = path.replace(/\//g, '-');
+    path = `\\\\.\\pipe\\${path}`;
+  }
+  return path;
+}
+
+/**
  * Handles the logic for managing the `docker compose up` process.
  *
  * Gracefully stops running containers when the process is interrupted, and
@@ -37,6 +52,8 @@ const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/);
  */
 class UpProcessManager {
   compose_file: string;
+  server?: net.Server;
+  socket: string;
   project_name: string;
   detached: boolean;
   is_windows: boolean;
@@ -45,8 +62,9 @@ class UpProcessManager {
   is_exiting: boolean;
   can_safely_kill: boolean;
 
-  constructor(compose_file: string, project_name: string, detached: boolean) {
+  constructor(compose_file: string, socket: string, project_name: string, detached: boolean) {
     this.compose_file = compose_file;
+    this.socket = socket;
     this.project_name = project_name;
     this.detached = detached;
 
@@ -68,8 +86,34 @@ class UpProcessManager {
     // On Windows (cmd, powershell), signals don't exist and running in detached mode opens a new window. The
     // "SIGINT" we get on Windows isn't a real signal and isn't automatically passed to child processes,
     // so we don't have to worry about it.
-    return DockerComposeUtils.dockerCompose(compose_args,
+    const compose_process = DockerComposeUtils.dockerCompose(compose_args,
       { stdout: 'pipe', stdin: 'ignore', detached: !this.is_windows });
+
+    this.server = net.createServer();
+    this.server.on('connection', (socket) => {
+      socket.on('data', (d) => {
+        if (d.toString('utf-8') === 'stop') {
+          this.handleInterrupt();
+        }
+      });
+    });
+
+    let recreated_socket = false;
+    this.server.on('error', (e: any) => {
+      if (e.code === 'EADDRINUSE' && this.server && !recreated_socket) {
+        recreated_socket = true;
+        // Socket already exists (likely from a previous run that didnt get cleaned up properly)
+        // Remove it and listen again creating a new socket.
+        fs.rmSync(this.socket);
+        this.server.listen(this.socket);
+      } else {
+        throw e;
+      }
+    });
+
+    this.server.listen(this.socket);
+
+    return compose_process;
   }
 
   /** Spawns a process running `docker compose stop`  */
@@ -136,7 +180,8 @@ class UpProcessManager {
         if (lineParts.length > 1) {
           // At this point we can stop the process without leaving containers running.
           this.can_safely_kill = true;
-          const service: string = lineParts[0];
+          const service = (lineParts[0] as string).replace(`${this.project_name}-`, '');
+
           lineParts.shift();
           const newLine = lineParts.join('|');
 
@@ -145,7 +190,7 @@ class UpProcessManager {
           }
 
           const color = service_colors.get(service) as chalk.Chalk;
-          console.log(color(service + "\t| ") + newLine);
+          console.log(color(service + "| ") + newLine);
         }
       }
     });
@@ -172,6 +217,12 @@ class UpProcessManager {
         await this.stop();
       }
     } finally {
+      if (this.server) {
+        this.server.close();
+      }
+      // Mark that we're exiting - in the case that the compose procesas is stopped by the `architect stop` command,
+      // this won't be set, but we do need it to be true so watchContainersHealth exits as desired
+      this.is_exiting = true;
       // If the process is interrupted or dies of some other means _right after_ a container was restarted,
       // we can end up in a state where that singular container is still running and the others have been stopped.
       // This checks for that case and will call `docker compose stop` if it happened to ensure the container is taken down.
@@ -365,7 +416,7 @@ export default class Dev extends BaseCommand {
     for (const svc_name of Object.keys(compose.services)) {
       for (const port_pair of compose.services[svc_name].ports || []) {
         const [exposed_port, internal_port] = port_pair && (port_pair as string).split(':');
-        this.log(`${chalk.blue(`${protocol}://localhost:${exposed_port}/`)} => ${svc_name}:${internal_port}`);
+        this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}:${internal_port}`);
       }
     }
 
@@ -400,10 +451,10 @@ export default class Dev extends BaseCommand {
     }, poll_interval);
   }
 
-  async buildImage(compose: DockerComposeTemplate): Promise<[string, string]> {
+  async buildImage(compose: DockerComposeTemplate, default_project_name: string): Promise<[string, string]> {
     const { flags } = await this.parse(Dev);
 
-    const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
+    const project_name = await DockerComposeUtils.getProjectName(default_project_name);
     const compose_file = flags['compose-file'] || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
 
     await fs.ensureFile(compose_file);
@@ -426,11 +477,10 @@ export default class Dev extends BaseCommand {
     return [project_name, compose_file];
   }
 
-  async runCompose(compose: DockerComposeTemplate, gateway_port: number, gateway_admin_port: number): Promise<void> {
+  async runCompose(compose: DockerComposeTemplate, default_project_name: string, gateway_port: number, gateway_admin_port: number): Promise<void> {
     const { flags } = await this.parse(Dev);
-    const [project_name, compose_file] = await this.buildImage(compose);
-
-    console.clear();
+    const [project_name, compose_file] = await this.buildImage(compose, default_project_name);
+    const socket = socketPath(path.join(this.app.config.getConfigDir(), LocalPaths.LOCAL_DEPLOY_PATH, project_name));
 
     this.log('Building containers...', chalk.green('done'));
     this.log('');
@@ -445,7 +495,7 @@ export default class Dev extends BaseCommand {
       this.pollTraefik(gateway_admin_port, traefik_service_map);
     }
 
-    await new UpProcessManager(compose_file, project_name, flags.detached).run();
+    await new UpProcessManager(compose_file, socket, project_name, flags.detached).run();
     fs.removeSync(compose_file);
     process.exit();
   }
@@ -471,7 +521,7 @@ export default class Dev extends BaseCommand {
     return port;
   }
 
-  private async downloadFile(url: string, output_location: string): Promise<void> {
+  private async downloadFileAndCache(url: string, output_location: string): Promise<void> {
     const handleReject = (resolve: () => void, reject: () => void) => {
       // These file operations can be sync due to failure state
       if (!fs.existsSync(output_location)) {
@@ -511,12 +561,32 @@ export default class Dev extends BaseCommand {
 
   private async downloadSSLCerts() {
     return Promise.all([
-      this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/fullchain.pem', path.join(this.app.config.getConfigDir(), 'fullchain.pem')),
-      this.downloadFile('https://storage.googleapis.com/architect-ci-ssl/privkey.pem', path.join(this.app.config.getConfigDir(), 'privkey.pem')),
+      this.downloadFileAndCache('https://storage.googleapis.com/architect-ci-ssl/fullchain.pem', path.join(this.app.config.getConfigDir(), 'fullchain.pem')),
+      this.downloadFileAndCache('https://storage.googleapis.com/architect-ci-ssl/privkey.pem', path.join(this.app.config.getConfigDir(), 'privkey.pem')),
     ]).catch((err) => {
-      this.warn(chalk.yellow("We are unable to download the neccessary ssl certificates. Please try again or use --ssl=false to temporarily disable ssl"));
-      this.exit(1);
+      this.warn(chalk.yellow('We are unable to download the neccessary ssl certificates. Please try again or use --ssl=false to temporarily disable ssl'));
+      this.error(new ArchitectError(err.message, false));
     });
+  }
+
+  private readSSLCert(file: string) {
+    return fs.readFileSync(path.join(this.app.config.getConfigDir(), file)).toString();
+  }
+
+  private async failIfEnvironmentExists(environment: string) {
+    const running_envs = await DockerComposeUtils.getLocalEnvironments();
+    if (running_envs.includes(environment)) {
+      this.log(chalk.red(`The environment \`${environment}\` is already running.`));
+      this.log(chalk.yellow(`To see a list of your currently running environemnts you can run
+$ architect dev:list
+
+To stop the currently running environemnt you can run
+$ architect dev:stop ${environment}
+
+To continue running the other environment and create a new one you can run the \`dev\` command with the \`-e\` flag
+$ architect dev -e new_env_name_here .`));
+      this.error(new ArchitectError("Environment name already in use.", false));
+    }
   }
 
   private async runLocal() {
@@ -526,11 +596,13 @@ export default class Dev extends BaseCommand {
       args.configs_or_components = ['./architect.yml'];
     }
 
+    const environment = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
+    await this.failIfEnvironmentExists(environment);
+
     flags.port = await this.getAvailablePort(flags.port || (flags.ssl ? 443 : 80));
 
     if (flags.ssl) {
       await this.downloadSSLCerts();
-      await DockerComposeUtils.generateTlsConfig(this.app.config.getConfigDir());
     }
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
@@ -602,12 +674,13 @@ export default class Dev extends BaseCommand {
     const graph = await dependency_manager.getGraph(component_specs, all_secrets); // TODO: 404: update
     const gateway_admin_port = await PortUtil.getAvailablePort(8080);
     const compose = await DockerComposeUtils.generate(graph, {
-      config_dir: this.app.config.getConfigDir(),
       external_addr: flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address,
-      use_ssl: flags.ssl,
       gateway_admin_port,
+      ssl_cert: flags.ssl ? this.readSSLCert('fullchain.pem') : undefined,
+      ssl_key: flags.ssl ? this.readSSLCert('privkey.pem') : undefined,
     });
-    await this.runCompose(compose, flags.port, gateway_admin_port);
+
+    await this.runCompose(compose, environment, flags.port, gateway_admin_port);
   }
 
   @RequiresDocker({ compose: true })

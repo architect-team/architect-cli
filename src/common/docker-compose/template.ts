@@ -10,6 +10,7 @@ export interface DockerServiceBuild {
   args?: string[] | { [s: string]: string };
   dockerfile?: string;
   target?: string;
+  tags?: string[];
   'x-bake'?: XBakeConfig;
 }
 
@@ -63,4 +64,14 @@ export default interface DockerComposeTemplate {
   version: '3';
   services: { [key: string]: DockerService };
   volumes: { [key: string]: { external?: boolean } };
+}
+
+export interface DockerInspect {
+  State: {
+    Status: string
+  },
+  Name: string,
+  Config: {
+    Labels: { [key: string]: string }
+  }
 }

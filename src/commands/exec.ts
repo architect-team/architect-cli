@@ -373,8 +373,9 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     const service = await DockerComposeUtils.getLocalServiceForEnvironment(compose_file, args.resource);
 
     const compose_args = ['-f', compose_file, '-p', environment_name, 'exec'];
+    const use_tty = flags.tty && process.stdout.isTTY;
     // https://docs.docker.com/compose/reference/exec/
-    if (!flags.tty || !process.stdout.isTTY) {
+    if (!use_tty) {
       compose_args.push('-T');
     }
     compose_args.push(service.name);
@@ -383,7 +384,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
       compose_args.push(arg);
     }
 
-    await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' }, true);
+    await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' }, use_tty);
   }
 
   async run(): Promise<void> {
@@ -402,7 +403,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     // If no account is default to local first.
     if (!flags.account && flags.environment) {
       // If the env exists locally then just assume local
-      const is_local_env = await DockerComposeUtils.isLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
+      const is_local_env = await DockerComposeUtils.isLocalEnvironment(flags.environment);
       if (is_local_env) {
         return await this.runLocal(args, flags);
       }
