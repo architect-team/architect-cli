@@ -2,7 +2,7 @@ import { isNumberString } from 'class-validator';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import _ from 'lodash';
-import { Dictionary } from '../../';
+import { ArchitectError, Dictionary } from '../../';
 
 export default class DeployUtils {
   private static getExtraSecrets(secrets: string[] = []): Dictionary<string | number | undefined> {
@@ -22,7 +22,7 @@ export default class DeployUtils {
     for (const secret of secrets) {
       const secret_split = secret.split('=');
       if (secret_split.length !== 2) {
-        throw new Error(`Bad format for secret ${secret}. Please specify in the format --secret SECRET_NAME=SECRET_VALUE`);
+        throw new ArchitectError(`Bad format for secret ${secret}. Please specify in the format --secret SECRET_NAME=SECRET_VALUE`, false);
       }
       let value: string | number = secret_split[1];
       if (isNumberString(value)) {

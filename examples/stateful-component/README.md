@@ -1,5 +1,9 @@
 <p align="center">
-  <a href="//architect.io" target="blank"><img src="https://docs.architect.io/img/logo.svg" width="320" alt="Architect Logo" /></a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.architect.io/logo/horizontal-inverted.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://cdn.architect.io/logo/horizontal.png">
+    <img width="320" alt="Architect Logo" src="https://cdn.architect.io/logo/horizontal.png">
+  </picture>
 </p>
 
 <p align="center">
@@ -23,25 +27,16 @@ Architect component specs are declarative, so it can be run locally or remotely 
 $ git clone https://github.com/architect-team/architect-cli.git
 $ cd ./architect-cli/examples/stateful-component
 
-# Register the component to the local registry
-$ architect link .
-
 # Deploy using the dev command
-$ architect dev stateful-component:latest
+$ architect dev ./architect.yml
 ```
 
-Once the deploy has completed, you can reach your new service by going to http://frontend.arc.localhost/.
+Once the deploy has completed, you can reach your new service by going to https://frontend.localhost.architect.sh/.
 
 ## Deploying to the cloud
 
-Want to try deploying this to a cloud environment? Architect's got you covered there too! Just click the button below to deploy it to a sample Kubernetes cluster powered by Architect Cloud:
-
-[![Deploy Button](https://docs.architect.io/deploy-button.svg)](https://cloud.architect.io/examples/components/stateful-component/deploy?tag=latest&interface=frontend%3Afrontend)
-
-Alternatively, if you're already familiar with Architect and have your own environment registered, you can use the command below instead:
+Want to try deploying this to a cloud environment? Architect's got you covered there too! if you've already [created your account](https://cloud.architect.io/signup), you can run the command below to deploy the component to a sample Kubernetes cluster powered by Architect Cloud:
 
 ```sh
-$ architect deploy stateful-component:latest -a <account-name> -e <environment-name>
+$ architect deploy ./architect.yml -e example-environment
 ```
-
-

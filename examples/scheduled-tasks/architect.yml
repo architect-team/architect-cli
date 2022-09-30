@@ -1,6 +1,6 @@
 name: scheduled-tasks
-description: Example application that calls the API once per 5 minutes and prints the results; showcasing Tasks (cron jobs)
-homepage: https://github.com/architect-team/architect-cli/tree/master/examples/scheduled-tasks
+description: Example application that supports manual tasks and prints the results
+homepage: https://github.com/architect-team/architect-cli/tree/main/examples/scheduled-tasks
 
 tasks:
   curler:

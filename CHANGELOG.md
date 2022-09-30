@@ -1,3 +1,81 @@
+# [1.26.0](https://github.com/architect-team/architect-cli/compare/v1.25.1...v1.26.0) (2022-09-29)
+
+
+### Bug Fixes
+
+* **analytics:** No longer report errors caused by missing software such as docker. ([51328c1](https://github.com/architect-team/architect-cli/commit/51328c1a6235f02dfd35afa39da6d8785549b232))
+* **dev:list:** 544 no dev instances console message ([#720](https://github.com/architect-team/architect-cli/issues/720)) ([136b389](https://github.com/architect-team/architect-cli/commit/136b3898e743b6ee47bd6cbbe403f3afbc8b69b7))
+* **dev:list:** always print json format, even on empty ([#721](https://github.com/architect-team/architect-cli/issues/721)) ([de5924f](https://github.com/architect-team/architect-cli/commit/de5924f395030f7f43aca73e2fcbfaad522675bd))
+* **dev:list:** Ouptut container name for the container name instead of accidentally using the image name ([#715](https://github.com/architect-team/architect-cli/issues/715)) ([f77cccd](https://github.com/architect-team/architect-cli/commit/f77cccd419bf70521c1674f14f63e1b332745e7f))
+* **dev:list:** requires docker and compose ([#708](https://github.com/architect-team/architect-cli/issues/708)) ([61bef4a](https://github.com/architect-team/architect-cli/commit/61bef4a146570bb697246256c04c84e6a7cd4e70))
+* **dev:** add another check for compose version ([f5cacae](https://github.com/architect-team/architect-cli/commit/f5cacaed17fdecf286196604f50282e8bfa76e86))
+* **dev:** Add safeguard to docker info call so that if it fails we report that docker daemon isnt running ([#700](https://github.com/architect-team/architect-cli/issues/700)) ([185eab8](https://github.com/architect-team/architect-cli/commit/185eab80f7aca171b813174437ad72740c62cb73))
+* **dev:** Add traefik default cert via envs as opposed to volume ([#709](https://github.com/architect-team/architect-cli/issues/709)) ([0a1b7ad](https://github.com/architect-team/architect-cli/commit/0a1b7ade829e86aeb19bb2db30fad3d390b31100))
+* **dev:** Fix https to https issue ([#704](https://github.com/architect-team/architect-cli/issues/704)) ([f2c1053](https://github.com/architect-team/architect-cli/commit/f2c10534184193b07b0c1da9e62ae8daa0d0dd04))
+* **dev:** fixing info function when no containers are running ([#702](https://github.com/architect-team/architect-cli/issues/702)) ([d72eb06](https://github.com/architect-team/architect-cli/commit/d72eb060d17b2a62132def58ceb22cee4fdcf1c9))
+* **dev:** Improve the way we handle local environments to avoid conflicts ([38623a6](https://github.com/architect-team/architect-cli/commit/38623a6c4715afd7066752e03dd89c73500c7b2a))
+* **dev:** More gracefully handle situations where previous runs were unexpectedly stopped ([d32cfd5](https://github.com/architect-team/architect-cli/commit/d32cfd51da331a66e6baa93773e561eb80a52ccc))
+* **examples:** Example docs updates ([#707](https://github.com/architect-team/architect-cli/issues/707)) ([49bff5e](https://github.com/architect-team/architect-cli/commit/49bff5e6e6b6bcd9f5fd69934b8ce76b4c789487))
+* **exec:** Better support for non TTY terminals ([4b05615](https://github.com/architect-team/architect-cli/commit/4b056159a8d6b15e5c98d6a7ac663f64f4f4b7ae))
+* **graph:** Make graph immutable ([#693](https://github.com/architect-team/architect-cli/issues/693)) ([6753170](https://github.com/architect-team/architect-cli/commit/675317032caa1dd91993fbda66d36e152957c209))
+* **scale:** Do not display interpolation as an option ([#717](https://github.com/architect-team/architect-cli/issues/717)) ([9e1ec99](https://github.com/architect-team/architect-cli/commit/9e1ec993ebecd33dcfe63ebb936b1fc87998eab5))
+
+
+### Features
+
+* **dev:list:** Add output type to dev list ([#711](https://github.com/architect-team/architect-cli/issues/711)) ([63b1458](https://github.com/architect-team/architect-cli/commit/63b145816c5ba756b306b9b0e91cc7d6b46eeff9))
+* **dev:** Optimize by not building the same dockerfile n times. ([#703](https://github.com/architect-team/architect-cli/issues/703)) ([9a19997](https://github.com/architect-team/architect-cli/commit/9a199971f24d9a2c46611d0a3c695ea041a7b655))
+* **platform:** Enable agent on cli ([#684](https://github.com/architect-team/architect-cli/issues/684)) ([122e3d0](https://github.com/architect-team/architect-cli/commit/122e3d0b2403f4467ed9e74eef65c7d6534d48ef))
+* **scale:** Scale command ([#701](https://github.com/architect-team/architect-cli/issues/701)) ([9c7b087](https://github.com/architect-team/architect-cli/commit/9c7b08789d0e2336ceb340b138849a404061de0c))
+* **spec:** remove deprecated sidecars field ([#716](https://github.com/architect-team/architect-cli/issues/716)) ([2335a4e](https://github.com/architect-team/architect-cli/commit/2335a4e1b3d1357e593b0d20af89464cd7a8527e))
+* **stop:** Add the dev:stop command ([a3617e7](https://github.com/architect-team/architect-cli/commit/a3617e751441693cc20d6e50debc0ebfecdf65f2))
+
+## [1.25.1](https://github.com/architect-team/architect-cli/compare/v1.25.0...v1.25.1) (2022-09-01)
+
+
+### Bug Fixes
+
+* **docs:** Fix html in readme ([89307fc](https://github.com/architect-team/architect-cli/commit/89307fc21d692b07248152dea2007f6bb87765ca))
+
+# [1.25.0](https://github.com/architect-team/architect-cli/compare/v1.24.0...v1.25.0) (2022-09-01)
+
+
+### Bug Fixes
+
+* **cli:** convert deployCommand auto-approve ([#685](https://github.com/architect-team/architect-cli/issues/685)) ([78f3209](https://github.com/architect-team/architect-cli/commit/78f32097e102fad82899750c3efdf99f970a741e))
+* **cli:** Docker verify improved ([#679](https://github.com/architect-team/architect-cli/issues/679)) ([552cd77](https://github.com/architect-team/architect-cli/commit/552cd77b67410f30f78e43761dfb8e9eb5942ee4))
+* **dev:** Dev command leaves containers running when process exits with an error ([#677](https://github.com/architect-team/architect-cli/issues/677)) ([b8e5165](https://github.com/architect-team/architect-cli/commit/b8e5165c5ec7b80f4a1ab4fa09859510e7229fb3))
+* **dev:** Fixed host regex that shouldnt have a global match that caused regexp.exec to not work as desired ([#689](https://github.com/architect-team/architect-cli/issues/689)) ([1a6428d](https://github.com/architect-team/architect-cli/commit/1a6428d01578cf6ea4df05acb83a784d5837242a))
+* **dev:** fixing healthcheck liveness probe protocol for port/path ([#678](https://github.com/architect-team/architect-cli/issues/678)) ([81e69f0](https://github.com/architect-team/architect-cli/commit/81e69f05a11e96e8c44000529f941d62af9452b5))
+* **dev:** Handle edge cases when starting components with pre-existing containers ([9cffb28](https://github.com/architect-team/architect-cli/commit/9cffb2897562bbbbabeebc0fe71d6785f34bf052))
+* **exec:** Handle case where older version of compose is used and ConfigFiles doesnt exist ([#681](https://github.com/architect-team/architect-cli/issues/681)) ([c0112d2](https://github.com/architect-team/architect-cli/commit/c0112d24b6746d25c5c272c9c7cd4edfbf257a63))
+* **exec:** Handle terminal resize events in exec ([#675](https://github.com/architect-team/architect-cli/issues/675)) ([6ff95a5](https://github.com/architect-team/architect-cli/commit/6ff95a5040afb5f50500ec0914c8affd3aef2d21))
+* **exec:** Improve error message for Windows PS users ([#680](https://github.com/architect-team/architect-cli/issues/680)) ([c214870](https://github.com/architect-team/architect-cli/commit/c214870cf3aa274ced0a29bea4971bd861f0ec76))
+* **subdomain:** 488 prevent nested subdomain ([#674](https://github.com/architect-team/architect-cli/issues/674)) ([0445430](https://github.com/architect-team/architect-cli/commit/0445430cfcd545ba476bac3fac3dc048012c529f))
+
+
+### Features
+
+* **cli:** 496 consistent boolean flags ([#683](https://github.com/architect-team/architect-cli/issues/683)) ([4203c74](https://github.com/architect-team/architect-cli/commit/4203c7467864af7e53754836a858ea14878cd5f1))
+* **dev:** Use local SSL for  ([#676](https://github.com/architect-team/architect-cli/issues/676)) ([536b38e](https://github.com/architect-team/architect-cli/commit/536b38ecd034c26fcc8aa6370c42098cccb1edcf))
+* **exec:** 482 pass replica name ([#663](https://github.com/architect-team/architect-cli/issues/663)) ([84ce8c5](https://github.com/architect-team/architect-cli/commit/84ce8c50e54b853e15c1c5bcaf14f3a2999e3d3b))
+* **register:** add register multiple components and test cases ([#657](https://github.com/architect-team/architect-cli/issues/657)) ([2bd1fd2](https://github.com/architect-team/architect-cli/commit/2bd1fd225c03e8dd0d9214717245e0c57d2289aa))
+
+# [1.24.0](https://github.com/architect-team/architect-cli/compare/v1.23.0...v1.24.0) (2022-08-17)
+
+
+### Bug Fixes
+
+* **dev:** Query traefik api to find healthy services ([2ac6ed0](https://github.com/architect-team/architect-cli/commit/2ac6ed06791451dd9471dbf2782feb81d8be696b))
+* **exec:** Handle multiple arguments after -- without requiring quotes ([#665](https://github.com/architect-team/architect-cli/issues/665)) ([d2859e9](https://github.com/architect-team/architect-cli/commit/d2859e9ee5a4060f6e9ed4bbc9c288c93a05a014))
+* **exec:** Use a stream.Writable instead of stream.Transform - we never read from this stream and eventually the buffer is full ([#671](https://github.com/architect-team/architect-cli/issues/671)) ([4376a21](https://github.com/architect-team/architect-cli/commit/4376a216d9c69ff845a8140916c09ef0ba9e7899))
+* **validate:** set process exit code for validation errors ([#655](https://github.com/architect-team/architect-cli/issues/655)) ([cd93baf](https://github.com/architect-team/architect-cli/commit/cd93baff215f08a7af183d6fffd4bb823b613d2f))
+
+
+### Features
+
+* **dev:** Ask for new gateway port of there is a conflict ([43fbbf2](https://github.com/architect-team/architect-cli/commit/43fbbf2069cc88bab4e2ebe7f28f4b0283c4a753))
+
 # [1.23.0](https://github.com/architect-team/architect-cli/compare/v1.22.1...v1.23.0) (2022-08-15)
 
 

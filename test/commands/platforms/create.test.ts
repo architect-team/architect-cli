@@ -1,209 +1,145 @@
-import { expect } from '@oclif/test';
+import { expect, test } from '@oclif/test';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
-import nock from 'nock';
-import os from 'os';
-import path from 'path';
-import sinon from 'sinon';
-import AppConfig from '../../../src/app-config/config';
+import sinon, { SinonSpy } from 'sinon';
 import AppService from '../../../src/app-config/service';
 import PipelineUtils from '../../../src/architect/pipeline/pipeline.utils';
 import PlatformCreate from '../../../src/commands/platforms/create';
+import { AgentPlatformUtils } from '../../../src/common/utils/agent-platform.utils';
 import { KubernetesPlatformUtils } from '../../../src/common/utils/kubernetes-platform.utils';
-import ARCHITECTPATHS from '../../../src/paths';
 
 describe('platform:create', function () {
-  const tmp_dir = os.tmpdir();
-
   const account = {
     id: 'test-account-id',
     name: 'test-account-name',
   };
 
-  beforeEach(() => {
-    // Stub the logger
-    sinon.replace(PlatformCreate.prototype, 'log', sinon.stub());
+  const mock_pipeline = {
+    id: 'test-pipeline-id',
+  };
 
-    const mock_pipeline = {
-      id: 'test-pipeline-id',
-    };
-    sinon.replace(PipelineUtils, 'pollPipeline', async () => mock_pipeline);
+  const test_platform_id = 'test-platform-id';
 
-    // Stub the log_level
-    const config = new AppConfig('', {
-      log_level: 'debug',
-    });
-    const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
-    fs.writeJSONSync(tmp_config_file, config);
-    const app_config_stub = sinon.stub().returns(new AppService(tmp_dir, '0.0.1'));
-    sinon.replace(AppService, 'create', app_config_stub);
-  });
-
-  afterEach(() => {
+  this.afterEach(() => {
     sinon.restore();
-  });
+  })
 
-  it('Does not auto approve creation when auto-approve flag value is false', async () => {
-    const inquirerStub = sinon.stub(inquirer, 'prompt');
-    inquirerStub.resolves({
-      context: 'minikube',
-      service_account_name: 'architect',
-      use_existing_sa: true,
-    });
-
-    const test_platform_id = 'test-platform-id';
-    const test_pipeline_id = 'test-pipeline-id';
-
-    nock('https://api.architect.io').get(`/accounts/${account.name}`)
-      .reply(200, account);
-
-    nock('https://api.architect.io').post(`/accounts/${account.id}/platforms`)
-      .reply(200, {
+  const create_test = () => {
+    return test
+      .stub(PlatformCreate.prototype, 'log', sinon.stub())
+      .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
+      .stub(fs, 'readJSONSync', () => {
+        return {
+          log_level: 'debug',
+        };
+      })
+      .stub(AppService, 'create', () => new AppService('', '1.0.0'))
+      .stub(PlatformCreate.prototype, <any>'setupKubeContext', async () => {
+        return {
+          original_context: "original_context",
+          current_context: "current_context",
+        }
+      })
+      .stub(PlatformCreate.prototype, <any>'setContext', async () => { })
+      .nock('https://api.architect.io', api => api
+        .get(`/accounts/${account.name}`)
+        .reply(200, account))
+      .stub(PlatformCreate.prototype, 'postPlatformToApi', sinon.stub().returns(Promise.resolve({
         id: test_platform_id,
         account: account,
+        token: {
+          access_token: 'token',
+        }
+      })))
+      .stub(PlatformCreate.prototype, 'createPlatformApplications', sinon.stub().returns(Promise.resolve()));
+  };
+
+  const k8s_test = (install_applications = false) => {
+    return create_test()
+      .stub(KubernetesPlatformUtils, 'configureKubernetesPlatform', sinon.stub().returns(Promise.resolve({ name: 'new_k8s_platform', type: 'KUBERNETES' })))
+      .stub(inquirer, 'prompt', () => {
+        return {
+          context: 'minikube',
+          service_account_name: 'architect',
+          use_existing_sa: true,
+          platform: 'test-platform',
+          application_install: install_applications,
+        }
       });
+  }
 
-    nock('https://api.architect.io').post(`/platforms/${test_platform_id}/apps`)
-      .reply(200, {
-        id: 'test-deployment-id',
-        pipeline: {
-          id: test_pipeline_id,
-        },
-      });
+  k8s_test()
+    .it('Does not auto approve creation when auto-approve flag value is false', async () => {
+      const create_platform_applications = PlatformCreate.prototype.createPlatformApplications as SinonSpy;
+      const configure_kubernetes = KubernetesPlatformUtils.configureKubernetesPlatform as SinonSpy;
+      const post_to_api = PlatformCreate.prototype.postPlatformToApi as SinonSpy;
 
-    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
-    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
-    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'postPlatformToApi');
-    const kubernetes_configuration_fake = sinon.fake.returns({ name: 'new_k8s_platform', type: 'KUBERNETES' });
-    sinon.replace(KubernetesPlatformUtils, 'configureKubernetesPlatform', kubernetes_configuration_fake);
-
-    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=false']);
-    expect(create_platform_spy.calledOnce).true;
-    expect(post_to_api_spy.calledOnce).true;
-    expect(kubernetes_configuration_fake.calledOnce).true;
-    expect(create_platform_applications_spy.calledOnce).false;
-  });
-
-  it('Auto approve creation when auto-approve flag value is true', async () => {
-    const inquirerStub = sinon.stub(inquirer, 'prompt');
-    inquirerStub.resolves({
-      context: 'minikube',
-      service_account_name: 'architect',
-      use_existing_sa: true,
+      await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=false']);
+      expect(configure_kubernetes.calledOnce).true;
+      expect(create_platform_applications.calledOnce).false;
+      expect(post_to_api.calledOnce).true;
     });
 
-    const test_platform_id = 'test-platform-id';
-    const test_pipeline_id = 'test-pipeline-id';
+  k8s_test()
+    .it('Auto approve creation when auto-approve flag value is true', async () => {
+      const create_platform_applications = PlatformCreate.prototype.createPlatformApplications as SinonSpy;
+      const configure_kubernetes = KubernetesPlatformUtils.configureKubernetesPlatform as SinonSpy;
+      const post_to_api = PlatformCreate.prototype.postPlatformToApi as SinonSpy;
 
-    nock('https://api.architect.io').get(`/accounts/${account.name}`)
-      .reply(200, account);
-
-    nock('https://api.architect.io').post(`/accounts/${account.id}/platforms`)
-      .reply(200, {
-        id: test_platform_id,
-        account: account,
-      });
-
-    nock('https://api.architect.io').post(`/platforms/${test_platform_id}/apps`)
-      .reply(200, {
-        id: 'test-deployment-id',
-        pipeline: {
-          id: test_pipeline_id,
-        },
-      });
-
-    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
-    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
-    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'postPlatformToApi');
-    const kubernetes_configuration_fake = sinon.fake.returns({ name: 'new_k8s_platform', type: 'KUBERNETES' });
-    sinon.replace(KubernetesPlatformUtils, 'configureKubernetesPlatform', kubernetes_configuration_fake);
-
-    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=true']);
-    expect(create_platform_spy.calledOnce).true;
-    expect(post_to_api_spy.calledOnce).true;
-    expect(kubernetes_configuration_fake.calledOnce).true;
-    expect(create_platform_applications_spy.calledOnce).true;
-  });
-
-  it('Auto approve creation when auto-approve flag value is not specified', async () => {
-    const inquirerStub = sinon.stub(inquirer, 'prompt');
-    inquirerStub.resolves({
-      context: 'minikube',
-      service_account_name: 'architect',
-      use_existing_sa: true,
+      await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=true']);
+      expect(configure_kubernetes.calledOnce).true;
+      expect(create_platform_applications.calledOnce).true;
+      expect(post_to_api.calledOnce).true;
     });
 
-    const test_platform_id = 'test-platform-id';
-    const test_pipeline_id = 'test-pipeline-id';
+  k8s_test(true)
+    .it('Auto approve creation when auto-approve flag value is not specified', async () => {
+      const create_platform_applications = PlatformCreate.prototype.createPlatformApplications as SinonSpy;
+      const configure_kubernetes = KubernetesPlatformUtils.configureKubernetesPlatform as SinonSpy;
+      const post_to_api = PlatformCreate.prototype.postPlatformToApi as SinonSpy;
 
-    nock('https://api.architect.io').get(`/accounts/${account.name}`)
-      .reply(200, account);
-
-    nock('https://api.architect.io').post(`/accounts/${account.id}/platforms`)
-      .reply(200, {
-        id: test_platform_id,
-        account: account,
-      });
-
-    nock('https://api.architect.io').post(`/platforms/${test_platform_id}/apps`)
-      .reply(200, {
-        id: 'test-deployment-id',
-        pipeline: {
-          id: test_pipeline_id,
-        },
-      });
-
-    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
-    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
-    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'postPlatformToApi');
-    const kubernetes_configuration_fake = sinon.fake.returns({ name: 'new_k8s_platform', type: 'KUBERNETES' });
-    sinon.replace(KubernetesPlatformUtils, 'configureKubernetesPlatform', kubernetes_configuration_fake);
-
-    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve']);
-    expect(create_platform_spy.calledOnce).true;
-    expect(post_to_api_spy.calledOnce).true;
-    expect(kubernetes_configuration_fake.calledOnce).true;
-    expect(create_platform_applications_spy.calledOnce).true;
-  });
-
-  it('Do not auto approve creation with auto-approve flag default value', async () => {
-    const inquirerStub = sinon.stub(inquirer, 'prompt');
-    inquirerStub.resolves({
-      context: 'minikube',
-      service_account_name: 'architect',
-      use_existing_sa: true,
+      await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes']);
+      expect(configure_kubernetes.calledOnce).true;
+      expect(create_platform_applications.calledOnce).true;
+      expect(post_to_api.calledOnce).true;
     });
 
-    const test_platform_id = 'test-platform-id';
-    const test_pipeline_id = 'test-pipeline-id';
+  k8s_test()
+    .it('Do not auto approve creation with auto-approve flag default value', async () => {
+      const create_platform_applications = PlatformCreate.prototype.createPlatformApplications as SinonSpy;
+      const configure_kubernetes = KubernetesPlatformUtils.configureKubernetesPlatform as SinonSpy;
+      const post_to_api = PlatformCreate.prototype.postPlatformToApi as SinonSpy;
 
-    nock('https://api.architect.io').get(`/accounts/${account.name}`)
-      .reply(200, account);
+      await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes']);
+      expect(configure_kubernetes.calledOnce).true;
+      expect(create_platform_applications.calledOnce).false;
+      expect(post_to_api.calledOnce).true;
+    });
 
-    nock('https://api.architect.io').post(`/accounts/${account.id}/platforms`)
-      .reply(200, {
-        id: test_platform_id,
-        account: account,
-      });
+  create_test()
+    .stub(inquirer, 'prompt', () => {
+      return {
+        context: 'minikube',
+        service_account_name: 'architect',
+        use_existing_sa: true,
+        platform: 'test-platform',
+        platform_type: 'agent (BETA)',
+        application_install: true,
+      }
+    })
+    .stub(AgentPlatformUtils, 'installAgent', sinon.stub().returns(Promise.resolve()))
+    .stub(AgentPlatformUtils, 'configureAgentPlatform', sinon.stub().returns(Promise.resolve()))
+    .stub(AgentPlatformUtils, 'waitForAgent', sinon.stub().returns(Promise.resolve()))
+    .it('configures agent platform when specified', async () => {
+      const create_platform_applications = PlatformCreate.prototype.createPlatformApplications as SinonSpy;
+      const install_agent = AgentPlatformUtils.installAgent as SinonSpy;
+      const configure_agent = AgentPlatformUtils.configureAgentPlatform as SinonSpy;
+      const post_to_api = PlatformCreate.prototype.postPlatformToApi as SinonSpy;
 
-    nock('https://api.architect.io').post(`/platforms/${test_platform_id}/apps`)
-      .reply(200, {
-        id: 'test-deployment-id',
-        pipeline: {
-          id: test_pipeline_id,
-        },
-      });
-
-    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
-    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
-    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'postPlatformToApi');
-    const kubernetes_configuration_fake = sinon.fake.returns({ name: 'new_k8s_platform', type: 'KUBERNETES' });
-    sinon.replace(KubernetesPlatformUtils, 'configureKubernetesPlatform', kubernetes_configuration_fake);
-
-    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes']);
-    expect(create_platform_spy.calledOnce).true;
-    expect(post_to_api_spy.calledOnce).true;
-    expect(kubernetes_configuration_fake.calledOnce).true;
-    expect(create_platform_applications_spy.calledOnce).false;
-  });
+      await PlatformCreate.run(['platform-name', '-a', 'test-account-name']);
+      expect(configure_agent.calledOnce).true;
+      expect(install_agent.calledOnce).true;
+      expect(create_platform_applications.calledOnce).true;
+      expect(post_to_api.calledOnce).true;
+    });
 });

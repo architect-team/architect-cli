@@ -1,6 +1,6 @@
 name: rabbitmq
 description: Example RabbitMQ message broker
-homepage: https://github.com/architect-team/architect-cli/tree/master/examples/rabbitmq
+homepage: https://github.com/architect-team/architect-cli/tree/main/examples/rabbitmq
 keywords:
   - architect
   - examples
@@ -10,7 +10,7 @@ keywords:
 
 secrets:
   queue_name:
-    required: true
+    default: architect
 
 services:
   message-broker:
@@ -19,7 +19,7 @@ services:
       mgmt: 15672
       amqp:
         protocol: amqp
-        port: 5432
+        port: 5672
   producer:
     build:
       context: ./rabbit-producer

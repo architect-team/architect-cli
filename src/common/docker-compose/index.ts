@@ -3,6 +3,7 @@ import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import yaml from 'js-yaml';
+import hash from 'object-hash';
 import os from 'os';
 import pLimit from 'p-limit';
 import path from 'path';
@@ -10,50 +11,68 @@ import untildify from 'untildify';
 import { ArchitectError, ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
 import { restart } from '../docker/cmd';
-import { RequiresDocker } from '../docker/helper';
+import { DockerHelper, RequiresDocker } from '../docker/helper';
 import PortUtil from '../utils/port';
 import { DockerComposeProject, DockerComposeProjectWithConfig } from './project';
-import DockerComposeTemplate, { DockerService } from './template';
+import DockerComposeTemplate, { DockerInspect, DockerService, DockerServiceBuild } from './template';
 
 type GenerateOptions = {
-  external_addr: string;
-  gateway_admin_port: number;
-  use_ssl: boolean;
-  config_dir?: string;
+  external_addr?: string;
+  gateway_admin_port?: number;
+  ssl_cert?: string;
+  ssl_key?: string;
+  getImage?: (ref: string) => string;
 };
 
 export class DockerComposeUtils {
-
   // used to namespace docker-compose projects so multiple deployments can happen to local
   public static DEFAULT_PROJECT = 'architect';
 
-  public static async generateTlsConfig(config_path: string): Promise<void> {
-    const traefik_config = {
+  public static async getProjectName(default_project_name: string): Promise<string> {
+    // 150 is somewhat arbitrary, but the intention is to give a more-than-reasonable max
+    // length while leavning enough room for other things that get added to this (like the service name).
+    // The max total size for this name is 255, but we use this for the file name too,
+    // which can lead to an ENAMETOOLONG issue.
+    // Note that this max is only achievable with a custom project name via `architect dev -e {SUPER LONG NAME}`,
+    // the architect.yml enforces a much shorter max of 32 already, so this just prevents errors if a user tries to
+    // do something interesting.
+    default_project_name = default_project_name.substring(0, 150);
+
+    const existing_project_count = (await DockerComposeUtils.getLocalEnvironments()).filter(env => {
+      return env.startsWith(default_project_name);
+    })?.length;
+
+    if (existing_project_count) {
+      return `${default_project_name}-${existing_project_count}`;
+    } else {
+      return default_project_name;
+    }
+  }
+
+  public static generateTlsConfig(): string {
+    return JSON.stringify({
       tls: {
         stores: {
           default: {
             defaultCertificate: {
-              certFile: '/etc/traefik-ssl/fullchain.pem',
-              keyFile: '/etc/traefik-ssl/privkey.pem',
+              certFile: '/etc/fullchain.pem',
+              keyFile: '/etc/privkey.pem',
             },
           },
         },
         certificates: [{
-          certFile: '/etc/traefik-ssl/fullchain.pem',
-          keyFile: '/etc/traefik-ssl/privkey.pem',
+          certFile: '/etc/fullchain.pem',
+          keyFile: '/etc/privkey.pem',
         }],
       },
-    };
-
-    const traefik_yaml = yaml.dump(traefik_config);
-    return fs.writeFile(path.join(config_path, `traefik.yaml`), traefik_yaml);
+    });
   }
 
   public static async generate(graph: DependencyGraph, options?: GenerateOptions): Promise<DockerComposeTemplate> {
     if (!options) {
-      options = { gateway_admin_port: 8080, external_addr: 'arc.localhost', use_ssl: false };
+      options = { gateway_admin_port: 8080, external_addr: 'arc.localhost' };
     }
-    const { gateway_admin_port, external_addr, use_ssl, config_dir } = options;
+    const { gateway_admin_port, external_addr, ssl_cert, ssl_key } = options;
 
     const compose: DockerComposeTemplate = {
       version: '3',
@@ -98,14 +117,16 @@ export class DockerComposeUtils {
           '--providers.docker=true',
           '--providers.docker.exposedByDefault=false',
           `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
-          ...(use_ssl ? [
+          ...(ssl_cert && ssl_key ? [
+            // Ignore local certs being invalid on proxy
+            `--serversTransport.insecureSkipVerify=true`,
             // redirect http to https
             `--entryPoints.web.http.redirections.entryPoint.scheme=https`,
             `--entryPoints.web.http.redirections.entryPoint.permanent=true`,
             `--entryPoints.web.http.redirections.entryPoint.to=:${gateway_port}`,
             // tls certs
             '--providers.file.watch=false',
-            `--providers.file.fileName=/etc/traefik-ssl/traefik.yaml`,
+            `--providers.file.fileName=/etc/traefik.yaml`,
           ] : []),
         ],
         ports: [
@@ -115,13 +136,34 @@ export class DockerComposeUtils {
           `${gateway_admin_port}:8080`,
         ],
         volumes: [
-          ...(use_ssl ? [`${config_dir}:/etc/traefik-ssl/`] : []),
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
+        ...(ssl_cert && ssl_key ? {
+          entrypoint: [
+            '/bin/sh',
+            '-c',
+            `
+            echo "$$TRAEFIK_CONFIG" >> /etc/traefik.yaml;
+            echo "$$TRAEFIK_CERT" >> /etc/fullchain.pem;
+            echo "$$TRAEFIK_KEY" >> /etc/privkey.pem;
+
+            set -- "$$@" "$$0"
+
+            sh ./entrypoint.sh $$@
+            `,
+          ],
+          environment: {
+            TRAEFIK_CONFIG: this.generateTlsConfig(),
+            TRAEFIK_CERT: ssl_cert,
+            TRAEFIK_KEY: ssl_key,
+          },
+        } : {}),
       };
     }
 
     const service_task_nodes = graph.nodes.filter((n) => n instanceof ServiceNode || n instanceof TaskNode) as (ServiceNode | TaskNode)[];
+
+    const seen_build_map: Dictionary<string | undefined> = {};
 
     // Enrich base service details
     for (const node of service_task_nodes) {
@@ -210,7 +252,7 @@ export class DockerComposeUtils {
       if (node.is_local) {
         const component_path = fs.lstatSync(node.local_path).isFile() ? path.dirname(node.local_path) : node.local_path;
         if (!node.config.image) {
-          const build = node.config.build;
+          const build = node.config.build || {};
 
           if (!service.build) {
             service.build = {};
@@ -241,8 +283,6 @@ export class DockerComposeUtils {
           if (build.target) {
             service.build.target = build.target;
           }
-        } else if (!node.config.build) {
-          throw new Error("Either `image` or `build` must be defined");
         }
 
         // Set volumes only for services (not supported by Tasks)
@@ -276,6 +316,31 @@ export class DockerComposeUtils {
       if (node instanceof TaskNode) {
         if (!service.deploy) { service.deploy = {}; }
         service.deploy.replicas = 0; // set all tasks scale to 0 so they don't start but can be optionally invoked later
+      }
+
+
+
+      if (service.build) {
+        if (!service.image) {
+          const image = options.getImage ? options.getImage(node.config.metadata.ref) : node.ref;
+          service.image = image;
+        }
+
+        // Optimization to check if multiple services share the same dockerfile/build config and avoid building unnecessarily
+        if (DockerHelper.composeVersion('>=2.6.0') && DockerHelper.buildXVersion('>=0.9.1')) { // docker-compose build.tags is only supported above these versions
+          const build_hash = hash(service.build);
+          const existing_service = seen_build_map[build_hash];
+          if (!existing_service) {
+            seen_build_map[build_hash] = node.ref;
+            service.build.tags = [service.image];
+          } else {
+            const existing_build = compose.services[existing_service].build as DockerServiceBuild;
+            if (!existing_build.tags) existing_build.tags = [];
+            existing_build.tags.push(service.image);
+
+            delete service.build;
+          }
+        }
       }
 
       compose.services[node.ref] = service;
@@ -324,9 +389,13 @@ export class DockerComposeUtils {
           if (node_to_interface.sticky) {
             service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadBalancer.sticky.cookie=true`);
           }
-          if (use_ssl) {
+          if (ssl_cert && ssl_key) {
             service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`);
             service_to.labels.push(`traefik.http.routers.${traefik_service}.tls=true`);
+          }
+
+          if (component_interface?.protocol) {
+            service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.scheme=${component_interface?.protocol}`);
           }
         }
       }
@@ -392,7 +461,7 @@ export class DockerComposeUtils {
 
   @RequiresDocker({ compose: true })
   public static dockerCompose(args: string[], execa_opts?: Options, use_console = false): execa.ExecaChildProcess<string> {
-    if (use_console) {
+    if (use_console && process.stdin.isTTY) {
       process.stdin.setRawMode(true);
     }
     const cmd = execa('docker', ['compose', ...args], execa_opts);
@@ -404,14 +473,54 @@ export class DockerComposeUtils {
     return cmd;
   }
 
-  public static async getLocalEnvironments(config_dir: string): Promise<string[]> {
-    const search_directory = path.join(config_dir, LocalPaths.LOCAL_DEPLOY_PATH);
-    const files = await fs.readdir(path.join(search_directory));
-    return files.map((file) => file.split('.')[0]);
+  /**
+   * Runs `docker inspect` on all containers and returns the resulting json as an array of objects.
+   */
+  public static async getAllContainerInfo(): Promise<DockerInspect[]> {
+    const container_cmd = await execa('docker', ['ps', '-aq']);
+    if (!container_cmd.stdout) {
+      return [];
+    }
+    const containers = container_cmd.stdout.split('\n');
+    const inspect_cmd = await execa('docker', ['inspect', "--format='{{json .}}'", ...containers]);
+    return inspect_cmd.stdout.split('\n').map(data => JSON.parse(data.substring(1, data.length - 1)));
   }
 
-  public static async isLocalEnvironment(config_dir: string, environment_name: string): Promise<boolean> {
-    const local_enviromments = await DockerComposeUtils.getLocalEnvironments(config_dir);
+  /**
+   * Combines the `docker compose ls` information with running container info to build a map of
+   * environment -> container list.
+   */
+  public static async getLocalEnvironmentContainerMap(): Promise<{ [key: string]: DockerInspect[] }> {
+    const running_cmd = await execa('docker', ['compose', 'ls', '--format=json']);
+    const running_projects = JSON.parse(running_cmd.stdout).map((container: any) => {
+      return container.Name;
+    });
+
+    const container_info = await this.getAllContainerInfo();
+    const env_map: { [key: string]: DockerInspect[] } = {};
+    for (const container of container_info) {
+      if (!('architect.ref' in container.Config.Labels)) {
+        continue;
+      }
+      const project = container.Config.Labels['com.docker.compose.project'];
+      if (running_projects.indexOf(project) === -1) {
+        continue;
+      }
+
+      if (!(project in env_map)) {
+        env_map[project] = [];
+      }
+      env_map[project].push(container);
+    }
+    return env_map;
+  }
+
+  public static async getLocalEnvironments(): Promise<string[]> {
+    return Object.keys(await this.getLocalEnvironmentContainerMap());
+  }
+
+  public static async isLocalEnvironment(environment_name: string): Promise<boolean> {
+    const local_enviromments = await DockerComposeUtils.getLocalEnvironments();
     return !!(local_enviromments.find(env => env == environment_name));
   }
 
@@ -464,7 +573,7 @@ export class DockerComposeUtils {
       {
         type: 'autocomplete',
         name: 'environment',
-        message: 'Select a environment',
+        message: 'Select an environment',
         source: (_: any, input: string) => {
           return architect_projects.map(project => ({
             name: `${project.Name} ${project.Status}`,
@@ -570,22 +679,23 @@ export class DockerComposeUtils {
           const state = container_state.State.toLowerCase();
           const health = container_state.Health.toLowerCase();
 
-          // Docker compose will only exit containers when stopping an up
-          // If we have no service data and the contianer state was exited
-          // it means that these containers were from an old instance and we
-          // are not yet in a bad state.
-          if (!service_data_dictionary[service_ref] && state == 'exited') {
-            continue;
-          }
+          const bad_state = state !== 'running' && container_state.ExitCode !== 0;
+          const bad_health = health === 'unhealthy';
 
           if (!service_data_dictionary[service_ref]) {
             service_data_dictionary[service_ref] = {
               last_restart_ms: Date.now(),
             };
-          }
 
-          const bad_state = state != 'running';
-          const bad_health = health == 'unhealthy';
+            // Docker compose will only exit containers when stopping an up
+            // If we had no service data and the container state is bad,
+            // these containers may be from an old instance and we
+            // are not yet in a bad state. If they are still bad after 5s, they
+            // will be restarted.
+            if (bad_state) {
+              continue;
+            }
+          }
 
           if (bad_state || bad_health) {
             const service_data = service_data_dictionary[service_ref];

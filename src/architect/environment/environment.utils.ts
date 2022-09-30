@@ -46,7 +46,7 @@ export class EnvironmentUtils {
         {
           type: 'autocomplete',
           name: 'environment',
-          message: 'Select a environment',
+          message: 'Select an environment',
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
             const { data } = await api.get(`/accounts/${account.id}/environments`, { params: { q: input, limit: 10 } });

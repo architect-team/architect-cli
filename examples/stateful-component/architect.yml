@@ -1,6 +1,6 @@
 name: stateful-component
 description: A simple sign in sheet webapp built with a Next.js frontend, Express JS backend, and postgres database.
-homepage: https://github.com/architect-team/architect-cli/tree/master/examples/stateful-component
+homepage: https://github.com/architect-team/architect-cli/tree/main/examples/stateful-component
 keywords:
   - architect
   - examples

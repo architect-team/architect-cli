@@ -9,7 +9,7 @@ import { GatewayNode } from './node/gateway';
 import { ServiceNode } from './node/service';
 import { TaskNode } from './node/task';
 
-export class DependencyGraph {
+export class DependencyGraphMutable {
   @Type(() => DependencyNode, {
     discriminator: {
       property: '__type',
@@ -254,3 +254,5 @@ export class DependencyGraph {
     return false;
   }
 }
+
+export type DependencyGraph = Readonly<DependencyGraphMutable>;

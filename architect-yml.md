@@ -41,7 +41,6 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
 | -------------------- | ---------- | -------------- | -------------- |
  | `debug` | Partial&lt;[ServiceSpec](#servicespec)&gt; | A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a "local override" block. |  |
  | `interfaces` | Dict&lt;string&gt; | A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
- | `sidecars` | Dict&lt;string&gt; | A set of services to run as a sidecar for this service. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `liveness_probe` | [LivenessProbeSpec](#livenessprobespec) |  |  |
  | `volumes` | Dict&lt;string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `replicas` | number \| [Expression](https://docs.architect.io/reference/contexts) | A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field. |  |
@@ -149,28 +148,6 @@ An object containing the details necessary for Architect to build the service vi
  | `args` | Dict&lt;string&gt; | Build args to be passed into `docker build`. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `dockerfile` | string \| [Expression](https://docs.architect.io/reference/contexts) | The path to the Dockerfile relative to the `build.context` | default: `Dockerfile` |
  | `target` | string \| [Expression](https://docs.architect.io/reference/contexts) | The stage to build in the Dockerfile |  |
-
-
-## SidecarSpec
-
-A container to run as a sidecar to the related component or service
-
-| Field  (*=required)  | Type       | Description    | Misc           |
-| -------------------- | ---------- | -------------- | -------------- |
- | `enabled` | boolean | If the sidecar should be started or not. | default: `true` |
- | `liveness_probe` | [LivenessProbeSpec](#livenessprobespec) |  |  |
- | `description` | string | Human readable description |  |
- | `image` | string \| [Expression](https://docs.architect.io/reference/contexts) | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
- | `command` | Array&lt;string&gt; \| string \| [Expression](https://docs.architect.io/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
- | `entrypoint` | Array&lt;string&gt; \| string \| [Expression](https://docs.architect.io/reference/contexts) | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
- | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
- | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](https://docs.architect.io/components/services/#local-configuration) |
- | `build` | [BuildSpec](#buildspec) |  |  |
- | `cpu` | number \| [Expression](https://docs.architect.io/reference/contexts) | The cpu required to run a service or a task | [More](https://docs.architect.io/components/services/#cpu--memory) |
- | `memory` | string \| [Expression](https://docs.architect.io/reference/contexts) | The memory required to run a service or a task. | [More](https://docs.architect.io/components/services/#cpu--memory) |
- | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
- | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](https://docs.architect.io/components/services/#labels) |
- | `reserved_name` | string | A specific service name which will override the service name specified in the component. | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">Regex</a> |
 
 
 ## ScalingMetricsSpec

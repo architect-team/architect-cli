@@ -1,4 +1,4 @@
-name: examples/nestjs-simple-client
+name: nestjs-simple-client
 description: Client used to test the connection to the simple NestJS microservice
 keywords:
   - nestjs
@@ -7,7 +7,7 @@ keywords:
   - client
 
 dependencies:
-  examples/nestjs-simple: latest
+  nestjs-simple: latest
 
 services:
   client:
@@ -16,8 +16,8 @@ services:
     interfaces:
       main: 3000
     environment:
-      HELLO_SERVICE_HOST: ${{ dependencies['examples/nestjs-simple'].interfaces.main.host }}
-      HELLO_SERVICE_PORT: ${{ dependencies['examples/nestjs-simple'].interfaces.main.port }}
+      HELLO_SERVICE_HOST: ${{ dependencies['nestjs-simple'].interfaces.main.host }}
+      HELLO_SERVICE_PORT: ${{ dependencies['nestjs-simple'].interfaces.main.port }}
     ${{ if architect.environment == 'local' }}:
       command: npm run start:dev
       volumes:
@@ -26,4 +26,8 @@ services:
           mount_path: /usr/src/app/src/
 
 interfaces:
-  client: ${{ services.client.interfaces.main.url }}
+  main:
+    description: Exposes the app
+    url: ${{ services.client.interfaces.main.url }}
+    ingress:
+      subdomain: app

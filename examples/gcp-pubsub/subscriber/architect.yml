@@ -1,4 +1,4 @@
-name: examples/subscriber
+name: subscriber
 
 secrets:
   subscription_key:
@@ -6,15 +6,15 @@ secrets:
     default: subscriber
 
 dependencies:
-  examples/gcp-pubsub: latest
-  examples/publisher: latest
+  gcp-pubsub: latest
+  publisher: latest
 
 services:
   api:
     build:
       context: ./
     environment:
-      PUBSUB_ENDPOINT: ${{ dependencies['examples/gcp-pubsub'].interfaces.pubsub.url }}
-      GCP_PROJECT_ID: ${{ dependencies['examples/gcp-pubsub'].outputs.gcp_project_id }}
-      PUBSUB_TOPIC: ${{ dependencies['examples/publisher'].outputs.publish_topic }}
+      PUBSUB_ENDPOINT: ${{ dependencies['gcp-pubsub'].interfaces.pubsub.url }}
+      GCP_PROJECT_ID: ${{ dependencies['gcp-pubsub'].outputs.gcp_project_id }}
+      PUBSUB_TOPIC: ${{ dependencies['publisher'].outputs.publish_topic }}
       PUBSUB_SUBSCRIPTION: ${{ secrets.subscription_key }}

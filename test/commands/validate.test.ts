@@ -1,19 +1,12 @@
 import { expect } from 'chai';
 import fs from 'fs-extra';
 import path from 'path';
+import sinon from 'sinon';
+import untildify from 'untildify';
 import { Slugs } from '../../src/dependency-manager/spec/utils/slugs';
 import { mockArchitectAuth } from '../utils/mocks';
-const validation_mocks_path = path.join(__dirname, '../mocks/validationerrors');
 
 describe('architect validate component', function () {
-
-  this.afterAll(() => {
-    const tmp_dir = path.resolve(`${validation_mocks_path}/subdomain`);
-    if (fs.existsSync(tmp_dir)) {
-      fs.rmSync(tmp_dir, { recursive: true });
-    }
-  });
-
   const subdomain_token_to_config_yaml_string = (subdomain_token: string): string =>
     `name: tests/validatesubdomain
 services:
@@ -100,8 +93,6 @@ interfaces:
       expect(ctx.stdout).to.equal('');
     });
 
-  fs.emptyDirSync(path.join(validation_mocks_path, '/subdomain'));
-
   describe('expect fail for invalid subdomain', () => {
 
     const invalid_subdomain_tokens = [
@@ -181,13 +172,13 @@ interfaces:
       'd______D',
     ];
 
+    const tmp_test_file = path.normalize(untildify("~/some_fake_file.yml"));
     for (const invalid_subdomain_token of invalid_subdomain_tokens) {
-      const test_tmp_sub_dir = fs.mkdtempSync(path.join(validation_mocks_path, '/subdomain/'));
-      const tmp_test_file = path.resolve(`${test_tmp_sub_dir}/architect.yml`);
-
-      fs.writeFileSync(tmp_test_file, subdomain_token_to_config_yaml_string(invalid_subdomain_token));
-
       mockArchitectAuth
+        .stub(fs, 'readFileSync', sinon.fake.returns(subdomain_token_to_config_yaml_string(invalid_subdomain_token)))
+        .stub(fs, 'lstatSync', sinon.fake.returns({
+          isDirectory: () => false,
+        }))
         .stdout({ print })
         .stderr({ print })
         .command(['validate', tmp_test_file])
@@ -227,13 +218,13 @@ interfaces:
       'a-b-c-d-eFG-H',
     ];
 
+    const tmp_test_file = path.normalize(untildify("~/some_fake_file.yml"));
     for (const valid_subdomain_token of valid_subdomain_tokens) {
-      const test_tmp_sub_dir = fs.mkdtempSync(path.join(validation_mocks_path, '/subdomain/'));
-      const tmp_test_file = path.resolve(`${test_tmp_sub_dir}/architect.yml`);
-
-      fs.writeFileSync(tmp_test_file, subdomain_token_to_config_yaml_string(valid_subdomain_token));
-
       mockArchitectAuth
+        .stub(fs, 'readFileSync', sinon.fake.returns(subdomain_token_to_config_yaml_string(valid_subdomain_token)))
+        .stub(fs, 'lstatSync', sinon.fake.returns({
+          isDirectory: () => false,
+        }))
         .stdout({ print })
         .stderr({ print })
         .command(['validate', tmp_test_file])

@@ -1,8 +1,8 @@
 import { AccessToken, AuthorizationCode } from 'simple-oauth2';
 import { URL } from 'url';
 import User from '../architect/user/user.entity';
-import LoginRequiredError from '../common/errors/login-required';
 import { docker } from '../common/docker/cmd';
+import LoginRequiredError from '../common/errors/login-required';
 import CallbackServer from './callback_server';
 import AppConfig from './config';
 import CredentialManager from './credentials';
@@ -85,7 +85,7 @@ export default class AuthClient {
   }
 
   public getAuthClient(): AuthorizationCode<"client_id"> {
-    const is_auth0 = this.config.oauth_host === 'https://auth.architect.io';
+    const is_auth0 = ['https://auth.architect.io', 'https://architect-dev.us.auth0.com'].includes(this.config.oauth_host);
 
     let oauth_token_host = this.config.oauth_host;
     const url = new URL(this.config.oauth_host);

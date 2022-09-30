@@ -1,5 +1,9 @@
 <p align="center">
-  <a href="//architect.io" target="blank"><img src="https://docs.architect.io/img/logo.svg" width="320" alt="Architect Logo" /></a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.architect.io/logo/horizontal-inverted.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://cdn.architect.io/logo/horizontal.png">
+    <img width="320" alt="Architect Logo" src="https://cdn.architect.io/logo/horizontal.png">
+  </picture>
 </p>
 
 <p align="center">
@@ -21,11 +25,8 @@ In this example component (described by the `architect.yml` file in this repo), 
 When you run the component locally the task will be configured but won't run on its schedule. This is because the environment is short-lived by nature rendering schedules of little use. Instead, testing tasks can be done manually to ensure that they work correctly. Just run the component and then you'll be able to manually execute the task:
 
 ```sh
-# Register the component locally
-$ architect link .
-
 # Deploy the component locally
-$ architect dev scheduled-tasks
+$ architect dev architect.yml
 
 # In another terminal session, execute the task
 $ architect task:exec --local scheduled-tasks curler
