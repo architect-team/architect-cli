@@ -48,7 +48,10 @@ export class AgentPlatformUtils {
         '-o', 'json',
       ]);
       return;
-    } catch { }
+    } catch {
+      // This occurs if the SA does not exist.
+      // This is okay and just means we need to create it.
+    }
     await execa('kubectl', [
       ...set_kubeconfig,
       'create', 'sa', SERVICE_ACCOUNT_NAME,
