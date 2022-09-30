@@ -179,6 +179,7 @@ Change directory to '../${root_service}', then run the register and deploy comma
   }
 
   static async updateArchitectYamls(app: AppService, selections: Dictionary<any>, project_dir: string): Promise<void> {
+    // Update backends first to include selected database
     const backend = selections['backend'];
     const backend_yml_path = `./${project_dir}/${backend.name.toLowerCase()}/architect.yml`;
     const backend_yml = yaml.load(fs.readFileSync(backend_yml_path).toString('utf-8')) as ComponentSpec;
@@ -186,6 +187,7 @@ Change directory to '../${root_service}', then run the register and deploy comma
     await this.switchDatabase(database_yml, backend_yml, backend_yml_path);
     console.log(chalk.grey('# Why did we do this? Check out - https://docs.architect.io/components/services/\n'));
 
+    // ZDJ - TODO 446 - link front-end to back-end
     // Need better handling for when a frontend requires a backend.
     const frontend = selections['frontend'];
     if (frontend) {
@@ -206,7 +208,7 @@ Change directory to '../${root_service}', then run the register and deploy comma
 
   static async getSelections(): Promise<Dictionary<Selection>> {
     // get choices from template-configs repository
-    const config_file = 'https://raw.githubusercontent.com/architect-team/template-configs/main/config.json';
+    const config_file = 'https://raw.githubusercontent.com/architect-team/template-configs/ui-conversion/config.json';
     const config_json = await this.fetchJsonFromGitHub(config_file) as Dictionary<any>;
     const choices = config_json.choices;
 
