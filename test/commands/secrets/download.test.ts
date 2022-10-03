@@ -5,12 +5,13 @@ import untildify from 'untildify';
 import UserUtils from '../../../src/architect/user/user.utils';
 import { MOCK_API_HOST } from '../../utils/mocks';
 import yaml from 'js-yaml';
+import path from 'path';
 
 describe('secrets', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
-  const download_location = untildify('~/secrets.yml');
+  const download_location = path.resolve(untildify('~/secrets.yml'));
 
   const account = {
     id: "aa440d39-97d9-43c3-9f1a-a9a69adb2a41",
