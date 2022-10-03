@@ -126,7 +126,7 @@ services:
       const errors = JSON.parse(err.message);
       expect(errors).lengthOf(1);
       expect(errors[0].path).eq(`services.stateless-app.replicas`);
-      expect(errors[0].message).includes(`must be number or must be an interpolation`);
+      expect(errors[0].message).includes(`must be integer or must be an interpolation`);
       expect(errors[0].start?.row).eq(5);
       expect(errors[0].start?.column).eq(22);
       expect(errors[0].end?.row).eq(5);
