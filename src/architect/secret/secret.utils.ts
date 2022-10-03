@@ -1,6 +1,7 @@
 import AppService from '../../app-config/service';
 import Account from '../account/account.entity';
 import { EnvironmentUtils } from '../environment/environment.utils';
+import PlatformUtils from '../platform/platform.utils';
 
 export interface Secret {
   scope: string;
@@ -10,18 +11,26 @@ export interface Secret {
 
 export default class SecretUtils {
   
-  static async getSecrets(app: AppService, account: Account, environment_name?: string, inherited?: boolean) : Promise<any[]>{
-    let secrets = [];
-    if (!environment_name) {
-      secrets = (await app.api.get(`accounts/${account.id}/secrets/values`)).data;
-    } else {
+  static async getSecrets(app: AppService, account: Account, platform_name?: string, environment_name?: string, inherited?: boolean) : Promise<Secret[]>{
+    let secrets: Secret[] = [];
+    if (environment_name) {
       const environment = await EnvironmentUtils.getEnvironment(app.api, account, environment_name);
       if (inherited) {
         secrets = (await app.api.get(`environments/${environment.id}/secrets/values`, { params: { inherited: true } })).data;
       } else {
         secrets = (await app.api.get(`environments/${environment.id}/secrets/values`)).data;
       }
+    } else if (platform_name) {
+      const platform = await PlatformUtils.getPlatform(app.api, account, platform_name);
+      if (inherited) {
+        secrets = (await app.api.get(`platforms/${platform.id}/secrets/values`, { params: { inherited: true } })).data;
+      } else {
+        secrets = (await app.api.get(`platforms/${platform.id}/secrets/values`)).data;
+      }
+    } else {
+      secrets = (await app.api.get(`accounts/${account.id}/secrets/values`)).data;
     }
+
     return secrets;
   }
 

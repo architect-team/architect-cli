@@ -4,6 +4,7 @@ import path from 'path';
 import untildify from 'untildify';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
+import PlatformUtils from '../../architect/platform/platform.utils';
 import SecretUtils from '../../architect/secret/secret.utils';
 import UserUtils from '../../architect/user/user.utils';
 import BaseCommand from '../../base-command';
@@ -15,11 +16,13 @@ export default class SecretsDownload extends BaseCommand {
   static examples = [
     'architect secrets ./mysecrets.yml',
     'architect secrets --account=myaccount --environment=myenvironment ../mysecrets.yml',
+    'architect secrets --account=myaccount --platform=myplatform ../mysecrets.yml',
   ];
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
+    ...PlatformUtils.flags,
   };
 
   static args = [{
@@ -38,7 +41,18 @@ export default class SecretsDownload extends BaseCommand {
       this.error('You do not have permission to download secrets. Please contact your admin.');
     }
 
-    const secrets = await SecretUtils.getSecrets(this.app, account, flags.environment, true);
+    if (flags.platform && flags.environment) {
+      this.log('Please provide either the platform flag or the environment flag and not both.');
+      return;
+    }
+
+    let secrets;
+    try {
+      secrets = await SecretUtils.getSecrets(this.app, account, flags.platform, flags.environment, true);
+    } catch {
+      this.error('Failed to find secrets. Please ensure your platform or environment exists.');
+    }
+
     if (secrets.length === 0) {
       this.log('There are no secrets to download.');
       return;
