@@ -16,6 +16,7 @@ export default class SecretsUpload extends BaseCommand {
   static description = 'Upload secrets from a file to an account or an environment';
   static aliases = ['secrets:set'];
   static examples = [
+    'architect secrets:set --account=myaccount --platform=myplatform ./mysecrets.yml',
     'architect secrets:set --account=myaccount --environment=myenvironment ./mysecrets.yml',
     'architect secrets:set --account=myaccount --override ./mysecrets.yml',
   ];
@@ -78,6 +79,11 @@ export default class SecretsUpload extends BaseCommand {
           update_secrets.push({ scope, key, value });
         }
       }
+    }
+
+    if (update_secrets.length === 0) {
+      this.log(`There are no new secrets to upload.`);
+      return;
     }
     await SecretUtils.batchUpdateSecrets(this.app, update_secrets, account, flags.platform, flags.environment);
 
