@@ -42,8 +42,7 @@ export default class SecretsDownload extends BaseCommand {
     }
 
     if (flags.platform && flags.environment) {
-      this.log('Please provide either the platform flag or the environment flag and not both.');
-      return;
+      throw new Error('Please provide either the platform flag or the environment flag and not both.');
     }
 
     let secrets;

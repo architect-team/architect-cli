@@ -34,10 +34,13 @@ export default class SecretUtils {
     return secrets;
   }
 
-  static async batchUpdateSecrets(app: AppService, secrets: Secret[], account: Account, environment_name?: string): Promise<void> {
+  static async batchUpdateSecrets(app: AppService, secrets: Secret[], account: Account, platform_name?: string, environment_name?: string): Promise<void> {
     if (environment_name) {
       const environment = await EnvironmentUtils.getEnvironment(app.api, account, environment_name);
       await app.api.post(`/environments/${environment.id}/secrets/batch`, secrets);
+    } else if (platform_name) {
+      const platform = await PlatformUtils.getPlatform(app.api, account, platform_name);
+      await app.api.post(`/platforms/${platform.id}/secrets/batch`, secrets);
     } else {
       await app.api.post(`/accounts/${account.id}/secrets/batch`, secrets);
     }

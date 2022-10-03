@@ -150,6 +150,17 @@ describe('secrets', function () {
     .stub(fs, 'writeFileSync', sinon.spy())
     .stdout({ print })
     .stderr({ print })
+    .command(['secrets', '-a', 'examples', '--platform', 'my-platform', '-e', 'env', download_location])
+    .catch(ctx => {
+      expect(ctx.message).to.contain('Please provide either the platform flag or the environment flag and not both.')
+    })
+    .it('download platform secrets failed when both platform and environment flags are set');
+
+  defaults
+    .stub(UserUtils, 'isAdmin', async () => true)
+    .stub(fs, 'writeFileSync', sinon.spy())
+    .stdout({ print })
+    .stderr({ print })
     .command(['secrets', '-a', 'examples', '--platform', 'non-existed-platform-name', download_location])
     .catch(ctx => {
       expect(ctx.message).to.contain('Failed to find secrets. Please ensure your platform or environment exists.')

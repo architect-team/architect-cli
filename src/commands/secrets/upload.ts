@@ -5,6 +5,7 @@ import untildify from 'untildify';
 import { Dictionary } from '../..';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
+import PlatformUtils from '../../architect/platform/platform.utils';
 import SecretUtils, { Secret } from '../../architect/secret/secret.utils';
 import UserUtils from '../../architect/user/user.utils';
 import BaseCommand from '../../base-command';
@@ -22,6 +23,7 @@ export default class SecretsUpload extends BaseCommand {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
+    ...PlatformUtils.flags,
     override: booleanString({
       description: 'Allow override of existing secrets',
       default: false,
@@ -45,6 +47,10 @@ export default class SecretsUpload extends BaseCommand {
       this.error('You do not have permission to upload secrets. Please contact your admin.');
     }
 
+    if (flags.platform && flags.environment) {
+      throw new Error('Please provide either the platform flag or the environment flag and not both.');
+    }
+
     // loaded secrets
     const secrets_file = path.resolve(untildify(args.secrets_file));
     const secrets_file_data = fs.readFileSync(secrets_file);
@@ -55,7 +61,7 @@ export default class SecretsUpload extends BaseCommand {
     }
 
     // existing secrets
-    const existing_secrets = await SecretUtils.getSecrets(this.app, account, flags.environment);
+    const existing_secrets = await SecretUtils.getSecrets(this.app, account, flags.platform, flags.environment);
     const existing_secret_yml: SecretsDict = {};
     if (existing_secrets && existing_secrets.length > 0) {
       for (const secret of existing_secrets) {
@@ -73,7 +79,7 @@ export default class SecretsUpload extends BaseCommand {
         }
       }
     }
-    await SecretUtils.batchUpdateSecrets(this.app, update_secrets, account, flags.environment);
+    await SecretUtils.batchUpdateSecrets(this.app, update_secrets, account, flags.platform, flags.environment);
 
     this.log(`Successfully uploaded secrets from ${secrets_file}`);
   }
