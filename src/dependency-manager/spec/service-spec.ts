@@ -15,7 +15,7 @@ import { Slugs } from './utils/slugs';
 export class ScalingMetricsSpec {
   @IsOptional()
   @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
+    ...ExpressionOr({ type: 'integer', minimum: 0, maximum: 100 }),
     description: 'The cpu usage required to trigger scaling.',
     externalDocs: { url: 'https://docs.architect.io/components/services/#cpu--memory' },
   })
@@ -23,7 +23,7 @@ export class ScalingMetricsSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
+    ...ExpressionOr({ type: 'integer', minimum: 0, maximum: 100 }),
     description: 'The memory usage required to trigger scaling.',
     externalDocs: { url: 'https://docs.architect.io/components/services/#cpu--memory' },
   })
@@ -36,14 +36,14 @@ export class ScalingMetricsSpec {
 export class ScalingSpec {
   @Allow()
   @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
+    ...ExpressionOr({ type: 'integer', minimum: 0 }),
     description: 'The target minimum number of service replicas.',
   })
   min_replicas!: number | string;
 
   @Allow()
   @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
+    ...ExpressionOr({ type: 'integer', minimum: 0 }),
     description: 'The target maximum number of service replicas.',
   })
   max_replicas!: number | string;
@@ -167,7 +167,7 @@ export class ServiceSpec extends ResourceSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
+    ...ExpressionOr({ type: 'integer', minimum: 0 }),
     description: 'A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field.',
   })
   replicas?: number | string;
