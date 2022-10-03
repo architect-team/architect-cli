@@ -4,6 +4,7 @@ import sinon, { SinonSpy } from 'sinon';
 import untildify from 'untildify';
 import UserUtils from '../../../src/architect/user/user.utils';
 import { MOCK_API_HOST } from '../../utils/mocks';
+import yaml from 'js-yaml';
 
 describe('secrets', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
@@ -92,7 +93,7 @@ describe('secrets', function () {
 
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
-    .stub(fs, 'writeFileSync', sinon.stub())
+    .stub(fs, 'writeFileSync', sinon.spy())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.id}/secrets/values`)
       .reply(200, account_secrets))
@@ -112,12 +113,12 @@ describe('secrets', function () {
       const fs_spy = fs.writeFileSync as SinonSpy;
       expect(ctx.stdout).to.contain(`Secrets have been downloaded`);
       expect(fs_spy.calledOnce).to.be.true;
-      expect(fs_spy.calledWith(download_location, expected_account_secrets))
+      expect(fs_spy.calledWith(download_location, yaml.dump(expected_account_secrets))).to.be.true;
     })
   
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
-    .stub(fs, 'writeFileSync', sinon.stub())
+    .stub(fs, 'writeFileSync', sinon.spy())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.id}/platforms/${platform.name}`)
       .reply(200, platform))
@@ -141,12 +142,12 @@ describe('secrets', function () {
       const fs_spy = fs.writeFileSync as SinonSpy;
       expect(ctx.stdout).to.contain(`Secrets have been downloaded`);
       expect(fs_spy.calledOnce).to.be.true;
-      expect(fs_spy.calledWith(download_location, expected_platform_secrets))
+      expect(fs_spy.calledWith(download_location, yaml.dump(expected_platform_secrets))).to.be.true;
     })
 
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
-    .stub(fs, 'writeFileSync', sinon.stub())
+    .stub(fs, 'writeFileSync', sinon.spy())
     .stdout({ print })
     .stderr({ print })
     .command(['secrets', '-a', 'examples', '--platform', 'non-existed-platform-name', download_location])
@@ -157,7 +158,7 @@ describe('secrets', function () {
 
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
-    .stub(fs, 'writeFileSync', sinon.stub())
+    .stub(fs, 'writeFileSync', sinon.spy())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.id}/platforms/${platform.name}`)
       .reply(200, platform))
@@ -173,7 +174,7 @@ describe('secrets', function () {
 
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
-    .stub(fs, 'writeFileSync', sinon.stub())
+    .stub(fs, 'writeFileSync', sinon.spy())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.id}/environments/${environment.name}`)
       .reply(200, environment))
@@ -197,12 +198,12 @@ describe('secrets', function () {
       const fs_spy = fs.writeFileSync as SinonSpy;
       expect(ctx.stdout).to.contain(`Secrets have been downloaded`);
       expect(fs_spy.calledOnce).to.be.true;
-      expect(fs_spy.calledWith(download_location, expected_env_secrets))
+      expect(fs_spy.calledWith(download_location, yaml.dump(expected_env_secrets))).to.be.true;
     })
   
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
-    .stub(fs, 'writeFileSync', sinon.stub())
+    .stub(fs, 'writeFileSync', sinon.spy())
     .stdout({ print })
     .stderr({ print })
     .command(['secrets', '-a', 'examples', '-e', 'non-existed-environment-name', download_location])
@@ -213,7 +214,7 @@ describe('secrets', function () {
 
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
-    .stub(fs, 'writeFileSync', sinon.stub())
+    .stub(fs, 'writeFileSync', sinon.spy())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.id}/environments/${environment.name}`)
       .reply(200, environment))
