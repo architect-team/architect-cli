@@ -1356,7 +1356,9 @@
         "cpu": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
             },
             {
               "type": "string",
@@ -1374,7 +1376,9 @@
         "memory": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
             },
             {
               "type": "string",
@@ -1418,7 +1422,9 @@
                 "cpu": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100
                     },
                     {
                       "type": "string",
@@ -1436,7 +1442,9 @@
                 "memory": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100
                     },
                     {
                       "type": "string",
@@ -1483,7 +1491,8 @@
         "min_replicas": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             {
               "type": "string",
@@ -1498,7 +1507,8 @@
         "max_replicas": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             {
               "type": "string",
@@ -1533,7 +1543,8 @@
                 "min_replicas": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0
                     },
                     {
                       "type": "string",
@@ -1548,7 +1559,8 @@
                 "max_replicas": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0
                     },
                     {
                       "type": "string",
@@ -2089,7 +2101,8 @@
         "replicas": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             {
               "type": "string",
@@ -2492,7 +2505,8 @@
                 "replicas": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0
                     },
                     {
                       "type": "string",
@@ -5132,7 +5146,9 @@
         "cpu": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
             },
             {
               "type": "string",
@@ -5150,7 +5166,9 @@
         "memory": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
             },
             {
               "type": "string",
@@ -5180,7 +5198,9 @@
                 "cpu": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100
                     },
                     {
                       "type": "string",
@@ -5198,7 +5218,9 @@
                 "memory": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100
                     },
                     {
                       "type": "string",
@@ -5231,7 +5253,8 @@
         "min_replicas": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             {
               "type": "string",
@@ -5246,7 +5269,8 @@
         "max_replicas": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             {
               "type": "string",
@@ -5276,7 +5300,8 @@
                 "min_replicas": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0
                     },
                     {
                       "type": "string",
@@ -5291,7 +5316,8 @@
                 "max_replicas": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0
                     },
                     {
                       "type": "string",
@@ -5790,7 +5816,8 @@
         "replicas": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             {
               "type": "string",
@@ -6190,7 +6217,8 @@
                 "replicas": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0
                     },
                     {
                       "type": "string",
