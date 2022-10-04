@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
+import chalk from 'chalk';
 import untildify from 'untildify';
 import { Dictionary } from '../..';
 import AccountUtils from '../../architect/account/account.utils';
@@ -16,9 +17,12 @@ export default class SecretsUpload extends BaseCommand {
   static description = 'Upload secrets from a file to an account or an environment';
   static aliases = ['secrets:set'];
   static examples = [
-    'architect secrets:set --account=myaccount --platform=myplatform ./mysecrets.yml',
-    'architect secrets:set --account=myaccount --environment=myenvironment ./mysecrets.yml',
+    'architect secrets:set --account=myaccount ./mysecrets.yml',
     'architect secrets:set --account=myaccount --override ./mysecrets.yml',
+    'architect secrets:set --account=myaccount --platform=myplatform ./mysecrets.yml',
+    'architect secrets:set --account=myaccount --platform=myplatform --override ./mysecrets.yml',
+    'architect secrets:set --account=myaccount --environment=myenvironment ./mysecrets.yml',
+    'architect secrets:set --account=myaccount --environment=myenvironment --override ./mysecrets.yml',
   ];
   static flags = {
     ...BaseCommand.flags,
@@ -41,8 +45,13 @@ export default class SecretsUpload extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags, args } = await this.parse(SecretsUpload);
-    const account = await AccountUtils.getAccount(this.app, flags.account);
+    if (!flags.account) {
+      this.log(chalk.red('Account is not found. Please see examples below:'));
+      this.log(`  ${SecretsUpload.examples.join('\n  ')}`);
+      return;
+    }
 
+    const account = await AccountUtils.getAccount(this.app, flags.account);
     const is_admin = await UserUtils.isAdmin(this.app, account.id);
     if (!is_admin) {
       this.error('You do not have permission to upload secrets. Please contact your admin.');

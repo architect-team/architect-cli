@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
+import chalk from 'chalk';
 import untildify from 'untildify';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
@@ -14,9 +15,9 @@ export default class SecretsDownload extends BaseCommand {
   static description = 'Download secrets from an account or an environment';
   static aliases = ['secrets', 'secrets/get'];
   static examples = [
-    'architect secrets ./mysecrets.yml',
-    'architect secrets --account=myaccount --environment=myenvironment ../mysecrets.yml',
-    'architect secrets --account=myaccount --platform=myplatform ../mysecrets.yml',
+    'architect secrets --account=myaccount ./mysecrets.yml',
+    'architect secrets --account=myaccount --platform=myplatform ./mysecrets.yml',
+    'architect secrets --account=myaccount --environment=myenvironment ./mysecrets.yml',
   ];
   static flags = {
     ...BaseCommand.flags,
@@ -34,24 +35,24 @@ export default class SecretsDownload extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags, args } = await this.parse(SecretsDownload);
-    const account = await AccountUtils.getAccount(this.app, flags.account);
 
-    const is_admin = await UserUtils.isAdmin(this.app, account.id);
-    if (!is_admin) {
-      this.error('You do not have permission to download secrets. Please contact your admin.');
+    if (!flags.account) {
+      this.log(chalk.red('Account is not found. Please see examples below:'));
+      this.log(`  ${SecretsDownload.examples.join('\n  ')}`);
+      return;
     }
 
     if (flags.platform && flags.environment) {
       throw new Error('Please provide either the platform flag or the environment flag and not both.');
     }
-
-    let secrets;
-    try {
-      secrets = await SecretUtils.getSecrets(this.app, account, flags.platform, flags.environment, true);
-    } catch {
-      this.error('Failed to find secrets. Please ensure your platform or environment exists.');
+    
+    const account = await AccountUtils.getAccount(this.app, flags.account);
+    const is_admin = await UserUtils.isAdmin(this.app, account.id);
+    if (!is_admin) {
+      this.error('You do not have permission to download secrets. Please contact your admin.');
     }
 
+    const secrets = await SecretUtils.getSecrets(this.app, account, flags.platform, flags.environment, true);
     if (secrets.length === 0) {
       this.log('There are no secrets to download.');
       return;

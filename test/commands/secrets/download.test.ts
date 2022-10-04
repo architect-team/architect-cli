@@ -149,28 +149,6 @@ describe('secrets', function () {
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(fs, 'writeFileSync', sinon.spy())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['secrets', '-a', 'examples', '--platform', 'my-platform', '-e', 'env', download_location])
-    .catch(ctx => {
-      expect(ctx.message).to.contain('Please provide either the platform flag or the environment flag and not both.')
-    })
-    .it('download platform secrets failed when both platform and environment flags are set');
-
-  defaults
-    .stub(UserUtils, 'isAdmin', async () => true)
-    .stub(fs, 'writeFileSync', sinon.spy())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['secrets', '-a', 'examples', '--platform', 'non-existed-platform-name', download_location])
-    .catch(ctx => {
-      expect(ctx.message).to.contain('Failed to find secrets. Please ensure your platform or environment exists.')
-    })
-    .it('download platform secrets failed with non-existed platform');
-
-  defaults
-    .stub(UserUtils, 'isAdmin', async () => true)
-    .stub(fs, 'writeFileSync', sinon.spy())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.id}/platforms/${platform.name}`)
       .reply(200, platform))
@@ -212,17 +190,6 @@ describe('secrets', function () {
       expect(fs_spy.calledOnce).to.be.true;
       expect(fs_spy.calledWith(download_location, yaml.dump(expected_env_secrets))).to.be.true;
     })
-  
-  defaults
-    .stub(UserUtils, 'isAdmin', async () => true)
-    .stub(fs, 'writeFileSync', sinon.spy())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['secrets', '-a', 'examples', '-e', 'non-existed-environment-name', download_location])
-    .catch(ctx => {
-      expect(ctx.message).to.contain('Failed to find secrets. Please ensure your platform or environment exists.')
-    })
-    .it('download environment secrets failed with non-existed environment');
 
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
@@ -249,4 +216,13 @@ describe('secrets', function () {
       expect(ctx.message).to.contain('You do not have permission to download secrets')
     })
     .it('download account secrets failed due to permission');
+  
+  test
+    .stdout({ print })
+    .stderr({ print })
+    .command(['secrets', '-a', 'examples', '--platform', 'my-platform', '-e', 'env', download_location])
+    .catch(ctx => {
+      expect(ctx.message).to.contain('Please provide either the platform flag or the environment flag and not both.')
+    })
+    .it('download platform secrets failed when both platform and environment flags are set');
 });

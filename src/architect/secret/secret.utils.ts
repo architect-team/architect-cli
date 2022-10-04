@@ -15,18 +15,10 @@ export default class SecretUtils {
     let secrets: Secret[] = [];
     if (environment_name) {
       const environment = await EnvironmentUtils.getEnvironment(app.api, account, environment_name);
-      if (inherited) {
-        secrets = (await app.api.get(`environments/${environment.id}/secrets/values`, { params: { inherited: true } })).data;
-      } else {
-        secrets = (await app.api.get(`environments/${environment.id}/secrets/values`)).data;
-      }
+      secrets = (await app.api.get(`environments/${environment.id}/secrets/values`, { params: { inherited: true } })).data;
     } else if (platform_name) {
       const platform = await PlatformUtils.getPlatform(app.api, account, platform_name);
-      if (inherited) {
-        secrets = (await app.api.get(`platforms/${platform.id}/secrets/values`, { params: { inherited: true } })).data;
-      } else {
-        secrets = (await app.api.get(`platforms/${platform.id}/secrets/values`)).data;
-      }
+      secrets = (await app.api.get(`platforms/${platform.id}/secrets/values`, { params: { inherited } })).data;
     } else {
       secrets = (await app.api.get(`accounts/${account.id}/secrets/values`)).data;
     }
