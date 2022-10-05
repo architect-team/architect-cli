@@ -334,6 +334,10 @@ export default class ComponentRegister extends BaseCommand {
     CliUx.ux.action.stop();
     this.log(chalk.green(`Successfully registered component`));
 
+    if (new_spec.dependencies) {
+      this.generateDependenciesWarnings(new_spec.dependencies, selected_account.id);
+    }
+    
     console.timeEnd('Time');
   }
 
@@ -359,5 +363,38 @@ export default class ComponentRegister extends BaseCommand {
 
   public static getTagFromFlags(flags: any): string {
     return flags.environment ? `${ENV_TAG_PREFIX}${flags.environment}` : flags.tag;
+  }
+
+  private async generateDependenciesWarnings(component_dependencies: Dictionary<string>, account_id: string) {
+    const existing_account_components: Dictionary<string> = {};
+    const { rows, _ } = (await this.app.api.get(`/accounts/${account_id}/components`)).data;
+    for (const row of rows) {
+      existing_account_components[row.component.name] = row.tag;
+    }
+
+    const register_warnings: string[] = [];
+    const latest_tag_warnings: string[] = [];
+    for (const key of Object.keys(component_dependencies)) {
+      if (!existing_account_components[key]) {
+        register_warnings.push(key); 
+      } 
+      if (component_dependencies[key] !== 'latest') {
+        latest_tag_warnings.push(key);
+      }
+    }
+
+    const warning = chalk.hex('#FFA500');
+    if (register_warnings.length > 0) {
+      this.log(warning(`\nMissing dependencies that need to be registered:`));
+      for (const component_name of register_warnings) {
+        this.log(warning(`  - ${component_name}`));
+      }
+    }
+    if (latest_tag_warnings.length > 0) {
+      this.log(warning(`\nThe following dependencies should have the 'latest' tag:`));
+      for (const component_name of latest_tag_warnings) {
+        this.log(warning(`  - ${component_name}`));
+      }
+    }
   }
 }
