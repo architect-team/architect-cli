@@ -21,7 +21,6 @@ import { validateOrRejectSpec } from './spec/utils/spec-validator';
 import { Dictionary, transformDictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
 import { interpolateObjectLoose, interpolateObjectOrReject, replaceInterpolationBrackets } from './utils/interpolation';
-
 export default abstract class DependencyManager {
 
   account?: string;
@@ -378,7 +377,8 @@ export default abstract class DependencyManager {
 
       const component_interfaces = node.config.interfaces;
       for (const [component_name, component_interface] of Object.entries(component_interfaces)) {
-        if (component_interface.protocol !== 'http' && component_interface.protocol !== 'https') {
+        const valid_protocol = [undefined, 'http', 'https'];
+        if (valid_protocol.indexOf(component_interface.protocol) === -1) {
           throw new ArchitectError(`Protocol '${component_interface.protocol}' is detected in component '${component_name}'. We currently only support 'http' and 'https' protocols.`);
         }
       }

@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
-import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
+import { ArchitectError, buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { SecretsConfig } from '../../src/dependency-manager/secrets/secrets';
 
@@ -1322,6 +1322,39 @@ services:
       err = e;
     }
     expect(err).to.be.undefined;
+  });
+
+  it('invalid tcp component protocol', async () => {
+    const component_config = `
+      name: test/component
+      interfaces:
+        main: \${{ services.app.interfaces.main.url }}
+      services:
+        app:
+          interfaces:
+            main:
+              port: 3000
+              protocol: tcp
+      `;
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentSpec('test/component'),
+      ]);
+    } catch (e: any) {
+      err = e;
+    }
+    expect(err).instanceOf(ArchitectError);
+    expect(err.message).includes(`tcp`);
+    expect(err.message).includes(`We currently only support 'http' and 'https' protocols`);
+    expect(process.exitCode).eq(1);
   });
 
   it('invalid component interface number', async () => {
