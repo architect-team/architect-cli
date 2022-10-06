@@ -47,11 +47,10 @@ const addLineNumbers = (value: string, errors: ValidationError[]): void => {
 
 export class ArchitectError extends Error {
   // When track is true, the exception will be captured by endSentryTransaction.
-  // Should be set to false when a raised error is an issue on the users end that doesn't have
-  // anything actionable for us to do.
+  // Set to true when constructing an error that should be reported via Sentry.
   track: boolean;
 
-  constructor(msg?: string, track = true) {
+  constructor(msg?: string, track = false) {
     super(msg);
     this.track = track;
   }
