@@ -371,6 +371,19 @@ export default abstract class DependencyManager {
   }
 
   validateGraph(graph: DependencyGraph): void {
+    // Check for protocols that are not http or https
+    for (const node of graph.nodes) {
+      if (node.is_external) continue;
+      if (!(node instanceof ComponentNode)) continue;
+
+      const component_interfaces = node.config.interfaces;
+      for (const [component_name, component_interface] of Object.entries(component_interfaces)) {
+        if (component_interface.protocol !== 'http' && component_interface.protocol !== 'https') {
+          throw new ArchitectError(`Protocol '${component_interface.protocol}' is detected in component '${component_name}'. We currently only support 'http' and 'https' protocols.`);
+        }
+      }
+    }
+
     // Check for duplicate subdomains
     const seen_subdomains: Dictionary<string[]> = {};
     for (const ingress_edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
@@ -562,6 +575,7 @@ export default abstract class DependencyManager {
   }
 
   async getGraph(component_specs: ComponentSpec[], all_secrets: SecretsDict = {}, options?: GraphOptions): Promise<DependencyGraph> {
+    console.log("in getGraph()");
     options = {
       ...{
         interpolate: true,
