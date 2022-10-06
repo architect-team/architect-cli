@@ -1357,6 +1357,38 @@ services:
     expect(process.exitCode).eq(1);
   });
 
+   it('valid component with protocol of undefined', async () => {
+    const component_config = `
+      name: test/component
+      interfaces:
+        main: \${{ services.app.interfaces.mysql.url }}
+      services:
+        app:
+          image: mysql:5.6.35
+          command: mysqld
+          interfaces:
+            mysql:
+              port: 3306
+              protocol: https
+      `;
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentSpec('test/component'),
+      ], {}, { interpolate: false });
+    } catch (e: any) {
+      err = e;
+    }
+    expect(err).to.be.undefined;
+  });
+
   it('invalid component interface number', async () => {
     const component_config = `
       name: test/component

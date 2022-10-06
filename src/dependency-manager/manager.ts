@@ -575,7 +575,6 @@ export default abstract class DependencyManager {
   }
 
   async getGraph(component_specs: ComponentSpec[], all_secrets: SecretsDict = {}, options?: GraphOptions): Promise<DependencyGraph> {
-    console.log("in getGraph()");
     options = {
       ...{
         interpolate: true,
