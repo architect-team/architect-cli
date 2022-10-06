@@ -565,7 +565,7 @@ export default class Dev extends BaseCommand {
       this.downloadFileAndCache('https://storage.googleapis.com/architect-ci-ssl/privkey.pem', path.join(this.app.config.getConfigDir(), 'privkey.pem')),
     ]).catch((err) => {
       this.warn(chalk.yellow('We are unable to download the neccessary ssl certificates. Please try again or use --ssl=false to temporarily disable ssl'));
-      this.error(new ArchitectError(err.message, false));
+      this.error(new ArchitectError(err.message));
     });
   }
 
@@ -585,7 +585,7 @@ $ architect dev:stop ${environment}
 
 To continue running the other environment and create a new one you can run the \`dev\` command with the \`-e\` flag
 $ architect dev -e new_env_name_here .`));
-      this.error(new ArchitectError("Environment name already in use.", false));
+      this.error(new ArchitectError("Environment name already in use."));
     }
   }
 

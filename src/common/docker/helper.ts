@@ -135,25 +135,25 @@ class _DockerHelper {
 
   verifyDocker(): void {
     if (!this.docker_installed) {
-      throw new ArchitectError('Architect requires Docker to be installed.\nPlease install docker and try again: https://docs.docker.com/engine/install/', false);
+      throw new ArchitectError('Architect requires Docker to be installed.\nPlease install docker and try again: https://docs.docker.com/engine/install/');
     }
   }
 
   verifyBuildX(): void {
     if (!this.docker_info.buildx) {
-      throw new ArchitectError("'docker buildx' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.", false);
+      throw new ArchitectError("'docker buildx' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.");
     }
   }
 
   verifyCompose(): void {
     if (!this.docker_info.compose) {
-      throw new ArchitectError("'docker compose' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.", false);
+      throw new ArchitectError("'docker compose' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.");
     }
   }
 
   verifyDaemon() {
     if (!this.daemonRunning()) {
-      throw new ArchitectError('Docker daemon is not running. Please start it and try again.', false);
+      throw new ArchitectError('Docker daemon is not running. Please start it and try again.');
     }
   }
 
