@@ -1,17 +1,17 @@
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
-import chalk from 'chalk';
 import untildify from 'untildify';
 import { Dictionary } from '../..';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
-import PlatformUtils from '../../architect/platform/platform.utils';
 import SecretUtils, { Secret } from '../../architect/secret/secret.utils';
 import UserUtils from '../../architect/user/user.utils';
 import BaseCommand from '../../base-command';
 import { booleanString } from '../../common/utils/oclif';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
+import { ArchitectError } from '../..';
+import { Flags } from '@oclif/core';
 
 export default class SecretsUpload extends BaseCommand {
   static description = 'Upload secrets from a file to an account or an environment';
@@ -28,7 +28,11 @@ export default class SecretsUpload extends BaseCommand {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    ...PlatformUtils.flags,
+    platform: Flags.string({
+      description: 'Architect platform',
+      parse: async value => value.toLowerCase(),
+      sensitive: false,
+    }),
     override: booleanString({
       description: 'Allow override of existing secrets',
       default: false,
@@ -46,9 +50,7 @@ export default class SecretsUpload extends BaseCommand {
   async run(): Promise<void> {
     const { flags, args } = await this.parse(SecretsUpload);
     if (!flags.account) {
-      this.log(chalk.red('Account is not found. Please see examples below:'));
-      this.log(`  ${SecretsUpload.examples.join('\n  ')}`);
-      return;
+      this.error(new ArchitectError(`Account is not found. Please see examples below:\n  ${SecretsUpload.examples.join('\n  ')}`));
     }
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
@@ -58,7 +60,7 @@ export default class SecretsUpload extends BaseCommand {
     }
 
     if (flags.platform && flags.environment) {
-      throw new Error('Please provide either the platform flag or the environment flag and not both.');
+      throw new ArchitectError('Please provide either the platform flag or the environment flag and not both.');
     }
 
     // loaded secrets

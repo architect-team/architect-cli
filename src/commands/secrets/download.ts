@@ -1,15 +1,15 @@
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
-import chalk from 'chalk';
 import untildify from 'untildify';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
-import PlatformUtils from '../../architect/platform/platform.utils';
 import SecretUtils from '../../architect/secret/secret.utils';
 import UserUtils from '../../architect/user/user.utils';
 import BaseCommand from '../../base-command';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
+import { ArchitectError } from '../..';
+import { Flags } from '@oclif/core';
 
 export default class SecretsDownload extends BaseCommand {
   static description = 'Download secrets from an account or an environment';
@@ -23,7 +23,11 @@ export default class SecretsDownload extends BaseCommand {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    ...PlatformUtils.flags,
+    platform: Flags.string({
+      description: 'Architect platform',
+      parse: async value => value.toLowerCase(),
+      sensitive: false,
+    }),
   };
 
   static args = [{
@@ -37,9 +41,7 @@ export default class SecretsDownload extends BaseCommand {
     const { flags, args } = await this.parse(SecretsDownload);
 
     if (!flags.account) {
-      this.log(chalk.red('Account is not found. Please see examples below:'));
-      this.log(`  ${SecretsDownload.examples.join('\n  ')}`);
-      return;
+      this.error(new ArchitectError(`Account is not found. Please see examples below:\n  ${SecretsDownload.examples.join('\n  ')}`));
     }
 
     if (flags.platform && flags.environment) {
