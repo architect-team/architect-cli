@@ -1,10 +1,13 @@
+import { V1Deployment } from '@kubernetes/client-node';
 import axios from 'axios';
 import { expect } from 'chai';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
+import TSON from "typescript-json";
 import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
+import { DeepPartial } from '../../src/common/utils/types';
 import { SecretsConfig } from '../../src/dependency-manager/secrets/secrets';
 
 describe('validate spec', () => {
@@ -1766,6 +1769,33 @@ services:
               TEST2: 2
       `;
       buildSpecFromYml(yml);
+    });
+
+    it('test tson', () => {
+      const deployment = {
+        apiVersion: 'v1',
+        metadata2: 'wrong key',
+        metadata: 'wrong value',
+        spec: {
+          template: {
+            spec: {
+              containers: [{
+                invalid_key: 'wrong'
+              }]
+            }
+          }
+        }
+      };
+
+      const res = TSON.validateEquals<DeepPartial<V1Deployment>>(deployment);
+
+      expect(res.errors.map(error => error.path)).to.have.members([
+        '$input.metadata',
+        '$input.metadata2',
+        '$input.spec.template.spec.containers[0].invalid_key'
+      ]);
+
+      expect(res.success).to.be.false;
     });
   });
 });
