@@ -31,7 +31,6 @@ module.exports = {
 
     'unicorn/no-array-reduce': 'off',
     'unicorn/no-for-loop': 'off',
-    'unicorn/no-instanceof-array': 'off',
     'unicorn/no-object-as-default-parameter': 'off',
     'unicorn/prefer-number-properties': 'off',
     'unicorn/prefer-object-from-entries': 'off',
