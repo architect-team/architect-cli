@@ -14,6 +14,7 @@ module.exports = {
     'no-else-return': 0,
     'object-curly-spacing': ['error', 'always'],
     'padding-line-between-statements': 0,
+    'radix': 0,
     'semi': [2, 'always'],
 
     'unicorn/no-zero-fractions': 'off',
@@ -21,14 +22,20 @@ module.exports = {
     'unicorn/prefer-switch': 'off',
 
     // Def enable
+    'default-param-last': 0,
     'eqeqeq': 0,
     'guard-for-in': 0,
     'indent': 0,
+    'no-await-in-loop': 0,
     'quotes': [0], // ['error', 'single', { 'allowTemplateLiterals': true }],
 
     'unicorn/no-array-for-each': 'off',
+    'unicorn/no-array-reduce': 'off',
     'unicorn/no-for-loop': 'off',
     'unicorn/no-instanceof-array': 'off',
+    'unicorn/no-object-as-default-parameter': 'off',
+    'unicorn/prefer-number-properties': 'off',
+    'unicorn/prefer-object-from-entries': 'off',
     'unicorn/prefer-set-has': 'off',
     'unicorn/prefer-spread': 'off',
 

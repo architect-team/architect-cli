@@ -170,16 +170,16 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
 
       let resolved = false;
 
-      ws.onopen = () => {
+      ws.addEventListener('open', () => {
         resolved = true;
         resolve(ws);
-      };
+      });
 
-      ws.onerror = (err) => {
+      ws.addEventListener('error', (err) => {
         if (!resolved) {
           reject(err);
         }
-      };
+      });
     });
   }
 

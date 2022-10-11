@@ -47,7 +47,6 @@ export class DependencyGraphMutable {
   addNode(node: DependencyNode): DependencyNode {
     if (!this.nodes_map.has(node.ref)) {
       this.nodes.push(node);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.__nodes_map!.set(node.ref, node);
     }
     return node;
@@ -72,7 +71,6 @@ export class DependencyGraphMutable {
       this.getNodeByRef(edge.to);
 
       this.edges.push(edge);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.__edges_map!.set(edge.ref, edge);
     }
     return edge;
@@ -121,7 +119,6 @@ export class DependencyGraphMutable {
     const queue = [node_ref];
     while (queue.length > 0) {
       const ref = queue.shift();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const node = this.getNodeByRef(ref!);
       const dependents = this.getUpstreamNodes(node).filter(n => !queue.includes(n.ref));
       const dependencies = this.getDownstreamNodes(node);
@@ -156,7 +153,6 @@ export class DependencyGraphMutable {
     const queue = [root_edge];
     const res = [];
     while (queue.length) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const edge = queue.shift()!;
       const node_to = this.getNodeByRef(edge.to);
       if (node_to instanceof ComponentNode) {

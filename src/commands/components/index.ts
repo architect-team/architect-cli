@@ -27,7 +27,7 @@ export default class Components extends BaseCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Components);
 
-    let account: Account | undefined = undefined;
+    let account: Account | undefined;
     if (flags.account) {
       account = await AccountUtils.getAccount(this.app, flags.account);
     }

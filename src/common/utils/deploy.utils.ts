@@ -1,7 +1,7 @@
 import { isNumberString } from 'class-validator';
+import deepmerge from 'deepmerge';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
-import _ from 'lodash';
 import { ArchitectError, Dictionary } from '../../';
 
 export default class DeployUtils {
@@ -67,7 +67,7 @@ export default class DeployUtils {
       const output_catch = DeployUtils.readSecretsFile(secret_file);
       // Deep merge to ensure all values from files are captured
       // By default, the last file in the array will always supersede any other values
-      component_secrets = _.merge(component_secrets, output_catch);
+      component_secrets = deepmerge(component_secrets, output_catch);
     }
 
     const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets);

@@ -13,14 +13,14 @@ const git = [
       "yarn.lock",
       "architect-yml.md",
       "src/dependency-manager/schema/architect.schema.json",
-    ]
-  }
+    ],
+  },
 ];
 const exec = [
   "@semantic-release/exec",
   {
-    "publishCmd": "npm run pack"
-  }
+    "publishCmd": "npm run pack",
+  },
 ];
 const npm = "@semantic-release/npm";
 const github = [
@@ -29,33 +29,32 @@ const github = [
     "assets": [
       {
         "path": "dist/*.tar.gz",
-        "label": "Architect-CLI ${nextRelease.version}"
-      }
-    ]
-  }
+        "label": "Architect-CLI ${nextRelease.version}",
+      },
+    ],
+  },
 ];
 const changelog = [
   "@semantic-release/changelog",
   {
-    "changelogFile": "CHANGELOG.md"
-  }
+    "changelogFile": "CHANGELOG.md",
+  },
 ];
 const backmerge = [
   "@saithodev/semantic-release-backmerge",
   {
     "branches": ["rc"],
     // Makes sure that only pushed changes are backmerged
-    "clearWorkspace": true
-  }
+    "clearWorkspace": true,
+  },
 ];
-
 
 const default_plugins = [
   commitAnalyzer,
   releaseNotesGenerator,
   npm,
-  git
-]
+  git,
+];
 
 const main_plugins = [
   commitAnalyzer,
@@ -65,20 +64,20 @@ const main_plugins = [
   npm,
   git,
   github,
-  backmerge
-]
+  backmerge,
+];
 
 module.exports = {
   "branches": [
     "main",
     {
       "name": "rc",
-      "prerelease": true
+      "prerelease": true,
     },
     {
       "name": "arc-*",
-      "prerelease": true
-    }
+      "prerelease": true,
+    },
   ],
   plugins: branch === 'main' ? main_plugins : default_plugins,
 };

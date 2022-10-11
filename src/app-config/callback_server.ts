@@ -3,9 +3,7 @@ import * as http from 'http';
 import * as path from 'path';
 
 export default class CallbackServer {
-
   async listenForCallback(port: number): Promise<string> {
-
     const [success_file, failure_file] = await Promise.all([this.get_success_file(), this.get_failure_file()]);
 
     return new Promise((resolve, reject) => {
@@ -35,7 +33,6 @@ export default class CallbackServer {
 
       server.listen(port);
     });
-
   }
 
   async get_success_file(): Promise<Buffer> {
@@ -61,5 +58,4 @@ export default class CallbackServer {
       });
     });
   }
-
 }

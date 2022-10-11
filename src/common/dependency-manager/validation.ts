@@ -35,7 +35,7 @@ export const prettyValidationErrors = (error: ValidationErrors): void => {
   }
 
   min_row = Math.max(min_row - 4, 0);
-  max_row = max_row + 3;
+  max_row += 3;
 
   const res = [];
   let line_number = min_row + 1;

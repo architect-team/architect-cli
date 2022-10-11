@@ -1,5 +1,6 @@
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
+import os from 'os';
 import config from '../../app-config/config';
 import { docker } from './cmd';
 import { RequiresDocker } from './helper';
@@ -14,9 +15,8 @@ const PLATFORM_MAP = new Map<string, string>([
 ]);
 
 export default class DockerBuildXUtils {
-
   public static isMacM1Machine(): boolean {
-    return require('os').cpus()[0].model.includes('Apple M1');
+    return os.cpus()[0].model.includes('Apple M1');
   }
 
   public static getBuildxPlatform(architecture: string): string {

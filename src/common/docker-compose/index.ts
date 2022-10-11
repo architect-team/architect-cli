@@ -204,10 +204,16 @@ export class DockerComposeUtils {
       const cpu = node.config.cpu;
       const memory = node.config.memory;
       if (cpu || memory) {
-        if (!service.deploy) { service.deploy = {}; }
+        if (!service.deploy) {
+          service.deploy = {};
+        }
         service.deploy.resources = { limits: {} };
-        if (cpu) { service.deploy.resources.limits.cpus = `${cpu}`; }
-        if (memory) { service.deploy.resources.limits.memory = memory; }
+        if (cpu) {
+          service.deploy.resources.limits.cpus = `${cpu}`;
+        }
+        if (memory) {
+          service.deploy.resources.limits.memory = memory;
+        }
       }
 
       if (!service.labels) {
@@ -314,11 +320,11 @@ export class DockerComposeUtils {
       }
 
       if (node instanceof TaskNode) {
-        if (!service.deploy) { service.deploy = {}; }
+        if (!service.deploy) {
+          service.deploy = {};
+        }
         service.deploy.replicas = 0; // set all tasks scale to 0 so they don't start but can be optionally invoked later
       }
-
-
 
       if (service.build) {
         if (!service.image) {
@@ -390,8 +396,7 @@ export class DockerComposeUtils {
             service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadBalancer.sticky.cookie=true`);
           }
           if (ssl_cert && ssl_key) {
-            service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`);
-            service_to.labels.push(`traefik.http.routers.${traefik_service}.tls=true`);
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`, `traefik.http.routers.${traefik_service}.tls=true`);
           }
 
           if (component_interface?.protocol) {
@@ -503,7 +508,7 @@ export class DockerComposeUtils {
         continue;
       }
       const project = container.Config.Labels['com.docker.compose.project'];
-      if (running_projects.indexOf(project) === -1) {
+      if (!running_projects.includes(project)) {
         continue;
       }
 
@@ -521,11 +526,10 @@ export class DockerComposeUtils {
 
   public static async isLocalEnvironment(environment_name: string): Promise<boolean> {
     const local_enviromments = await DockerComposeUtils.getLocalEnvironments();
-    return !!(local_enviromments.find(env => env == environment_name));
+    return !!(local_enviromments.some(env => env == environment_name));
   }
 
   public static async getLocalEnvironment(config_dir: string, environment_name?: string): Promise<string> {
-
     const { stdout } = await DockerComposeUtils.dockerCompose(['ls', '--format', 'json']);
 
     const projects: DockerComposeProject[] = JSON.parse(stdout);
@@ -603,7 +607,7 @@ export class DockerComposeUtils {
         name: 'service',
         message: 'Select a service',
         source: async (_: any, input: string) => {
-          return services.filter((s) => !input || s.name.toLowerCase().indexOf(input.toLowerCase()) >= 0);
+          return services.filter((s) => !input || s.name.toLowerCase().includes(input.toLowerCase()));
         },
       },
     ]);
@@ -671,7 +675,9 @@ export class DockerComposeUtils {
           const full_service_name = container_state.Service;
 
           const service_ref = service_ref_map[full_service_name];
-          if (!service_ref) { continue; }
+          if (!service_ref) {
+            continue;
+          }
 
           const { resource_type } = ResourceSlugUtils.parse(service_ref);
           if (resource_type !== 'services') continue;

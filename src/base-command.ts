@@ -132,7 +132,9 @@ export default abstract class BaseCommand extends Command {
         for (const [k, v] of Object.entries(error.response.data)) {
           try {
             const msg = JSON.parse(v as any).message;
-            if (!msg) { throw new Error('Invalid msg'); }
+            if (!msg) {
+              throw new Error('Invalid msg');
+            }
             error.message += `\n${k}: ${msg}`;
           } catch {
             error.message += `\n${k}: ${v}`;

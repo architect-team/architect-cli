@@ -15,7 +15,6 @@ import Dev from "./dev";
 import ComponentRegister from './register';
 
 export abstract class DeployCommand extends BaseCommand {
-
   static flags = {
     ...BaseCommand.flags,
     auto_approve: booleanString({
@@ -249,7 +248,7 @@ export default class Deploy extends DeployCommand {
       deployment_dtos.map(async (deployment_dto) => {
         const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, deployment_dto);
         return { component_name: deployment_dto.component, pipeline };
-      })
+      }),
     );
     CliUx.ux.action.stop();
 
@@ -280,7 +279,7 @@ export default class Deploy extends DeployCommand {
               throw err;
             }
           });
-      })
+      }),
     );
     CliUx.ux.action.stop();
   }
@@ -288,11 +287,9 @@ export default class Deploy extends DeployCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Deploy);
 
-    if (args.configs_or_components && args.configs_or_components.length > 1) {
-      if (flags.interface?.length) {
+    if (args.configs_or_components && args.configs_or_components.length > 1 && flags.interface?.length) {
         throw new Error('Interface flag not supported if deploying multiple components in the same command.');
       }
-    }
 
     if (flags.local) {
       this.log(chalk.yellow("The --local(-l) flag will be deprecated soon. Please switch over to using the architect dev command instead."));

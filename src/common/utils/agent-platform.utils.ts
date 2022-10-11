@@ -10,7 +10,6 @@ const SERVICE_ACCOUNT_NAME = 'architect-agent';
 const AGENT_NAMESPACE = 'architect-agent';
 
 export class AgentPlatformUtils {
-
   private static getLocalServerAgentIP(): string {
     return 'host.docker.internal';
   }
@@ -72,8 +71,8 @@ export class AgentPlatformUtils {
         rolebinding.subjects.find(
           (subject: any) =>
             subject.kind === 'ServiceAccount' &&
-            subject.name === SERVICE_ACCOUNT_NAME
-        )
+            subject.name === SERVICE_ACCOUNT_NAME,
+        ),
     );
 
     // Check if cluster role binding already exists

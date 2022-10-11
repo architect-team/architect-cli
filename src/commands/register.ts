@@ -174,7 +174,7 @@ export default class ComponentRegister extends BaseCommand {
         const { component_account_name, component_name, resource_type, resource_name } = ResourceSlugUtils.parse(ref);
         const ref_with_account = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, resource_type, resource_name);
 
-        const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags['architecture']);
+        const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags.architecture);
 
         if (service.build) {
           service.build['x-bake'] = {
@@ -236,8 +236,7 @@ export default class ComponentRegister extends BaseCommand {
     const build_args = args.filter((value, index, self) => {
       return self.indexOf(value) === index;
     }).reduce((arr, value) => {
-      arr.push('--set');
-      arr.push(`*.args.${value}`);
+      arr.push('--set', `*.args.${value}`);
       return arr;
     }, [] as string[]);
 
@@ -260,7 +259,9 @@ export default class ComponentRegister extends BaseCommand {
 
     const new_spec = classToClass(component_spec);
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
-      if (IF_EXPRESSION_REGEX.test(service_name)) { continue; }
+      if (IF_EXPRESSION_REGEX.test(service_name)) {
+        continue;
+      }
 
       delete service.debug; // we don't need to compare the debug block for remotely-deployed components
 
@@ -277,7 +278,9 @@ export default class ComponentRegister extends BaseCommand {
       }
     }
     for (const [task_name, task] of Object.entries(new_spec.tasks || {})) {
-      if (IF_EXPRESSION_REGEX.test(task_name)) { continue; }
+      if (IF_EXPRESSION_REGEX.test(task_name)) {
+        continue;
+      }
 
       delete task.debug; // we don't need to compare the debug block for remotely-deployed components
 

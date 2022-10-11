@@ -9,7 +9,6 @@ interface PipelineResult {
 }
 
 export default class PipelineUtils {
-
   static POLL_INTERVAL = 10000;
 
   static getDeploymentUrl(app: AppService, deployment: Deployment): string {

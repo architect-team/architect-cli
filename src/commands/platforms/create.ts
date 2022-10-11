@@ -39,7 +39,7 @@ export default class PlatformCreate extends BaseCommand {
       sensitive: false,
       default: false,
     }),
-    ['auto-approve']: booleanString({
+    'auto-approve': booleanString({
       sensitive: false,
       default: false,
     }),
@@ -137,8 +137,8 @@ export default class PlatformCreate extends BaseCommand {
     try {
       const platform_dto = {
         name: platform_name,
-        ...await this.createArchitectPlatform(flags, kube_contexts.current_context)
-        , flags: flags_map,
+        ...await this.createArchitectPlatform(flags, kube_contexts.current_context),
+         flags: flags_map,
       };
 
       CliUx.ux.action.start('Registering platform with Architect');
@@ -172,7 +172,7 @@ export default class PlatformCreate extends BaseCommand {
         choices: [
           'kubernetes',
           agent_display_name,
-          //...(this.app.config.environment !== ENVIRONMENT.PRODUCTION ? [agent_display_name] : []),
+          // ...(this.app.config.environment !== ENVIRONMENT.PRODUCTION ? [agent_display_name] : []),
         ],
       },
     ]);

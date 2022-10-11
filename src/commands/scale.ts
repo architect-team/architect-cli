@@ -50,7 +50,7 @@ export default class Scale extends BaseCommand {
   async run(): Promise<void> {
     this.log(chalk.yellow(
       `This feature is in alpha. While the feature should be stable, it may be changed or removed without prior notice. As such we do not recommend using this feature in any automated pipelines.
-During this time we greatly appreciate any feedback as we continue to finalize the implementation. You can reach us at support@architect.io.`
+During this time we greatly appreciate any feedback as we continue to finalize the implementation. You can reach us at support@architect.io.`,
     ));
     const { args, flags } = await this.parse(Scale);
 
@@ -65,13 +65,14 @@ During this time we greatly appreciate any feedback as we continue to finalize t
         component_version = (await this.app.api.get(`/accounts/${account.id}/components/${flags.component}`)).data;
       }
     } else {
+      // eslint-disable-next-line unicorn/prefer-module
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
       const answers: { component_version: ComponentVersion } = await inquirer.prompt([
         {
           type: 'autocomplete',
           name: 'component_version',
           message: 'Select a component',
-          filter: (x) => x, // api filters
+          filter: (x: any) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
             const { data } = await this.app.api.get(`/accounts/${account.id}/components`, { params: { q: input, limit: 10 } });
             const latest_component_versions = data.rows as ComponentVersion[];

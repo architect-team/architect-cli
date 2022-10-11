@@ -142,15 +142,13 @@ export default class Logs extends BaseCommand {
       next();
     };
 
-    const childProcess = spawn('docker', ["compose", ...compose_args],
-      { stdio: [process.stdin, null, process.stderr] });
+    const childProcess = spawn('docker', ["compose", ...compose_args], { stdio: [process.stdin, null, process.stderr] });
     (childProcess.stdout as Readable).pipe(logger);
 
     await new Promise((resolve) => {
       childProcess.on('close', resolve);
     });
   }
-
 
   async runRemote(account: Account): Promise<void> {
     const { args, flags } = await this.parse(Logs);
@@ -261,7 +259,7 @@ export default class Logs extends BaseCommand {
       // If the env exists locally then just assume local
       const is_local_env = await DockerComposeUtils.isLocalEnvironment(flags.environment);
       if (is_local_env) {
-        return await this.runLocal();
+        return this.runLocal();
       }
     }
 
@@ -269,7 +267,7 @@ export default class Logs extends BaseCommand {
     const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: !flags.environment });
 
     if (AccountUtils.isLocalAccount(account)) {
-      return await this.runLocal();
+      return this.runLocal();
     }
 
     await this.runRemote(account);

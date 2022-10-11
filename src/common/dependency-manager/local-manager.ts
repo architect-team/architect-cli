@@ -27,9 +27,9 @@ export default class LocalDependencyManager extends DependencyManager {
 
   async loadComponentSpec(component_string: string, options?: ComponentConfigOpts, debug?: boolean): Promise<ComponentSpec> {
     const merged_options = {
-      ...{
-        map_all_interfaces: false,
-      }, ...options,
+
+      map_all_interfaces: false,
+      ...options,
     };
 
     const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);

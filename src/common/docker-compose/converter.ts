@@ -17,12 +17,23 @@ interface ComposeConversion {
 }
 
 export class ComposeConverter {
-
   private static compose_property_converters: { compose_property: string, architect_property: string, func: (compose_property: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceSpec>) => ComposeConversion }[] = [
-    { compose_property: 'environment',  architect_property: 'environment', func: this.convertEnvironment },
-    { compose_property: 'command', architect_property: 'command', func: (command: any) => { return { base: command }; } },
-    { compose_property: 'entrypoint', architect_property: 'entrypoint', func: (entrypoint: any) => { return { base: entrypoint }; } },
-    { compose_property: 'image', architect_property: 'image', func: (image: string) => { return { base: image }; } },
+    { compose_property: 'environment', architect_property: 'environment', func: this.convertEnvironment },
+    {
+      compose_property: 'command', architect_property: 'command', func: (command: any) => {
+        return { base: command };
+      },
+    },
+    {
+      compose_property: 'entrypoint', architect_property: 'entrypoint', func: (entrypoint: any) => {
+        return { base: entrypoint };
+      },
+    },
+    {
+      compose_property: 'image', architect_property: 'image', func: (image: string) => {
+        return { base: image };
+      },
+    },
     { compose_property: 'build', architect_property: 'build', func: this.convertBuild },
     { compose_property: 'ports', architect_property: 'interfaces', func: this.convertPorts },
     { compose_property: 'volumes', architect_property: 'volumes', func: this.convertVolumes },
@@ -47,7 +58,6 @@ export class ComposeConverter {
     for (const [service_name, service_data] of Object.entries(docker_compose.services || {})) {
       const architect_service: Partial<ServiceSpec> = {};
       for (const [property_name, property_data] of Object.entries(service_data || {})) {
-
         const converters = this.compose_property_converters.filter(c => c.compose_property === property_name);
         if (!converters.length) {
           warnings.push(`Could not convert ${service_name} property "${property_name}"`);
@@ -206,29 +216,27 @@ export class ComposeConverter {
         } else {
           warnings.push(`Could not convert volume with spec ${volume}`);
         }
-      } else {
-        if (volume.source) { // local volume
-          const service_volume: Partial<VolumeSpec> = {};
-          service_volume.host_path = volume.source;
-          service_volume.mount_path = volume.target;
-          if (volume.read_only) {
-            service_volume.readonly = volume.read_only;
-          }
-
-          if (volume.type === 'volume' || compose_volumes.includes(volume.source)) {
-            service_volume.host_path = undefined;
-            volumes[volume_key] = service_volume;
-          } else {
-            local_volumes[volume_key] = service_volume;
-          }
-        } else {
-          const service_volume: Partial<VolumeSpec> = {};
-          service_volume.mount_path = volume.target;
-          if (volume.read_only) {
-            service_volume.readonly = volume.read_only;
-          }
-          volumes[volume_key] = service_volume;
+      } else if (volume.source) { // local volume
+        const service_volume: Partial<VolumeSpec> = {};
+        service_volume.host_path = volume.source;
+        service_volume.mount_path = volume.target;
+        if (volume.read_only) {
+          service_volume.readonly = volume.read_only;
         }
+
+        if (volume.type === 'volume' || compose_volumes.includes(volume.source)) {
+          service_volume.host_path = undefined;
+          volumes[volume_key] = service_volume;
+        } else {
+          local_volumes[volume_key] = service_volume;
+        }
+      } else {
+        const service_volume: Partial<VolumeSpec> = {};
+        service_volume.mount_path = volume.target;
+        if (volume.read_only) {
+          service_volume.readonly = volume.read_only;
+        }
+        volumes[volume_key] = service_volume;
       }
       volume_index++;
     }

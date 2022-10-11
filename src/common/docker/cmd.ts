@@ -13,7 +13,7 @@ export const docker = async (args: string[], opts = { stdout: true }, execa_opts
     cmd.stdout?.pipe(process.stdout);
     cmd.stderr?.pipe(process.stderr);
   }
-  return await cmd;
+  return cmd;
 };
 
 export const restart = async (container_id: string): Promise<void> => {

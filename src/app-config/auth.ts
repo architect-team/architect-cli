@@ -129,7 +129,7 @@ export default class AuthClient {
         payload: { 'client_id': this.config.oauth_client_id },
         headers: { 'HOST': url.hostname },
         rejectUnauthorized: !url.hostname.endsWith('.localhost'),
-      }
+      },
     );
 
     const decoded_token = this.decodeIdToken(access_token.token.id_token);

@@ -26,7 +26,7 @@ export default class Environments extends BaseCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Environments);
 
-    let account: Account | undefined = undefined;
+    let account: Account | undefined;
     if (flags.account) {
       account = await AccountUtils.getAccount(this.app, flags.account);
     }
