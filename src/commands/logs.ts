@@ -127,7 +127,7 @@ export default class Logs extends BaseCommand {
     const logger = new Writable();
 
     logger._write = (chunk, _encoding, next) => {
-      chunk.toString().split('\n').filter((e: string) => e).forEach((line: string) => {
+      for (let line of chunk.toString().split('\n').filter((e: string) => e)) {
         if (!flags.raw && show_header) {
           this.log(chalk.bold(chalk.white('Logs:')));
           this.log(chalk.bold(chalk.white('―'.repeat(process.stdout.columns))));
@@ -137,7 +137,7 @@ export default class Logs extends BaseCommand {
           line = line.substring(line.indexOf('|') + 1);
         }
         this.log(prefix, chalk.cyan(line));
-      });
+      }
       next();
     };
 

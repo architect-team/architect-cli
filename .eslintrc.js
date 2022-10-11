@@ -29,7 +29,6 @@ module.exports = {
     'indent': 0,
     'no-await-in-loop': 0,
 
-    'unicorn/no-array-for-each': 'off',
     'unicorn/no-array-reduce': 'off',
     'unicorn/no-for-loop': 'off',
     'unicorn/no-instanceof-array': 'off',

@@ -127,11 +127,11 @@ export class DependencyGraphMutable {
         this.removeNodeByRef(node.ref);
 
         if (cleanup_dangling) {
-          dependencies.forEach((dep) => {
+          for (const dep of dependencies) {
             if (!queue.includes(dep.ref)) {
               queue.push(dep.ref);
             }
-          });
+          }
         }
       }
     }

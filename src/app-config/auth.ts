@@ -78,9 +78,10 @@ export default class AuthClient {
     }
     const payloadJSON = JSON.parse(decodeURIComponent(Buffer.from(payload, 'base64').toString()));
     const claims: any = { __raw: token };
-    Object.keys(payloadJSON).forEach(k => {
+
+    for (const k of Object.keys(payloadJSON)) {
       claims[k] = payloadJSON[k];
-    });
+    }
     return claims;
   }
 
