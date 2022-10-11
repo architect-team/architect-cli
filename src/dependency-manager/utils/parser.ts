@@ -191,7 +191,7 @@ export class ArchitectParser {
             type: 'Literal',
             value: value,
           };
-        } else if (node.type == 'CallExpression') {
+        } else if (node.type === 'CallExpression') {
           let value;
           if (node.callee.value === 'trim') {
             value = node.arguments[0].value.trim();
@@ -204,7 +204,7 @@ export class ArchitectParser {
             type: 'Literal',
             value: value,
           };
-        } else if (node.type == 'IfStatement') {
+        } else if (node.type === 'IfStatement') {
           if (node.test.type === 'Literal') {
             return {
               type: 'Literal',

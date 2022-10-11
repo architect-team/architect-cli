@@ -527,7 +527,7 @@ export class DockerComposeUtils {
 
   public static async isLocalEnvironment(environment_name: string): Promise<boolean> {
     const local_enviromments = await DockerComposeUtils.getLocalEnvironments();
-    return !!(local_enviromments.some(env => env == environment_name));
+    return !!(local_enviromments.includes(environment_name));
   }
 
   public static async getLocalEnvironment(config_dir: string, environment_name?: string): Promise<string> {
@@ -727,7 +727,7 @@ export class DockerComposeUtils {
             // Docker compose will stop watching when there is a single container and it goes down.
             // If all containers go down at the same time it will wait for the restart and just move on. So only need this
             // for the case of 1 container with a health check.
-            if (container_states.length == 1) {
+            if (container_states.length === 1) {
               DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(service_data.last_restart_ms).toISOString()], { stdout: 'inherit' });
             }
           }

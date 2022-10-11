@@ -33,7 +33,7 @@ export default class SentryService {
   initSentry(): void {
     this.ignoreTryCatch(async () => {
       Sentry.init({
-        enabled: process.env.TEST !== '1' && process.env.NODE_ENV != 'development' && process.env.NODE_ENV != ENVIRONMENT.PREVIEW,
+        enabled: process.env.TEST !== '1' && process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== ENVIRONMENT.PREVIEW,
         dsn: CLI_SENTRY_DSN,
         debug: false,
         environment: process.env?.NODE_ENV ?? 'production',

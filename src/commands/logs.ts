@@ -113,10 +113,10 @@ export default class Logs extends BaseCommand {
     if (flags.timestamps) {
       compose_args.push('--timestamps');
     }
-    if (flags.tail != -1) {
+    if (flags.tail !== -1) {
       compose_args.push('--tail', flags.tail.toString());
     }
-    if (flags.since != '') {
+    if (flags.since !== '') {
       compose_args.push('--since', flags.since.toString());
     }
     compose_args.push(service.name);

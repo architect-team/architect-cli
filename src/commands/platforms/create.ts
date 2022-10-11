@@ -146,7 +146,7 @@ export default class PlatformCreate extends BaseCommand {
       CliUx.ux.action.stop();
       this.log(`Platform registered: ${this.app.config.app_host}/${account.name}/platforms/new?platform_id=${created_platform.id}`);
 
-      if (flags.type?.toLowerCase() == 'agent') {
+      if (flags.type?.toLowerCase() === 'agent') {
         CliUx.ux.action.start(chalk.blue('Installing the agent'));
         await AgentPlatformUtils.installAgent(flags, created_platform.token.access_token, AgentPlatformUtils.getServerAgentHost(this.app.config.agent_server_host), this.app.config);
         await AgentPlatformUtils.waitForAgent(flags);

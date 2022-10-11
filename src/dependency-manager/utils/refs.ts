@@ -7,10 +7,10 @@ export class Refs {
   public static safeRef(ref: string, max_length?: number): string;
   public static safeRef(ref: string, seed?: string, max_length?: number): string;
   public static safeRef(ref: string, seed?: string | number, max_length: number = Refs.DEFAULT_MAX_LENGTH): string {
-    if (typeof seed == 'number') {
+    if (typeof seed === 'number') {
       max_length = seed;
     }
-    if (typeof seed == 'number' || !seed) {
+    if (typeof seed === 'number' || !seed) {
       seed = ref;
     }
 

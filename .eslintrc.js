@@ -25,7 +25,6 @@ module.exports = {
 
     // Def enable
     'default-param-last': 0,
-    'eqeqeq': 0,
     'guard-for-in': 0,
     'indent': 0,
     'no-await-in-loop': 0,
