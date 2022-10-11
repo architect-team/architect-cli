@@ -208,7 +208,7 @@ export default class Deploy extends DeployCommand {
     const components = args.configs_or_components;
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const all_secret_file_values = flags['secret-file'].concat(flags.secrets); // TODO: 404: remove
+    const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
     const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values); // TODO: 404: update
     const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_file_values); // TODO: 404: remove
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
@@ -288,8 +288,8 @@ export default class Deploy extends DeployCommand {
     const { args, flags } = await this.parse(Deploy);
 
     if (args.configs_or_components && args.configs_or_components.length > 1 && flags.interface?.length) {
-        throw new Error('Interface flag not supported if deploying multiple components in the same command.');
-      }
+      throw new Error('Interface flag not supported if deploying multiple components in the same command.');
+    }
 
     if (flags.local) {
       this.log(chalk.yellow('The --local(-l) flag will be deprecated soon. Please switch over to using the architect dev command instead.'));

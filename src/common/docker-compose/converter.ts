@@ -83,7 +83,7 @@ export class ComposeConverter {
           }
 
           if (converted_props.warnings) {
-            warnings = warnings.concat(converted_props.warnings);
+            warnings = [...warnings, ...converted_props.warnings];
           }
         }
       }
@@ -257,7 +257,7 @@ export class ComposeConverter {
     }
 
     const depends_on: string[] = [];
-    const links: Set<string> = new Set((depends_on_or_links || []).concat(architect_service.depends_on || []));
+    const links: Set<string> = new Set([...(depends_on_or_links || []), ...(architect_service.depends_on || [])]);
     for (const link of links) {
       if (!depends_on.includes(link)) {
         depends_on?.push(link);

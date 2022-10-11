@@ -21,7 +21,7 @@ export default class DockerBuildXUtils {
 
   public static getBuildxPlatform(architecture: string): string {
     if (!PLATFORM_MAP.has(architecture)) {
-      const keys = Array.from(PLATFORM_MAP.keys()).join(', ');
+      const keys = [...PLATFORM_MAP.keys()].join(', ');
       throw new Error(`Architecture '${architecture}' is not supported. Supported architectures: ` + keys);
     }
     return PLATFORM_MAP.get(architecture) as string;

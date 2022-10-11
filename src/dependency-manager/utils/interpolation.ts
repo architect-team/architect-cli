@@ -107,7 +107,7 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
             to_add.push([value, current_path_keys]);
           }
         }
-        errors = errors.concat(parser.errors);
+        errors = [...errors, ...parser.errors];
         parser.errors = [];
       }
       if (has_conditional) {

@@ -452,7 +452,7 @@ export default abstract class DependencyManager {
 
     const parameters = transformDictionary(transformSecretDefinitionSpec, component_spec.parameters); // TODO: 404: remove
     const component_spec_secrets = transformDictionary(transformSecretDefinitionSpec, component_spec.secrets);
-    for (const [key, value] of Object.entries(parameters).concat(Object.entries(component_spec_secrets))) {
+    for (const [key, value] of [...Object.entries(parameters), ...Object.entries(component_spec_secrets)]) {
       context.secrets[key] = value.default;
     }
 
@@ -478,7 +478,7 @@ export default abstract class DependencyManager {
     }
 
     const nodes = this.getComponentNodes(component_config);
-    this.validateReservedNodeNames(nodes.concat(graph.nodes));
+    this.validateReservedNodeNames([...nodes, ...graph.nodes]);
 
     const has_interfaces = Object.keys(component_config.interfaces).length > 0;
     const has_outputs = Object.keys(component_config.outputs).length > 0;

@@ -112,7 +112,7 @@ export class DependencyGraphMutable {
       }
     }
 
-    return Array.from(nodes.values());
+    return [...nodes.values()];
   }
 
   removeNode(node_ref: string, cleanup_dangling: boolean): void {
@@ -146,7 +146,7 @@ export class DependencyGraphMutable {
       }
     }
 
-    return Array.from(nodes.values());
+    return [...nodes.values()];
   }
 
   followEdge(root_edge: DependencyEdge): { interface_from: string, interface_to: string, node_to: DependencyNode, node_to_interface_name: string }[] {
@@ -189,7 +189,7 @@ export class DependencyGraphMutable {
   getDependsOn(node: ServiceNode | TaskNode): ServiceNode[] {
     const explicit_depends_on = this.getExplicitDependsOn(node);
     const cross_component_depends_on = this.getInterComponentDependsOn(node);
-    const all_depends_on = explicit_depends_on.concat(cross_component_depends_on);
+    const all_depends_on = [...explicit_depends_on, ...cross_component_depends_on];
     return all_depends_on.filter(n => !n.is_external);
   }
 
@@ -212,7 +212,7 @@ export class DependencyGraphMutable {
     for (const i of interfaces) {
       const interface_downstreams = interfaces.map(i => this.getDownstreamNodes(i));
       for (const i_downstream of interface_downstreams) {
-        downstreams = downstreams.concat(i_downstream);
+        downstreams = [...downstreams, ...i_downstream];
       }
     }
     downstreams = downstreams.filter((node, index, self) => self.findIndex(n => n.ref === node.ref) === index); // dedupe
