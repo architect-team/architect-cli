@@ -123,8 +123,7 @@ export default class ComponentRegister extends BaseCommand {
     validateInterpolation(component_spec);
 
     const { component_account_name, component_name } = ComponentSlugUtils.parse(component_spec.name);
-    const selected_account = await AccountUtils.getAccount(this.app, component_account_name || flags.account);
-
+    const selected_account = await AccountUtils.getAccount(this.app, component_account_name || flags.account, { is_component_account_name: component_account_name !== undefined});
     if (flags.environment) { // will throw an error if a user specifies an environment that doesn't exist
       await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);
     }
@@ -142,8 +141,8 @@ export default class ComponentRegister extends BaseCommand {
     }
 
     const getImage = (ref: string) => {
-      const { component_account_name, component_name, resource_type, resource_name } = ResourceSlugUtils.parse(ref);
-      const ref_with_account = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, resource_type, resource_name);
+      const { component_name, resource_type, resource_name } = ResourceSlugUtils.parse(ref);
+      const ref_with_account = ResourceSlugUtils.build(selected_account.name, component_name, resource_type, resource_name);
       const image = `${this.app.config.registry_host}/${ref_with_account}:${tag}`;
       return image;
     };
@@ -171,8 +170,8 @@ export default class ComponentRegister extends BaseCommand {
         const ref_label = service.labels.find(label => label.startsWith('architect.ref='));
         if (!ref_label) continue;
         const ref = ref_label.replace('architect.ref=', '');
-        const { component_account_name, component_name, resource_type, resource_name } = ResourceSlugUtils.parse(ref);
-        const ref_with_account = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, resource_type, resource_name);
+        const { component_name, resource_type, resource_name } = ResourceSlugUtils.parse(ref);
+        const ref_with_account = ResourceSlugUtils.build(selected_account.name, component_name, resource_type, resource_name);
 
         const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags['architecture']);
 
@@ -264,7 +263,7 @@ export default class ComponentRegister extends BaseCommand {
 
       delete service.debug; // we don't need to compare the debug block for remotely-deployed components
 
-      const ref = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, 'services', service_name);
+      const ref = ResourceSlugUtils.build(selected_account.name, component_name, 'services', service_name);
       const image = image_mapping[ref];
       if (image) {
         const digest = await this.getDigest(image);
@@ -281,7 +280,7 @@ export default class ComponentRegister extends BaseCommand {
 
       delete task.debug; // we don't need to compare the debug block for remotely-deployed components
 
-      const ref = ResourceSlugUtils.build(component_account_name || selected_account.name, component_name, 'tasks', task_name);
+      const ref = ResourceSlugUtils.build(selected_account.name, component_name, 'tasks', task_name);
       const image = image_mapping[ref];
       if (image) {
         const digest = await this.getDigest(image);

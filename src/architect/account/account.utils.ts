@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AppService from '../../app-config/service';
 import { DockerHelper } from '../../common/docker/helper';
+import Membership from '../user/user.utils';
 import Account from './account.entity';
 
 export default class AccountUtils {
@@ -36,7 +37,7 @@ export default class AccountUtils {
     return account.id === "dev";
   }
 
-  static async getAccount(app: AppService, account_name?: string, options?: { account_message?: string, ask_local_account?: boolean }): Promise<Account> {
+  static async getAccount(app: AppService, account_name?: string, options?: { account_message?: string, ask_local_account?: boolean, is_component_account_name?: boolean }): Promise<Account> {
     const config_account = app.config.defaultAccount();
     // Set the account name from the config only if an account name wasn't set as cli flag
     if (config_account && !account_name && !options?.ask_local_account) {
@@ -69,6 +70,17 @@ export default class AccountUtils {
       ]);
 
       return this.getLocalAccount();
+    }
+
+    if (options?.is_component_account_name) {
+      const { data: user_data } = await app.api.get('/users/me');
+      if (user_data.memberships?.length > 0) {
+        const account = user_data.memberships.find((membership: Membership) => membership.account.name === account_name);
+        if (!account) {
+          console.log(chalk.yellow(`The account name '${account_name}' was found as part of the component name in your architect.yml file. Either that account does not exist or you do not have permission to access it. You can select from a valid list of your accounts below.\n`));
+          account_name = '';
+        }
+      }
     }
 
     let account: Account;
