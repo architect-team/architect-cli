@@ -33,7 +33,6 @@ module.exports = {
     'unicorn/no-for-loop': 'off',
     'unicorn/no-object-as-default-parameter': 'off',
     'unicorn/prefer-object-from-entries': 'off',
-    'unicorn/prefer-set-has': 'off',
     'unicorn/prefer-spread': 'off',
 
     // Consider enabling

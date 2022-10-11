@@ -498,9 +498,9 @@ export class DockerComposeUtils {
    */
   public static async getLocalEnvironmentContainerMap(): Promise<{ [key: string]: DockerInspect[] }> {
     const running_cmd = await execa('docker', ['compose', 'ls', '--format=json']);
-    const running_projects = JSON.parse(running_cmd.stdout).map((container: any) => {
+    const running_projects = new Set(JSON.parse(running_cmd.stdout).map((container: any) => {
       return container.Name;
-    });
+    }));
 
     const container_info = await this.getAllContainerInfo();
     const env_map: { [key: string]: DockerInspect[] } = {};
@@ -509,7 +509,7 @@ export class DockerComposeUtils {
         continue;
       }
       const project = container.Config.Labels['com.docker.compose.project'];
-      if (!running_projects.includes(project)) {
+      if (!running_projects.has(project)) {
         continue;
       }
 

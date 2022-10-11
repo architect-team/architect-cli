@@ -3,7 +3,7 @@ import { DecoratorSchema } from 'class-validator-jsonschema/build/decorators';
 import { EXPRESSION_REGEX } from './interpolation';
 
 export const REF_PREFIX = '#/definitions/';
-const PRIMITIVES = ['integer', 'number', 'string', 'boolean', 'object', 'null', 'array'];
+const PRIMITIVES = new Set(['integer', 'number', 'string', 'boolean', 'object', 'null', 'array']);
 
 /**
  * Returns a partial JSON Schema to define a disjunctive type
@@ -15,7 +15,7 @@ export const AnyOf = (...args: any): DecoratorSchema => {
   const anyOf = [];
 
   for (const arg of args) {
-    if (typeof arg === 'string' && PRIMITIVES.includes(arg)) {
+    if (typeof arg === 'string' && PRIMITIVES.has(arg)) {
       anyOf.push({
         type: arg,
       });
@@ -44,7 +44,7 @@ export const ArrayOfAny = (...args: any): DecoratorSchema => {
   const anyOf = [];
 
   for (const arg of args) {
-    if (typeof arg === 'string' && PRIMITIVES.includes(arg)) {
+    if (typeof arg === 'string' && PRIMITIVES.has(arg)) {
       anyOf.push({
         type: arg,
       });

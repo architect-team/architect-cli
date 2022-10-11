@@ -685,8 +685,8 @@ export default abstract class DependencyManager {
       // Set consumers context
       if (ingress_edge) {
         for (const [interface_name, consumer_refs] of Object.entries(ingress_edge.consumers_map)) {
-          const interfaces_refs = graph.edges.filter(edge => consumer_refs.has(edge.to) && graph.getNodeByRef(edge.from) instanceof ComponentNode).map(edge => edge.from);
-          const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && interfaces_refs.includes(edge.to)) as IngressEdge[];
+          const interfaces_refs = new Set(graph.edges.filter(edge => consumer_refs.has(edge.to) && graph.getNodeByRef(edge.from) instanceof ComponentNode).map(edge => edge.from));
+          const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && interfaces_refs.has(edge.to)) as IngressEdge[];
           const consumers = new Set<string>();
           for (const consumer_ingress_edge of consumer_ingress_edges) {
             const interface_node = graph.getNodeByRef(consumer_ingress_edge.to) as ComponentNode;
