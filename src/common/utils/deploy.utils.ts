@@ -13,7 +13,7 @@ export default class DeployUtils {
         const key = secret_name.substring(4);
         let value: string | number | undefined = secret_value;
         if (value && isNumberString(value)) {
-          value = parseFloat(value);
+          value = Number.parseFloat(value);
         }
         extra_secrets[key] = value;
       }
@@ -26,7 +26,7 @@ export default class DeployUtils {
       }
       let value: string | number = secret_split[1];
       if (isNumberString(value)) {
-        value = parseFloat(value);
+        value = Number.parseFloat(value);
       }
       extra_secrets[secret_split[0]] = value;
     }

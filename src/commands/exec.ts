@@ -284,21 +284,21 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     let service_replicas = [];
     let replica_idx;
     const replica_parts = replica_flag.split(':');
-    if (replica_parts.length === 1 && !isNaN(parseInt(replica_parts[0]))) {
+    if (replica_parts.length === 1 && !Number.isNaN(Number.parseInt(replica_parts[0]))) {
       if (resource_names.length > 1) {
         throw new ArchitectError(`More than one service is found [${resource_names.join(', ')}]. Please specify replica in the form of <service-name>:<replica-index>.`);
       }
 
       service_replicas = replicas;
-      replica_idx = parseInt(replica_flag);
-    } else if (replica_parts.length === 2 && !isNaN(parseInt(replica_parts[1]))) {
+      replica_idx = Number.parseInt(replica_flag);
+    } else if (replica_parts.length === 2 && !Number.isNaN(Number.parseInt(replica_parts[1]))) {
       const [service_name, service_replica_idx] = replica_parts;
       if (!(service_name in resources)) {
         throw new ArchitectError(`No service name found for '${service_name}'. Try ${resource_names.join(', ')}.`);
       }
 
       service_replicas = resources[service_name];
-      replica_idx = parseInt(service_replica_idx);
+      replica_idx = Number.parseInt(service_replica_idx);
     } else {
       throw new ArchitectError('Replica must be of the form <service-name>:<replica-index> or <replica-index>.');
     }

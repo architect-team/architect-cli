@@ -127,7 +127,7 @@ export default class Doctor extends BaseCommand {
   };
 
   async numRecordsInputIsValid(num?: any): Promise<boolean> {
-    if (!num || isNaN(num)) {
+    if (!num || Number.isNaN(num)) {
       return false;
     }
     return (num >= DOCTOR_PROPERTIES.HISTORY_LENGTH.LOWER_BOUND_INCLUSIVE &&

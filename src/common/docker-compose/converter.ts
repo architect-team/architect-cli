@@ -150,7 +150,7 @@ export class ComposeConverter {
         const port_range_regex = new RegExp('(\\d+[-]\\d+)\\/*([a-zA-Z]+)*$');
 
         if (single_number_port_regex.test(string_port)) {
-          interfaces[interface_name] = typeof port === 'string' ? parseInt(port) : port;
+          interfaces[interface_name] = typeof port === 'string' ? Number.parseInt(port) : port;
           port_index++;
         } else if (single_port_regex.test(string_port)) {
           const matches = single_port_regex.exec(string_port);
@@ -159,7 +159,7 @@ export class ComposeConverter {
             interface_spec.protocol = matches[2];
           }
           if (matches && matches.length >= 2) {
-            interface_spec.port = parseInt(matches[1].split(':')[1]);
+            interface_spec.port = Number.parseInt(matches[1].split(':')[1]);
           }
           (interfaces[interface_name] as Partial<ServiceInterfaceSpec>) = interface_spec;
           port_index++;
@@ -167,7 +167,7 @@ export class ComposeConverter {
           const matches = port_range_regex.exec(string_port);
           if (matches && matches.length >= 2) {
             const [start, end] = matches[1].split('-');
-            for (let i = parseInt(start); i < parseInt(end) + 1; i++) {
+            for (let i = Number.parseInt(start); i < Number.parseInt(end) + 1; i++) {
               interface_name = port_index === 0 ? 'main' : `main${port_index + 1}`;
               interfaces[interface_name] = i;
               port_index++;
@@ -178,7 +178,7 @@ export class ComposeConverter {
         }
       } else {
         const interface_spec: Partial<ServiceInterfaceSpec> = {};
-        interface_spec.port = typeof port.target === 'string' ? parseInt(port.target) : port.target;
+        interface_spec.port = typeof port.target === 'string' ? Number.parseInt(port.target) : port.target;
         if (port.protocol) {
           interface_spec.protocol = port.protocol;
         }
