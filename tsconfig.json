@@ -18,7 +18,8 @@
       {
         "transform": "typescript-json/lib/transform"
       }
-    ]
+    ],
+    "skipLibCheck": true
   },
   "ts-node": {
     "compiler": "ttypescript"
