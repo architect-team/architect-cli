@@ -76,7 +76,7 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
   const ignore_data_paths = new Set<string>();
   for (const data_path of sorted_data_path_keys) {
     const segments_list = data_path.split('.');
-    const segments = segments_list.slice(0, segments_list.length - 1);
+    const segments = segments_list.slice(0, -1);
     let path = '';
     for (const segment of segments) {
       path += path ? `.${segment}` : segment;
@@ -174,7 +174,6 @@ export const validateDependsOn = (component: ComponentSpec): ValidationError[] =
 
   for (const [name, dependencies] of Object.entries(depends_on_map)) {
     for (const dependency of dependencies) {
-
       if (task_map[dependency]) {
         const error = new ValidationError({
           component: component.name,
@@ -218,16 +217,12 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
 
   const component_spec = plainToClass(ComponentSpec, parsed_yml);
 
-  if (metadata) {
-    component_spec.metadata = metadata;
-  } else {
-    component_spec.metadata = {
-      ref: component_spec.name,
-      architect_ref: component_spec.name,
-      tag: 'latest',
-      instance_date: new Date(),
-    };
-  }
+  component_spec.metadata = metadata ? metadata : {
+    ref: component_spec.name,
+    architect_ref: component_spec.name,
+    tag: 'latest',
+    instance_date: new Date(),
+  };
 
   if (!metadata?.interpolated) {
     // Don't allow host_path outside of debug block

@@ -150,7 +150,7 @@ export default class SentryService {
 
   private async filterNonSensitiveSentryMetadata(non_sensitive: Set<string>, metadata: any): Promise<any> {
     return Object.entries(metadata)
-      .filter((value,) => !!value[1] && non_sensitive.has(value[0]))
+      .filter((value) => !!value[1] && non_sensitive.has(value[0]))
       .map(key => ({ [key[0]]: key[1] }));
   }
 

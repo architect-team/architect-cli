@@ -1,4 +1,5 @@
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
+// eslint-disable-next-line node/no-extraneous-import
 import { SchemaObject } from 'openapi3-ts';
 import { Dictionary } from '../../utils/dictionary';
 import { ComponentSpec } from '../component-spec';
@@ -55,7 +56,6 @@ export const findDefinition = (pointer: string, schema: SchemaObject): SchemaObj
       }
     } else if (property.patternProperties) {
       for (const pattern_property of Object.values(property.patternProperties)) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const anyOf = (pattern_property as SchemaObject)!.anyOf || [];
         for (const x of anyOf) {
           if (x.$ref) {
@@ -100,7 +100,6 @@ const recursivelyReplaceDebugRefs = (obj: SchemaObject) => {
  * @returns
  */
 const mergeDebugSpec = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
-
   const service_spec_name = ServiceSpec.name;
   const task_spec_name = TaskSpec.name;
   const debug_field = 'debug';
@@ -121,14 +120,12 @@ const mergeDebugSpec = (definitions: Record<string, SchemaObject>): Record<strin
   }
 
   if (definitions[service_spec_name]?.properties) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     definitions[service_spec_name].properties![debug_field].$ref = `${REF_PREFIX}${DEBUG_PREFIX}${service_spec_name}`;
   } else {
     throw new Error(`The Spec has been modified in a way such that the debug block is no longer being added to ${service_spec_name}!`);
   }
 
   if (definitions[task_spec_name]?.properties) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     definitions[task_spec_name].properties![debug_field].$ref = `${REF_PREFIX}${DEBUG_PREFIX}${task_spec_name}`;
   } else {
     throw new Error(`The Spec has been modified in a way such that the debug block is no longer being added to ${task_spec_name}!`);

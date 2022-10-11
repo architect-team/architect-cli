@@ -20,7 +20,6 @@ export const transformDictionary = <T, U>(transform: (key: string, value: T, ...
 };
 
 export const sortOnKeys = <T>(dict: Dictionary<T>): Dictionary<T> => {
-
   const sorted = [];
   for (const key in dict) {
     sorted[sorted.length] = key;

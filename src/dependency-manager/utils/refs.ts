@@ -5,9 +5,7 @@ export class Refs {
   public static DEFAULT_MAX_LENGTH = 63;
 
   public static safeRef(ref: string, max_length?: number): string;
-  // eslint-disable-next-line no-dupe-class-members
   public static safeRef(ref: string, seed?: string, max_length?: number): string;
-  // eslint-disable-next-line no-dupe-class-members
   public static safeRef(ref: string, seed?: string | number, max_length: number = Refs.DEFAULT_MAX_LENGTH): string {
     if (typeof seed == 'number') {
       max_length = seed;
@@ -30,7 +28,9 @@ export class Refs {
   public static trimSafeRef(ref: string, max_length = Refs.DEFAULT_MAX_LENGTH, prefix = '', suffix = ''): string {
     const split = ref.split('-');
     const hash = split.pop();
-    if (!hash || hash.length !== Refs.HASH_LENGTH) { throw new Error(`Not a valid ref: ${ref}`); }
+    if (!hash || hash.length !== Refs.HASH_LENGTH) {
+      throw new Error(`Not a valid ref: ${ref}`);
+    }
 
     const target_length = max_length - (hash.length + 1 + suffix.length);
     if (target_length < 0) {

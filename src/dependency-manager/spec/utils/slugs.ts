@@ -4,7 +4,6 @@ export type ArchitectSlug = string; // a string that passes Slugs.ArchitectSlugV
 export type ComponentTag = string; // "tag"
 
 export class Slugs {
-
   public static DEFAULT_TAG = 'latest';
 
   public static NAMESPACE_DELIMITER = '/';
@@ -74,9 +73,7 @@ function parseCurry<S extends string, P extends ParsedSlug>() {
   return parse;
 }
 
-
 export class ComponentSlugUtils extends SlugUtils {
-
   public static Description = `${Slugs.ArchitectSlugDescription}; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).`;
 
   static RegexName = `(?:(?<component_account_name>${Slugs.ArchitectSlugRegexBase})${Slugs.NAMESPACE_DELIMITER})?(?<component_name>${Slugs.ArchitectSlugRegexBase})`;
@@ -109,7 +106,6 @@ export interface ParsedComponentVersionSlug extends ParsedSlug {
 }
 
 export class ComponentVersionSlugUtils extends SlugUtils {
-
   public static Description = ComponentSlugUtils.Description;
 
   public static RegexTag = `(?:${Slugs.TAG_DELIMITER}(?<tag>${Slugs.ComponentTagRegexBase}))?`;
@@ -143,7 +139,6 @@ export interface ParsedResourceSlug extends ParsedSlug {
   instance_name?: string;
 }
 export class ResourceSlugUtils extends SlugUtils {
-
   public static Description = 'must be of the form <account-name>/<component-name>.services|tasks.<resource-name>';
 
   public static RegexResource = `${ComponentSlugUtils.RegexName}\\${Slugs.RESOURCE_DELIMITER}(?<resource_type>services|tasks)\\${Slugs.RESOURCE_DELIMITER}(?<resource_name>${Slugs.ArchitectSlugRegexBase})`;
@@ -176,11 +171,9 @@ export interface ParsedUnknownSlug extends ParsedSlug {
 export const parseUnknownSlug = (unknown: string): ParsedUnknownSlug => {
   try {
     return ComponentSlugUtils.parse(unknown);
-    // eslint-disable-next-line no-empty
   } catch { }
   try {
     return ComponentVersionSlugUtils.parse(unknown);
-    // eslint-disable-next-line no-empty
   } catch { }
   return ResourceSlugUtils.parse(unknown);
 };

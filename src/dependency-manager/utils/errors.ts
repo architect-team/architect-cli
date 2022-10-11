@@ -25,7 +25,7 @@ const addLineNumbers = (value: string, errors: ValidationError[]): void => {
       if (error.invalid_key) {
         error.start = {
           row: target_row + 1,
-          column: (end_row.length - end_row.trimLeft().length) + 1,
+          column: (end_row.length - end_row.trimStart().length) + 1,
         };
         error.end = {
           row: target_row + 1,
