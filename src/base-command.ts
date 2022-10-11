@@ -119,7 +119,7 @@ export default abstract class BaseCommand extends Command {
 
     try {
       if (error.stack) {
-        error.stack = [...new Set(error.stack.split('\n'))].join("\n");
+        error.stack = [...new Set(error.stack.split('\n'))].join('\n');
       }
 
       if (error instanceof ValidationErrors) {

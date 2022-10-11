@@ -206,15 +206,15 @@ export default class Doctor extends BaseCommand {
     if (flags.output) {
       try {
         fs.writeJson(flags.output, this.history, { spaces: 2 });
-        return console.log(chalk.green("Please submit the generated information file with your support ticket at https://support.architect.io/"));
+        return console.log(chalk.green('Please submit the generated information file with your support ticket at https://support.architect.io/'));
       } catch (e: any) {
         if (!seen) {
           console.log(util.inspect(this.history, false, 100, true));
         }
-        console.log(chalk.yellow("Unable to save information file to the specified file path"));
+        console.log(chalk.yellow('Unable to save information file to the specified file path'));
       }
     }
 
-    console.log(chalk.green("Please submit the generated information above with your support ticket at https://support.architect.io/"));
+    console.log(chalk.green('Please submit the generated information above with your support ticket at https://support.architect.io/'));
   }
 }

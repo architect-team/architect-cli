@@ -18,6 +18,7 @@ module.exports = {
     'padding-line-between-statements': 0,
     'radix': 0,
     'semi': 'off',
+    'quotes': ['error', 'single', { 'allowTemplateLiterals': true }],
 
     'unicorn/no-zero-fractions': 'off',
     'unicorn/prefer-node-protocol': 'off',
@@ -25,10 +26,8 @@ module.exports = {
 
     // Def enable
     'default-param-last': 0,
-    'guard-for-in': 0,
     'indent': 0,
     'no-await-in-loop': 0,
-    'quotes': [0], // ['error', 'single', { 'allowTemplateLiterals': true }],
 
     'unicorn/no-array-for-each': 'off',
     'unicorn/no-array-reduce': 'off',

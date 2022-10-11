@@ -140,13 +140,13 @@ class _DockerHelper {
 
   verifyBuildX(): void {
     if (!this.docker_info.buildx) {
-      throw new ArchitectError("'docker buildx' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.");
+      throw new ArchitectError('\'docker buildx\' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.');
     }
   }
 
   verifyCompose(): void {
     if (!this.docker_info.compose) {
-      throw new ArchitectError("'docker compose' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.");
+      throw new ArchitectError('\'docker compose\' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.');
     }
   }
 

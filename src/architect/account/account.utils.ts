@@ -34,7 +34,7 @@ export default class AccountUtils {
   }
 
   static isLocalAccount(account: Account): boolean {
-    return account.id === "dev";
+    return account.id === 'dev';
   }
 
   static async getAccount(app: AppService, account_name?: string, options?: { account_message?: string, ask_local_account?: boolean }): Promise<Account> {

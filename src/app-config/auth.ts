@@ -84,7 +84,7 @@ export default class AuthClient {
     return claims;
   }
 
-  public getAuthClient(): AuthorizationCode<"client_id"> {
+  public getAuthClient(): AuthorizationCode<'client_id'> {
     const is_auth0 = ['https://auth.architect.io', 'https://architect-dev.us.auth0.com'].includes(this.config.oauth_host);
 
     let oauth_token_host = this.config.oauth_host;

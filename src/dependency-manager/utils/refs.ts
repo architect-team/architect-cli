@@ -48,7 +48,7 @@ export class Refs {
    */
   private static toDigest(uri: string): string {
     return crypto.createHash('md5').update(uri)
-      .digest("base64") // base64 adds entropy in a more compact string
+      .digest('base64') // base64 adds entropy in a more compact string
       .toLowerCase() // we need to makes everything lower which unfortunately removes some entropy
       .replace(/[\\/+=]/g, ''); // we also remove occurances of slash, plus, and equals to make url-safe
   }

@@ -1,4 +1,4 @@
-import AppService from "../../app-config/service";
+import AppService from '../../app-config/service';
 
 export default class UserUtils {
   static async isAdmin(app: AppService, account_id: string): Promise<boolean> {

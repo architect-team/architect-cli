@@ -488,7 +488,7 @@ export class DockerComposeUtils {
       return [];
     }
     const containers = container_cmd.stdout.split('\n');
-    const inspect_cmd = await execa('docker', ['inspect', "--format='{{json .}}'", ...containers]);
+    const inspect_cmd = await execa('docker', ['inspect', '--format=\'{{json .}}\'', ...containers]);
     return inspect_cmd.stdout.split('\n').map(data => JSON.parse(data.substring(1, data.length - 1)));
   }
 

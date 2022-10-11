@@ -192,7 +192,7 @@ class UpProcessManager {
           }
 
           const color = service_colors.get(service) as chalk.Chalk;
-          console.log(color(service + "| ") + newLine);
+          console.log(color(service + '| ') + newLine);
         }
       }
     });
@@ -590,7 +590,7 @@ $ architect dev:stop ${environment}
 
 To continue running the other environment and create a new one you can run the \`dev\` command with the \`-e\` flag
 $ architect dev -e new_env_name_here .`));
-      this.error(new ArchitectError("Environment name already in use."));
+      this.error(new ArchitectError('Environment name already in use.'));
     }
   }
 
@@ -690,7 +690,7 @@ $ architect dev -e new_env_name_here .`));
   @RequiresDocker({ compose: true })
   async run(): Promise<void> {
     // Oclif only removes the command name if you are running that command
-    if (this.argv[0] && this.argv[0].toLocaleLowerCase() === "deploy") {
+    if (this.argv[0] && this.argv[0].toLocaleLowerCase() === 'deploy') {
       this.argv.splice(0, 1);
     }
     const { args, flags } = await this.parse(Dev);

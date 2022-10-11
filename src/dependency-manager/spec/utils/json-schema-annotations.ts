@@ -59,7 +59,7 @@ export const ArrayOfAny = (...args: any): DecoratorSchema => {
   }
 
   return {
-    type: "array",
+    type: 'array',
     items: {
       anyOf,
     },
@@ -79,7 +79,7 @@ export const ArrayOf = (arg: any): DecoratorSchema => {
 export const RequiredOr = (...properties: string[]): DecoratorSchema => {
   const anyOf = properties.map(p => {
     return {
-      type: "object",
+      type: 'object',
       required: [p],
     };
   });
@@ -100,7 +100,7 @@ export const RequiredOr = (...properties: string[]): DecoratorSchema => {
 export const ExclusiveOr = (...properties: string[]): DecoratorSchema => {
   const oneOf = properties.map(p => {
     return {
-      type: "object",
+      type: 'object',
       required: [p],
     };
   });
@@ -121,7 +121,7 @@ export const ExclusiveOr = (...properties: string[]): DecoratorSchema => {
 export const ExclusiveOrNeither = (...properties: string[]): DecoratorSchema => {
   return {
     not: {
-      type: "object",
+      type: 'object',
       required: [...properties],
     },
   } as DecoratorSchema;
@@ -138,7 +138,7 @@ export const ExclusiveOrNeither = (...properties: string[]): DecoratorSchema => 
 export const OneOf = (...properties: string[]): DecoratorSchema => {
   const anyOf = properties.map(p => {
     return {
-      type: "object",
+      type: 'object',
       required: [p],
     };
   });

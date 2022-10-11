@@ -141,7 +141,7 @@ export default class Logs extends BaseCommand {
       next();
     };
 
-    const childProcess = spawn('docker', ["compose", ...compose_args], { stdio: [process.stdin, null, process.stderr] });
+    const childProcess = spawn('docker', ['compose', ...compose_args], { stdio: [process.stdin, null, process.stderr] });
     (childProcess.stdout as Readable).pipe(logger);
 
     await new Promise((resolve) => {

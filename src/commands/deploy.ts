@@ -11,7 +11,7 @@ import DeployUtils from '../common/utils/deploy.utils';
 import { booleanString } from '../common/utils/oclif';
 import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-builder';
 import { ComponentVersionSlugUtils } from '../dependency-manager/spec/utils/slugs';
-import Dev from "./dev";
+import Dev from './dev';
 import ComponentRegister from './register';
 
 export abstract class DeployCommand extends BaseCommand {
@@ -292,8 +292,8 @@ export default class Deploy extends DeployCommand {
       }
 
     if (flags.local) {
-      this.log(chalk.yellow("The --local(-l) flag will be deprecated soon. Please switch over to using the architect dev command instead."));
-      this.log(chalk.yellow("All deprecated flags will also be removed."));
+      this.log(chalk.yellow('The --local(-l) flag will be deprecated soon. Please switch over to using the architect dev command instead.'));
+      this.log(chalk.yellow('All deprecated flags will also be removed.'));
       await new Promise(resolve => setTimeout(resolve, 2000));
       await Dev.run();
     } else {

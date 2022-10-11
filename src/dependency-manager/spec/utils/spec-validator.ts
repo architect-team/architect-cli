@@ -1,6 +1,6 @@
-import Ajv, { ErrorObject, ValidateFunction } from "ajv";
-import ajv_errors from "ajv-errors";
-import addFormats from "ajv-formats";
+import Ajv, { ErrorObject, ValidateFunction } from 'ajv';
+import ajv_errors from 'ajv-errors';
+import addFormats from 'ajv-formats';
 import { plainToClass } from 'class-transformer';
 import cron from 'cron-validate';
 import { Dictionary } from '../../utils/dictionary';
@@ -119,7 +119,7 @@ export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
     const ajv = new Ajv({ allErrors: true, unicodeRegExp: false });
     addFormats(ajv);
     ajv.addFormat('cidrv4', /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?:\/(?:3[0-2]|[12]?[0-9]))?$/);
-    ajv.addFormat('cron', (value: string): boolean => value === "" || cron(value, cron_options).isValid());
+    ajv.addFormat('cron', (value: string): boolean => value === '' || cron(value, cron_options).isValid());
     ajv.addKeyword('externalDocs');
     // https://github.com/ajv-validator/ajv-errors
     ajv_errors(ajv);
