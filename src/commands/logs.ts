@@ -13,6 +13,18 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import { RequiresDocker } from '../common/docker/helper';
 import { booleanString } from '../common/utils/oclif';
 
+function chunkSubstring(str: string, size: number) {
+  const numChunks = Math.ceil(str.length / size);
+  // eslint-disable-next-line unicorn/no-new-array
+  const chunks = new Array(numChunks);
+
+  for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+    chunks[i] = str.substring(o, o + size);
+  }
+
+  return chunks;
+}
+
 export default class Logs extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
@@ -70,17 +82,6 @@ export default class Logs extends BaseCommand {
     const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(display_name))} ${chalk.hex('#D3D3D3')('|')}`;
     const columns = process.stdout.columns - (display_name.length + 3);
 
-    function chunkSubstring(str: string, size: number) {
-      const numChunks = Math.ceil(str.length / size);
-      const chunks = new Array(numChunks);
-
-      for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
-        chunks[i] = str.substring(o, o + size);
-      }
-
-      return chunks;
-    }
-
     return (txt: string) => {
       if (displayRawLogs) {
         this.log(txt);
@@ -113,12 +114,10 @@ export default class Logs extends BaseCommand {
       compose_args.push('--timestamps');
     }
     if (flags.tail != -1) {
-      compose_args.push('--tail');
-      compose_args.push(flags.tail.toString());
+      compose_args.push('--tail', flags.tail.toString());
     }
     if (flags.since != '') {
-      compose_args.push('--since');
-      compose_args.push(flags.since.toString());
+      compose_args.push('--since', flags.since.toString());
     }
     compose_args.push(service.name);
 
@@ -250,6 +249,7 @@ export default class Logs extends BaseCommand {
   }
 
   async run(): Promise<void> {
+    // eslint-disable-next-line unicorn/prefer-module
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
     const { flags } = await this.parse(Logs);

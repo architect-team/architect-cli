@@ -81,7 +81,7 @@ export default class PipelineUtils {
 
       // Build a list of links for the failed deployments
       const failed_deployment_links = deployments
-        .filter((d: any) => d.failed_at)
+        .filter((d) => d.failed_at)
         .map((d: any) => this.getDeploymentUrl(app, d));
       throw new DeploymentFailedError(pipeline.id, failed_deployment_links);
     }

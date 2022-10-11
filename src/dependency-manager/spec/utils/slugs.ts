@@ -146,6 +146,7 @@ export class ResourceSlugUtils extends SlugUtils {
   public static RegexBase = `${ResourceSlugUtils.RegexResource}${ComponentSlugUtils.RegexInstance}`;
   public static Validator = new RegExp(`^${ResourceSlugUtils.RegexBase}$`);
 
+  // eslint-disable-next-line max-params
   public static build = (account_name: string | undefined, component_name: string, resource_type: ResourceType, resource_name: string, instance_name = ''): ResourceSlug => {
     let slug = `${component_name}${Slugs.RESOURCE_DELIMITER}${resource_type}${Slugs.RESOURCE_DELIMITER}${resource_name}`;
     if (account_name) {

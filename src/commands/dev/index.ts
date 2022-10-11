@@ -31,6 +31,9 @@ type TraefikHttpService = {
 
 const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/);
 
+const rand = () => Math.floor(Math.random() * 255);
+const onlyUnique = <T>(value: T, index: number, self: T[]) => self.indexOf(value) === index;
+
 /**
  * Converts a regular filepath into a path that is valid for a Windows socket
  * See https://nodejs.org/api/net.html#ipc-support for info.
@@ -169,7 +172,6 @@ class UpProcessManager {
     }
 
     const service_colors = new Map<string, chalk.Chalk>();
-    const rand = () => Math.floor(Math.random() * 255);
     this.compose_process.stdout?.on('data', (data) => {
       if (this.is_exiting) {
         return;
@@ -203,8 +205,8 @@ class UpProcessManager {
     this.configureLogs();
 
     const container_health = DockerComposeUtils.watchContainersHealth(this.compose_file, this.project_name, () => {
- return this.is_exiting;
-});
+      return this.is_exiting;
+    });
 
     try {
       await this.compose_process;
@@ -497,6 +499,7 @@ export default class Dev extends BaseCommand {
 
     await new UpProcessManager(compose_file, socket, project_name, flags.detached).run();
     fs.removeSync(compose_file);
+    // eslint-disable-next-line no-process-exit
     process.exit();
   }
 
@@ -555,8 +558,8 @@ export default class Dev extends BaseCommand {
         });
       }).catch(err => {
         return handleReject(resolve, () => {
- reject(err);
-});
+          reject(err);
+        });
       });
     });
   }
@@ -654,7 +657,7 @@ $ architect dev -e new_env_name_here .`));
     // Check if multiple instances of the same component are being deployed. This check is needed
     // so that we can disable automatic interface mapping since we can't map a single interface to
     // multiple components at this time
-    const onlyUnique = <T>(value: T, index: number, self: T[]) => self.indexOf(value) === index;
+    // eslint-disable-next-line unicorn/no-array-callback-reference
     const uniqe_names = component_versions.map(name => name.split('@')[0]).filter(onlyUnique);
     const duplicates = uniqe_names.length !== component_versions.length;
 
@@ -693,8 +696,8 @@ $ architect dev -e new_env_name_here .`));
     const { args, flags } = await this.parse(Dev);
 
     if (args.configs_or_components && args.configs_or_components.length > 1 && flags.interface?.length) {
-        throw new Error('Interface flag not supported if deploying multiple components in the same command.');
-      }
+      throw new Error('Interface flag not supported if deploying multiple components in the same command.');
+    }
 
     await this.runLocal();
   }

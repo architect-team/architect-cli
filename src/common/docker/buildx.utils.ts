@@ -54,7 +54,6 @@ export default class DockerBuildXUtils {
     // Create a docker context
     try {
       await docker(['context', 'create', `${builder}-context`]);
-      // eslint-disable-next-line no-empty
     } catch (err) { }
 
     try {
@@ -72,7 +71,6 @@ export default class DockerBuildXUtils {
           stdio: 'inherit',
         });
       }
-      // eslint-disable-next-line no-empty
     } catch { }
 
     return builder;
@@ -86,6 +84,7 @@ export default class DockerBuildXUtils {
     const cmd = execa('docker', [`--context=${docker_builder_name}-context`, 'buildx', '--builder', docker_builder_name, ...args], execa_opts);
     if (use_console) {
       cmd.on('exit', () => {
+        // eslint-disable-next-line no-process-exit
         process.exit();
       });
     }

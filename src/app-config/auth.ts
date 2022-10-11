@@ -3,7 +3,7 @@ import { URL } from 'url';
 import User from '../architect/user/user.entity';
 import { docker } from '../common/docker/cmd';
 import LoginRequiredError from '../common/errors/login-required';
-import CallbackServer from './callback_server';
+import CallbackServer from './callback-server';
 import AppConfig from './config';
 import CredentialManager from './credentials';
 

@@ -308,7 +308,6 @@ export default class ComponentRegister extends BaseCommand {
     let previous_config_data;
     try {
       previous_config_data = (await this.app.api.get(`/accounts/${selected_account.name}/components/${component_name}/versions/${tag || 'latest'}`)).data.config;
-      /* eslint-disable-next-line no-empty */
     } catch { }
 
     this.log(chalk.blue(`Begin component config diff`));

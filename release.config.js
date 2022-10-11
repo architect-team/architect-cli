@@ -67,6 +67,7 @@ const main_plugins = [
   backmerge,
 ];
 
+// eslint-disable-next-line unicorn/prefer-module
 module.exports = {
   "branches": [
     "main",
@@ -82,4 +83,5 @@ module.exports = {
   plugins: branch === 'main' ? main_plugins : default_plugins,
 };
 
+// eslint-disable-next-line unicorn/prefer-module
 console.log(module.exports);

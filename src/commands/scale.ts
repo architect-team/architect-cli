@@ -72,7 +72,7 @@ During this time we greatly appreciate any feedback as we continue to finalize t
           type: 'autocomplete',
           name: 'component_version',
           message: 'Select a component',
-          filter: (x: any) => x, // api filters
+          filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
             const { data } = await this.app.api.get(`/accounts/${account.id}/components`, { params: { q: input, limit: 10 } });
             const latest_component_versions = data.rows as ComponentVersion[];

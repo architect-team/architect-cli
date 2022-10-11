@@ -1,3 +1,4 @@
+// eslint-disable-next-line unicorn/prefer-module
 module.exports = {
   extends: [
     'oclif',
@@ -5,6 +6,7 @@ module.exports = {
   ],
   rules: {
     '@typescript-eslint/no-unused-vars': 0,
+    '@typescript-eslint/semi': ['error'],
 
     'array-element-newline': 0,
     'camelcase': [0],
@@ -15,7 +17,7 @@ module.exports = {
     'object-curly-spacing': ['error', 'always'],
     'padding-line-between-statements': 0,
     'radix': 0,
-    'semi': [2, 'always'],
+    'semi': 'off',
 
     'unicorn/no-zero-fractions': 'off',
     'unicorn/prefer-node-protocol': 'off',
@@ -45,6 +47,7 @@ module.exports = {
     'max-depth': ['error', 6],
     'no-implicit-coercion': 0,
     'no-negated-condition': 0,
+    'no-promise-executor-return': 0,
     'no-template-curly-in-string': 0,
     'no-warning-comments': 0,
     'one-var-declaration-per-line': 0,
@@ -57,6 +60,8 @@ module.exports = {
     'unicorn/catch-error-name': 'off',
     'unicorn/empty-brace-spaces': 'off',
     'unicorn/explicit-length-check': 'off',
+    'unicorn/import-style': 'off',
+    'unicorn/no-process-exit': 'off',
     'unicorn/no-static-only-class': 'off',
     'unicorn/no-useless-undefined': 'off',
     'unicorn/numeric-separators-style': 'off',

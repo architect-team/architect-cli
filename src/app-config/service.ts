@@ -85,7 +85,7 @@ export default class AppService {
   unlinkComponent(componentNameOrPath: string): string | undefined {
     let res;
 
-    if (this.linkedComponents.hasOwnProperty(componentNameOrPath)) {
+    if (componentNameOrPath in this.linkedComponents) {
       delete this.linkedComponents[componentNameOrPath];
       res = componentNameOrPath;
     } else {

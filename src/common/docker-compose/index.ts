@@ -328,6 +328,7 @@ export class DockerComposeUtils {
 
       if (service.build) {
         if (!service.image) {
+          // eslint-disable-next-line unicorn/consistent-destructuring
           const image = options.getImage ? options.getImage(node.config.metadata.ref) : node.ref;
           service.image = image;
         }
@@ -453,7 +454,6 @@ export class DockerComposeUtils {
     } catch {
       try {
         raw_config = yaml.load(file_contents);
-        // eslint-disable-next-line no-empty
       } catch { }
     }
 
@@ -472,6 +472,7 @@ export class DockerComposeUtils {
     const cmd = execa('docker', ['compose', ...args], execa_opts);
     if (use_console) {
       cmd.on('exit', () => {
+        // eslint-disable-next-line no-process-exit
         process.exit(cmd.exitCode || 0);
       });
     }

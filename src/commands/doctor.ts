@@ -136,6 +136,7 @@ export default class Doctor extends BaseCommand {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Doctor);
+    // eslint-disable-next-line unicorn/prefer-module
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
     const answers: any = await inquirer.prompt([
       {
@@ -143,7 +144,7 @@ export default class Doctor extends BaseCommand {
         name: 'history',
         default: DOCTOR_PROPERTIES.HISTORY_LENGTH.DEFAULT_VALUE,
         message: `How many historical commands should we include in the report? (${Doctor.history_length_hint})`,
-        filter: async (input: any) => await this.numRecordsInputIsValid(input as number) ? input : DOCTOR_PROPERTIES.HISTORY_LENGTH.DEFAULT_VALUE,
+        filter: async (input) => await this.numRecordsInputIsValid(input as number) ? input : DOCTOR_PROPERTIES.HISTORY_LENGTH.DEFAULT_VALUE,
       },
       {
         type: 'confirm',

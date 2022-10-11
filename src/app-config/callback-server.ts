@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
+import { ArchitectError } from '../dependency-manager/utils/errors';
 
 export default class CallbackServer {
   async listenForCallback(port: number): Promise<string> {
@@ -16,7 +17,7 @@ export default class CallbackServer {
             res.writeHead(400, { 'Content-Type': 'text/html' });
             const failure_html = failure_file.toString().replace('%%FAILURE_MESSAGE%%', (queryObject.get('error_description') as string));
             res.end(failure_html);
-            reject('Login failed: ' + queryObject.get('error_description'));
+            reject(new ArchitectError('Login failed: ' + queryObject.get('error_description')));
           } else {
             res.writeHead(200, { 'Content-Type': 'text/html' });
             res.end(success_file);
@@ -36,6 +37,7 @@ export default class CallbackServer {
   }
 
   async get_success_file(): Promise<Buffer> {
+    // eslint-disable-next-line unicorn/prefer-module
     const success_path = path.join(path.dirname(fs.realpathSync(__filename)), '../static/login_callback_success.html');
     return new Promise((resolve, reject) => {
       fs.readFile(success_path, function (err, html) {
@@ -49,6 +51,7 @@ export default class CallbackServer {
 
   async get_failure_file(): Promise<Buffer> {
     return new Promise((resolve, reject) => {
+      // eslint-disable-next-line unicorn/prefer-module
       const failure_path = path.join(path.dirname(fs.realpathSync(__filename)), '../static/login_callback_failure.html');
       fs.readFile(failure_path, function (err, html) {
         if (err) {
