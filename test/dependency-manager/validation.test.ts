@@ -76,35 +76,6 @@ services:
       expect(() => { buildSpecFromPath('/architect.yml'); }).to.throw(ValidationErrors);
     });
 
-    it('invalid deploy key', async () => {
-      const component_config = `
-      name: test/component
-      services:
-        stateless-app:
-          deploy:
-            strategy: deploy-strategy
-            modules:
-              deploy-module:
-                path: ./deploy/module
-                inputs:
-                  deploy-input-string: some_deploy_input
-                  deploy-input-unset:
-      `;
-      mock_fs({ '/architect.yml': component_config });
-      let err;
-      try {
-        buildSpecFromPath('/architect.yml');
-      } catch (e: any) {
-        err = e;
-      }
-      expect(err).instanceOf(ValidationErrors);
-      const errors = JSON.parse(err.message);
-      expect(errors).lengthOf(1);
-      expect(errors[0].path).eq(`services.stateless-app.deploy`);
-      expect(errors[0].message).includes(`Invalid key: deploy`);
-      expect(process.exitCode).eq(1);
-    });
-
     it('invalid replicas value', async () => {
       const component_config = `
       name: test/component
@@ -1796,6 +1767,45 @@ services:
       ]);
 
       expect(res.success).to.be.false;
+    });
+
+    it('invalid deploy overrides for kubernetes', async () => {
+      const yml = `
+      name: test/component
+      services:
+        app:
+          deploy:
+            kubernetes:
+              deployment:
+                spec:
+                  template:
+                    spec:
+                      serviceAccount: test-admin
+                      serviceAccountName: test-admin
+                      nodeSelectorInvalid:
+                        iam.gke.io/gke-metadata-server-enabled: "true"
+      `;
+
+      expect(() => { buildSpecFromYml(yml); }).to.throw(ValidationErrors);
+    });
+
+    it('valid deploy overrides for kubernetes', async () => {
+      const yml = `
+      name: test/component
+      services:
+        app:
+          deploy:
+            kubernetes:
+              deployment:
+                spec:
+                  template:
+                    spec:
+                      serviceAccount: test-admin
+                      serviceAccountName: test-admin
+                      nodeSelector:
+                        iam.gke.io/gke-metadata-server-enabled: "true"
+      `;
+      buildSpecFromYml(yml);
     });
   });
 });
