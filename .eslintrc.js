@@ -11,6 +11,7 @@ module.exports = {
     'array-element-newline': 0,
     'camelcase': [0],
     'generator-star-spacing': 0,
+    'indent': 0,
     'lines-between-class-members': 0,
     'new-cap': 0,
     'no-else-return': 0,
@@ -26,7 +27,6 @@ module.exports = {
 
     // Def enable
     'default-param-last': 0,
-    'indent': 0,
     'no-await-in-loop': 0,
 
     'unicorn/no-array-reduce': 'off',
