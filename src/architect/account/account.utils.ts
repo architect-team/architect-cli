@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AppService from '../../app-config/service';
 import { DockerHelper } from '../../common/docker/helper';
+import Membership from '../user/user.utils';
 import Account from './account.entity';
 
 export default class AccountUtils {
@@ -34,6 +35,14 @@ export default class AccountUtils {
 
   static isLocalAccount(account: Account): boolean {
     return account.id === "dev";
+  }
+
+  static async isValidAccount(app: AppService, account_name: string): Promise<boolean> {
+    const { data: user_data } = await app.api.get('/users/me');
+    if (user_data.memberships?.length > 0) {
+      return user_data.memberships.some((membership: Membership) => membership.account.name === account_name);
+    }
+    return false;
   }
 
   static async getAccount(app: AppService, account_name?: string, options?: { account_message?: string, ask_local_account?: boolean }): Promise<Account> {

@@ -5,7 +5,7 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
 import TSON from "typescript-json";
-import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
+import { ArchitectError, buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DeepPartial } from '../../src/common/utils/types';
 import { SecretsConfig } from '../../src/dependency-manager/secrets/secrets';
@@ -1292,6 +1292,71 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
+    } catch (e: any) {
+      err = e;
+    }
+    expect(err).to.be.undefined;
+  });
+
+  it('invalid tcp component protocol', async () => {
+    const component_config = `
+      name: test/component
+      interfaces:
+        main: \${{ services.app.interfaces.main.url }}
+      services:
+        app:
+          interfaces:
+            main:
+              port: 3000
+              protocol: tcp
+      `;
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentSpec('test/component'),
+      ]);
+    } catch (e: any) {
+      err = e;
+    }
+    expect(err).instanceOf(ArchitectError);
+    expect(err.message).includes(`tcp`);
+    expect(err.message).includes(`We currently only support 'http' and 'https' protocols`);
+    expect(process.exitCode).eq(1);
+  });
+
+   it('valid component with protocol of undefined', async () => {
+    const component_config = `
+      name: test/component
+      interfaces:
+        main: \${{ services.app.interfaces.mysql.url }}
+      services:
+        app:
+          image: mysql:5.6.35
+          command: mysqld
+          interfaces:
+            mysql:
+              port: 3306
+              protocol: https
+      `;
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentSpec('test/component'),
+      ], {}, { interpolate: false });
     } catch (e: any) {
       err = e;
     }

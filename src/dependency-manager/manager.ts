@@ -21,7 +21,6 @@ import { validateOrRejectSpec } from './spec/utils/spec-validator';
 import { Dictionary, transformDictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
 import { interpolateObjectLoose, interpolateObjectOrReject, replaceInterpolationBrackets } from './utils/interpolation';
-
 export default abstract class DependencyManager {
 
   account?: string;
@@ -370,7 +369,25 @@ export default abstract class DependencyManager {
     }
   }
 
+  private validateProtocols(graph: DependencyGraph): void {
+    const valid_protocols = [undefined, 'http', 'https'];
+
+    for (const node of graph.nodes) {
+      if (node.is_external) continue;
+      if (!(node instanceof ComponentNode)) continue;
+
+      const component_interfaces = node.config.interfaces;
+      for (const [component_name, component_interface] of Object.entries(component_interfaces)) {
+        if (valid_protocols.indexOf(component_interface.protocol) === -1) {
+          throw new ArchitectError(`Protocol '${component_interface.protocol}' is detected in component '${component_name}'. We currently only support 'http' and 'https' protocols.`);
+        }
+      }
+    }
+  }
+
   validateGraph(graph: DependencyGraph): void {
+    this.validateProtocols(graph);
+
     // Check for duplicate subdomains
     const seen_subdomains: Dictionary<string[]> = {};
     for (const ingress_edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
