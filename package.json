@@ -50,7 +50,7 @@
     "string-argv": "^0.3.1",
     "tmp": "^0.2.1",
     "tslib": "2.3.1",
-    "typescript-json": "^3.3.7",
+    "typescript-json": "^3.3.10",
     "untildify": "4.0.0",
     "which": "^2.0.2",
     "ws": "^8.4.0"
@@ -99,8 +99,8 @@
     "nyc": "15.1.0",
     "oclif": "^2.4.2",
     "sinon": "9.2.4",
-    "ts-node": "10.5.0",
-    "ttypescript": "^1.5.13",
+    "ts-node": "10.9.1",
+    "ts-patch": "^2.0.2",
     "typescript": "^4.5.5"
   },
   "engines": {
@@ -159,7 +159,7 @@
     "generate:schema-docs": "ts-node --project ./tsconfig.json ./src/dependency-manager/generate.ts",
     "generate:yarn-lock": "(rm yarn.lock || true) && yarn import",
     "semantic-release": "./node_modules/semantic-release/bin/semantic-release.js",
-    "prepare": "git checkout yarn.lock && patch-package"
+    "prepare": "ts-patch install -s && git checkout yarn.lock && patch-package"
   },
   "types": "lib/index.d.ts"
 }
