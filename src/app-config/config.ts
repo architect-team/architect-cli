@@ -58,6 +58,10 @@ export default class AppConfig {
     return this.account === '' ? null : this.account;
   }
 
+  getPluginDirectory(): string {
+    return path.join(this.config_dir, '/plugins');
+  }
+
   getConfigDir(): string {
     return this.config_dir;
   }

@@ -6,6 +6,7 @@ import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
+import PluginManager, { ArchitectPlugin } from '../../src/common/plugins/plugin-manager';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
 import { mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST } from '../utils/mocks';
 
@@ -51,6 +52,7 @@ describe('register', function () {
       })
       .reply(200, {})
     )
+    .stub(PluginManager, 'getPlugin', sinon.stub().returns(new ArchitectPlugin()))
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'test/mocks/superset/architect.yml', '-a', 'examples'])
@@ -105,6 +107,7 @@ describe('register', function () {
     )
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
     .stub(fs, 'move', sinon.stub())
+    .stub(PluginManager, 'getPlugin', sinon.stub().returns(new ArchitectPlugin()))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -527,7 +530,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'examples/react-app/architect.yml', '-t', '1.0.0', 'examples/stateful-component/architect.yml', '--arg', 'NODE_ENV=dev', '-a', 'examples' ])
+    .command(['register', 'examples/react-app/architect.yml', '-t', '1.0.0', 'examples/stateful-component/architect.yml', '--arg', 'NODE_ENV=dev', '-a', 'examples'])
     .it('register multiple apps at the same time with a shared build arg', ctx => {
       expect(ctx.stderr).to.contain('Registering component react-app:1.0.0 with Architect Cloud...... done\n');
       expect(ctx.stderr).to.contain('Registering component stateful-component:1.0.0 with Architect Cloud...... done\n');

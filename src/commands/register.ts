@@ -19,8 +19,9 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DockerBuildXUtils from '../common/docker/buildx.utils';
-import { oras } from '../common/docker/cmd';
 import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
+import OrasPlugin from '../common/plugins/oras-plugin';
+import PluginManager from '../common/plugins/plugin-manager';
 import { transformVolumeSpec } from '../dependency-manager/spec/transform/common-transform';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
@@ -115,6 +116,8 @@ export default class ComponentRegister extends BaseCommand {
   }
 
   private async uploadVolume(component_path: string, component_name: string, service_name: string, volume_name: string, volume: VolumeSpec, account: Account): Promise<VolumeSpec> {
+    const oras_plugin = await PluginManager.getPlugin<OrasPlugin>(this.app.config.getPluginDirectory(), OrasPlugin);
+
     if (!volume.host_path) {
       return classToClass(volume);
     }
@@ -133,15 +136,12 @@ export default class ComponentRegister extends BaseCommand {
 
     const output = fs.createWriteStream(output_file_location);
     const archive = archiver('tar', {
-      zlib: { level: 9 } // Sets the compression level.
+      zlib: { level: 9 }, // Sets the compression level.
     });
     archive.directory(host_path, false).pipe(output);
 
     await archive.finalize();
-
-    oras(['push', updated_volume.host_path, `${file_name}.tar`], undefined, {
-      cwd: base_folder
-    });
+    oras_plugin.push(updated_volume.host_path, `${file_name}.tar`, base_folder);
 
     return updated_volume;
   }
@@ -300,9 +300,7 @@ export default class ComponentRegister extends BaseCommand {
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
       if (IF_EXPRESSION_REGEX.test(service_name)) { continue; }
       for (const [volume_name, volume] of Object.entries(service.volumes || {})) {
-        console.log(volume);
         const volume_config = transformVolumeSpec(volume_name, volume);
-        console.log(config_path);
         (service?.volumes as Dictionary<VolumeSpec>)[volume_name] = await this.uploadVolume(config_path, new_spec.name, service_name, volume_name, volume_config, selected_account);
       }
     }
