@@ -123,7 +123,17 @@ export default class ComponentRegister extends BaseCommand {
     validateInterpolation(component_spec);
 
     const { component_account_name, component_name } = ComponentSlugUtils.parse(component_spec.name);
-    const selected_account = await AccountUtils.getAccount(this.app, component_account_name || flags.account, { is_component_account_name: component_account_name !== undefined});
+    let is_valid_component_account;
+    if (component_account_name) {
+      is_valid_component_account = await AccountUtils.isValidAccount(this.app, component_account_name);
+      if (!is_valid_component_account) {
+        console.log(chalk.yellow(`The account name '${component_account_name}' was found as part of the component name in your architect.yml file. Either that account does not exist or you do not have permission to access it. You can select from a valid list of your accounts below.\n`));
+      }
+      component_spec.name = component_name;
+    }
+    const account_name = is_valid_component_account ? component_account_name : flags.account;
+    const selected_account = await AccountUtils.getAccount(this.app, account_name);
+    
     if (flags.environment) { // will throw an error if a user specifies an environment that doesn't exist
       await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);
     }
