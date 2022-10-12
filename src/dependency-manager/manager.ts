@@ -440,7 +440,7 @@ export default abstract class DependencyManager {
   validateReservedNodeNames(all_nodes: DependencyNode[]): void {
     const seen_nodes: DependencyNode[] = [];
     for (const node of all_nodes.filter(n => n instanceof ServiceNode || n instanceof TaskNode)) {
-      if (seen_nodes.some(n => !!node.instance_id && !!n.instance_id && n.ref === node.ref && n.instance_id !== node.instance_id)) {
+      if (seen_nodes.some(n => Boolean(node.instance_id) && Boolean(n.instance_id) && n.ref === node.ref && n.instance_id !== node.instance_id)) {
         throw new Error(`A service named ${node.ref} is declared in multiple places. The same name can't be used for multiple services.`);
       }
       seen_nodes.push(node);

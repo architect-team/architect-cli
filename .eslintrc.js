@@ -30,7 +30,6 @@ module.exports = {
     'arrow-parens': 0,
     'complexity': ['error', 50],
     'max-depth': ['error', 6],
-    'no-implicit-coercion': 0,
     'no-await-in-loop': 0,
     'no-negated-condition': 0,
     'no-promise-executor-return': 0,

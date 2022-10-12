@@ -214,7 +214,7 @@ const definitionToMarkdown = (spec_name: string, definition: SchemaObject): stri
   markdown += `| -------------------- | ---------- | -------------- | -------------- |\n`;
 
   for (const [prop_name, prop_body] of Object.entries(definition.properties)) {
-    const required = !!definition.required && definition.required.includes(prop_name);
+    const required = Boolean(definition.required) && definition.required.includes(prop_name);
     markdown += ` | ${propertyToFieldName(prop_name, prop_body, required)}`;
     markdown += ` | ${propertyToType(prop_body)}`;
     markdown += ` | ${propertyToDescription(prop_body)}`;

@@ -134,7 +134,7 @@ During this time we greatly appreciate any feedback as we continue to finalize t
     };
     const update_env_dto = {
       ...scaling_dto,
-      clear_scaling: !!flags.clear || undefined,
+      clear_scaling: Boolean(flags.clear) || undefined,
     };
     if (!flags.clear) {
       try {

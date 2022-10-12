@@ -528,7 +528,7 @@ export class DockerComposeUtils {
 
   public static async isLocalEnvironment(environment_name: string): Promise<boolean> {
     const local_enviromments = await DockerComposeUtils.getLocalEnvironments();
-    return !!(local_enviromments.includes(environment_name));
+    return Boolean(local_enviromments.includes(environment_name));
   }
 
   public static async getLocalEnvironment(config_dir: string, environment_name?: string): Promise<string> {

@@ -150,7 +150,7 @@ export default class SentryService {
 
   private async filterNonSensitiveSentryMetadata(non_sensitive: Set<string>, metadata: any): Promise<any> {
     return Object.entries(metadata)
-      .filter((value) => !!value[1] && non_sensitive.has(value[0]))
+      .filter((value) => Boolean(value[1]) && non_sensitive.has(value[0]))
       .map(key => ({ [key[0]]: key[1] }));
   }
 
@@ -216,7 +216,7 @@ export default class SentryService {
       const docker_command = await docker(['ps', '--format', '{{json .}}%%'], { stdout: false });
       const docker_stdout = (docker_command.stdout as string).split('%%')
         .map((str: string) => (str && str.length) ? JSON.parse(str) : undefined);
-      const docker_containers = docker_stdout.filter(x => !!x).map((container: any) => ({ ...container, Labels: undefined }));
+      const docker_containers = docker_stdout.filter(x => Boolean(x)).map((container: any) => ({ ...container, Labels: undefined }));
 
       const updated_docker_info = Object.assign(docker_info, { Containers: docker_containers });
 

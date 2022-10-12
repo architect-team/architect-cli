@@ -208,7 +208,7 @@ export class ArchitectParser {
           if (node.test.type === 'Literal') {
             return {
               type: 'Literal',
-              value: !!node.test.value,
+              value: Boolean(node.test.value),
             };
           } else {
             throw new Error(`Unsupported node.test.type: ${node.test.type}`);
