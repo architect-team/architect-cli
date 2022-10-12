@@ -547,6 +547,7 @@ export class DockerComposeUtils {
         const files = await fs.readdir(path.join(search_directory));
         const local_enviromments = files.map((file) => file.split('.')[0]);
 
+        // eslint-disable-next-line unicorn/no-array-reduce
         architect_projects = projects.reduce((filtered: DockerComposeProjectWithConfig[], project) => {
           const env_index = local_enviromments.indexOf(project.Name);
           if (env_index >= 0) {

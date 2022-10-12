@@ -235,6 +235,7 @@ export default class ComponentRegister extends BaseCommand {
 
     const build_args = args.filter((value, index, self) => {
       return self.indexOf(value) === index;
+      // eslint-disable-next-line unicorn/no-array-reduce
     }).reduce((arr, value) => {
       arr.push('--set', `*.args.${value}`);
       return arr;

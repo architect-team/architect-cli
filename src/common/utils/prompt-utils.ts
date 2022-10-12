@@ -42,7 +42,7 @@ export default class PromptUtils {
           throw new Error(`${prompt.name} is required`);
         }
       }
-      // eslint-disable-next-line unicorn/prefer-object-from-entries
+      // eslint-disable-next-line unicorn/no-array-reduce,unicorn/prefer-object-from-entries
       return prompts.reduce((d: any, p: any) => {
         d[p.name] = p.default;
         return d;

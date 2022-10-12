@@ -89,6 +89,7 @@ export default class AppService {
       delete this.linkedComponents[componentNameOrPath];
       res = componentNameOrPath;
     } else {
+      // eslint-disable-next-line unicorn/no-array-reduce
       this.linkedComponents = Object.entries(this.linkedComponents).reduce((linkedComponents, [componentName, componentPath]) => {
         if (componentPath !== componentNameOrPath) {
           linkedComponents[componentName] = componentPath;
