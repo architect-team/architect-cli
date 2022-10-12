@@ -7,7 +7,7 @@ export function DeprecatedCommand(options: { newAliases?: string[] }): (target: 
       let message = 'This command is deprecated.';
 
       if (options.newAliases) {
-        message = `${message} Please use any of the following commands instead: ${options.newAliases.join(', ')}`;
+        message = `${message} Please use any of the following commands instead: ${options.newAliases.join(', ')}.`;
       }
 
       this.log(chalk.yellow(message));
