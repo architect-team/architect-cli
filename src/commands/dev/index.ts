@@ -511,7 +511,7 @@ export default class Dev extends BaseCommand {
           name: 'port',
           message: `Trying to listen on port ${port}, but something is already using it. What port would you like us to run the API gateway on (you can use the '--port' flag to skip this message in the future)?`,
           validate: (value: any) => {
-            if (new RegExp('^[1-9]+[0-9]*$').test(value)) {
+            if (new RegExp('^[1-9]+\\d*$').test(value)) {
               return true;
             }
             return `Port can only be positive number.`;

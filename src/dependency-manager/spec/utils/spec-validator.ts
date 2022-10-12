@@ -121,7 +121,7 @@ export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
     // TODO:288 enable strict mode?
     const ajv = new Ajv({ allErrors: true, unicodeRegExp: false });
     addFormats(ajv);
-    ajv.addFormat('cidrv4', /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?:\/(?:3[0-2]|[12]?[0-9]))?$/);
+    ajv.addFormat('cidrv4', /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?:\/(?:3[0-2]|[12]?\d))?$/);
     ajv.addFormat('cron', (value: string): boolean => value === '' || cron(value, cron_options).isValid());
     ajv.addKeyword('externalDocs');
     // https://github.com/ajv-validator/ajv-errors

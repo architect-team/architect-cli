@@ -21,6 +21,7 @@ module.exports = {
     'semi': 'off',
     'quotes': ['error', 'single', { 'allowTemplateLiterals': true }],
 
+    'unicorn/catch-error-name': 'off',
     'unicorn/no-zero-fractions': 'off',
     'unicorn/prefer-node-protocol': 'off',
     'unicorn/prefer-switch': 'off',
@@ -41,8 +42,7 @@ module.exports = {
       allowArgumentsExplicitlyTypedAsAny: true,
     }],
     'valid-jsdoc': 0,
-    'unicorn/better-regex': 'off',
-    'unicorn/catch-error-name': 'off',
+
     'unicorn/empty-brace-spaces': 'off',
     'unicorn/explicit-length-check': 'off',
     'unicorn/import-style': 'off',

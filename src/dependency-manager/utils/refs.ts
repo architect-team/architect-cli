@@ -18,7 +18,7 @@ export class Refs {
       throw new Error('Max length cannot be less than hash length');
     }
 
-    const sanitized_ref = ref.replace(/[^a-zA-Z0-9-]/g, '-');
+    const sanitized_ref = ref.replace(/[^\dA-Za-z-]/g, '-');
     const truncated_ref = sanitized_ref.substring(0, (max_length - 1) - Refs.HASH_LENGTH);
     const hash = Refs.toDigest(seed).substring(0, Refs.HASH_LENGTH);
 
@@ -50,6 +50,6 @@ export class Refs {
     return crypto.createHash('md5').update(uri)
       .digest('base64') // base64 adds entropy in a more compact string
       .toLowerCase() // we need to makes everything lower which unfortunately removes some entropy
-      .replace(/[\\/+=]/g, ''); // we also remove occurances of slash, plus, and equals to make url-safe
+      .replace(/[+/=\\]/g, ''); // we also remove occurances of slash, plus, and equals to make url-safe
   }
 }

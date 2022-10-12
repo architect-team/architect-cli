@@ -7,14 +7,14 @@ import { ParsedYaml } from './types';
 // https://stackoverflow.com/questions/4253367/how-to-escape-a-json-string-containing-newline-characters-using-javascript
 const escape = (str: string): string => {
   return str
-    .replace(/[\\]/g, '\\\\')
-    .replace(/["]/g, '\\"')
-    .replace(/[/]/g, '\\/')
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\//g, '\\/')
     .replace(/[\b]/g, '\\b')
-    .replace(/[\f]/g, '\\f')
-    .replace(/[\n]/g, '\\n')
-    .replace(/[\r]/g, '\\r')
-    .replace(/[\t]/g, '\\t');
+    .replace(/\f/g, '\\f')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t');
 };
 
 const escapeEnvironmentInterpolation = (str: string): string => {

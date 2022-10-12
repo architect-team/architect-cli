@@ -7,7 +7,7 @@ import { matches } from './regex';
 import { CONTEXT_KEY_DELIMITER } from './rules';
 
 export const replaceBrackets = (value: string): string => {
-  return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
+  return value.replace(/\[/g, '.').replace(/["'\\\]|]/g, '');
 };
 
 /*
