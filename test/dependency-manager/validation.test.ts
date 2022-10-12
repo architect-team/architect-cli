@@ -1331,7 +1331,7 @@ services:
     expect(process.exitCode).eq(1);
   });
 
-   it('valid component with protocol of undefined', async () => {
+  it('valid component with protocol of undefined', async () => {
     const component_config = `
       name: test/component
       interfaces:

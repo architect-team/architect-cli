@@ -21,9 +21,6 @@
     ],
     "skipLibCheck": true
   },
-  "ts-node": {
-    "compiler": "ttypescript"
-  },
   "include": [
     "./src/**/*"
   ],

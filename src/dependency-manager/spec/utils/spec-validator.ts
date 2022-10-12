@@ -247,6 +247,7 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
 
   for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
     if (service_spec.deploy && service_spec.deploy.kubernetes.deployment) {
+      // Only works if transpileOnly=false in ./bin/dev
       const res = TSON.validateEquals<DeepPartial<V1Deployment>>(service_spec.deploy.kubernetes.deployment);
 
       for (const tson_error of res.errors) {
