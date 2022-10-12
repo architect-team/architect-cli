@@ -29,8 +29,6 @@ module.exports = {
     'default-param-last': 0,
     'no-await-in-loop': 0,
 
-    'unicorn/no-object-as-default-parameter': 'off',
-
     // Consider enabling
     'arrow-parens': 0,
     'complexity': 0,
