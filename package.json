@@ -159,7 +159,7 @@
     "generate:schema-docs": "ts-node --project ./tsconfig.json ./src/dependency-manager/generate.ts",
     "generate:yarn-lock": "(rm yarn.lock || true) && yarn import",
     "semantic-release": "./node_modules/semantic-release/bin/semantic-release.js",
-    "prepare": "ts-patch install -s && git checkout yarn.lock && patch-package"
+    "prepare": "(ts-patch install -s || true) && git checkout yarn.lock && patch-package"
   },
   "types": "lib/index.d.ts"
 }
