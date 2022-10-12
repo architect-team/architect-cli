@@ -2,16 +2,16 @@ import { CliUx, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AccountUtils from '../../architect/account/account.utils';
-import PlatformUtils from '../../architect/platform/platform.utils';
+import ClusterUtils from '../../architect/cluster/cluster.utils';
 import BaseCommand from '../../base-command';
 import { booleanString } from '../../common/utils/oclif';
 
-export default class PlatformDestroy extends BaseCommand {
-  static aliases = ['platforms:deregister', 'platform:destroy', 'platforms:destroy'];
-  static description = 'Deregister a platform from Architect';
+export default class ClusterDestroy extends BaseCommand {
+  static aliases = ['clusters:deregister', 'cluster:destroy', 'clusters:destroy'];
+  static description = 'Deregister a cluster from Architect';
   static examples = [
-    'architect platform:destroy --account=myaccount architect',
-    'architect platforms:deregister --account=myaccount --auto-approve --force architect',
+    'architect cluster:destroy --account=myaccount architect',
+    'architect clusters:deregister --account=myaccount --auto-approve --force architect',
   ];
   static flags = {
     ...BaseCommand.flags,
@@ -28,7 +28,7 @@ export default class PlatformDestroy extends BaseCommand {
       sensitive: false,
     }),
     force: booleanString({
-      description: 'Force the deletion even if the platform is not empty',
+      description: 'Force the deletion even if the cluster is not empty',
       char: 'f',
       default: false,
       sensitive: false,
@@ -37,8 +37,8 @@ export default class PlatformDestroy extends BaseCommand {
 
   static args = [{
     sensitive: false,
-    name: 'platform',
-    description: 'Name of the platform to deregister',
+    name: 'cluster',
+    description: 'Name of the cluster to deregister',
     parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
@@ -56,34 +56,34 @@ export default class PlatformDestroy extends BaseCommand {
   }
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(PlatformDestroy);
+    const { args, flags } = await this.parse(ClusterDestroy);
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
-    const platform = await PlatformUtils.getPlatform(this.app.api, account, args.platform);
+    const cluster = await ClusterUtils.getCluster(this.app.api, account, args.cluster);
 
     let answers = await inquirer.prompt([{
       type: 'input',
       name: 'destroy',
-      message: 'Are you absolutely sure? This will deregister the platform from the Architect system.\nPlease type in the name of the platform to confirm.\n',
+      message: 'Are you absolutely sure? This will deregister the cluster from the Architect system.\nPlease type in the name of the cluster to confirm.\n',
       validate: (value: any, answers: any) => {
-        if (value === platform.name) {
+        if (value === cluster.name) {
           return true;
         }
-        return `Name must match: ${chalk.blue(platform.name)}`;
+        return `Name must match: ${chalk.blue(cluster.name)}`;
       },
       when: !flags['auto-approve'],
     }]);
 
     answers = { ...args, ...flags, ...answers };
-    const { data: account_platform } = await this.app.api.get(`/accounts/${account.id}/platforms/${platform.name}`);
+    const { data: account_cluster } = await this.app.api.get(`/accounts/${account.id}/clusters/${cluster.name}`);
 
-    CliUx.ux.action.start(chalk.blue('Deregistering platform'));
+    CliUx.ux.action.start(chalk.blue('Deregistering cluster'));
     const params: any = {};
     if (answers.force) {
       params.force = 1;
     }
-    await this.app.api.delete(`/platforms/${account_platform.id}`, { params });
+    await this.app.api.delete(`/clusters/${account_cluster.id}`, { params });
     CliUx.ux.action.stop();
-    this.log(chalk.green('Platform deregistered'));
+    this.log(chalk.green('Cluster deregistered'));
   }
 }

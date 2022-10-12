@@ -132,16 +132,16 @@ describe('auto-approve flag with underscore style still works', function () {
 describe('pollPipeline handles failed deployments', () => {
   let randomId = () => (Math.random() + 1).toString(36).substring(2);
 
-  const mock_platform = {
+  const mock_cluster = {
     id: randomId(),
-    name: 'my-mocked-platform',
+    name: 'my-mocked-cluster',
     account,
   }
   const failed_pipeline = {
     id: mock_pipeline.id,
     failed_at: new Date(),
     environment,
-    platform: mock_platform,
+    cluster: mock_cluster,
   };
   const aborted_deployment = {
     id: randomId(),
@@ -153,14 +153,14 @@ describe('pollPipeline handles failed deployments', () => {
     failed_at: new Date(),
     pipeline: {
       ...failed_pipeline,
-      platform: undefined,
+      cluster: undefined,
     },
   };
   const failed_environment_deployment_2 = {
     ...failed_environment_deployment,
     id: randomId(),
   }
-  const failed_platform_deployment = {
+  const failed_cluster_deployment = {
     id: randomId(),
     failed_at: new Date(),
     pipeline: {
@@ -220,13 +220,13 @@ describe('pollPipeline handles failed deployments', () => {
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .nock(MOCK_API_HOST, api => api
       .get(`/pipelines/${mock_pipeline.id}/deployments`)
-      .reply(200, [failed_platform_deployment]))
+      .reply(200, [failed_cluster_deployment]))
     .stdout({ print })
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
     .it('when pipeline deployment fails it prints useful error with expected url', ctx => {
       const message = `Pipeline ${mock_pipeline.id} failed because 1 deployment failed:`;
-      const link = `- ${app_host}/${account.name}/platforms/${failed_platform_deployment.pipeline.platform!.name}`;
+      const link = `- ${app_host}/${account.name}/clusters/${failed_cluster_deployment.pipeline.cluster!.name}`;
       const expected_error = `${message}\n${link}`
       expect((Deploy.prototype.warn as SinonSpy).getCalls().length).to.equal(1);
       expect((Deploy.prototype.warn as SinonSpy).firstCall.args[0]).to.equal(expected_error);

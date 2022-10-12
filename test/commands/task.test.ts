@@ -18,7 +18,7 @@ describe('task:exec', async function () {
   const mock_env = {
     id: "81ab04df-97d9-43c3-9f1a-b9c891baf37d",
     name: "dev",
-    platform: {
+    cluster: {
       type: "KUBERNETES",
     },
   };

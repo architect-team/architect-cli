@@ -4,12 +4,12 @@ import BaseCommand from '../../base-command';
 import Table from '../../base-table';
 import localizedTimestamp from '../../common/utils/localized-timestamp';
 
-export default class Platforms extends BaseCommand {
-  static aliases = ['platform', 'platform:search', 'platforms', 'platforms:search'];
-  static description = 'Search for platforms on Architect Cloud';
+export default class Clusters extends BaseCommand {
+  static aliases = ['cluster', 'cluster:search', 'clusters', 'clusters:search'];
+  static description = 'Search for clusters on Architect Cloud';
   static examples = [
-    'architect platforms',
-    'architect platforms --account=myaccount myplatform',
+    'architect clusters',
+    'architect clusters --account=myaccount mycluster',
   ];
   static flags = {
     ...BaseCommand.flags,
@@ -24,7 +24,7 @@ export default class Platforms extends BaseCommand {
   }];
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(Platforms);
+    const { args, flags } = await this.parse(Clusters);
 
     let account: Account | undefined = undefined;
     if (flags.account) {
@@ -36,19 +36,19 @@ export default class Platforms extends BaseCommand {
       account_id: account?.id,
     };
 
-    const { data: { rows: platforms } } = await this.app.api.get(`/platforms`, { params });
+    const { data: { rows: clusters } } = await this.app.api.get(`/clusters`, { params });
 
-    if (!platforms.length) {
+    if (!clusters.length) {
       if (args.query) {
-        this.log(`No platforms found matching ${args.query}.`);
+        this.log(`No clusters found matching ${args.query}.`);
       } else {
-        this.log('You have not configured any platforms yet. Use `architect platform:create` to set up your first one.');
+        this.log('You have not configured any clusters yet. Use `architect cluster:create` to set up your first one.');
       }
       return;
     }
 
     const table = new Table({ head: ['Name', 'Account', 'Host', 'Type', 'Credentials', 'Created', 'Updated'] });
-    for (const row of platforms) {
+    for (const row of clusters) {
       table.push([
         row.name,
         row.account.name,

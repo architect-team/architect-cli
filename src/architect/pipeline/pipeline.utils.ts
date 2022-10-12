@@ -16,11 +16,11 @@ export default class PipelineUtils {
     if (deployment.pipeline.environment) {
       const environment = deployment.pipeline.environment;
       return `${app.config.app_host}/${environment.account.name}/environments/${environment.name}/deployments/${deployment.id}`;
-    } else if (deployment.pipeline.platform) {
-      const platform = deployment.pipeline.platform;
-      return `${app.config.app_host}/${platform.account.name}/platforms/${platform.name}`;
+    } else if (deployment.pipeline.cluster) {
+      const cluster = deployment.pipeline.cluster;
+      return `${app.config.app_host}/${cluster.account.name}/clusters/${cluster.name}`; // TODO: how do we want to make this backwards compatible
     } else {
-      throw new Error('deployment was for neither a platform nor environment');
+      throw new Error('deployment was for neither a cluster nor environment');
     }
   }
 
