@@ -1,10 +1,9 @@
+import { DeprecatedCommand } from '../../common/utils/deprecated-command';
 import ClusterDestroy from '../clusters/destroy';
 
 export default class PlatformDestroy extends ClusterDestroy {
-  static aliases = ['platforms:deregister', 'platform:destroy', 'platforms:destroy'];
-
-  static examples = [
-    'architect platform:destroy --account=myaccount architect',
-    'architect platforms:deregister --account=myaccount --auto-approve --force architect',
-  ];
+  @DeprecatedCommand({ newAliases: ClusterDestroy.aliases })
+  async run(): Promise<void> {
+    super.run();
+  }
 }
