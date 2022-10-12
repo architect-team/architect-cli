@@ -25,15 +25,13 @@ module.exports = {
     'unicorn/prefer-node-protocol': 'off',
     'unicorn/prefer-switch': 'off',
 
-    // Def enable
-    'default-param-last': 0,
-    'no-await-in-loop': 0,
-
     // Consider enabling
+    'default-param-last': 0,
     'arrow-parens': 0,
-    'complexity': 0,
+    'complexity': ['error', 50],
     'max-depth': ['error', 6],
     'no-implicit-coercion': 0,
+    'no-await-in-loop': 0,
     'no-negated-condition': 0,
     'no-promise-executor-return': 0,
     'no-template-curly-in-string': 0,

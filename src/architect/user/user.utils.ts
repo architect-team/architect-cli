@@ -1,6 +1,6 @@
 import AppService from '../../app-config/service';
-import Account from "../account/account.entity";
-import User from "./user.entity";
+import Account from '../account/account.entity';
+import User from './user.entity';
 
 export default interface Membership {
   id: string;

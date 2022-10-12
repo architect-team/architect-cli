@@ -68,6 +68,7 @@ export class DockerComposeUtils {
     });
   }
 
+  // eslint-disable-next-line complexity
   public static async generate(graph: DependencyGraph, options?: GenerateOptions): Promise<DockerComposeTemplate> {
     if (!options) {
       options = { gateway_admin_port: 8080, external_addr: 'arc.localhost' };

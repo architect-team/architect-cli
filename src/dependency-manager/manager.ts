@@ -58,6 +58,7 @@ export default abstract class DependencyManager {
     return component_ref;
   }
 
+  // eslint-disable-next-line complexity
   addComponentEdges(graph: DependencyGraph, component_config: ComponentConfig, dependency_configs: ComponentConfig[], context_map: Dictionary<ComponentContext>): void {
     const component = component_config;
 
