@@ -45,6 +45,7 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
  | `volumes` | Dict&lt;string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `replicas` | integer \| [Expression](https://docs.architect.io/reference/contexts) | A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field. |  |
  | `scaling` | [ScalingSpec](#scalingspec) |  |  |
+ | `deploy` | [DeploySpec](#deployspec) |  |  |
  | `description` | string | Human readable description |  |
  | `image` | string \| [Expression](https://docs.architect.io/reference/contexts) | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
  | `command` | Array&lt;string&gt; \| string \| [Expression](https://docs.architect.io/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
@@ -169,6 +170,24 @@ Configuration that dictates the scaling behavior of a service.
  | `min_replicas`* | integer \| [Expression](https://docs.architect.io/reference/contexts) | The target minimum number of service replicas. |  |
  | `max_replicas`* | integer \| [Expression](https://docs.architect.io/reference/contexts) | The target maximum number of service replicas. |  |
  | `metrics`* | [ScalingMetricsSpec](#scalingmetricsspec) |  |  |
+
+
+## KubernetesDeploySpec
+
+Configuration that dictates the kubernetes deploy overrides.
+
+| Field  (*=required)  | Type       | Description    | Misc           |
+| -------------------- | ---------- | -------------- | -------------- |
+ | `deployment`* |  |  |  |
+
+
+## DeploySpec
+
+Configuration that dictates the deploy overrides.
+
+| Field  (*=required)  | Type       | Description    | Misc           |
+| -------------------- | ---------- | -------------- | -------------- |
+ | `kubernetes`* | [KubernetesDeploySpec](#kubernetesdeployspec) |  |  |
 
 
 ## ServiceInterfaceSpec

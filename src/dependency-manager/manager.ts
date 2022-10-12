@@ -464,7 +464,9 @@ export default abstract class DependencyManager {
     }
 
     const nodes = this.getComponentNodes(component_config);
-    this.validateReservedNodeNames(nodes.concat(graph.nodes));
+    if (options.validate) {
+      this.validateReservedNodeNames(nodes.concat(graph.nodes));
+    }
 
     const has_interfaces = Object.keys(component_config.interfaces).length > 0;
     const has_outputs = Object.keys(component_config.outputs).length > 0;
