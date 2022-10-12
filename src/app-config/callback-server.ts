@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as http from 'http';
-import * as path from 'path';
+import path from 'path';
 import { ArchitectError } from '../dependency-manager/utils/errors';
 
 export default class CallbackServer {

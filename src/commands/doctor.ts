@@ -2,7 +2,7 @@ import { Flags } from '@oclif/core';
 import chalk from 'chalk';
 import * as fs from 'fs-extra';
 import inquirer from 'inquirer';
-import util from 'util';
+import { inspect } from 'util';
 import BaseCommand from '../base-command';
 
 interface DOCTOR_INPUT_PROPERTIES {
@@ -190,7 +190,7 @@ export default class Doctor extends BaseCommand {
 
     let seen = false;
     if (!flags.output) {
-      console.log(util.inspect(this.history, false, 100, true));
+      console.log(inspect(this.history, false, 100, true));
       seen = true;
       const answers: any = await inquirer.prompt([
         {
@@ -209,7 +209,7 @@ export default class Doctor extends BaseCommand {
         return console.log(chalk.green('Please submit the generated information file with your support ticket at https://support.architect.io/'));
       } catch (e: any) {
         if (!seen) {
-          console.log(util.inspect(this.history, false, 100, true));
+          console.log(inspect(this.history, false, 100, true));
         }
         console.log(chalk.yellow('Unable to save information file to the specified file path'));
       }

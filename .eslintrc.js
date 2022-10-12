@@ -43,7 +43,6 @@ module.exports = {
       allowArgumentsExplicitlyTypedAsAny: true,
     }],
     'valid-jsdoc': 0,
-    'unicorn/import-style': 'off',
     'unicorn/no-process-exit': 'off',
     'unicorn/no-static-only-class': 'off',
     'unicorn/no-useless-undefined': 'off',
