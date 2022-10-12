@@ -31,7 +31,6 @@ module.exports = {
 
     'unicorn/no-array-reduce': 'off',
     'unicorn/no-object-as-default-parameter': 'off',
-    'unicorn/prefer-object-from-entries': 'off',
 
     // Consider enabling
     'arrow-parens': 0,
