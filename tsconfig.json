@@ -22,7 +22,8 @@
     "skipLibCheck": true
   },
   "ts-node": {
-    "compiler": "ttypescript"
+    // "compiler": "./node_modules/ttypescript"
+    "transpileOnly": true
   },
   "include": [
     "./src/**/*"
