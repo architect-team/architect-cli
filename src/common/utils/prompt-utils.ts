@@ -40,6 +40,9 @@ export default class PromptUtils {
       }
       for (const prompt of prompts) {
         if ((prompt.when && prompt.default == undefined) || prompt.when === undefined) {
+          if (prompt.name === 'deploy' && prompt.type === 'confirm') {
+            throw new Error(`Please specify the --auto-approve flag to proceed`);
+          }
           throw new Error(`${prompt.name} is required`);
         }
       }
