@@ -21,10 +21,6 @@
     ],
     "skipLibCheck": true
   },
-  "ts-node": {
-    // "compiler": "./node_modules/ttypescript"
-    "transpileOnly": true
-  },
   "include": [
     "./src/**/*"
   ],

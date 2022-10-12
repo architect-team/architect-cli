@@ -1,10 +1,13 @@
+import { V1Deployment } from '@kubernetes/client-node';
 import axios from 'axios';
 import { expect } from 'chai';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
+import TSON from "typescript-json";
 import { ArchitectError, buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
+import { DeepPartial } from '../../src/common/utils/types';
 import { SecretsConfig } from '../../src/dependency-manager/secrets/secrets';
 
 describe('validate spec', () => {
@@ -1804,7 +1807,6 @@ services:
       buildSpecFromYml(yml);
     });
 
-    /*
     it('test tson', () => {
       const deployment = {
         apiVersion: 'v1',
@@ -1870,6 +1872,5 @@ services:
       `;
       buildSpecFromYml(yml);
     });
-    */
   });
 });
