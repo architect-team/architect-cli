@@ -28,8 +28,8 @@ export const sortOnKeys = <T>(dict: Dictionary<T>): Dictionary<T> => {
   sorted.sort();
 
   const tempDict: Dictionary<T> = {};
-  for (let i = 0; i < sorted.length; i++) {
-    tempDict[sorted[i]] = dict[sorted[i]];
+  for (const s of sorted) {
+    tempDict[s] = dict[s];
   }
 
   return tempDict;

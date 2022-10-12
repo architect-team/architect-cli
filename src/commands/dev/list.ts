@@ -53,8 +53,8 @@ export default class DevList extends BaseCommand {
       output[env_name] = {} as Dictionary<any>;
       const container_names = this.getContainerNames(containers);
       const statuses = this.getContainerStates(containers);
-      for (let i = 0; i < container_names.length; i++) {
-        output[env_name][container_names[i]] = {
+      for (const [i, container_name] of container_names.entries()) {
+        output[env_name][container_name] = {
           status: statuses[i],
         };
       }

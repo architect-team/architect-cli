@@ -30,7 +30,6 @@ module.exports = {
     'no-await-in-loop': 0,
 
     'unicorn/no-array-reduce': 'off',
-    'unicorn/no-for-loop': 'off',
     'unicorn/no-object-as-default-parameter': 'off',
     'unicorn/prefer-object-from-entries': 'off',
 
