@@ -1,8 +1,11 @@
+import { V1Deployment } from '@kubernetes/client-node';
 import Ajv, { ErrorObject, ValidateFunction } from 'ajv';
 import ajv_errors from 'ajv-errors';
 import addFormats from 'ajv-formats';
 import { plainToClass } from 'class-transformer';
 import cron from 'cron-validate';
+import TSON from "typescript-json";
+import { DeepPartial } from '../../../common/utils/types';
 import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { buildContextMap, interpolateObject, replaceBrackets } from '../../utils/interpolation';
@@ -234,6 +237,25 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
             path: `services.${service_name}.volumes.${volume_name}.host_path`,
             message: `services.${service_name}.volumes.${volume_name}.host_path cannot be defined outside of a debug block. https://docs.architect.io/components/local-configuration/#when-is-the-debug-block-used`,
             value: volume_spec.host_path,
+            invalid_key: true,
+          });
+          errors.push(error);
+        }
+      }
+    }
+  }
+
+  for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
+    if (service_spec.deploy) {
+      if (service_spec.deploy.kubernetes.deployment) {
+        const res = TSON.validateEquals<DeepPartial<V1Deployment>>(service_spec.deploy.kubernetes.deployment);
+
+        for (const tson_error of res.errors) {
+          const error = new ValidationError({
+            component: component_spec.name,
+            path: `services.${service_name}.deploy.kubernetes.deployment.${tson_error.path.replace('$input.', '')}`,
+            message: `Invalid kubernetes deployment override. ${tson_error.expected !== 'undefined' ? `Expected: ${tson_error.expected}` : 'Error: Invalid key'}`,
+            value: service_spec.deploy.kubernetes.deployment,
             invalid_key: true,
           });
           errors.push(error);
