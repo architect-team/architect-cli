@@ -38,7 +38,7 @@ export default class Environments extends BaseCommand {
 
     const { data: { rows: environments } } = await this.app.api.get(`/environments`, { params });
 
-    if (!environments.length) {
+    if (environments.length === 0) {
       if (args.query) {
         this.log(`No environments found matching ${args.query}.`);
       } else {

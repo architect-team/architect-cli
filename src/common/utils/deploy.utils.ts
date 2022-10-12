@@ -71,7 +71,7 @@ export default class DeployUtils {
     }
 
     const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets);
-    if (extra_secrets && Object.keys(extra_secrets).length) {
+    if (extra_secrets && Object.keys(extra_secrets).length > 0) {
       if (!component_secrets['*']) {
         component_secrets['*'] = {};
       }

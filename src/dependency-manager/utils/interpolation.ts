@@ -25,7 +25,7 @@ export const replaceInterpolationBrackets = (value: string): string => {
 export const buildContextMap = (context: any): any => {
   const context_map: Dictionary<any> = {};
   const queue = [['', context]];
-  while (queue.length) {
+  while (queue.length > 0) {
     const [prefix, c] = queue.shift()!;
 
     if (c instanceof Object) {
@@ -70,7 +70,7 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
   let errors: ValidationError[] = [];
 
   let queue = [[obj, []]];
-  while (queue.length) {
+  while (queue.length > 0) {
     const [el, path_keys] = queue.shift() as [any, string[]];
     if (el instanceof Object) {
       let has_conditional = false;
@@ -123,7 +123,7 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
 
 export const interpolateObjectOrReject = <T>(obj: T, context: any, options?: InterpolateObjectOptions): T => {
   const { interpolated_obj, errors } = interpolateObject(obj, context, options);
-  if (errors.length) {
+  if (errors.length > 0) {
     throw new ValidationErrors(errors, options?.file);
   }
   return interpolated_obj;

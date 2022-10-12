@@ -40,7 +40,7 @@ export default class Components extends BaseCommand {
     let { data: { rows: components } } = await this.app.api.get(`/components`, { params });
     components = components.filter((c: Component) => c.account);
 
-    if (!components.length) {
+    if (components.length === 0) {
       if (args.query) {
         this.log(`No components found matching ${args.query}.`);
       } else {

@@ -183,7 +183,7 @@ export default class Logs extends BaseCommand {
       params: replica_query,
     });
 
-    if (!replicas.length)
+    if (replicas.length === 0)
       throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
     const replica = await EnvironmentUtils.getReplica(replicas);

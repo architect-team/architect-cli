@@ -16,7 +16,7 @@ export const transformLivenessProbeSpecCommand = function (command: string[] | s
 };
 
 export const transformLivenessProbeSpec = function (liveness_probe: LivenessProbeSpec | undefined, environment: Dictionary<string | null>): LivenessProbeConfig | undefined {
-  if (!liveness_probe || !Object.keys(liveness_probe).length) {
+  if (!liveness_probe || Object.keys(liveness_probe).length === 0) {
     return undefined;
   }
 

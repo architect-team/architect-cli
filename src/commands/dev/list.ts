@@ -31,7 +31,7 @@ export default class DevList extends BaseCommand {
       const statuses = this.getContainerStates(containers).join('\n');
       table.push([env_name, container_names, statuses]);
     }
-    if (!table.length) {
+    if (table.length === 0) {
       this.log('There are no active dev instances yet. Use `architect dev` to create one.');
     } else {
       this.log(table.toString());

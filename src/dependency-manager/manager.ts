@@ -392,7 +392,7 @@ export default abstract class DependencyManager {
         validation_errors.push(validation_error);
       }
     }
-    if (validation_errors.length) {
+    if (validation_errors.length > 0) {
       throw new ValidationErrors(validation_errors, component.metadata.file);
     }
   }
@@ -731,13 +731,13 @@ export default abstract class DependencyManager {
       const component_config = transformComponentSpec(component_spec);
 
       // Add interfaces to ComponentNode of the tree if there are any interfaces defined
-      if (Object.keys(component_config.interfaces).length) {
+      if (Object.keys(component_config.interfaces).length > 0) {
         const component_node = graph.getNodeByRef(buildInterfacesRef(component_config)) as ComponentNode;
         component_node.config.interfaces = component_config.interfaces;
       }
 
       // Add outputs to ComponentNode of the tree if there are any outputs defined
-      if (Object.keys(component_config.outputs).length) {
+      if (Object.keys(component_config.outputs).length > 0) {
         const component_node = graph.getNodeByRef(buildInterfacesRef(component_config)) as ComponentNode;
         component_node.config.outputs = component_config.outputs;
       }

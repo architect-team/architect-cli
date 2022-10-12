@@ -597,7 +597,7 @@ $ architect dev -e new_env_name_here .`));
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
 
-    if (!args.configs_or_components || !args.configs_or_components.length) {
+    if (!args.configs_or_components || args.configs_or_components.length === 0) {
       args.configs_or_components = ['./architect.yml'];
     }
 

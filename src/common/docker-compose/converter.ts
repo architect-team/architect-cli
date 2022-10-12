@@ -59,7 +59,7 @@ export class ComposeConverter {
       const architect_service: Partial<ServiceSpec> = {};
       for (const [property_name, property_data] of Object.entries(service_data || {})) {
         const converters = this.compose_property_converters.filter(c => c.compose_property === property_name);
-        if (!converters.length) {
+        if (converters.length === 0) {
           warnings.push(`Could not convert ${service_name} property "${property_name}"`);
         }
         for (const converter of converters) {
@@ -96,7 +96,7 @@ export class ComposeConverter {
     for (const service_config of Object.values(architect_component.services || {})) {
       for (const depends_on of (service_config.depends_on || [])) {
         service_config.environment = service_config.environment || {};
-        if (Object.keys(architect_component.services[depends_on].interfaces || {}).length) {
+        if (Object.keys(architect_component.services[depends_on].interfaces || {}).length > 0) {
           service_config.environment[`${depends_on.replace('-', '_').toUpperCase()}_URL`] = `\${{ services.${depends_on}.interfaces.main.url }}`;
         }
       }
@@ -242,17 +242,17 @@ export class ComposeConverter {
     }
 
     const compose_conversion: ComposeConversion = { warnings };
-    if (Object.entries(local_volumes).length) {
+    if (Object.entries(local_volumes).length > 0) {
       compose_conversion.local = local_volumes;
     }
-    if (Object.entries(volumes).length) {
+    if (Object.entries(volumes).length > 0) {
       compose_conversion.base = volumes;
     }
     return compose_conversion;
   }
 
   private static convertDependsOn(depends_on_or_links: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceSpec>): ComposeConversion {
-    if (!depends_on_or_links.length) {
+    if (depends_on_or_links.length === 0) {
       return {};
     }
 
@@ -263,7 +263,7 @@ export class ComposeConverter {
         depends_on?.push(link);
       }
     }
-    return { base: depends_on.length ? depends_on : undefined };
+    return { base: depends_on.length > 0 ? depends_on : undefined };
   }
 
   private static convertHealthcheck(compose_healthcheck: DockerComposeHealthCheck): ComposeConversion {
@@ -272,7 +272,7 @@ export class ComposeConverter {
     if (command && Array.isArray(command)) {
       if (command.length >= 2 && command[0] === 'CMD-SHELL') {
         liveness_probe_command = command.slice(1);
-      } else if (command.length && command[0] === 'CMD') {
+      } else if (command.length > 0 && command[0] === 'CMD') {
         liveness_probe_command = command.slice(1);
       }
     } else if (command && typeof command === 'string') {

@@ -243,7 +243,7 @@ export default class Deploy extends DeployCommand {
       deployment_dtos.push(deploy_dto);
     }
 
-    CliUx.ux.action.start(chalk.blue(`Creating pipeline${deployment_dtos.length ? 's' : ''}`));
+    CliUx.ux.action.start(chalk.blue(`Creating pipeline${deployment_dtos.length > 0 ? 's' : ''}`));
     const pipelines = await Promise.all(
       deployment_dtos.map(async (deployment_dto) => {
         const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, deployment_dto);

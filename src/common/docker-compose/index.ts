@@ -185,11 +185,11 @@ export class DockerComposeUtils {
         environment: formatted_environment_variables,
       } as DockerService;
 
-      if (ports.length) {
+      if (ports.length > 0) {
         service.ports = ports;
       }
 
-      if (gateway_links.size) {
+      if (gateway_links.size > 0) {
         service.external_links = [...gateway_links];
       }
 
@@ -279,7 +279,7 @@ export class DockerComposeUtils {
           for (const [arg_key, arg] of Object.entries(build.args || {})) {
             args.push(`${arg_key}=${arg}`);
           }
-          if (args.length) {
+          if (args.length > 0) {
             service.build.args = args;
           }
 
@@ -316,7 +316,7 @@ export class DockerComposeUtils {
             }
             volumes.push(volume);
           }
-          if (volumes.length) service.volumes = volumes;
+          if (volumes.length > 0) service.volumes = volumes;
         }
       }
 

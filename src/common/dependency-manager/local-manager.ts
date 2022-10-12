@@ -134,7 +134,7 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const component_refs_queue = [root_component_ref];
 
-    while (component_refs_queue.length) {
+    while (component_refs_queue.length > 0) {
       const component_ref = component_refs_queue.pop() as string;
 
       if (seen_component_refs.has(component_ref)) {

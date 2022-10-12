@@ -192,7 +192,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
 
         const buffer = data.slice(1);
 
-        if (buffer.length < 1) {
+        if (buffer.length === 0) {
           return done();
         }
 
@@ -341,7 +341,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
       params: replica_query,
     });
 
-    if (!replicas.length)
+    if (replicas.length === 0)
       throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
     const replica = flags.replica ? this.getServiceReplica(flags.replica, replicas) : await EnvironmentUtils.getReplica(replicas);

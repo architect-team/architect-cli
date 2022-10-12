@@ -152,7 +152,7 @@ export class DependencyGraphMutable {
   followEdge(root_edge: DependencyEdge): { interface_from: string, interface_to: string, node_to: DependencyNode, node_to_interface_name: string }[] {
     const queue = [root_edge];
     const res = [];
-    while (queue.length) {
+    while (queue.length > 0) {
       const edge = queue.shift()!;
       const node_to = this.getNodeByRef(edge.to);
       if (node_to instanceof ComponentNode) {

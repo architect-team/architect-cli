@@ -214,7 +214,7 @@ export const validateDependsOn = (component: ComponentSpec): ValidationError[] =
 export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMetadata): ComponentSpec => {
   const errors = validateSpec(parsed_yml);
 
-  if (errors && errors.length) {
+  if (errors && errors.length > 0) {
     throw new ValidationErrors(errors);
   }
 
@@ -264,7 +264,7 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
 
   errors.push(...validateDependsOn(component_spec));
 
-  if (errors && errors.length) {
+  if (errors && errors.length > 0) {
     throw new ValidationErrors(errors);
   }
 
@@ -280,7 +280,7 @@ export const validateInterpolation = (component_spec: ComponentSpec): void => {
 
   const filtered_errors = errors.filter(error => !error.message.startsWith(RequiredInterpolationRule.PREFIX));
 
-  if (filtered_errors.length) {
+  if (filtered_errors.length > 0) {
     throw new ValidationErrors(filtered_errors, component_spec.metadata.file);
   }
 };

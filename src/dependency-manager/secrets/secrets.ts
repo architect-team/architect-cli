@@ -61,7 +61,7 @@ export class SecretsConfig {
       }
     }
 
-    if (validation_errors.length) {
+    if (validation_errors.length > 0) {
       throw new ValidationErrors(validation_errors);
     }
   }

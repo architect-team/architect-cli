@@ -38,7 +38,7 @@ export default class Platforms extends BaseCommand {
 
     const { data: { rows: platforms } } = await this.app.api.get(`/platforms`, { params });
 
-    if (!platforms.length) {
+    if (platforms.length === 0) {
       if (args.query) {
         this.log(`No platforms found matching ${args.query}.`);
       } else {

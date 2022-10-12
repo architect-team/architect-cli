@@ -74,7 +74,7 @@ export default class PipelineUtils {
 
       // Check if the deployment failed due to a user aborting the deployment and build an abort error if so
       const aborted_deployments = deployments.filter((d: Deployment) => d.aborted_at);
-      if (aborted_deployments.length !== 0) {
+      if (aborted_deployments.length > 0) {
         const deployment_url = this.getDeploymentUrl(app, aborted_deployments[0]);
         throw new PipelineAbortedError(aborted_deployments[0].id, deployment_url);
       }

@@ -215,7 +215,7 @@ export default class SentryService {
 
       const docker_command = await docker(['ps', '--format', '{{json .}}%%'], { stdout: false });
       const docker_stdout = (docker_command.stdout as string).split('%%')
-        .map((str: string) => (str && str.length) ? JSON.parse(str) : undefined);
+        .map((str: string) => (str && str.length > 0) ? JSON.parse(str) : undefined);
       const docker_containers = docker_stdout.filter(x => Boolean(x)).map((container: any) => ({ ...container, Labels: undefined }));
 
       const updated_docker_info = Object.assign(docker_info, { Containers: docker_containers });
@@ -259,7 +259,7 @@ export default class SentryService {
         if (remove_keys.has(key)) {
           return undefined;
         }
-        if (typeof value === 'number' || (value && Object.keys(value).length)) {
+        if (typeof value === 'number' || (value && Object.keys(value).length > 0)) {
           return value;
         }
       }));
