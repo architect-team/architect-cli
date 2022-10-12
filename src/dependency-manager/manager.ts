@@ -369,20 +369,24 @@ export default abstract class DependencyManager {
     }
   }
 
-  validateGraph(graph: DependencyGraph): void {
-    // Check for protocols that are not http or https
+  private validateProtocols(graph: DependencyGraph): void {
+    const valid_protocols = [undefined, 'http', 'https'];
+
     for (const node of graph.nodes) {
       if (node.is_external) continue;
       if (!(node instanceof ComponentNode)) continue;
 
       const component_interfaces = node.config.interfaces;
       for (const [component_name, component_interface] of Object.entries(component_interfaces)) {
-        const valid_protocol = [undefined, 'http', 'https'];
-        if (valid_protocol.indexOf(component_interface.protocol) === -1) {
+        if (valid_protocols.indexOf(component_interface.protocol) === -1) {
           throw new ArchitectError(`Protocol '${component_interface.protocol}' is detected in component '${component_name}'. We currently only support 'http' and 'https' protocols.`);
         }
       }
     }
+  }
+
+  validateGraph(graph: DependencyGraph): void {
+    this.validateProtocols(graph);
 
     // Check for duplicate subdomains
     const seen_subdomains: Dictionary<string[]> = {};
