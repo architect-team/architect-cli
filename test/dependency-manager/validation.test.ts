@@ -57,22 +57,6 @@ services:
       expect(process.exitCode).eq(1);
     });
 
-    it('invalid host_path outside debug block', async () => {
-      const component_config = `
-name: test/component
-services:
-  stateless-app:
-    environment:
-      LOG_LEVEL: error
-    volumes:
-      test:
-        host_path: ./test
-      `;
-      mock_fs({ '/architect.yml': component_config });
-
-      expect(() => { buildSpecFromPath('/architect.yml'); }).to.throw(ValidationErrors);
-    });
-
     it('invalid deploy key', async () => {
       const component_config = `
       name: test/component
