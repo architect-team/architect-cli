@@ -1,8 +1,6 @@
 import execa from 'execa';
-import * as fs from 'fs-extra';
 import * as path from 'path';
 import { ArchitectPlugin, PluginArchitecture, PluginBinary, PluginBundleType, PluginOptions, PluginPlatform } from './plugin-manager';
-import PluginUtils from './plugin-utils';
 
 export default class OrasPlugin implements ArchitectPlugin {
   private plugin_directory = '';
@@ -45,19 +43,9 @@ export default class OrasPlugin implements ArchitectPlugin {
     },
   ];
 
-  async load(pluginDirectory: string, binary: PluginBinary): Promise<void> {
+  async setup(pluginDirectory: string, binary: PluginBinary): Promise<void> {
     this.binary = binary;
     this.plugin_directory = pluginDirectory;
-    const tar_file_path = path.join(pluginDirectory, '/oras.tar.gz');
-
-    if ((await fs.pathExists(path.join(this.plugin_directory, `/${this.binary?.executable_path}`)))) {
-      // Plugin is already loaded
-      return;
-    }
-
-    await PluginUtils.downloadFile(binary.url, tar_file_path, binary.sha256);
-    await PluginUtils.extractFile(tar_file_path, pluginDirectory, binary.bundle_type);
-    await fs.remove(tar_file_path);
   }
 
   async exec(args: string[], opts: PluginOptions): Promise<execa.ExecaChildProcess<string> | undefined> {

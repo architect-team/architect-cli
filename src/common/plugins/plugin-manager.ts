@@ -34,7 +34,7 @@ export interface ArchitectPlugin {
   version: string;
   name: string;
   binaries: PluginBinary[];
-  load(pluginDirectory: string, binary: PluginBinary): Promise<void>;
+  setup(pluginDirectory: string, binary: PluginBinary): Promise<void>;
   exec(args: string[], opts: PluginOptions): Promise<execa.ExecaChildProcess<string> | undefined>;
 }
 
@@ -83,7 +83,17 @@ export default class PluginManager {
 
     await this.removeOldPluginVersions(current_plugin_directory, plugin.version);
     await fs.mkdirp(version_path);
-    await plugin.load(version_path, PluginUtils.getBinary(plugin.binaries, this.getPlatform(), this.getArchitecture()));
+
+    const binary = PluginUtils.getBinary(plugin.binaries, this.getPlatform(), this.getArchitecture());
+    const downloaded_file_path = path.join(version_path, `/${plugin.name}.${binary.bundle_type === PluginBundleType.ZIP ? 'zip' : 'tar.gz'}`);
+
+    if (!(await fs.pathExists(path.join(version_path, `/${binary.executable_path}`)))) {
+      await PluginUtils.downloadFile(binary.url, downloaded_file_path, binary.sha256);
+      await PluginUtils.extractFile(downloaded_file_path, version_path, binary.bundle_type);
+      await fs.remove(downloaded_file_path);
+    }
+
+    await plugin.setup(version_path, PluginUtils.getBinary(plugin.binaries, this.getPlatform(), this.getArchitecture()));
 
     this.plugins[ctor.name] = plugin;
     return plugin as T;
