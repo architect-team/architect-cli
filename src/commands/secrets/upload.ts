@@ -73,7 +73,7 @@ export default class SecretsUpload extends BaseCommand {
     }
 
     // existing secrets
-    const existing_secrets = await SecretUtils.getSecrets(this.app, account, flags.platform, flags.environment);
+    const existing_secrets = await SecretUtils.getSecrets(this.app, account, { platform_name: flags.platform, environment_name: flags.environment });
     const existing_secret_yml: SecretsDict = {};
     if (existing_secrets && existing_secrets.length > 0) {
       for (const secret of existing_secrets) {
@@ -96,7 +96,7 @@ export default class SecretsUpload extends BaseCommand {
       this.log(`There are no new secrets to upload.`);
       return;
     }
-    await SecretUtils.batchUpdateSecrets(this.app, update_secrets, account, flags.platform, flags.environment);
+    await SecretUtils.batchUpdateSecrets(this.app, update_secrets, account, { platform_name: flags.platform, environment_name: flags.environment });
 
     this.log(`Successfully uploaded secrets from ${secrets_file}`);
   }

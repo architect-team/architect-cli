@@ -47,14 +47,14 @@ export default class SecretsDownload extends BaseCommand {
     if (flags.platform && flags.environment) {
       throw new Error('Please provide either the platform flag or the environment flag and not both.');
     }
-    
+
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const is_admin = await UserUtils.isAdmin(this.app, account.id);
     if (!is_admin) {
       this.error('You do not have permission to download secrets. Please contact your admin.');
     }
 
-    const secrets = await SecretUtils.getSecrets(this.app, account, flags.platform, flags.environment, true);
+    const secrets = await SecretUtils.getSecrets(this.app, account, { platform_name: flags.platform, environment_name: flags.environment }, true);
     if (secrets.length === 0) {
       this.log('There are no secrets to download.');
       return;
