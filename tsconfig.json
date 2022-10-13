@@ -14,6 +14,12 @@
     "target": "es2019",
     "composite": true,
     "noEmitHelpers": true,
+    "plugins": [
+      {
+        "transform": "typescript-json/lib/transform"
+      }
+    ],
+    "skipLibCheck": true
   },
   "include": [
     "./src/**/*"

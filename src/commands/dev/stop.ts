@@ -6,8 +6,8 @@ import net from 'net';
 import path from 'path';
 import { socketPath } from '.';
 import { ArchitectError } from '../..';
-import BaseCommand from "../../base-command";
-import { DockerComposeUtils } from "../../common/docker-compose";
+import BaseCommand from '../../base-command';
+import { DockerComposeUtils } from '../../common/docker-compose';
 import { RequiresDocker } from '../../common/docker/helper';
 import LocalPaths from '../../paths';
 

@@ -9,7 +9,6 @@ interface PipelineResult {
 }
 
 export default class PipelineUtils {
-
   static POLL_INTERVAL = 10000;
 
   static getDeploymentUrl(app: AppService, deployment: Deployment): string {
@@ -75,14 +74,14 @@ export default class PipelineUtils {
 
       // Check if the deployment failed due to a user aborting the deployment and build an abort error if so
       const aborted_deployments = deployments.filter((d: Deployment) => d.aborted_at);
-      if (aborted_deployments.length !== 0) {
+      if (aborted_deployments.length > 0) {
         const deployment_url = this.getDeploymentUrl(app, aborted_deployments[0]);
         throw new PipelineAbortedError(aborted_deployments[0].id, deployment_url);
       }
 
       // Build a list of links for the failed deployments
       const failed_deployment_links = deployments
-        .filter((d: any) => d.failed_at)
+        .filter((d) => d.failed_at)
         .map((d: any) => this.getDeploymentUrl(app, d));
       throw new DeploymentFailedError(pipeline.id, failed_deployment_links);
     }

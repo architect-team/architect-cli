@@ -1356,7 +1356,9 @@
         "cpu": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
             },
             {
               "type": "string",
@@ -1374,7 +1376,9 @@
         "memory": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
             },
             {
               "type": "string",
@@ -1418,7 +1422,9 @@
                 "cpu": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100
                     },
                     {
                       "type": "string",
@@ -1436,7 +1442,9 @@
                 "memory": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100
                     },
                     {
                       "type": "string",
@@ -1483,7 +1491,8 @@
         "min_replicas": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             {
               "type": "string",
@@ -1498,7 +1507,8 @@
         "max_replicas": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             {
               "type": "string",
@@ -1533,7 +1543,8 @@
                 "min_replicas": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0
                     },
                     {
                       "type": "string",
@@ -1548,7 +1559,8 @@
                 "max_replicas": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0
                     },
                     {
                       "type": "string",
@@ -1574,6 +1586,80 @@
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://docs.architect.io/reference/architect-yml#scalingspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
+    "KubernetesDeploySpec": {
+      "properties": {
+        "deployment": {}
+      },
+      "type": "object",
+      "required": [
+        "deployment"
+      ],
+      "description": "Configuration that dictates the kubernetes deploy overrides.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#kubernetesdeployspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "deployment": {}
+              },
+              "type": "object",
+              "required": [
+                "deployment"
+              ],
+              "description": "Configuration that dictates the kubernetes deploy overrides.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#kubernetesdeployspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
+    "DeploySpec": {
+      "properties": {
+        "kubernetes": {
+          "$ref": "#/definitions/KubernetesDeploySpec"
+        }
+      },
+      "type": "object",
+      "required": [
+        "kubernetes"
+      ],
+      "description": "Configuration that dictates the deploy overrides.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#deployspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "kubernetes": {
+                  "$ref": "#/definitions/KubernetesDeploySpec"
+                }
+              },
+              "type": "object",
+              "required": [
+                "kubernetes"
+              ],
+              "description": "Configuration that dictates the deploy overrides.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#deployspec"
               },
               "patternProperties": {}
             }
@@ -2089,7 +2175,8 @@
         "replicas": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             {
               "type": "string",
@@ -2103,6 +2190,9 @@
         },
         "scaling": {
           "$ref": "#/definitions/ScalingSpec"
+        },
+        "deploy": {
+          "$ref": "#/definitions/DeploySpec"
         },
         "description": {
           "type": "string",
@@ -2492,7 +2582,8 @@
                 "replicas": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0
                     },
                     {
                       "type": "string",
@@ -2506,6 +2597,9 @@
                 },
                 "scaling": {
                   "$ref": "#/definitions/ScalingSpec"
+                },
+                "deploy": {
+                  "$ref": "#/definitions/DeploySpec"
                 },
                 "description": {
                   "type": "string",
@@ -5132,7 +5226,9 @@
         "cpu": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
             },
             {
               "type": "string",
@@ -5150,7 +5246,9 @@
         "memory": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
             },
             {
               "type": "string",
@@ -5180,7 +5278,9 @@
                 "cpu": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100
                     },
                     {
                       "type": "string",
@@ -5198,7 +5298,9 @@
                 "memory": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100
                     },
                     {
                       "type": "string",
@@ -5231,7 +5333,8 @@
         "min_replicas": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             {
               "type": "string",
@@ -5246,7 +5349,8 @@
         "max_replicas": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             {
               "type": "string",
@@ -5276,7 +5380,8 @@
                 "min_replicas": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0
                     },
                     {
                       "type": "string",
@@ -5291,7 +5396,8 @@
                 "max_replicas": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0
                     },
                     {
                       "type": "string",
@@ -5312,6 +5418,68 @@
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://docs.architect.io/reference/architect-yml#scalingspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
+    "_DebugKubernetesDeploySpec": {
+      "properties": {
+        "deployment": {}
+      },
+      "type": "object",
+      "description": "Configuration that dictates the kubernetes deploy overrides.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#kubernetesdeployspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "deployment": {}
+              },
+              "type": "object",
+              "description": "Configuration that dictates the kubernetes deploy overrides.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#kubernetesdeployspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
+    "_DebugDeploySpec": {
+      "properties": {
+        "kubernetes": {
+          "$ref": "#/definitions/_DebugKubernetesDeploySpec"
+        }
+      },
+      "type": "object",
+      "description": "Configuration that dictates the deploy overrides.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#deployspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "kubernetes": {
+                  "$ref": "#/definitions/_DebugKubernetesDeploySpec"
+                }
+              },
+              "type": "object",
+              "description": "Configuration that dictates the deploy overrides.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#deployspec"
               },
               "patternProperties": {}
             }
@@ -5790,7 +5958,8 @@
         "replicas": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             {
               "type": "string",
@@ -5804,6 +5973,9 @@
         },
         "scaling": {
           "$ref": "#/definitions/_DebugScalingSpec"
+        },
+        "deploy": {
+          "$ref": "#/definitions/_DebugDeploySpec"
         },
         "description": {
           "type": "string",
@@ -6190,7 +6362,8 @@
                 "replicas": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "integer",
+                      "minimum": 0
                     },
                     {
                       "type": "string",
@@ -6204,6 +6377,9 @@
                 },
                 "scaling": {
                   "$ref": "#/definitions/_DebugScalingSpec"
+                },
+                "deploy": {
+                  "$ref": "#/definitions/_DebugDeploySpec"
                 },
                 "description": {
                   "type": "string",

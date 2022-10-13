@@ -7,7 +7,7 @@ import { ComponentSlugUtils, ResourceSlugUtils, ResourceType } from '../utils/sl
 
 export const transformResourceSpecCommand = (command: string | string[] | undefined): string[] => {
   if (!command) return [];
-  if (command instanceof Array) {
+  if (Array.isArray(command)) {
     return command;
   }
   return stringArgv(command);
@@ -15,7 +15,7 @@ export const transformResourceSpecCommand = (command: string | string[] | undefi
 
 export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | undefined): string[] => {
   if (!entrypoint) return [];
-  if (entrypoint instanceof Array) {
+  if (Array.isArray(entrypoint)) {
     return entrypoint;
   }
   return stringArgv(entrypoint);

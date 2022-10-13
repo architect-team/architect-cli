@@ -136,6 +136,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
       }
 
       websocket.on('end', () => {
+        // eslint-disable-next-line no-process-exit
         process.exit();
       });
       websocket.on('error', (err) => {
@@ -170,16 +171,16 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
 
       let resolved = false;
 
-      ws.onopen = () => {
+      ws.addEventListener('open', () => {
         resolved = true;
         resolve(ws);
-      };
+      });
 
-      ws.onerror = (err) => {
+      ws.addEventListener('error', (err) => {
         if (!resolved) {
           reject(err);
         }
-      };
+      });
     });
   }
 
@@ -191,7 +192,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
 
         const buffer = data.slice(1);
 
-        if (buffer.length < 1) {
+        if (buffer.length === 0) {
           return done();
         }
 
@@ -208,6 +209,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
             if (outcome.message && outcome.reason !== 'NonZeroExitCode') {
               process.stderr.write(chalk.red(outcome.message) + '\n');
             }
+            // eslint-disable-next-line no-process-exit
             process.exit(error_code);
           }
         } else {
@@ -271,7 +273,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     const resources: Dictionary<any> = {};
     for (const rep of replicas) {
       const { resource_name } = ResourceSlugUtils.parse(rep.resource_ref);
-      if (resources.hasOwnProperty(resource_name)) {
+      if (resource_name in resources) {
         resources[resource_name].push(rep);
       } else {
         resources[resource_name] = [rep];
@@ -282,21 +284,21 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     let service_replicas = [];
     let replica_idx;
     const replica_parts = replica_flag.split(':');
-    if (replica_parts.length === 1 && !isNaN(parseInt(replica_parts[0]))) {
+    if (replica_parts.length === 1 && !Number.isNaN(Number.parseInt(replica_parts[0]))) {
       if (resource_names.length > 1) {
         throw new ArchitectError(`More than one service is found [${resource_names.join(', ')}]. Please specify replica in the form of <service-name>:<replica-index>.`);
       }
 
       service_replicas = replicas;
-      replica_idx = parseInt(replica_flag);
-    } else if (replica_parts.length === 2 && !isNaN(parseInt(replica_parts[1]))) {
+      replica_idx = Number.parseInt(replica_flag);
+    } else if (replica_parts.length === 2 && !Number.isNaN(Number.parseInt(replica_parts[1]))) {
       const [service_name, service_replica_idx] = replica_parts;
-      if (!resources.hasOwnProperty(service_name)) {
+      if (!(service_name in resources)) {
         throw new ArchitectError(`No service name found for '${service_name}'. Try ${resource_names.join(', ')}.`);
       }
 
       service_replicas = resources[service_name];
-      replica_idx = parseInt(service_replica_idx);
+      replica_idx = Number.parseInt(service_replica_idx);
     } else {
       throw new ArchitectError('Replica must be of the form <service-name>:<replica-index> or <replica-index>.');
     }
@@ -339,7 +341,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
       params: replica_query,
     });
 
-    if (!replicas.length)
+    if (replicas.length === 0)
       throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
     const replica = flags.replica ? this.getServiceReplica(flags.replica, replicas) : await EnvironmentUtils.getReplica(replicas);
@@ -388,6 +390,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
   }
 
   async run(): Promise<void> {
+    // eslint-disable-next-line unicorn/prefer-module
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
     const { args, flags } = await this.parse(Exec);
@@ -395,7 +398,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     // Automatically set tty if the user doesn't supply it based on whether stdin is TTY.
     if (flags.tty === undefined) {
       // NOTE: stdin.isTTY is undefined if stdin is not a TTY, which is why this is a double negation.
-      flags.tty = !!process.stdin.isTTY;
+      flags.tty = Boolean(process.stdin.isTTY);
     } else if (flags.tty && !process.stdin.isTTY) {
       throw new ArchitectError('stdin does not support tty');
     }
@@ -405,7 +408,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
       // If the env exists locally then just assume local
       const is_local_env = await DockerComposeUtils.isLocalEnvironment(flags.environment);
       if (is_local_env) {
-        return await this.runLocal(args, flags);
+        return this.runLocal(args, flags);
       }
     }
 
@@ -413,7 +416,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: !flags.environment });
 
     if (AccountUtils.isLocalAccount(account)) {
-      return await this.runLocal(args, flags);
+      return this.runLocal(args, flags);
     }
 
     await this.runRemote(account, args, flags);

@@ -3,38 +3,38 @@ import { JSONSchema } from 'class-validator-jsonschema';
 import { ExclusiveOrNeither, ExpressionOr, ExpressionOrString, StringOrStringArray } from './utils/json-schema-annotations';
 
 @JSONSchema({
-  "allOf": [
+  'allOf': [
     {
-      "oneOf": [
+      'oneOf': [
         {
-          "type": "object",
-          "required": [
-            "command",
+          'type': 'object',
+          'required': [
+            'command',
           ],
         },
         {
-          "type": "object",
-          "required": [
-            "path", "port",
+          'type': 'object',
+          'required': [
+            'path', 'port',
           ],
         },
       ],
     },
     {
-      "not":
+      'not':
       {
-        "type": "object",
-        "required": [
-          "command", "port",
+        'type': 'object',
+        'required': [
+          'command', 'port',
         ],
       },
     },
     {
-      "not":
+      'not':
       {
-        "type": "object",
-        "required": [
-          "command", "path",
+        'type': 'object',
+        'required': [
+          'command', 'path',
         ],
       },
     },
@@ -112,7 +112,7 @@ export class LivenessProbeSpec {
 }
 
 @JSONSchema({
-  ...ExclusiveOrNeither("host_path", "key"),
+  ...ExclusiveOrNeither('host_path', 'key'),
   description: 'Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.',
 })
 export class VolumeSpec {
