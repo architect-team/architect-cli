@@ -35,7 +35,7 @@ export default class ComponentValidate extends BaseCommand {
     [name: string]: any;
   }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     if (!options) {
-      return await super.parse(options, argv);
+      return super.parse(options, argv);
     }
     options.args = [];
     for (const _ of argv) {

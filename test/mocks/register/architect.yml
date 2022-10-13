@@ -1,0 +1,15 @@
+name: invalid-account/hello-world
+description: Test invalid account in register command
+
+services:
+  api:
+    build:
+      context: .
+    interfaces:
+      main: 3000
+
+interfaces:
+  hello:
+    url: ${{ services.api.interfaces.main.url }}
+    ingress:
+      subdomain: hello

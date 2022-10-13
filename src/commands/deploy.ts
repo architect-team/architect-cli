@@ -11,11 +11,10 @@ import DeployUtils from '../common/utils/deploy.utils';
 import { booleanString } from '../common/utils/oclif';
 import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-builder';
 import { ComponentVersionSlugUtils } from '../dependency-manager/spec/utils/slugs';
-import Dev from "./dev";
+import Dev from './dev';
 import ComponentRegister from './register';
 
 export abstract class DeployCommand extends BaseCommand {
-
   static flags = {
     ...BaseCommand.flags,
     auto_approve: booleanString({
@@ -209,7 +208,7 @@ export default class Deploy extends DeployCommand {
     const components = args.configs_or_components;
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const all_secret_file_values = flags['secret-file'].concat(flags.secrets); // TODO: 404: remove
+    const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
     const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values); // TODO: 404: update
     const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_file_values); // TODO: 404: remove
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
@@ -244,12 +243,12 @@ export default class Deploy extends DeployCommand {
       deployment_dtos.push(deploy_dto);
     }
 
-    CliUx.ux.action.start(chalk.blue(`Creating pipeline${deployment_dtos.length ? 's' : ''}`));
+    CliUx.ux.action.start(chalk.blue(`Creating pipeline${deployment_dtos.length > 0 ? 's' : ''}`));
     const pipelines = await Promise.all(
       deployment_dtos.map(async (deployment_dto) => {
         const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, deployment_dto);
         return { component_name: deployment_dto.component, pipeline };
-      })
+      }),
     );
     CliUx.ux.action.stop();
 
@@ -280,7 +279,7 @@ export default class Deploy extends DeployCommand {
               throw err;
             }
           });
-      })
+      }),
     );
     CliUx.ux.action.stop();
   }
@@ -288,15 +287,13 @@ export default class Deploy extends DeployCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Deploy);
 
-    if (args.configs_or_components && args.configs_or_components.length > 1) {
-      if (flags.interface?.length) {
-        throw new Error('Interface flag not supported if deploying multiple components in the same command.');
-      }
+    if (args.configs_or_components && args.configs_or_components.length > 1 && flags.interface?.length) {
+      throw new Error('Interface flag not supported if deploying multiple components in the same command.');
     }
 
     if (flags.local) {
-      this.log(chalk.yellow("The --local(-l) flag will be deprecated soon. Please switch over to using the architect dev command instead."));
-      this.log(chalk.yellow("All deprecated flags will also be removed."));
+      this.log(chalk.yellow('The --local(-l) flag will be deprecated soon. Please switch over to using the architect dev command instead.'));
+      this.log(chalk.yellow('All deprecated flags will also be removed.'));
       await new Promise(resolve => setTimeout(resolve, 2000));
       await Dev.run();
     } else {

@@ -26,7 +26,7 @@ export default class Platforms extends BaseCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Platforms);
 
-    let account: Account | undefined = undefined;
+    let account: Account | undefined;
     if (flags.account) {
       account = await AccountUtils.getAccount(this.app, flags.account);
     }
@@ -38,7 +38,7 @@ export default class Platforms extends BaseCommand {
 
     const { data: { rows: platforms } } = await this.app.api.get(`/platforms`, { params });
 
-    if (!platforms.length) {
+    if (platforms.length === 0) {
       if (args.query) {
         this.log(`No platforms found matching ${args.query}.`);
       } else {

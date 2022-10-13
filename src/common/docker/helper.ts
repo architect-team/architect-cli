@@ -3,7 +3,6 @@ import semver from 'semver';
 import which from 'which';
 import { ArchitectError } from '../../dependency-manager/utils/errors';
 
-
 /**
  * this method splits the tag off of an image string. this logic is not straightforward as the image string may contain a port.
  *
@@ -135,25 +134,25 @@ class _DockerHelper {
 
   verifyDocker(): void {
     if (!this.docker_installed) {
-      throw new ArchitectError('Architect requires Docker to be installed.\nPlease install docker and try again: https://docs.docker.com/engine/install/', false);
+      throw new ArchitectError('Architect requires Docker to be installed.\nPlease install docker and try again: https://docs.docker.com/engine/install/');
     }
   }
 
   verifyBuildX(): void {
     if (!this.docker_info.buildx) {
-      throw new ArchitectError("'docker buildx' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.", false);
+      throw new ArchitectError('\'docker buildx\' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.');
     }
   }
 
   verifyCompose(): void {
     if (!this.docker_info.compose) {
-      throw new ArchitectError("'docker compose' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.", false);
+      throw new ArchitectError('\'docker compose\' is not available.\nDocker engine must be updated - visit https://docs.docker.com/engine/install/ or install updates via Docker Desktop.');
     }
   }
 
   verifyDaemon() {
     if (!this.daemonRunning()) {
-      throw new ArchitectError('Docker daemon is not running. Please start it and try again.', false);
+      throw new ArchitectError('Docker daemon is not running. Please start it and try again.');
     }
   }
 
@@ -195,7 +194,6 @@ export function RequiresDocker(options?: RequiresDockerOptions): (target: any, p
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const wrappedFunc = descriptor.value;
     descriptor.value = function (this: any, ...args: any[]) {
-
       // We always want to verify docker is installed and the daemon is running if any docker usage is required.
       DockerHelper.verifyDocker();
       DockerHelper.verifyDaemon();

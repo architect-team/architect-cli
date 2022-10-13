@@ -1593,6 +1593,80 @@
         }
       }
     },
+    "KubernetesDeploySpec": {
+      "properties": {
+        "deployment": {}
+      },
+      "type": "object",
+      "required": [
+        "deployment"
+      ],
+      "description": "Configuration that dictates the kubernetes deploy overrides.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#kubernetesdeployspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "deployment": {}
+              },
+              "type": "object",
+              "required": [
+                "deployment"
+              ],
+              "description": "Configuration that dictates the kubernetes deploy overrides.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#kubernetesdeployspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
+    "DeploySpec": {
+      "properties": {
+        "kubernetes": {
+          "$ref": "#/definitions/KubernetesDeploySpec"
+        }
+      },
+      "type": "object",
+      "required": [
+        "kubernetes"
+      ],
+      "description": "Configuration that dictates the deploy overrides.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#deployspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "kubernetes": {
+                  "$ref": "#/definitions/KubernetesDeploySpec"
+                }
+              },
+              "type": "object",
+              "required": [
+                "kubernetes"
+              ],
+              "description": "Configuration that dictates the deploy overrides.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#deployspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
     "ServiceInterfaceSpec": {
       "properties": {
         "description": {
@@ -2117,6 +2191,9 @@
         "scaling": {
           "$ref": "#/definitions/ScalingSpec"
         },
+        "deploy": {
+          "$ref": "#/definitions/DeploySpec"
+        },
         "description": {
           "type": "string",
           "description": "Human readable description"
@@ -2520,6 +2597,9 @@
                 },
                 "scaling": {
                   "$ref": "#/definitions/ScalingSpec"
+                },
+                "deploy": {
+                  "$ref": "#/definitions/DeploySpec"
                 },
                 "description": {
                   "type": "string",
@@ -5345,6 +5425,68 @@
         }
       }
     },
+    "_DebugKubernetesDeploySpec": {
+      "properties": {
+        "deployment": {}
+      },
+      "type": "object",
+      "description": "Configuration that dictates the kubernetes deploy overrides.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#kubernetesdeployspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "deployment": {}
+              },
+              "type": "object",
+              "description": "Configuration that dictates the kubernetes deploy overrides.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#kubernetesdeployspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
+    "_DebugDeploySpec": {
+      "properties": {
+        "kubernetes": {
+          "$ref": "#/definitions/_DebugKubernetesDeploySpec"
+        }
+      },
+      "type": "object",
+      "description": "Configuration that dictates the deploy overrides.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#deployspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "kubernetes": {
+                  "$ref": "#/definitions/_DebugKubernetesDeploySpec"
+                }
+              },
+              "type": "object",
+              "description": "Configuration that dictates the deploy overrides.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#deployspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
     "_DebugServiceInterfaceSpec": {
       "properties": {
         "description": {
@@ -5832,6 +5974,9 @@
         "scaling": {
           "$ref": "#/definitions/_DebugScalingSpec"
         },
+        "deploy": {
+          "$ref": "#/definitions/_DebugDeploySpec"
+        },
         "description": {
           "type": "string",
           "description": "Human readable description"
@@ -6232,6 +6377,9 @@
                 },
                 "scaling": {
                   "$ref": "#/definitions/_DebugScalingSpec"
+                },
+                "deploy": {
+                  "$ref": "#/definitions/_DebugDeploySpec"
                 },
                 "description": {
                   "type": "string",

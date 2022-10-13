@@ -1,9 +1,11 @@
 import leven from 'leven';
 
 export const findPotentialMatch = (value: string, options: string[], max_distance = 15): string | undefined => {
-  if (!value) { return; }
+  if (!value) {
+    return;
+  }
   let potential_match;
-  let shortest_distance = Infinity;
+  let shortest_distance = Number.POSITIVE_INFINITY;
   const value_length = value.length;
   for (const option of [...options].sort()) {
     const option_length = option.length;

@@ -47,7 +47,6 @@ export class DependencyGraphMutable {
   addNode(node: DependencyNode): DependencyNode {
     if (!this.nodes_map.has(node.ref)) {
       this.nodes.push(node);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.__nodes_map!.set(node.ref, node);
     }
     return node;
@@ -72,7 +71,6 @@ export class DependencyGraphMutable {
       this.getNodeByRef(edge.to);
 
       this.edges.push(edge);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.__edges_map!.set(edge.ref, edge);
     }
     return edge;
@@ -114,14 +112,13 @@ export class DependencyGraphMutable {
       }
     }
 
-    return Array.from(nodes.values());
+    return [...nodes.values()];
   }
 
   removeNode(node_ref: string, cleanup_dangling: boolean): void {
     const queue = [node_ref];
     while (queue.length > 0) {
       const ref = queue.shift();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const node = this.getNodeByRef(ref!);
       const dependents = this.getUpstreamNodes(node).filter(n => !queue.includes(n.ref));
       const dependencies = this.getDownstreamNodes(node);
@@ -130,11 +127,11 @@ export class DependencyGraphMutable {
         this.removeNodeByRef(node.ref);
 
         if (cleanup_dangling) {
-          dependencies.forEach((dep) => {
+          for (const dep of dependencies) {
             if (!queue.includes(dep.ref)) {
               queue.push(dep.ref);
             }
-          });
+          }
         }
       }
     }
@@ -149,14 +146,13 @@ export class DependencyGraphMutable {
       }
     }
 
-    return Array.from(nodes.values());
+    return [...nodes.values()];
   }
 
   followEdge(root_edge: DependencyEdge): { interface_from: string, interface_to: string, node_to: DependencyNode, node_to_interface_name: string }[] {
     const queue = [root_edge];
     const res = [];
-    while (queue.length) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    while (queue.length > 0) {
       const edge = queue.shift()!;
       const node_to = this.getNodeByRef(edge.to);
       if (node_to instanceof ComponentNode) {
@@ -193,7 +189,7 @@ export class DependencyGraphMutable {
   getDependsOn(node: ServiceNode | TaskNode): ServiceNode[] {
     const explicit_depends_on = this.getExplicitDependsOn(node);
     const cross_component_depends_on = this.getInterComponentDependsOn(node);
-    const all_depends_on = explicit_depends_on.concat(cross_component_depends_on);
+    const all_depends_on = [...explicit_depends_on, ...cross_component_depends_on];
     return all_depends_on.filter(n => !n.is_external);
   }
 
@@ -216,7 +212,7 @@ export class DependencyGraphMutable {
     for (const i of interfaces) {
       const interface_downstreams = interfaces.map(i => this.getDownstreamNodes(i));
       for (const i_downstream of interface_downstreams) {
-        downstreams = downstreams.concat(i_downstream);
+        downstreams = [...downstreams, ...i_downstream];
       }
     }
     downstreams = downstreams.filter((node, index, self) => self.findIndex(n => n.ref === node.ref) === index); // dedupe

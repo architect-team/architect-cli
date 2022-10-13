@@ -1,8 +1,11 @@
-import Ajv, { ErrorObject, ValidateFunction } from "ajv";
-import ajv_errors from "ajv-errors";
-import addFormats from "ajv-formats";
+import { V1Deployment } from '@kubernetes/client-node';
+import Ajv, { ErrorObject, ValidateFunction } from 'ajv';
+import ajv_errors from 'ajv-errors';
+import addFormats from 'ajv-formats';
 import { plainToClass } from 'class-transformer';
 import cron from 'cron-validate';
+import TSON from 'typescript-json';
+import { DeepPartial } from '../../../common/utils/types';
 import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { buildContextMap, interpolateObject, replaceBrackets } from '../../utils/interpolation';
@@ -76,7 +79,7 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
   const ignore_data_paths = new Set<string>();
   for (const data_path of sorted_data_path_keys) {
     const segments_list = data_path.split('.');
-    const segments = segments_list.slice(0, segments_list.length - 1);
+    const segments = segments_list.slice(0, -1);
     let path = '';
     for (const segment of segments) {
       path += path ? `.${segment}` : segment;
@@ -118,8 +121,8 @@ export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
     // TODO:288 enable strict mode?
     const ajv = new Ajv({ allErrors: true, unicodeRegExp: false });
     addFormats(ajv);
-    ajv.addFormat('cidrv4', /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?:\/(?:3[0-2]|[12]?[0-9]))?$/);
-    ajv.addFormat('cron', (value: string): boolean => value === "" || cron(value, cron_options).isValid());
+    ajv.addFormat('cidrv4', /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?:\/(?:3[0-2]|[12]?\d))?$/);
+    ajv.addFormat('cron', (value: string): boolean => value === '' || cron(value, cron_options).isValid());
     ajv.addKeyword('externalDocs');
     // https://github.com/ajv-validator/ajv-errors
     ajv_errors(ajv);
@@ -174,7 +177,6 @@ export const validateDependsOn = (component: ComponentSpec): ValidationError[] =
 
   for (const [name, dependencies] of Object.entries(depends_on_map)) {
     for (const dependency of dependencies) {
-
       if (task_map[dependency]) {
         const error = new ValidationError({
           component: component.name,
@@ -212,26 +214,40 @@ export const validateDependsOn = (component: ComponentSpec): ValidationError[] =
 export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMetadata): ComponentSpec => {
   const errors = validateSpec(parsed_yml);
 
-  if (errors && errors.length) {
+  if (errors && errors.length > 0) {
     throw new ValidationErrors(errors);
   }
 
   const component_spec = plainToClass(ComponentSpec, parsed_yml);
 
-  if (metadata) {
-    component_spec.metadata = metadata;
-  } else {
-    component_spec.metadata = {
-      ref: component_spec.name,
-      architect_ref: component_spec.name,
-      tag: 'latest',
-      instance_date: new Date(),
-    };
+  component_spec.metadata = metadata ? metadata : {
+    ref: component_spec.name,
+    architect_ref: component_spec.name,
+    tag: 'latest',
+    instance_date: new Date(),
+  };
+
+  for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
+    if (service_spec.deploy && service_spec.deploy.kubernetes.deployment) {
+      // Only works if transpileOnly=false in ./bin/dev
+      const res = TSON.validateEquals<DeepPartial<V1Deployment>>(service_spec.deploy.kubernetes.deployment);
+
+      for (const tson_error of res.errors) {
+        const error = new ValidationError({
+          component: component_spec.name,
+          path: `services.${service_name}.deploy.kubernetes.deployment.${tson_error.path.replace('$input.', '')}`,
+          message: `Invalid kubernetes deployment override. ${tson_error.expected !== 'undefined' ? `Expected: ${tson_error.expected}` : 'Error: Invalid key'}`,
+          value: service_spec.deploy.kubernetes.deployment,
+          invalid_key: true,
+        });
+        errors.push(error);
+      }
+    }
   }
 
   errors.push(...validateDependsOn(component_spec));
 
-  if (errors && errors.length) {
+  if (errors && errors.length > 0) {
     throw new ValidationErrors(errors);
   }
 
@@ -247,7 +263,7 @@ export const validateInterpolation = (component_spec: ComponentSpec): void => {
 
   const filtered_errors = errors.filter(error => !error.message.startsWith(RequiredInterpolationRule.PREFIX));
 
-  if (filtered_errors.length) {
+  if (filtered_errors.length > 0) {
     throw new ValidationErrors(filtered_errors, component_spec.metadata.file);
   }
 };

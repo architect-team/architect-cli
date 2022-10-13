@@ -35,7 +35,7 @@ export class SecretsConfig {
       }
 
       // check that secrets are only strings and not things like arrays or objects
-      if (typeof component_secrets !== 'object' || component_secrets instanceof Array) {
+      if (typeof component_secrets !== 'object' || Array.isArray(component_secrets)) {
         const validation_error = new ValidationError({
           component: component_key,
           path: component_key,
@@ -45,7 +45,7 @@ export class SecretsConfig {
         validation_errors.push(validation_error);
       }
 
-      if (typeof component_secrets === 'object' && !(component_secrets instanceof Array)) {
+      if (typeof component_secrets === 'object' && !(Array.isArray(component_secrets))) {
         for (const [secret_key, secret_value] of Object.entries(component_secrets || {})) {
           // check that keys of values use allowed characters
           if (!Slugs.ComponentSecretValidator.test(secret_key)) {
@@ -61,7 +61,7 @@ export class SecretsConfig {
       }
     }
 
-    if (validation_errors.length) {
+    if (validation_errors.length > 0) {
       throw new ValidationErrors(validation_errors);
     }
   }

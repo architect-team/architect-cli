@@ -68,6 +68,7 @@ export class DockerComposeUtils {
     });
   }
 
+  // eslint-disable-next-line complexity
   public static async generate(graph: DependencyGraph, options?: GenerateOptions): Promise<DockerComposeTemplate> {
     if (!options) {
       options = { gateway_admin_port: 8080, external_addr: 'arc.localhost' };
@@ -184,11 +185,11 @@ export class DockerComposeUtils {
         environment: formatted_environment_variables,
       } as DockerService;
 
-      if (ports.length) {
+      if (ports.length > 0) {
         service.ports = ports;
       }
 
-      if (gateway_links.size) {
+      if (gateway_links.size > 0) {
         service.external_links = [...gateway_links];
       }
 
@@ -204,10 +205,16 @@ export class DockerComposeUtils {
       const cpu = node.config.cpu;
       const memory = node.config.memory;
       if (cpu || memory) {
-        if (!service.deploy) { service.deploy = {}; }
+        if (!service.deploy) {
+          service.deploy = {};
+        }
         service.deploy.resources = { limits: {} };
-        if (cpu) { service.deploy.resources.limits.cpus = `${cpu}`; }
-        if (memory) { service.deploy.resources.limits.memory = memory; }
+        if (cpu) {
+          service.deploy.resources.limits.cpus = `${cpu}`;
+        }
+        if (memory) {
+          service.deploy.resources.limits.memory = memory;
+        }
       }
 
       if (!service.labels) {
@@ -229,7 +236,7 @@ export class DockerComposeUtils {
             test: liveness_probe.command,
             interval: liveness_probe.interval,
             timeout: liveness_probe.timeout,
-            retries: typeof liveness_probe.failure_threshold === 'string' ? parseInt(liveness_probe.failure_threshold) : liveness_probe.failure_threshold,
+            retries: typeof liveness_probe.failure_threshold === 'string' ? Number.parseInt(liveness_probe.failure_threshold) : liveness_probe.failure_threshold,
             start_period: liveness_probe.initial_delay,
           };
           if (!service.labels) {
@@ -272,7 +279,7 @@ export class DockerComposeUtils {
           for (const [arg_key, arg] of Object.entries(build.args || {})) {
             args.push(`${arg_key}=${arg}`);
           }
-          if (args.length) {
+          if (args.length > 0) {
             service.build.args = args;
           }
 
@@ -309,19 +316,20 @@ export class DockerComposeUtils {
             }
             volumes.push(volume);
           }
-          if (volumes.length) service.volumes = volumes;
+          if (volumes.length > 0) service.volumes = volumes;
         }
       }
 
       if (node instanceof TaskNode) {
-        if (!service.deploy) { service.deploy = {}; }
+        if (!service.deploy) {
+          service.deploy = {};
+        }
         service.deploy.replicas = 0; // set all tasks scale to 0 so they don't start but can be optionally invoked later
       }
 
-
-
       if (service.build) {
         if (!service.image) {
+          // eslint-disable-next-line unicorn/consistent-destructuring
           const image = options.getImage ? options.getImage(node.config.metadata.ref) : node.ref;
           service.image = image;
         }
@@ -390,8 +398,7 @@ export class DockerComposeUtils {
             service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadBalancer.sticky.cookie=true`);
           }
           if (ssl_cert && ssl_key) {
-            service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`);
-            service_to.labels.push(`traefik.http.routers.${traefik_service}.tls=true`);
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`, `traefik.http.routers.${traefik_service}.tls=true`);
           }
 
           if (component_interface?.protocol) {
@@ -448,7 +455,6 @@ export class DockerComposeUtils {
     } catch {
       try {
         raw_config = yaml.load(file_contents);
-        // eslint-disable-next-line no-empty
       } catch { }
     }
 
@@ -467,6 +473,7 @@ export class DockerComposeUtils {
     const cmd = execa('docker', ['compose', ...args], execa_opts);
     if (use_console) {
       cmd.on('exit', () => {
+        // eslint-disable-next-line no-process-exit
         process.exit(cmd.exitCode || 0);
       });
     }
@@ -482,7 +489,7 @@ export class DockerComposeUtils {
       return [];
     }
     const containers = container_cmd.stdout.split('\n');
-    const inspect_cmd = await execa('docker', ['inspect', "--format='{{json .}}'", ...containers]);
+    const inspect_cmd = await execa('docker', ['inspect', '--format=\'{{json .}}\'', ...containers]);
     return inspect_cmd.stdout.split('\n').map(data => JSON.parse(data.substring(1, data.length - 1)));
   }
 
@@ -492,9 +499,9 @@ export class DockerComposeUtils {
    */
   public static async getLocalEnvironmentContainerMap(): Promise<{ [key: string]: DockerInspect[] }> {
     const running_cmd = await execa('docker', ['compose', 'ls', '--format=json']);
-    const running_projects = JSON.parse(running_cmd.stdout).map((container: any) => {
+    const running_projects = new Set(JSON.parse(running_cmd.stdout).map((container: any) => {
       return container.Name;
-    });
+    }));
 
     const container_info = await this.getAllContainerInfo();
     const env_map: { [key: string]: DockerInspect[] } = {};
@@ -503,7 +510,7 @@ export class DockerComposeUtils {
         continue;
       }
       const project = container.Config.Labels['com.docker.compose.project'];
-      if (running_projects.indexOf(project) === -1) {
+      if (!running_projects.has(project)) {
         continue;
       }
 
@@ -521,11 +528,10 @@ export class DockerComposeUtils {
 
   public static async isLocalEnvironment(environment_name: string): Promise<boolean> {
     const local_enviromments = await DockerComposeUtils.getLocalEnvironments();
-    return !!(local_enviromments.find(env => env == environment_name));
+    return Boolean(local_enviromments.includes(environment_name));
   }
 
   public static async getLocalEnvironment(config_dir: string, environment_name?: string): Promise<string> {
-
     const { stdout } = await DockerComposeUtils.dockerCompose(['ls', '--format', 'json']);
 
     const projects: DockerComposeProject[] = JSON.parse(stdout);
@@ -542,6 +548,7 @@ export class DockerComposeUtils {
         const files = await fs.readdir(path.join(search_directory));
         const local_enviromments = files.map((file) => file.split('.')[0]);
 
+        // eslint-disable-next-line unicorn/no-array-reduce
         architect_projects = projects.reduce((filtered: DockerComposeProjectWithConfig[], project) => {
           const env_index = local_enviromments.indexOf(project.Name);
           if (env_index >= 0) {
@@ -603,7 +610,7 @@ export class DockerComposeUtils {
         name: 'service',
         message: 'Select a service',
         source: async (_: any, input: string) => {
-          return services.filter((s) => !input || s.name.toLowerCase().indexOf(input.toLowerCase()) >= 0);
+          return services.filter((s) => !input || s.name.toLowerCase().includes(input.toLowerCase()));
         },
       },
     ]);
@@ -671,7 +678,9 @@ export class DockerComposeUtils {
           const full_service_name = container_state.Service;
 
           const service_ref = service_ref_map[full_service_name];
-          if (!service_ref) { continue; }
+          if (!service_ref) {
+            continue;
+          }
 
           const { resource_type } = ResourceSlugUtils.parse(service_ref);
           if (resource_type !== 'services') continue;
@@ -720,7 +729,7 @@ export class DockerComposeUtils {
             // Docker compose will stop watching when there is a single container and it goes down.
             // If all containers go down at the same time it will wait for the restart and just move on. So only need this
             // for the case of 1 container with a health check.
-            if (container_states.length == 1) {
+            if (container_states.length === 1) {
               DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(service_data.last_restart_ms).toISOString()], { stdout: 'inherit' });
             }
           }

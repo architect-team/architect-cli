@@ -27,9 +27,9 @@ export default class LocalDependencyManager extends DependencyManager {
 
   async loadComponentSpec(component_string: string, options?: ComponentConfigOpts, debug?: boolean): Promise<ComponentSpec> {
     const merged_options = {
-      ...{
-        map_all_interfaces: false,
-      }, ...options,
+
+      map_all_interfaces: false,
+      ...options,
     };
 
     const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
@@ -134,7 +134,7 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const component_refs_queue = [root_component_ref];
 
-    while (component_refs_queue.length) {
+    while (component_refs_queue.length > 0) {
       const component_ref = component_refs_queue.pop() as string;
 
       if (seen_component_refs.has(component_ref)) {

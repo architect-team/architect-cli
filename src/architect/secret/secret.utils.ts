@@ -9,8 +9,7 @@ export interface Secret {
 }
 
 export default class SecretUtils {
-  
-  static async getSecrets(app: AppService, account: Account, environment_name?: string, inherited?: boolean) : Promise<any[]>{
+  static async getSecrets(app: AppService, account: Account, environment_name?: string, inherited?: boolean) : Promise<any[]> {
     let secrets = [];
     if (!environment_name) {
       secrets = (await app.api.get(`accounts/${account.id}/secrets/values`)).data;
