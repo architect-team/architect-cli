@@ -6,7 +6,7 @@ import { createWriteStream } from 'fs-extra';
 import { finished } from 'stream';
 import * as tar from 'tar';
 import { promisify } from 'util';
-import { PluginArchitecture, PluginBinary, PluginBundleType, PluginPlatform } from './plugin-manager';
+import { PluginArchitecture, PluginBinary, PluginBundleType, PluginPlatform } from './plugin-types';
 
 export default class PluginUtils {
   static async downloadFile(url: string, location: string, sha256: string): Promise<void> {

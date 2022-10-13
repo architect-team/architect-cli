@@ -1,6 +1,6 @@
 import execa from 'execa';
 import path from 'path';
-import { ArchitectPlugin, PluginArchitecture, PluginBinary, PluginBundleType, PluginOptions, PluginPlatform } from './plugin-manager';
+import { ArchitectPlugin, PluginArchitecture, PluginBinary, PluginBundleType, PluginOptions, PluginPlatform } from './plugin-types';
 
 export default class OrasPlugin implements ArchitectPlugin {
   private plugin_directory = '';
