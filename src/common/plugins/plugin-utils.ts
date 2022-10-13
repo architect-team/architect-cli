@@ -23,7 +23,7 @@ export default class PluginUtils {
       hashSum.update(fileBuffer);
       const hex = hashSum.digest('hex');
       if (hex !== sha256) {
-        throw new Error(`Unable to verify ${url}. Please contact Architect support for help.`)
+        throw new Error(`Unable to verify ${url}. Please contact Architect support for help.`);
       }
     });
   }
@@ -32,7 +32,7 @@ export default class PluginUtils {
     if (bundleType === PluginBundleType.TAR_GZ) {
       await tar.extract({ file, C: location });
     } else if (bundleType === PluginBundleType.ZIP) {
-      var zip = new AdmZip(file);
+      const zip = new AdmZip(file);
       zip.extractAllTo(location);
     }
   }

@@ -8,7 +8,7 @@ export default class OrasPlugin implements ArchitectPlugin {
   private plugin_directory = '';
   private binary?: PluginBinary;
 
-  version: string = '0.15.0';
+  version = '0.15.0';
   name: string = OrasPlugin.name;
   binaries: PluginBinary[] = [
     {
@@ -17,7 +17,7 @@ export default class OrasPlugin implements ArchitectPlugin {
       bundle_type: PluginBundleType.ZIP,
       executable_path: 'oras.exe',
       url: 'https://github.com/oras-project/oras/releases/download/v0.15.0/oras_0.15.0_windows_amd64.zip',
-      sha256: 'f8a43b8f3b1caf0a3c3a2204a7eab597d3a9241b1e0673c4d8a23ad439cd652a'
+      sha256: 'f8a43b8f3b1caf0a3c3a2204a7eab597d3a9241b1e0673c4d8a23ad439cd652a',
     },
     {
       platform: PluginPlatform.LINUX,
@@ -25,7 +25,7 @@ export default class OrasPlugin implements ArchitectPlugin {
       bundle_type: PluginBundleType.TAR_GZ,
       executable_path: 'oras',
       url: 'https://github.com/oras-project/oras/releases/download/v0.15.0/oras_0.15.0_linux_amd64.tar.gz',
-      sha256: '529c9d567f212093bc01c508b71b922fc6c6cbc74767d3b2eb7f9f79d534e718'
+      sha256: '529c9d567f212093bc01c508b71b922fc6c6cbc74767d3b2eb7f9f79d534e718',
     },
     {
       platform: PluginPlatform.DARWIN,
@@ -33,7 +33,7 @@ export default class OrasPlugin implements ArchitectPlugin {
       bundle_type: PluginBundleType.TAR_GZ,
       executable_path: 'oras',
       url: 'https://github.com/oras-project/oras/releases/download/v0.15.0/oras_0.15.0_darwin_amd64.tar.gz',
-      sha256: '0724f64f38f9389497da71795751e5f1b48fd4fc43aa752241b020c0772d5cd8'
+      sha256: '0724f64f38f9389497da71795751e5f1b48fd4fc43aa752241b020c0772d5cd8',
     },
     {
       platform: PluginPlatform.DARWIN,
@@ -41,9 +41,9 @@ export default class OrasPlugin implements ArchitectPlugin {
       bundle_type: PluginBundleType.TAR_GZ,
       executable_path: 'oras',
       url: 'https://github.com/oras-project/oras/releases/download/v0.15.0/oras_0.15.0_darwin_arm64.tar.gz',
-      sha256: '7889cee33ba2147678642cbd909be81ec9996f62c57c53b417f7c21c8d282334'
-    }
-  ]
+      sha256: '7889cee33ba2147678642cbd909be81ec9996f62c57c53b417f7c21c8d282334',
+    },
+  ];
 
   async load(pluginDirectory: string, binary: PluginBinary): Promise<void> {
     this.binary = binary;
