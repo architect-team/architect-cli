@@ -17,12 +17,23 @@ interface ComposeConversion {
 }
 
 export class ComposeConverter {
-
   private static compose_property_converters: { compose_property: string, architect_property: string, func: (compose_property: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceSpec>) => ComposeConversion }[] = [
-    { compose_property: 'environment',  architect_property: 'environment', func: this.convertEnvironment },
-    { compose_property: 'command', architect_property: 'command', func: (command: any) => { return { base: command }; } },
-    { compose_property: 'entrypoint', architect_property: 'entrypoint', func: (entrypoint: any) => { return { base: entrypoint }; } },
-    { compose_property: 'image', architect_property: 'image', func: (image: string) => { return { base: image }; } },
+    { compose_property: 'environment', architect_property: 'environment', func: this.convertEnvironment },
+    {
+      compose_property: 'command', architect_property: 'command', func: (command: any) => {
+        return { base: command };
+      },
+    },
+    {
+      compose_property: 'entrypoint', architect_property: 'entrypoint', func: (entrypoint: any) => {
+        return { base: entrypoint };
+      },
+    },
+    {
+      compose_property: 'image', architect_property: 'image', func: (image: string) => {
+        return { base: image };
+      },
+    },
     { compose_property: 'build', architect_property: 'build', func: this.convertBuild },
     { compose_property: 'ports', architect_property: 'interfaces', func: this.convertPorts },
     { compose_property: 'volumes', architect_property: 'volumes', func: this.convertVolumes },
@@ -47,9 +58,8 @@ export class ComposeConverter {
     for (const [service_name, service_data] of Object.entries(docker_compose.services || {})) {
       const architect_service: Partial<ServiceSpec> = {};
       for (const [property_name, property_data] of Object.entries(service_data || {})) {
-
         const converters = this.compose_property_converters.filter(c => c.compose_property === property_name);
-        if (!converters.length) {
+        if (converters.length === 0) {
           warnings.push(`Could not convert ${service_name} property "${property_name}"`);
         }
         for (const converter of converters) {
@@ -73,7 +83,7 @@ export class ComposeConverter {
           }
 
           if (converted_props.warnings) {
-            warnings = warnings.concat(converted_props.warnings);
+            warnings = [...warnings, ...converted_props.warnings];
           }
         }
       }
@@ -86,7 +96,7 @@ export class ComposeConverter {
     for (const service_config of Object.values(architect_component.services || {})) {
       for (const depends_on of (service_config.depends_on || [])) {
         service_config.environment = service_config.environment || {};
-        if (Object.keys(architect_component.services[depends_on].interfaces || {}).length) {
+        if (Object.keys(architect_component.services[depends_on].interfaces || {}).length > 0) {
           service_config.environment[`${depends_on.replace('-', '_').toUpperCase()}_URL`] = `\${{ services.${depends_on}.interfaces.main.url }}`;
         }
       }
@@ -140,7 +150,7 @@ export class ComposeConverter {
         const port_range_regex = new RegExp('(\\d+[-]\\d+)\\/*([a-zA-Z]+)*$');
 
         if (single_number_port_regex.test(string_port)) {
-          interfaces[interface_name] = typeof port === 'string' ? parseInt(port) : port;
+          interfaces[interface_name] = typeof port === 'string' ? Number.parseInt(port) : port;
           port_index++;
         } else if (single_port_regex.test(string_port)) {
           const matches = single_port_regex.exec(string_port);
@@ -149,7 +159,7 @@ export class ComposeConverter {
             interface_spec.protocol = matches[2];
           }
           if (matches && matches.length >= 2) {
-            interface_spec.port = parseInt(matches[1].split(':')[1]);
+            interface_spec.port = Number.parseInt(matches[1].split(':')[1]);
           }
           (interfaces[interface_name] as Partial<ServiceInterfaceSpec>) = interface_spec;
           port_index++;
@@ -157,7 +167,7 @@ export class ComposeConverter {
           const matches = port_range_regex.exec(string_port);
           if (matches && matches.length >= 2) {
             const [start, end] = matches[1].split('-');
-            for (let i = parseInt(start); i < parseInt(end) + 1; i++) {
+            for (let i = Number.parseInt(start); i < Number.parseInt(end) + 1; i++) {
               interface_name = port_index === 0 ? 'main' : `main${port_index + 1}`;
               interfaces[interface_name] = i;
               port_index++;
@@ -168,7 +178,7 @@ export class ComposeConverter {
         }
       } else {
         const interface_spec: Partial<ServiceInterfaceSpec> = {};
-        interface_spec.port = typeof port.target === 'string' ? parseInt(port.target) : port.target;
+        interface_spec.port = typeof port.target === 'string' ? Number.parseInt(port.target) : port.target;
         if (port.protocol) {
           interface_spec.protocol = port.protocol;
         }
@@ -206,56 +216,54 @@ export class ComposeConverter {
         } else {
           warnings.push(`Could not convert volume with spec ${volume}`);
         }
-      } else {
-        if (volume.source) { // local volume
-          const service_volume: Partial<VolumeSpec> = {};
-          service_volume.host_path = volume.source;
-          service_volume.mount_path = volume.target;
-          if (volume.read_only) {
-            service_volume.readonly = volume.read_only;
-          }
-
-          if (volume.type === 'volume' || compose_volumes.includes(volume.source)) {
-            service_volume.host_path = undefined;
-            volumes[volume_key] = service_volume;
-          } else {
-            local_volumes[volume_key] = service_volume;
-          }
-        } else {
-          const service_volume: Partial<VolumeSpec> = {};
-          service_volume.mount_path = volume.target;
-          if (volume.read_only) {
-            service_volume.readonly = volume.read_only;
-          }
-          volumes[volume_key] = service_volume;
+      } else if (volume.source) { // local volume
+        const service_volume: Partial<VolumeSpec> = {};
+        service_volume.host_path = volume.source;
+        service_volume.mount_path = volume.target;
+        if (volume.read_only) {
+          service_volume.readonly = volume.read_only;
         }
+
+        if (volume.type === 'volume' || compose_volumes.includes(volume.source)) {
+          service_volume.host_path = undefined;
+          volumes[volume_key] = service_volume;
+        } else {
+          local_volumes[volume_key] = service_volume;
+        }
+      } else {
+        const service_volume: Partial<VolumeSpec> = {};
+        service_volume.mount_path = volume.target;
+        if (volume.read_only) {
+          service_volume.readonly = volume.read_only;
+        }
+        volumes[volume_key] = service_volume;
       }
       volume_index++;
     }
 
     const compose_conversion: ComposeConversion = { warnings };
-    if (Object.entries(local_volumes).length) {
+    if (Object.entries(local_volumes).length > 0) {
       compose_conversion.local = local_volumes;
     }
-    if (Object.entries(volumes).length) {
+    if (Object.entries(volumes).length > 0) {
       compose_conversion.base = volumes;
     }
     return compose_conversion;
   }
 
   private static convertDependsOn(depends_on_or_links: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceSpec>): ComposeConversion {
-    if (!depends_on_or_links.length) {
+    if (depends_on_or_links.length === 0) {
       return {};
     }
 
     const depends_on: string[] = [];
-    const links: Set<string> = new Set((depends_on_or_links || []).concat(architect_service.depends_on || []));
+    const links: Set<string> = new Set([...(depends_on_or_links || []), ...(architect_service.depends_on || [])]);
     for (const link of links) {
       if (!depends_on.includes(link)) {
         depends_on?.push(link);
       }
     }
-    return { base: depends_on.length ? depends_on : undefined };
+    return { base: depends_on.length > 0 ? depends_on : undefined };
   }
 
   private static convertHealthcheck(compose_healthcheck: DockerComposeHealthCheck): ComposeConversion {
@@ -264,7 +272,7 @@ export class ComposeConverter {
     if (command && Array.isArray(command)) {
       if (command.length >= 2 && command[0] === 'CMD-SHELL') {
         liveness_probe_command = command.slice(1);
-      } else if (command.length && command[0] === 'CMD') {
+      } else if (command.length > 0 && command[0] === 'CMD') {
         liveness_probe_command = command.slice(1);
       }
     } else if (command && typeof command === 'string') {

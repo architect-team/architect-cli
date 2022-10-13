@@ -20,16 +20,16 @@ export const transformDictionary = <T, U>(transform: (key: string, value: T, ...
 };
 
 export const sortOnKeys = <T>(dict: Dictionary<T>): Dictionary<T> => {
-
   const sorted = [];
+  // eslint-disable-next-line guard-for-in
   for (const key in dict) {
     sorted[sorted.length] = key;
   }
   sorted.sort();
 
   const tempDict: Dictionary<T> = {};
-  for (let i = 0; i < sorted.length; i++) {
-    tempDict[sorted[i]] = dict[sorted[i]];
+  for (const s of sorted) {
+    tempDict[s] = dict[s];
   }
 
   return tempDict;

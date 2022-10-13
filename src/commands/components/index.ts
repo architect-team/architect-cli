@@ -27,7 +27,7 @@ export default class Components extends BaseCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Components);
 
-    let account: Account | undefined = undefined;
+    let account: Account | undefined;
     if (flags.account) {
       account = await AccountUtils.getAccount(this.app, flags.account);
     }
@@ -40,7 +40,7 @@ export default class Components extends BaseCommand {
     let { data: { rows: components } } = await this.app.api.get(`/components`, { params });
     components = components.filter((c: Component) => c.account);
 
-    if (!components.length) {
+    if (components.length === 0) {
       if (args.query) {
         this.log(`No components found matching ${args.query}.`);
       } else {

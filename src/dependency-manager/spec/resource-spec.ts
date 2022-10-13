@@ -48,7 +48,7 @@ export class BuildSpec {
 }
 
 @JSONSchema({
-  ...OneOf("build", "image"),
+  ...OneOf('build', 'image'),
 })
 export abstract class ResourceSpec {
   @IsOptional()
@@ -129,10 +129,10 @@ export abstract class ResourceSpec {
 
   @IsOptional()
   @JSONSchema({
-    type: "object",
+    type: 'object',
     patternProperties: {
       [Slugs.LabelKeySlugValidatorString]: ExpressionOr({
-        type: "string",
+        type: 'string',
         pattern: Slugs.LabelValueSlugValidatorString,
       }),
     },

@@ -28,13 +28,14 @@ export default class AccountUtils {
   static shouldListLocalAccounts(exit_on_failure?: boolean): boolean {
     const daemon_running = DockerHelper.daemonRunning();
     if (exit_on_failure && !daemon_running) {
+      // eslint-disable-next-line no-process-exit
       process.exit();
     }
     return daemon_running;
   }
 
   static isLocalAccount(account: Account): boolean {
-    return account.id === "dev";
+    return account.id === 'dev';
   }
 
   static async isValidAccount(app: AppService, account_name: string): Promise<boolean> {
@@ -87,6 +88,7 @@ export default class AccountUtils {
         throw new Error(`Could not find account=${account_name}`);
       }
     } else {
+      // eslint-disable-next-line unicorn/prefer-module
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
       const can_run_local = this.shouldListLocalAccounts();
       const answers: { account: Account } = await inquirer.prompt([

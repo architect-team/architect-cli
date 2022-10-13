@@ -22,7 +22,6 @@ import { Dictionary, transformDictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
 import { interpolateObjectLoose, interpolateObjectOrReject, replaceInterpolationBrackets } from './utils/interpolation';
 export default abstract class DependencyManager {
-
   account?: string;
   external_addr = 'arc.localhost:80';
   use_ssl = false;
@@ -59,6 +58,7 @@ export default abstract class DependencyManager {
     return component_ref;
   }
 
+  // eslint-disable-next-line complexity
   addComponentEdges(graph: DependencyGraph, component_config: ComponentConfig, dependency_configs: ComponentConfig[], context_map: Dictionary<ComponentContext>): void {
     const component = component_config;
 
@@ -82,8 +82,10 @@ export default abstract class DependencyManager {
       const ingresses: [ComponentConfig, string][] = [];
       // Deprecated environment.ingresses
       const environment_ingresses_regex = new RegExp(`\\\${{\\s*environment\\.ingresses\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
-      while ((matches = environment_ingresses_regex.exec(service_string)) != null) {
-        if (!matches.groups) { continue; }
+      while ((matches = environment_ingresses_regex.exec(service_string)) !== null) {
+        if (!matches.groups) {
+          continue;
+        }
         const { dependency_name, interface_name } = matches.groups;
         const dep_ref = this.getComponentRef(dependency_name);
         if (dep_ref === component.metadata.ref) {
@@ -94,16 +96,20 @@ export default abstract class DependencyManager {
         }
       }
       const dependencies_ingresses_regex = new RegExp(`\\\${{\\s*dependencies\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.ingresses\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
-      while ((matches = dependencies_ingresses_regex.exec(service_string)) != null) {
-        if (!matches.groups) { continue; }
+      while ((matches = dependencies_ingresses_regex.exec(service_string)) !== null) {
+        if (!matches.groups) {
+          continue;
+        }
         const { dependency_name, interface_name } = matches.groups;
         const dep_ref = this.getComponentRef(dependency_name);
         const dep_component = dependency_map[dep_ref];
         ingresses.push([dep_component, interface_name]);
       }
       const ingresses_regex = new RegExp(`\\\${{\\s*ingresses\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
-      while ((matches = ingresses_regex.exec(service_string)) != null) {
-        if (!matches.groups) { continue; }
+      while ((matches = ingresses_regex.exec(service_string)) !== null) {
+        if (!matches.groups) {
+          continue;
+        }
         const { interface_name } = matches.groups;
         ingresses.push([component, interface_name]);
       }
@@ -114,15 +120,21 @@ export default abstract class DependencyManager {
       }
 
       for (const [dep_component, interface_name] of ingresses) {
-        if (!dep_component) { continue; }
-        if (!dep_component.interfaces[interface_name]) { continue; }
+        if (!dep_component) {
+          continue;
+        }
+        if (!dep_component.interfaces[interface_name]) {
+          continue;
+        }
 
         const dep_context = context_map[dep_component.metadata.ref];
         const subdomain = dep_context.ingresses[interface_name]?.subdomain;
-        if (!subdomain) { continue; }
+        if (!subdomain) {
+          continue;
+        }
 
         const gateway_host = this.external_addr.split(':')[0];
-        const gateway_port = parseInt(this.external_addr.split(':')[1] || '443');
+        const gateway_port = Number.parseInt(this.external_addr.split(':')[1] || '443');
         const gateway_ref = GatewayNode.getRef(gateway_port);
         let ingress_edge = graph.edges.find(edge => edge.from === gateway_ref && edge.to === buildInterfacesRef(dep_component)) as IngressEdge;
         if (!ingress_edge) {
@@ -134,7 +146,7 @@ export default abstract class DependencyManager {
           graph.addEdge(ingress_edge);
         }
 
-        if (!ingress_edge.interface_mappings.find((i) => i.interface_from === subdomain && i.interface_to === interface_name)) {
+        if (!ingress_edge.interface_mappings.some((i) => i.interface_from === subdomain && i.interface_to === interface_name)) {
           ingress_edge.interface_mappings.push({ interface_from: subdomain, interface_to: interface_name });
         }
 
@@ -148,8 +160,10 @@ export default abstract class DependencyManager {
       // Add edges between services inside the component and dependencies
       const services_regex = new RegExp(`\\\${{\\s*services\\.(?<service_name>${Slugs.ArchitectSlugRegexBase})\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
       const service_edge_map: Dictionary<Dictionary<string>> = {};
-      while ((matches = services_regex.exec(service_string)) != null) {
-        if (!matches.groups) { continue; }
+      while ((matches = services_regex.exec(service_string)) !== null) {
+        if (!matches.groups) {
+          continue;
+        }
         const { service_name, interface_name } = matches.groups;
         const service_to = services.find(s => s.resource_name === service_name);
         const to = buildNodeRef(component, 'services', service_name);
@@ -168,8 +182,10 @@ export default abstract class DependencyManager {
       // Add edges between services and interface dependencies inside the component
       const dep_interface_regex = new RegExp(`\\\${{\\s*dependencies\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
       const dep_service_edge_map: Dictionary<Dictionary<string>> = {};
-      while ((matches = dep_interface_regex.exec(service_string)) != null) {
-        if (!matches.groups) { continue; }
+      while ((matches = dep_interface_regex.exec(service_string)) !== null) {
+        if (!matches.groups) {
+          continue;
+        }
         const { dependency_name, interface_name } = matches.groups;
         const dep_ref = this.getComponentRef(dependency_name);
 
@@ -191,8 +207,10 @@ export default abstract class DependencyManager {
       // Add edges between services and output dependencies inside the component
       const dep_output_regex = new RegExp(`\\\${{\\s*dependencies\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.outputs\\.(?<output_name>${Slugs.ArchitectSlugRegexBase})`, 'g');
       const dep_output_edge_map: Dictionary<Dictionary<string>> = {};
-      while ((matches = dep_output_regex.exec(service_string)) != null) {
-        if (!matches.groups) { continue; }
+      while ((matches = dep_output_regex.exec(service_string)) !== null) {
+        if (!matches.groups) {
+          continue;
+        }
         const { dependency_name, output_name } = matches.groups;
         const dep_ref = this.getComponentRef(dependency_name);
         const dependency = dependency_map[dep_ref];
@@ -214,13 +232,16 @@ export default abstract class DependencyManager {
     // Add edges between services and the component's interfaces node
     const service_edge_map: Dictionary<Dictionary<string>> = {};
     for (const [component_interface_name, component_interface] of Object.entries(component.interfaces)) {
-      if (!component_interface) { continue; }
+      if (!component_interface) {
+        continue;
+      }
       const services_regex = new RegExp(`\\\${{\\s*services\\.(?<service_name>${Slugs.ArchitectSlugRegexBase})?\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const matches = services_regex.exec(replaceInterpolationBrackets(component_interface.url!));
       if (!matches) continue;
-      if (!matches.groups) { continue; }
+      if (!matches.groups) {
+        continue;
+      }
       const { service_name, interface_name } = matches.groups;
       const to = buildNodeRef(component, 'services', service_name);
       if (!service_edge_map[to]) service_edge_map[to] = {};
@@ -228,14 +249,17 @@ export default abstract class DependencyManager {
     }
 
     for (const [component_interface_name, component_interface] of Object.entries(component.interfaces || {})) {
-      if (!component_interface) { continue; }
+      if (!component_interface) {
+        continue;
+      }
       const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const matches = dependencies_regex.exec(replaceInterpolationBrackets(component_interface.url!));
       if (!matches) continue;
 
-      if (!matches.groups) { continue; }
+      if (!matches.groups) {
+        continue;
+      }
       const { dependency_name, interface_name } = matches.groups;
       const dep_ref = this.getComponentRef(dependency_name);
       const dependency = dependency_map[dep_ref];
@@ -268,7 +292,7 @@ export default abstract class DependencyManager {
     const { component_account_name, component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
     const component_ref_with_account = component_account_name ? component_ref : ComponentSlugUtils.build(this.account, component_name, instance_name);
 
-    const component_secrets = new Set(Object.keys({ ...(component_spec.parameters || {}), ...(component_spec.secrets || {}) })); // TODO: 404: update
+    const component_secrets = new Set(Object.keys({ ...component_spec.parameters, ...component_spec.secrets })); // TODO: 404: update
 
     const res: Dictionary<any> = {};
     // add values from values file to all existing, matching components
@@ -299,12 +323,16 @@ export default abstract class DependencyManager {
   }
 
   findClosestComponent(component_configs: ComponentSpec[], date: Date): ComponentSpec | undefined {
-    if (component_configs.length === 0) { return; }
-    if (component_configs.length === 1) { return component_configs[0]; }
+    if (component_configs.length === 0) {
+      return;
+    }
+    if (component_configs.length === 1) {
+      return component_configs[0];
+    }
 
     const target_time = date.getTime();
 
-    let res = undefined;
+    let res;
     let best_diff = Number.NEGATIVE_INFINITY;
     for (const component_config of component_configs) {
       if (!component_config.metadata) {
@@ -364,13 +392,13 @@ export default abstract class DependencyManager {
         validation_errors.push(validation_error);
       }
     }
-    if (validation_errors.length) {
+    if (validation_errors.length > 0) {
       throw new ValidationErrors(validation_errors, component.metadata.file);
     }
   }
 
   private validateProtocols(graph: DependencyGraph): void {
-    const valid_protocols = [undefined, 'http', 'https'];
+    const valid_protocols = new Set([undefined, 'http', 'https']);
 
     for (const node of graph.nodes) {
       if (node.is_external) continue;
@@ -378,7 +406,7 @@ export default abstract class DependencyManager {
 
       const component_interfaces = node.config.interfaces;
       for (const [component_name, component_interface] of Object.entries(component_interfaces)) {
-        if (valid_protocols.indexOf(component_interface.protocol) === -1) {
+        if (!valid_protocols.has(component_interface.protocol)) {
           throw new ArchitectError(`Protocol '${component_interface.protocol}' is detected in component '${component_name}'. We currently only support 'http' and 'https' protocols.`);
         }
       }
@@ -412,7 +440,7 @@ export default abstract class DependencyManager {
   validateReservedNodeNames(all_nodes: DependencyNode[]): void {
     const seen_nodes: DependencyNode[] = [];
     for (const node of all_nodes.filter(n => n instanceof ServiceNode || n instanceof TaskNode)) {
-      if (seen_nodes.find(n => !!node.instance_id && !!n.instance_id && n.ref === node.ref && n.instance_id !== node.instance_id)) {
+      if (seen_nodes.some(n => Boolean(node.instance_id) && Boolean(n.instance_id) && n.ref === node.ref && n.instance_id !== node.instance_id)) {
         throw new Error(`A service named ${node.ref} is declared in multiple places. The same name can't be used for multiple services.`);
       }
       seen_nodes.push(node);
@@ -442,7 +470,7 @@ export default abstract class DependencyManager {
 
     const parameters = transformDictionary(transformSecretDefinitionSpec, component_spec.parameters); // TODO: 404: remove
     const component_spec_secrets = transformDictionary(transformSecretDefinitionSpec, component_spec.secrets);
-    for (const [key, value] of Object.entries(parameters).concat(Object.entries(component_spec_secrets))) {
+    for (const [key, value] of [...Object.entries(parameters), ...Object.entries(component_spec_secrets)]) {
       context.secrets[key] = value.default;
     }
 
@@ -469,7 +497,7 @@ export default abstract class DependencyManager {
 
     const nodes = this.getComponentNodes(component_config);
     if (options.validate) {
-      this.validateReservedNodeNames(nodes.concat(graph.nodes));
+      this.validateReservedNodeNames([...nodes, ...graph.nodes]);
     }
 
     const has_interfaces = Object.keys(component_config.interfaces).length > 0;
@@ -526,7 +554,7 @@ export default abstract class DependencyManager {
 
     // Set component interfaces
     const [external_host, external_port_string] = this.external_addr.split(':');
-    const external_port = parseInt(external_port_string);
+    const external_port = Number.parseInt(external_port_string);
     const external_protocol = this.use_ssl ? 'https' : 'http';
     for (const [interface_name, interface_config] of Object.entries(component_config.interfaces)) {
       const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
@@ -582,10 +610,9 @@ export default abstract class DependencyManager {
 
   async getGraph(component_specs: ComponentSpec[], all_secrets: SecretsDict = {}, options?: GraphOptions): Promise<DependencyGraph> {
     options = {
-      ...{
-        interpolate: true,
-        validate: true,
-      },
+
+      interpolate: true,
+      validate: true,
       ...options,
     };
 
@@ -648,7 +675,9 @@ export default abstract class DependencyManager {
       }
 
       for (const [task_name, task] of Object.entries(component_spec.tasks || {})) {
-        if (!context.tasks[task_name]) { context.tasks[task_name] = {}; }
+        if (!context.tasks[task_name]) {
+          context.tasks[task_name] = {};
+        }
         context.tasks[task_name].environment = task.environment;
       }
 
@@ -676,8 +705,8 @@ export default abstract class DependencyManager {
       // Set consumers context
       if (ingress_edge) {
         for (const [interface_name, consumer_refs] of Object.entries(ingress_edge.consumers_map)) {
-          const interfaces_refs = graph.edges.filter(edge => consumer_refs.has(edge.to) && graph.getNodeByRef(edge.from) instanceof ComponentNode).map(edge => edge.from);
-          const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && interfaces_refs.includes(edge.to)) as IngressEdge[];
+          const interfaces_refs = new Set(graph.edges.filter(edge => consumer_refs.has(edge.to) && graph.getNodeByRef(edge.from) instanceof ComponentNode).map(edge => edge.from));
+          const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && interfaces_refs.has(edge.to)) as IngressEdge[];
           const consumers = new Set<string>();
           for (const consumer_ingress_edge of consumer_ingress_edges) {
             const interface_node = graph.getNodeByRef(consumer_ingress_edge.to) as ComponentNode;
@@ -702,13 +731,13 @@ export default abstract class DependencyManager {
       const component_config = transformComponentSpec(component_spec);
 
       // Add interfaces to ComponentNode of the tree if there are any interfaces defined
-      if (Object.keys(component_config.interfaces).length) {
+      if (Object.keys(component_config.interfaces).length > 0) {
         const component_node = graph.getNodeByRef(buildInterfacesRef(component_config)) as ComponentNode;
         component_node.config.interfaces = component_config.interfaces;
       }
 
       // Add outputs to ComponentNode of the tree if there are any outputs defined
-      if (Object.keys(component_config.outputs).length) {
+      if (Object.keys(component_config.outputs).length > 0) {
         const component_node = graph.getNodeByRef(buildInterfacesRef(component_config)) as ComponentNode;
         component_node.config.outputs = component_config.outputs;
       }

@@ -1,5 +1,6 @@
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
+import os from 'os';
 import config from '../../app-config/config';
 import { docker } from './cmd';
 import { RequiresDocker } from './helper';
@@ -14,14 +15,13 @@ const PLATFORM_MAP = new Map<string, string>([
 ]);
 
 export default class DockerBuildXUtils {
-
   public static isMacM1Machine(): boolean {
-    return require('os').cpus()[0].model.includes('Apple M1');
+    return os.cpus()[0].model.includes('Apple M1');
   }
 
   public static getBuildxPlatform(architecture: string): string {
     if (!PLATFORM_MAP.has(architecture)) {
-      const keys = Array.from(PLATFORM_MAP.keys()).join(', ');
+      const keys = [...PLATFORM_MAP.keys()].join(', ');
       throw new Error(`Architecture '${architecture}' is not supported. Supported architectures: ` + keys);
     }
     return PLATFORM_MAP.get(architecture) as string;
@@ -54,7 +54,6 @@ export default class DockerBuildXUtils {
     // Create a docker context
     try {
       await docker(['context', 'create', `${builder}-context`]);
-      // eslint-disable-next-line no-empty
     } catch (err) { }
 
     try {
@@ -72,7 +71,6 @@ export default class DockerBuildXUtils {
           stdio: 'inherit',
         });
       }
-      // eslint-disable-next-line no-empty
     } catch { }
 
     return builder;
@@ -86,6 +84,7 @@ export default class DockerBuildXUtils {
     const cmd = execa('docker', [`--context=${docker_builder_name}-context`, 'buildx', '--builder', docker_builder_name, ...args], execa_opts);
     if (use_console) {
       cmd.on('exit', () => {
+        // eslint-disable-next-line no-process-exit
         process.exit();
       });
     }

@@ -20,7 +20,7 @@ export function generateIngressesOverrideSpec(component_spec: ComponentSpec, ing
         message: `Invalid key: ${interface_name}`,
         value: { ingress },
       });
-      if (interface_names.length) {
+      if (interface_names.length > 0) {
         const potential_match = findPotentialMatch(`interfaces.${interface_name}`, interface_names.map(i => `interfaces.${i}`));
         if (potential_match) {
           error.message += ` - Did you mean \${{ ${potential_match} }}?`;
@@ -40,7 +40,7 @@ export function generateIngressesOverrideSpec(component_spec: ComponentSpec, ing
     };
   }
 
-  if (errors && errors.length) {
+  if (errors && errors.length > 0) {
     throw new ValidationErrors(errors);
   }
 

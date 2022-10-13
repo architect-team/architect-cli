@@ -31,6 +31,9 @@ type TraefikHttpService = {
 
 const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/);
 
+const rand = () => Math.floor(Math.random() * 255);
+const onlyUnique = <T>(value: T, index: number, self: T[]) => self.indexOf(value) === index;
+
 /**
  * Converts a regular filepath into a path that is valid for a Windows socket
  * See https://nodejs.org/api/net.html#ipc-support for info.
@@ -124,7 +127,7 @@ class UpProcessManager {
   /** Sends the SIGINT signal to the running `docker compose up` process. */
   interrupt() {
     if (!this.compose_process) {
-      throw Error('Must call run() first');
+      throw new Error('Must call run() first');
     }
     process.kill(-this.compose_process.pid, 'SIGINT');
   }
@@ -165,11 +168,10 @@ class UpProcessManager {
    */
   configureLogs() {
     if (!this.compose_process) {
-      throw Error('Must call run() first');
+      throw new Error('Must call run() first');
     }
 
     const service_colors = new Map<string, chalk.Chalk>();
-    const rand = () => Math.floor(Math.random() * 255);
     this.compose_process.stdout?.on('data', (data) => {
       if (this.is_exiting) {
         return;
@@ -190,7 +192,7 @@ class UpProcessManager {
           }
 
           const color = service_colors.get(service) as chalk.Chalk;
-          console.log(color(service + "| ") + newLine);
+          console.log(color(service + '| ') + newLine);
         }
       }
     });
@@ -202,8 +204,9 @@ class UpProcessManager {
     this.configureInterrupts();
     this.configureLogs();
 
-    const container_health = DockerComposeUtils.watchContainersHealth(this.compose_file, this.project_name,
-      () => { return this.is_exiting; });
+    const container_health = DockerComposeUtils.watchContainersHealth(this.compose_file, this.project_name, () => {
+      return this.is_exiting;
+    });
 
     try {
       await this.compose_process;
@@ -386,7 +389,7 @@ export default class Dev extends BaseCommand {
       if (service.status !== 'enabled') return false;
       if (!service.serverStatus) return false;
       if (service.provider !== 'docker') return false;
-      return Object.values(service.serverStatus).some(status => status === 'UP');
+      return Object.values(service.serverStatus).includes('UP');
     });
     return healthy_services;
   }
@@ -469,8 +472,7 @@ export default class Dev extends BaseCommand {
       if (!value) {
         throw new Error(`--arg must be in the format key=value: ${arg}`);
       }
-      build_args.push('--build-arg');
-      build_args.push(arg);
+      build_args.push('--build-arg', arg);
     }
 
     await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build', ...build_args], { stdio: 'inherit' });
@@ -497,6 +499,7 @@ export default class Dev extends BaseCommand {
 
     await new UpProcessManager(compose_file, socket, project_name, flags.detached).run();
     fs.removeSync(compose_file);
+    // eslint-disable-next-line no-process-exit
     process.exit();
   }
 
@@ -508,7 +511,7 @@ export default class Dev extends BaseCommand {
           name: 'port',
           message: `Trying to listen on port ${port}, but something is already using it. What port would you like us to run the API gateway on (you can use the '--port' flag to skip this message in the future)?`,
           validate: (value: any) => {
-            if (new RegExp('^[1-9]+[0-9]*$').test(value)) {
+            if (new RegExp('^[1-9]+\\d*$').test(value)) {
               return true;
             }
             return `Port can only be positive number.`;
@@ -554,7 +557,9 @@ export default class Dev extends BaseCommand {
           return handleReject(resolve, reject);
         });
       }).catch(err => {
-        return handleReject(resolve, () => { reject(err); });
+        return handleReject(resolve, () => {
+          reject(err);
+        });
       });
     });
   }
@@ -585,14 +590,14 @@ $ architect dev:stop ${environment}
 
 To continue running the other environment and create a new one you can run the \`dev\` command with the \`-e\` flag
 $ architect dev -e new_env_name_here .`));
-      this.error(new ArchitectError("Environment name already in use."));
+      this.error(new ArchitectError('Environment name already in use.'));
     }
   }
 
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
 
-    if (!args.configs_or_components || !args.configs_or_components.length) {
+    if (!args.configs_or_components || args.configs_or_components.length === 0) {
       args.configs_or_components = ['./architect.yml'];
     }
 
@@ -606,14 +611,13 @@ $ architect dev -e new_env_name_here .`));
     }
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const all_secret_file_values = flags['secret-file'].concat(flags.secrets); // TODO: 404: remove
+    const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
     const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values);
     const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_file_values);
 
     const linked_components = this.app.linkedComponents;
     const component_versions: string[] = [];
     for (const config_or_component of args.configs_or_components) {
-
       let component_version = config_or_component;
       // Load architect.yml if passed
       if (!ComponentVersionSlugUtils.Validator.test(config_or_component) && !ComponentSlugUtils.Validator.test(config_or_component)) {
@@ -626,7 +630,7 @@ $ architect dev -e new_env_name_here .`));
 
     const dependency_manager = new LocalDependencyManager(
       this.app.api,
-      linked_components
+      linked_components,
     );
 
     dependency_manager.use_ssl = flags.ssl;
@@ -653,7 +657,7 @@ $ architect dev -e new_env_name_here .`));
     // Check if multiple instances of the same component are being deployed. This check is needed
     // so that we can disable automatic interface mapping since we can't map a single interface to
     // multiple components at this time
-    const onlyUnique = <T>(value: T, index: number, self: T[]) => self.indexOf(value) === index;
+    // eslint-disable-next-line unicorn/no-array-callback-reference
     const uniqe_names = component_versions.map(name => name.split('@')[0]).filter(onlyUnique);
     const duplicates = uniqe_names.length !== component_versions.length;
 
@@ -686,15 +690,13 @@ $ architect dev -e new_env_name_here .`));
   @RequiresDocker({ compose: true })
   async run(): Promise<void> {
     // Oclif only removes the command name if you are running that command
-    if (this.argv[0] && this.argv[0].toLocaleLowerCase() === "deploy") {
+    if (this.argv[0] && this.argv[0].toLocaleLowerCase() === 'deploy') {
       this.argv.splice(0, 1);
     }
     const { args, flags } = await this.parse(Dev);
 
-    if (args.configs_or_components && args.configs_or_components.length > 1) {
-      if (flags.interface?.length) {
-        throw new Error('Interface flag not supported if deploying multiple components in the same command.');
-      }
+    if (args.configs_or_components && args.configs_or_components.length > 1 && flags.interface?.length) {
+      throw new Error('Interface flag not supported if deploying multiple components in the same command.');
     }
 
     await this.runLocal();
