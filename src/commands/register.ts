@@ -376,7 +376,6 @@ export default class ComponentRegister extends BaseCommand {
     this.log(chalk.blue(`End component config diff`));
 
     CliUx.ux.action.start(chalk.blue(`Registering component ${new_spec.name}:${tag} with Architect Cloud...`));
-    console.log(JSON.stringify(component_dto, undefined, 2));
     await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
     CliUx.ux.action.stop();
     this.log(chalk.green(`Successfully registered component`));

@@ -1,12 +1,19 @@
 import execa, { Options } from 'execa';
+import * as fs from 'fs-extra';
+import * as path from 'path';
 import { Dictionary } from '../..';
+import PluginUtils from './plugin-utils';
 
 export enum PluginArchitecture {
   AMD64, ARM64
 }
 
-export enum PluginOperatingSystem {
+export enum PluginPlatform {
   LINUX, DARWIN, WINDOWS
+}
+
+export enum PluginBundleType {
+  ZIP, TAR_GZ
 }
 
 export interface PluginOptions {
@@ -14,15 +21,21 @@ export interface PluginOptions {
   execa_options?: Options<string>;
 }
 
-// Must be a class to pass type into getPlugin function
-// interfaces do not have a typeof
-export class ArchitectPlugin {
-  async load(pluginDirectory: string, architecture: PluginArchitecture, operatingSystem: PluginOperatingSystem): Promise<void> {
-    throw new Error('Cannot call load for ArchitectPlugin base class');
-  }
-  async exec(args: string[], opts: PluginOptions): Promise<execa.ExecaChildProcess<string> | undefined> {
-    throw new Error('Cannot exec load for ArchitectPlugin base class');
-  }
+export interface PluginBinary {
+  url: string;
+  architecture: PluginArchitecture;
+  platform: PluginPlatform;
+  sha256: string;
+  bundle_type: PluginBundleType;
+  executable_path: string;
+}
+
+export interface ArchitectPlugin {
+  version: string;
+  name: string;
+  binaries: PluginBinary[];
+  load(pluginDirectory: string, binary: PluginBinary): Promise<void>;
+  exec(args: string[], opts: PluginOptions): Promise<execa.ExecaChildProcess<string> | undefined>;
 }
 
 export default class PluginManager {
@@ -33,13 +46,13 @@ export default class PluginManager {
     'arm64': PluginArchitecture.ARM64,
   };
 
-  private static readonly OPERATIN_SYSTEM_MAP: Dictionary<PluginOperatingSystem> = {
-    'win32': PluginOperatingSystem.WINDOWS,
-    'darwin': PluginOperatingSystem.DARWIN,
-    'linux': PluginOperatingSystem.LINUX,
+  private static readonly OPERATIN_SYSTEM_MAP: Dictionary<PluginPlatform> = {
+    'win32': PluginPlatform.WINDOWS,
+    'darwin': PluginPlatform.DARWIN,
+    'linux': PluginPlatform.LINUX,
   };
 
-  private static getOperatingSystem(): PluginOperatingSystem {
+  private static getPlatform(): PluginPlatform {
     return this.OPERATIN_SYSTEM_MAP[process.platform];
   }
 
@@ -47,12 +60,30 @@ export default class PluginManager {
     return this.ARCHITECTURE_MAP[process.arch];
   }
 
-  static async getPlugin<T extends ArchitectPlugin>(pluginDirectory: string, ctor: typeof ArchitectPlugin): Promise<T> {
+  private static async removeOldPluginVersions(pluginDirectory: string, version: string) {
+    if (!(await fs.pathExists(pluginDirectory))) {
+      return;
+    }
+    const downloaded_versions = await fs.readdir(pluginDirectory);
+    for (const downloaded_version of downloaded_versions) {
+      if (downloaded_version === version) {
+        continue;
+      }
+      await fs.remove(path.join(pluginDirectory, downloaded_version));
+    }
+  }
+
+  static async getPlugin<T extends ArchitectPlugin>(pluginDirectory: string, ctor: { new(): T; }): Promise<T> {
     if (this.plugins[ctor.name]) {
       return this.plugins[ctor.name] as T;
     }
     const plugin = new ctor();
-    await plugin.load(pluginDirectory, this.getArchitecture(), this.getOperatingSystem());
+    const current_plugin_directory = path.join(pluginDirectory, `/${plugin.name}`);
+    const version_path = path.join(current_plugin_directory, `/${plugin.version}`);
+
+    await this.removeOldPluginVersions(current_plugin_directory, plugin.version);
+    await fs.mkdirp(version_path);
+    await plugin.load(version_path, PluginUtils.getBinary(plugin.binaries, this.getPlatform(), this.getArchitecture()));
 
     this.plugins[ctor.name] = plugin;
     return plugin as T;
