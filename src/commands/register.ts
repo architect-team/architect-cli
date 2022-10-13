@@ -6,7 +6,6 @@ import { classToClass, classToPlain } from 'class-transformer';
 import * as Diff from 'diff';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
-import * as os from 'os';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
@@ -116,24 +115,23 @@ export default class ComponentRegister extends BaseCommand {
   }
 
   // eslint-disable-next-line max-params
-  private async uploadVolume(component_path: string, component_name: string, service_name: string, volume_name: string, volume: VolumeSpec, account: Account): Promise<VolumeSpec> {
+  private async uploadVolume(component_path: string, file_name: string, tag: string, volume: VolumeSpec, account: Account): Promise<VolumeSpec> {
     const oras_plugin = await PluginManager.getPlugin<OrasPlugin>(this.app.config.getPluginDirectory(), OrasPlugin);
 
     if (!volume.host_path) {
       return classToClass(volume);
     }
 
-    const base_folder = path.join(os.tmpdir(), `/${account.name}`);
+    const tmp_dir = tmp.dirSync();
+    const base_folder = path.join(tmp_dir.name, `/${account.name}`);
     fs.mkdirpSync(base_folder);
-    const file_name = `volume--${component_name}-${service_name}-${volume_name}`;
-    const file_path = `${account.name}/${file_name}`;
-    const registry_url = new URL(`/${file_path}:latest`, 'http://' + this.app.config.registry_host);
+    const registry_url = new URL(`/${account.name}/${file_name}:${tag}`, 'http://' + this.app.config.registry_host);
 
     const updated_volume = classToClass(volume);
-    const host_path = path.resolve(component_path, untildify(updated_volume.host_path as string));
+    const host_path = path.resolve(component_path, untildify(updated_volume.host_path!));
     updated_volume.host_path = registry_url.href.replace('http://', '');
 
-    const output_file_location = path.join(os.tmpdir(), `${file_path}.tar`);
+    const output_file_location = path.join(base_folder, `${file_name}.tar`);
 
     const output = fs.createWriteStream(output_file_location);
     const archive = archiver('tar', {
@@ -313,7 +311,7 @@ export default class ComponentRegister extends BaseCommand {
       }
       for (const [volume_name, volume] of Object.entries(service.volumes || {})) {
         const volume_config = transformVolumeSpec(volume_name, volume);
-        (service?.volumes as Dictionary<VolumeSpec>)[volume_name] = await this.uploadVolume(config_path, new_spec.name, service_name, volume_name, volume_config, selected_account);
+        (service?.volumes as Dictionary<VolumeSpec>)[volume_name] = await this.uploadVolume(config_path, `${new_spec.name}.services.${service_name}.volumes.${volume_name}`, tag, volume_config, selected_account);
       }
     }
 
