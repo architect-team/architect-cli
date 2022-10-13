@@ -115,6 +115,7 @@ export default class ComponentRegister extends BaseCommand {
     }
   }
 
+  // eslint-disable-next-line max-params
   private async uploadVolume(component_path: string, component_name: string, service_name: string, volume_name: string, volume: VolumeSpec, account: Account): Promise<VolumeSpec> {
     const oras_plugin = await PluginManager.getPlugin<OrasPlugin>(this.app.config.getPluginDirectory(), OrasPlugin);
 
@@ -307,7 +308,9 @@ export default class ComponentRegister extends BaseCommand {
     const new_spec = classToClass(component_spec);
 
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
-      if (IF_EXPRESSION_REGEX.test(service_name)) { continue; }
+      if (IF_EXPRESSION_REGEX.test(service_name)) {
+        continue;
+      }
       for (const [volume_name, volume] of Object.entries(service.volumes || {})) {
         const volume_config = transformVolumeSpec(volume_name, volume);
         (service?.volumes as Dictionary<VolumeSpec>)[volume_name] = await this.uploadVolume(config_path, new_spec.name, service_name, volume_name, volume_config, selected_account);

@@ -1,5 +1,5 @@
 import execa from 'execa';
-import * as path from 'path';
+import path from 'path';
 import { ArchitectPlugin, PluginArchitecture, PluginBinary, PluginBundleType, PluginOptions, PluginPlatform } from './plugin-manager';
 
 export default class OrasPlugin implements ArchitectPlugin {
@@ -58,7 +58,7 @@ export default class OrasPlugin implements ArchitectPlugin {
       cmd.stdout?.pipe(process.stdout);
       cmd.stderr?.pipe(process.stderr);
     }
-    return await cmd;
+    return cmd;
   }
 
   async push(url: string, tarFile: string, cwd: string): Promise<void> {
