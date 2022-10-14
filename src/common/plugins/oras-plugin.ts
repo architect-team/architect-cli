@@ -62,7 +62,7 @@ export default class OrasPlugin implements ArchitectPlugin {
   }
 
   async push(url: string, tarFile: string, cwd: string): Promise<void> {
-    this.exec(['push', url, tarFile], {
+    await this.exec(['push', url, tarFile], {
       stdout: true,
       execa_options: {
         cwd: cwd,

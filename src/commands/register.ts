@@ -140,7 +140,7 @@ export default class ComponentRegister extends BaseCommand {
     archive.directory(host_path, false).pipe(output);
 
     await archive.finalize();
-    oras_plugin.push(updated_volume.host_path, `${file_name}.tar`, base_folder);
+    await oras_plugin.push(updated_volume.host_path, `${file_name}.tar`, base_folder);
 
     return updated_volume;
   }
