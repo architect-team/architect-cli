@@ -26,7 +26,7 @@ export default class Clusters extends BaseCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Clusters);
 
-    let account: Account | undefined = undefined;
+    let account: Account | undefined;
     if (flags.account) {
       account = await AccountUtils.getAccount(this.app, flags.account);
     }

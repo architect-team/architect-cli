@@ -13,9 +13,8 @@ const SERVICE_ACCOUNT_NAME = 'architect';
 const SERVICE_ACCOUNT_SECRET_NAME = `${SERVICE_ACCOUNT_NAME}-token`;
 
 export class KubernetesClusterUtils {
-
   public static async configureKubernetesCluster(
-    flags: any, environment: string = ENVIRONMENT.PRODUCTION, kube_context: any
+    flags: any, environment: string = ENVIRONMENT.PRODUCTION, kube_context: any,
   ): Promise<CreateClusterInput> {
     const default_config_directory = path.join(os.homedir(), '.config');
     const config_env = {

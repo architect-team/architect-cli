@@ -10,7 +10,6 @@ const SERVICE_ACCOUNT_NAME = 'architect-agent';
 const AGENT_NAMESPACE = 'architect-agent';
 
 export class AgentClusterUtils {
-
   private static getLocalServerAgentIP(): string {
     return 'host.docker.internal';
   }

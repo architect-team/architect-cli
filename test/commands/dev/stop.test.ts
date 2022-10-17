@@ -9,7 +9,7 @@ import { mockArchitectAuth } from '../../utils/mocks';
 describe('dev:stop', () => {
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-  const print = true;
+  const print = false;
 
   const env_names = ['test_env'];
 

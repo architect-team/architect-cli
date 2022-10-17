@@ -4,7 +4,7 @@ import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import yaml from 'js-yaml';
-import * as path from 'path';
+import path from 'path';
 import untildify from 'untildify';
 import { ArchitectError, Dictionary, Slugs } from '../..';
 import AccountUtils from '../../architect/account/account.utils';
@@ -46,7 +46,7 @@ export default class ClusterCreate extends BaseCommand {
     // TODO https://gitlab.com/architect-io/architect-cli/-/issues/514
     type: Flags.string({
       char: 't',
-      options: ['KUBERNETES', 'kubernetes', 'agent', 'AGENT'],
+      options: ['KUBERNETES', 'kubernetes'],
       sensitive: false,
     }),
     host: Flags.string({
@@ -137,8 +137,8 @@ export default class ClusterCreate extends BaseCommand {
     try {
       const cluster_dto = {
         name: cluster_name,
-        ...await this.createArchitectCluster(flags, kube_contexts.current_context)
-        , flags: flags_map,
+        ...await this.createArchitectCluster(flags, kube_contexts.current_context),
+        flags: flags_map,
       };
 
       CliUx.ux.action.start('Registering cluster with Architect');
@@ -146,14 +146,14 @@ export default class ClusterCreate extends BaseCommand {
       CliUx.ux.action.stop();
       this.log(`Cluster registered: ${this.app.config.app_host}/${account.name}/clusters/new?cluster_id=${created_cluster.id}`);
 
-      if (flags.type?.toLowerCase() == 'agent') {
+      if (flags.type?.toLowerCase() === 'agent') {
         CliUx.ux.action.start(chalk.blue('Installing the agent'));
         await AgentClusterUtils.installAgent(flags, created_cluster.token.access_token, AgentClusterUtils.getServerAgentHost(this.app.config.agent_server_host), this.app.config);
         await AgentClusterUtils.waitForAgent(flags);
         CliUx.ux.action.stop();
-        await this.installAppliations(flags, created_cluster, account.name, cluster_name);
+        await this.installAppliations(flags, created_cluster, cluster_name, account.name);
       } else {
-        await this.installAppliations(flags, created_cluster, account.name, cluster_name);
+        await this.installAppliations(flags, created_cluster, cluster_name, account.name);
       }
       return created_cluster;
     } finally {
@@ -183,11 +183,12 @@ export default class ClusterCreate extends BaseCommand {
     const selected_type = (flags.type || cluster_type_answers.cluster_type).toLowerCase();
 
     flags.type = selected_type;
-
+console.debug('********HERE')
     switch (selected_type) {
       case 'agent':
         return await AgentClusterUtils.configureAgentCluster(flags, context.name);
       case 'kubernetes':
+        console.debug('********configureKubernetesCluster')
         return await KubernetesClusterUtils.configureKubernetesCluster(flags, this.app.config.environment, context);
       case 'architect':
         throw new Error(`You cannot create an Architect cluster from the CLI. One Architect cluster is registered by default per account.`);
