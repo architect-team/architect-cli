@@ -34,10 +34,13 @@ export default class TaskExec extends BaseCommand {
       default: false,
     }),
     compose_file: Flags.string({
-      description: `${BaseCommand.DEPRECATED} Please use --compose-file.`,
+      description: `Please use --compose-file.`,
       exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
       hidden: true,
       sensitive: false,
+      deprecated: {
+        to: 'compose-file',
+      },
     }),
     'compose-file': Flags.string({
       char: 'o',
@@ -65,7 +68,7 @@ export default class TaskExec extends BaseCommand {
 
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
 

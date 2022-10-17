@@ -8,11 +8,7 @@ import LoginRequiredError from './common/errors/login-required';
 import { isBooleanStringFlag } from './common/utils/oclif';
 import SentryService from './sentry';
 
-const DEPRECATED_LABEL = '[deprecated]';
-
 export default abstract class BaseCommand extends Command {
-  static readonly DEPRECATED: string = DEPRECATED_LABEL;
-
   app: AppService;
   sentry: SentryService;
 
@@ -53,12 +49,14 @@ export default abstract class BaseCommand extends Command {
       }
     }
     await this.sentry.startSentryTransaction();
+
+    await super.init();
   }
 
   // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const flag_definitions = this.getClass().flags;
 
     const flags_map: Dictionary<Interfaces.CompletableFlag<any> | undefined> = {};
@@ -95,9 +93,6 @@ export default abstract class BaseCommand extends Command {
 
       if (is_flag) {
         const flag_obj = flags_map[arg.split('=', 1)[0]];
-        if (flag_obj?.description?.startsWith(DEPRECATED_LABEL)) {
-          this.warn(`Flag ${arg.split('=', 1)[0]} is deprecated.${flag_obj.description.split(DEPRECATED_LABEL)[1]}`);
-        }
         flag_option = flag_obj?.type === 'option' && !arg.includes('=');
       } else {
         flag_option = false;

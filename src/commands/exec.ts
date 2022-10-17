@@ -84,7 +84,7 @@ export default class Exec extends BaseCommand {
 
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const double_dash_index = argv.indexOf('--');
     if (double_dash_index === -1) {
       let missing_dash_error_msg = 'Command must be provided after --\n(e.g. "architect exec -- ls")';
