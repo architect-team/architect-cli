@@ -183,12 +183,10 @@ export default class ClusterCreate extends BaseCommand {
     const selected_type = (flags.type || cluster_type_answers.cluster_type).toLowerCase();
 
     flags.type = selected_type;
-console.debug('********HERE')
     switch (selected_type) {
       case 'agent':
         return await AgentClusterUtils.configureAgentCluster(flags, context.name);
       case 'kubernetes':
-        console.debug('********configureKubernetesCluster')
         return await KubernetesClusterUtils.configureKubernetesCluster(flags, this.app.config.environment, context);
       case 'architect':
         throw new Error(`You cannot create an Architect cluster from the CLI. One Architect cluster is registered by default per account.`);
