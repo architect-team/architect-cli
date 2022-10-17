@@ -10,18 +10,29 @@ import UserUtils from '../../architect/user/user.utils';
 import BaseCommand from '../../base-command';
 import { booleanString } from '../../common/utils/oclif';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
+import { ArchitectError } from '../..';
+import { Flags } from '@oclif/core';
 
 export default class SecretsUpload extends BaseCommand {
   static description = 'Upload secrets from a file to an account or an environment';
   static aliases = ['secrets:set'];
   static examples = [
-    'architect secrets:set --account=myaccount --environment=myenvironment ./mysecrets.yml',
+    'architect secrets:set --account=myaccount ./mysecrets.yml',
     'architect secrets:set --account=myaccount --override ./mysecrets.yml',
+    'architect secrets:set --account=myaccount --platform=myplatform ./mysecrets.yml',
+    'architect secrets:set --account=myaccount --platform=myplatform --override ./mysecrets.yml',
+    'architect secrets:set --account=myaccount --environment=myenvironment ./mysecrets.yml',
+    'architect secrets:set --account=myaccount --environment=myenvironment --override ./mysecrets.yml',
   ];
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
+    platform: Flags.string({
+      description: 'Architect platform',
+      parse: async value => value.toLowerCase(),
+      sensitive: false,
+    }),
     override: booleanString({
       description: 'Allow override of existing secrets',
       default: false,
@@ -38,11 +49,18 @@ export default class SecretsUpload extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags, args } = await this.parse(SecretsUpload);
-    const account = await AccountUtils.getAccount(this.app, flags.account);
+    if (!flags.account) {
+      this.error(new ArchitectError(`Account is not found. Please see examples below:\n  ${SecretsUpload.examples.join('\n  ')}`));
+    }
 
+    const account = await AccountUtils.getAccount(this.app, flags.account);
     const is_admin = await UserUtils.isAdmin(this.app, account.id);
     if (!is_admin) {
       this.error('You do not have permission to upload secrets. Please contact your admin.');
+    }
+
+    if (flags.platform && flags.environment) {
+      throw new ArchitectError('Please provide either the platform flag or the environment flag and not both.');
     }
 
     // loaded secrets
@@ -55,7 +73,7 @@ export default class SecretsUpload extends BaseCommand {
     }
 
     // existing secrets
-    const existing_secrets = await SecretUtils.getSecrets(this.app, account, flags.environment);
+    const existing_secrets = await SecretUtils.getSecrets(this.app, account, { platform_name: flags.platform, environment_name: flags.environment });
     const existing_secret_yml: SecretsDict = {};
     if (existing_secrets && existing_secrets.length > 0) {
       for (const secret of existing_secrets) {
@@ -73,7 +91,12 @@ export default class SecretsUpload extends BaseCommand {
         }
       }
     }
-    await SecretUtils.batchUpdateSecrets(this.app, update_secrets, account, flags.environment);
+
+    if (update_secrets.length === 0) {
+      this.log(`There are no new secrets to upload.`);
+      return;
+    }
+    await SecretUtils.batchUpdateSecrets(this.app, update_secrets, account, { platform_name: flags.platform, environment_name: flags.environment });
 
     this.log(`Successfully uploaded secrets from ${secrets_file}`);
   }
