@@ -1,4 +1,3 @@
-/* eslint-disable no-empty */
 import { Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import fs from 'fs';

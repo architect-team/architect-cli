@@ -2,7 +2,6 @@ import BaseCommand from '../../base-command';
 import Table from '../../base-table';
 
 export default class ConfigView extends BaseCommand {
-
   async auth_required(): Promise<boolean> {
     return false;
   }

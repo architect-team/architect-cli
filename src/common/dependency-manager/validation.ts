@@ -10,8 +10,8 @@ export const prettyValidationErrors = (error: ValidationErrors): void => {
   const errors = JSON.parse(error.message) as ValidationError[];
 
   const errors_row_map: Dictionary<ValidationError> = {};
-  let min_row = Infinity;
-  let max_row = -Infinity;
+  let min_row = Number.POSITIVE_INFINITY;
+  let max_row = Number.NEGATIVE_INFINITY;
   let missing_line_numbers = false;
   for (const error of errors) {
     if (error.start && error.end) {
@@ -35,7 +35,7 @@ export const prettyValidationErrors = (error: ValidationErrors): void => {
   }
 
   min_row = Math.max(min_row - 4, 0);
-  max_row = max_row + 3;
+  max_row += 3;
 
   const res = [];
   let line_number = min_row + 1;

@@ -1,5 +1,3 @@
-
-/* eslint-disable no-empty */
 import fs from 'fs-extra';
 import yaml, { DumpOptions } from 'js-yaml';
 import path from 'path';

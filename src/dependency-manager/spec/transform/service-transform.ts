@@ -24,5 +24,6 @@ export const transformServiceSpec = (key: string, spec: ServiceSpec, metadata: C
     volumes: transformDictionary(transformVolumeSpec, spec.volumes),
     replicas: spec.replicas || 1,
     scaling: spec.scaling,
+    deploy: spec.deploy,
   };
 };

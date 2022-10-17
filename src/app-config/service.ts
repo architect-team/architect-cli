@@ -85,10 +85,11 @@ export default class AppService {
   unlinkComponent(componentNameOrPath: string): string | undefined {
     let res;
 
-    if (this.linkedComponents.hasOwnProperty(componentNameOrPath)) {
+    if (componentNameOrPath in this.linkedComponents) {
       delete this.linkedComponents[componentNameOrPath];
       res = componentNameOrPath;
     } else {
+      // eslint-disable-next-line unicorn/no-array-reduce
       this.linkedComponents = Object.entries(this.linkedComponents).reduce((linkedComponents, [componentName, componentPath]) => {
         if (componentPath !== componentNameOrPath) {
           linkedComponents[componentName] = componentPath;
@@ -153,7 +154,7 @@ export default class AppService {
           }
           // Note: it is okay to rethrow these errors as they are here because the catch block in the basecommand.ts should correctly interpret axios errors.
           throw err;
-        }
+        },
       );
     }
 

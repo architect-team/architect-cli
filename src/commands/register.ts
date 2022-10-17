@@ -133,7 +133,7 @@ export default class ComponentRegister extends BaseCommand {
     }
     const account_name = is_valid_component_account ? component_account_name : flags.account;
     const selected_account = await AccountUtils.getAccount(this.app, account_name);
-    
+
     if (flags.environment) { // will throw an error if a user specifies an environment that doesn't exist
       await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);
     }
@@ -183,7 +183,7 @@ export default class ComponentRegister extends BaseCommand {
         const { component_name, resource_type, resource_name } = ResourceSlugUtils.parse(ref);
         const ref_with_account = ResourceSlugUtils.build(selected_account.name, component_name, resource_type, resource_name);
 
-        const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags['architecture']);
+        const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags.architecture);
 
         if (service.build) {
           service.build['x-bake'] = {
@@ -244,9 +244,9 @@ export default class ComponentRegister extends BaseCommand {
 
     const build_args = args.filter((value, index, self) => {
       return self.indexOf(value) === index;
+      // eslint-disable-next-line unicorn/no-array-reduce
     }).reduce((arr, value) => {
-      arr.push('--set');
-      arr.push(`*.args.${value}`);
+      arr.push('--set', `*.args.${value}`);
       return arr;
     }, [] as string[]);
 
@@ -269,7 +269,9 @@ export default class ComponentRegister extends BaseCommand {
 
     const new_spec = classToClass(component_spec);
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
-      if (IF_EXPRESSION_REGEX.test(service_name)) { continue; }
+      if (IF_EXPRESSION_REGEX.test(service_name)) {
+        continue;
+      }
 
       delete service.debug; // we don't need to compare the debug block for remotely-deployed components
 
@@ -286,7 +288,9 @@ export default class ComponentRegister extends BaseCommand {
       }
     }
     for (const [task_name, task] of Object.entries(new_spec.tasks || {})) {
-      if (IF_EXPRESSION_REGEX.test(task_name)) { continue; }
+      if (IF_EXPRESSION_REGEX.test(task_name)) {
+        continue;
+      }
 
       delete task.debug; // we don't need to compare the debug block for remotely-deployed components
 
@@ -314,7 +318,6 @@ export default class ComponentRegister extends BaseCommand {
     let previous_config_data;
     try {
       previous_config_data = (await this.app.api.get(`/accounts/${selected_account.name}/components/${component_name}/versions/${tag || 'latest'}`)).data.config;
-      /* eslint-disable-next-line no-empty */
     } catch { }
 
     this.log(chalk.blue(`Begin component config diff`));

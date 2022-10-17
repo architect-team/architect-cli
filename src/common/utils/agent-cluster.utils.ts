@@ -72,8 +72,8 @@ export class AgentClusterUtils {
         rolebinding.subjects.find(
           (subject: any) =>
             subject.kind === 'ServiceAccount' &&
-            subject.name === SERVICE_ACCOUNT_NAME
-        )
+            subject.name === SERVICE_ACCOUNT_NAME,
+        ),
     );
 
     // Check if cluster role binding already exists
