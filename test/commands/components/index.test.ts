@@ -2,8 +2,8 @@ import { expect } from '@oclif/test';
 import sinon, { SinonSpy } from 'sinon';
 import BaseTable from '../../../src/base-table';
 import Components from '../../../src/commands/components/index';
-import { mockArchitectAuth, MOCK_API_HOST } from '../../utils/mocks';
 import * as LocalizedTimestamp from '../../../src/common/utils/localized-timestamp';
+import { mockArchitectAuth, MOCK_API_HOST } from '../../utils/mocks';
 
 describe('list components', () => {
   const date = '5/2/22, 12:38:32 AM UTC';
@@ -37,12 +37,12 @@ describe('list components', () => {
   const header = { head: ['Name', 'Account', 'Created', 'Updated'] };
   const full_table = new BaseTable(header);
   for (const entry of components) {
-    full_table.push([entry.name, entry.account.name, entry.created_at, entry.updated_at ]);
+    full_table.push([entry.name, entry.account.name, entry.created_at, entry.updated_at]);
   }
   const query_table = new BaseTable(header);
-  query_table.push([components[2].name, components[2].account.name, components[2].created_at, components[2].updated_at ]);
+  query_table.push([components[2].name, components[2].account.name, components[2].created_at, components[2].updated_at]);
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(Components.prototype, 'log', sinon.fake.returns(null))
     .stub(LocalizedTimestamp, 'default', sinon.stub().returns(date))
     .nock(MOCK_API_HOST, api => api
@@ -54,7 +54,7 @@ describe('list components', () => {
       expect(log_spy_list.firstCall.args[0]).to.equal(full_table.toString());
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(Components.prototype, 'log', sinon.fake.returns(null))
     .stub(LocalizedTimestamp, 'default', sinon.stub().returns(date))
     .nock(MOCK_API_HOST, api => api

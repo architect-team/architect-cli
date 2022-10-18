@@ -5,7 +5,7 @@ describe('environments', () => {
 
   const print = false;
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
       .get(`/environments?q=`)
       .reply(200, { rows: [], total: 0 }))
@@ -16,7 +16,7 @@ describe('environments', () => {
       expect(ctx.stdout).to.contain('You have not configured any environments')
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
       .get(`/environments?q=architect`)
       .reply(200, { rows: [], total: 0 }))
