@@ -33,7 +33,7 @@ export default class ComponentValidate extends BaseCommand {
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     if (!options) {
       return super.parse(options, argv);
     }
