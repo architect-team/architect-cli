@@ -13,7 +13,7 @@ describe('secrets', function () {
     name: "examples"
   }
 
-  const defaults = mockArchitectAuth
+  const defaults = mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
       .reply(200, account));
@@ -43,7 +43,7 @@ describe('secrets', function () {
       expect(batch_update.callCount).to.eq(1);
       expect(ctx.stdout).to.contain('Successfully uploaded secrets');
     })
-  
+
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(SecretUtils, 'getSecrets', sinon.stub())
@@ -55,7 +55,7 @@ describe('secrets', function () {
       expect(ctx.message).to.contain('Please provide either the platform flag or the environment flag and not both.')
     })
     .it('upload secrets failed when both platform and environment flags are set');
-  
+
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(SecretUtils, 'getSecrets', sinon.stub())

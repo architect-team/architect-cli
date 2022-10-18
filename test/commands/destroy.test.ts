@@ -21,7 +21,7 @@ describe('destroy', function () {
     id: 'test-pipeline-id'
   }
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(PipelineUtils, 'pollPipeline', async () => null)
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${mock_account.name}`)

@@ -4,7 +4,7 @@ require:
   - ./test/test-setup.ts
 recursive: true
 reporter: spec
-timeout: 10000
+timeout: 20000
 trace-warnings: true
 watch-extensions:
   - ts
