@@ -333,7 +333,7 @@ export default class Dev extends BaseCommand {
     }),
     compose_file: Flags.string({
       description: `Please use --compose-file.`,
-      exclusive: ['account', 'environment'], // TODO: why are auto-approve and the deprecated version here?
+      exclusive: ['account', 'environment'],
       hidden: true,
       sensitive: false,
       deprecated: {
