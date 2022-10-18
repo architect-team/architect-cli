@@ -22,7 +22,7 @@ services:
 `;
 
   const mockInit = () => {
-    return mockArchitectAuth
+    return mockArchitectAuth()
       .stub(fs, 'writeFileSync', sinon.stub().returns(undefined))
       .stdout({ print })
       .stderr({ print })

@@ -10,9 +10,9 @@ export class DeploymentFailedError extends Error {
   constructor(pipeline_id: string, deployment_links: string[]) {
     super();
 
-    const deployment_string = deployment_links.length > 1
-      ? `${deployment_links.length} deployments`
-      : '1 deployment';
+    const deployment_string = deployment_links.length > 1 ?
+      `${deployment_links.length} deployments` :
+      '1 deployment';
     const listified_link_string = deployment_links.map((s: string) => `- ${s}`).join('\n');
     this.message = `Pipeline ${pipeline_id} failed because ${deployment_string} failed:\n${listified_link_string}`;
   }

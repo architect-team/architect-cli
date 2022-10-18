@@ -33,7 +33,7 @@ export default class SentryService {
   initSentry(): void {
     this.ignoreTryCatch(async () => {
       Sentry.init({
-        enabled: process.env.TEST !== '1' && process.env.NODE_ENV != 'development' && process.env.NODE_ENV != ENVIRONMENT.PREVIEW,
+        enabled: process.env.TEST !== '1' && process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== ENVIRONMENT.PREVIEW,
         dsn: CLI_SENTRY_DSN,
         debug: false,
         environment: process.env?.NODE_ENV ?? 'production',
@@ -73,7 +73,7 @@ export default class SentryService {
         return user;
       }
     } catch {
-      this.command.debug("SENTRY: Unable to load user");
+      this.command.debug('SENTRY: Unable to load user');
     }
   }
 
@@ -144,13 +144,13 @@ export default class SentryService {
       const update_scope = Sentry.getCurrentHub().getScope();
       update_scope?.setExtras(sentry_session_metadata);
     } catch {
-      this.command.debug("SENTRY: Unable to attach metadata to the current transaction");
+      this.command.debug('SENTRY: Unable to attach metadata to the current transaction');
     }
   }
 
   private async filterNonSensitiveSentryMetadata(non_sensitive: Set<string>, metadata: any): Promise<any> {
     return Object.entries(metadata)
-      .filter((value,) => !!value[1] && non_sensitive.has(value[0]))
+      .filter((value) => Boolean(value[1]) && non_sensitive.has(value[0]))
       .map(key => ({ [key[0]]: key[1] }));
   }
 
@@ -175,7 +175,7 @@ export default class SentryService {
         await this.setScopeExtra('command_args', filtered_sentry_args);
         await this.setScopeExtra('command_flags', filtered_sentry_flags);
       } catch (err) {
-        this.command.debug("Unable to add extra sentry metadata");
+        this.command.debug('Unable to add extra sentry metadata');
       }
 
       await this.updateSentryTransaction(error);
@@ -204,7 +204,7 @@ export default class SentryService {
       const update_scope = Sentry.getCurrentHub().getScope();
       update_scope?.setExtra(key, value);
     } catch {
-      this.command.debug("SENTRY: Unable to add extra metadata element to the current transaction");
+      this.command.debug('SENTRY: Unable to add extra metadata element to the current transaction');
     }
   }
 
@@ -215,14 +215,14 @@ export default class SentryService {
 
       const docker_command = await docker(['ps', '--format', '{{json .}}%%'], { stdout: false });
       const docker_stdout = (docker_command.stdout as string).split('%%')
-        .map((str: string) => (str && str.length) ? JSON.parse(str) : undefined);
-      const docker_containers = docker_stdout.filter(x => !!x).map((container: any) => ({ ...container, Labels: undefined }));
+        .map((str: string) => (str && str.length > 0) ? JSON.parse(str) : undefined);
+      const docker_containers = docker_stdout.filter(x => Boolean(x)).map((container: any) => ({ ...container, Labels: undefined }));
 
       const updated_docker_info = Object.assign(docker_info, { Containers: docker_containers });
 
       return updated_docker_info;
     } catch {
-      this.command.debug("SENTRY: Unable to retrieve running docker container metadata");
+      this.command.debug('SENTRY: Unable to retrieve running docker container metadata');
       return [];
     }
   }
@@ -233,7 +233,7 @@ export default class SentryService {
       const addr = fs.readdirSync(path ?? '', { withFileTypes: true });
       return addr.filter(f => f.isFile()).map(f => ({ name: f.name })) || [];
     } catch {
-      this.command.debug("SENTRY: Unable to read list of file names from the architect config directory");
+      this.command.debug('SENTRY: Unable to read list of file names from the architect config directory');
       return [];
     }
   }
@@ -244,7 +244,7 @@ export default class SentryService {
         return await JSON.parse(fs.readFileSync(this.sentry_history_file_path ?? '').toString()) || [];
       }
     } catch {
-      this.command.debug("SENTRY: Unable to read command history file from the architect config directory");
+      this.command.debug('SENTRY: Unable to read command history file from the architect config directory');
     }
     return [];
   }
@@ -259,7 +259,7 @@ export default class SentryService {
         if (remove_keys.has(key)) {
           return undefined;
         }
-        if (typeof value === 'number' || (value && Object.keys(value).length)) {
+        if (typeof value === 'number' || (value && Object.keys(value).length > 0)) {
           return value;
         }
       }));
@@ -284,7 +284,7 @@ export default class SentryService {
       const maximum_records = ~Math.min(5, history.length) + 1;
       fs.outputJsonSync(this.sentry_history_file_path, history.slice(maximum_records), { spaces: 2 });
     } catch {
-      this.command.debug("SENTRY: Unable to write command history file to the architect config directory");
+      this.command.debug('SENTRY: Unable to write command history file to the architect config directory');
     }
   }
 }

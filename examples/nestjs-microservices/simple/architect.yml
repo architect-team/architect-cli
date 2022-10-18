@@ -1,10 +1,9 @@
 name: nestjs-simple
-description: Simple NestJS microservice that uses TCP for inter-process communication
+description: Simple NestJS microservice
 homepage: https://github.com/architect-team/architect-cli/tree/main/examples/nestjs-microservices/simple
 keywords:
   - nestjs
   - examples
-  - tcp
   - microservices
 
 interfaces:
@@ -22,7 +21,6 @@ services:
     interfaces:
       main:
         port: 8080
-        protocol: tcp
     debug:
       command: npm run start:dev
       build:

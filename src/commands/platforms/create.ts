@@ -4,7 +4,7 @@ import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import yaml from 'js-yaml';
-import * as path from 'path';
+import path from 'path';
 import untildify from 'untildify';
 import { ArchitectError, Dictionary, Slugs } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
@@ -39,7 +39,7 @@ export default class PlatformCreate extends BaseCommand {
       sensitive: false,
       default: false,
     }),
-    ['auto-approve']: booleanString({
+    'auto-approve': booleanString({
       sensitive: false,
       default: false,
     }),
@@ -137,8 +137,8 @@ export default class PlatformCreate extends BaseCommand {
     try {
       const platform_dto = {
         name: platform_name,
-        ...await this.createArchitectPlatform(flags, kube_contexts.current_context)
-        , flags: flags_map,
+        ...await this.createArchitectPlatform(flags, kube_contexts.current_context),
+        flags: flags_map,
       };
 
       CliUx.ux.action.start('Registering platform with Architect');
@@ -146,7 +146,7 @@ export default class PlatformCreate extends BaseCommand {
       CliUx.ux.action.stop();
       this.log(`Platform registered: ${this.app.config.app_host}/${account.name}/platforms/new?platform_id=${created_platform.id}`);
 
-      if (flags.type?.toLowerCase() == 'agent') {
+      if (flags.type?.toLowerCase() === 'agent') {
         CliUx.ux.action.start(chalk.blue('Installing the agent'));
         await AgentPlatformUtils.installAgent(flags, created_platform.token.access_token, AgentPlatformUtils.getServerAgentHost(this.app.config.agent_server_host), this.app.config);
         await AgentPlatformUtils.waitForAgent(flags);
@@ -172,7 +172,7 @@ export default class PlatformCreate extends BaseCommand {
         choices: [
           'kubernetes',
           agent_display_name,
-          //...(this.app.config.environment !== ENVIRONMENT.PRODUCTION ? [agent_display_name] : []),
+          // ...(this.app.config.environment !== ENVIRONMENT.PRODUCTION ? [agent_display_name] : []),
         ],
       },
     ]);
@@ -186,9 +186,9 @@ export default class PlatformCreate extends BaseCommand {
 
     switch (selected_type) {
       case 'agent':
-        return await AgentPlatformUtils.configureAgentPlatform(flags, context.name);
+        return AgentPlatformUtils.configureAgentPlatform(flags, context.name);
       case 'kubernetes':
-        return await KubernetesPlatformUtils.configureKubernetesPlatform(flags, this.app.config.environment, context);
+        return KubernetesPlatformUtils.configureKubernetesPlatform(flags, this.app.config.environment, context);
       case 'architect':
         throw new Error(`You cannot create an Architect platform from the CLI. One Architect platform is registered by default per account.`);
       default:

@@ -1,7 +1,6 @@
 import isCi from 'is-ci';
 
 export default class PromptUtils {
-
   /**
    * Removes all/any applied ascii color codes from a string, and returns the modified string or empty string.
    * @param {string} message - a string to modify
@@ -30,7 +29,7 @@ export default class PromptUtils {
    * https://github.com/SBoudrias/Inquirer.js/pull/891
    */
   public static disable_prompts(): void {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line unicorn/prefer-module
     const inquirer = require('inquirer');
     process.stdout.isTTY = false;
 
@@ -39,10 +38,11 @@ export default class PromptUtils {
         prompts = [prompts];
       }
       for (const prompt of prompts) {
-        if ((prompt.when && prompt.default == undefined) || prompt.when === undefined) {
+        if ((prompt.when && prompt.default === undefined) || prompt.when === undefined) {
           throw new Error(`${prompt.name} is required`);
         }
       }
+      // eslint-disable-next-line unicorn/no-array-reduce,unicorn/prefer-object-from-entries
       return prompts.reduce((d: any, p: any) => {
         d[p.name] = p.default;
         return d;

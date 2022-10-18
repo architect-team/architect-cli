@@ -1,6 +1,8 @@
+import { V1Deployment } from '@kubernetes/client-node';
 import { Transform } from 'class-transformer';
 import { Allow, IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
+import { DeepPartial } from '../../common/utils/types';
 import { Dictionary } from '../utils/dictionary';
 import { LivenessProbeSpec, VolumeSpec } from './common-spec';
 import { ResourceSpec } from './resource-spec';
@@ -50,6 +52,24 @@ export class ScalingSpec {
 
   @ValidateNested()
   metrics!: ScalingMetricsSpec;
+}
+
+@JSONSchema({
+  description: 'Configuration that dictates the kubernetes deploy overrides.',
+})
+export class KubernetesDeploySpec {
+  @Allow()
+  deployment!: DeepPartial<V1Deployment>;
+}
+
+@JSONSchema({
+  description: 'Configuration that dictates the deploy overrides.',
+})
+export class DeploySpec {
+  @Allow()
+  @ValidateNested()
+  @Transform(transformObject(KubernetesDeploySpec))
+  kubernetes!: KubernetesDeploySpec;
 }
 
 @JSONSchema({
@@ -176,4 +196,9 @@ export class ServiceSpec extends ResourceSpec {
   @ValidateNested()
   @Transform(transformObject(ScalingSpec))
   scaling?: ScalingSpec;
+
+  @IsOptional()
+  @ValidateNested()
+  @Transform(transformObject(DeploySpec))
+  deploy?: DeploySpec;
 }
