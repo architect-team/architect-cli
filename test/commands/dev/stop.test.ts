@@ -33,7 +33,7 @@ describe('dev:stop', () => {
     }
   };
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'getLocalEnvironments', sinon.stub().returns(env_names))
     .stub(DevStop.prototype, 'waitForEnviromentToStop', sinon.stub().returns(true))
     .stub(DevStop.prototype, 'log', sinon.fake.returns(null))
@@ -49,7 +49,7 @@ describe('dev:stop', () => {
       expect(connect.firstCall.firstArg).to.contain('test_env');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'getLocalEnvironments', sinon.stub().returns([]))
     .stub(DevStop.prototype, 'waitForEnviromentToStop', sinon.stub().returns(true))
     .stub(DevStop.prototype, 'log', sinon.fake.returns(null))
@@ -60,7 +60,7 @@ describe('dev:stop', () => {
     })
     .it('cannot stop a local deployment in empty environment');
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'getLocalEnvironments', sinon.stub().returns(env_names))
     .stub(DevStop.prototype, 'waitForEnviromentToStop', sinon.stub().returns(false))
     .stub(DevStop.prototype, 'log', sinon.fake.returns(null))
@@ -72,7 +72,7 @@ describe('dev:stop', () => {
     })
     .it('handles not stopping gracefully');
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'getLocalEnvironments', sinon.stub().returns(env_names))
     .stub(DevStop.prototype, 'waitForEnviromentToStop', sinon.stub().returns(true))
     .stub(DevStop.prototype, 'log', sinon.fake.returns(null))
