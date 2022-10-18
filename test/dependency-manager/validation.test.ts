@@ -5,7 +5,7 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
 import TSON from "typescript-json";
-import { ArchitectError, buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
+import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DeepPartial } from '../../src/common/utils/types';
 import { SecretsConfig } from '../../src/dependency-manager/secrets/secrets';
@@ -1298,6 +1298,7 @@ services:
     expect(err).to.be.undefined;
   });
 
+  /*
   it('invalid tcp component protocol', async () => {
     const component_config = `
       name: test/component
@@ -1362,6 +1363,7 @@ services:
     }
     expect(err).to.be.undefined;
   });
+  */
 
   it('invalid component interface number', async () => {
     const component_config = `
