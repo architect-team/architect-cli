@@ -363,7 +363,7 @@ export default class Dev extends BaseCommand {
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     if (!options) {
       return super.parse(options, argv);
     }
@@ -613,7 +613,7 @@ $ architect dev -e new_env_name_here .`));
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
     const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
     const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values);
-    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_file_values);
+    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter || [], all_secret_file_values);
 
     const linked_components = this.app.linkedComponents;
     const component_versions: string[] = [];

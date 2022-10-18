@@ -68,7 +68,7 @@ export default class ClusterCreate extends BaseCommand {
 
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
 
@@ -185,11 +185,9 @@ export default class ClusterCreate extends BaseCommand {
     flags.type = selected_type;
     switch (selected_type) {
       case 'agent':
-        await AgentClusterUtils.configureAgentCluster(flags, context.name);
-        break;
+        return AgentClusterUtils.configureAgentCluster(flags, context.name);
       case 'kubernetes':
-        await KubernetesClusterUtils.configureKubernetesCluster(flags, this.app.config.environment, context);
-        break;
+        return KubernetesClusterUtils.configureKubernetesCluster(flags, this.app.config.environment, context);
       case 'architect':
         throw new Error(`You cannot create an Architect cluster from the CLI. One Architect cluster is registered by default per account.`);
       default:

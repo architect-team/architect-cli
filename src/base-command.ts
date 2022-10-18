@@ -58,7 +58,7 @@ export default abstract class BaseCommand extends Command {
   // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const flag_definitions = this.getClass().flags;
 
     const flags_map: Dictionary<Interfaces.CompletableFlag<any> | undefined> = {};

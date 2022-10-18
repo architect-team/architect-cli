@@ -34,7 +34,7 @@ export abstract class DeployCommand extends BaseCommand {
 
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
 
@@ -186,7 +186,7 @@ export default class Deploy extends DeployCommand {
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     if (!options) {
       return super.parse(options, argv);
     }
@@ -210,7 +210,7 @@ export default class Deploy extends DeployCommand {
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
     const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
     const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values); // TODO: 404: update
-    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_file_values); // TODO: 404: remove
+    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter || [], all_secret_file_values); // TODO: 404: remove
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
