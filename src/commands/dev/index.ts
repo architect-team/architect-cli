@@ -258,7 +258,7 @@ export default class Dev extends BaseCommand {
       char: 'o',
       description: 'Path where the compose file should be written to',
       default: '',
-      exclusive: ['environment', 'auto-approve', 'auto_approve', 'refresh'],
+      exclusive: ['environment'],
       sensitive: false,
     }),
     parameter: Flags.string({
@@ -315,11 +315,11 @@ export default class Dev extends BaseCommand {
     local: booleanString({
       char: 'l',
       description: `Deploy the stack locally instead of via Architect Cloud`,
-      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
+      exclusive: ['account', 'auto-approve'],
       hidden: true,
       sensitive: false,
-      default: false,
-      deprecated: true
+      default: undefined,
+      deprecated: true,
     }),
     production: booleanString({
       description: `Please use --environment.`,
@@ -333,7 +333,7 @@ export default class Dev extends BaseCommand {
     }),
     compose_file: Flags.string({
       description: `Please use --compose-file.`,
-      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      exclusive: ['account', 'environment'], // TODO: why are auto-approve and the deprecated version here?
       hidden: true,
       sensitive: false,
       deprecated: {

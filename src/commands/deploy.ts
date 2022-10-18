@@ -22,7 +22,7 @@ export abstract class DeployCommand extends BaseCommand {
       description: `Please use --auto-approve.`,
       hidden: true,
       sensitive: false,
-      default: false,
+      default: undefined, // TODO: test for warnings on changed commands
       deprecated: {
         to: 'auto-approve',
       },
@@ -38,6 +38,8 @@ export abstract class DeployCommand extends BaseCommand {
   async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+    // TODO: issue is that booleanstrings have a default value of false, showing that they're set
+
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
 
@@ -92,7 +94,7 @@ export default class Deploy extends DeployCommand {
       exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
       hidden: true,
       sensitive: false,
-      default: false,
+      default: undefined,
       deprecated: true,
     }),
     production: booleanString({

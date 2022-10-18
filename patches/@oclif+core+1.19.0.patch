@@ -1,15 +1,15 @@
 diff --git a/node_modules/@oclif/core/lib/interfaces/parser.d.ts b/node_modules/@oclif/core/lib/interfaces/parser.d.ts
-index f533dcc..d46d402 100644
+index f533dcc..29deae0 100644
 --- a/node_modules/@oclif/core/lib/interfaces/parser.d.ts
 +++ b/node_modules/@oclif/core/lib/interfaces/parser.d.ts
-@@ -143,6 +143,7 @@ export declare type FlagProps = {
+@@ -140,6 +140,7 @@ export declare type FlagProps = {
+      * List of flags that cannot be used with this flag.
+      */
+     exclusive?: string[];
++    sensitive?: boolean;
      /**
       * Exactly one of these flags must be provided.
       */
-+    sensitive?: boolean;
-     exactlyOne?: string[];
-     /**
-      * Define complex relationships between flags.
 @@ -159,7 +160,6 @@ export declare type FlagProps = {
  };
  export declare type BooleanFlagProps = FlagProps & {

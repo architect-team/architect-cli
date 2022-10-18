@@ -1,6 +1,7 @@
 import { Command, Config, Interfaces } from '@oclif/core';
 import '@sentry/tracing';
 import chalk from 'chalk';
+import { Memoize } from 'typescript-memoize';
 import { Dictionary, ValidationErrors } from '.';
 import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
@@ -49,12 +50,10 @@ export default abstract class BaseCommand extends Command {
       }
     }
     await this.sentry.startSentryTransaction();
-
-    await super.init();
   }
 
-  // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
-  async parse<F, A extends {
+  @Memoize()
+  async parse<F, A extends { // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
     [name: string]: any;
   }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const flag_definitions = this.getClass().flags;

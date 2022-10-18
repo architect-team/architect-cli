@@ -9,7 +9,7 @@
   "bugs": "https://github.com/architect-team/architect-cli/issues",
   "dependencies": {
     "@kubernetes/client-node": "^0.17.1",
-    "@oclif/core": "1.18.0",
+    "@oclif/core": "1.19.0",
     "@oclif/plugin-autocomplete": "1.2.0",
     "@oclif/plugin-help": "5.1.11",
     "@oclif/plugin-not-found": "2.3.1",
@@ -51,6 +51,7 @@
     "tmp": "^0.2.1",
     "tslib": "2.3.1",
     "typescript-json": "^3.3.10",
+    "typescript-memoize": "^1.1.1",
     "untildify": "4.0.0",
     "which": "^2.0.2",
     "ws": "^8.4.0"

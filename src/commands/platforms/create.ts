@@ -37,7 +37,7 @@ export default class PlatformCreate extends BaseCommand {
       description: `Please use --auto-approve.`,
       hidden: true,
       sensitive: false,
-      default: false,
+      default: undefined,
       deprecated: {
         to: 'auto-approve',
       },

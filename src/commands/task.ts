@@ -29,15 +29,16 @@ export default class TaskExec extends BaseCommand {
     local: booleanString({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
-      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
+      exclusive: ['account'],
       sensitive: false,
       default: false,
     }),
     compose_file: Flags.string({
       description: `Please use --compose-file.`,
-      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      exclusive: ['account', 'environment'],
       hidden: true,
       sensitive: false,
+      default: undefined,
       deprecated: {
         to: 'compose-file',
       },
@@ -46,7 +47,7 @@ export default class TaskExec extends BaseCommand {
       char: 'o',
       description: 'Path where the compose file should be written to',
       default: '',
-      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      exclusive: ['account', 'environment'],
       sensitive: false,
     }),
   };
@@ -74,7 +75,6 @@ export default class TaskExec extends BaseCommand {
 
     // Merge any values set via deprecated flags into their supported counterparts
     flags['compose-file'] = flags.compose_file ? flags.compose_file : flags['compose-file'];
-    flags['auto-approve'] = flags.auto_approve ? flags.auto_approve : flags['auto-approve'];
     parsed.flags = flags;
 
     return parsed;
