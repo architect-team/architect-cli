@@ -407,7 +407,7 @@ export default abstract class DependencyManager {
       const component_interfaces = node.config.interfaces;
       for (const [component_name, component_interface] of Object.entries(component_interfaces)) {
         if (!valid_protocols.has(component_interface.protocol)) {
-          throw new ArchitectError(`Protocol '${component_interface.protocol}' is detected in component '${component_name}'. We currently only support 'http' and 'https' protocols.`);
+          // throw new ArchitectError(`Protocol '${component_interface.protocol}' is detected in component '${component_name}'. We currently only support 'http' and 'https' protocols.`);
         }
       }
     }

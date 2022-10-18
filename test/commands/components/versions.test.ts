@@ -34,10 +34,10 @@ describe('list component versions', () => {
   const header = { head: ['Tag', 'Created'] };
   const full_table = new BaseTable(header);
   for (const entry of component_versions) {
-    full_table.push([entry.tag, entry.created_at ]);
+    full_table.push([entry.tag, entry.created_at]);
   }
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(AccountUtils, 'getAccount', sinon.stub().returns(component.account))
     .stub(LocalizedTimestamp, 'default', sinon.stub().returns(date))
     .stub(ComponentVersions.prototype, 'log', sinon.fake.returns(null))
