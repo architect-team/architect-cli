@@ -38,7 +38,7 @@ export default class Clusters extends BaseCommand {
 
     const { data: { rows: clusters } } = await this.app.api.get(`/clusters`, { params });
 
-    if (!clusters.length) {
+    if (clusters.length === 0) {
       if (args.query) {
         this.log(`No clusters found matching ${args.query}.`);
       } else {

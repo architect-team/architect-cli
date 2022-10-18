@@ -40,6 +40,7 @@ export default class ClusterUtils {
     if (cluster_name) {
       cluster = (await api.get(`/accounts/${account.id}/clusters/${cluster_name}`)).data;
     } else {
+      // eslint-disable-next-line unicorn/prefer-module
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
       // inquirer-autocomplete-prompt doesn't catch exceptions in source...

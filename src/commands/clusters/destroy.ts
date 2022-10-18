@@ -22,7 +22,7 @@ export default class ClusterDestroy extends BaseCommand {
       sensitive: false,
       default: false,
     }),
-    ['auto-approve']: booleanString({
+    'auto-approve': booleanString({
       description: 'Automatically apply the changes',
       default: false,
       sensitive: false,

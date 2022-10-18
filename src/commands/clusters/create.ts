@@ -39,7 +39,7 @@ export default class ClusterCreate extends BaseCommand {
       sensitive: false,
       default: false,
     }),
-    ['auto-approve']: booleanString({
+    'auto-approve': booleanString({
       sensitive: false,
       default: false,
     }),
@@ -172,7 +172,7 @@ export default class ClusterCreate extends BaseCommand {
         choices: [
           'kubernetes',
           agent_display_name,
-          //...(this.app.config.environment !== ENVIRONMENT.PRODUCTION ? [agent_display_name] : []),
+          // ...(this.app.config.environment !== ENVIRONMENT.PRODUCTION ? [agent_display_name] : []),
         ],
       },
     ]);
@@ -185,9 +185,11 @@ export default class ClusterCreate extends BaseCommand {
     flags.type = selected_type;
     switch (selected_type) {
       case 'agent':
-        return await AgentClusterUtils.configureAgentCluster(flags, context.name);
+        await AgentClusterUtils.configureAgentCluster(flags, context.name);
+        break;
       case 'kubernetes':
-        return await KubernetesClusterUtils.configureKubernetesCluster(flags, this.app.config.environment, context);
+        await KubernetesClusterUtils.configureKubernetesCluster(flags, this.app.config.environment, context);
+        break;
       case 'architect':
         throw new Error(`You cannot create an Architect cluster from the CLI. One Architect cluster is registered by default per account.`);
       default:
