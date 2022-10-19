@@ -1,10 +1,12 @@
-import { DeprecatedCommand } from '../../common/utils/deprecated-command';
 import ClusterCreate from '../clusters/create';
 
 export default class PlatformCreate extends ClusterCreate {
   static aliases = ['platforms:register', 'platform:create', 'platforms:create'];
+  static state = 'deprecated';
+  static deprecationOptions = {
+    to: 'cluster:register',
+  };
 
-  @DeprecatedCommand({ new_aliases: ClusterCreate.aliases })
   async run(): Promise<void> {
     await super.run();
   }

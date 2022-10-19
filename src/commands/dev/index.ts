@@ -12,7 +12,7 @@ import path from 'path';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
-import { default as BaseCommand, default as Command } from '../../base-command';
+import { default as BaseCommand } from '../../base-command';
 import LocalDependencyManager, { ComponentConfigOpts } from '../../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../common/docker-compose';
 import DockerComposeTemplate from '../../common/docker-compose/template';
@@ -258,14 +258,17 @@ export default class Dev extends BaseCommand {
       char: 'o',
       description: 'Path where the compose file should be written to',
       default: '',
-      exclusive: ['environment', 'auto-approve', 'auto_approve', 'refresh'],
+      exclusive: ['environment'],
       sensitive: false,
     }),
     parameter: Flags.string({
       char: 'p',
-      description: `${Command.DEPRECATED} Please use --secret.`,
+      description: `Please use --secret.`,
       multiple: true,
       hidden: true,
+      deprecated: {
+        to: 'secret',
+      },
     }),
     interface: Flags.string({
       char: 'i',
@@ -280,9 +283,12 @@ export default class Dev extends BaseCommand {
       default: [],
     }),
     secrets: Flags.string({
-      description: `${Command.DEPRECATED} Please use --secret-file.`,
+      description: `Please use --secret-file.`,
       multiple: true,
       hidden: true,
+      deprecated: {
+        to: 'secret-file',
+      },
     }),
     secret: Flags.string({
       char: 's',
@@ -308,29 +314,39 @@ export default class Dev extends BaseCommand {
     // Used for proxy from deploy to dev. These will be removed once --local is deprecated
     local: booleanString({
       char: 'l',
-      description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
-      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
+      description: `Deploy the stack locally instead of via Architect Cloud`,
+      exclusive: ['account', 'auto-approve'],
       hidden: true,
       sensitive: false,
-      default: false,
+      default: undefined,
+      deprecated: true,
     }),
     production: booleanString({
-      description: `${Command.DEPRECATED} Please use --environment.`,
+      description: `Please use --environment.`,
       dependsOn: ['local'],
       hidden: true,
       sensitive: false,
       default: undefined,
+      deprecated: {
+        to: 'environment',
+      },
     }),
     compose_file: Flags.string({
-      description: `${Command.DEPRECATED} Please use --compose-file.`,
-      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      description: `Please use --compose-file.`,
+      exclusive: ['account', 'environment'],
       hidden: true,
       sensitive: false,
+      deprecated: {
+        to: 'compose-file',
+      },
     }),
     values: Flags.string({
       char: 'v',
       hidden: true,
-      description: `${Command.DEPRECATED} Please use --secret-file.`,
+      description: `Please use --secret-file.`,
+      deprecated: {
+        to: 'secret-file',
+      },
     }),
     detached: booleanString({
       description: 'Run in detached mode',
@@ -363,7 +379,7 @@ export default class Dev extends BaseCommand {
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     if (!options) {
       return super.parse(options, argv);
     }

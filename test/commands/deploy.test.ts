@@ -117,14 +117,14 @@ describe('auto-approve flag with underscore style still works', function () {
   remoteDeploy
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
     .it('works but also emits a deprecation warning', ctx => {
-      expect(ctx.stderr).to.contain('Flag --auto_approve is deprecated.');
+      expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated. Use "auto-approve" instead.');
       expect(ctx.stdout).to.contain('Deployed');
     });
 
   remoteDeploy
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve=true', 'examples/echo:latest'])
     .it('works but also emits a deprecation warning 2', ctx => {
-      expect(ctx.stderr).to.contain('Flag --auto_approve is deprecated.');
+      expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated. Use "auto-approve" instead.');
       expect(ctx.stdout).to.contain('Deployed');
     });
 });

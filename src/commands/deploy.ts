@@ -19,10 +19,13 @@ export abstract class DeployCommand extends BaseCommand {
     ...BaseCommand.flags,
     auto_approve: booleanString({
       exclusive: ['compose-file', 'compose_file'],
-      description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
+      description: `Please use --auto-approve.`,
       hidden: true,
       sensitive: false,
-      default: false,
+      default: undefined,
+      deprecated: {
+        to: 'auto-approve',
+      },
     }),
     'auto-approve': booleanString({
       exclusive: ['compose-file', 'compose_file'],
@@ -34,7 +37,7 @@ export abstract class DeployCommand extends BaseCommand {
 
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
 
@@ -85,23 +88,30 @@ export default class Deploy extends DeployCommand {
     ...EnvironmentUtils.flags,
     local: booleanString({
       char: 'l',
-      description: `${BaseCommand.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
+      description: `Deploy the stack locally instead of via Architect Cloud`,
       exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
       hidden: true,
       sensitive: false,
-      default: false,
+      default: undefined,
+      deprecated: true,
     }),
     production: booleanString({
-      description: `${BaseCommand.DEPRECATED} Please use --environment.`,
+      description: `Please use --environment.`,
       dependsOn: ['local'],
       sensitive: false,
       default: undefined,
+      deprecated: {
+        to: 'environment',
+      },
     }),
     compose_file: Flags.string({
-      description: `${BaseCommand.DEPRECATED} Please use --compose-file.`,
+      description: `Please use --compose-file.`,
       exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
       hidden: true,
       sensitive: false,
+      deprecated: {
+        to: 'compose-file',
+      },
     }),
     'compose-file': Flags.string({
       char: 'o',
@@ -119,9 +129,12 @@ export default class Deploy extends DeployCommand {
     }),
     parameter: Flags.string({
       char: 'p',
-      description: `${BaseCommand.DEPRECATED} Please use --secret.`,
+      description: `Please use --secret.`,
       multiple: true,
       hidden: true,
+      deprecated: {
+        to: 'secret',
+      },
     }),
     interface: Flags.string({
       char: 'i',
@@ -136,9 +149,12 @@ export default class Deploy extends DeployCommand {
       default: [],
     }),
     secrets: Flags.string({
-      description: `${BaseCommand.DEPRECATED} Please use --secret-file.`,
+      description: `Please use --secret-file.`,
       multiple: true,
       hidden: true,
+      deprecated: {
+        to: 'secret-file',
+      },
     }),
     secret: Flags.string({
       char: 's',
@@ -150,7 +166,10 @@ export default class Deploy extends DeployCommand {
       char: 'v',
       hidden: true,
       multiple: true,
-      description: `${BaseCommand.DEPRECATED} Please use --secret-file.`,
+      description: `Please use --secret-file.`,
+      deprecated: {
+        to: 'secret-file',
+      },
     }),
     'deletion-protection': booleanString({
       default: true,
@@ -186,7 +205,7 @@ export default class Deploy extends DeployCommand {
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     if (!options) {
       return super.parse(options, argv);
     }

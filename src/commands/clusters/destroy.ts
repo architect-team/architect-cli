@@ -17,7 +17,7 @@ export default class ClusterDestroy extends BaseCommand {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     auto_approve: booleanString({
-      description: `${BaseCommand.DEPRECATED} Please use --auto-approve.`,
+      description: `Please use --auto-approve.`,
       hidden: true,
       sensitive: false,
       default: false,
@@ -44,7 +44,7 @@ export default class ClusterDestroy extends BaseCommand {
 
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
 
