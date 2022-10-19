@@ -34,7 +34,7 @@ describe('platform:create', function () {
           log_level: 'debug',
         };
       })
-      .stub(AppService, 'create', () => new AppService('', '1.0.0'))
+      .stub(AppService, 'create', () => new AppService(process.env.ARCHITECT_CONFIG_DIR!, '1.0.0'))
       .stub(ClusterCreate.prototype, <any>'setupKubeContext', async () => {
         return {
           original_context: "original_context",

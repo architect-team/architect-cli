@@ -13,7 +13,7 @@ describe('secrets', function () {
     name: "examples"
   }
 
-  const defaults = mockArchitectAuth
+  const defaults = mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
       .reply(200, account));

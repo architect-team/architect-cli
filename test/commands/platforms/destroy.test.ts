@@ -21,7 +21,7 @@ describe('environment:destroy', () => {
     id: 'test-pipeline-id'
   }
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(PipelineUtils, 'pollPipeline', async () => null)
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${mock_account.name}`)
@@ -41,7 +41,7 @@ describe('environment:destroy', () => {
       expect(ctx.stdout).to.contain('Cluster deregistered\n')
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(PipelineUtils, 'pollPipeline', async () => null)
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${mock_account.name}`)

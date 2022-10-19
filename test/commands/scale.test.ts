@@ -39,7 +39,7 @@ const clear_dto = { resource_slug, clear_scaling: true };
 
 describe('Scale', function () {
   describe('Scale services without deploying', function () {
-    const scale = mockArchitectAuth
+    const scale = mockArchitectAuth()
       .nock(MOCK_API_HOST, api => api
         .get(`/accounts/${account.name}`)
         .reply(200, account))
