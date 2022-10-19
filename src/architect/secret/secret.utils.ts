@@ -1,7 +1,7 @@
 import AppService from '../../app-config/service';
 import Account from '../account/account.entity';
+import ClusterUtils from '../cluster/cluster.utils';
 import { EnvironmentUtils } from '../environment/environment.utils';
-import PlatformUtils from '../platform/platform.utils';
 
 export interface Secret {
   scope: string;
@@ -10,7 +10,7 @@ export interface Secret {
 }
 
 export interface SecretOptions {
-  platform_name?: string;
+  cluster_name?: string;
   environment_name?: string;
 }
 
@@ -20,9 +20,9 @@ export default class SecretUtils {
     if (options?.environment_name) {
       const environment = await EnvironmentUtils.getEnvironment(app.api, account, options?.environment_name);
       secrets = (await app.api.get(`environments/${environment.id}/secrets/values`, { params: { inherited: true } })).data;
-    } else if (options?.platform_name) {
-      const platform = await PlatformUtils.getPlatform(app.api, account, options?.platform_name);
-      secrets = (await app.api.get(`platforms/${platform.id}/secrets/values`, { params: { inherited } })).data;
+    } else if (options?.cluster_name) {
+      const cluster = await ClusterUtils.getCluster(app.api, account, options?.cluster_name);
+      secrets = (await app.api.get(`clusters/${cluster.id}/secrets/values`, { params: { inherited } })).data;
     } else {
       secrets = (await app.api.get(`accounts/${account.id}/secrets/values`)).data;
     }
@@ -34,9 +34,9 @@ export default class SecretUtils {
     if (options?.environment_name) {
       const environment = await EnvironmentUtils.getEnvironment(app.api, account, options?.environment_name);
       await app.api.post(`/environments/${environment.id}/secrets/batch`, secrets);
-    } else if (options?.platform_name) {
-      const platform = await PlatformUtils.getPlatform(app.api, account, options?.platform_name);
-      await app.api.post(`/platforms/${platform.id}/secrets/batch`, secrets);
+    } else if (options?.cluster_name) {
+      const cluster = await ClusterUtils.getCluster(app.api, account, options?.cluster_name);
+      await app.api.post(`/clusters/${cluster.id}/secrets/batch`, secrets);
     } else {
       await app.api.post(`/accounts/${account.id}/secrets/batch`, secrets);
     }

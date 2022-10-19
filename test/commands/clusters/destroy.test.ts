@@ -36,7 +36,7 @@ describe('environment:destroy', () => {
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['platforms:destroy', '-a', mock_account.name, mock_cluster.name, '--auto-approve'])
+    .command(['clusters:destroy', '-a', mock_account.name, mock_cluster.name, '--auto-approve'])
     .it('should generate destroy deployment', ctx => {
       expect(ctx.stdout).to.contain('Cluster deregistered\n')
     });
@@ -56,7 +56,7 @@ describe('environment:destroy', () => {
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['platforms:destroy', '-a', mock_account.name, mock_cluster.name, '--auto-approve', '--force'])
+    .command(['clusters:destroy', '-a', mock_account.name, mock_cluster.name, '--auto-approve', '--force'])
     .it('should force apply destroy job', ctx => {
       expect(ctx.stdout).to.contain('Cluster deregistered\n')
     });
