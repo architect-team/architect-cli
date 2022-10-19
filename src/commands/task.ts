@@ -29,21 +29,25 @@ export default class TaskExec extends BaseCommand {
     local: booleanString({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
-      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
+      exclusive: ['account'],
       sensitive: false,
       default: false,
     }),
     compose_file: Flags.string({
-      description: `${BaseCommand.DEPRECATED} Please use --compose-file.`,
-      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      description: `Please use --compose-file.`,
+      exclusive: ['account', 'environment'],
       hidden: true,
       sensitive: false,
+      default: undefined,
+      deprecated: {
+        to: 'compose-file',
+      },
     }),
     'compose-file': Flags.string({
       char: 'o',
       description: 'Path where the compose file should be written to',
       default: '',
-      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      exclusive: ['account', 'environment'],
       sensitive: false,
     }),
   };
@@ -65,13 +69,12 @@ export default class TaskExec extends BaseCommand {
 
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
 
     // Merge any values set via deprecated flags into their supported counterparts
     flags['compose-file'] = flags.compose_file ? flags.compose_file : flags['compose-file'];
-    flags['auto-approve'] = flags.auto_approve ? flags.auto_approve : flags['auto-approve'];
     parsed.flags = flags;
 
     return parsed;
