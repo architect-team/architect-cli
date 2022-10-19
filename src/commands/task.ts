@@ -148,6 +148,6 @@ export default class TaskExec extends BaseCommand {
     });
     CliUx.ux.action.stop();
 
-    this.log(chalk.green(`Successfully kicked off task. ${environment.platform.type.toLowerCase()} reference= ${res.data}`));
+    this.log(chalk.green(`Successfully kicked off task. ${environment.cluster.type.toLowerCase()} reference= ${res.data}`));
   }
 }

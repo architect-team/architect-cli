@@ -1,8 +1,8 @@
-import Platform from '../platform/platform.entity';
+import Cluster from '../cluster/cluster.entity';
 
 export default interface Environment {
   id: string;
   name: string;
   namespace: string;
-  platform: Platform;
+  cluster: Cluster;
 }

@@ -49,6 +49,7 @@ export default abstract class BaseCommand extends Command {
         }
       }
     }
+    this.warnIfCommandDeprecated();
     await this.sentry.startSentryTransaction();
   }
 

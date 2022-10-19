@@ -1,30 +1,30 @@
+import { Flags } from '@oclif/core';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
+import { ArchitectError } from '../..';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import SecretUtils from '../../architect/secret/secret.utils';
 import UserUtils from '../../architect/user/user.utils';
 import BaseCommand from '../../base-command';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
-import { ArchitectError } from '../..';
-import { Flags } from '@oclif/core';
 
 export default class SecretsDownload extends BaseCommand {
   static description = 'Download secrets from an account or an environment';
   static aliases = ['secrets', 'secrets/get'];
   static examples = [
     'architect secrets --account=myaccount ./mysecrets.yml',
-    'architect secrets --account=myaccount --platform=myplatform ./mysecrets.yml',
+    'architect secrets --account=myaccount --cluster=mycluster ./mysecrets.yml',
     'architect secrets --account=myaccount --environment=myenvironment ./mysecrets.yml',
   ];
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    platform: Flags.string({
-      description: 'Architect platform',
+    cluster: Flags.string({
+      description: 'Architect cluster',
       parse: async value => value.toLowerCase(),
       sensitive: false,
     }),
@@ -44,8 +44,8 @@ export default class SecretsDownload extends BaseCommand {
       this.error(new ArchitectError(`Account is not found. Please see examples below:\n  ${SecretsDownload.examples.join('\n  ')}`));
     }
 
-    if (flags.platform && flags.environment) {
-      throw new Error('Please provide either the platform flag or the environment flag and not both.');
+    if (flags.cluster && flags.environment) {
+      throw new Error('Please provide either the cluster flag or the environment flag and not both.');
     }
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
@@ -54,7 +54,7 @@ export default class SecretsDownload extends BaseCommand {
       this.error('You do not have permission to download secrets. Please contact your admin.');
     }
 
-    const secrets = await SecretUtils.getSecrets(this.app, account, { platform_name: flags.platform, environment_name: flags.environment }, true);
+    const secrets = await SecretUtils.getSecrets(this.app, account, { cluster_name: flags.cluster, environment_name: flags.environment }, true);
     if (secrets.length === 0) {
       this.log('There are no secrets to download.');
       return;
