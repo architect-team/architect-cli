@@ -349,7 +349,7 @@ export default class ComponentRegister extends BaseCommand {
     if (new_spec.dependencies) {
       this.generateDependenciesWarnings(new_spec.dependencies, selected_account.name);
     }
-    
+
     console.timeEnd('Time');
   }
 
@@ -378,33 +378,19 @@ export default class ComponentRegister extends BaseCommand {
   }
 
   private async generateDependenciesWarnings(component_dependencies: Dictionary<string>, account_name: string) {
-    const register_warnings: string[] = [];
-    const tag_warnings: string[] = [];
-    for (const [component_name, tag] of Object.entries(component_dependencies)) {
-      try {
-        await this.app.api.get(`accounts/${account_name}/components-raw/${component_name}`);
-      } catch {
-        register_warnings.push(`${component_name}:${tag}`);
-        continue;
-      }
+    const dependencies: Dictionary<boolean> = (await this.app.api.get(`accounts/${account_name}/components-tags`, { params: { components: component_dependencies } })).data;
 
-      try {
-        await this.app.api.get(`accounts/${account_name}/components/${component_name}/versions/${tag}`);
-      } catch {
-        tag_warnings.push(`${component_name}:${tag}`);
+    const invalid_dependencies = [];
+    for (const [component_name, is_valid] of Object.entries(dependencies)) {
+      if (!is_valid) {
+        invalid_dependencies.push(component_name);
       }
     }
 
-    if (register_warnings.length > 0) {
-      this.log(chalk.yellow(`\nThe following dependencies need to be registered:`));
-      for (const component_name of register_warnings) {
-        this.log(chalk.yellow(`  - ${component_name}`));
-      }
-    }
-    if (tag_warnings.length > 0) {
-      this.log(chalk.yellow(`\nCannot find the following dependencies tag:`));
-      for (const component_name of tag_warnings) {
-        this.log(chalk.yellow(`  - ${component_name}`));
+    if (Object.keys(invalid_dependencies).length > 0) {
+      this.log(chalk.yellow(`\nThe following dependencies are not found:`));
+      for (const dependency of invalid_dependencies) {
+        this.log(chalk.yellow(`  - ${dependency}`));
       }
     }
   }
