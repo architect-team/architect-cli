@@ -28,7 +28,7 @@ export default class ClusterUtils {
       env: 'ARCHITECT_CLUSTER',
       parse: async value => value.toLowerCase(),
       sensitive: false,
-      exclusive: ['platform'], // TODO: add test
+      exclusive: ['platform'],
     }),
   };
 

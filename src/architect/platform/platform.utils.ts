@@ -7,7 +7,7 @@ export default class PlatformUtils {
       env: 'ARCHITECT_PLATFORM',
       parse: async value => value.toLowerCase(),
       sensitive: false,
-      exclusive: ['cluster'], // TODO: add test
+      exclusive: ['cluster'],
     }),
   };
 }

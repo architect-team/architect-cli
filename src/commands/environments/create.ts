@@ -24,7 +24,7 @@ export default class EnvironmentCreate extends BaseCommand {
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    ...ClusterUtils.flags, // TODO: add back PlatformUtils for this
+    ...ClusterUtils.flags,
     ...PlatformUtils.flags,
     description: Flags.string({
       description: 'Environment Description',
