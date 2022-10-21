@@ -15,6 +15,7 @@ import BaseCommand from '../../base-command';
 import { AgentClusterUtils } from '../../common/utils/agent-cluster.utils';
 import { KubernetesClusterUtils } from '../../common/utils/kubernetes-cluster.utils';
 import { booleanString } from '../../common/utils/oclif';
+import isCi from 'is-ci';
 
 export default class ClusterCreate extends BaseCommand {
   static aliases = ['clusters:register', 'cluster:create', 'clusters:create'];
@@ -89,6 +90,12 @@ export default class ClusterCreate extends BaseCommand {
         type: 'confirm',
         name: 'application_install',
         message: `Would you like to install the requisite networking applications? This is a required step before using Architect with this cluster. More details at the above URL.`,
+        when: () => {
+          if (isCi) {
+            this.error('--auto-approve is required in ci pipelines');
+          }
+          return true;
+        },
       });
       if (!confirmation.application_install) {
         this.warn(`Installation cancelled. You will be unable to deploy services to this cluster.\n\nIf you decide to proceed with installation, you can do so at the above URL. Or if you would like to deregister this cluster from Architect, run: \n\narchitect cluster:destroy -a ${account_name} --auto_approve ${cluster_name}`);
@@ -254,6 +261,12 @@ export default class ClusterCreate extends BaseCommand {
 
             // Set the context value to the matching object from the kubeconfig
             return kubeconfig.contexts.find((ctx: any) => ctx.name === value);
+          },
+          when: () => {
+            if (isCi) {
+              this.error('--auto-approve is required in ci pipelines');
+            }
+            return true;
           },
         },
       ]);
