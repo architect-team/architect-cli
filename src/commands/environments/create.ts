@@ -66,7 +66,7 @@ export default class EnvironmentCreate extends BaseCommand {
     }
 
     const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the environment with' });
-    const cluster = await ClusterUtils.getCluster(this.app.api, account, flags.cluster);
+    const cluster = await ClusterUtils.getCluster(this.app.api, account, flags.cluster || flags.platform);
 
     CliUx.ux.action.start(chalk.blue('Registering environment with Architect'));
 

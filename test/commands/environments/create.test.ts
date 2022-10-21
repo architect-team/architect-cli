@@ -36,7 +36,27 @@ describe('environment:create', () => {
 
   create_environment
     .command(['environment:create', mock_env.name, '-a', mock_account.name, '--cluster', mock_cluster.name])
-    .it('should create an environment', ctx => {
+    .it('should create an environment with the cluster flag', ctx => {
+      expect(ctx.stdout).to.contain('Environment created');
+    });
+
+  create_environment
+    .env({ ARCHITECT_CLUSTER: mock_cluster.name })
+    .command(['environment:create', mock_env.name, '-a', mock_account.name])
+    .it('should create an environment with the cluster environment variable', ctx => {
+      expect(ctx.stdout).to.contain('Environment created');
+    });
+
+  create_environment
+    .command(['environment:create', mock_env.name, '-a', mock_account.name, '--platform', mock_cluster.name])
+    .it('should create an environment with the platform flag', ctx => {
+      expect(ctx.stdout).to.contain('Environment created');
+    });
+
+  create_environment
+  .env({ ARCHITECT_PLATFORM: mock_cluster.name })
+    .command(['environment:create', mock_env.name, '-a', mock_account.name])
+    .it('should create an environment with the platform environment variable', ctx => {
       expect(ctx.stdout).to.contain('Environment created');
     });
 
