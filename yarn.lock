@@ -647,10 +647,10 @@
     supports-color "^8.1.1"
     tslib "^2"
 
-"@oclif/core@1.9.0", "@oclif/core@^1.0.8", "@oclif/core@^1.2.0", "@oclif/core@^1.2.1", "@oclif/core@^1.6.4":
-  version "1.9.0"
-  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-1.9.0.tgz#bb2a7820a9176f28921f449c0f577d39c15e74d0"
-  integrity sha512-duvlaRQf4JM+mKuwwos1DNa/Q9x6tnF3khV5RU0fy5hhETF7THlTmxioKlIvKMyQDVpySqtZXZ0OKHeCi2EWuQ==
+"@oclif/core@1.19.0", "@oclif/core@^1.0.8", "@oclif/core@^1.2.0", "@oclif/core@^1.2.1", "@oclif/core@^1.6.4":
+  version "1.19.0"
+  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-1.19.0.tgz#b2e5260c2344e5905312efd7538daacaedb75cbf"
+  integrity sha512-4R087E3TAG6Q9cvr+4wnlryHbciioXkZmUF/Qmc08dReoFus1BIfwtR5kUa/thNmQBw5oeGnrxnl9yA/TaxAmA==
   dependencies:
     "@oclif/linewrap" "^1.0.0"
     "@oclif/screen" "^3.0.2"
@@ -5122,17 +5122,10 @@ min-indent@^1.0.0:
   resolved "https://registry.yarnpkg.com/min-indent/-/min-indent-1.0.1.tgz#a63f681673b30571fbe8bc25686ae746eefa9869"
   integrity sha512-I9jwMn07Sy/IwOj3zVkVik2JTvgpaykDZEigL6Rx6N9LbMywwUSMtxET+7lVoDLLd3O3IXwJwvuuns8UB/HeAg==
 
-minimatch@3.0.4, minimatch@^3.0.3:
+minimatch@3.0.4, minimatch@^3.0.3, minimatch@^3.0.4:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-3.0.4.tgz#5166e286457f03306064be5497e8dbb0c3d32083"
   integrity sha512-yJHVQEhyqPLUTgt9B83PXu6W3rx4MvvHvSUvToogpwoGDOUQ+yDrR0HRot+yOCdCO7u4hX3pWft6kWBBcqh0UA==
-  dependencies:
-    brace-expansion "^1.1.7"
-
-minimatch@^3.0.4:
-  version "3.1.2"
-  resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-3.1.2.tgz#19cd194bfd3e428f049a70817c038d89ab4be35b"
-  integrity sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==
   dependencies:
     brace-expansion "^1.1.7"
 
@@ -7736,6 +7729,11 @@ typescript-json@^3.3.10:
   version "3.3.10"
   resolved "https://registry.yarnpkg.com/typescript-json/-/typescript-json-3.3.10.tgz#396e0ae4a459879cedda3f806c632b0e242c780e"
   integrity sha512-5HkMxCKD/95M++dqkG2ft6ysis5sA/Hp7dk74GA24jukrH1YiqdbwJZ16Sk/0AhTYSjr1f8+tb9fhipxXaEjhw==
+
+typescript-memoize@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/typescript-memoize/-/typescript-memoize-1.1.1.tgz#02737495d5df6ebf72c07ba0d002e8f4cf5ccfa0"
+  integrity sha512-GQ90TcKpIH4XxYTI2F98yEQYZgjNMOGPpOgdjIBhaLaWji5HPWlRnZ4AeA1hfBxtY7bCGDJsqDDHk/KaHOl5bA==
 
 typescript@^3.9.5, typescript@^3.9.7:
   version "3.9.10"

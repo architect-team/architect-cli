@@ -4,7 +4,7 @@ interface Token {
   access_token: string;
 }
 
-export default interface Platform {
+export default interface Cluster {
   id: string;
   name: string;
   type: string;

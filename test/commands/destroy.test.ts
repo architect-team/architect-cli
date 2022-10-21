@@ -21,7 +21,7 @@ describe('destroy', function () {
     id: 'test-pipeline-id'
   }
 
-  mockArchitectAuth()
+  const destroy = mockArchitectAuth()
     .stub(PipelineUtils, 'pollPipeline', async () => null)
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${mock_account.name}`)
@@ -37,9 +37,18 @@ describe('destroy', function () {
       .reply(200, {}))
     .stdout({ print })
     .stderr({ print })
-    .timeout(20000)
+    .timeout(20000);
+
+  destroy
     .command(['destroy', '-a', mock_account.name, '-e', mock_env.name, '--auto-approve'])
     .it('destroy completes', ctx => {
+      expect(ctx.stdout).to.contain('Deployed\n')
+    });
+
+  destroy
+    .command(['destroy', '-a', mock_account.name, '-e', mock_env.name, '--auto_approve'])
+    .it('destroy completes with a warning when using a deprecated flag', ctx => {
+      expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated. Use "auto-approve" instead.');
       expect(ctx.stdout).to.contain('Deployed\n')
     });
 });
