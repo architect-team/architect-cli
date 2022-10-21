@@ -24,18 +24,6 @@ export default class PromptUtils {
     return !(isCi || !process.stdout.isTTY);
   }
 
-  private static throwPromptError(name: string, type: string, message: string) {
-    if (name === 'platform' && type === 'input') {
-      throw new Error('Please provide a name of your new platform');
-    } else if (name === 'history' && type === 'number') {
-      throw new Error(`Failed to run 'doctor' command because it requires prompts`);
-    } else if (type === 'confirm') {
-      throw new Error(`Please specify the --auto-approve flag for the '${name}' command to proceed`);
-    } else {
-      throw new Error(`${name} is required.\nprompt message: ${message}`);
-    }
-  }
-
   /**
    * There is an open issue in inquirer to handle this behavior, eventually we can replace this when it's properly released:
    * https://github.com/SBoudrias/Inquirer.js/pull/891
@@ -51,7 +39,7 @@ export default class PromptUtils {
       }
       for (const prompt of prompts) {
         if ((prompt.when && prompt.default === undefined) || prompt.when === undefined) {
-          PromptUtils.throwPromptError(prompt.name, prompt.type, prompt.message);
+          throw new Error(`${prompt.name} is required`);
         }
       }
       // eslint-disable-next-line unicorn/no-array-reduce,unicorn/prefer-object-from-entries
