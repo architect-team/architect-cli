@@ -61,7 +61,7 @@ export abstract class DeployCommand extends BaseCommand {
         message: 'Would you like to apply?',
         when: () => {
           if (isCi) {
-            this.error('--auto-approve is required in ci pipelines');
+            throw new Error('--auto-approve is required in ci pipelines');
           }
           return true;
         },

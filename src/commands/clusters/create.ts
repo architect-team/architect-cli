@@ -92,7 +92,7 @@ export default class ClusterCreate extends BaseCommand {
         message: `Would you like to install the requisite networking applications? This is a required step before using Architect with this cluster. More details at the above URL.`,
         when: () => {
           if (isCi) {
-            this.error('--auto-approve is required in ci pipelines');
+            throw new Error('--auto-approve is required in ci pipelines');
           }
           return true;
         },
@@ -264,7 +264,7 @@ export default class ClusterCreate extends BaseCommand {
           },
           when: () => {
             if (isCi) {
-              this.error('--auto-approve is required in ci pipelines');
+              throw new Error('--auto-approve is required in ci pipelines');
             }
             return true;
           },

@@ -8,6 +8,7 @@ import { RequiresDocker } from '../common/docker/helper';
 import PortUtil from '../common/utils/port';
 import PromptUtils from '../common/utils/prompt-utils';
 import inquirer = require('inquirer');
+import isCi from 'is-ci';
 
 export default class Login extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -82,7 +83,16 @@ export default class Login extends BaseCommand {
         type: 'password',
         name: 'password',
         default: flags.password,
-        when: !flags.password,
+        when: () => {
+          if (flags.password) {
+            return false;
+          }
+
+          if (isCi) {
+            throw new Error('password is required in ci pipelines');
+          }
+          return true;
+        },
       },
     ]);
 

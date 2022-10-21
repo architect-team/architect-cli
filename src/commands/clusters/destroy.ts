@@ -78,7 +78,7 @@ export default class ClusterDestroy extends BaseCommand {
         }
 
         if (isCi) {
-          this.error('--auto-approve is required in ci pipelines');
+          throw new Error('--auto-approve is required in ci pipelines');
         }
         return true;
       },
