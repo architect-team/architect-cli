@@ -5,7 +5,7 @@ describe('config:get', function () {
 
   const print = false;
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
     .command(['config:get', 'log_level'])

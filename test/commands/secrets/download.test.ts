@@ -1,11 +1,11 @@
 import { expect, test } from '@oclif/test';
 import fs from 'fs-extra';
+import yaml from 'js-yaml';
+import path from 'path';
 import sinon, { SinonSpy } from 'sinon';
 import untildify from 'untildify';
 import UserUtils from '../../../src/architect/user/user.utils';
 import { MOCK_API_HOST } from '../../utils/mocks';
-import yaml from 'js-yaml';
-import path from 'path';
 
 describe('secrets', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
@@ -24,9 +24,9 @@ describe('secrets', function () {
     account: account
   }
 
-  const platform = {
+  const cluster = {
     id: '59db4eae-eb8a-4125-8834-7fb7b6208cbd',
-    name: 'my-platform',
+    name: 'my-cluster',
     account: account
   }
 
@@ -45,18 +45,18 @@ describe('secrets', function () {
     }
   ]
 
-  const platform_secrets_w_inheritance = [
+  const cluster_secrets_w_inheritance = [
     {
       scope: 'cloud/*',
       key: 'secret',
-      value: 'platform-override',
-      platform: platform
+      value: 'cluster-override',
+      cluster,
     },
     {
       scope: '*',
-      key: 'platform-secret',
-      value: 'platform-secret-val',
-      platform: platform
+      key: 'cluster-secret',
+      value: 'cluster-secret-val',
+      cluster,
     },
     {
       scope: '*',
@@ -75,9 +75,9 @@ describe('secrets', function () {
     },
     {
       scope: '*',
-      key: 'platform-secret',
-      value: 'platform-secret-val',
-      platform: platform
+      key: 'cluster-secret',
+      value: 'cluster-secret-val',
+      cluster,
     },
     {
       scope: '*',
@@ -116,26 +116,26 @@ describe('secrets', function () {
       expect(fs_spy.calledOnce).to.be.true;
       expect(fs_spy.calledWith(download_location, yaml.dump(expected_account_secrets))).to.be.true;
     })
-  
+
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(fs, 'writeFileSync', sinon.spy())
     .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/platforms/${platform.name}`)
-      .reply(200, platform))
+      .get(`/accounts/${account.id}/clusters/${cluster.name}`)
+      .reply(200, cluster))
     .nock(MOCK_API_HOST, api => api
-      .get(`/platforms/${platform.id}/secrets/values?inherited=true`)
-      .reply(200, platform_secrets_w_inheritance))
+      .get(`/clusters/${cluster.id}/secrets/values?inherited=true`)
+      .reply(200, cluster_secrets_w_inheritance))
     .stdout({ print })
     .stderr({ print })
-    .command(['secrets', '-a', 'examples', '--platform', 'my-platform', download_location])
-    .it('download platform secrets successfully', async ctx => {
-      const expected_platform_secrets = {
+    .command(['secrets', '-a', 'examples', '--cluster', 'my-cluster', download_location])
+    .it('download cluster secrets successfully', async ctx => {
+      const expected_cluster_secrets = {
         'cloud/*': {
-          secret: 'platform-override'
+          secret: 'cluster-override'
         },
         '*': {
-          'platform-secret': 'platform-secret-val',
+          'cluster-secret': 'cluster-secret-val',
           'acc-secret': 'acc-secret-val'
         }
       }
@@ -143,22 +143,22 @@ describe('secrets', function () {
       const fs_spy = fs.writeFileSync as SinonSpy;
       expect(ctx.stdout).to.contain(`Secrets have been downloaded`);
       expect(fs_spy.calledOnce).to.be.true;
-      expect(fs_spy.calledWith(download_location, yaml.dump(expected_platform_secrets))).to.be.true;
+      expect(fs_spy.calledWith(download_location, yaml.dump(expected_cluster_secrets))).to.be.true;
     })
 
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(fs, 'writeFileSync', sinon.spy())
     .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/platforms/${platform.name}`)
-      .reply(200, platform))
+      .get(`/accounts/${account.id}/clusters/${cluster.name}`)
+      .reply(200, cluster))
     .nock(MOCK_API_HOST, api => api
-      .get(`/platforms/${platform.id}/secrets/values?inherited=true`)
+      .get(`/clusters/${cluster.id}/secrets/values?inherited=true`)
       .reply(200, []))
     .stdout({ print })
     .stderr({ print })
-    .command(['secrets', '-a', 'examples', '--platform', 'my-platform', download_location])
-    .it('download platform secrets failed when there are no secrets', ctx => {
+    .command(['secrets', '-a', 'examples', '--cluster', 'my-cluster', download_location])
+    .it('download cluster secrets failed when there are no secrets', ctx => {
       expect(ctx.stdout).to.contain('There are no secrets to download');
     })
 
@@ -180,7 +180,7 @@ describe('secrets', function () {
           secret: 'environment-override'
         },
         '*': {
-          'platform-secret': 'platform-secret-val',
+          'cluster-secret': 'cluster-secret-val',
           'acc-secret': 'acc-secret-val'
         }
       }
@@ -216,13 +216,13 @@ describe('secrets', function () {
       expect(ctx.message).to.contain('You do not have permission to download secrets')
     })
     .it('download account secrets failed due to permission');
-  
+
   test
     .stdout({ print })
     .stderr({ print })
-    .command(['secrets', '-a', 'examples', '--platform', 'my-platform', '-e', 'env', download_location])
+    .command(['secrets', '-a', 'examples', '--cluster', 'my-cluster', '-e', 'env', download_location])
     .catch(ctx => {
-      expect(ctx.message).to.contain('Please provide either the platform flag or the environment flag and not both.')
+      expect(ctx.message).to.contain('Please provide either the cluster flag or the environment flag and not both.')
     })
-    .it('download platform secrets failed when both platform and environment flags are set');
+    .it('download cluster secrets failed when both cluster and environment flags are set');
 });

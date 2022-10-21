@@ -35,7 +35,7 @@ describe('register', function () {
     name: 'architect',
   };
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_architect_account_response)
@@ -61,7 +61,7 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
     .nock(MOCK_API_HOST, api => api
@@ -86,7 +86,7 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().throws(new Error('Some internal docker build exception')))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
@@ -101,7 +101,7 @@ describe('register', function () {
     })
     .it('register component with architecture flag failed');
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -155,7 +155,7 @@ describe('register', function () {
       */
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -180,7 +180,7 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -205,7 +205,7 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -231,7 +231,7 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -252,7 +252,7 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
     .nock(MOCK_API_HOST, api => api
       .get('/accounts/examples')
@@ -269,7 +269,7 @@ describe('register', function () {
     })
     .it('rejects with informative error message if account is unavailable');
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(fs, 'move', sinon.stub())
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
@@ -301,7 +301,7 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub().throws(new Error('Some internal docker build exception')))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
@@ -316,7 +316,7 @@ describe('register', function () {
     })
     .it('rejects with the original error message if docker buildx inspect fails');
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(fs, 'move', sinon.stub())
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
@@ -344,7 +344,7 @@ describe('register', function () {
       expect(ctx.stderr).to.contain('Registering component stateless-component:1.0.0 with Architect Cloud');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -382,7 +382,7 @@ describe('register', function () {
       ]);
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .nock(MOCK_REGISTRY_HOST, api => api
@@ -412,7 +412,7 @@ describe('register', function () {
       expect(compose.firstCall.args[0][7]).to.deep.equal('*.args.SSH_PUB_KEY="abc==\ntest.architect.io"');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -437,7 +437,7 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -462,7 +462,7 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -487,7 +487,7 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -512,7 +512,7 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -544,7 +544,7 @@ describe('register', function () {
       expect(compose.secondCall.args[0][5]).to.deep.equal("*.args.NODE_ENV=dev");
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -577,7 +577,7 @@ describe('register', function () {
       expect(compose.thirdCall).null;
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -610,7 +610,7 @@ describe('register', function () {
       expect(compose.thirdCall).null;
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -642,7 +642,7 @@ describe('register', function () {
       expect(compose.secondCall).null;
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()

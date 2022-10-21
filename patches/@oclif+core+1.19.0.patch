@@ -1,0 +1,20 @@
+diff --git a/node_modules/@oclif/core/lib/interfaces/parser.d.ts b/node_modules/@oclif/core/lib/interfaces/parser.d.ts
+index f533dcc..29deae0 100644
+--- a/node_modules/@oclif/core/lib/interfaces/parser.d.ts
++++ b/node_modules/@oclif/core/lib/interfaces/parser.d.ts
+@@ -140,6 +140,7 @@ export declare type FlagProps = {
+      * List of flags that cannot be used with this flag.
+      */
+     exclusive?: string[];
++    sensitive?: boolean;
+     /**
+      * Exactly one of these flags must be provided.
+      */
+@@ -159,7 +160,6 @@ export declare type FlagProps = {
+ };
+ export declare type BooleanFlagProps = FlagProps & {
+     type: 'boolean';
+-    allowNo: boolean;
+ };
+ export declare type OptionFlagProps = FlagProps & {
+     type: 'option';

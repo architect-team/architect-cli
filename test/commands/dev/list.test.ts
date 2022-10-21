@@ -84,7 +84,7 @@ describe('dev:list', () => {
   const default_container_name_table = new BaseTable(header);
   default_container_name_table.push(['test_env', 'container_name', 'running']);
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns({}))
     .stub(DevList.prototype, 'log', sinon.fake.returns(null))
     .command(['dev:list'])
@@ -93,7 +93,7 @@ describe('dev:list', () => {
       expect(log_spy.firstCall.args[0]).to.equal('There are no active dev instances yet. Use `architect dev` to create one.');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns(first_env))
     .stub(DevList.prototype, 'log', sinon.fake.returns(null))
     .command(['dev:list'])
@@ -102,7 +102,7 @@ describe('dev:list', () => {
       expect(log_spy.firstCall.args[0]).to.equal(one_env_one_container.toString());
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns(second_env))
     .stub(DevList.prototype, 'log', sinon.fake.returns(null))
     .command(['dev:list'])
@@ -111,7 +111,7 @@ describe('dev:list', () => {
       expect(log_spy.firstCall.args[0]).to.equal(one_env_many_containers.toString());
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns(third_env))
     .stub(DevList.prototype, 'log', sinon.fake.returns(null))
     .command(['dev:list'])
@@ -120,7 +120,7 @@ describe('dev:list', () => {
       expect(log_spy.firstCall.args[0]).to.equal(many_env_one_container.toString());
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns(fourth_env))
     .stub(DevList.prototype, 'log', sinon.fake.returns(null))
     .command(['dev:list'])
@@ -129,7 +129,7 @@ describe('dev:list', () => {
       expect(log_spy.firstCall.args[0]).to.equal(many_env_many_containers.toString());
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns(fourth_env))
     .stub(DevList.prototype, 'log', sinon.fake.returns(null))
     .command(['dev:list', '-f=json'])
@@ -138,7 +138,7 @@ describe('dev:list', () => {
       expect(log_spy.firstCall.args[0]).to.equal(JSON.stringify(many_env_many_containers_json, null, 2));
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'getLocalEnvironmentContainerMap', sinon.stub().returns(default_container_name_env))
     .stub(DevList.prototype, 'log', sinon.fake.returns(null))
     .command(['dev:list'])
