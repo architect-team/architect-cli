@@ -28,11 +28,15 @@ export default class ClusterUtils {
       env: 'ARCHITECT_CLUSTER',
       parse: async value => value.toLowerCase(),
       sensitive: false,
+      exclusive: ['platform'], // TODO: add test
     }),
   };
 
   static async getCluster(api: AxiosInstance, account: Account, cluster_name?: string): Promise<Cluster> {
-    if (process.env.ARCHITECT_CLUSTER === cluster_name && process.env.ARCHITECT_CLUSTER) {
+    const cluster_environment_variable_set = process.env.ARCHITECT_CLUSTER === cluster_name && process.env.ARCHITECT_CLUSTER;
+    const platform_environment_variable_set = process.env.ARCHITECT_PLATFORM === cluster_name && process.env.ARCHITECT_PLATFORM;
+
+    if (cluster_environment_variable_set || platform_environment_variable_set) {
       console.log(chalk.blue(`Using cluster from environment variables: `) + cluster_name);
     }
 

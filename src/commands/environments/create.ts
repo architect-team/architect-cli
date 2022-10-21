@@ -4,6 +4,7 @@ import inquirer from 'inquirer';
 import { Slugs } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
 import ClusterUtils from '../../architect/cluster/cluster.utils';
+import PlatformUtils from '../../architect/platform/platform.utils';
 import BaseCommand from '../../base-command';
 
 interface CreateEnvironmentDto {
@@ -23,7 +24,8 @@ export default class EnvironmentCreate extends BaseCommand {
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    ...ClusterUtils.flags,
+    ...ClusterUtils.flags, // TODO: add back PlatformUtils for this
+    ...PlatformUtils.flags,
     description: Flags.string({
       description: 'Environment Description',
       sensitive: false,
