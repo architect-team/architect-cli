@@ -4,13 +4,12 @@ import fs from 'fs-extra';
 import path from 'path';
 import untildify from 'untildify';
 import AppConfig from '../../app-config/config';
-import { CreatePlatformInput } from '../../architect/platform/platform.utils';
+import { CreateClusterInput } from '../../architect/cluster/cluster.utils';
 
 const SERVICE_ACCOUNT_NAME = 'architect-agent';
 const AGENT_NAMESPACE = 'architect-agent';
 
-export class AgentPlatformUtils {
-
+export class AgentClusterUtils {
   private static getLocalServerAgentIP(): string {
     return 'host.docker.internal';
   }
@@ -40,64 +39,61 @@ export class AgentPlatformUtils {
     ]);
   }
 
-  public static async configureAgentPlatform(
-    flags: any,
-    description: string,
-  ): Promise<CreatePlatformInput> {
-    const kubeconfig_path = untildify(flags.kubeconfig);
-    await this.createNamespace(kubeconfig_path);
-
-    const set_kubeconfig = ['--kubeconfig', untildify(kubeconfig_path), '--namespace', AGENT_NAMESPACE];
-
-    let use_existing_sa;
+  private static async createServiceAccount(set_kubeconfig: string[]) {
     try {
       await execa('kubectl', [
         ...set_kubeconfig,
         'get', 'sa', SERVICE_ACCOUNT_NAME,
         '-o', 'json',
       ]);
-      use_existing_sa = true;
+      return;
     } catch {
-      use_existing_sa = false;
+      // This occurs if the SA does not exist.
+      // This is okay and just means we need to create it.
+    }
+    await execa('kubectl', [
+      ...set_kubeconfig,
+      'create', 'sa', SERVICE_ACCOUNT_NAME,
+    ]);
+  }
+
+  private static async createClusterRoleBinding(set_kubeconfig: string[]) {
+    const { stdout } = await execa('kubectl', [
+      ...set_kubeconfig,
+      'get', 'clusterrolebinding',
+      '-o', 'json',
+    ]);
+    const clusterrolebindings = JSON.parse(stdout);
+    const sa_binding = clusterrolebindings.items.find(
+      (rolebinding: any) =>
+        rolebinding.subjects &&
+        rolebinding.subjects.length > 0 &&
+        rolebinding.subjects.find(
+          (subject: any) =>
+            subject.kind === 'ServiceAccount' &&
+            subject.name === SERVICE_ACCOUNT_NAME,
+        ),
+    );
+
+    // Check if cluster role binding already exists
+    if (sa_binding) {
+      return;
     }
 
-    // Make sure the existing SA uses cluster-admin role binding
-    if (use_existing_sa) {
-      const { stdout } = await execa('kubectl', [
-        ...set_kubeconfig,
-        'get', 'clusterrolebinding',
-        '-o', 'json',
-      ]);
-      const clusterrolebindings = JSON.parse(stdout);
-      const sa_binding = clusterrolebindings.items.find(
-        (rolebinding: any) =>
-          rolebinding.subjects &&
-          rolebinding.subjects.length > 0 &&
-          rolebinding.subjects.find(
-            (subject: any) =>
-              subject.kind === 'ServiceAccount' &&
-              subject.name === SERVICE_ACCOUNT_NAME
-          )
-      );
+    await execa('kubectl', [
+      ...set_kubeconfig,
+      'create',
+      'clusterrolebinding',
+      `${SERVICE_ACCOUNT_NAME}-cluster-admin`,
+      '--clusterrole',
+      'cluster-admin',
+      '--serviceaccount',
+      `${AGENT_NAMESPACE}:${SERVICE_ACCOUNT_NAME}`,
+    ]);
+  }
 
-      if (!sa_binding) {
-        await execa('kubectl', [
-          ...set_kubeconfig,
-          'create',
-          'clusterrolebinding',
-          `${SERVICE_ACCOUNT_NAME}-cluster-admin`,
-          '--clusterrole',
-          'cluster-admin',
-          '--serviceaccount',
-          `${AGENT_NAMESPACE}:${SERVICE_ACCOUNT_NAME}`,
-        ]);
-      }
-    }
-
-    if (!use_existing_sa) {
-      CliUx.ux.action.start('Creating the service account');
-      await AgentPlatformUtils.createKubernetesServiceAccount(untildify(kubeconfig_path), SERVICE_ACCOUNT_NAME);
-      const secret_yml = `
+  private static async createServiceAccountSecret(set_kubeconfig: string[]) {
+    const secret_yml = `
 apiVersion: v1
 kind: Secret
 metadata:
@@ -106,12 +102,26 @@ metadata:
     kubernetes.io/service-account.name: ${SERVICE_ACCOUNT_NAME}
 type: kubernetes.io/service-account-token
 `;
-      await execa('kubectl', [
-        ...set_kubeconfig,
-        'apply', '-f', '-',
-      ], { input: secret_yml });
-      CliUx.ux.action.stop();
-    }
+    await execa('kubectl', [
+      ...set_kubeconfig,
+      'apply', '-f', '-',
+    ], { input: secret_yml });
+  }
+
+  public static async configureAgentCluster(
+    flags: any,
+    description: string,
+  ): Promise<CreateClusterInput> {
+    const kubeconfig_path = untildify(flags.kubeconfig);
+    await this.createNamespace(kubeconfig_path);
+
+    const set_kubeconfig = ['--kubeconfig', untildify(kubeconfig_path), '--namespace', AGENT_NAMESPACE];
+
+    CliUx.ux.action.start('Creating the service account');
+    await this.createServiceAccount(set_kubeconfig);
+    await this.createClusterRoleBinding(set_kubeconfig);
+    await this.createServiceAccountSecret(set_kubeconfig);
+    CliUx.ux.action.stop();
 
     return {
       description,
@@ -189,42 +199,5 @@ spec:
       ...set_kubeconfig,
       'apply', '-f', yamlFile,
     ]);
-  }
-
-  public static async createKubernetesServiceAccount(kubeconfig_path: string, sa_name: string): Promise<void> {
-    const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', AGENT_NAMESPACE];
-
-    // Create the service account
-    await execa('kubectl', [
-      ...set_kubeconfig,
-      'create', 'sa', sa_name,
-    ]);
-
-    // Bind the service account to the cluster-admin role
-
-    let create_crb;
-    try {
-      await execa('kubectl', [
-        ...set_kubeconfig,
-        'get', 'sa', SERVICE_ACCOUNT_NAME,
-        '-o', 'json',
-      ]);
-      create_crb = false;
-    } catch {
-      create_crb = true;
-    }
-
-    if (create_crb) {
-      await execa('kubectl', [
-        ...set_kubeconfig,
-        'create',
-        'clusterrolebinding',
-        `${sa_name}-cluster-admin`,
-        '--clusterrole',
-        'cluster-admin',
-        '--serviceaccount',
-        `${AGENT_NAMESPACE}:${sa_name}`,
-      ]);
-    }
   }
 }

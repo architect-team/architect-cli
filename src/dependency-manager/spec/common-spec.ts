@@ -3,38 +3,38 @@ import { JSONSchema } from 'class-validator-jsonschema';
 import { ExclusiveOrNeither, ExpressionOr, ExpressionOrString, StringOrStringArray } from './utils/json-schema-annotations';
 
 @JSONSchema({
-  "allOf": [
+  'allOf': [
     {
-      "oneOf": [
+      'oneOf': [
         {
-          "type": "object",
-          "required": [
-            "command",
+          'type': 'object',
+          'required': [
+            'command',
           ],
         },
         {
-          "type": "object",
-          "required": [
-            "path", "port",
+          'type': 'object',
+          'required': [
+            'path', 'port',
           ],
         },
       ],
     },
     {
-      "not":
+      'not':
       {
-        "type": "object",
-        "required": [
-          "command", "port",
+        'type': 'object',
+        'required': [
+          'command', 'port',
         ],
       },
     },
     {
-      "not":
+      'not':
       {
-        "type": "object",
-        "required": [
-          "command", "path",
+        'type': 'object',
+        'required': [
+          'command', 'path',
         ],
       },
     },
@@ -112,7 +112,7 @@ export class LivenessProbeSpec {
 }
 
 @JSONSchema({
-  ...ExclusiveOrNeither("host_path", "key"),
+  ...ExclusiveOrNeither('host_path', 'key'),
   description: 'Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.',
 })
 export class VolumeSpec {
@@ -135,7 +135,7 @@ export class VolumeSpec {
   @IsOptional()
   @JSONSchema({
     ...ExpressionOrString(),
-    description: 'A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).',
+    description: 'A reference to the underlying volume on the deployment cluster of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).',
     externalDocs: { url: 'https://docs.architect.io/components/services/#volumes' },
   })
   key?: string;

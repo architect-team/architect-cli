@@ -43,8 +43,9 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
  | `interfaces` | Dict&lt;string&gt; | A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `liveness_probe` | [LivenessProbeSpec](#livenessprobespec) |  |  |
  | `volumes` | Dict&lt;string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
- | `replicas` | number \| [Expression](https://docs.architect.io/reference/contexts) | A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field. |  |
+ | `replicas` | integer \| [Expression](https://docs.architect.io/reference/contexts) | A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field. |  |
  | `scaling` | [ScalingSpec](#scalingspec) |  |  |
+ | `deploy` | [DeploySpec](#deployspec) |  |  |
  | `description` | string | Human readable description |  |
  | `image` | string \| [Expression](https://docs.architect.io/reference/contexts) | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
  | `command` | Array&lt;string&gt; \| string \| [Expression](https://docs.architect.io/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
@@ -133,7 +134,7 @@ Architect can mount volumes onto your services and tasks to store data that shou
 | -------------------- | ---------- | -------------- | -------------- |
  | `mount_path` | string \| [Expression](https://docs.architect.io/reference/contexts) | Directory at which the volume will be mounted inside the container. |  |
  | `host_path` | string \| [Expression](https://docs.architect.io/reference/contexts) | A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set). |  |
- | `key` | string \| [Expression](https://docs.architect.io/reference/contexts) | A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set). | [More](https://docs.architect.io/components/services/#volumes) |
+ | `key` | string \| [Expression](https://docs.architect.io/reference/contexts) | A reference to the underlying volume on the deployment cluster of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set). | [More](https://docs.architect.io/components/services/#volumes) |
  | `description` | string | Human-readable description of volume |  |
  | `readonly` | boolean \| [Expression](https://docs.architect.io/reference/contexts) | Marks the volume as readonly. |  |
 
@@ -156,8 +157,8 @@ Scaling metrics define the upper bound of resource consumption before spinning u
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `cpu` | number \| [Expression](https://docs.architect.io/reference/contexts) | The cpu usage required to trigger scaling. | [More](https://docs.architect.io/components/services/#cpu--memory) |
- | `memory` | number \| [Expression](https://docs.architect.io/reference/contexts) | The memory usage required to trigger scaling. | [More](https://docs.architect.io/components/services/#cpu--memory) |
+ | `cpu` | integer \| [Expression](https://docs.architect.io/reference/contexts) | The cpu usage required to trigger scaling. | [More](https://docs.architect.io/components/services/#cpu--memory) |
+ | `memory` | integer \| [Expression](https://docs.architect.io/reference/contexts) | The memory usage required to trigger scaling. | [More](https://docs.architect.io/components/services/#cpu--memory) |
 
 
 ## ScalingSpec
@@ -166,9 +167,27 @@ Configuration that dictates the scaling behavior of a service.
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `min_replicas`* | number \| [Expression](https://docs.architect.io/reference/contexts) | The target minimum number of service replicas. |  |
- | `max_replicas`* | number \| [Expression](https://docs.architect.io/reference/contexts) | The target maximum number of service replicas. |  |
+ | `min_replicas`* | integer \| [Expression](https://docs.architect.io/reference/contexts) | The target minimum number of service replicas. |  |
+ | `max_replicas`* | integer \| [Expression](https://docs.architect.io/reference/contexts) | The target maximum number of service replicas. |  |
  | `metrics`* | [ScalingMetricsSpec](#scalingmetricsspec) |  |  |
+
+
+## KubernetesDeploySpec
+
+Configuration that dictates the kubernetes deploy overrides.
+
+| Field  (*=required)  | Type       | Description    | Misc           |
+| -------------------- | ---------- | -------------- | -------------- |
+ | `deployment`* |  |  |  |
+
+
+## DeploySpec
+
+Configuration that dictates the deploy overrides.
+
+| Field  (*=required)  | Type       | Description    | Misc           |
+| -------------------- | ---------- | -------------- | -------------- |
+ | `kubernetes`* | [KubernetesDeploySpec](#kubernetesdeployspec) |  |  |
 
 
 ## ServiceInterfaceSpec

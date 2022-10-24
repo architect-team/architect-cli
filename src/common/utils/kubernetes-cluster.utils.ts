@@ -7,21 +7,20 @@ import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
 import { ENVIRONMENT } from '../../app-config/config';
-import { CreatePlatformInput } from '../../architect/platform/platform.utils';
+import { CreateClusterInput } from '../../architect/cluster/cluster.utils';
 
 const SERVICE_ACCOUNT_NAME = 'architect';
 const SERVICE_ACCOUNT_SECRET_NAME = `${SERVICE_ACCOUNT_NAME}-token`;
 
-export class KubernetesPlatformUtils {
-
-  public static async configureKubernetesPlatform(
-    flags: any, environment: string = ENVIRONMENT.PRODUCTION, kube_context: any
-  ): Promise<CreatePlatformInput> {
+export class KubernetesClusterUtils {
+  public static async configureKubernetesCluster(
+    flags: any, environment: string = ENVIRONMENT.PRODUCTION, kube_context: any,
+  ): Promise<CreateClusterInput> {
     const default_config_directory = path.join(os.homedir(), '.config');
     const config_env = {
-      XDG_CONFIG_HOME: environment === ENVIRONMENT.PRODUCTION
-        ? process.env.XDG_CONFIG_HOME || default_config_directory
-        : default_config_directory,
+      XDG_CONFIG_HOME: environment === ENVIRONMENT.PRODUCTION ?
+        process.env.XDG_CONFIG_HOME || default_config_directory :
+        default_config_directory,
     };
 
     const kubeconfig_path = untildify(flags.kubeconfig);
@@ -73,8 +72,8 @@ export class KubernetesPlatformUtils {
           rolebinding.subjects.find(
             (subject: any) =>
               subject.kind === 'ServiceAccount' &&
-              subject.name === SERVICE_ACCOUNT_NAME
-          )
+              subject.name === SERVICE_ACCOUNT_NAME,
+          ),
       );
 
       if (!sa_binding) {
@@ -161,7 +160,6 @@ type: kubernetes.io/service-account-token
       if (JSON.parse(nodes.stdout).items.length === 0) {
         console.log(chalk.yellow('Warning: The cluster does not have any running nodes.'));
       }
-      // eslint-disable-next-line no-empty
     } catch (err) { }
     CliUx.ux.action.stop();
 

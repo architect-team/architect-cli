@@ -1,6 +1,8 @@
+import { V1Deployment } from '@kubernetes/client-node';
 import { Transform } from 'class-transformer';
 import { Allow, IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
+import { DeepPartial } from '../../common/utils/types';
 import { Dictionary } from '../utils/dictionary';
 import { LivenessProbeSpec, VolumeSpec } from './common-spec';
 import { ResourceSpec } from './resource-spec';
@@ -15,7 +17,7 @@ import { Slugs } from './utils/slugs';
 export class ScalingMetricsSpec {
   @IsOptional()
   @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
+    ...ExpressionOr({ type: 'integer', minimum: 0, maximum: 100 }),
     description: 'The cpu usage required to trigger scaling.',
     externalDocs: { url: 'https://docs.architect.io/components/services/#cpu--memory' },
   })
@@ -23,7 +25,7 @@ export class ScalingMetricsSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
+    ...ExpressionOr({ type: 'integer', minimum: 0, maximum: 100 }),
     description: 'The memory usage required to trigger scaling.',
     externalDocs: { url: 'https://docs.architect.io/components/services/#cpu--memory' },
   })
@@ -36,20 +38,38 @@ export class ScalingMetricsSpec {
 export class ScalingSpec {
   @Allow()
   @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
+    ...ExpressionOr({ type: 'integer', minimum: 0 }),
     description: 'The target minimum number of service replicas.',
   })
   min_replicas!: number | string;
 
   @Allow()
   @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
+    ...ExpressionOr({ type: 'integer', minimum: 0 }),
     description: 'The target maximum number of service replicas.',
   })
   max_replicas!: number | string;
 
   @ValidateNested()
   metrics!: ScalingMetricsSpec;
+}
+
+@JSONSchema({
+  description: 'Configuration that dictates the kubernetes deploy overrides.',
+})
+export class KubernetesDeploySpec {
+  @Allow()
+  deployment!: DeepPartial<V1Deployment>;
+}
+
+@JSONSchema({
+  description: 'Configuration that dictates the deploy overrides.',
+})
+export class DeploySpec {
+  @Allow()
+  @ValidateNested()
+  @Transform(transformObject(KubernetesDeploySpec))
+  kubernetes!: KubernetesDeploySpec;
 }
 
 @JSONSchema({
@@ -167,7 +187,7 @@ export class ServiceSpec extends ResourceSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...ExpressionOr({ type: 'number' }),
+    ...ExpressionOr({ type: 'integer', minimum: 0 }),
     description: 'A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field.',
   })
   replicas?: number | string;
@@ -176,4 +196,9 @@ export class ServiceSpec extends ResourceSpec {
   @ValidateNested()
   @Transform(transformObject(ScalingSpec))
   scaling?: ScalingSpec;
+
+  @IsOptional()
+  @ValidateNested()
+  @Transform(transformObject(DeploySpec))
+  deploy?: DeploySpec;
 }

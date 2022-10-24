@@ -13,6 +13,18 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import { RequiresDocker } from '../common/docker/helper';
 import { booleanString } from '../common/utils/oclif';
 
+function chunkSubstring(str: string, size: number) {
+  const numChunks = Math.ceil(str.length / size);
+  // eslint-disable-next-line unicorn/no-new-array
+  const chunks = new Array(numChunks);
+
+  for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+    chunks[i] = str.substring(o, o + size);
+  }
+
+  return chunks;
+}
+
 export default class Logs extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
@@ -70,17 +82,6 @@ export default class Logs extends BaseCommand {
     const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(display_name))} ${chalk.hex('#D3D3D3')('|')}`;
     const columns = process.stdout.columns - (display_name.length + 3);
 
-    function chunkSubstring(str: string, size: number) {
-      const numChunks = Math.ceil(str.length / size);
-      const chunks = new Array(numChunks);
-
-      for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
-        chunks[i] = str.substring(o, o + size);
-      }
-
-      return chunks;
-    }
-
     return (txt: string) => {
       if (displayRawLogs) {
         this.log(txt);
@@ -112,13 +113,11 @@ export default class Logs extends BaseCommand {
     if (flags.timestamps) {
       compose_args.push('--timestamps');
     }
-    if (flags.tail != -1) {
-      compose_args.push('--tail');
-      compose_args.push(flags.tail.toString());
+    if (flags.tail !== -1) {
+      compose_args.push('--tail', flags.tail.toString());
     }
-    if (flags.since != '') {
-      compose_args.push('--since');
-      compose_args.push(flags.since.toString());
+    if (flags.since !== '') {
+      compose_args.push('--since', flags.since.toString());
     }
     compose_args.push(service.name);
 
@@ -128,7 +127,7 @@ export default class Logs extends BaseCommand {
     const logger = new Writable();
 
     logger._write = (chunk, _encoding, next) => {
-      chunk.toString().split('\n').filter((e: string) => e).forEach((line: string) => {
+      for (let line of chunk.toString().split('\n').filter((e: string) => e)) {
         if (!flags.raw && show_header) {
           this.log(chalk.bold(chalk.white('Logs:')));
           this.log(chalk.bold(chalk.white('―'.repeat(process.stdout.columns))));
@@ -138,19 +137,17 @@ export default class Logs extends BaseCommand {
           line = line.substring(line.indexOf('|') + 1);
         }
         this.log(prefix, chalk.cyan(line));
-      });
+      }
       next();
     };
 
-    const childProcess = spawn('docker', ["compose", ...compose_args],
-      { stdio: [process.stdin, null, process.stderr] });
+    const childProcess = spawn('docker', ['compose', ...compose_args], { stdio: [process.stdin, null, process.stderr] });
     (childProcess.stdout as Readable).pipe(logger);
 
     await new Promise((resolve) => {
       childProcess.on('close', resolve);
     });
   }
-
 
   async runRemote(account: Account): Promise<void> {
     const { args, flags } = await this.parse(Logs);
@@ -186,7 +183,7 @@ export default class Logs extends BaseCommand {
       params: replica_query,
     });
 
-    if (!replicas.length)
+    if (replicas.length === 0)
       throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
     const replica = await EnvironmentUtils.getReplica(replicas);
@@ -252,6 +249,7 @@ export default class Logs extends BaseCommand {
   }
 
   async run(): Promise<void> {
+    // eslint-disable-next-line unicorn/prefer-module
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
     const { flags } = await this.parse(Logs);
@@ -261,7 +259,7 @@ export default class Logs extends BaseCommand {
       // If the env exists locally then just assume local
       const is_local_env = await DockerComposeUtils.isLocalEnvironment(flags.environment);
       if (is_local_env) {
-        return await this.runLocal();
+        return this.runLocal();
       }
     }
 
@@ -269,7 +267,7 @@ export default class Logs extends BaseCommand {
     const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: !flags.environment });
 
     if (AccountUtils.isLocalAccount(account)) {
-      return await this.runLocal();
+      return this.runLocal();
     }
 
     await this.runRemote(account);

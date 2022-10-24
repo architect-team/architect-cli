@@ -1,3 +1,4 @@
+import { DeploySpec } from '../spec/service-spec';
 import { Dictionary } from '../utils/dictionary';
 import { LivenessProbeConfig, VolumeConfig } from './common-config';
 import { ResourceConfig } from './resource-config';
@@ -31,4 +32,5 @@ export interface ServiceConfig extends ResourceConfig {
   volumes: Dictionary<VolumeConfig>;
   replicas: number | string; // TODO:290:number
   scaling?: ScalingConfig;
+  deploy?: DeploySpec;
 }

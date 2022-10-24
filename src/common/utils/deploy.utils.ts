@@ -1,8 +1,8 @@
 import { isNumberString } from 'class-validator';
+import deepmerge from 'deepmerge';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
-import _ from 'lodash';
-import { Dictionary } from '../../';
+import { ArchitectError, Dictionary } from '../../';
 
 export default class DeployUtils {
   private static getExtraSecrets(secrets: string[] = []): Dictionary<string | number | undefined> {
@@ -13,7 +13,7 @@ export default class DeployUtils {
         const key = secret_name.substring(4);
         let value: string | number | undefined = secret_value;
         if (value && isNumberString(value)) {
-          value = parseFloat(value);
+          value = Number.parseFloat(value);
         }
         extra_secrets[key] = value;
       }
@@ -22,11 +22,11 @@ export default class DeployUtils {
     for (const secret of secrets) {
       const secret_split = secret.split('=');
       if (secret_split.length !== 2) {
-        throw new Error(`Bad format for secret ${secret}. Please specify in the format --secret SECRET_NAME=SECRET_VALUE`);
+        throw new ArchitectError(`Bad format for secret ${secret}. Please specify in the format --secret SECRET_NAME=SECRET_VALUE`, false);
       }
       let value: string | number = secret_split[1];
       if (isNumberString(value)) {
-        value = parseFloat(value);
+        value = Number.parseFloat(value);
       }
       extra_secrets[secret_split[0]] = value;
     }
@@ -49,7 +49,7 @@ export default class DeployUtils {
     const flags: any = parsedFlags;
     flags['build-parallel'] = flags.build_parallel ? flags.build_parallel : flags['build-parallel'];
     flags['compose-file'] = flags.compose_file ? flags.compose_file : flags['compose-file'];
-    flags['secret-file'] = (flags.values || []).concat(flags.secrets || []).concat(flags['secret-file']);
+    flags['secret-file'] = [...(flags.values || []), ...(flags.secrets || []), ...(flags['secret-file'] || [])];
 
     // If values were provided and secrets were not provided, override the secrets with the values
     if (!flags['secret-file'] && fs.existsSync('./values.yml')) {
@@ -67,11 +67,11 @@ export default class DeployUtils {
       const output_catch = DeployUtils.readSecretsFile(secret_file);
       // Deep merge to ensure all values from files are captured
       // By default, the last file in the array will always supersede any other values
-      component_secrets = _.merge(component_secrets, output_catch);
+      component_secrets = deepmerge(component_secrets, output_catch);
     }
 
     const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets);
-    if (extra_secrets && Object.keys(extra_secrets).length) {
+    if (extra_secrets && Object.keys(extra_secrets).length > 0) {
       if (!component_secrets['*']) {
         component_secrets['*'] = {};
       }

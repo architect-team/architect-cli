@@ -7,14 +7,14 @@ import { ParsedYaml } from './types';
 // https://stackoverflow.com/questions/4253367/how-to-escape-a-json-string-containing-newline-characters-using-javascript
 const escape = (str: string): string => {
   return str
-    .replace(/[\\]/g, '\\\\')
-    .replace(/["]/g, '\\"')
-    .replace(/[/]/g, '\\/')
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\//g, '\\/')
     .replace(/[\b]/g, '\\b')
-    .replace(/[\f]/g, '\\f')
-    .replace(/[\n]/g, '\\n')
-    .replace(/[\r]/g, '\\r')
-    .replace(/[\t]/g, '\\t');
+    .replace(/\f/g, '\\f')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t');
 };
 
 const escapeEnvironmentInterpolation = (str: string): string => {
@@ -31,7 +31,7 @@ export const insertFileDataFromRefs = (file_contents: string, config_path: strin
   let updated_file_contents = file_contents;
   const file_regex = new RegExp('^(?!.*"extends)[a-zA-Z0-9_"\\s:]*(file:.*\\..*)(",|")$', 'gm');
   let matches;
-  while ((matches = file_regex.exec(updated_file_contents)) != null) {
+  while ((matches = file_regex.exec(updated_file_contents)) !== null) {
     updated_file_contents = updated_file_contents.replace(matches[1], readFile(matches[1], config_path));
   }
   return updated_file_contents;

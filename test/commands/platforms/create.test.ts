@@ -4,9 +4,10 @@ import inquirer from 'inquirer';
 import sinon, { SinonSpy } from 'sinon';
 import AppService from '../../../src/app-config/service';
 import PipelineUtils from '../../../src/architect/pipeline/pipeline.utils';
+import ClusterCreate from '../../../src/commands/clusters/create';
 import PlatformCreate from '../../../src/commands/platforms/create';
-import { AgentPlatformUtils } from '../../../src/common/utils/agent-platform.utils';
-import { KubernetesPlatformUtils } from '../../../src/common/utils/kubernetes-platform.utils';
+import { AgentClusterUtils } from '../../../src/common/utils/agent-cluster.utils';
+import { KubernetesClusterUtils } from '../../../src/common/utils/kubernetes-cluster.utils';
 
 describe('platform:create', function () {
   const account = {
@@ -18,7 +19,7 @@ describe('platform:create', function () {
     id: 'test-pipeline-id',
   };
 
-  const test_platform_id = 'test-platform-id';
+  const test_cluster_id = 'test-cluster-id';
 
   this.afterEach(() => {
     sinon.restore();
@@ -33,36 +34,36 @@ describe('platform:create', function () {
           log_level: 'debug',
         };
       })
-      .stub(AppService, 'create', () => new AppService('', '1.0.0'))
-      .stub(PlatformCreate.prototype, <any>'setupKubeContext', async () => {
+      .stub(AppService, 'create', () => new AppService(process.env.ARCHITECT_CONFIG_DIR!, '1.0.0'))
+      .stub(ClusterCreate.prototype, <any>'setupKubeContext', async () => {
         return {
           original_context: "original_context",
           current_context: "current_context",
         }
       })
-      .stub(PlatformCreate.prototype, <any>'setContext', async () => { })
+      .stub(ClusterCreate.prototype, <any>'setContext', async () => { })
       .nock('https://api.architect.io', api => api
         .get(`/accounts/${account.name}`)
         .reply(200, account))
-      .stub(PlatformCreate.prototype, 'postPlatformToApi', sinon.stub().returns(Promise.resolve({
-        id: test_platform_id,
+      .stub(ClusterCreate.prototype, 'postClusterToApi', sinon.stub().returns(Promise.resolve({
+        id: test_cluster_id,
         account: account,
         token: {
           access_token: 'token',
         }
       })))
-      .stub(PlatformCreate.prototype, 'createPlatformApplications', sinon.stub().returns(Promise.resolve()));
+      .stub(ClusterCreate.prototype, 'createClusterApplications', sinon.stub().returns(Promise.resolve()));
   };
 
   const k8s_test = (install_applications = false) => {
     return create_test()
-      .stub(KubernetesPlatformUtils, 'configureKubernetesPlatform', sinon.stub().returns(Promise.resolve({ name: 'new_k8s_platform', type: 'KUBERNETES' })))
+      .stub(KubernetesClusterUtils, 'configureKubernetesCluster', sinon.stub().returns(Promise.resolve({ name: 'new_k8s_cluster', type: 'KUBERNETES' })))
       .stub(inquirer, 'prompt', () => {
         return {
           context: 'minikube',
           service_account_name: 'architect',
           use_existing_sa: true,
-          platform: 'test-platform',
+          cluster: 'test-cluster',
           application_install: install_applications,
         }
       });
@@ -70,49 +71,49 @@ describe('platform:create', function () {
 
   k8s_test()
     .it('Does not auto approve creation when auto-approve flag value is false', async () => {
-      const create_platform_applications = PlatformCreate.prototype.createPlatformApplications as SinonSpy;
-      const configure_kubernetes = KubernetesPlatformUtils.configureKubernetesPlatform as SinonSpy;
-      const post_to_api = PlatformCreate.prototype.postPlatformToApi as SinonSpy;
+      const create_cluster_applications = ClusterCreate.prototype.createClusterApplications as SinonSpy;
+      const configure_kubernetes = KubernetesClusterUtils.configureKubernetesCluster as SinonSpy;
+      const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=false']);
+      await PlatformCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=false']);
       expect(configure_kubernetes.calledOnce).true;
-      expect(create_platform_applications.calledOnce).false;
+      expect(create_cluster_applications.calledOnce).false;
       expect(post_to_api.calledOnce).true;
     });
 
   k8s_test()
     .it('Auto approve creation when auto-approve flag value is true', async () => {
-      const create_platform_applications = PlatformCreate.prototype.createPlatformApplications as SinonSpy;
-      const configure_kubernetes = KubernetesPlatformUtils.configureKubernetesPlatform as SinonSpy;
-      const post_to_api = PlatformCreate.prototype.postPlatformToApi as SinonSpy;
+      const create_cluster_applications = ClusterCreate.prototype.createClusterApplications as SinonSpy;
+      const configure_kubernetes = KubernetesClusterUtils.configureKubernetesCluster as SinonSpy;
+      const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=true']);
+      await PlatformCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=true']);
       expect(configure_kubernetes.calledOnce).true;
-      expect(create_platform_applications.calledOnce).true;
+      expect(create_cluster_applications.calledOnce).true;
       expect(post_to_api.calledOnce).true;
     });
 
   k8s_test(true)
     .it('Auto approve creation when auto-approve flag value is not specified', async () => {
-      const create_platform_applications = PlatformCreate.prototype.createPlatformApplications as SinonSpy;
-      const configure_kubernetes = KubernetesPlatformUtils.configureKubernetesPlatform as SinonSpy;
-      const post_to_api = PlatformCreate.prototype.postPlatformToApi as SinonSpy;
+      const create_cluster_applications = ClusterCreate.prototype.createClusterApplications as SinonSpy;
+      const configure_kubernetes = KubernetesClusterUtils.configureKubernetesCluster as SinonSpy;
+      const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes']);
+      await PlatformCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes']);
       expect(configure_kubernetes.calledOnce).true;
-      expect(create_platform_applications.calledOnce).true;
+      expect(create_cluster_applications.calledOnce).true;
       expect(post_to_api.calledOnce).true;
     });
 
   k8s_test()
     .it('Do not auto approve creation with auto-approve flag default value', async () => {
-      const create_platform_applications = PlatformCreate.prototype.createPlatformApplications as SinonSpy;
-      const configure_kubernetes = KubernetesPlatformUtils.configureKubernetesPlatform as SinonSpy;
-      const post_to_api = PlatformCreate.prototype.postPlatformToApi as SinonSpy;
+      const create_cluster_applications = ClusterCreate.prototype.createClusterApplications as SinonSpy;
+      const configure_kubernetes = KubernetesClusterUtils.configureKubernetesCluster as SinonSpy;
+      const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes']);
+      await PlatformCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes']);
       expect(configure_kubernetes.calledOnce).true;
-      expect(create_platform_applications.calledOnce).false;
+      expect(create_cluster_applications.calledOnce).false;
       expect(post_to_api.calledOnce).true;
     });
 
@@ -122,24 +123,24 @@ describe('platform:create', function () {
         context: 'minikube',
         service_account_name: 'architect',
         use_existing_sa: true,
-        platform: 'test-platform',
-        platform_type: 'agent (BETA)',
+        cluster: 'test-cluster',
+        cluster_type: 'agent (BETA)',
         application_install: true,
       }
     })
-    .stub(AgentPlatformUtils, 'installAgent', sinon.stub().returns(Promise.resolve()))
-    .stub(AgentPlatformUtils, 'configureAgentPlatform', sinon.stub().returns(Promise.resolve()))
-    .stub(AgentPlatformUtils, 'waitForAgent', sinon.stub().returns(Promise.resolve()))
-    .it('configures agent platform when specified', async () => {
-      const create_platform_applications = PlatformCreate.prototype.createPlatformApplications as SinonSpy;
-      const install_agent = AgentPlatformUtils.installAgent as SinonSpy;
-      const configure_agent = AgentPlatformUtils.configureAgentPlatform as SinonSpy;
-      const post_to_api = PlatformCreate.prototype.postPlatformToApi as SinonSpy;
+    .stub(AgentClusterUtils, 'installAgent', sinon.stub().returns(Promise.resolve()))
+    .stub(AgentClusterUtils, 'configureAgentCluster', sinon.stub().returns(Promise.resolve()))
+    .stub(AgentClusterUtils, 'waitForAgent', sinon.stub().returns(Promise.resolve()))
+    .it('configures agent cluster when specified', async () => {
+      const create_cluster_applications = ClusterCreate.prototype.createClusterApplications as SinonSpy;
+      const install_agent = AgentClusterUtils.installAgent as SinonSpy;
+      const configure_agent = AgentClusterUtils.configureAgentCluster as SinonSpy;
+      const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await PlatformCreate.run(['platform-name', '-a', 'test-account-name']);
+      await PlatformCreate.run(['cluster-name', '-a', 'test-account-name']);
       expect(configure_agent.calledOnce).true;
       expect(install_agent.calledOnce).true;
-      expect(create_platform_applications.calledOnce).true;
+      expect(create_cluster_applications.calledOnce).true;
       expect(post_to_api.calledOnce).true;
     });
 });

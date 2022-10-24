@@ -1,9 +1,9 @@
 import { AccessToken, AuthorizationCode } from 'simple-oauth2';
 import { URL } from 'url';
 import User from '../architect/user/user.entity';
-import LoginRequiredError from '../common/errors/login-required';
 import { docker } from '../common/docker/cmd';
-import CallbackServer from './callback_server';
+import LoginRequiredError from '../common/errors/login-required';
+import CallbackServer from './callback-server';
 import AppConfig from './config';
 import CredentialManager from './credentials';
 
@@ -78,14 +78,15 @@ export default class AuthClient {
     }
     const payloadJSON = JSON.parse(decodeURIComponent(Buffer.from(payload, 'base64').toString()));
     const claims: any = { __raw: token };
-    Object.keys(payloadJSON).forEach(k => {
+
+    for (const k of Object.keys(payloadJSON)) {
       claims[k] = payloadJSON[k];
-    });
+    }
     return claims;
   }
 
-  public getAuthClient(): AuthorizationCode<"client_id"> {
-    const is_auth0 = this.config.oauth_host === 'https://auth.architect.io';
+  public getAuthClient(): AuthorizationCode<'client_id'> {
+    const is_auth0 = ['https://auth.architect.io', 'https://architect-dev.us.auth0.com'].includes(this.config.oauth_host);
 
     let oauth_token_host = this.config.oauth_host;
     const url = new URL(this.config.oauth_host);
@@ -129,7 +130,7 @@ export default class AuthClient {
         payload: { 'client_id': this.config.oauth_client_id },
         headers: { 'HOST': url.hostname },
         rejectUnauthorized: !url.hostname.endsWith('.localhost'),
-      }
+      },
     );
 
     const decoded_token = this.decodeIdToken(access_token.token.id_token);

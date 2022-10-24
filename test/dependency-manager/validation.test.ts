@@ -1,10 +1,13 @@
+import { V1Deployment } from '@kubernetes/client-node';
 import axios from 'axios';
 import { expect } from 'chai';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
+import TSON from "typescript-json";
 import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
+import { DeepPartial } from '../../src/common/utils/types';
 import { SecretsConfig } from '../../src/dependency-manager/secrets/secrets';
 
 describe('validate spec', () => {
@@ -73,35 +76,6 @@ services:
       expect(() => { buildSpecFromPath('/architect.yml'); }).to.throw(ValidationErrors);
     });
 
-    it('invalid deploy key', async () => {
-      const component_config = `
-      name: test/component
-      services:
-        stateless-app:
-          deploy:
-            strategy: deploy-strategy
-            modules:
-              deploy-module:
-                path: ./deploy/module
-                inputs:
-                  deploy-input-string: some_deploy_input
-                  deploy-input-unset:
-      `;
-      mock_fs({ '/architect.yml': component_config });
-      let err;
-      try {
-        buildSpecFromPath('/architect.yml');
-      } catch (e: any) {
-        err = e;
-      }
-      expect(err).instanceOf(ValidationErrors);
-      const errors = JSON.parse(err.message);
-      expect(errors).lengthOf(1);
-      expect(errors[0].path).eq(`services.stateless-app.deploy`);
-      expect(errors[0].message).includes(`Invalid key: deploy`);
-      expect(process.exitCode).eq(1);
-    });
-
     it('invalid replicas value', async () => {
       const component_config = `
       name: test/component
@@ -126,7 +100,7 @@ services:
       const errors = JSON.parse(err.message);
       expect(errors).lengthOf(1);
       expect(errors[0].path).eq(`services.stateless-app.replicas`);
-      expect(errors[0].message).includes(`must be number or must be an interpolation`);
+      expect(errors[0].message).includes(`must be integer or must be an interpolation`);
       expect(errors[0].start?.row).eq(5);
       expect(errors[0].start?.column).eq(22);
       expect(errors[0].end?.row).eq(5);
@@ -1324,6 +1298,73 @@ services:
     expect(err).to.be.undefined;
   });
 
+  /*
+  it('invalid tcp component protocol', async () => {
+    const component_config = `
+      name: test/component
+      interfaces:
+        main: \${{ services.app.interfaces.main.url }}
+      services:
+        app:
+          interfaces:
+            main:
+              port: 3000
+              protocol: tcp
+      `;
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentSpec('test/component'),
+      ]);
+    } catch (e: any) {
+      err = e;
+    }
+    expect(err).instanceOf(ArchitectError);
+    expect(err.message).includes(`tcp`);
+    expect(err.message).includes(`We currently only support 'http' and 'https' protocols`);
+    expect(process.exitCode).eq(1);
+  });
+
+  it('valid component with protocol of undefined', async () => {
+    const component_config = `
+      name: test/component
+      interfaces:
+        main: \${{ services.app.interfaces.mysql.url }}
+      services:
+        app:
+          image: mysql:5.6.35
+          command: mysqld
+          interfaces:
+            mysql:
+              port: 3306
+              protocol: https
+      `;
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentSpec('test/component'),
+      ], {}, { interpolate: false });
+    } catch (e: any) {
+      err = e;
+    }
+    expect(err).to.be.undefined;
+  });
+  */
+
   it('invalid component interface number', async () => {
     const component_config = `
       name: test/component
@@ -1764,6 +1805,72 @@ services:
           \${{ if true }}:
             environment:
               TEST2: 2
+      `;
+      buildSpecFromYml(yml);
+    });
+
+    it('test tson', () => {
+      const deployment = {
+        apiVersion: 'v1',
+        metadata2: 'wrong key',
+        metadata: 'wrong value',
+        spec: {
+          template: {
+            spec: {
+              containers: [{
+                invalid_key: 'wrong'
+              }]
+            }
+          }
+        }
+      };
+
+      const res = TSON.validateEquals<DeepPartial<V1Deployment>>(deployment);
+
+      expect(res.errors.map(error => error.path)).to.have.members([
+        '$input.metadata',
+        '$input.metadata2',
+        '$input.spec.template.spec.containers[0].invalid_key'
+      ]);
+
+      expect(res.success).to.be.false;
+    });
+
+    it('invalid deploy overrides for kubernetes', async () => {
+      const yml = `
+      name: test/component
+      services:
+        app:
+          deploy:
+            kubernetes:
+              deployment:
+                spec:
+                  template:
+                    spec:
+                      serviceAccount: test-admin
+                      serviceAccountName: test-admin
+                      nodeSelectorInvalid:
+                        iam.gke.io/gke-metadata-server-enabled: "true"
+      `;
+
+      expect(() => { buildSpecFromYml(yml); }).to.throw(ValidationErrors);
+    });
+
+    it('valid deploy overrides for kubernetes', async () => {
+      const yml = `
+      name: test/component
+      services:
+        app:
+          deploy:
+            kubernetes:
+              deployment:
+                spec:
+                  template:
+                    spec:
+                      serviceAccount: test-admin
+                      serviceAccountName: test-admin
+                      nodeSelector:
+                        iam.gke.io/gke-metadata-server-enabled: "true"
       `;
       buildSpecFromYml(yml);
     });

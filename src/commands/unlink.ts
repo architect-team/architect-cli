@@ -43,7 +43,7 @@ export default class Unlink extends BaseCommand {
       return;
     }
 
-    if (args.componentPathOrName === '.' || args.componentPathOrName.toLowerCase().endsWith("architect.yml")) {
+    if (args.componentPathOrName === '.' || args.componentPathOrName.toLowerCase().endsWith('architect.yml')) {
       const component_path = path.resolve(untildify(args.componentPathOrName));
       try {
         const component_config = buildSpecFromPath(component_path);

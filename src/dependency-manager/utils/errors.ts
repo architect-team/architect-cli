@@ -4,7 +4,7 @@ const addLineNumbers = (value: string, errors: ValidationError[]): void => {
   const rows = value.split('\n');
   const total_rows = rows.length;
   for (const error of errors) {
-    const keys = error.path.split(/(?<!\$\{\{)\.(?![^.]+[}}])/); // Split on periods except when inside ${{ }}
+    const keys = error.path.split(/(?<!\${{)\.(?![^.]+})/); // Split on periods except when inside ${{ }}
     let pattern = '(.*?)' + keys.map((key) => `${escapeRegex(key)}:`).join('(.*?)');
 
     const target_value = `${error.value}`.split('\n')[0];
@@ -25,7 +25,7 @@ const addLineNumbers = (value: string, errors: ValidationError[]): void => {
       if (error.invalid_key) {
         error.start = {
           row: target_row + 1,
-          column: (end_row.length - end_row.trimLeft().length) + 1,
+          column: (end_row.length - end_row.trimStart().length) + 1,
         };
         error.end = {
           row: target_row + 1,
@@ -47,11 +47,10 @@ const addLineNumbers = (value: string, errors: ValidationError[]): void => {
 
 export class ArchitectError extends Error {
   // When track is true, the exception will be captured by endSentryTransaction.
-  // Should be set to false when a raised error is an issue on the users end that doesn't have
-  // anything actionable for us to do.
+  // Set to true when constructing an error that should be reported via Sentry.
   track: boolean;
 
-  constructor(msg?: string, track = true) {
+  constructor(msg?: string, track = false) {
     super(msg);
     this.track = track;
   }

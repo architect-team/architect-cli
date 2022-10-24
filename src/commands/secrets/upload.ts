@@ -1,8 +1,9 @@
+import { Flags } from '@oclif/core';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
-import { Dictionary } from '../..';
+import { ArchitectError, Dictionary } from '../..';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import SecretUtils, { Secret } from '../../architect/secret/secret.utils';
@@ -15,13 +16,22 @@ export default class SecretsUpload extends BaseCommand {
   static description = 'Upload secrets from a file to an account or an environment';
   static aliases = ['secrets:set'];
   static examples = [
-    'architect secrets:set --account=myaccount --environment=myenvironment ./mysecrets.yml',
+    'architect secrets:set --account=myaccount ./mysecrets.yml',
     'architect secrets:set --account=myaccount --override ./mysecrets.yml',
+    'architect secrets:set --account=myaccount --cluster=mycluster ./mysecrets.yml',
+    'architect secrets:set --account=myaccount --cluster=mycluster --override ./mysecrets.yml',
+    'architect secrets:set --account=myaccount --environment=myenvironment ./mysecrets.yml',
+    'architect secrets:set --account=myaccount --environment=myenvironment --override ./mysecrets.yml',
   ];
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
+    cluster: Flags.string({
+      description: 'Architect cluster',
+      parse: async value => value.toLowerCase(),
+      sensitive: false,
+    }),
     override: booleanString({
       description: 'Allow override of existing secrets',
       default: false,
@@ -38,11 +48,18 @@ export default class SecretsUpload extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags, args } = await this.parse(SecretsUpload);
-    const account = await AccountUtils.getAccount(this.app, flags.account);
+    if (!flags.account) {
+      this.error(new ArchitectError(`Account is not found. Please see examples below:\n  ${SecretsUpload.examples.join('\n  ')}`));
+    }
 
+    const account = await AccountUtils.getAccount(this.app, flags.account);
     const is_admin = await UserUtils.isAdmin(this.app, account.id);
     if (!is_admin) {
       this.error('You do not have permission to upload secrets. Please contact your admin.');
+    }
+
+    if (flags.cluster && flags.environment) {
+      throw new ArchitectError('Please provide either the cluster flag or the environment flag and not both.');
     }
 
     // loaded secrets
@@ -55,7 +72,7 @@ export default class SecretsUpload extends BaseCommand {
     }
 
     // existing secrets
-    const existing_secrets = await SecretUtils.getSecrets(this.app, account, flags.environment);
+    const existing_secrets = await SecretUtils.getSecrets(this.app, account, { cluster_name: flags.cluster, environment_name: flags.environment });
     const existing_secret_yml: SecretsDict = {};
     if (existing_secrets && existing_secrets.length > 0) {
       for (const secret of existing_secrets) {
@@ -73,7 +90,12 @@ export default class SecretsUpload extends BaseCommand {
         }
       }
     }
-    await SecretUtils.batchUpdateSecrets(this.app, update_secrets, account, flags.environment);
+
+    if (update_secrets.length === 0) {
+      this.log(`There are no new secrets to upload.`);
+      return;
+    }
+    await SecretUtils.batchUpdateSecrets(this.app, update_secrets, account, { cluster_name: flags.cluster, environment_name: flags.environment });
 
     this.log(`Successfully uploaded secrets from ${secrets_file}`);
   }

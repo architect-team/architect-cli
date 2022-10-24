@@ -1,3 +1,4 @@
+// eslint-disable-next-line node/no-extraneous-import
 import { isIdentifierChar, isIdentifierStart } from 'acorn';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -47,22 +48,23 @@ function getArchitectAcornParser(Parser: any) {
     // Override to support '-' or '/'
     readWord1() {
       this.containsEsc = false;
-      let word = "", first = true, chunkStart = this.pos;
+      // eslint-disable-next-line max-statements-per-line
+      let word = ''; let first = true; let chunkStart = this.pos;
       const astral = this.options.ecmaVersion >= 6;
       while (this.pos < this.input.length) {
         const ch = this.fullCharCodeAtPos();
         if (isIdentifierChar(ch, astral) || ch === 45 || ch === 47) {  // Override to support '-' or '/'
-          this.pos += ch <= 0xffff ? 1 : 2;
+          this.pos += ch <= 0xFFFF ? 1 : 2;
         } else if (ch === 92) { // "\"
           this.containsEsc = true;
           word += this.input.slice(chunkStart, this.pos);
           const escStart = this.pos;
           if (this.input.charCodeAt(++this.pos) !== 117) // "u"
-            this.invalidStringToken(this.pos, "Expecting Unicode escape sequence \\uXXXX");
+            this.invalidStringToken(this.pos, 'Expecting Unicode escape sequence \\uXXXX');
           ++this.pos;
           const esc = this.readCodePoint();
           if (!(first ? isIdentifierStart : isIdentifierChar)(esc, astral))
-            this.invalidStringToken(escStart, "Invalid Unicode escape");
+            this.invalidStringToken(escStart, 'Invalid Unicode escape');
           word += codePointToString(esc);
           chunkStart = this.pos;
         } else {
@@ -189,7 +191,7 @@ export class ArchitectParser {
             type: 'Literal',
             value: value,
           };
-        } else if (node.type == 'CallExpression') {
+        } else if (node.type === 'CallExpression') {
           let value;
           if (node.callee.value === 'trim') {
             value = node.arguments[0].value.trim();
@@ -202,11 +204,11 @@ export class ArchitectParser {
             type: 'Literal',
             value: value,
           };
-        } else if (node.type == 'IfStatement') {
+        } else if (node.type === 'IfStatement') {
           if (node.test.type === 'Literal') {
             return {
               type: 'Literal',
-              value: !!node.test.value,
+              value: Boolean(node.test.value),
             };
           } else {
             throw new Error(`Unsupported node.test.type: ${node.test.type}`);
