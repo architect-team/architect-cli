@@ -30,6 +30,16 @@ export default class ClusterUtils {
       sensitive: false,
       exclusive: ['platform'],
     }),
+    platform: Flags.string({
+      description: 'Architect cluster',
+      env: 'ARCHITECT_PLATFORM',
+      parse: async value => value.toLowerCase(),
+      sensitive: false,
+      exclusive: ['cluster'],
+      deprecated: {
+        to: 'cluster',
+      },
+    }),
   };
 
   static async getCluster(api: AxiosInstance, account: Account, cluster_name?: string): Promise<Cluster> {
