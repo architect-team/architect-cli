@@ -4,12 +4,12 @@ import fs from 'fs-extra';
 import path from 'path';
 import untildify from 'untildify';
 import AppConfig from '../../app-config/config';
-import { CreatePlatformInput } from '../../architect/platform/platform.utils';
+import { CreateClusterInput } from '../../architect/cluster/cluster.utils';
 
 const SERVICE_ACCOUNT_NAME = 'architect-agent';
 const AGENT_NAMESPACE = 'architect-agent';
 
-export class AgentPlatformUtils {
+export class AgentClusterUtils {
   private static getLocalServerAgentIP(): string {
     return 'host.docker.internal';
   }
@@ -108,10 +108,10 @@ type: kubernetes.io/service-account-token
     ], { input: secret_yml });
   }
 
-  public static async configureAgentPlatform(
+  public static async configureAgentCluster(
     flags: any,
     description: string,
-  ): Promise<CreatePlatformInput> {
+  ): Promise<CreateClusterInput> {
     const kubeconfig_path = untildify(flags.kubeconfig);
     await this.createNamespace(kubeconfig_path);
 

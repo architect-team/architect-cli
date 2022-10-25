@@ -1,3 +1,26 @@
+# [1.27.0](https://github.com/architect-team/architect-cli/compare/v1.26.0...v1.27.0) (2022-10-24)
+
+
+### Bug Fixes
+
+* **deploy:** Tmp remove protocol validation ([1217783](https://github.com/architect-team/architect-cli/commit/1217783b87433c2542e34fd594c1e9f5e40a6c75))
+* **dev:list:** fixing spelling ([#723](https://github.com/architect-team/architect-cli/issues/723)) ([7b37daa](https://github.com/architect-team/architect-cli/commit/7b37daa7e3266098506ff31289829c0c903a90ea))
+* **dev:** support home directory for volume host_path ([e13e5e1](https://github.com/architect-team/architect-cli/commit/e13e5e1155b78335b4ffa4ac056c4f1870eef9d8))
+* **env:create:** Env create platform flag ([#739](https://github.com/architect-team/architect-cli/issues/739)) ([3b7105c](https://github.com/architect-team/architect-cli/commit/3b7105cba99c4ed1ad6b28c7a039e4c4768c9718))
+* **platform:** Clean up agent install ([#724](https://github.com/architect-team/architect-cli/issues/724)) ([ec59cf9](https://github.com/architect-team/architect-cli/commit/ec59cf9ee88de8d71406f5571eefdd6585931e0c))
+* **register:** Ask user for account if they do not have access to the one specified in the architect.yml file ([9a6e413](https://github.com/architect-team/architect-cli/commit/9a6e4137fbdf71ca9e9614e89d99ad63b1b0f532))
+* **spec:** add deploy block to serviceconfig ([491850d](https://github.com/architect-team/architect-cli/commit/491850d869f1bf639912caf458596aac97d6c5df))
+* **spec:** Add validation for replicas/scaling ([#726](https://github.com/architect-team/architect-cli/issues/726)) ([6d42c48](https://github.com/architect-team/architect-cli/commit/6d42c487108e0cedbbb6e6af9268732f24885090))
+
+
+### Features
+
+* **cli:** Deprecated flags/commands ([#737](https://github.com/architect-team/architect-cli/issues/737)) ([4961854](https://github.com/architect-team/architect-cli/commit/49618545cd3e47e85e1b708f2844fd15f682e75b))
+* **cli:** platforms -> clusters ([#732](https://github.com/architect-team/architect-cli/issues/732)) ([ae05772](https://github.com/architect-team/architect-cli/commit/ae057720fd983a536c6e0cac7cfc4ea6f177fa0e))
+* **deploy:** Add runtime type validation for k8s deployment ([#730](https://github.com/architect-team/architect-cli/issues/730)) ([5ace7d8](https://github.com/architect-team/architect-cli/commit/5ace7d85682f3fb1466f09d3e462d40601829d09))
+* **ingress:** Throw an error if using an unsupported protocol with ingresses. ([1255186](https://github.com/architect-team/architect-cli/commit/12551865fc561af6264070314f58b47796e44ea9))
+* **secrets:** Add platform secret functionality ([5f63d23](https://github.com/architect-team/architect-cli/commit/5f63d239d991d4644af2e1eb9ca40dce02348d01))
+
 # [1.26.0](https://github.com/architect-team/architect-cli/compare/v1.25.1...v1.26.0) (2022-09-29)
 
 

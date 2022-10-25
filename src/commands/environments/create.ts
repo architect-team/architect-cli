@@ -3,13 +3,13 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { Slugs } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
-import PlatformUtils from '../../architect/platform/platform.utils';
+import ClusterUtils from '../../architect/cluster/cluster.utils';
 import BaseCommand from '../../base-command';
 
 interface CreateEnvironmentDto {
   name: string;
   description?: string;
-  platform_id: string;
+  cluster_id: string;
   ttl?: string;
 }
 
@@ -23,7 +23,7 @@ export default class EnvironmentCreate extends BaseCommand {
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    ...PlatformUtils.flags,
+    ...ClusterUtils.flags,
     description: Flags.string({
       description: 'Environment Description',
       sensitive: false,
@@ -64,14 +64,14 @@ export default class EnvironmentCreate extends BaseCommand {
     }
 
     const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the environment with' });
-    const platform = await PlatformUtils.getPlatform(this.app.api, account, flags.platform);
+    const cluster = await ClusterUtils.getCluster(this.app.api, account, flags.cluster || flags.platform);
 
     CliUx.ux.action.start(chalk.blue('Registering environment with Architect'));
 
     const dto: CreateEnvironmentDto = {
       name: environment_name,
       description: flags.description,
-      platform_id: platform.id,
+      cluster_id: cluster.id,
     };
     if (flags.ttl) {
       dto.ttl = flags.ttl;

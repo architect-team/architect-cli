@@ -5,11 +5,10 @@ import sinon, { SinonSpy } from 'sinon';
 import AppService from '../../../src/app-config/service';
 import PipelineUtils from '../../../src/architect/pipeline/pipeline.utils';
 import ClusterCreate from '../../../src/commands/clusters/create';
-import PlatformCreate from '../../../src/commands/platforms/create';
 import { AgentClusterUtils } from '../../../src/common/utils/agent-cluster.utils';
 import { KubernetesClusterUtils } from '../../../src/common/utils/kubernetes-cluster.utils';
 
-describe('platform:create', function () {
+describe('cluster:create', function () {
   const account = {
     id: 'test-account-id',
     name: 'test-account-name',
@@ -27,14 +26,14 @@ describe('platform:create', function () {
 
   const create_test = () => {
     return test
-      .stub(PlatformCreate.prototype, 'log', sinon.stub())
+      .stub(ClusterCreate.prototype, 'log', sinon.stub())
       .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
       .stub(fs, 'readJSONSync', () => {
         return {
           log_level: 'debug',
         };
       })
-      .stub(AppService, 'create', () => new AppService(process.env.ARCHITECT_CONFIG_DIR!, '1.0.0'))
+      .stub(AppService, 'create', () => new AppService('', '1.0.0'))
       .stub(ClusterCreate.prototype, <any>'setupKubeContext', async () => {
         return {
           original_context: "original_context",
@@ -75,7 +74,7 @@ describe('platform:create', function () {
       const configure_kubernetes = KubernetesClusterUtils.configureKubernetesCluster as SinonSpy;
       const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await PlatformCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=false']);
+      await ClusterCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=false']);
       expect(configure_kubernetes.calledOnce).true;
       expect(create_cluster_applications.calledOnce).false;
       expect(post_to_api.calledOnce).true;
@@ -87,7 +86,7 @@ describe('platform:create', function () {
       const configure_kubernetes = KubernetesClusterUtils.configureKubernetesCluster as SinonSpy;
       const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await PlatformCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=true']);
+      await ClusterCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=true']);
       expect(configure_kubernetes.calledOnce).true;
       expect(create_cluster_applications.calledOnce).true;
       expect(post_to_api.calledOnce).true;
@@ -99,7 +98,7 @@ describe('platform:create', function () {
       const configure_kubernetes = KubernetesClusterUtils.configureKubernetesCluster as SinonSpy;
       const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await PlatformCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes']);
+      await ClusterCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes']);
       expect(configure_kubernetes.calledOnce).true;
       expect(create_cluster_applications.calledOnce).true;
       expect(post_to_api.calledOnce).true;
@@ -111,7 +110,7 @@ describe('platform:create', function () {
       const configure_kubernetes = KubernetesClusterUtils.configureKubernetesCluster as SinonSpy;
       const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await PlatformCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes']);
+      await ClusterCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes']);
       expect(configure_kubernetes.calledOnce).true;
       expect(create_cluster_applications.calledOnce).false;
       expect(post_to_api.calledOnce).true;
@@ -137,7 +136,7 @@ describe('platform:create', function () {
       const configure_agent = AgentClusterUtils.configureAgentCluster as SinonSpy;
       const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await PlatformCreate.run(['cluster-name', '-a', 'test-account-name']);
+      await ClusterCreate.run(['cluster-name', '-a', 'test-account-name']);
       expect(configure_agent.calledOnce).true;
       expect(install_agent.calledOnce).true;
       expect(create_cluster_applications.calledOnce).true;

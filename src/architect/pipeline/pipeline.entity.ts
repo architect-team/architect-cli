@@ -1,5 +1,5 @@
 import Account from '../account/account.entity';
-import Platform from '../platform/platform.entity';
+import Cluster from '../cluster/cluster.entity';
 
 export default interface Pipeline {
   id: string;
@@ -9,8 +9,8 @@ export default interface Pipeline {
   environment?: {
     id: string;
     name: string;
-    platform: Platform;
+    cluster: Cluster;
     account: Account;
   };
-  platform?: Platform;
+  cluster?: Cluster;
 }

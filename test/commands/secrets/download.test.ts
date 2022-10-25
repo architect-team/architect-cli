@@ -1,5 +1,7 @@
 import { expect, test } from '@oclif/test';
 import fs from 'fs-extra';
+import yaml from 'js-yaml';
+import path from 'path';
 import sinon, { SinonSpy } from 'sinon';
 import untildify from 'untildify';
 import UserUtils from '../../../src/architect/user/user.utils';
@@ -9,7 +11,7 @@ describe('secrets', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
-  const download_location = untildify('~/secrets.yml');
+  const download_location = path.resolve(untildify('~/secrets.yml'));
 
   const account = {
     id: "aa440d39-97d9-43c3-9f1a-a9a69adb2a41",
@@ -22,13 +24,10 @@ describe('secrets', function () {
     account: account
   }
 
-  const member_user = {
-    memberships: [
-      {
-        role: 'MEMBER',
-        account: account
-      },
-    ],
+  const cluster = {
+    id: '59db4eae-eb8a-4125-8834-7fb7b6208cbd',
+    name: 'my-cluster',
+    account: account
   }
 
   const account_secrets = [
@@ -46,12 +45,39 @@ describe('secrets', function () {
     }
   ]
 
+  const cluster_secrets_w_inheritance = [
+    {
+      scope: 'cloud/*',
+      key: 'secret',
+      value: 'cluster-override',
+      cluster,
+    },
+    {
+      scope: '*',
+      key: 'cluster-secret',
+      value: 'cluster-secret-val',
+      cluster,
+    },
+    {
+      scope: '*',
+      key: 'acc-secret',
+      value: 'acc-secret-val',
+      account: account
+    }
+  ]
+
   const environment_secrets_w_inheritance = [
     {
       scope: 'cloud/*',
       key: 'secret',
-      value: 'override',
+      value: 'environment-override',
       environment: environment
+    },
+    {
+      scope: '*',
+      key: 'cluster-secret',
+      value: 'cluster-secret-val',
+      cluster,
     },
     {
       scope: '*',
@@ -68,7 +94,7 @@ describe('secrets', function () {
 
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
-    .stub(fs, 'writeFileSync', sinon.stub())
+    .stub(fs, 'writeFileSync', sinon.spy())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.id}/secrets/values`)
       .reply(200, account_secrets))
@@ -88,12 +114,57 @@ describe('secrets', function () {
       const fs_spy = fs.writeFileSync as SinonSpy;
       expect(ctx.stdout).to.contain(`Secrets have been downloaded`);
       expect(fs_spy.calledOnce).to.be.true;
-      expect(fs_spy.calledWith(download_location, expected_account_secrets))
+      expect(fs_spy.calledWith(download_location, yaml.dump(expected_account_secrets))).to.be.true;
     })
 
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
-    .stub(fs, 'writeFileSync', sinon.stub())
+    .stub(fs, 'writeFileSync', sinon.spy())
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.id}/clusters/${cluster.name}`)
+      .reply(200, cluster))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/clusters/${cluster.id}/secrets/values?inherited=true`)
+      .reply(200, cluster_secrets_w_inheritance))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['secrets', '-a', 'examples', '--cluster', 'my-cluster', download_location])
+    .it('download cluster secrets successfully', async ctx => {
+      const expected_cluster_secrets = {
+        'cloud/*': {
+          secret: 'cluster-override'
+        },
+        '*': {
+          'cluster-secret': 'cluster-secret-val',
+          'acc-secret': 'acc-secret-val'
+        }
+      }
+
+      const fs_spy = fs.writeFileSync as SinonSpy;
+      expect(ctx.stdout).to.contain(`Secrets have been downloaded`);
+      expect(fs_spy.calledOnce).to.be.true;
+      expect(fs_spy.calledWith(download_location, yaml.dump(expected_cluster_secrets))).to.be.true;
+    })
+
+  defaults
+    .stub(UserUtils, 'isAdmin', async () => true)
+    .stub(fs, 'writeFileSync', sinon.spy())
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.id}/clusters/${cluster.name}`)
+      .reply(200, cluster))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/clusters/${cluster.id}/secrets/values?inherited=true`)
+      .reply(200, []))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['secrets', '-a', 'examples', '--cluster', 'my-cluster', download_location])
+    .it('download cluster secrets failed when there are no secrets', ctx => {
+      expect(ctx.stdout).to.contain('There are no secrets to download');
+    })
+
+  defaults
+    .stub(UserUtils, 'isAdmin', async () => true)
+    .stub(fs, 'writeFileSync', sinon.spy())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.id}/environments/${environment.name}`)
       .reply(200, environment))
@@ -106,9 +177,10 @@ describe('secrets', function () {
     .it('download environment secrets successfully', async ctx => {
       const expected_env_secrets = {
         'cloud/*': {
-          secret: 'override'
+          secret: 'environment-override'
         },
         '*': {
+          'cluster-secret': 'cluster-secret-val',
           'acc-secret': 'acc-secret-val'
         }
       }
@@ -116,12 +188,12 @@ describe('secrets', function () {
       const fs_spy = fs.writeFileSync as SinonSpy;
       expect(ctx.stdout).to.contain(`Secrets have been downloaded`);
       expect(fs_spy.calledOnce).to.be.true;
-      expect(fs_spy.calledWith(download_location, expected_env_secrets))
+      expect(fs_spy.calledWith(download_location, yaml.dump(expected_env_secrets))).to.be.true;
     })
 
   defaults
     .stub(UserUtils, 'isAdmin', async () => true)
-    .stub(fs, 'writeFileSync', sinon.stub())
+    .stub(fs, 'writeFileSync', sinon.spy())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.id}/environments/${environment.name}`)
       .reply(200, environment))
@@ -144,4 +216,13 @@ describe('secrets', function () {
       expect(ctx.message).to.contain('You do not have permission to download secrets')
     })
     .it('download account secrets failed due to permission');
+
+  test
+    .stdout({ print })
+    .stderr({ print })
+    .command(['secrets', '-a', 'examples', '--cluster', 'my-cluster', '-e', 'env', download_location])
+    .catch(ctx => {
+      expect(ctx.message).to.contain('Please provide either the cluster flag or the environment flag and not both.')
+    })
+    .it('download cluster secrets failed when both cluster and environment flags are set');
 });

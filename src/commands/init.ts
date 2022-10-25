@@ -26,9 +26,12 @@ export abstract class InitCommand extends BaseCommand {
   static flags = {
     ...BaseCommand.flags,
     component_file: Flags.string({
-      description: `${BaseCommand.DEPRECATED} Please use --component-file.`,
+      description: `Please use --component-file.`,
       hidden: true,
       sensitive: false,
+      deprecated: {
+        to: 'component-file',
+      },
     }),
     'component-file': Flags.string({
       char: 'o',
@@ -41,9 +44,12 @@ export abstract class InitCommand extends BaseCommand {
       sensitive: false,
     }),
     from_compose: Flags.string({
-      description: `${BaseCommand.DEPRECATED} Please use --from-compose.`,
+      description: `Please use --from-compose.`,
       hidden: true,
       sensitive: false,
+      deprecated: {
+        to: 'from-compose',
+      },
     }),
     'from-compose': Flags.string({
       sensitive: false,
@@ -52,7 +58,7 @@ export abstract class InitCommand extends BaseCommand {
 
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
 

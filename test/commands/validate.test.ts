@@ -22,7 +22,7 @@ interfaces:
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
     .command(['validate', 'examples/database-seeding/architect.yml'])
@@ -31,7 +31,7 @@ interfaces:
       expect(ctx.stdout).to.contain(path.resolve(`examples/database-seeding/architect.yml`));
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
     .command(['validate', 'examples/database-seeding/'])
@@ -40,7 +40,7 @@ interfaces:
       expect(ctx.stdout).to.contain(path.resolve('examples/database-seeding/architect.yml'));
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
     .command(['validate', 'examples/hello-world/architect.yml', 'examples/database-seeding/architect.yml'])
@@ -51,7 +51,7 @@ interfaces:
       expect(ctx.stdout).to.contain(path.resolve('examples/hello-world/architect.yml'));
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
     .command(['validate', 'non-existent/directory/architect.yml'])
@@ -60,7 +60,7 @@ interfaces:
     })
     .it('correctly fails on a non-existent directory and prints an error message');
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
     .command(['validate', 'test/mocks/validationerrors/architect.yml'])
@@ -69,7 +69,7 @@ interfaces:
     })
     .it('correctly fails on an invalidation error with exit code 1');
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
     .command(['validate', 'test/mocks/validationerrors/architect.yml'])
@@ -78,7 +78,7 @@ interfaces:
     })
     .it('correctly fails on an invalidation error with no stacktrace');
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
     .command(['validate', 'test/mocks/validationerrors/architect.yml'])
@@ -174,7 +174,7 @@ interfaces:
 
     const tmp_test_file = path.normalize(untildify("~/some_fake_file.yml"));
     for (const invalid_subdomain_token of invalid_subdomain_tokens) {
-      mockArchitectAuth
+      mockArchitectAuth()
         .stub(fs, 'readFileSync', sinon.fake.returns(subdomain_token_to_config_yaml_string(invalid_subdomain_token)))
         .stub(fs, 'lstatSync', sinon.fake.returns({
           isDirectory: () => false,
@@ -220,7 +220,7 @@ interfaces:
 
     const tmp_test_file = path.normalize(untildify("~/some_fake_file.yml"));
     for (const valid_subdomain_token of valid_subdomain_tokens) {
-      mockArchitectAuth
+      mockArchitectAuth()
         .stub(fs, 'readFileSync', sinon.fake.returns(subdomain_token_to_config_yaml_string(valid_subdomain_token)))
         .stub(fs, 'lstatSync', sinon.fake.returns({
           isDirectory: () => false,
