@@ -311,7 +311,7 @@ export default class ComponentRegister extends BaseCommand {
       }
       for (const [volume_name, volume] of Object.entries(service.volumes || {})) {
         const volume_config = transformVolumeSpec(volume_name, volume);
-        (service?.volumes as Dictionary<VolumeSpec>)[volume_name] = await this.uploadVolume(config_path, `${new_spec.name}.services.${service_name}.volumes.${volume_name}`, tag, volume_config, selected_account);
+        (service?.volumes as Dictionary<VolumeSpec>)[volume_name] = await this.uploadVolume(config_path, `${component_name}.services.${service_name}.volumes.${volume_name}`, tag, volume_config, selected_account);
       }
     }
 
