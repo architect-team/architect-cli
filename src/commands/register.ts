@@ -128,7 +128,8 @@ export default class ComponentRegister extends BaseCommand {
     const registry_url = new URL(`/${account.name}/${file_name}:${tag}`, 'http://' + this.app.config.registry_host);
 
     const updated_volume = classToClass(volume);
-    const host_path = path.resolve(component_path, untildify(updated_volume.host_path!));
+    const component_folder = fs.lstatSync(component_path).isFile() ? path.dirname(component_path) : component_path;
+    const host_path = path.resolve(component_folder, untildify(updated_volume.host_path!));
     updated_volume.host_path = registry_url.href.replace('http://', '');
 
     const output_file_location = path.join(base_folder, `${file_name}.tar`);
