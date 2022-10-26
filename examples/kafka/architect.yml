@@ -3,11 +3,11 @@ homepage: https://github.com/architect-team/architect-cli/tree/main/examples/kaf
 
 services:
   zookeeper:
-    image: jplock/zookeeper
+    image: zookeeper:3.5.9
     interfaces:
       main: 2181
   kafka:
-    image: wurstmeister/kafka:2.12-2.4.0
+    image: wurstmeister/kafka:2.13-2.8.1
     interfaces:
       internal: 9092
       external: 9093
