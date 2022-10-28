@@ -201,7 +201,7 @@ tasks:
       - $RUN_CURL && $SERVER_URL
 
     environment:
-      SERVER_URL: ${{ services.stateless-api.interfaces.main.url }}
+      SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
       RUN_CURL: ${{ secrets.param_boolean }}
 
   # curler-build: # TODO: keep pr remove this task?
