@@ -9,7 +9,7 @@ describe('superset spec validation', function () {
 
     it(`test/mocks/superset/architect.yml passes ajv json schema validation`, async () => {
       const component_spec = buildSpecFromPath(`test/mocks/superset/architect.yml`);
-      const dependency_component_spec = buildSpecFromPath('examples/hello-world/architect.yml'); // TODO: add this to the superset directory as a dependency?
+      const dependency_component_spec = buildSpecFromPath('test/mocks/dependency/architect.yml');
 
       expect(component_spec.metadata.file?.path).to.equal(`test/mocks/superset/architect.yml`);
       expect(component_spec).to.not.be.undefined;
@@ -20,7 +20,8 @@ describe('superset spec validation', function () {
 
     it(`config interpolation works with multiline secrets`, async () => {
       const component_spec = buildSpecFromPath(`test/mocks/superset/architect.yml`);
-      const dependency_component_spec = buildSpecFromPath('examples/hello-world/architect.yml'); // TODO: add this to the superset directory as a dependency?
+      const dependency_component_spec = buildSpecFromPath('test/mocks/dependency/architect.yml');
+
       const secrets_yml = `
         '*':
           param_unset: true
@@ -45,7 +46,8 @@ describe('superset spec validation', function () {
 
     it(`config interpolation works with multiline secrets 2`, async () => {
       const component_spec = buildSpecFromPath(`test/mocks/superset/architect.yml`);
-      const dependency_component_spec = buildSpecFromPath('examples/hello-world/architect.yml'); // TODO: add this to the superset directory as a dependency?
+      const dependency_component_spec = buildSpecFromPath('test/mocks/dependency/architect.yml');
+
       const secrets_yml = `
         '*':
           param_unset: true
