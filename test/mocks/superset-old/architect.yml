@@ -1,0 +1,214 @@
+name: superset # done
+description: A spec with every field # done
+keywords: # done
+  - architect
+  - spec
+author: Architect.io # done
+homepage: https://architect.io # done
+
+secrets:
+  param_string: architect # done
+  param_number: 3000 # done
+  param_boolean: true # done
+  param_required: # done
+    required: true
+    description: Root password to assign to the component's DB
+    default: secret
+  param_optional: # done
+    required: false
+    description: Name of the DB the component will store content in
+    default: stateful
+  param_default_undefined: # done
+    required: false
+    description: Default undefined
+    default:
+  param_default_boolean: # done
+    required: false
+    default: true
+  param_unset: # done
+
+services: # done
+  api-db: # done
+    description: api-db service description # done
+    image: postgres:12 # done
+    command: 'postgres' # done
+    entrypoint: # done
+      - 'echo' # done
+      - 'hello' # done
+    language: postgresql # done
+    environment: # done
+      POSTGRES_USER: ${{ secrets.param_string }} # done
+      POSTGRES_PASSWORD: ${{ secrets.param_required }} # done
+      POSTGRES_DB: ${{ secrets.param_optional }} # done
+      ENVIRONMENT_UNSET: # done
+    volumes: # done
+      volume-string: ./some-volume # done
+      volume-object: # done
+        mount_path: ./mount-path # done
+        key: volume-key # done
+        description: Volume description # done
+        readonly: false # done
+    build: # done
+      context: . # done
+      dockerfile: Dockerfile # done
+      args: # done
+        build_arg_string: arg_value # done
+        build_arg_unset: # done
+    cpu: 2 # done
+    memory: 4GB # done
+    depends_on: # done
+      - stateful-api # done
+    labels: # done
+      label-string: some_label # done
+    interfaces:
+      postgres: # done
+        port: 5432 # done
+        protocol: postgresql # done
+    liveness_probe: # done
+      success_threshold: 3 # done
+      failure_threshold: 3 # done
+      timeout: '12s' # done
+      interval: '20s' # done
+      initial_delay: '30s' # done
+      path: /liveness # done
+      port: 5432  # done
+    replicas: 2 # done
+    scaling: # done
+      min_replicas: 1 # done
+      max_replicas: 3 # done
+      metrics: # done
+        memory: 80 # done
+    ${{ if architect.environment == 'local' }}:
+      description: api-db service debug
+      image: postgres:12
+      command: 'postgres'
+      entrypoint:
+        - 'echo'
+        - 'hello'
+      language: postgresql
+      environment:
+        POSTGRES_USER: ${{ secrets.param_string }}
+        POSTGRES_PASSWORD: ${{ secrets.param_required }}
+        POSTGRES_DB: ${{ secrets.param_optional }}
+        ENVIRONMENT_UNSET:
+      volumes:
+        volume-string: ./some-volume
+        volume-object:
+          mount_path: ./mount-path
+          key: volume-key
+          description: Volume description
+          readonly: false
+        another-volume-object:
+          mount_path: ./mount-path
+          host_path: ./test
+          description: Volume description
+          readonly: false
+      build:
+        dockerfile: ./Dockerfile
+        args:
+          build_arg_string: arg_value
+          build_arg_unset:
+      cpu: 2
+      memory: 4GB
+      depends_on:
+        - stateful-api
+      labels:
+        label-string: some_label
+      interfaces:
+        postgres:
+          port: 5432
+          protocol: postgresql
+      liveness_probe:
+        success_threshold: 3
+        failure_threshold: 3
+        timeout: '12s'
+        interval: '20s'
+        initial_delay: '30s'
+        path: /status
+        port: 5432
+      replicas: 2
+      scaling:
+        min_replicas: 1
+        max_replicas: 3
+        metrics:
+          cpu: 80
+
+  stateful-api: # done
+    build: # done
+      context: ./backend # done
+      target: production # done
+      ${{ if architect.environment == 'local' }}: # done
+        target: dev # done
+    interfaces: # done
+      http: 8080 # done
+    environment: # done
+      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ secrets.param_optional }} # done
+      DB_USER: ${{ secrets.param_string }} # done
+      DB_PASS: ${{ secrets.param_required }} # done
+  frontend: # done
+    build: # done
+      context: ./frontend # done
+    interfaces: # done
+      web: 8081 # done
+    environment: # done
+      API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
+    ${{ if architect.environment == 'local' }}: # done
+      build: # done
+        args: # done
+          NODE_ENV: development # done
+  ${{ if architect.environment == 'local' }}: # done
+    local-cli: # done
+      build: # done
+        context: ./frontend # done
+      interfaces: # done
+        web: 8081 # done
+      environment: # done
+        API_ADDR: ${{ services.stateful-api.interfaces.http.url }} # done
+  stateless-api: # done
+    image: heroku/nodejs-hello-world # done
+    interfaces: # done
+      main: ${{ secrets.param_number }} # done
+    environment: # done
+      FILE_DATA: file:./filedata.txt # done
+
+tasks: # TODO
+  curler:
+    schedule: '*/5 * * * ?'
+    image: ellerbrock/alpine-bash-curl-ssl
+    command:
+      - sh
+      - -c
+      - $RUN_CURL && $SERVER_URL
+
+    environment:
+      SERVER_URL: ${{ services.stateless-api.interfaces.main.url }}
+      RUN_CURL: ${{ secrets.param_boolean }}
+
+  curler-build:
+    schedule: '*/5 * * * ?'
+    build:
+      context: ./task
+    command:
+      - sh
+      - -c
+      - $RUN_CURL && $SERVER_URL
+    environment:
+      SERVER_URL: ${{ services.stateless-api.interfaces.main.url }}
+      RUN_CURL: ${{ secrets.param_boolean }}
+  ${{ if architect.environment == 'local' }}:
+    local-task:
+      build:
+        context: ./frontend
+      environment:
+        API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
+
+dependencies: # done
+  examples/hello-world: latest # done
+
+interfaces: # done
+  api: ${{ services.stateless-api.interfaces.main.url }} # done
+  frontend: # done
+    description: Exposes the sign in webapp to upstreams # done
+    url: ${{ services.frontend.interfaces.web.url }} # done
+
+artifact_image: some-image # done

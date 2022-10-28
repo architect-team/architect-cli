@@ -48,7 +48,7 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         const text_file = fs.readFileSync('test/mocks/superset/filedata.txt');
-        expect(body.config.services['stateless-api'].environment.FILE_DATA).to.eq(text_file.toString().trim());
+        expect(body.config.services['stateful-api'].environment.FILE_DATA).to.eq(text_file.toString().trim());
         return body;
       })
       .reply(200, {})
