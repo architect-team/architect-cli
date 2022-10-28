@@ -69,6 +69,60 @@ services:
       - api-db
     labels:
       label-string: some_label
+    # ${{ if architect.environment == 'local' }}: # TODO: do we want the debug block here?
+    #   description: api-db service debug
+    #   image: postgres:12
+    #   command: 'postgres'
+    #   entrypoint:
+    #     - 'echo'
+    #     - 'hello'
+    #   language: postgresql
+    #   environment:
+    #     POSTGRES_USER: ${{ secrets.param_string }}
+    #     POSTGRES_PASSWORD: ${{ secrets.param_required }}
+    #     POSTGRES_DB: ${{ secrets.param_optional }}
+    #     ENVIRONMENT_UNSET:
+    #   volumes:
+    #     volume-string: ./some-volume
+    #     volume-object:
+    #       mount_path: ./mount-path
+    #       key: volume-key
+    #       description: Volume description
+    #       readonly: false
+    #     another-volume-object:
+    #       mount_path: ./mount-path
+    #       host_path: ./test
+    #       description: Volume description
+    #       readonly: false
+    #   build:
+    #     dockerfile: ./Dockerfile
+    #     args:
+    #       build_arg_string: arg_value
+    #       build_arg_unset:
+    #   cpu: 2
+    #   memory: 4GB
+    #   depends_on:
+    #     - stateful-api
+    #   labels:
+    #     label-string: some_label
+    #   interfaces:
+    #     postgres:
+    #       port: 5432
+    #       protocol: postgresql
+    #   liveness_probe:
+    #     success_threshold: 3
+    #     failure_threshold: 3
+    #     timeout: '12s'
+    #     interval: '20s'
+    #     initial_delay: '30s'
+    #     path: /status
+    #     port: 5432
+    #   replicas: 2
+    #   scaling:
+    #     min_replicas: 1
+    #     max_replicas: 3
+    #     metrics:
+    #       cpu: 80
   api-db:
     image: postgres:12
     language: postgresql
@@ -147,9 +201,26 @@ tasks:
       - $RUN_CURL && $SERVER_URL
 
     environment:
-      SERVER_URL: ${{ services.stateful-api.interfaces.http.url }}
+      SERVER_URL: ${{ services.stateless-api.interfaces.main.url }}
       RUN_CURL: ${{ secrets.param_boolean }}
-# TODO: debug block overrides on a service
+
+  # curler-build: # TODO: keep pr remove this task?
+  #   schedule: '*/5 * * * ?'
+  #   build:
+  #     context: ./task
+  #   command:
+  #     - sh
+  #     - -c
+  #     - $RUN_CURL && $SERVER_URL
+  #   environment:
+  #     SERVER_URL: ${{ services.stateless-api.interfaces.main.url }}
+  #     RUN_CURL: ${{ secrets.param_boolean }}
+  # ${{ if architect.environment == 'local' }}:
+  #   local-task:
+  #     build:
+  #       context: ./frontend
+  #     environment:
+  #       API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
 
 interfaces:
   stateless:
