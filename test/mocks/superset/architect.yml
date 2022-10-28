@@ -154,10 +154,10 @@ services:
     liveness_probe:
       success_threshold: 3
       failure_threshold: 3
-      timeout: '12s'
+      timeout: '10s'
       interval: '20s'
       initial_delay: '30s'
-      path: /sign-ins
+      path: /
       port: 8080
   stateful-frontend:
     build:
