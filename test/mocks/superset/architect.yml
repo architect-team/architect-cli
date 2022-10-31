@@ -41,7 +41,7 @@ dependencies:
   hello-world: latest
 
 services:
-  stateless-app: # TODO: shove most of the debug block into this component?
+  stateless-app:
     description: stateless app service description
     language: javascript
     build:
@@ -69,60 +69,9 @@ services:
       - api-db
     labels:
       label-string: some_label
-    # ${{ if architect.environment == 'local' }}: # TODO: do we want the debug block here?
-    #   description: api-db service debug
-    #   image: postgres:12
-    #   command: 'postgres'
-    #   entrypoint:
-    #     - 'echo'
-    #     - 'hello'
-    #   language: postgresql
-    #   environment:
-    #     POSTGRES_USER: ${{ secrets.param_string }}
-    #     POSTGRES_PASSWORD: ${{ secrets.param_required }}
-    #     POSTGRES_DB: ${{ secrets.param_optional }}
-    #     ENVIRONMENT_UNSET:
-    #   volumes:
-    #     volume-string: ./some-volume
-    #     volume-object:
-    #       mount_path: ./mount-path
-    #       key: volume-key
-    #       description: Volume description
-    #       readonly: false
-    #     another-volume-object:
-    #       mount_path: ./mount-path
-    #       host_path: ./test
-    #       description: Volume description
-    #       readonly: false
-    #   build:
-    #     dockerfile: ./Dockerfile
-    #     args:
-    #       build_arg_string: arg_value
-    #       build_arg_unset:
-    #   cpu: 2
-    #   memory: 4GB
-    #   depends_on:
-    #     - stateful-api
-    #   labels:
-    #     label-string: some_label
-    #   interfaces:
-    #     postgres:
-    #       port: 5432
-    #       protocol: postgresql
-    #   liveness_probe:
-    #     success_threshold: 3
-    #     failure_threshold: 3
-    #     timeout: '12s'
-    #     interval: '20s'
-    #     initial_delay: '30s'
-    #     path: /status
-    #     port: 5432
-    #   replicas: 2
-    #   scaling:
-    #     min_replicas: 1
-    #     max_replicas: 3
-    #     metrics:
-    #       cpu: 80
+    ${{ if architect.environment == 'local' }}:
+      command: 'npm run start'
+
   api-db:
     image: postgres:12
     language: postgresql
@@ -134,6 +83,38 @@ services:
       POSTGRES_USER: ${{ secrets.db_user }}
       POSTGRES_PASSWORD: ${{ secrets.db_pass }}
       POSTGRES_DB: ${{ secrets.db_name }}
+    # volumes: # TODO: how do we want to handle local -> remote deployments?
+    #   volume-object:
+    #     host_path: /tmp/data
+    #     mount_path: /usr/data
+    ${{ if architect.environment == 'local' }}:
+      description: api-db service debug
+      image: postgres:12
+      language: postgresql
+      environment:
+        POSTGRES_USER: ${{ secrets.param_string }}
+        POSTGRES_PASSWORD: ${{ secrets.param_required }}
+        POSTGRES_DB: ${{ secrets.log_level }}
+        ENVIRONMENT_UNSET:
+      volumes:
+        volume-string: ./some-volume
+        volume-object:
+          mount_path: ./mount-path
+          key: volume-key
+          description: Volume description
+          readonly: false
+        another-volume-object:
+          mount_path: ./mount-path
+          host_path: ./test
+          description: Volume description
+          readonly: false
+      cpu: 2
+      memory: 4GB
+      interfaces:
+        postgres:
+          port: 5432
+          protocol: postgresql
+
   stateful-api:
     build:
       args:
@@ -151,14 +132,35 @@ services:
       DB_USER: ${{ secrets.db_user }}
       DB_PASS: ${{ secrets.db_pass }}
       FILE_DATA: file:./filedata.txt
-    liveness_probe:
-      success_threshold: 3
-      failure_threshold: 3
-      timeout: '10s'
-      interval: '20s'
-      initial_delay: '30s'
-      path: /
-      port: 8080
+    # liveness_probe: # TODO: why doesn't this work for remote deployments?
+    #   success_threshold: 3
+    #   failure_threshold: 3
+    #   timeout: '10s'
+    #   interval: '20s'
+    #   initial_delay: '30s'
+    #   path: /
+    #   port: 8080
+    ${{ if architect.environment == 'local' }}:
+      entrypoint:
+        - npm
+        - start
+      liveness_probe:
+        success_threshold: 3
+        failure_threshold: 3
+        timeout: '10s'
+        interval: '20s'
+        initial_delay: '30s'
+        path: /
+        port: 8080
+      labels:
+        label-string: some_label
+      build:
+        dockerfile: ./Dockerfile
+        args:
+          build_arg_string: arg_value
+          build_arg_unset:
+      replicas: 2
+
   stateful-frontend:
     build:
       context: ./stateful-frontend
@@ -170,17 +172,24 @@ services:
       - npm
       - run
       - start
-    # volumes:
-    #   volume-string: ./some-volume # TODO: docker error locally - Error response from daemon: invalid mount config for type "volume": invalid mount path: 'some-volume' mount path must be absolute
-    #   volume-object:
-    #     mount_path: ./mount-path # TODO: Error response from daemon: invalid mount config for type "volume": invalid mount path: 'mount-path' mount path must be absolute
-    #     # key: volume-key # TODO: keep or remove? What about mike's work, and this would be a pain for local testing
-    #     description: Volume description
-    #     readonly: false
+    volumes: # TODO: how do we want to handle local to remote deployments?
+      volume-string: /usr/src/app/some-volume
+      volume-object:
+        mount_path: /usr/src/app/mount-path
+        description: Volume description
+        readonly: false
     ${{ if architect.environment == 'local' }}:
       build:
         args:
           NODE_ENV: development
+      depends_on:
+        - stateful-api
+      scaling:
+        min_replicas: 1
+        max_replicas: 3
+        metrics:
+          cpu: 80
+
   ${{ if architect.environment == 'local' }}:
     local-cli:
       build:
@@ -225,13 +234,18 @@ tasks:
 interfaces:
   stateless:
     url: ${{ services.stateless-app.interfaces.http.url }}
-    ingress: # TODO: other ingress properties
+    ingress:
       enabled: true
-      # TODO: ip_whitelist, path,
+  stateless-unused:
+    url: ${{ services.stateless-app.interfaces.http.url }}
+    ingress:
+      ip_whitelist:
+        - 0.0.0.0
+      path: /api
   stateful:
     description: Exposes the sign in webapp to upstreams
     url: ${{ services.stateful-frontend.interfaces.web.url }}
-    ingress: # TODO: other ingress properties
+    ingress:
       subdomain: stateful
 
 artifact_image: architect-artifact-image
