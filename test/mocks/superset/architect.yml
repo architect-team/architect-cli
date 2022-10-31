@@ -49,10 +49,11 @@ services:
       dockerfile: Dockerfile
     command: 'npm run start'
     interfaces:
-      http: 8080 # TODO: try to set this to the secret - stateless_app_port - does this not work?
+      http: 8080
     environment:
       LOG_LEVEL: ${{ secrets.log_level }}
       HELLO_WORLD_ADDR: ${{ dependencies.hello-world.interfaces.hello.url }}
+      UNUSED_INGRESS_ADDR: ${{ ingresses.stateless-unused.url }}
       ENVIRONMENT_UNSET:
       PARAM_STRING: ${{ secrets.param_string }}
       PARAM_REQUIRED: ${{ secrets.param_required }}
@@ -83,21 +84,21 @@ services:
       POSTGRES_USER: ${{ secrets.db_user }}
       POSTGRES_PASSWORD: ${{ secrets.db_pass }}
       POSTGRES_DB: ${{ secrets.db_name }}
-    # volumes: # TODO: how do we want to handle local -> remote deployments?
-    #   volume-object:
-    #     host_path: /tmp/data
-    #     mount_path: /usr/data
+    volumes:
+      volume-object:
+        host_path: /tmp/data
+        mount_path: /usr/data
     ${{ if architect.environment == 'local' }}:
       description: api-db service debug
       image: postgres:12
       language: postgresql
       environment:
-        POSTGRES_USER: ${{ secrets.param_string }}
-        POSTGRES_PASSWORD: ${{ secrets.param_required }}
-        POSTGRES_DB: ${{ secrets.log_level }}
+        POSTGRES_USER: ${{ secrets.db_user }}
+        POSTGRES_PASSWORD: ${{ secrets.db_pass }}
+        POSTGRES_DB: ${{ secrets.db_name }}
         ENVIRONMENT_UNSET:
       volumes:
-        volume-string: ./some-volume
+        volume-string: /tmp/some-volume
         volume-object:
           mount_path: ./mount-path
           key: volume-key
@@ -132,14 +133,14 @@ services:
       DB_USER: ${{ secrets.db_user }}
       DB_PASS: ${{ secrets.db_pass }}
       FILE_DATA: file:./filedata.txt
-    # liveness_probe: # TODO: why doesn't this work for remote deployments?
-    #   success_threshold: 3
-    #   failure_threshold: 3
-    #   timeout: '10s'
-    #   interval: '20s'
-    #   initial_delay: '30s'
-    #   path: /
-    #   port: 8080
+    liveness_probe:
+      success_threshold: 3
+      failure_threshold: 3
+      timeout: '10s'
+      interval: '20s'
+      initial_delay: '30s'
+      path: /
+      port: 8080
     ${{ if architect.environment == 'local' }}:
       entrypoint:
         - npm
@@ -172,7 +173,7 @@ services:
       - npm
       - run
       - start
-    volumes: # TODO: how do we want to handle local to remote deployments?
+    volumes:
       volume-string: /usr/src/app/some-volume
       volume-object:
         mount_path: /usr/src/app/mount-path
@@ -199,37 +200,42 @@ services:
       environment:
         API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
 
-# TODO: tasks
-tasks:
-  curler:
-    schedule: '*/5 * * * ?'
-    image: ellerbrock/alpine-bash-curl-ssl
-    command:
-      - sh
-      - -c
-      - $RUN_CURL && $SERVER_URL
+# tasks: # TODO: add back in once https://gitlab.com/architect-io/architect-cli/-/issues/559 is fixed
+#   curler:
+#     schedule: '*/5 * * * ?'
+#     image: ellerbrock/alpine-bash-curl-ssl
+#     command:
+#       - sh
+#       - -c
+#       - $RUN_CURL && $SERVER_URL
 
-    environment:
-      SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
-      RUN_CURL: ${{ secrets.param_boolean }}
+#     environment:
+#       SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
+#       RUN_CURL: ${{ secrets.param_boolean }}
 
-  # curler-build: # TODO: keep pr remove this task?
-  #   schedule: '*/5 * * * ?'
-  #   build:
-  #     context: ./task
-  #   command:
-  #     - sh
-  #     - -c
-  #     - $RUN_CURL && $SERVER_URL
-  #   environment:
-  #     SERVER_URL: ${{ services.stateless-api.interfaces.main.url }}
-  #     RUN_CURL: ${{ secrets.param_boolean }}
-  # ${{ if architect.environment == 'local' }}:
-  #   local-task:
-  #     build:
-  #       context: ./frontend
-  #     environment:
-  #       API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
+#   curler-build:
+#     schedule: '*/5 * * * ?'
+#     build:
+#       context: ./task
+#     command:
+#       - sh
+#       - -c
+#       - curl $SERVER_URL
+#     environment:
+#       SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
+#       RUN_CURL: ${{ secrets.param_boolean }}
+#   ${{ if architect.environment == 'local' }}:
+#     curler-build-local:
+#       build:
+#         context: ./task
+#         dockerfile: ./Dockerfile
+#       command:
+#       - sh
+#       - -c
+#       - curl $SERVER_URL
+#       environment:
+#         SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
+#         RUN_CURL: ${{ secrets.param_boolean }}
 
 interfaces:
   stateless:
