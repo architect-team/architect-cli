@@ -99,7 +99,7 @@ services:
         ENVIRONMENT_UNSET:
       volumes:
         volume-string: /tmp/some-volume
-        volume-object:
+        volume-debug:
           mount_path: ./mount-path
           key: volume-key
           description: Volume description
