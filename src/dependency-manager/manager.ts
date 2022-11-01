@@ -289,8 +289,8 @@ export default abstract class DependencyManager {
     }
 
     const component_ref = component_spec.metadata.ref;
-    const { component_account_name, component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
-    const component_ref_with_account = component_account_name ? component_ref : ComponentSlugUtils.build(this.account, component_name, instance_name);
+    const { component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
+    const component_ref_with_account = ComponentSlugUtils.build(this.account, component_name, instance_name);
 
     const component_secrets = new Set(Object.keys({ ...component_spec.parameters, ...component_spec.secrets })); // TODO: 404: update
 
