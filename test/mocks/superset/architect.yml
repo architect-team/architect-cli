@@ -108,8 +108,8 @@ services:
           host_path: ./test
           description: Volume description
           readonly: false
-      cpu: 1
-      memory: 2GB
+      cpu: .8
+      memory: 1GB
       interfaces:
         postgres:
           port: 5432
