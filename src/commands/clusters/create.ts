@@ -90,12 +90,6 @@ export default class ClusterCreate extends BaseCommand {
         type: 'confirm',
         name: 'application_install',
         message: `Would you like to install the requisite networking applications? This is a required step before using Architect with this cluster. More details at the above URL.`,
-        when: () => {
-          if (isCi) {
-            throw new Error('--auto-approve is required in ci pipelines');
-          }
-          return true;
-        },
       });
       if (!confirmation.application_install) {
         this.warn(`Installation cancelled. You will be unable to deploy services to this cluster.\n\nIf you decide to proceed with installation, you can do so at the above URL. Or if you would like to deregister this cluster from Architect, run: \n\narchitect cluster:destroy -a ${account_name} --auto_approve ${cluster_name}`);
@@ -264,7 +258,7 @@ export default class ClusterCreate extends BaseCommand {
           },
           when: () => {
             if (isCi) {
-              throw new Error('--auto-approve is required in ci pipelines');
+              throw new Error('kube context is required in ci pipelines');
             }
             return true;
           },
