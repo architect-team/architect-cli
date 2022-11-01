@@ -86,7 +86,6 @@ services:
       POSTGRES_DB: ${{ secrets.db_name }}
     volumes:
       volume-object:
-        host_path: /tmp/data
         mount_path: /usr/data
     ${{ if architect.environment == 'local' }}:
       description: api-db service debug
@@ -100,12 +99,12 @@ services:
       volumes:
         volume-string: /tmp/some-volume
         volume-debug:
-          mount_path: ./mount-path
+          mount_path: /tmp/mount-path
           key: volume-key
           description: Volume description
           readonly: false
         another-volume-object:
-          mount_path: ./mount-path
+          mount_path: /tmp/mount-path
           host_path: ./test
           description: Volume description
           readonly: false
