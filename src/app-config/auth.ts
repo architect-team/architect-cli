@@ -203,6 +203,11 @@ export default class AuthClient {
   }
 
   async dockerLogin(username: string): Promise<void> {
+    try {
+      await docker(['logout', this.config.registry_host], { stdout: false });
+    } catch {
+      // docker is required, but not truly necessary here
+    }
     await docker([
       'login', this.config.registry_host,
       '-u', username,

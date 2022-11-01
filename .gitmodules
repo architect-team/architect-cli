@@ -1,3 +1,0 @@
-[submodule "examples/gcp-microservices-demo"]
-	path = examples/gcp-microservices-demo
-	url = https://github.com/architect-team/microservices-demo.git

@@ -1,4 +1,5 @@
 import { CliUx, Flags, Interfaces } from '@oclif/core';
+import archiver from 'archiver';
 import axios from 'axios';
 import chalk from 'chalk';
 import { classToClass, classToPlain } from 'class-transformer';
@@ -8,7 +9,8 @@ import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, TaskNode, validateInterpolation } from '../';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, TaskNode, validateInterpolation, VolumeSpec } from '../';
+import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
@@ -17,6 +19,9 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DockerBuildXUtils from '../common/docker/buildx.utils';
 import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
+import OrasPlugin from '../common/plugins/oras-plugin';
+import PluginManager from '../common/plugins/plugin-manager';
+import { transformVolumeSpec } from '../dependency-manager/spec/transform/common-transform';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
 tmp.setGracefulCleanup();
@@ -107,6 +112,38 @@ export default class ComponentRegister extends BaseCommand {
 
       await this.registerComponent(config_path, ComponentRegister.getTagFromFlags(flags));
     }
+  }
+
+  // eslint-disable-next-line max-params
+  private async uploadVolume(component_path: string, file_name: string, tag: string, volume: VolumeSpec, account: Account): Promise<VolumeSpec> {
+    const oras_plugin = await PluginManager.getPlugin<OrasPlugin>(this.app.config.getPluginDirectory(), OrasPlugin);
+
+    if (!volume.host_path) {
+      return classToClass(volume);
+    }
+
+    const tmp_dir = tmp.dirSync();
+    const base_folder = path.join(tmp_dir.name, `/${account.name}`);
+    fs.mkdirpSync(base_folder);
+    const registry_url = new URL(`/${account.name}/${file_name}:${tag}`, 'http://' + this.app.config.registry_host);
+
+    const updated_volume = classToClass(volume);
+    const component_folder = fs.lstatSync(component_path).isFile() ? path.dirname(component_path) : component_path;
+    const host_path = path.resolve(component_folder, untildify(updated_volume.host_path!));
+    updated_volume.host_path = registry_url.href.replace('http://', '');
+
+    const output_file_location = path.join(base_folder, `${file_name}.tar`);
+
+    const output = fs.createWriteStream(output_file_location);
+    const archive = archiver('tar', {
+      zlib: { level: 9 }, // Sets the compression level.
+    });
+    archive.directory(host_path, false).pipe(output);
+
+    await archive.finalize();
+    await oras_plugin.push(updated_volume.host_path, `${file_name}.tar`, base_folder);
+
+    return updated_volume;
   }
 
   private async registerComponent(config_path: string, tag: string) {
@@ -268,6 +305,17 @@ export default class ComponentRegister extends BaseCommand {
     }
 
     const new_spec = classToClass(component_spec);
+
+    for (const [service_name, service] of Object.entries(new_spec.services || {})) {
+      if (IF_EXPRESSION_REGEX.test(service_name)) {
+        continue;
+      }
+      for (const [volume_name, volume] of Object.entries(service.volumes || {})) {
+        const volume_config = transformVolumeSpec(volume_name, volume);
+        (service?.volumes as Dictionary<VolumeSpec>)[volume_name] = await this.uploadVolume(config_path, `${component_name}.services.${service_name}.volumes.${volume_name}`, tag, volume_config, selected_account);
+      }
+    }
+
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
       if (IF_EXPRESSION_REGEX.test(service_name)) {
         continue;
