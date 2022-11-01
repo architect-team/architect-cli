@@ -58,7 +58,7 @@ services:
       PARAM_STRING: ${{ secrets.param_string }}
       PARAM_REQUIRED: ${{ secrets.param_required }}
       PARAM_OPTIONAL: ${{ secrets.log_level }}
-    cpu: 1
+    cpu: 2
     memory: 4GB
     replicas: 2
     scaling:
@@ -108,8 +108,8 @@ services:
           host_path: ./test
           description: Volume description
           readonly: false
-      cpu: 2
-      memory: 4GB
+      cpu: 1
+      memory: 2GB
       interfaces:
         postgres:
           port: 5432
