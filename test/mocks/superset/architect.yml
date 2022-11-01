@@ -45,7 +45,7 @@ services:
     description: stateless app service description
     language: javascript
     build:
-      context: ./stateless-app
+      context: ../../../examples/stateless-component/
       dockerfile: Dockerfile
     command: 'npm run start'
     interfaces:
@@ -121,10 +121,10 @@ services:
       args:
         build_arg_string: arg_value
         build_arg_unset:
-      target: production
-      ${{ if architect.environment == 'local' }}:
-        target: dev
-      context: ./stateful-backend
+      # target: production # TODO: re-enable when we move the example app to the test directory
+      # ${{ if architect.environment == 'local' }}:
+      #   target: dev
+      context: ../../../examples/stateful-component/backend/
       dockerfile: ./Dockerfile
     interfaces:
       http: 8080
@@ -164,7 +164,7 @@ services:
 
   stateful-frontend:
     build:
-      context: ./stateful-frontend
+      context: ../../../examples/stateful-component/frontend/
     interfaces:
       web: 8081
     environment:
@@ -194,7 +194,7 @@ services:
   ${{ if architect.environment == 'local' }}:
     local-cli:
       build:
-        context: ./stateful-frontend
+        context: ../../../examples/stateful-component/frontend/
       interfaces:
         web: 8081
       environment:
