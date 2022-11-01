@@ -58,7 +58,7 @@ services:
       PARAM_STRING: ${{ secrets.param_string }}
       PARAM_REQUIRED: ${{ secrets.param_required }}
       PARAM_OPTIONAL: ${{ secrets.log_level }}
-    cpu: 2
+    cpu: 1
     memory: 4GB
     replicas: 2
     scaling:
