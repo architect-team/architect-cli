@@ -112,7 +112,16 @@ export default class ClusterCreate extends BaseCommand {
         type: 'input',
         name: 'cluster',
         message: 'What would you like to name your new cluster?',
-        when: !args.cluster,
+        when: () => {
+          if (args.cluster) {
+            return false;
+          }
+
+          if (isCi) {
+            this.error('Cluster name is required in ci pipelines');
+          }
+          return true;
+        },
         filter: value => value.toLowerCase(),
         validate: value => {
           if (Slugs.ArchitectSlugValidator.test(value)) return true;
@@ -166,7 +175,16 @@ export default class ClusterCreate extends BaseCommand {
     const agent_display_name = 'agent (BETA)';
     const cluster_type_answers: any = await inquirer.prompt([
       {
-        when: !flags.type,
+        when: () => {
+          if (flags.type) {
+            return false;
+          }
+
+          if (isCi) {
+            this.error('--type is required in ci pipelines');
+          }
+          return true;
+        },
         type: 'list',
         name: 'cluster_type',
         message: 'What type of cluster would you like to register?',
