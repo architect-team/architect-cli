@@ -7,17 +7,27 @@ author: Architect.io
 homepage: https://architect.io
 
 secrets:
+  log_level:
+    required: false
+    default: debug
+    description: |
+      Applied as an environment variable to each service in the component
+      (oneof: ['error', 'warning', 'debug', 'info', 'trace'])
+  db_user:
+    description: Root user to assign to the component's DB
+    default: architect
+  db_pass:
+    description: Root password to assign to the component's DB
+    default: secret
+  db_name: stateful
+  stateless_app_port: 8080
+  # not required for the apps to run
   param_string: architect
-  param_number: 3000
   param_boolean: true
   param_required:
     required: true
     description: Root password to assign to the component's DB
     default: secret
-  param_optional:
-    required: false
-    description: Name of the DB the component will store content in
-    default: stateful
   param_default_undefined:
     required: false
     description: Default undefined
@@ -27,73 +37,69 @@ secrets:
     default: true
   param_unset:
 
+dependencies:
+  hello-world: latest
+
 services:
-  api-db:
-    description: api-db service description
-    image: postgres:12
-    command: 'postgres'
-    entrypoint:
-      - 'echo'
-      - 'hello'
-    language: postgresql
-    environment:
-      POSTGRES_USER: ${{ secrets.param_string }}
-      POSTGRES_PASSWORD: ${{ secrets.param_required }}
-      POSTGRES_DB: ${{ secrets.param_optional }}
-      ENVIRONMENT_UNSET:
-    volumes:
-      volume-string: ./some-volume
-      volume-object:
-        mount_path: ./mount-path
-        key: volume-key
-        description: Volume description
-        readonly: false
+  stateless-app:
+    description: stateless app service description
+    language: javascript
     build:
-      context: .
+      context: ../../../examples/stateless-component/
       dockerfile: Dockerfile
-      args:
-        build_arg_string: arg_value
-        build_arg_unset:
+    command: 'npm run start'
+    interfaces:
+      http: 8080
+    environment:
+      LOG_LEVEL: ${{ secrets.log_level }}
+      HELLO_WORLD_ADDR: ${{ dependencies.hello-world.interfaces.hello.url }}
+      UNUSED_INGRESS_ADDR: ${{ ingresses.stateless-unused.url }}
+      ENVIRONMENT_UNSET:
+      PARAM_STRING: ${{ secrets.param_string }}
+      PARAM_REQUIRED: ${{ secrets.param_required }}
+      PARAM_OPTIONAL: ${{ secrets.log_level }}
     cpu: 2
     memory: 4GB
-    depends_on:
-      - stateful-api
-    labels:
-      label-string: some_label
-    interfaces:
-      postgres:
-        port: 5432
-        protocol: postgresql
-    liveness_probe:
-      success_threshold: 3
-      failure_threshold: 3
-      timeout: '12s'
-      interval: '20s'
-      initial_delay: '30s'
-      path: /liveness
-      port: 5432
     replicas: 2
     scaling:
       min_replicas: 1
       max_replicas: 3
       metrics:
         memory: 80
+    depends_on:
+      - api-db
+    labels:
+      label-string: some_label
+    ${{ if architect.environment == 'local' }}:
+      command: 'npm run start'
+
+  api-db:
+    image: postgres:12
+    language: postgresql
+    interfaces:
+      postgres:
+        port: 5432
+        protocol: postgresql
+    environment:
+      POSTGRES_USER: ${{ secrets.db_user }}
+      POSTGRES_PASSWORD: ${{ secrets.db_pass }}
+      POSTGRES_DB: ${{ secrets.db_name }}
+    volumes:
+      volume-object:
+        host_path: /tmp/data
+        mount_path: /usr/data
     ${{ if architect.environment == 'local' }}:
       description: api-db service debug
       image: postgres:12
-      command: 'postgres'
-      entrypoint:
-        - 'echo'
-        - 'hello'
       language: postgresql
       environment:
-        POSTGRES_USER: ${{ secrets.param_string }}
-        POSTGRES_PASSWORD: ${{ secrets.param_required }}
-        POSTGRES_DB: ${{ secrets.param_optional }}
+        POSTGRES_USER: ${{ secrets.db_user }}
+        POSTGRES_PASSWORD: ${{ secrets.db_pass }}
+        POSTGRES_DB: ${{ secrets.db_name }}
         ENVIRONMENT_UNSET:
       volumes:
-        volume-string: ./some-volume
-        volume-object:
+        volume-string: /tmp/some-volume
+        volume-debug:
           mount_path: ./mount-path
           key: volume-key
           description: Volume description
@@ -103,112 +109,149 @@ services:
           host_path: ./test
           description: Volume description
           readonly: false
+      cpu: 2
+      memory: 4GB
+      interfaces:
+        postgres:
+          port: 5432
+          protocol: postgresql
+
+  stateful-api:
+    build:
+      args:
+        build_arg_string: arg_value
+        build_arg_unset:
+      # target: production # TODO: re-enable when we move the example app to the test directory
+      # ${{ if architect.environment == 'local' }}:
+      #   target: dev
+      context: ../../../examples/stateful-component/backend/
+      dockerfile: ./Dockerfile
+    interfaces:
+      http: 8080
+    environment:
+      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ secrets.db_name }}
+      DB_USER: ${{ secrets.db_user }}
+      DB_PASS: ${{ secrets.db_pass }}
+      FILE_DATA: file:./filedata.txt
+    liveness_probe:
+      success_threshold: 3
+      failure_threshold: 3
+      timeout: '10s'
+      interval: '20s'
+      initial_delay: '30s'
+      path: /
+      port: 8080
+    ${{ if architect.environment == 'local' }}:
+      entrypoint:
+        - npm
+        - start
+      liveness_probe:
+        success_threshold: 3
+        failure_threshold: 3
+        timeout: '10s'
+        interval: '20s'
+        initial_delay: '30s'
+        path: /
+        port: 8080
+      labels:
+        label-string: some_label
       build:
         dockerfile: ./Dockerfile
         args:
           build_arg_string: arg_value
           build_arg_unset:
-      cpu: 2
-      memory: 4GB
+      replicas: 2
+
+  stateful-frontend:
+    build:
+      context: ../../../examples/stateful-component/frontend/
+    interfaces:
+      web: 8081
+    environment:
+      API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
+    entrypoint:
+      - npm
+      - run
+      - start
+    volumes:
+      volume-string: /usr/src/app/some-volume
+      volume-object:
+        mount_path: /usr/src/app/mount-path
+        description: Volume description
+        readonly: false
+    ${{ if architect.environment == 'local' }}:
+      build:
+        args:
+          NODE_ENV: development
       depends_on:
         - stateful-api
-      labels:
-        label-string: some_label
-      interfaces:
-        postgres:
-          port: 5432
-          protocol: postgresql
-      liveness_probe:
-        success_threshold: 3
-        failure_threshold: 3
-        timeout: '12s'
-        interval: '20s'
-        initial_delay: '30s'
-        path: /status
-        port: 5432
-      replicas: 2
       scaling:
         min_replicas: 1
         max_replicas: 3
         metrics:
           cpu: 80
 
-  stateful-api:
-    build:
-      context: ./backend
-      target: production
-      ${{ if architect.environment == 'local' }}:
-        target: dev
-    interfaces:
-      http: 8080
-    environment:
-      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ secrets.param_optional }}
-      DB_USER: ${{ secrets.param_string }}
-      DB_PASS: ${{ secrets.param_required }}
-  frontend:
-    build:
-      context: ./frontend
-    interfaces:
-      web: 8081
-    environment:
-      API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
-    ${{ if architect.environment == 'local' }}:
-      build:
-        args:
-          NODE_ENV: development
   ${{ if architect.environment == 'local' }}:
     local-cli:
       build:
-        context: ./frontend
+        context: ../../../examples/stateful-component/frontend/
       interfaces:
         web: 8081
       environment:
         API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
-  stateless-api:
-    image: heroku/nodejs-hello-world
-    interfaces:
-      main: ${{ secrets.param_number }}
-    environment:
-      FILE_DATA: file:./filedata.txt
 
-tasks:
-  curler:
-    schedule: '*/5 * * * ?'
-    image: ellerbrock/alpine-bash-curl-ssl
-    command:
-      - sh
-      - -c
-      - $RUN_CURL && $SERVER_URL
+# tasks: # TODO: add back in once https://gitlab.com/architect-io/architect-cli/-/issues/559 is fixed
+#   curler:
+#     schedule: '*/5 * * * ?'
+#     image: ellerbrock/alpine-bash-curl-ssl
+#     command:
+#       - sh
+#       - -c
+#       - $RUN_CURL && $SERVER_URL
 
-    environment:
-      SERVER_URL: ${{ services.stateless-api.interfaces.main.url }}
-      RUN_CURL: ${{ secrets.param_boolean }}
+#     environment:
+#       SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
+#       RUN_CURL: ${{ secrets.param_boolean }}
 
-  curler-build:
-    schedule: '*/5 * * * ?'
-    build:
-      context: ./task
-    command:
-      - sh
-      - -c
-      - $RUN_CURL && $SERVER_URL
-    environment:
-      SERVER_URL: ${{ services.stateless-api.interfaces.main.url }}
-      RUN_CURL: ${{ secrets.param_boolean }}
-  ${{ if architect.environment == 'local' }}:
-    local-task:
-      build:
-        context: ./frontend
-      environment:
-        API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
-
-dependencies:
-  examples/hello-world: latest
+#   curler-build:
+#     schedule: '*/5 * * * ?'
+#     build:
+#       context: ./task
+#     command:
+#       - sh
+#       - -c
+#       - curl $SERVER_URL
+#     environment:
+#       SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
+#       RUN_CURL: ${{ secrets.param_boolean }}
+#   ${{ if architect.environment == 'local' }}:
+#     curler-build-local:
+#       build:
+#         context: ./task
+#         dockerfile: ./Dockerfile
+#       command:
+#       - sh
+#       - -c
+#       - curl $SERVER_URL
+#       environment:
+#         SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
+#         RUN_CURL: ${{ secrets.param_boolean }}
 
 interfaces:
-  api: ${{ services.stateless-api.interfaces.main.url }}
-  frontend:
+  stateless:
+    url: ${{ services.stateless-app.interfaces.http.url }}
+    ingress:
+      enabled: true
+  stateless-unused:
+    url: ${{ services.stateless-app.interfaces.http.url }}
+    ingress:
+      ip_whitelist:
+        - 0.0.0.0
+      path: /api
+  stateful:
     description: Exposes the sign in webapp to upstreams
-    url: ${{ services.frontend.interfaces.web.url }}
+    url: ${{ services.stateful-frontend.interfaces.web.url }}
+    ingress:
+      subdomain: stateful
 
-artifact_image: some-image
+artifact_image: architect-artifact-image
