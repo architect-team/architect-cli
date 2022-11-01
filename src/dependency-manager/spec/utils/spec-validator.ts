@@ -227,24 +227,6 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
     instance_date: new Date(),
   };
 
-  if (!metadata?.interpolated) {
-    // Don't allow host_path outside of debug block
-    for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
-      for (const [volume_name, volume_spec] of Object.entries(service_spec.volumes || {})) {
-        if (volume_spec instanceof Object && volume_spec.host_path) {
-          const error = new ValidationError({
-            component: component_spec.name,
-            path: `services.${service_name}.volumes.${volume_name}.host_path`,
-            message: `services.${service_name}.volumes.${volume_name}.host_path cannot be defined outside of a debug block. https://docs.architect.io/components/local-configuration/#when-is-the-debug-block-used`,
-            value: volume_spec.host_path,
-            invalid_key: true,
-          });
-          errors.push(error);
-        }
-      }
-    }
-  }
-
   for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
     if (service_spec.deploy && service_spec.deploy.kubernetes.deployment) {
       // Only works if transpileOnly=false in ./bin/dev

@@ -7,6 +7,7 @@ import AccountUtils from '../../src/architect/account/account.utils';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
+import PluginManager from '../../src/common/plugins/plugin-manager';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
 import { mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST } from '../utils/mocks';
 
@@ -52,6 +53,7 @@ describe('register', function () {
       })
       .reply(200, {})
     )
+    .stub(PluginManager, 'getPlugin', sinon.stub().returns({}))
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'test/mocks/superset/architect.yml', '-a', 'examples'])
@@ -107,6 +109,7 @@ describe('register', function () {
     )
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
     .stub(fs, 'move', sinon.stub())
+    .stub(PluginManager, 'getPlugin', sinon.stub().returns({}))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
