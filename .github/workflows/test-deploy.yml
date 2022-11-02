@@ -22,8 +22,8 @@ jobs:
       # - run: apt update && apt install nodejs-current git curl jq # TODO: name steps, check if these are needed for gh
       - run: npm install -g @architect-io/cli
       - run: architect --version
-      - run: architect config:set registry_host registry.dev.architect.io
-      - run: architect config:set api_host https://api.dev.architect.io
+      # - run: architect config:set registry_host registry.dev.architect.io
+      # - run: architect config:set api_host https://api.dev.architect.io
       - run: architect config:set log_level debug
       - run: architect login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
       - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git
