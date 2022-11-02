@@ -25,7 +25,7 @@ jobs:
       - run: architect config:set registry_host registry.dev.architect.io
       - run: architect config:set api_host https://api.dev.architect.io
       - run: architect config:set log_level debug
-      - run: architect login -e ${ARCHITECT_EMAIL} -p ${ARCHITECT_PASSWORD}
+      - run: architect login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
       - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git
       - run: docker volume create volume-key
       - run: architect dev -e superset architect-cli/test/mocks/superset/architect.yml --browser=false -s param_unset=test -d
