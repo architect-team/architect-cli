@@ -15,7 +15,7 @@ jobs:
           node-version: '16'
           cache: 'npm'
       # - run: apt update && apt install nodejs-current git curl jq # TODO: name steps, check if these are needed for gh
-      - run: apt install curl
+      - run: sudo apt-get update && sudo apt-get install curl
       - run: npm install -g @architect-io/cli@1.28.0-arc-detached-testing.1
       - run: architect --version
       - run: architect config:set registry_host registry.dev.architect.io
