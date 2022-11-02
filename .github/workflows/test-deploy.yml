@@ -11,7 +11,33 @@ env:
   NPM_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
 
 jobs:
-  test:
+  # test_local:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '16'
+  #         cache: 'npm'
+  #     # - run: apt update && apt install nodejs-current git curl jq # TODO: name steps, check if these are needed for gh
+  #     - run: npm install -g @architect-io/cli
+  #     - run: architect --version
+  #     # - run: architect config:set registry_host registry.dev.architect.io
+  #     # - run: architect config:set api_host https://api.dev.architect.io
+  #     - run: architect config:set log_level debug
+  #     - run: architect login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
+  #     - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git # TODO: update branch
+  #     - run: docker volume create volume-key
+  #     - run: architect link examples/hello-world/architect.yml
+  #     - run: architect dev -e superset architect-cli/test/mocks/superset/architect.yml --browser=false -s param_unset=test -d
+  #     - run: sleep 60
+  #     - run: docker ps -a
+  #     - run: ENV_NAME=$(architect dev:list --format=json | jq 'keys[0]' | tr -d '"')
+  #     - run: architect dev:list
+  #     - run: echo $ENV_NAME
+  #     - run: architect exec -e $ENV_NAME superset.services.stateless-app -- sh -c "curl -S -I https://hello.localhost.architect.sh:443/"
+
+  test_remote:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -26,13 +52,13 @@ jobs:
       # - run: architect config:set api_host https://api.dev.architect.io
       - run: architect config:set log_level debug
       - run: architect login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
-      - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git
-      - run: docker volume create volume-key
-      - run: architect link examples/hello-world/architect.yml
-      - run: architect dev -e superset architect-cli/test/mocks/superset/architect.yml --browser=false -s param_unset=test -d
-      - run: sleep 60
-      - run: docker ps -a
-      - run: ENV_NAME=$(architect dev:list --format=json | jq 'keys[0]' | tr -d '"')
-      - run: architect dev:list
-      - run: echo $ENV_NAME
-      - run: architect exec -e $ENV_NAME superset.services.stateless-app -- sh -c "curl -S -I https://hello.localhost.architect.sh:443/"
+      - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git # TODO: update branch
+      # - if [ "${CREATE_ENVIRONMENT}" = "true" ]; then architect env:create architect-ci-do-ttl ${DEPLOY_TTL} || exit 0; fi
+      # - architect deploy --auto-approve -e ${ARCHITECT_ENVIRONMENT} ${COMPONENT_FILE} ${DEPLOY_INTERFACES} -s app_replicas=2
+      - run: architect register examples/hello-world/architect.yml
+      - run: architect deploy --auto-approve -e example-environment architect-cli/test/mocks/superset/architect.yml -s param_unset=test # TODO: deploy when we merge to rc
+      # - curl --insecure --fail -S -I ${APP_ENDPOINT} || exit 1
+      # - if [ -n "${APP_ENDPOINT_2}" ]; then curl --insecure --fail -S -I ${APP_ENDPOINT_2} || exit 1; fi
+      # - export CERT_DATA=$(openssl s_client -showcerts -connect ${APP_DOMAIN}:443 </dev/null | openssl x509 -noout -issuer)
+      # - if [[ "$CERT_DATA" = "issuer=C = US, O = Let's Encrypt, CN = R3" || "$CERT_DATA" = "issuer=C = US, O = (STAGING) Let's Encrypt, CN = (STAGING) Artificial Apricot R3" ]]; then echo "Valid cert generated"; else exit 1; fi
+      # - if [ "${DESTROY_COMPONENTS}" = "true" ]; then architect destroy --auto-approve -e ${ARCHITECT_ENVIRONMENT}; fi
