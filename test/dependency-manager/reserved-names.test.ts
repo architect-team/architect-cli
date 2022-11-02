@@ -16,7 +16,7 @@ describe('components with reserved_name field set', function () {
     it('simple local component with reserved name', async () => {
       const reserved_name = 'test-name';
       const component_config_yml = `
-        name: architect/cloud
+        name: cloud
         services:
           app:
             interfaces:
@@ -32,14 +32,14 @@ describe('components with reserved_name field set', function () {
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'architect/cloud': '/stack'
+        'cloud': '/stack'
       });
 
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('architect/cloud:latest')
+        await manager.loadComponentSpec('cloud:latest')
       ]);
 
-      const app_ref = resourceRefToNodeRef('architect/cloud.services.app');
+      const app_ref = resourceRefToNodeRef('cloud.services.app');
       const api_ref = reserved_name;
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
@@ -60,7 +60,7 @@ describe('components with reserved_name field set', function () {
               "context": path.resolve("/stack")
             },
             image: app_ref,
-            labels: ['architect.ref=architect/cloud.services.app']
+            labels: ['architect.ref=cloud.services.app']
           },
           [api_ref]: {
             "environment": {},
@@ -71,7 +71,7 @@ describe('components with reserved_name field set', function () {
               "context": path.resolve("/stack")
             },
             image: reserved_name,
-            labels: [`architect.ref=architect/cloud.services.api`]
+            labels: [`architect.ref=cloud.services.api`]
           },
         },
         "version": "3",
@@ -82,7 +82,7 @@ describe('components with reserved_name field set', function () {
 
     it('simple local component with interpolated reserved name', async () => {
       const component_config_yml = `
-        name: architect/cloud
+        name: cloud
         secrets:
           name_override:
             default: test-name
@@ -98,11 +98,11 @@ describe('components with reserved_name field set', function () {
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'architect/cloud': '/stack'
+        'cloud': '/stack'
       });
 
       try {
-        await manager.loadComponentSpec('architect/cloud:latest');
+        await manager.loadComponentSpec('cloud:latest');
       } catch (err: any) {
         expect(err).instanceOf(ValidationErrors);
         const errors = JSON.parse(err.message) as ValidationError[];
@@ -119,7 +119,7 @@ describe('components with reserved_name field set', function () {
     it('simple remote component', async () => {
       const reserved_name = 'test-name';
       const component_config_json = {
-        name: 'architect/cloud',
+        name: 'cloud',
         services: {
           app: {
             interfaces: {
@@ -136,14 +136,16 @@ describe('components with reserved_name field set', function () {
       };
 
       nock('http://localhost').get(`/accounts/architect/components/cloud/versions/v1`)
-        .reply(200, { tag: 'v1', config: component_config_json, service: { url: 'architect/cloud:v1' } });
+        .reply(200, { tag: 'v1', config: component_config_json, service: { url: 'cloud:v1' } });
 
       const manager = new LocalDependencyManager(axios.create());
+      manager.account = 'architect';
+
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('architect/cloud:v1')
+        await manager.loadComponentSpec('cloud:v1')
       ]);
       const app_ref = reserved_name;
-      const api_ref = resourceRefToNodeRef('architect/cloud.services.api');
+      const api_ref = resourceRefToNodeRef('cloud.services.api');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         app_ref,
@@ -155,7 +157,7 @@ describe('components with reserved_name field set', function () {
     it('simple remote component with override', async () => {
       const reserved_name = 'test-name';
       const component_config = {
-        name: 'architect/cloud',
+        name: 'cloud',
         secrets: {
           log_level: 'info'
         },
@@ -173,11 +175,13 @@ describe('components with reserved_name field set', function () {
       };
 
       nock('http://localhost').get(`/accounts/architect/components/cloud/versions/v1`)
-        .reply(200, { tag: 'v1', config: component_config, service: { url: 'architect/cloud:v1' } });
+        .reply(200, { tag: 'v1', config: component_config, service: { url: 'cloud:v1' } });
 
       const manager = new LocalDependencyManager(axios.create());
+      manager.account = 'architect';
+
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('architect/cloud:v1')
+        await manager.loadComponentSpec('cloud:v1')
       ], { '*': { log_level: 'debug' } });
       const app_ref = reserved_name;
       expect(graph.nodes.map((n) => n.ref)).has.members([app_ref]);
@@ -189,7 +193,7 @@ describe('components with reserved_name field set', function () {
     it('local component with edges and reserved name', async () => {
       const reserved_name = 'test-name';
       const component_config = {
-        name: 'architect/cloud',
+        name: 'cloud',
         services: {
           app: {
             interfaces: {
@@ -228,14 +232,14 @@ describe('components with reserved_name field set', function () {
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'architect/cloud': '/stack/architect.yml'
+        'cloud': '/stack/architect.yml'
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('architect/cloud:latest')
+        await manager.loadComponentSpec('cloud:latest')
       ]);
-      const app_ref = resourceRefToNodeRef('architect/cloud.services.app');
+      const app_ref = resourceRefToNodeRef('cloud.services.app');
       const api_ref = reserved_name;
-      const db_ref = resourceRefToNodeRef('architect/cloud.services.db');
+      const db_ref = resourceRefToNodeRef('cloud.services.db');
       expect(graph.nodes.map((n) => n.ref)).has.members([
         app_ref,
         api_ref,
@@ -269,7 +273,7 @@ describe('components with reserved_name field set', function () {
               "50001:8080",
             ],
             image: reserved_name,
-            labels: [`architect.ref=architect/cloud.services.api`]
+            labels: [`architect.ref=cloud.services.api`]
           },
           [app_ref]: {
             "depends_on": [
@@ -290,7 +294,7 @@ describe('components with reserved_name field set', function () {
               ],
             },
             image: app_ref,
-            labels: ['architect.ref=architect/cloud.services.app']
+            labels: ['architect.ref=cloud.services.app']
           },
           [db_ref]: {
             "environment": {},
@@ -298,7 +302,7 @@ describe('components with reserved_name field set', function () {
               "50002:5432"
             ],
             image: db_ref,
-            labels: ['architect.ref=architect/cloud.services.db']
+            labels: ['architect.ref=cloud.services.db']
           }
         },
         "version": "3",
@@ -397,7 +401,7 @@ describe('components with reserved_name field set', function () {
     it('environment ingress context produces the correct values for a simple external interface', async () => {
       const reserved_name = 'test-name';
       const cloud_component_config = {
-        name: 'architect/cloud',
+        name: 'cloud',
         services: {
           api: {
             interfaces: {
@@ -405,7 +409,7 @@ describe('components with reserved_name field set', function () {
             },
             environment: {
               EXTERNAL_APP_URL: "${{ ingresses['api-interface'].url }}",
-              EXTERNAL_APP_URL2: "${{ environment.ingresses['architect/cloud']['api-interface'].url }}",
+              EXTERNAL_APP_URL2: "${{ environment.ingresses['cloud']['api-interface'].url }}",
             },
             reserved_name,
           }
@@ -419,9 +423,9 @@ describe('components with reserved_name field set', function () {
         '/stack/cloud/architect.yml': yaml.dump(cloud_component_config),
       });
 
-      const manager = new LocalDependencyManager(axios.create(), { 'architect/cloud': '/stack/cloud/architect.yml' });
+      const manager = new LocalDependencyManager(axios.create(), { 'cloud': '/stack/cloud/architect.yml' });
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('architect/cloud:latest', { interfaces: { api: 'api-interface' } })
+        await manager.loadComponentSpec('cloud:latest', { interfaces: { api: 'api-interface' } })
       ]);
 
       expect(graph.edges.filter(e => e instanceof IngressEdge).length).eq(1);
@@ -435,18 +439,18 @@ describe('components with reserved_name field set', function () {
     it('component with deep dependencies', async () => {
       const reserved_name = 'test-name';
       const component_a = `
-      name: examples/component-a
+      name: component-a
       dependencies:
-        examples/component-b: latest
+        component-b: latest
       services:
         app:
           image: test:v1
       `;
 
       const component_b = `
-      name: examples/component-b
+      name: component-b
       dependencies:
-        examples/component-c: latest
+        component-c: latest
       services:
         api:
           image: test:v1
@@ -454,7 +458,7 @@ describe('components with reserved_name field set', function () {
       `;
 
       const component_c = `
-      name: examples/component-c
+      name: component-c
       services:
         api:
           image: test:v1
@@ -467,17 +471,17 @@ describe('components with reserved_name field set', function () {
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'examples/component-a': '/a/architect.yaml',
-        'examples/component-b': '/b/architect.yaml',
-        'examples/component-c': '/c/architect.yaml'
+        'component-a': '/a/architect.yaml',
+        'component-b': '/b/architect.yaml',
+        'component-c': '/c/architect.yaml'
       });
       const graph = await manager.getGraph([
-        ...await manager.loadComponentSpecs('examples/component-a'),
+        ...await manager.loadComponentSpecs('component-a'),
       ]);
 
-      const a_ref = resourceRefToNodeRef('examples/component-a.services.app');
+      const a_ref = resourceRefToNodeRef('component-a.services.app');
       const b_ref = reserved_name;
-      const c_ref = resourceRefToNodeRef('examples/component-c.services.api');
+      const c_ref = resourceRefToNodeRef('component-c.services.api');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         a_ref,
@@ -489,31 +493,31 @@ describe('components with reserved_name field set', function () {
     it('components with a shared dependency', async () => {
       const reserved_name = 'test-name';
       const component_a = `
-      name: examples/component-a
+      name: component-a
       dependencies:
-        examples/component-c: latest
+        component-c: latest
       services:
         app:
           image: test:v1
           environment:
-            C_ADDR: \${{ dependencies.examples/component-c.interfaces.api.url }}
-            C_EXT_ADDR: \${{ dependencies.examples/component-c.ingresses.api.url }}
+            C_ADDR: \${{ dependencies.component-c.interfaces.api.url }}
+            C_EXT_ADDR: \${{ dependencies.component-c.ingresses.api.url }}
       `;
 
       const component_b = `
-      name: examples/component-b
+      name: component-b
       dependencies:
-        examples/component-c: latest
+        component-c: latest
       services:
         api:
           image: test:v1
           environment:
-            C_ADDR: \${{ dependencies.examples/component-c.interfaces.api.url }}
-            C_EXT_ADDR: \${{ dependencies.examples/component-c.ingresses.api.url }}
+            C_ADDR: \${{ dependencies.component-c.interfaces.api.url }}
+            C_EXT_ADDR: \${{ dependencies.component-c.ingresses.api.url }}
       `;
 
       const component_c = `
-      name: examples/component-c
+      name: component-c
       services:
         api:
           image: test:v1
@@ -531,17 +535,17 @@ describe('components with reserved_name field set', function () {
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'examples/component-a': '/a/architect.yaml',
-        'examples/component-b': '/b/architect.yaml',
-        'examples/component-c': '/c/architect.yaml'
+        'component-a': '/a/architect.yaml',
+        'component-b': '/b/architect.yaml',
+        'component-c': '/c/architect.yaml'
       });
       const graph = await manager.getGraph([
-        ...await manager.loadComponentSpecs('examples/component-a'),
-        ...await manager.loadComponentSpecs('examples/component-b'),
+        ...await manager.loadComponentSpecs('component-a'),
+        ...await manager.loadComponentSpecs('component-b'),
       ]);
 
-      const a_ref = resourceRefToNodeRef('examples/component-a.services.app');
-      const b_ref = resourceRefToNodeRef('examples/component-b.services.api');
+      const a_ref = resourceRefToNodeRef('component-a.services.app');
+      const b_ref = resourceRefToNodeRef('component-b.services.api');
       const c_ref = reserved_name;
 
       const a_node = graph.getNodeByRef(a_ref) as ServiceNode;
@@ -559,7 +563,7 @@ describe('components with reserved_name field set', function () {
 
     it(`the same reserved name can't be used for more than one service`, async () => {
       const component_config_yml = `
-        name: architect/cloud
+        name: cloud
         secrets:
           name_override:
             default: test-name
@@ -579,12 +583,12 @@ describe('components with reserved_name field set', function () {
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'architect/cloud': '/stack/architect.yml'
+        'cloud': '/stack/architect.yml'
       });
 
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('architect/cloud:latest')
+          await manager.loadComponentSpec('cloud:latest')
         ]);
       } catch (err: any) {
         expect(err.message).eq(`A service named uncreative-name is declared in multiple places. The same name can't be used for multiple services.`);

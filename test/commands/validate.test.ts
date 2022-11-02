@@ -8,7 +8,7 @@ import { mockArchitectAuth } from '../utils/mocks';
 
 describe('architect validate component', function () {
   const subdomain_token_to_config_yaml_string = (subdomain_token: string): string =>
-    `name: tests/validatesubdomain
+    `name: validatesubdomain
 services:
   validatesubdomain:
     build:
@@ -84,17 +84,16 @@ interfaces:
     .command(['validate', 'test/mocks/validationerrors/architect.yml'])
     .catch(err => {
       expect(err.name).to.contain('ValidationErrors');
-      expect(err.name).to.contain('component: tests/validation_errors');
+      expect(err.name).to.contain('component: validation_errors');
       expect(err.name).to.contain(`file: ${path.resolve(`test/mocks/validationerrors/architect.yml`)}`);
     })
     .it('correctly displays prettyValidationErrors error message to screen in place of a stacktrace', ctx => {
-      expect(ctx.stderr).to.contain('›  1 | name: tests/validation_errors');
-      expect(ctx.stderr).to.contain('must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).');
+      expect(ctx.stderr).to.contain('›  1 | name: validation_errors');
+      expect(ctx.stderr).to.contain('must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32');
       expect(ctx.stdout).to.equal('');
     });
 
   describe('expect fail for invalid subdomain', () => {
-
     const invalid_subdomain_tokens = [
       '_',
       '-',
@@ -172,7 +171,7 @@ interfaces:
       'd______D',
     ];
 
-    const tmp_test_file = path.normalize(untildify("~/some_fake_file.yml"));
+    const tmp_test_file = path.normalize(untildify('~/some_fake_file.yml'));
     for (const invalid_subdomain_token of invalid_subdomain_tokens) {
       mockArchitectAuth()
         .stub(fs, 'readFileSync', sinon.fake.returns(subdomain_token_to_config_yaml_string(invalid_subdomain_token)))
@@ -197,7 +196,6 @@ interfaces:
   }).timeout(20000);
 
   describe('expect pass for valid subdomain', () => {
-
     const valid_subdomain_tokens = [
       '*',
       '@',
@@ -218,7 +216,7 @@ interfaces:
       'a-b-c-d-eFG-H',
     ];
 
-    const tmp_test_file = path.normalize(untildify("~/some_fake_file.yml"));
+    const tmp_test_file = path.normalize(untildify('~/some_fake_file.yml'));
     for (const valid_subdomain_token of valid_subdomain_tokens) {
       mockArchitectAuth()
         .stub(fs, 'readFileSync', sinon.fake.returns(subdomain_token_to_config_yaml_string(valid_subdomain_token)))
@@ -229,10 +227,9 @@ interfaces:
         .stderr({ print })
         .command(['validate', tmp_test_file])
         .it(`'${valid_subdomain_token}'`, ctx => {
-          expect(ctx.stdout).to.contain('tests/validatesubdomain');
+          expect(ctx.stdout).to.contain('validatesubdomain');
           expect(ctx.stdout).to.contain(tmp_test_file);
         });
     }
   }).timeout(20000);
-
 });

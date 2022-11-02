@@ -12,7 +12,7 @@ describe('external spec v1', () => {
 
   it('simple external', async () => {
     const component_config = {
-      name: 'architect/cloud',
+      name: 'cloud',
       services: {
         app: {
           interfaces: {
@@ -35,13 +35,13 @@ describe('external spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml'
+      'cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud:latest')
+      await manager.loadComponentSpec('cloud:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud.services.app')
+    const app_ref = resourceRefToNodeRef('cloud.services.app')
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
     ])
@@ -63,7 +63,7 @@ describe('external spec v1', () => {
 
   it('simple no override', async () => {
     const component_config = {
-      name: 'architect/cloud',
+      name: 'cloud',
       secrets: {
         optional_host: { required: false },
         optional_port: { default: 8080 }
@@ -90,13 +90,13 @@ describe('external spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml'
+      'cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud:latest')
+      await manager.loadComponentSpec('cloud:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud.services.app')
+    const app_ref = resourceRefToNodeRef('cloud.services.app')
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
     ])
@@ -111,7 +111,7 @@ describe('external spec v1', () => {
 
   it('simple external override', async () => {
     const component_config = {
-      name: 'architect/cloud',
+      name: 'cloud',
       secrets: {
         optional_host: {},
         optional_port: { default: 8080 }
@@ -138,14 +138,14 @@ describe('external spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml'
+      'cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud:latest')
+      await manager.loadComponentSpec('cloud:latest')
       // @ts-ignore
     ], { '*': { optional_host: 'cloud.architect.io', optional_port: 8081 } });
 
-    const app_ref = resourceRefToNodeRef('architect/cloud.services.app')
+    const app_ref = resourceRefToNodeRef('cloud.services.app')
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
     ])
@@ -167,7 +167,7 @@ describe('external spec v1', () => {
 
   it('service connecting to external', async () => {
     const component_config = {
-      name: 'architect/cloud',
+      name: 'cloud',
       services: {
         app: {
           interfaces: {
@@ -196,13 +196,13 @@ describe('external spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml'
+      'cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud:latest')
+      await manager.loadComponentSpec('cloud:latest')
     ]);
-    const app_ref = resourceRefToNodeRef('architect/cloud.services.app')
-    const api_ref = resourceRefToNodeRef('architect/cloud.services.api')
+    const app_ref = resourceRefToNodeRef('cloud.services.app')
+    const api_ref = resourceRefToNodeRef('cloud.services.api')
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
@@ -231,7 +231,7 @@ describe('external spec v1', () => {
             context: path.resolve('/stack')
           },
           image: app_ref,
-          labels: ['architect.ref=architect/cloud.services.app']
+          labels: ['architect.ref=cloud.services.app']
         }
       },
       'version': '3',
@@ -242,21 +242,21 @@ describe('external spec v1', () => {
 
   it('dependency refs external host', async () => {
     const component_config = `
-      name: architect/component
+      name: component
       dependencies:
-        architect/dependency: latest
+        dependency: latest
       services:
         app:
           image: hashicorp/http-echo
           environment:
-            DEP_ADDR: \${{ dependencies.architect/dependency.interfaces.api.url }}
-            CI_ADDR: \${{ dependencies.architect/dependency.interfaces.ci.url }}
-            DEP_EXTERNAL_ADDR: \${{ dependencies.architect/dependency.ingresses.api.url }}
-            CI_EXTERNAL_ADDR: \${{ dependencies.architect/dependency.ingresses.ci.url }}
+            DEP_ADDR: \${{ dependencies.dependency.interfaces.api.url }}
+            CI_ADDR: \${{ dependencies.dependency.interfaces.ci.url }}
+            DEP_EXTERNAL_ADDR: \${{ dependencies.dependency.ingresses.api.url }}
+            CI_EXTERNAL_ADDR: \${{ dependencies.dependency.ingresses.ci.url }}
     `;
 
     const dependency_config = `
-      name: architect/dependency
+      name: dependency
       secrets:
         optional_host: ci.architect.io
       services:
@@ -287,15 +287,15 @@ describe('external spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/component': '/stack/component/architect.yml',
-      'architect/dependency': '/stack/dependency/architect.yml'
+      'component': '/stack/component/architect.yml',
+      'dependency': '/stack/dependency/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/component:latest'),
-      await manager.loadComponentSpec('architect/dependency:latest')
+      await manager.loadComponentSpec('component:latest'),
+      await manager.loadComponentSpec('dependency:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/component.services.app')
+    const app_ref = resourceRefToNodeRef('component.services.app')
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
       DEP_ADDR: `https://external.localhost`,
@@ -304,7 +304,7 @@ describe('external spec v1', () => {
       CI_EXTERNAL_ADDR: `https://ci.architect.io:8501`
     });
 
-    const dep_ref = resourceRefToNodeRef('architect/dependency.services.app')
+    const dep_ref = resourceRefToNodeRef('dependency.services.app')
     const dep_node = graph.getNodeByRef(dep_ref) as ServiceNode;
     expect(dep_node.config.environment).to.deep.eq({
       DEP_EXTERNAL_ADDR: `https://external.localhost`,
@@ -316,7 +316,7 @@ describe('external spec v1', () => {
 
   it('should strip default ports from environment ingress references', async () => {
     const component_config = `
-      name: architect/component
+      name: component
       services:
         app:
           image: hashicorp/http-echo
@@ -324,7 +324,7 @@ describe('external spec v1', () => {
             api: 8080
           environment:
             SELF_ADDR: \${{ ingresses.app.url }}
-            SELF_ADDR2: \${{ environment.ingresses['architect/component'].app.url }}
+            SELF_ADDR2: \${{ environment.ingresses['component'].app.url }}
       interfaces:
         app: \${{ services.app.interfaces.api.url }}
     `;
@@ -334,13 +334,13 @@ describe('external spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/component': '/stack/component/architect.yml'
+      'component': '/stack/component/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/component:latest')
+      await manager.loadComponentSpec('component:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/component.services.app')
+    const app_ref = resourceRefToNodeRef('component.services.app')
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
       SELF_ADDR: `http://app.arc.localhost`,
@@ -350,7 +350,7 @@ describe('external spec v1', () => {
 
   it('host override db via secret', async () => {
     const component_config = `
-      name: architect/component
+      name: component
 
       secrets:
         MYSQL_HOST:
@@ -379,15 +379,15 @@ describe('external spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/component': '/stack/component/architect.yml'
+      'component': '/stack/component/architect.yml'
     });
 
-    const core_ref = resourceRefToNodeRef('architect/component.services.core')
-    const db_ref = resourceRefToNodeRef('architect/component.services.db')
+    const core_ref = resourceRefToNodeRef('component.services.core')
+    const db_ref = resourceRefToNodeRef('component.services.db')
 
     // No host override
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/component:latest')
+      await manager.loadComponentSpec('component:latest')
     ], { '*': { MYSQL_DATABASE: 'test' } });
     const test_node = graph.getNodeByRef(core_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
@@ -397,7 +397,7 @@ describe('external spec v1', () => {
 
     // Host override
     const graph2 = await manager.getGraph([
-      await manager.loadComponentSpec('architect/component:latest')
+      await manager.loadComponentSpec('component:latest')
     ], { '*': { MYSQL_HOST: 'external', MYSQL_DATABASE: 'test' } });
     const test_node2 = graph2.getNodeByRef(core_ref) as ServiceNode;
     expect(test_node2.config.environment).to.deep.eq({
@@ -408,7 +408,7 @@ describe('external spec v1', () => {
 
   it('host override via templating', async () => {
     const component_config = `
-      name: architect/component
+      name: component
 
       services:
         db:
@@ -432,13 +432,13 @@ describe('external spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/component': '/stack/component/architect.yml'
+      'component': '/stack/component/architect.yml'
     });
 
-    const core_ref = resourceRefToNodeRef('architect/component.services.core')
+    const core_ref = resourceRefToNodeRef('component.services.core')
 
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/component:latest')
+      await manager.loadComponentSpec('component:latest')
     ]);
 
     const test_node = graph.getNodeByRef(core_ref) as ServiceNode;

@@ -25,7 +25,7 @@ describe('interpolation spec v1', () => {
 
   it('interpolation null value', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
 
     secrets:
       null_required:
@@ -59,19 +59,19 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('examples/hello-world'),
+      await manager.loadComponentSpec('hello-world'),
     ], { '*': { null_required: null } });
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({});
   });
 
   it('interpolation multiple refs on same line', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
 
     secrets:
       first: 1
@@ -88,19 +88,19 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('examples/hello-world'),
+      await manager.loadComponentSpec('hello-world'),
     ]);
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({ TEST: '1 and 2' });
   });
 
   it('interpolation dependencies', async () => {
     const web_component_config = {
-      name: 'concourse/web',
+      name: 'web',
       interfaces: {
         main: '${{ services.web.interfaces.main.url }}'
       },
@@ -113,16 +113,16 @@ describe('interpolation spec v1', () => {
       }
     }
     const worker_component_config = {
-      name: 'concourse/worker',
+      name: 'worker',
       dependencies: {
-        'concourse/web': 'latest'
+        'web': 'latest'
       },
       services: {
         worker: {
           environment: {
-            REGULAR: '${{ dependencies.concourse/web.interfaces.main.host }}:2222',
-            SINGLE_QUOTE: '${{ dependencies[\'concourse/web\'].interfaces.main.host }}:2222',
-            DOUBLE_QUOTE: '${{ dependencies["concourse/web"].interfaces.main.host }}:2222',
+            REGULAR: '${{ dependencies.web.interfaces.main.host }}:2222',
+            SINGLE_QUOTE: '${{ dependencies[\'web\'].interfaces.main.host }}:2222',
+            DOUBLE_QUOTE: '${{ dependencies["web"].interfaces.main.host }}:2222',
           }
         }
       },
@@ -135,18 +135,18 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'concourse/web': '/stack/web.yml',
-      'concourse/worker': '/stack/worker.yml'
+      'web': '/stack/web.yml',
+      'worker': '/stack/worker.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('concourse/web'),
-      await manager.loadComponentSpec('concourse/worker')
+      await manager.loadComponentSpec('web'),
+      await manager.loadComponentSpec('worker')
     ]);
 
-    const web_interfaces_ref = resourceRefToNodeRef('concourse/web');
-    const web_resource_ref = 'concourse/web.services.web';
+    const web_interfaces_ref = resourceRefToNodeRef('web');
+    const web_resource_ref = 'web.services.web';
     const web_ref = resourceRefToNodeRef(web_resource_ref);
-    const worker_ref = resourceRefToNodeRef('concourse/worker.services.worker');
+    const worker_ref = resourceRefToNodeRef('worker.services.worker');
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       web_interfaces_ref,
@@ -179,7 +179,7 @@ describe('interpolation spec v1', () => {
             'context': path.resolve('/stack')
           },
           image: web_ref,
-          labels: ['architect.ref=concourse/web.services.web']
+          labels: ['architect.ref=web.services.web']
         },
         [worker_ref]: {
           'environment': {
@@ -194,7 +194,7 @@ describe('interpolation spec v1', () => {
           'depends_on': [
             web_ref
           ],
-          labels: ['architect.ref=concourse/worker.services.worker']
+          labels: ['architect.ref=worker.services.worker']
         },
       },
       'version': '3',
@@ -203,12 +203,12 @@ describe('interpolation spec v1', () => {
     expect(template).to.be.deep.equal(expected_compose);
 
     const public_manager = new LocalDependencyManager(axios.create(), {
-      'concourse/web': '/stack/web.yml',
-      'concourse/worker': '/stack/worker.yml'
+      'web': '/stack/web.yml',
+      'worker': '/stack/worker.yml'
     });
     const public_graph = await public_manager.getGraph([
-      await public_manager.loadComponentSpec('concourse/web', { interfaces: { public: 'main' } }),
-      await public_manager.loadComponentSpec('concourse/worker')
+      await public_manager.loadComponentSpec('web', { interfaces: { public: 'main' } }),
+      await public_manager.loadComponentSpec('worker')
     ]);
 
     expect(public_graph.nodes.map((n) => n.ref)).has.members([
@@ -261,14 +261,14 @@ describe('interpolation spec v1', () => {
       external_links: [
         'gateway:public.arc.localhost'
       ],
-      labels: ['architect.ref=concourse/worker.services.worker']
+      labels: ['architect.ref=worker.services.worker']
     };
     expect(public_template.services[worker_ref]).to.be.deep.equal(expected_worker_compose);
   });
 
   it('ingresses interpolation', async () => {
     const backend_config = `
-    name: examples/backend
+    name: backend
     interfaces:
       main: \${{ services.api.interfaces.api.url }}
     services:
@@ -277,17 +277,17 @@ describe('interpolation spec v1', () => {
           api: 8081
     `
     const frontend_config = `
-    name: examples/frontend
+    name: frontend
     interfaces:
       main: \${{ services.app.interfaces.app.url }}
     dependencies:
-      examples/backend: latest
+      backend: latest
     services:
       app:
         interfaces:
           app: 8080
         environment:
-          EXTERNAL_API_HOST: \${{ dependencies['examples/backend'].ingresses['main'].url }}
+          EXTERNAL_API_HOST: \${{ dependencies['backend'].ingresses['main'].url }}
     `
 
     mock_fs({
@@ -296,19 +296,19 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/backend': '/backend/architect.yml',
-      'examples/frontend': '/frontend/architect.yml'
+      'backend': '/backend/architect.yml',
+      'frontend': '/frontend/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('examples/backend'),
-      await manager.loadComponentSpec('examples/frontend')
+      await manager.loadComponentSpec('backend'),
+      await manager.loadComponentSpec('frontend')
     ]);
 
-    const backend_resource_ref = 'examples/backend.services.api';
+    const backend_resource_ref = 'backend.services.api';
     const backend_ref = resourceRefToNodeRef(backend_resource_ref);
     const backend_interface_ref = `${backend_ref}-main`;
     const backend_external_url = `http://main.arc.localhost`
-    const frontend_ref = resourceRefToNodeRef('examples/frontend.services.app');
+    const frontend_ref = resourceRefToNodeRef('frontend.services.app');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
     expect(frontend_node.config.environment).to.deep.eq({
       EXTERNAL_API_HOST: backend_external_url,
@@ -330,18 +330,18 @@ describe('interpolation spec v1', () => {
 
   it('ingresses interpolation with no dependency deployed', async () => {
     const frontend_config = `
-    name: examples/frontend
+    name: frontend
     interfaces:
       main: \${{ services.app.interfaces.app.url }}
     dependencies:
-      examples/backend: latest
+      backend: latest
     services:
       app:
         interfaces:
           app: 8080
         environment:
-          INTERNAL_ADDR: \${{ dependencies['examples/backend'].interfaces['main'].url }}
-          EXTERNAL_API_ADDR: \${{ dependencies['examples/backend'].ingresses['main'].url }}
+          INTERNAL_ADDR: \${{ dependencies['backend'].interfaces['main'].url }}
+          EXTERNAL_API_ADDR: \${{ dependencies['backend'].ingresses['main'].url }}
     `
 
     mock_fs({
@@ -349,30 +349,30 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/frontend': '/frontend/architect.yml'
+      'frontend': '/frontend/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('examples/frontend')
+      await manager.loadComponentSpec('frontend')
     ], {}, { interpolate: true, validate: false });
 
-    const frontend_ref = resourceRefToNodeRef('examples/frontend.services.app');
+    const frontend_ref = resourceRefToNodeRef('frontend.services.app');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
     const expected = {
-      INTERNAL_ADDR: `\${{ dependencies['examples/backend'].interfaces['main'].url }}`,
-      EXTERNAL_API_ADDR: `\${{ dependencies['examples/backend'].ingresses['main'].url }}`,
+      INTERNAL_ADDR: `\${{ dependencies['backend'].interfaces['main'].url }}`,
+      EXTERNAL_API_ADDR: `\${{ dependencies['backend'].ingresses['main'].url }}`,
     };
     expect(frontend_node.config.environment).to.deep.eq(expected)
     const template = await DockerComposeUtils.generate(graph);
     const expected2 = {
-      INTERNAL_ADDR: `\$\${{ dependencies['examples/backend'].interfaces['main'].url }}`,
-      EXTERNAL_API_ADDR: `\$\${{ dependencies['examples/backend'].ingresses['main'].url }}`,
+      INTERNAL_ADDR: `\$\${{ dependencies['backend'].interfaces['main'].url }}`,
+      EXTERNAL_API_ADDR: `\$\${{ dependencies['backend'].ingresses['main'].url }}`,
     };
     expect(template.services[frontend_ref].environment).to.deep.eq(expected2)
   });
 
   it('ingresses consumers interpolation', async () => {
     const backend_config = `
-    name: examples/backend
+    name: backend
     interfaces:
       main: \${{ services.api.interfaces.api.url }}
       main2: \${{ services.api.interfaces.api.url }}
@@ -385,45 +385,45 @@ describe('interpolation spec v1', () => {
           CORS2: \${{ ingresses.main2.consumers }}
     `
     const frontend_config = `
-    name: examples/frontend
+    name: frontend
     interfaces:
       main: \${{ services.app.interfaces.app.url }}
     dependencies:
-      examples/backend: latest
+      backend: latest
     services:
       app:
         interfaces:
           app: 8080
         environment:
-          EXTERNAL_API_ADDR: \${{ dependencies['examples/backend'].ingresses['main'].url }}
-          EXTERNAL_API_ADDR2: \${{ dependencies['examples/backend'].ingresses['main2'].url }}
+          EXTERNAL_API_ADDR: \${{ dependencies['backend'].ingresses['main'].url }}
+          EXTERNAL_API_ADDR2: \${{ dependencies['backend'].ingresses['main2'].url }}
     `
     const frontend_config2 = `
-    name: examples/frontend2
+    name: frontend2
     interfaces:
       main:
         ingress:
           subdomain: '@'
         url: \${{ services.app.interfaces.app.url }}
     dependencies:
-      examples/backend: latest
+      backend: latest
     services:
       app:
         interfaces:
           app: 8080
         environment:
           EXTERNAL_ADDR: \${{ ingresses.main.url }}
-          EXTERNAL_API_ADDR: \${{ dependencies['examples/backend'].ingresses['main'].url }}
+          EXTERNAL_API_ADDR: \${{ dependencies['backend'].ingresses['main'].url }}
     `
     const frontend_config3 = `
-    name: examples/frontend3
+    name: frontend3
     interfaces:
       main:
         ingress:
           subdomain: frontend3
         url: \${{ services.app.interfaces.app.url }}
     dependencies:
-      examples/backend: latest
+      backend: latest
     services:
       app:
         interfaces:
@@ -433,7 +433,7 @@ describe('interpolation spec v1', () => {
             port: 443
         environment:
           EXTERNAL_ADDR: \${{ ingresses.main.url }}
-          EXTERNAL_API_ADDR: \${{ dependencies['examples/backend'].ingresses['main'].url }}
+          EXTERNAL_API_ADDR: \${{ dependencies['backend'].ingresses['main'].url }}
     `
 
     mock_fs({
@@ -444,21 +444,21 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/backend': '/backend/architect.yml',
-      'examples/frontend': '/frontend/architect.yml',
-      'examples/frontend2': '/frontend2/architect.yml',
-      'examples/frontend3': '/frontend3/architect.yml'
+      'backend': '/backend/architect.yml',
+      'frontend': '/frontend/architect.yml',
+      'frontend2': '/frontend2/architect.yml',
+      'frontend3': '/frontend3/architect.yml'
     });
 
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('examples/backend'),
-      await manager.loadComponentSpec('examples/frontend', { interfaces: { frontend: 'main' } }),
-      await manager.loadComponentSpec('examples/frontend2'),
-      await manager.loadComponentSpec('examples/frontend3')
+      await manager.loadComponentSpec('backend'),
+      await manager.loadComponentSpec('frontend', { interfaces: { frontend: 'main' } }),
+      await manager.loadComponentSpec('frontend2'),
+      await manager.loadComponentSpec('frontend3')
     ]);
 
     const template = await DockerComposeUtils.generate(graph);
-    const backend_ref = resourceRefToNodeRef('examples/backend.services.api');
+    const backend_ref = resourceRefToNodeRef('backend.services.api');
     expect(template.services[backend_ref].environment).to.deep.eq({
       CORS: JSON.stringify([`http://arc.localhost`, 'http://frontend.arc.localhost', 'http://main.arc.localhost', 'http://main2.arc.localhost', 'https://app.architect.io']),
       CORS2: JSON.stringify(['http://frontend.arc.localhost', 'http://main.arc.localhost', 'http://main2.arc.localhost'])
@@ -471,7 +471,7 @@ describe('interpolation spec v1', () => {
 
   it('interpolation interfaces', async () => {
     const backend_config = `
-    name: examples/backend
+    name: backend
     interfaces:
       main: \${{ services.api.interfaces.api.url }}
       main2: \${{ services.api.interfaces.api.url }}
@@ -485,24 +485,24 @@ describe('interpolation spec v1', () => {
           INTERNAL_HOST: \${{ services.api.interfaces.api.url }}
           EXTERNAL_HOST: \${{ ingresses['main'].url }}
           EXTERNAL_HOST2: \${{ ingresses['main2'].url }}
-          EXTERNAL_HOST3: \${{ environment.ingresses['examples/backend']['main'].url }}
+          EXTERNAL_HOST3: \${{ environment.ingresses['backend']['main'].url }}
     `
     const frontend_config = `
-    name: examples/frontend
+    name: frontend
     interfaces:
       main: \${{ services.app.interfaces.app.url }}
     dependencies:
-      examples/backend: latest
+      backend: latest
     services:
       app:
         interfaces:
           app: 8080
         environment:
-          SUBDOMAIN: \${{ dependencies['examples/backend'].ingresses.main.subdomain }}
-          DNS_ZONE: \${{ dependencies['examples/backend'].ingresses.main.dns_zone }}
-          EXTERNAL_API_HOST: \${{ dependencies['examples/backend'].ingresses['main'].url }}
-          EXTERNAL_API_HOST2: \${{ dependencies['examples/backend'].ingresses['main2'].url }}
-          EXTERNAL_API_HOST3: \${{ environment.ingresses['examples/backend']['main'].url }}
+          SUBDOMAIN: \${{ dependencies['backend'].ingresses.main.subdomain }}
+          DNS_ZONE: \${{ dependencies['backend'].ingresses.main.dns_zone }}
+          EXTERNAL_API_HOST: \${{ dependencies['backend'].ingresses['main'].url }}
+          EXTERNAL_API_HOST2: \${{ dependencies['backend'].ingresses['main2'].url }}
+          EXTERNAL_API_HOST3: \${{ environment.ingresses['backend']['main'].url }}
           INTERNAL_APP_URL: \${{ interfaces.main.url }}
     `
 
@@ -512,16 +512,16 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/backend': '/backend/architect.yml',
-      'examples/frontend': '/frontend/architect.yml'
+      'backend': '/backend/architect.yml',
+      'frontend': '/frontend/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('examples/backend', { interfaces: { backend: 'main', backend2: 'main2' } }),
-      await manager.loadComponentSpec('examples/frontend')
+      await manager.loadComponentSpec('backend', { interfaces: { backend: 'main', backend2: 'main2' } }),
+      await manager.loadComponentSpec('frontend')
     ]);
     const backend_external_url = 'http://backend.arc.localhost'
     const backend2_external_url = 'http://backend2.arc.localhost'
-    const backend_ref = resourceRefToNodeRef('examples/backend.services.api');
+    const backend_ref = resourceRefToNodeRef('backend.services.api');
     const backend_node = graph.getNodeByRef(backend_ref) as ServiceNode;
     expect(backend_node.config.environment).to.deep.eq({
       DNS_ZONE: 'arc.localhost',
@@ -531,7 +531,7 @@ describe('interpolation spec v1', () => {
       EXTERNAL_HOST2: backend2_external_url,
       EXTERNAL_HOST3: backend_external_url
     })
-    const frontend_ref = resourceRefToNodeRef('examples/frontend.services.app');
+    const frontend_ref = resourceRefToNodeRef('frontend.services.app');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
     expect(frontend_node.config.environment).to.deep.eq({
       DNS_ZONE: 'arc.localhost',
@@ -545,7 +545,7 @@ describe('interpolation spec v1', () => {
 
   // it('interpolation environment file:', async () => {
   //   const component_config = {
-  //     name: 'test/component',
+  //     name: 'component',
   //     interfaces: {
   //       main: '${{ services.web.interfaces.main.url }}'
   //     },
@@ -572,12 +572,12 @@ describe('interpolation spec v1', () => {
   //   });
 
   //   const manager = new LocalDependencyManager(axios.create(), {
-  //     'test/component': '/stack/web/web.json',
+  //     'component': '/stack/web/web.json',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentSpec('test/component'),
+  //     await manager.loadComponentSpec('component'),
   //   ]);
-  //   const web_ref = resourceRefToNodeRef('test/component.services.web');
+  //   const web_ref = resourceRefToNodeRef('component.services.web');
   //   const node = graph.getNodeByRef(web_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     APPLICATION_PROPERTIES: 'log_level=debug'
@@ -586,7 +586,7 @@ describe('interpolation spec v1', () => {
 
   // it('service environment param interpolated from component secret with file ref', async () => {
   //   const component_config = {
-  //     name: 'test/component',
+  //     name: 'component',
   //     interfaces: {
   //       main: '${{ services.web.interfaces.main.url }}'
   //     },
@@ -611,12 +611,12 @@ describe('interpolation spec v1', () => {
   //   });
 
   //   const manager = new LocalDependencyManager(axios.create(), {
-  //     'test/component': '/stack/web/web.json',
+  //     'component': '/stack/web/web.json',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentSpec('test/component'),
+  //     await manager.loadComponentSpec('component'),
   //   ]);
-  //   const web_ref = resourceRefToNodeRef('test/component.services.web');
+  //   const web_ref = resourceRefToNodeRef('component.services.web');
   //   const node = graph.getNodeByRef(web_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_DATA: 'some test file data from component param'
@@ -625,7 +625,7 @@ describe('interpolation spec v1', () => {
 
   // it('yaml file ref with a mix of numbers and letters', async () => {
   //   const component_config = `
-  //   name: examples/hello-world
+  //   name: hello-world
 
   //   services:
   //     api:
@@ -646,12 +646,12 @@ describe('interpolation spec v1', () => {
   //   });
 
   //   const manager = new LocalDependencyManager(axios.create(), {
-  //     'examples/hello-world': '/stack/architect.yml',
+  //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentSpec('examples/hello-world'),
+  //     await manager.loadComponentSpec('hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+  //   const api_ref = resourceRefToNodeRef('hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     T3ST_FILE_DATA16: 'some file data'
@@ -660,7 +660,7 @@ describe('interpolation spec v1', () => {
 
   // it('yaml file ref as .env file', async () => {
   //   const component_config = `
-  //   name: examples/hello-world
+  //   name: hello-world
 
   //   services:
   //     api:
@@ -681,12 +681,12 @@ describe('interpolation spec v1', () => {
   //   });
 
   //   const manager = new LocalDependencyManager(axios.create(), {
-  //     'examples/hello-world': '/stack/architect.yml',
+  //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentSpec('examples/hello-world'),
+  //     await manager.loadComponentSpec('hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+  //   const api_ref = resourceRefToNodeRef('hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_FILE_DATA: 'some file data'
@@ -695,7 +695,7 @@ describe('interpolation spec v1', () => {
 
   // it('yaml file ref as .env file via linked component', async () => {
   //   const component_config = `
-  //   name: examples/hello-world
+  //   name: hello-world
 
   //   services:
   //     api:
@@ -716,12 +716,12 @@ describe('interpolation spec v1', () => {
   //   });
 
   //   const manager = new LocalDependencyManager(axios.create(), {
-  //     'examples/hello-world': '/stack/architect.yml',
+  //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentSpec('examples/hello-world'),
+  //     await manager.loadComponentSpec('hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+  //   const api_ref = resourceRefToNodeRef('hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_FILE_DATA: 'some file data'
@@ -730,7 +730,7 @@ describe('interpolation spec v1', () => {
 
   // it('multiple yaml file refs as .env files', async () => {
   //   const component_config = `
-  //   name: examples/hello-world
+  //   name: hello-world
 
   //   services:
   //     api:
@@ -753,12 +753,12 @@ describe('interpolation spec v1', () => {
   //   });
 
   //   const manager = new LocalDependencyManager(axios.create(), {
-  //     'examples/hello-world': '/stack/architect.yml',
+  //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentSpec('examples/hello-world'),
+  //     await manager.loadComponentSpec('hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+  //   const api_ref = resourceRefToNodeRef('hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_FILE_DATA: 'some file data',
@@ -768,7 +768,7 @@ describe('interpolation spec v1', () => {
 
   // it('multi-line file inserted into yaml produces proper yaml', async () => {
   //   const component_config = `
-  //   name: examples/hello-world
+  //   name: hello-world
 
   //   services:
   //     api:
@@ -789,12 +789,12 @@ describe('interpolation spec v1', () => {
   //   });
 
   //   const manager = new LocalDependencyManager(axios.create(), {
-  //     'examples/hello-world': '/stack/architect.yml',
+  //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentSpec('examples/hello-world'),
+  //     await manager.loadComponentSpec('hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+  //   const api_ref = resourceRefToNodeRef('hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_FILE_DATA: 'some file data\nsome file data on a new line\n  file data indented on a new line',
@@ -803,7 +803,7 @@ describe('interpolation spec v1', () => {
 
   // it('multi-line file inserted into json produces proper json', async () => {
   //   const component_config = {
-  //     name: 'test/component',
+  //     name: 'component',
   //     interfaces: {
   //       main: '${{ services.web.interfaces.main.url }}'
   //     },
@@ -825,12 +825,12 @@ describe('interpolation spec v1', () => {
   //   });
 
   //   const manager = new LocalDependencyManager(axios.create(), {
-  //     'test/component': '/stack/web.json',
+  //     'component': '/stack/web.json',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentSpec('test/component'),
+  //     await manager.loadComponentSpec('component'),
   //   ]);
-  //   const web_ref = resourceRefToNodeRef('test/component.services.web');
+  //   const web_ref = resourceRefToNodeRef('component.services.web');
   //   const node = graph.getNodeByRef(web_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_DATA: 'some file data\nsome file data on a new line\n  file data indented on a new line'
@@ -839,7 +839,7 @@ describe('interpolation spec v1', () => {
 
   // it('backwards file refs to build stack with yml configs', async () => {
   //   const component_config = `
-  //   name: examples/hello-world
+  //   name: hello-world
 
   //   services:
   //     api:
@@ -860,12 +860,12 @@ describe('interpolation spec v1', () => {
   //   });
 
   //   const manager = new LocalDependencyManager(axios.create(), {
-  //     'examples/hello-world': '/stack/arc/architect.yml',
+  //     'hello-world': '/stack/arc/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentSpec('examples/hello-world'),
+  //     await manager.loadComponentSpec('hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+  //   const api_ref = resourceRefToNodeRef('hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_FILE_DATA: 'some file data',
@@ -874,7 +874,7 @@ describe('interpolation spec v1', () => {
 
   // it('yaml comment not interpreted as active file ref', async () => {
   //   const component_config = `
-  //   name: examples/hello-world
+  //   name: hello-world
 
   //   secrets:
   //     TEST_FILE: manually set test file env # file:./this-file-does-not-exist.nope
@@ -897,12 +897,12 @@ describe('interpolation spec v1', () => {
   //   });
 
   //   const manager = new LocalDependencyManager(axios.create(), {
-  //     'examples/hello-world': '/stack/architect.yml',
+  //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentSpec('examples/hello-world'),
+  //     await manager.loadComponentSpec('hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+  //   const api_ref = resourceRefToNodeRef('hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_FILE_ENV: 'manually set test file env'
@@ -911,7 +911,7 @@ describe('interpolation spec v1', () => {
 
   it('secret value starting with bracket does not produce invalid yaml', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
 
     secrets:
       secret:
@@ -927,12 +927,12 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('examples/hello-world'),
+      await manager.loadComponentSpec('hello-world'),
     ], { '*': { secret: '[abc' } });
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       SECRET: '[abc'
@@ -941,7 +941,7 @@ describe('interpolation spec v1', () => {
 
   it('file: at end of yaml key not interpreted as file ref', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
 
     services:
       api:
@@ -961,12 +961,12 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('examples/hello-world'),
+      await manager.loadComponentSpec('hello-world'),
     ]);
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       data_from_my_config_file: 'regular config file data'
@@ -975,7 +975,7 @@ describe('interpolation spec v1', () => {
 
   // it('commented file ref not interpreted to be read', async () => {
   //   const component_config = `
-  //   name: examples/hello-world
+  //   name: hello-world
 
   //   services:
   //     api:
@@ -996,12 +996,12 @@ describe('interpolation spec v1', () => {
   //   });
 
   //   const manager = new LocalDependencyManager(axios.create(), {
-  //     'examples/hello-world': '/stack/architect.yml',
+  //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentSpec('examples/hello-world'),
+  //     await manager.loadComponentSpec('hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+  //   const api_ref = resourceRefToNodeRef('hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     ENV_PARAM: 'env_param_data'
@@ -1010,7 +1010,7 @@ describe('interpolation spec v1', () => {
 
   // it('file ref with bash env vars', async () => {
   //   const component_config = `
-  //   name: examples/hello-world
+  //   name: hello-world
 
   //   services:
   //     api:
@@ -1036,12 +1036,12 @@ describe('interpolation spec v1', () => {
   //   });
 
   //   const manager = new LocalDependencyManager(axios.create(), {
-  //     'examples/hello-world': '/stack/architect.yml',
+  //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentSpec('examples/hello-world'),
+  //     await manager.loadComponentSpec('hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+  //   const api_ref = resourceRefToNodeRef('hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     CONFIG_DATA: 'test.security.apiTrustedSecret=$${TEST_AUTH_CODE_SECRET:}\n    test.security.apiTrustedSecret2=$${ TEST_AUTH_CODE_SECRET }'
@@ -1050,7 +1050,7 @@ describe('interpolation spec v1', () => {
 
   it('implicit environment secret', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
 
     secrets:
       aws_secret:
@@ -1077,15 +1077,15 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('examples/hello-world'),
+      await manager.loadComponentSpec('hello-world'),
     ], {
       '*': { aws_secret: 'test' },
-      'examples/hello-world*': { other_secret: 'shown' }
+      'hello-world*': { other_secret: 'shown' }
     });
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       AWS_SECRET: 'test',
@@ -1096,9 +1096,9 @@ describe('interpolation spec v1', () => {
 
   it('dependency interpolation from secrets.yml', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
     dependencies:
-      examples/dependency: latest
+      dependency: latest
     interfaces:
       api: \${{ services.api.interfaces.api.url }}
     services:
@@ -1107,11 +1107,11 @@ describe('interpolation spec v1', () => {
           api: 8080
         environment:
           ADDR: \${{ ingresses.api.url }}
-          DEP_ADDR: \${{ dependencies.examples/dependency.ingresses.app.url }}
+          DEP_ADDR: \${{ dependencies.dependency.ingresses.app.url }}
     `
 
     const component_config2 = `
-    name: examples/dependency
+    name: dependency
     interfaces:
       app:
         url: \${{ services.app.interfaces.app.url }}
@@ -1136,14 +1136,14 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
-      'examples/dependency': '/stack2/architect.yml',
+      'hello-world': '/stack/architect.yml',
+      'dependency': '/stack2/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/hello-world'), {
+      await manager.loadComponentSpecs('hello-world'), {
       '*': { test_subdomain: 'test-subdomain' },
     });
-    const app_ref = resourceRefToNodeRef('examples/dependency.services.app');
+    const app_ref = resourceRefToNodeRef('dependency.services.app');
     const node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       ADDR: 'http://test-subdomain.arc.localhost',
@@ -1151,14 +1151,14 @@ describe('interpolation spec v1', () => {
       DNS_ZONE: 'arc.localhost'
     });
 
-    const ingress_edge = graph.edges.find((edge) => edge.to === resourceRefToNodeRef('examples/dependency')) as IngressEdge
+    const ingress_edge = graph.edges.find((edge) => edge.to === resourceRefToNodeRef('dependency')) as IngressEdge
     expect(ingress_edge.interface_mappings).to.deep.equal([{ interface_from: 'test-subdomain', interface_to: 'app' }]);
     expect(ingress_edge.consumers_map).keys('app')
   });
 
   it('interpolate secret for replicas', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
     secrets:
       replicas:
     services:
@@ -1171,22 +1171,22 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/hello-world'), {
+      await manager.loadComponentSpecs('hello-world'), {
       // TODO:269 allow for number types in secrets.yml?
       // @ts-ignore
       '*': { replicas: 1 },
     });
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.replicas).to.eq(1);
   });
 
   it('interpolate object secret for replicas', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
     secrets:
       api_config:
         default:
@@ -1202,18 +1202,18 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/hello-world'));
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+      await manager.loadComponentSpecs('hello-world'));
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.replicas).to.eq(3);
   });
 
   it('interpolate secret to env with empty string', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
     secrets:
       secret:
         default: ''
@@ -1228,11 +1228,11 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/hello-world'));
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+      await manager.loadComponentSpecs('hello-world'));
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       SECRET: ''
@@ -1246,7 +1246,7 @@ describe('interpolation spec v1', () => {
 
   it('interpolate nested secret', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
     secrets:
       db_host:
         default: ''
@@ -1264,11 +1264,11 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/hello-world'));
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+      await manager.loadComponentSpecs('hello-world'));
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       DB_ADDR: ':5432',
@@ -1288,7 +1288,7 @@ describe('interpolation spec v1', () => {
 
   it('interpolate interfaces node', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
     secrets:
       subdomain: test
     interfaces:
@@ -1307,12 +1307,12 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
-    const graph = await manager.getGraph(await manager.loadComponentSpecs('examples/hello-world'));
+    const graph = await manager.getGraph(await manager.loadComponentSpecs('hello-world'));
 
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
-    const hello_component = await manager.loadComponentSpec('examples/hello-world')
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
+    const hello_component = await manager.loadComponentSpec('hello-world')
     const component_ref = buildInterfacesRef(hello_component);
     const node = graph.getNodeByRef(component_ref) as ComponentNode;
     expect(node.config.interfaces).to.deep.eq({
@@ -1328,7 +1328,7 @@ describe('interpolation spec v1', () => {
 
   it('interpolate interfaces ingress whitelist', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
     secrets:
       ip_whitelist:
         default: [127.0.0.1]
@@ -1353,16 +1353,16 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/hello-world'),
+      await manager.loadComponentSpecs('hello-world'),
       // @ts-ignore
       { '*': { required_ip_whitelist: ['127.0.0.1/32'] } }
     );
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
 
-    const hello_component = await manager.loadComponentSpec('examples/hello-world')
+    const hello_component = await manager.loadComponentSpec('hello-world')
     const component_ref = buildInterfacesRef(hello_component);
     const node = graph.getNodeByRef(component_ref) as ComponentNode;
     expect(node.config.interfaces).to.deep.eq({
@@ -1385,7 +1385,7 @@ describe('interpolation spec v1', () => {
 
   it('interpolate interfaces ingress whitelist with single value', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
     secrets:
       ip_whitelist:
         required: true
@@ -1413,16 +1413,16 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/hello-world'),
+      await manager.loadComponentSpecs('hello-world'),
       // @ts-ignore
       { '*': { ip_whitelist: '1.2.3.4', required_ip_whitelist: '127.0.0.1/32' } }
     );
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
 
-    const hello_component = await manager.loadComponentSpec('examples/hello-world')
+    const hello_component = await manager.loadComponentSpec('hello-world')
     const component_ref = buildInterfacesRef(hello_component);
     const node = graph.getNodeByRef(component_ref) as ComponentNode;
     expect(node.config.interfaces).to.deep.eq({
@@ -1445,7 +1445,7 @@ describe('interpolation spec v1', () => {
 
   it('interpolate component outputs', async () => {
     const publisher_config = `
-    name: examples/publisher
+    name: publisher
     secrets:
       topic_name: test
     outputs:
@@ -1458,16 +1458,16 @@ describe('interpolation spec v1', () => {
     `
 
     const consumer_config = `
-    name: examples/consumer
+    name: consumer
     dependencies:
-      examples/publisher: latest
+      publisher: latest
     services:
       api:
         environment:
-          TOPIC1: \${{ dependencies.examples/publisher.outputs.topic1 }}
-          TOPIC2: \${{ dependencies.examples/publisher.outputs.topic2 }}
-          TOPIC3: \${{ dependencies.examples/publisher.outputs.topic3 }}
-          TOPIC4: \${{ dependencies.examples/publisher.outputs.topic4 }}
+          TOPIC1: \${{ dependencies.publisher.outputs.topic1 }}
+          TOPIC2: \${{ dependencies.publisher.outputs.topic2 }}
+          TOPIC3: \${{ dependencies.publisher.outputs.topic3 }}
+          TOPIC4: \${{ dependencies.publisher.outputs.topic4 }}
     `
 
     mock_fs({
@@ -1476,12 +1476,12 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/publisher': '/stack/publisher/architect.yml',
-      'examples/consumer': '/stack/consumer/architect.yml',
+      'publisher': '/stack/publisher/architect.yml',
+      'consumer': '/stack/consumer/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/consumer'));
-    const api_ref = resourceRefToNodeRef('examples/consumer.services.api');
+      await manager.loadComponentSpecs('consumer'));
+    const api_ref = resourceRefToNodeRef('consumer.services.api');
     // Check the interpolated values on the service node resolved correctly
     const service_node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(service_node.config.environment).to.deep.eq({
@@ -1491,7 +1491,7 @@ describe('interpolation spec v1', () => {
       TOPIC4: 'test'
     });
     // Check the component interface node has the outputs set on its config
-    const config = await manager.loadComponentSpec('examples/publisher');
+    const config = await manager.loadComponentSpec('publisher');
     const interfaces_ref = buildInterfacesRef(config);
     const interface_node = graph.getNodeByRef(interfaces_ref) as ComponentNode;
     expect(interface_node.config.outputs).to.deep.eq({
@@ -1504,19 +1504,19 @@ describe('interpolation spec v1', () => {
 
   it('interpolating output dependency creates OutputEdge', async () => {
     const publisher_config = `
-    name: examples/publisher
+    name: publisher
     outputs:
       topic1: test
     `
 
     const consumer_config = `
-    name: examples/consumer
+    name: consumer
     dependencies:
-      examples/publisher: latest
+      publisher: latest
     services:
       api:
         environment:
-          TOPIC1: \${{ dependencies.examples/publisher.outputs.topic1 }}
+          TOPIC1: \${{ dependencies.publisher.outputs.topic1 }}
     `
 
     mock_fs({
@@ -1525,11 +1525,11 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/publisher': '/stack/publisher/architect.yml',
-      'examples/consumer': '/stack/consumer/architect.yml',
+      'publisher': '/stack/publisher/architect.yml',
+      'consumer': '/stack/consumer/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/consumer')
+      await manager.loadComponentSpecs('consumer')
     );
 
     const output_edges = graph.edges.filter(edge => edge instanceof OutputEdge);
@@ -1538,7 +1538,7 @@ describe('interpolation spec v1', () => {
 
   it('interpolating outputs dependency with interfaces creates 2 edges', async () => {
     const publisher_config = `
-    name: examples/publisher
+    name: publisher
     outputs:
       topic1: test
     services:
@@ -1551,14 +1551,14 @@ describe('interpolation spec v1', () => {
     `
 
     const consumer_config = `
-    name: examples/consumer
+    name: consumer
     dependencies:
-      examples/publisher: latest
+      publisher: latest
     services:
       consumer-api:
         environment:
-          API_HOST: \${{ dependencies.examples/publisher.interfaces.api.url }}
-          TOPIC1: \${{ dependencies.examples/publisher.outputs.topic1 }}
+          API_HOST: \${{ dependencies.publisher.interfaces.api.url }}
+          TOPIC1: \${{ dependencies.publisher.outputs.topic1 }}
     `
 
     mock_fs({
@@ -1567,15 +1567,15 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/publisher': '/stack/publisher/architect.yml',
-      'examples/consumer': '/stack/consumer/architect.yml',
+      'publisher': '/stack/publisher/architect.yml',
+      'consumer': '/stack/consumer/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/consumer')
+      await manager.loadComponentSpecs('consumer')
     );
-    const publisher_component_ref = resourceRefToNodeRef('examples/publisher');
-    const publisher_api_ref = resourceRefToNodeRef('examples/publisher.services.publisher-api');
-    const consumer_api_ref = resourceRefToNodeRef('examples/consumer.services.consumer-api');
+    const publisher_component_ref = resourceRefToNodeRef('publisher');
+    const publisher_api_ref = resourceRefToNodeRef('publisher.services.publisher-api');
+    const consumer_api_ref = resourceRefToNodeRef('consumer.services.consumer-api');
     expect(graph.edges.map((e) => e.toString())).has.members([
       `${publisher_component_ref} [api] -> ${publisher_api_ref} [main]`,
       `${consumer_api_ref} [service->api] -> ${publisher_component_ref} [api]`,
@@ -1585,7 +1585,7 @@ describe('interpolation spec v1', () => {
 
   it('All edges are still found if a double dash exists later in the service config', async () => {
     const config = `
-    name: examples/test
+    name: test
 
     secrets:
       api_port: 8080
@@ -1615,15 +1615,15 @@ describe('interpolation spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/test': '/stack/architect.yml',
+      'test': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/test')
+      await manager.loadComponentSpecs('test')
     );
 
-    const test_component_ref = resourceRefToNodeRef('examples/test');
-    const app_ref = resourceRefToNodeRef('examples/test.services.app');
-    const api_ref = resourceRefToNodeRef('examples/test.services.api');
+    const test_component_ref = resourceRefToNodeRef('test');
+    const app_ref = resourceRefToNodeRef('test.services.app');
+    const api_ref = resourceRefToNodeRef('test.services.api');
     expect(graph.edges.map((e) => e.toString())).has.members([
       `${test_component_ref} [api] -> ${api_ref} [main]`,
       `${app_ref} [service->main] -> ${api_ref} [main]`,

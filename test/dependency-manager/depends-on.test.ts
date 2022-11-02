@@ -1,14 +1,13 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
-import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { resourceRefToNodeRef, ServiceNode } from '../../src';
+import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 
 describe('graph depends_on', () => {
-
   it('happy path depends_on', async () => {
     const component_config = `
-      name: architect/cloud
+      name: cloud
       services:
         app:
           interfaces:
@@ -29,19 +28,19 @@ describe('graph depends_on', () => {
       '/stack/architect.yml': component_config,
     });
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml'
+      'cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud:latest')
+      await manager.loadComponentSpec('cloud:latest'),
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud.services.app');
+    const app_ref = resourceRefToNodeRef('cloud.services.app');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/cloud.services.api');
+    const api_ref = resourceRefToNodeRef('cloud.services.api');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/cloud.services.db');
+    const db_ref = resourceRefToNodeRef('cloud.services.db');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -58,7 +57,7 @@ describe('graph depends_on', () => {
 
   it('multiple depends_on', async () => {
     const component_config = `
-      name: architect/cloud
+      name: cloud
       services:
         app:
           interfaces:
@@ -80,19 +79,19 @@ describe('graph depends_on', () => {
       '/stack/architect.yml': component_config,
     });
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml'
+      'cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud:latest')
+      await manager.loadComponentSpec('cloud:latest'),
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud.services.app');
+    const app_ref = resourceRefToNodeRef('cloud.services.app');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/cloud.services.api');
+    const api_ref = resourceRefToNodeRef('cloud.services.api');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/cloud.services.db');
+    const db_ref = resourceRefToNodeRef('cloud.services.db');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -110,7 +109,7 @@ describe('graph depends_on', () => {
 
   it('no depends_on', async () => {
     const component_config = `
-      name: architect/cloud
+      name: cloud
       services:
         app:
           interfaces:
@@ -127,19 +126,19 @@ describe('graph depends_on', () => {
       '/stack/architect.yml': component_config,
     });
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml'
+      'cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud:latest')
+      await manager.loadComponentSpec('cloud:latest'),
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud.services.app');
+    const app_ref = resourceRefToNodeRef('cloud.services.app');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/cloud.services.api');
+    const api_ref = resourceRefToNodeRef('cloud.services.api');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/cloud.services.db');
+    const db_ref = resourceRefToNodeRef('cloud.services.db');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -154,7 +153,7 @@ describe('graph depends_on', () => {
 
   it('external depends_on', async () => {
     const component_config = `
-      name: architect/cloud
+      name: cloud
       services:
         app:
           interfaces:
@@ -177,19 +176,19 @@ describe('graph depends_on', () => {
       '/stack/architect.yml': component_config,
     });
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml'
+      'cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud:latest')
+      await manager.loadComponentSpec('cloud:latest'),
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud.services.app');
+    const app_ref = resourceRefToNodeRef('cloud.services.app');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/cloud.services.api');
+    const api_ref = resourceRefToNodeRef('cloud.services.api');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/cloud.services.db');
+    const db_ref = resourceRefToNodeRef('cloud.services.db');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -205,19 +204,19 @@ describe('graph depends_on', () => {
 
   it('cross component depends_on', async () => {
     const component_config = `
-      name: architect/cloud
+      name: cloud
       dependencies:
-        architect/dependency: latest
+        dependency: latest
       services:
         app:
           interfaces:
             main: 8080
           environment:
-            API_URL: \${{ dependencies.architect/dependency.interfaces.api.url }}
+            API_URL: \${{ dependencies.dependency.interfaces.api.url }}
     `;
 
     const dependency_config = `
-      name: architect/dependency
+      name: dependency
       services:
         api:
           interfaces:
@@ -235,21 +234,21 @@ describe('graph depends_on', () => {
       '/stack/dependency.yml': dependency_config,
     });
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml',
-      'architect/dependency': '/stack/dependency.yml'
+      'cloud': '/stack/architect.yml',
+      'dependency': '/stack/dependency.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud:latest'),
-      await manager.loadComponentSpec('architect/dependency:latest')
+      await manager.loadComponentSpec('cloud:latest'),
+      await manager.loadComponentSpec('dependency:latest'),
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud.services.app');
+    const app_ref = resourceRefToNodeRef('cloud.services.app');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/dependency.services.api');
+    const api_ref = resourceRefToNodeRef('dependency.services.api');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/dependency.services.db');
+    const db_ref = resourceRefToNodeRef('dependency.services.db');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -266,20 +265,20 @@ describe('graph depends_on', () => {
 
   it('cross component multiple depends_on', async () => {
     const component_config = `
-      name: architect/cloud
+      name: cloud
       dependencies:
-        architect/dependency: latest
+        dependency: latest
       services:
         app:
           interfaces:
             main: 8080
           environment:
-            API_URL: \${{ dependencies.architect/dependency.interfaces.api.url }}
-            DB_URL: \${{ dependencies.architect/dependency.interfaces.db.url }}
+            API_URL: \${{ dependencies.dependency.interfaces.api.url }}
+            DB_URL: \${{ dependencies.dependency.interfaces.db.url }}
     `;
 
     const dependency_config = `
-      name: architect/dependency
+      name: dependency
       services:
         api:
           interfaces:
@@ -297,21 +296,21 @@ describe('graph depends_on', () => {
       '/stack/dependency.yml': dependency_config,
     });
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml',
-      'architect/dependency': '/stack/dependency.yml'
+      'cloud': '/stack/architect.yml',
+      'dependency': '/stack/dependency.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud:latest'),
-      await manager.loadComponentSpec('architect/dependency:latest')
+      await manager.loadComponentSpec('cloud:latest'),
+      await manager.loadComponentSpec('dependency:latest'),
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud.services.app');
+    const app_ref = resourceRefToNodeRef('cloud.services.app');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/dependency.services.api');
+    const api_ref = resourceRefToNodeRef('dependency.services.api');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/dependency.services.db');
+    const db_ref = resourceRefToNodeRef('dependency.services.db');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -328,20 +327,20 @@ describe('graph depends_on', () => {
 
   it('cross component multiple interfaces to same service depends_on', async () => {
     const component_config = `
-      name: architect/cloud
+      name: cloud
       dependencies:
-        architect/dependency: latest
+        dependency: latest
       services:
         app:
           interfaces:
             main: 8080
           environment:
-            API_URL: \${{ dependencies.architect/dependency.interfaces.api.url }}
-            API_2_URL: \${{ dependencies.architect/dependency.interfaces.api-2.url }}
+            API_URL: \${{ dependencies.dependency.interfaces.api.url }}
+            API_2_URL: \${{ dependencies.dependency.interfaces.api-2.url }}
     `;
 
     const dependency_config = `
-      name: architect/dependency
+      name: dependency
       services:
         api:
           interfaces:
@@ -357,18 +356,18 @@ describe('graph depends_on', () => {
       '/stack/dependency.yml': dependency_config,
     });
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml',
-      'architect/dependency': '/stack/dependency.yml'
+      'cloud': '/stack/architect.yml',
+      'dependency': '/stack/dependency.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud:latest'),
-      await manager.loadComponentSpec('architect/dependency:latest')
+      await manager.loadComponentSpec('cloud:latest'),
+      await manager.loadComponentSpec('dependency:latest'),
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud.services.app');
+    const app_ref = resourceRefToNodeRef('cloud.services.app');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/dependency.services.api');
+    const api_ref = resourceRefToNodeRef('dependency.services.api');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -381,19 +380,19 @@ describe('graph depends_on', () => {
 
   it('cross component chained depends_on', async () => {
     const component_config = `
-      name: architect/cloud
+      name: cloud
       dependencies:
-        architect/dependency: latest
+        dependency: latest
       services:
         app:
           interfaces:
             main: 8080
           environment:
-            API_URL: \${{ dependencies.architect/dependency.interfaces.api.url }}
+            API_URL: \${{ dependencies.dependency.interfaces.api.url }}
     `;
 
     const dependency_config = `
-      name: architect/dependency
+      name: dependency
       services:
         api:
           interfaces:
@@ -413,21 +412,21 @@ describe('graph depends_on', () => {
       '/stack/dependency.yml': dependency_config,
     });
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml',
-      'architect/dependency': '/stack/dependency.yml'
+      'cloud': '/stack/architect.yml',
+      'dependency': '/stack/dependency.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud:latest'),
-      await manager.loadComponentSpec('architect/dependency:latest')
+      await manager.loadComponentSpec('cloud:latest'),
+      await manager.loadComponentSpec('dependency:latest'),
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud.services.app');
+    const app_ref = resourceRefToNodeRef('cloud.services.app');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/dependency.services.api');
+    const api_ref = resourceRefToNodeRef('dependency.services.api');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/dependency.services.db');
+    const db_ref = resourceRefToNodeRef('dependency.services.db');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -445,20 +444,20 @@ describe('graph depends_on', () => {
 
   it('cross component multiple and chained depends_on', async () => {
     const component_config = `
-      name: architect/cloud
+      name: cloud
       dependencies:
-        architect/dependency: latest
+        dependency: latest
       services:
         app:
           interfaces:
             main: 8080
           environment:
-            API_URL: \${{ dependencies.architect/dependency.interfaces.api.url }}
-            DB_URL: \${{ dependencies.architect/dependency.interfaces.db.url }}
+            API_URL: \${{ dependencies.dependency.interfaces.api.url }}
+            DB_URL: \${{ dependencies.dependency.interfaces.db.url }}
     `;
 
     const dependency_config = `
-      name: architect/dependency
+      name: dependency
       services:
         api:
           interfaces:
@@ -478,21 +477,21 @@ describe('graph depends_on', () => {
       '/stack/dependency.yml': dependency_config,
     });
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml',
-      'architect/dependency': '/stack/dependency.yml'
+      'cloud': '/stack/architect.yml',
+      'dependency': '/stack/dependency.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud:latest'),
-      await manager.loadComponentSpec('architect/dependency:latest')
+      await manager.loadComponentSpec('cloud:latest'),
+      await manager.loadComponentSpec('dependency:latest'),
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud.services.app');
+    const app_ref = resourceRefToNodeRef('cloud.services.app');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/dependency.services.api');
+    const api_ref = resourceRefToNodeRef('dependency.services.api');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/dependency.services.db');
+    const db_ref = resourceRefToNodeRef('dependency.services.db');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);

@@ -16,7 +16,7 @@ describe('interfaces spec v1', () => {
 
     beforeEach(async () => {
       leaf_component = {
-        name: 'test/leaf',
+        name: 'leaf',
         services: {
           db: {
             image: 'postgres:11',
@@ -45,19 +45,19 @@ describe('interfaces spec v1', () => {
       };
 
       branch_component = {
-        name: 'test/branch',
+        name: 'branch',
         dependencies: {
-          'test/leaf': 'latest',
+          'leaf': 'latest',
         },
         services: {
           api: {
             image: 'branch:latest',
             interfaces: {},
             environment: {
-              LEAF_PROTOCOL: '${{ dependencies.test/leaf.interfaces.api.protocol }}',
-              LEAF_HOST: '${{ dependencies.test/leaf.interfaces.api.host }}',
-              LEAF_PORT: '${{ dependencies.test/leaf.interfaces.api.port }}',
-              LEAF_URL: '${{ dependencies.test/leaf.interfaces.api.url }}',
+              LEAF_PROTOCOL: '${{ dependencies.leaf.interfaces.api.protocol }}',
+              LEAF_HOST: '${{ dependencies.leaf.interfaces.api.host }}',
+              LEAF_PORT: '${{ dependencies.leaf.interfaces.api.port }}',
+              LEAF_URL: '${{ dependencies.leaf.interfaces.api.url }}',
             },
           },
         },
@@ -65,10 +65,10 @@ describe('interfaces spec v1', () => {
       };
     });
 
-    const branch_ref = resourceRefToNodeRef('test/branch.services.api');
-    const leaf_interfaces_ref = resourceRefToNodeRef('test/leaf');
-    const leaf_db_ref = resourceRefToNodeRef('test/leaf.services.db');
-    const leaf_api_resource_ref = 'test/leaf.services.api';
+    const branch_ref = resourceRefToNodeRef('branch.services.api');
+    const leaf_interfaces_ref = resourceRefToNodeRef('leaf');
+    const leaf_db_ref = resourceRefToNodeRef('leaf.services.db');
+    const leaf_api_resource_ref = 'leaf.services.api';
     const leaf_api_ref = resourceRefToNodeRef(leaf_api_resource_ref);
 
     it('should connect two services together', async () => {
@@ -77,10 +77,10 @@ describe('interfaces spec v1', () => {
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'test/leaf': '/stack/leaf/architect.yml',
+        'leaf': '/stack/leaf/architect.yml',
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('test/leaf'),
+        await manager.loadComponentSpec('leaf'),
       ]);
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
@@ -112,12 +112,12 @@ describe('interfaces spec v1', () => {
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'test/leaf': '/stack/leaf/architect.yml',
-        'test/branch': '/stack/branch/architect.yml',
+        'leaf': '/stack/leaf/architect.yml',
+        'branch': '/stack/branch/architect.yml',
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('test/leaf'),
-        await manager.loadComponentSpec('test/branch'),
+        await manager.loadComponentSpec('leaf'),
+        await manager.loadComponentSpec('branch'),
       ]);
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
@@ -146,11 +146,11 @@ describe('interfaces spec v1', () => {
       leaf_component.interfaces = {
         api: '${{ services.api.interfaces.main.url }}',
       };
-      branch_component.services.api.environment.EXTERNAL_INTERFACE = "${{ dependencies['test/leaf'].ingresses['api'].url }}";
-      branch_component.services.api.environment.EXTERNAL_INTERFACE2 = "${{ environment.ingresses['test/leaf']['api'].url }}";
+      branch_component.services.api.environment.EXTERNAL_INTERFACE = "${{ dependencies['leaf'].ingresses['api'].url }}";
+      branch_component.services.api.environment.EXTERNAL_INTERFACE2 = "${{ environment.ingresses['leaf']['api'].url }}";
 
       const other_leaf_component = {
-        name: 'test/other-leaf',
+        name: 'other-leaf',
         services: {
           db: {
             image: 'postgres:11',
@@ -187,19 +187,19 @@ describe('interfaces spec v1', () => {
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'test/leaf': '/stack/leaf/architect.yml',
-        'test/branch': '/stack/branch/architect.yml',
-        'test/other-leaf': '/stack/other-leaf/architect.yml',
+        'leaf': '/stack/leaf/architect.yml',
+        'branch': '/stack/branch/architect.yml',
+        'other-leaf': '/stack/other-leaf/architect.yml',
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('test/leaf', { interfaces: { public: 'api' } }),
-        await manager.loadComponentSpec('test/branch'),
-        await manager.loadComponentSpec('test/other-leaf', { interfaces: { publicv1: 'api' } }),
+        await manager.loadComponentSpec('leaf', { interfaces: { public: 'api' } }),
+        await manager.loadComponentSpec('branch'),
+        await manager.loadComponentSpec('other-leaf', { interfaces: { publicv1: 'api' } }),
       ]);
 
-      const other_leaf_interfaces_ref = resourceRefToNodeRef('test/other-leaf');
-      const other_leaf_api_ref = resourceRefToNodeRef('test/other-leaf.services.api');
-      const other_leaf_db_ref = resourceRefToNodeRef('test/other-leaf.services.db');
+      const other_leaf_interfaces_ref = resourceRefToNodeRef('other-leaf');
+      const other_leaf_api_ref = resourceRefToNodeRef('other-leaf.services.api');
+      const other_leaf_db_ref = resourceRefToNodeRef('other-leaf.services.db');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'gateway',
@@ -261,7 +261,7 @@ describe('interfaces spec v1', () => {
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost',
         ],
-        labels: ['architect.ref=test/branch.services.api'],
+        labels: ['architect.ref=branch.services.api'],
       };
       expect(template.services[branch_ref]).to.be.deep.equal(expected_leaf_compose);
 
@@ -273,7 +273,7 @@ describe('interfaces spec v1', () => {
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost',
         ],
-        labels: ['architect.ref=test/leaf.services.db'],
+        labels: ['architect.ref=leaf.services.db'],
       };
       expect(template.services[leaf_db_ref]).to.be.deep.equal(expected_leaf_db_compose);
 
@@ -311,7 +311,7 @@ describe('interfaces spec v1', () => {
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost',
         ],
-        labels: ['architect.ref=test/other-leaf.services.db'],
+        labels: ['architect.ref=other-leaf.services.db'],
       };
       expect(template.services[other_leaf_db_ref]).to.be.deep.equal(expected_other_leaf_db_compose);
 
@@ -324,7 +324,7 @@ describe('interfaces spec v1', () => {
           DB_URL: `postgres://${other_leaf_db_ref}:5432`,
         },
         "labels": [
-          `architect.ref=test/other-leaf.services.api`,
+          `architect.ref=other-leaf.services.api`,
           "traefik.enable=true",
           "traefik.port=80",
           `traefik.http.routers.${other_leaf_api_ref}-api.rule=Host(\`publicv1.arc.localhost\`)`,
@@ -345,7 +345,7 @@ describe('interfaces spec v1', () => {
 
   it('service with multiple public interfaces', async () => {
     const component_config = {
-      name: 'architect/cloud',
+      name: 'cloud',
       services: {
         api: {
           interfaces: {
@@ -365,14 +365,14 @@ describe('interfaces spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml',
+      'cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud', { interfaces: { app: 'app', admin: 'admin' } }),
+      await manager.loadComponentSpec('cloud', { interfaces: { app: 'app', admin: 'admin' } }),
     ]);
 
-    const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud');
-    const api_resource_ref = 'architect/cloud.services.api';
+    const cloud_interfaces_ref = resourceRefToNodeRef('cloud');
+    const api_resource_ref = 'cloud.services.api';
     const api_ref = resourceRefToNodeRef(api_resource_ref);
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
@@ -419,7 +419,7 @@ describe('interfaces spec v1', () => {
 
   it('automatically maps interfaces when map_all_interfaces = true', async () => {
     const component_config = {
-      name: 'architect/cloud',
+      name: 'cloud',
       services: {
         api: {
           interfaces: {
@@ -451,14 +451,14 @@ describe('interfaces spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.yml',
+      'cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud', { map_all_interfaces: true, interfaces: { 'staff2': 'admin2', 'staff3': 'admin3' } }),
+      await manager.loadComponentSpec('cloud', { map_all_interfaces: true, interfaces: { 'staff2': 'admin2', 'staff3': 'admin3' } }),
     ]);
 
-    const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud');
-    const api_resource_ref = 'architect/cloud.services.api';
+    const cloud_interfaces_ref = resourceRefToNodeRef('cloud');
+    const api_resource_ref = 'cloud.services.api';
     const api_ref = resourceRefToNodeRef(api_resource_ref);
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
@@ -515,23 +515,23 @@ describe('interfaces spec v1', () => {
 
   it('using multiple ports from a dependency', async () => {
     const admin_ui_config = `
-      name: voic/admin-ui
+      name: admin-ui
       dependencies:
-        voic/product-catalog: latest
+        product-catalog: latest
       services:
         dashboard:
           interfaces:
             main: 3000
           environment:
-            API_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.public.url }}
-            ADMIN_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.admin.url }}
-            PRIVATE_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.private.url }}
-            EXTERNAL_API_ADDR: \${{ dependencies['voic/product-catalog'].ingresses['public'].url }}
-            EXTERNAL_API_ADDR2: \${{ environment.ingresses['voic/product-catalog']['public'].url }}
+            API_ADDR: \${{ dependencies['product-catalog'].interfaces.public.url }}
+            ADMIN_ADDR: \${{ dependencies['product-catalog'].interfaces.admin.url }}
+            PRIVATE_ADDR: \${{ dependencies['product-catalog'].interfaces.private.url }}
+            EXTERNAL_API_ADDR: \${{ dependencies['product-catalog'].ingresses['public'].url }}
+            EXTERNAL_API_ADDR2: \${{ environment.ingresses['product-catalog']['public'].url }}
       `;
 
     const product_catalog_config = `
-      name: voic/product-catalog
+      name: product-catalog
       services:
         db:
           interfaces:
@@ -555,17 +555,17 @@ describe('interfaces spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'voic/admin-ui': '/stack/admin-ui/architect.yml',
-      'voic/product-catalog': '/stack/product-catalog/architect.yml',
+      'admin-ui': '/stack/admin-ui/architect.yml',
+      'product-catalog': '/stack/product-catalog/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('voic/admin-ui'),
-      await manager.loadComponentSpec('voic/product-catalog', { interfaces: { public2: 'public', admin2: 'admin' } }),
+      await manager.loadComponentSpec('admin-ui'),
+      await manager.loadComponentSpec('product-catalog', { interfaces: { public2: 'public', admin2: 'admin' } }),
     ]);
 
-    const admin_ref = resourceRefToNodeRef('voic/admin-ui.services.dashboard');
-    const catalog_interfaces_ref = resourceRefToNodeRef('voic/product-catalog');
-    const api_ref = resourceRefToNodeRef('voic/product-catalog.services.api');
+    const admin_ref = resourceRefToNodeRef('admin-ui.services.dashboard');
+    const catalog_interfaces_ref = resourceRefToNodeRef('product-catalog');
+    const api_ref = resourceRefToNodeRef('product-catalog.services.api');
 
     expect(graph.edges.map(e => e.toString())).members([
       `${catalog_interfaces_ref} [public, admin, private] -> ${api_ref} [public, admin, private]`,
@@ -585,7 +585,7 @@ describe('interfaces spec v1', () => {
 
   it('should support HTTP basic auth', async () => {
     const smtp_config = `
-      name: architect/smtp
+      name: smtp
       services:
         maildev:
           image: maildev/maildev
@@ -609,14 +609,14 @@ describe('interfaces spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/smtp': '/stack/smtp/architect.yml',
+      'smtp': '/stack/smtp/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/smtp'),
+      await manager.loadComponentSpec('smtp'),
     ]);
 
-    const mail_ref = resourceRefToNodeRef('architect/smtp.services.maildev');
-    const app_ref = resourceRefToNodeRef('architect/smtp.services.test-app');
+    const mail_ref = resourceRefToNodeRef('smtp.services.maildev');
+    const app_ref = resourceRefToNodeRef('smtp.services.test-app');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
@@ -628,7 +628,7 @@ describe('interfaces spec v1', () => {
 
   it('should allow HTTP basic auth values to be secrets', async () => {
     const smtp_config = `
-      name: architect/smtp
+      name: smtp
       secrets:
         SMTP_USER: param-user
         SMTP_PASS: param-pass
@@ -655,14 +655,14 @@ describe('interfaces spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/smtp': '/stack/smtp/architect.yml',
+      'smtp': '/stack/smtp/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/smtp'),
+      await manager.loadComponentSpec('smtp'),
     ]);
 
-    const mail_ref = resourceRefToNodeRef('architect/smtp.services.maildev');
-    const app_ref = resourceRefToNodeRef('architect/smtp.services.test-app');
+    const mail_ref = resourceRefToNodeRef('smtp.services.maildev');
+    const app_ref = resourceRefToNodeRef('smtp.services.test-app');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
@@ -674,7 +674,7 @@ describe('interfaces spec v1', () => {
 
   it('should support HTTP basic auth for dependency interfaces', async () => {
     const smtp_config = `
-      name: architect/smtp
+      name: smtp
       services:
         maildev:
           image: maildev/maildev
@@ -689,16 +689,16 @@ describe('interfaces spec v1', () => {
     `;
 
     const upstream_config = `
-      name: architect/upstream
+      name: upstream
       dependencies:
-        architect/smtp: latest
+        smtp: latest
       services:
         test-app:
           image: hashicorp/http-echo
           environment:
-            SMTP_ADDR: \${{ dependencies['architect/smtp'].interfaces.smtp.url }}
-            SMTP_USER: \${{ dependencies['architect/smtp'].interfaces.smtp.username }}
-            SMTP_PASS: \${{ dependencies['architect/smtp'].interfaces.smtp.password }}
+            SMTP_ADDR: \${{ dependencies['smtp'].interfaces.smtp.url }}
+            SMTP_USER: \${{ dependencies['smtp'].interfaces.smtp.username }}
+            SMTP_PASS: \${{ dependencies['smtp'].interfaces.smtp.password }}
     `;
 
     mock_fs({
@@ -707,16 +707,16 @@ describe('interfaces spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/smtp': '/stack/smtp/architect.yml',
-      'architect/upstream': '/stack/upstream/architect.yml',
+      'smtp': '/stack/smtp/architect.yml',
+      'upstream': '/stack/upstream/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/smtp'),
-      await manager.loadComponentSpec('architect/upstream'),
+      await manager.loadComponentSpec('smtp'),
+      await manager.loadComponentSpec('upstream'),
     ]);
 
-    const mail_ref = resourceRefToNodeRef('architect/smtp.services.maildev');
-    const app_ref = resourceRefToNodeRef('architect/upstream.services.test-app');
+    const mail_ref = resourceRefToNodeRef('smtp.services.maildev');
+    const app_ref = resourceRefToNodeRef('upstream.services.test-app');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
@@ -728,7 +728,7 @@ describe('interfaces spec v1', () => {
 
   it('service interface with path', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
     services:
       app:
         environment:
@@ -749,19 +749,19 @@ describe('interfaces spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/hello-world'));
+      await manager.loadComponentSpecs('hello-world'));
     const template = await DockerComposeUtils.generate(graph);
 
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
     expect(template.services[api_ref].environment).to.deep.eq({
       MY_PATH: '/api',
       MY_ADDR: `http://${api_ref}:8080/api`,
     });
 
-    const app_ref = resourceRefToNodeRef('examples/hello-world.services.app');
+    const app_ref = resourceRefToNodeRef('hello-world.services.app');
     expect(template.services[app_ref].environment).to.deep.eq({
       API_PATH: '/api',
       API_ADDR: `http://${api_ref}:8080/api`,
@@ -770,7 +770,7 @@ describe('interfaces spec v1', () => {
 
   it('interfaces with same subdomain and different paths', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
     interfaces:
       api:
         url: \${{ services.api.interfaces.main.url }}
@@ -798,11 +798,11 @@ describe('interfaces spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/hello-world'));
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+      await manager.loadComponentSpecs('hello-world'));
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
 
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[api_ref].environment).to.deep.eq({
@@ -815,7 +815,7 @@ describe('interfaces spec v1', () => {
 
   it('error on interfaces with same subdomain and same path', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
     interfaces:
       api:
         url: \${{ services.api.interfaces.main.url }}
@@ -840,11 +840,11 @@ describe('interfaces spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     let err;
     try {
-      await manager.getGraph(await manager.loadComponentSpecs('examples/hello-world'));
+      await manager.getGraph(await manager.loadComponentSpecs('hello-world'));
     } catch (e: any) {
       err = e;
     }
@@ -853,7 +853,7 @@ describe('interfaces spec v1', () => {
 
   it('followEdge returns proper results when called with ServiceEdge', async () => {
     const component_config = `
-    name: architect/dependency
+    name: dependency
 
     services:
       db:
@@ -872,10 +872,10 @@ describe('interfaces spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/dependency': '/stack/architect.yml',
+      'dependency': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('architect/dependency'));
+      await manager.loadComponentSpecs('dependency'));
 
     expect(graph.edges.length).eq(1);
 
@@ -888,7 +888,7 @@ describe('interfaces spec v1', () => {
 
   it('validation error on interfaces for invalid subdomain passed through secrets', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
     secrets:
       subdomain: not_ok
     interfaces:
@@ -909,11 +909,11 @@ describe('interfaces spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     let err;
     try {
-      await manager.getGraph(await manager.loadComponentSpecs('examples/hello-world'));
+      await manager.getGraph(await manager.loadComponentSpecs('hello-world'));
     } catch (e: any) {
       err = e;
     }
@@ -922,7 +922,7 @@ describe('interfaces spec v1', () => {
 
   it('maps ok on interfaces for valid subdomain passed through secrets', async () => {
     const component_config = `
-    name: examples/hello-world
+    name: hello-world
     secrets:
       subdomain: is-ok
     interfaces:
@@ -943,11 +943,11 @@ describe('interfaces spec v1', () => {
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('examples/hello-world'));
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+      await manager.loadComponentSpecs('hello-world'));
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
 
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[api_ref].environment).to.deep.eq({
