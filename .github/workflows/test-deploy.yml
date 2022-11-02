@@ -14,9 +14,9 @@ jobs:
         with:
           node-version: '16'
           cache: 'npm'
-      # - run: apt update && apt install nodejs-current git curl jq # TODO: name steps, check if these are needed for gh
+      # TODO: name steps
       - run: sudo apt-get update && sudo apt-get install curl
-      - run: npm install -g @architect-io/cli@1.28.0-arc-detached-testing.1
+      - run: npm install -g @architect-io/cli@1.28.0
       - run: architect --version
       - run: architect config:set registry_host registry.dev.architect.io
       - run: architect config:set api_host https://api.dev.architect.io
@@ -25,14 +25,10 @@ jobs:
       - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git # TODO: update branch
       - run: docker volume create volume-key
       - run: architect link examples/hello-world/architect.yml
-      - run: architect dev -e superset architect-cli/test/mocks/superset/architect.yml --browser=false -s param_unset=test -d
-      - run: sleep 60
-      # - run: docker ps -a
-      # - run: ENV_NAME=$(architect dev:list --format=json | jq 'keys[0]' | tr -d '"')
-      # - run: architect dev:list --format=json | jq 'keys[0]' | tr -d '"'
-      # - run: architect dev:list
-      # - run: echo $ENV_NAME
-      # - run: ls -la ~/.config/architect/docker-compose # TODO: remove
+      - run: architect dev -e superset architect-cli/test/mocks/superset/architect.yml --browser=false -s param_unset=test > ./tmp.txt 2>&1 & # TODO: make ticket for compose file being deleted when the -d flag is used
+      - run: sh architect-cli/scripts/server_online.sh
+      - run: echo "Finished waiting"
+      - run: tail -f ./tmp.txt &
       - run: architect exec -e superset superset.services.stateless-app -- sh -c "curl --fail -S -I https://hello.localhost.architect.sh:443/"
 
   # test_remote:
@@ -43,7 +39,7 @@ jobs:
   #       with:
   #         node-version: '16'
   #         cache: 'npm'
-      # - run: apt install curl
+  #     - run: apt install curl
   #     - run: npm install -g @architect-io/cli
   #     - run: architect --version
   #     - run: architect config:set registry_host registry.dev.architect.io
@@ -58,5 +54,5 @@ jobs:
   #     - run: curl --insecure --fail -S -I https://hello.example-environment.architect-ci.dev.arcitect.io/ || exit 1
   #     - run: export CERT_DATA=$(openssl s_client -showcerts -connect example-environment.architect-ci.dev.arcitect.io:443 </dev/null | openssl x509 -noout -issuer) # TODO: update app domain
   #     - run: if [[ "$CERT_DATA" = "issuer=C = US, O = Let's Encrypt, CN = R3" || "$CERT_DATA" = "issuer=C = US, O = (STAGING) Let's Encrypt, CN = (STAGING) Artificial Apricot R3" ]]; then echo "Valid cert generated"; else exit 1; fi
-        # - run: architect exec -e superset superset.services.stateful-api -- sh -c "curl -S -I https://hello.localhost.architect.sh:443/"
+  #     - run: architect exec -e superset superset.services.stateful-api -- sh -c "curl --insecure --fail -S -I https://hello.localhost.architect.sh:443/"
   #     # TODO: deploy to a different environment based on the branch name or something?
