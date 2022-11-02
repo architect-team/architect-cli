@@ -16,7 +16,7 @@ jobs:
           cache: 'npm'
       # TODO: name steps
       - run: sudo apt-get update && sudo apt-get install curl
-      - run: npm install -g @architect-io/cli@1.28.0
+      - run: npm install -g @architect-io/cli
       - run: architect --version
       - run: architect config:set registry_host registry.dev.architect.io
       - run: architect config:set api_host https://api.dev.architect.io
