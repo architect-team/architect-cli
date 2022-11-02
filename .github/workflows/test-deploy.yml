@@ -11,7 +11,7 @@ env:
   NPM_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
 
 jobs:
-  build_run:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: '16'
           cache: 'npm'
-      - run: apt install --update nodejs-current git curl jq # TODO: name steps, check if these are needed for gh
+      - run: apt update && apt install nodejs-current git curl jq # TODO: name steps, check if these are needed for gh
       - run: npm install -g @architect-io/cli
       - run: architect --version
       - run: architect config:set registry_host registry.dev.architect.io
