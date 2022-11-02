@@ -28,6 +28,7 @@ jobs:
       - run: architect login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
       - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git
       - run: docker volume create volume-key
+      - run: architect link examples/hello-world/architect.yml
       - run: architect dev -e superset architect-cli/test/mocks/superset/architect.yml --browser=false -s param_unset=test -d
       - run: sleep 60
       - run: docker ps -a
