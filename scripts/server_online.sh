@@ -3,7 +3,7 @@ max_attempts=200
 
 running_count=$(architect dev:list | grep running | wc -l)
 
-while [ ! $running_count -eq 3 ]
+while [ ! $running_count -eq 5 ]
 do
     if [ ${attempt_counter} -eq ${max_attempts} ];then
       echo "Max attempts reached"
