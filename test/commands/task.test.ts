@@ -191,7 +191,7 @@ describe('task:exec', async function () {
       expect(run.calledOnce).to.be.true;
       expect(loadDockerCompose.calledOnce).to.be.true;
 
-      expect(ctx.stdout).to.contain(`Running task ${task_name} in the local ${mock_component.name} environment...`);
+      expect(ctx.stdout).to.contain(`Running task ${task_name} in the local ${DockerComposeUtils.DEFAULT_PROJECT} environment...`);
       expect(ctx.stdout).to.contain('Successfully ran task.');
     });
 
@@ -206,7 +206,7 @@ describe('task:exec', async function () {
       const loadDockerCompose = DockerComposeUtils.loadDockerCompose as sinon.SinonStub;
       const runDockerCompose = DockerComposeUtils.run as sinon.SinonStub;
       expect(runDockerCompose.calledOnce).to.be.true;
-      expect(runDockerCompose.args[0]).to.deep.equal([mock_ref, mock_component.name, path.join('test', 'docker-compose', `${mock_component.name}.yml`)]);
+      expect(runDockerCompose.args[0]).to.deep.equal([mock_ref, 'architect', path.join('test', 'docker-compose', 'architect.yml')]);
       expect(loadDockerCompose.calledOnce).to.be.true;
     });
 
@@ -252,7 +252,7 @@ describe('task:exec', async function () {
     .stderr({ print })
     .command(['task:exec', '-l', namespaced_component_name, mock_task.name])
     .catch(err => {
-      expect(err.message).to.contain(`Could not find docker compose file at ${DockerComposeUtils.buildComposeFilepath('test', mock_component.name)}. Please run \`architect dev -e ${mock_component.name} ${namespaced_component_name}\` before executing any tasks in your local ${mock_component.name} environment.`);
+      expect(err.message).to.contain(`Could not find docker compose file at ${DockerComposeUtils.buildComposeFilepath('test', DockerComposeUtils.DEFAULT_PROJECT)}. Please run \`architect dev -e ${DockerComposeUtils.DEFAULT_PROJECT} ${namespaced_component_name}\` before executing any tasks in your local ${DockerComposeUtils.DEFAULT_PROJECT} environment.`);
     })
     .it('fails with a useful message if no docker compose file is found');
 
@@ -276,7 +276,7 @@ describe('task:exec', async function () {
     .stderr({ print })
     .command(['task:exec', '-l', namespaced_component_name, mock_task.name])
     .catch(err => {
-      expect(err.message).to.contain(`Could not find ${task_name} running in your local ${mock_component.name} environment`);
+      expect(err.message).to.contain(`Could not find ${task_name} running in your local ${DockerComposeUtils.DEFAULT_PROJECT} environment`);
     })
     .it('fails with a useful message if the specified task is not present in the docker compose');
 
