@@ -514,7 +514,6 @@ export default class Dev extends BaseCommand {
     }
 
     await new UpProcessManager(compose_file, socket, project_name, flags.detached).run();
-    fs.removeSync(compose_file);
     // eslint-disable-next-line no-process-exit
     process.exit();
   }
