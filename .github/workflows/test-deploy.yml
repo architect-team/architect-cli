@@ -31,7 +31,9 @@ jobs:
       # - run: architect dev:list --format=json | jq 'keys[0]' | tr -d '"'
       # - run: architect dev:list
       # - run: echo $ENV_NAME
+      - run: ls -la ~/.config/architect/docker-compose # TODO: remove
       - run: architect exec -e superset superset.services.stateless-app -- sh -c "curl -S -I https://hello.localhost.architect.sh:443/"
+      # TODO: Error: ENOENT: no such file or directory, open '/home/runner/.config/architect/docker-compose/superset.yml'
 
   # test_remote:
   #   runs-on: ubuntu-latest
