@@ -18,11 +18,11 @@ done
 
 echo "Containers are started"
 
-AUTH_TEXT="> Ready on port: 8080"
+AUTH_TEXT="Ready on port: 8080"
 MATCH=1
 while [ ${MATCH} -eq 1 ]
 do
-    tail -1 ./tmp.txt | grep "$AUTH_TEXT"
+    tail -20 ./tmp.txt | grep $AUTH_TEXT
     if [ $? -eq 0 ]; then
       MATCH=0
     else
