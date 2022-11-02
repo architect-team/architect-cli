@@ -1,0 +1,41 @@
+name: Test superset deployment
+
+on:
+  push:
+    branches:
+      - superset-updates # TODO: update
+
+env:
+  CI: true
+  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+  NPM_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
+
+jobs:
+  build_run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+      - run: apk add --update nodejs-current # TODO: name steps
+      - run: apk add npm
+      - run: apk add --update git
+      - run: apk add --update curl
+      - run: apk add --update jq
+      - run: npm install -g @architect-io/cli
+      - run: architect --version
+      - run: architect config:set registry_host registry.dev.architect.io
+      - run: architect config:set api_host https://api.dev.architect.io
+      - run: architect config:set log_level debug
+      - run: architect login -e ${ARCHITECT_EMAIL} -p ${ARCHITECT_PASSWORD}
+      - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git
+      - run: docker volume create volume-key
+      - run: architect dev -e superset architect-cli/test/mocks/superset/architect.yml --browser=false -s param_unset=test -d
+      - run: sleep 60
+      - run: docker ps -a
+      - run: ENV_NAME=$(architect dev:list --format=json | jq 'keys[0]' | tr -d '"')
+      - run: architect dev:list
+      - run: echo $ENV_NAME
+      - run: architect exec -e $ENV_NAME superset.services.stateless-app -- sh -c "curl -S -I https://hello.localhost.architect.sh:443/"
