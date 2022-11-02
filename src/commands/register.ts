@@ -176,9 +176,8 @@ export default class ComponentRegister extends BaseCommand {
       await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);
     }
 
-    const dependency_manager = new LocalDependencyManager(this.app.api);
+    const dependency_manager = new LocalDependencyManager(this.app.api, selected_account.name);
     dependency_manager.environment = 'production';
-    dependency_manager.account = selected_account.name;
 
     const graph = await dependency_manager.getGraph([classToClass(component_spec)], undefined, { interpolate: false, validate: false });
     // Tmp fix to register host overrides

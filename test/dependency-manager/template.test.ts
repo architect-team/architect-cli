@@ -159,7 +159,7 @@ describe('template', () => {
         '/stack/architect.yml': component_config,
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'hello-world': '/stack/architect.yml',
       });
       const graph = await manager.getGraph([
@@ -211,7 +211,7 @@ describe('template', () => {
         '/stack/architect.yml': component_config,
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'hello-world': '/stack/architect.yml',
       });
       const graph = await manager.getGraph([
@@ -249,7 +249,7 @@ describe('template', () => {
         '/stack/architect.yml': component_config,
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'hello-world': '/stack/architect.yml',
       });
       const graph = await manager.getGraph([

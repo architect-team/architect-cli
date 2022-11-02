@@ -34,7 +34,7 @@ describe('external spec v1', () => {
       '/stack/architect.yml': yaml.dump(component_config),
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
@@ -89,7 +89,7 @@ describe('external spec v1', () => {
       '/stack/architect.yml': yaml.dump(component_config),
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
@@ -137,7 +137,7 @@ describe('external spec v1', () => {
       '/stack/architect.yml': yaml.dump(component_config),
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
@@ -195,7 +195,7 @@ describe('external spec v1', () => {
       '/stack/architect.yml': yaml.dump(component_config),
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
@@ -286,7 +286,7 @@ describe('external spec v1', () => {
       '/stack/dependency/architect.yml': dependency_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/stack/component/architect.yml',
       'dependency': '/stack/dependency/architect.yml'
     });
@@ -333,7 +333,7 @@ describe('external spec v1', () => {
       '/stack/component/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/stack/component/architect.yml'
     });
     const graph = await manager.getGraph([
@@ -378,7 +378,7 @@ describe('external spec v1', () => {
       '/stack/component/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/stack/component/architect.yml'
     });
 
@@ -431,7 +431,7 @@ describe('external spec v1', () => {
       '/stack/component/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/stack/component/architect.yml'
     });
 

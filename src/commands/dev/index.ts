@@ -644,23 +644,24 @@ $ architect dev -e new_env_name_here .`));
       component_versions.push(component_version);
     }
 
+    let account_name: string | undefined;  // TODO: error if no account name found
+    if (flags.account) {
+      const account = await AccountUtils.getAccount(this.app, flags.account);
+      account_name = account.name;
+    } else {
+      const config_account = this.app.config.defaultAccount();
+      if (config_account) {
+        account_name = config_account;
+      }
+    }
     const dependency_manager = new LocalDependencyManager(
       this.app.api,
+      account_name,
       linked_components,
     );
 
     dependency_manager.use_ssl = flags.ssl;
     dependency_manager.external_addr = (flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address) + `:${flags.port}`;
-
-    if (flags.account) {
-      const account = await AccountUtils.getAccount(this.app, flags.account);
-      dependency_manager.account = account.name;
-    } else {
-      const config_account = this.app.config.defaultAccount();
-      if (config_account) {
-        dependency_manager.account = config_account;
-      }
-    }
 
     if (flags.environment) {
       dependency_manager.environment = flags.environment;

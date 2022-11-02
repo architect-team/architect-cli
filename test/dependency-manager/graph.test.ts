@@ -69,8 +69,7 @@ describe('graph', () => {
     nock('http://localhost').get('/accounts/architect/components/dependency/versions/latest')
       .reply(200, { tag: 'latest', config: yaml.load(dependency_config), service: { url: 'dependency:latest' } });
 
-    const manager = new LocalDependencyManager(axios.create());
-    manager.account = 'architect';
+    const manager = new LocalDependencyManager(axios.create(), 'architect');
 
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('component:latest'),
@@ -125,8 +124,7 @@ describe('graph', () => {
     nock('http://localhost').get('/accounts/architect/components/dependency/versions/latest')
       .reply(200, { tag: 'latest', config: yaml.load(dependency_config), service: { url: 'dependency:latest' } });
 
-    const manager = new LocalDependencyManager(axios.create());
-    manager.account = 'architect';
+    const manager = new LocalDependencyManager(axios.create(), 'architect');
 
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('component:latest'),

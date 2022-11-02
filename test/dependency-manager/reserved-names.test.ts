@@ -31,7 +31,7 @@ describe('components with reserved_name field set', function () {
         '/stack/architect.yml': component_config_yml,
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'cloud': '/stack'
       });
 
@@ -97,7 +97,7 @@ describe('components with reserved_name field set', function () {
         '/stack/architect.yml': component_config_yml,
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'cloud': '/stack'
       });
 
@@ -138,8 +138,7 @@ describe('components with reserved_name field set', function () {
       nock('http://localhost').get(`/accounts/architect/components/cloud/versions/v1`)
         .reply(200, { tag: 'v1', config: component_config_json, service: { url: 'cloud:v1' } });
 
-      const manager = new LocalDependencyManager(axios.create());
-      manager.account = 'architect';
+      const manager = new LocalDependencyManager(axios.create(), 'architect');
 
       const graph = await manager.getGraph([
         await manager.loadComponentSpec('cloud:v1')
@@ -177,8 +176,7 @@ describe('components with reserved_name field set', function () {
       nock('http://localhost').get(`/accounts/architect/components/cloud/versions/v1`)
         .reply(200, { tag: 'v1', config: component_config, service: { url: 'cloud:v1' } });
 
-      const manager = new LocalDependencyManager(axios.create());
-      manager.account = 'architect';
+      const manager = new LocalDependencyManager(axios.create(), 'architect');
 
       const graph = await manager.getGraph([
         await manager.loadComponentSpec('cloud:v1')
@@ -231,7 +229,7 @@ describe('components with reserved_name field set', function () {
         return true;
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'cloud': '/stack/architect.yml'
       });
       const graph = await manager.getGraph([
@@ -359,7 +357,7 @@ describe('components with reserved_name field set', function () {
         '/stack/concourse/architect.yml': yaml.dump(concourse_component_config),
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'cloud': '/stack/cloud/architect.yml',
         'ci': '/stack/concourse/architect.yml'
       });
@@ -423,7 +421,7 @@ describe('components with reserved_name field set', function () {
         '/stack/cloud/architect.yml': yaml.dump(cloud_component_config),
       });
 
-      const manager = new LocalDependencyManager(axios.create(), { 'cloud': '/stack/cloud/architect.yml' });
+      const manager = new LocalDependencyManager(axios.create(), 'architect', { 'cloud': '/stack/cloud/architect.yml' });
       const graph = await manager.getGraph([
         await manager.loadComponentSpec('cloud:latest', { interfaces: { api: 'api-interface' } })
       ]);
@@ -470,7 +468,7 @@ describe('components with reserved_name field set', function () {
         '/c/architect.yaml': component_c,
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component-a': '/a/architect.yaml',
         'component-b': '/b/architect.yaml',
         'component-c': '/c/architect.yaml'
@@ -534,7 +532,7 @@ describe('components with reserved_name field set', function () {
         '/c/architect.yaml': component_c,
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component-a': '/a/architect.yaml',
         'component-b': '/b/architect.yaml',
         'component-c': '/c/architect.yaml'
@@ -582,7 +580,7 @@ describe('components with reserved_name field set', function () {
         '/stack/architect.yml': component_config_yml,
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'cloud': '/stack/architect.yml'
       });
 

@@ -23,7 +23,7 @@ describe('volumes spec v1', () => {
     mock_fs({
       '/component/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component/component.yml'
     });
     const graph = await manager.getGraph([
@@ -47,7 +47,7 @@ describe('volumes spec v1', () => {
     mock_fs({
       '/component/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component/component.yml'
     });
     const graph = await manager.getGraph([
@@ -70,7 +70,7 @@ describe('volumes spec v1', () => {
     mock_fs({
       '/component/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component/component.yml'
     });
     const graph = await manager.getGraph([
@@ -110,7 +110,7 @@ describe('volumes spec v1', () => {
     mock_fs({
       '/component/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component/component.yml'
     });
     const graph = await manager.getGraph([

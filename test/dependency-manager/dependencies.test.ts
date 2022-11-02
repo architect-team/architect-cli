@@ -47,7 +47,7 @@ describe('dependencies', () => {
       '/stack/cloud/architect.yml': cloud_config,
       '/stack/server/architect.yml': server_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/cloud/architect.yml',
       'server': '/stack/server/architect.yml'
     });

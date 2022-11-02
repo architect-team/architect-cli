@@ -67,7 +67,7 @@ services:
           replicas: '1'
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/architect.yml',
       });
       let err;
@@ -102,7 +102,7 @@ services:
         frontend: \${{ services.fake.interfaces.main.url }}
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/architect.yml',
       });
       let err;
@@ -135,7 +135,7 @@ services:
             TEST: 1
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/architect.yml',
       });
 
@@ -177,7 +177,7 @@ services:
           image: ellerbrock/alpine-bash-curl-ssl
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/architect.yml',
       });
       let err;
@@ -235,7 +235,7 @@ services:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/architect.yml',
       });
       let err;
@@ -266,7 +266,7 @@ services:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/architect.yml',
       });
       let err;
@@ -297,7 +297,7 @@ services:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/architect.yml',
       });
       let err;
@@ -334,7 +334,7 @@ services:
       `;
       mock_fs({ '/architect.yml': component_config });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/architect.yml',
       });
       let err;
@@ -378,7 +378,7 @@ services:
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/architect.yml',
       });
       let err;
@@ -410,7 +410,7 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/component.yml',
       });
       let err;
@@ -452,7 +452,7 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/component.yml',
       });
       let err;
@@ -493,7 +493,7 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/component.yml',
       });
       let err;
@@ -530,7 +530,7 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/component.yml',
       });
       let err;
@@ -583,7 +583,7 @@ services:
         '/component.yml': component_config,
         '/other-component.yml': other_component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/component.yml',
         'other': '/other-component.yml',
       });
@@ -626,7 +626,7 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/component.yml',
       });
       let err;
@@ -663,7 +663,7 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/component.yml',
       });
       let err;
@@ -704,7 +704,7 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/component.yml',
       });
       let err;
@@ -738,7 +738,7 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/component.yml',
       });
       let err;
@@ -768,7 +768,7 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/component.yml',
       });
 
@@ -801,7 +801,7 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/component.yml',
       });
       let err;
@@ -845,7 +845,7 @@ services:
         '/other-component.yml': other_component_config,
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/component.yml',
         'other': '/other-component.yml',
       });
@@ -902,7 +902,7 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/component.yml',
       });
       let err;
@@ -971,10 +971,9 @@ services:
       nock('http://localhost').get('/accounts/examples/components/hello-world2/versions/latest')
         .reply(200, { tag: 'latest', config: yaml.load(component_config2), service: { url: 'hello-world2:latest' } });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'examples', {
         'hello-world': '/architect.yml',
       });
-      manager.account = 'examples';
 
       let err;
       try {
@@ -1113,7 +1112,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
     let err;
@@ -1144,7 +1143,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
     let err;
@@ -1170,7 +1169,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
 
@@ -1205,7 +1204,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
 
@@ -1232,7 +1231,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
 
@@ -1267,7 +1266,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
 
@@ -1298,7 +1297,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
 
@@ -1333,7 +1332,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
 
@@ -1362,7 +1361,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
 
@@ -1395,7 +1394,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
 
@@ -1427,7 +1426,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
 
@@ -1454,7 +1453,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
     let err;
@@ -1490,7 +1489,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
     let err;
@@ -1525,7 +1524,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
     let err;
@@ -1554,7 +1553,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
     let err;
@@ -1582,7 +1581,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
     let err;
@@ -1619,7 +1618,7 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
     });
     let err;
@@ -1658,7 +1657,7 @@ services:
       '/stack/architect.yml': yml,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/stack/architect.yml',
     });
 

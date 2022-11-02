@@ -58,7 +58,7 @@ describe('interpolation spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
@@ -87,7 +87,7 @@ describe('interpolation spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
@@ -134,7 +134,7 @@ describe('interpolation spec v1', () => {
       '/stack/worker.yml': yaml.dump(worker_component_config),
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'web': '/stack/web.yml',
       'worker': '/stack/worker.yml'
     });
@@ -202,7 +202,7 @@ describe('interpolation spec v1', () => {
     };
     expect(template).to.be.deep.equal(expected_compose);
 
-    const public_manager = new LocalDependencyManager(axios.create(), {
+    const public_manager = new LocalDependencyManager(axios.create(), 'architect', {
       'web': '/stack/web.yml',
       'worker': '/stack/worker.yml'
     });
@@ -295,7 +295,7 @@ describe('interpolation spec v1', () => {
       '/frontend/architect.yml': frontend_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'backend': '/backend/architect.yml',
       'frontend': '/frontend/architect.yml'
     });
@@ -348,7 +348,7 @@ describe('interpolation spec v1', () => {
       '/frontend/architect.yml': frontend_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'frontend': '/frontend/architect.yml'
     });
     const graph = await manager.getGraph([
@@ -443,7 +443,7 @@ describe('interpolation spec v1', () => {
       '/frontend3/architect.yml': frontend_config3,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'backend': '/backend/architect.yml',
       'frontend': '/frontend/architect.yml',
       'frontend2': '/frontend2/architect.yml',
@@ -511,7 +511,7 @@ describe('interpolation spec v1', () => {
       '/frontend/architect.yml': frontend_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'backend': '/backend/architect.yml',
       'frontend': '/frontend/architect.yml'
     });
@@ -571,7 +571,7 @@ describe('interpolation spec v1', () => {
   //     '/stack/web/web.json': JSON.stringify(component_config),
   //   });
 
-  //   const manager = new LocalDependencyManager(axios.create(), {
+  //   const manager = new LocalDependencyManager(axios.create(), 'architect', {
   //     'component': '/stack/web/web.json',
   //   });
   //   const graph = await manager.getGraph([
@@ -610,7 +610,7 @@ describe('interpolation spec v1', () => {
   //     '/stack/web/web.json': JSON.stringify(component_config),
   //   });
 
-  //   const manager = new LocalDependencyManager(axios.create(), {
+  //   const manager = new LocalDependencyManager(axios.create(), 'architect', {
   //     'component': '/stack/web/web.json',
   //   });
   //   const graph = await manager.getGraph([
@@ -645,7 +645,7 @@ describe('interpolation spec v1', () => {
   //     '/stack/architect.yml': component_config,
   //   });
 
-  //   const manager = new LocalDependencyManager(axios.create(), {
+  //   const manager = new LocalDependencyManager(axios.create(), 'architect', {
   //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
@@ -680,7 +680,7 @@ describe('interpolation spec v1', () => {
   //     '/stack/architect.yml': component_config,
   //   });
 
-  //   const manager = new LocalDependencyManager(axios.create(), {
+  //   const manager = new LocalDependencyManager(axios.create(), 'architect', {
   //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
@@ -715,7 +715,7 @@ describe('interpolation spec v1', () => {
   //     '/stack/architect.yml': component_config,
   //   });
 
-  //   const manager = new LocalDependencyManager(axios.create(), {
+  //   const manager = new LocalDependencyManager(axios.create(), 'architect', {
   //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
@@ -752,7 +752,7 @@ describe('interpolation spec v1', () => {
   //     '/stack/architect.yml': component_config,
   //   });
 
-  //   const manager = new LocalDependencyManager(axios.create(), {
+  //   const manager = new LocalDependencyManager(axios.create(), 'architect', {
   //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
@@ -788,7 +788,7 @@ describe('interpolation spec v1', () => {
   //     '/stack/architect.yml': component_config,
   //   });
 
-  //   const manager = new LocalDependencyManager(axios.create(), {
+  //   const manager = new LocalDependencyManager(axios.create(), 'architect', {
   //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
@@ -824,7 +824,7 @@ describe('interpolation spec v1', () => {
   //     '/stack/web.json': JSON.stringify(component_config),
   //   });
 
-  //   const manager = new LocalDependencyManager(axios.create(), {
+  //   const manager = new LocalDependencyManager(axios.create(), 'architect', {
   //     'component': '/stack/web.json',
   //   });
   //   const graph = await manager.getGraph([
@@ -859,7 +859,7 @@ describe('interpolation spec v1', () => {
   //     '/stack/arc/architect.yml': component_config,
   //   });
 
-  //   const manager = new LocalDependencyManager(axios.create(), {
+  //   const manager = new LocalDependencyManager(axios.create(), 'architect', {
   //     'hello-world': '/stack/arc/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
@@ -896,7 +896,7 @@ describe('interpolation spec v1', () => {
   //     '/stack/architect.yml': component_config,
   //   });
 
-  //   const manager = new LocalDependencyManager(axios.create(), {
+  //   const manager = new LocalDependencyManager(axios.create(), 'architect', {
   //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
@@ -926,7 +926,7 @@ describe('interpolation spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
@@ -960,7 +960,7 @@ describe('interpolation spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
@@ -995,7 +995,7 @@ describe('interpolation spec v1', () => {
   //     '/stack/architect.yml': component_config,
   //   });
 
-  //   const manager = new LocalDependencyManager(axios.create(), {
+  //   const manager = new LocalDependencyManager(axios.create(), 'architect', {
   //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
@@ -1035,7 +1035,7 @@ describe('interpolation spec v1', () => {
   //     '/stack/architect.yml': component_config,
   //   });
 
-  //   const manager = new LocalDependencyManager(axios.create(), {
+  //   const manager = new LocalDependencyManager(axios.create(), 'architect', {
   //     'hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
@@ -1076,7 +1076,7 @@ describe('interpolation spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
@@ -1135,7 +1135,7 @@ describe('interpolation spec v1', () => {
       '/stack2/architect.yml': component_config2,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
       'dependency': '/stack2/architect.yml',
     });
@@ -1170,7 +1170,7 @@ describe('interpolation spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
@@ -1201,7 +1201,7 @@ describe('interpolation spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
@@ -1227,7 +1227,7 @@ describe('interpolation spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
@@ -1263,7 +1263,7 @@ describe('interpolation spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
@@ -1306,7 +1306,7 @@ describe('interpolation spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(await manager.loadComponentSpecs('hello-world'));
@@ -1352,7 +1352,7 @@ describe('interpolation spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
@@ -1412,7 +1412,7 @@ describe('interpolation spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
@@ -1475,7 +1475,7 @@ describe('interpolation spec v1', () => {
       '/stack/consumer/architect.yml': consumer_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'publisher': '/stack/publisher/architect.yml',
       'consumer': '/stack/consumer/architect.yml',
     });
@@ -1524,7 +1524,7 @@ describe('interpolation spec v1', () => {
       '/stack/consumer/architect.yml': consumer_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'publisher': '/stack/publisher/architect.yml',
       'consumer': '/stack/consumer/architect.yml',
     });
@@ -1566,7 +1566,7 @@ describe('interpolation spec v1', () => {
       '/stack/consumer/architect.yml': consumer_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'publisher': '/stack/publisher/architect.yml',
       'consumer': '/stack/consumer/architect.yml',
     });
@@ -1614,7 +1614,7 @@ describe('interpolation spec v1', () => {
       '/stack/architect.yml': config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'test': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(

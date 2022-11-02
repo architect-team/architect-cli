@@ -27,7 +27,7 @@ describe('graph depends_on', () => {
     mock_fs({
       '/stack/architect.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
@@ -78,7 +78,7 @@ describe('graph depends_on', () => {
     mock_fs({
       '/stack/architect.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
@@ -125,7 +125,7 @@ describe('graph depends_on', () => {
     mock_fs({
       '/stack/architect.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
@@ -175,7 +175,7 @@ describe('graph depends_on', () => {
     mock_fs({
       '/stack/architect.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
@@ -233,7 +233,7 @@ describe('graph depends_on', () => {
       '/stack/architect.yml': component_config,
       '/stack/dependency.yml': dependency_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml',
       'dependency': '/stack/dependency.yml',
     });
@@ -295,7 +295,7 @@ describe('graph depends_on', () => {
       '/stack/architect.yml': component_config,
       '/stack/dependency.yml': dependency_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml',
       'dependency': '/stack/dependency.yml',
     });
@@ -355,7 +355,7 @@ describe('graph depends_on', () => {
       '/stack/architect.yml': component_config,
       '/stack/dependency.yml': dependency_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml',
       'dependency': '/stack/dependency.yml',
     });
@@ -411,7 +411,7 @@ describe('graph depends_on', () => {
       '/stack/architect.yml': component_config,
       '/stack/dependency.yml': dependency_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml',
       'dependency': '/stack/dependency.yml',
     });
@@ -476,7 +476,7 @@ describe('graph depends_on', () => {
       '/stack/architect.yml': component_config,
       '/stack/dependency.yml': dependency_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml',
       'dependency': '/stack/dependency.yml',
     });

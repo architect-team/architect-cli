@@ -76,7 +76,7 @@ describe('interfaces spec v1', () => {
         '/stack/leaf/architect.yml': yaml.dump(leaf_component),
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'leaf': '/stack/leaf/architect.yml',
       });
       const graph = await manager.getGraph([
@@ -111,7 +111,7 @@ describe('interfaces spec v1', () => {
         '/stack/branch/architect.yml': yaml.dump(branch_component),
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'leaf': '/stack/leaf/architect.yml',
         'branch': '/stack/branch/architect.yml',
       });
@@ -186,7 +186,7 @@ describe('interfaces spec v1', () => {
         '/stack/other-leaf/architect.yml': yaml.dump(other_leaf_component),
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'leaf': '/stack/leaf/architect.yml',
         'branch': '/stack/branch/architect.yml',
         'other-leaf': '/stack/other-leaf/architect.yml',
@@ -364,7 +364,7 @@ describe('interfaces spec v1', () => {
       '/stack/architect.yml': yaml.dump(component_config),
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
@@ -450,7 +450,7 @@ describe('interfaces spec v1', () => {
       '/stack/architect.yml': yaml.dump(component_config),
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
@@ -554,7 +554,7 @@ describe('interfaces spec v1', () => {
       '/stack/admin-ui/architect.yml': admin_ui_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'admin-ui': '/stack/admin-ui/architect.yml',
       'product-catalog': '/stack/product-catalog/architect.yml',
     });
@@ -608,7 +608,7 @@ describe('interfaces spec v1', () => {
       '/stack/smtp/architect.yml': smtp_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'smtp': '/stack/smtp/architect.yml',
     });
     const graph = await manager.getGraph([
@@ -654,7 +654,7 @@ describe('interfaces spec v1', () => {
       '/stack/smtp/architect.yml': smtp_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'smtp': '/stack/smtp/architect.yml',
     });
     const graph = await manager.getGraph([
@@ -706,7 +706,7 @@ describe('interfaces spec v1', () => {
       '/stack/upstream/architect.yml': upstream_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'smtp': '/stack/smtp/architect.yml',
       'upstream': '/stack/upstream/architect.yml',
     });
@@ -748,7 +748,7 @@ describe('interfaces spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
@@ -797,7 +797,7 @@ describe('interfaces spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
@@ -839,7 +839,7 @@ describe('interfaces spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     let err;
@@ -871,7 +871,7 @@ describe('interfaces spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'dependency': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
@@ -908,7 +908,7 @@ describe('interfaces spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     let err;
@@ -942,7 +942,7 @@ describe('interfaces spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
