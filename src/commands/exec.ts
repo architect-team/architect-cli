@@ -372,10 +372,6 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
   async runLocal(args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
     const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
-    console.log('*****************CONFIG**********************')
-    console.log(compose_file)
-    console.log('/home/runner/.config/architect/docker-compose/superset.yml')
-    console.log('*****************CONFIG**********************')
     const service = await DockerComposeUtils.getLocalServiceForEnvironment(compose_file, args.resource);
 
     const compose_args = ['-f', compose_file, '-p', environment_name, 'exec'];
