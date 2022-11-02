@@ -19,11 +19,7 @@ jobs:
         with:
           node-version: '16'
           cache: 'npm'
-      - run: apk add --update nodejs-current # TODO: name steps
-      - run: apk add npm
-      - run: apk add --update git
-      - run: apk add --update curl
-      - run: apk add --update jq
+      - run: apt install --update nodejs-current git curl jq # TODO: name steps, check if these are needed for gh
       - run: npm install -g @architect-io/cli
       - run: architect --version
       - run: architect config:set registry_host registry.dev.architect.io
