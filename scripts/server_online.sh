@@ -18,7 +18,7 @@ done
 
 echo "Containers are started"
 
-AUTH_TEXT="Authenticated with Architect platform"
+AUTH_TEXT="Ready on port: 8080"
 MATCH=1
 while [ ${MATCH} -eq 1 ]
 do
