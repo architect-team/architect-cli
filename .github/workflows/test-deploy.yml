@@ -57,5 +57,6 @@ jobs:
       # (curl -I -L  google.com || true) > test.txt
       - run: |
           architect exec -e superset superset.services.stateful-api -- sh -c "(curl --insecure -L -I https://hello.localhost.architect.sh:443/ || true) > curl_test.txt"
-          exit $?
+          if [ $(wc -c < test_curl.txt) -eq 0 ]; then exit 0; else exit 1; fi
+
       # TODO: deploy to a different environment based on the branch name or something?
