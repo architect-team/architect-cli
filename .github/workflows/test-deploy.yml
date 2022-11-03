@@ -51,7 +51,7 @@ jobs:
       - run: architect deploy -a architect-ci --auto-approve -e do-k8s architect-cli/test/mocks/superset/architect.yml -s param_unset=test # TODO: deploy when we merge to rc
       - run: sleep 180 # TODO: change account back to architect-ci and environment back to example-environment
       - run: curl --insecure --fail -S -I https://hello.do-k8s.architect-ci.dev.arcitect.io/ || exit 1
-      - run: export CERT_DATA=$(openssl s_client -showcerts -connect hello.do-k8s.architect-ci.dev.arcitect.io:443 </dev/null | openssl x509 -noout -issuer) # TODO: update app domain
+      - run: export CERT_DATA=$(openssl s_client -showcerts -connect hello.do-k8s.architect-ci.dev.arcitect.io:443 </dev/null | openssl x509 -noout -issuer) # TODO: update app domain, parameterize
       - run: if [[ "$CERT_DATA" = "issuer=C = US, O = Let's Encrypt, CN = R3" || "$CERT_DATA" = "issuer=C = US, O = (STAGING) Let's Encrypt, CN = (STAGING) Artificial Apricot R3" ]]; then echo "Valid cert generated"; else exit 1; fi
       # TODO: architect exec to hello-world instance and attempt to get a container it shouldn't be able to access, ex stateful-app
       # (curl -I -L  google.com || true) > test.txt
