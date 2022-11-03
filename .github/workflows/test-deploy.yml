@@ -32,7 +32,6 @@ jobs:
       - run: architect dev -e superset architect-cli/test/mocks/superset/architect.yml --browser=false -s param_unset=test > ./tmp.txt 2>&1 &
       - run: sh architect-cli/scripts/server_online.sh
       - run: echo "Finished waiting"
-      # - run: tail -f ./tmp.txt & # TODO: probably can remove this
       - name: Check that the app is accessible locally
         run: architect exec -e superset superset.services.stateless-app -- sh -c "curl --fail -S -I https://hello.localhost.architect.sh:443/"
 
@@ -57,7 +56,7 @@ jobs:
       - run: sleep 180 # TODO: change account back to architect-ci and environment back to example-environment
       - run: curl --insecure --fail -S -I https://hello.do-k8s.architect-ci.dev.arcitect.io/ || exit 1
       - run: export CERT_DATA=$(openssl s_client -showcerts -connect hello.do-k8s.architect-ci.dev.arcitect.io:443 </dev/null | openssl x509 -noout -issuer) # TODO: update app domain, parameterize
-      - run: if [[ "$CERT_DATA" = "issuer=C = US, O = Let's Encrypt, CN = R3" || "$CERT_DATA" = "issuer=C = US, O = (STAGING) Let's Encrypt, CN = (STAGING) Artificial Apricot R3" ]]; then echo "Valid cert generated"; else exit 1; fi
+      - run: if [ "$CERT_DATA" = "issuer=C = US, O = Let's Encrypt, CN = R3" || "$CERT_DATA" = "issuer=C = US, O = (STAGING) Let's Encrypt, CN = (STAGING) Artificial Apricot R3" ]; then echo "Valid cert generated"; else exit 1; fi
       - name: Check that network policies are being enforced in the cluster
         run: |
           architect exec -e superset superset.services.stateful-api -- sh -c "(curl --insecure -L -I http://hello-world--api:3000/ || true) > curl_test.txt"
