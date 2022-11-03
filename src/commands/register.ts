@@ -430,19 +430,31 @@ export default class ComponentRegister extends BaseCommand {
     for (const [component_name, tag] of Object.entries(component_dependencies)) {
       dependency_arr.push(`${component_name}:${tag}`);
     }
+    const dependencies: Dictionary<{ component: boolean, component_and_version: boolean }> = (await this.app.api.get(`accounts/${account_name}/components-tags`, { params: { components: dependency_arr } })).data;
 
-    const dependencies: Dictionary<boolean> = (await this.app.api.get(`accounts/${account_name}/components-tags`, { params: { components: dependency_arr } })).data;
-    const invalid_dependencies = [];
-    for (const [component_name, is_valid] of Object.entries(dependencies)) {
-      if (!is_valid) {
-        invalid_dependencies.push(component_name);
+    const component_warnings: string[] = [];
+    const tag_warnings: string[] = [];
+    for (const [component_name, valid] of Object.entries(dependencies)) {
+      if (valid.component && valid.component_and_version) {
+        continue;
+      } else if (valid.component && !valid.component_and_version) {
+        tag_warnings.push(component_name);
+      } else {
+        component_warnings.push(component_name);
       }
     }
 
-    if (Object.keys(invalid_dependencies).length > 0) {
-      this.log(chalk.yellow(`\nThe following dependencies are not found:`));
-      for (const dependency of invalid_dependencies) {
-        this.log(chalk.yellow(`  - ${dependency}`));
+    if (component_warnings.length > 0) {
+      this.log(chalk.yellow(`\nThe following dependencies need to be registered:`));
+      for (const component_name of component_warnings) {
+        this.log(chalk.yellow(`  - ${component_name}`));
+      }
+    }
+
+    if (tag_warnings.length > 0) {
+      this.log(chalk.yellow(`\nThe following dependencies tag are not found:`));
+      for (const component_name of tag_warnings) {
+        this.log(chalk.yellow(`  - ${component_name}`));
       }
     }
   }
