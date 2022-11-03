@@ -18,11 +18,11 @@ done
 
 echo "Containers are started"
 
-READY_TEXT="Ready on port"
+READY_TEXT="Ready on port\|Listening on port\|database system is ready"
 MATCH=1
 while [ ${MATCH} -eq 1 ]
 do
-    tail -40 ./tmp.txt | grep "$READY_TEXT"
+    tail -20 ./tmp.txt | grep "$READY_TEXT"
     if [ $? -eq 0 ]; then
       MATCH=0
     else
