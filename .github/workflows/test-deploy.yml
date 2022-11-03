@@ -39,7 +39,7 @@ jobs:
         with:
           node-version: '16'
           cache: 'npm'
-      - run: apt install curl
+      - run: sudo apt-get update && sudo apt-get install curl
       - run: npm install -g @architect-io/cli
       - run: architect --version
       - run: architect config:set registry_host registry.dev.architect.io
