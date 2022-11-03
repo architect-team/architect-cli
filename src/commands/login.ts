@@ -77,22 +77,13 @@ export default class Login extends BaseCommand {
         type: 'input',
         name: 'email',
         default: flags.email,
-        when: !flags.email,
+        when: PromptUtils.allowWhen('email is required in ci pipelines', flags.email),
       },
       {
         type: 'password',
         name: 'password',
         default: flags.password,
-        when: () => {
-          if (flags.password) {
-            return false;
-          }
-
-          if (isCi) {
-            throw new Error('password is required in ci pipelines');
-          }
-          return true;
-        },
+        when: PromptUtils.allowWhen('password is required in ci pipelines', flags.password),
       },
     ]);
 

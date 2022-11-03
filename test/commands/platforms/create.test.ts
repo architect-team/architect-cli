@@ -8,6 +8,7 @@ import ClusterCreate from '../../../src/commands/clusters/create';
 import PlatformCreate from '../../../src/commands/platforms/create';
 import { AgentClusterUtils } from '../../../src/common/utils/agent-cluster.utils';
 import { KubernetesClusterUtils } from '../../../src/common/utils/kubernetes-cluster.utils';
+import PromptUtils from '../../../src/common/utils/prompt-utils';
 
 describe('platform:create', function () {
   const account = {
@@ -127,6 +128,9 @@ describe('platform:create', function () {
         cluster_type: 'agent (BETA)',
         application_install: true,
       }
+    })
+    .stub(PromptUtils, 'allowWhen', () => {
+      return 'agent (BETA)';
     })
     .stub(AgentClusterUtils, 'installAgent', sinon.stub().returns(Promise.resolve()))
     .stub(AgentClusterUtils, 'configureAgentCluster', sinon.stub().returns(Promise.resolve()))

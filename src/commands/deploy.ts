@@ -14,6 +14,7 @@ import { ComponentVersionSlugUtils } from '../dependency-manager/spec/utils/slug
 import Dev from './dev';
 import ComponentRegister from './register';
 import isCi from 'is-ci';
+import PromptUtils from '../common/utils/prompt-utils';
 
 export abstract class DeployCommand extends BaseCommand {
   static flags = {
@@ -59,12 +60,7 @@ export abstract class DeployCommand extends BaseCommand {
         type: 'confirm',
         name: 'deploy',
         message: 'Would you like to apply?',
-        when: () => {
-          if (isCi) {
-            throw new Error('--auto-approve is required in ci pipelines');
-          }
-          return true;
-        },
+        when: PromptUtils.allowWhen('--auto-approve is required in ci pipelines'),
       });
       if (!confirmation.deploy) {
         this.warn(`Canceled pipeline`);

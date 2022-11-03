@@ -6,6 +6,7 @@ import ClusterUtils from '../../architect/cluster/cluster.utils';
 import BaseCommand from '../../base-command';
 import { booleanString } from '../../common/utils/oclif';
 import isCi from 'is-ci';
+import PromptUtils from '../../common/utils/prompt-utils';
 
 export default class ClusterDestroy extends BaseCommand {
   static aliases = ['clusters:deregister', 'cluster:destroy', 'clusters:destroy'];
@@ -72,16 +73,7 @@ export default class ClusterDestroy extends BaseCommand {
         }
         return `Name must match: ${chalk.blue(cluster.name)}`;
       },
-      when: () => {
-        if (flags['auto-approve']) {
-          return false;
-        }
-
-        if (isCi) {
-          throw new Error('--auto-approve is required in ci pipelines');
-        }
-        return true;
-      },
+      when: PromptUtils.allowWhen('--auto-approve is required in ci pipelines', flags['auto-approve']),
     }]);
 
     answers = { ...args, ...flags, ...answers };

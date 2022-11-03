@@ -15,7 +15,7 @@ import BaseCommand from '../../base-command';
 import { AgentClusterUtils } from '../../common/utils/agent-cluster.utils';
 import { KubernetesClusterUtils } from '../../common/utils/kubernetes-cluster.utils';
 import { booleanString } from '../../common/utils/oclif';
-import isCi from 'is-ci';
+import PromptUtils from '../../common/utils/prompt-utils';
 
 export default class ClusterCreate extends BaseCommand {
   static aliases = ['clusters:register', 'cluster:create', 'clusters:create'];
@@ -112,16 +112,7 @@ export default class ClusterCreate extends BaseCommand {
         type: 'input',
         name: 'cluster',
         message: 'What would you like to name your new cluster?',
-        when: () => {
-          if (args.cluster) {
-            return false;
-          }
-
-          if (isCi) {
-            this.error('Cluster name is required in ci pipelines');
-          }
-          return true;
-        },
+        when: PromptUtils.allowWhen('Cluster name is required in ci pipelines', args.cluster),
         filter: value => value.toLowerCase(),
         validate: value => {
           if (Slugs.ArchitectSlugValidator.test(value)) return true;
@@ -175,16 +166,7 @@ export default class ClusterCreate extends BaseCommand {
     const agent_display_name = 'agent (BETA)';
     const cluster_type_answers: any = await inquirer.prompt([
       {
-        when: () => {
-          if (flags.type) {
-            return false;
-          }
-
-          if (isCi) {
-            this.error('--type is required in ci pipelines');
-          }
-          return true;
-        },
+        when: PromptUtils.allowWhen('--type is required in ci pipelines', flags.type),
         type: 'list',
         name: 'cluster_type',
         message: 'What type of cluster would you like to register?',
@@ -274,12 +256,7 @@ export default class ClusterCreate extends BaseCommand {
             // Set the context value to the matching object from the kubeconfig
             return kubeconfig.contexts.find((ctx: any) => ctx.name === value);
           },
-          when: () => {
-            if (isCi) {
-              throw new Error('kube context is required in ci pipelines');
-            }
-            return true;
-          },
+          when: PromptUtils.allowWhen('kube context is required in ci pipelines'),
         },
       ]);
       kube_context = new_cluster_answers.context;

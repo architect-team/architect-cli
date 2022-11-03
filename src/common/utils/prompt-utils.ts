@@ -51,4 +51,15 @@ export default class PromptUtils {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     inquirer.prompt.registerPrompt = function () { };
   }
+
+  public static allowWhen(error_msg: string, value?: any | undefined): boolean {
+    if (value) {
+      return false;
+    }
+
+    if (isCi) {
+      throw new Error(error_msg);
+    }
+    return true;
+  }
 }
