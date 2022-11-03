@@ -1,0 +1,16 @@
+name: Test architect dev
+
+on: push
+
+jobs:
+  build_run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+      - run: npm ci
+      - run: ./bin/dev dev ./examples/hello-world --detached
+      - run: docker ps
