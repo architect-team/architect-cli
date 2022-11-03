@@ -130,7 +130,7 @@ describe('platform:create', function () {
       }
     })
     .stub(PromptUtils, 'allowWhen', () => {
-      return 'agent (BETA)';
+      return true;
     })
     .stub(AgentClusterUtils, 'installAgent', sinon.stub().returns(Promise.resolve()))
     .stub(AgentClusterUtils, 'configureAgentCluster', sinon.stub().returns(Promise.resolve()))
