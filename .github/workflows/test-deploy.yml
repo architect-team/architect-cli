@@ -54,5 +54,8 @@ jobs:
       - run: export CERT_DATA=$(openssl s_client -showcerts -connect example-environment.architect-ci.dev.arcitect.io:443 </dev/null | openssl x509 -noout -issuer) # TODO: update app domain
       - run: if [[ "$CERT_DATA" = "issuer=C = US, O = Let's Encrypt, CN = R3" || "$CERT_DATA" = "issuer=C = US, O = (STAGING) Let's Encrypt, CN = (STAGING) Artificial Apricot R3" ]]; then echo "Valid cert generated"; else exit 1; fi
       # TODO: architect exec to hello-world instance and attempt to get a container it shouldn't be able to access, ex stateful-app
-      - run: ! architect exec -e superset superset.services.stateful-api -- sh -c "curl --insecure --fail -S -I https://hello.localhost.architect.sh:443/"
+      # (curl -I -L  google.com || true) > test.txt
+      - run: |
+          architect exec -e superset superset.services.stateful-api -- sh -c "(curl --insecure -L -I https://hello.localhost.architect.sh:443/ || true) > curl_test.txt"
+          exit $?
       # TODO: deploy to a different environment based on the branch name or something?
