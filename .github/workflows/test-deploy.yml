@@ -62,4 +62,4 @@ jobs:
       - name: Check that network policies are being enforced in the cluster
         run: |
           architect exec -a architect-ci -e do-k8s superset.services.stateful-api -- sh -c  "curl --connect-timeout 15 --insecure -L -I http://hello-world--api:3000/ || true" > curl_test.txt
-          if [[ $(cat curl_test.txt) == "curl: (28) Connection timeout after 15"* ]]; then exit 0; else exit 1; fi
+          if [[ $(cat curl_test.txt) == *"curl: (28) Connection timeout after 15"* ]]; then exit 0; else exit 1; fi
