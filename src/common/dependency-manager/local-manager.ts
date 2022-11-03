@@ -33,7 +33,7 @@ export default class LocalDependencyManager extends DependencyManager {
       ...options,
     };
 
-    const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
+    const { component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
     const component_ref = this.getComponentRef(component_string);
 
     if (this.loaded_components[component_ref]) {

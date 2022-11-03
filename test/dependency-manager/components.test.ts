@@ -791,8 +791,8 @@ describe('components spec v1', function () {
     });
 
     it('test account scoping', async () => {
-      // TODO: This test maybe should remain until account name is no longer supported in component name
-      // Can be refactored to test dependency names can contain account name but components cant?
+      // This test still uses account name in components/dependencies to verify backwards compatibility
+      // and ensure the various combos do not throw any validation errors
       const combinations = [
         {
           cloud: 'architect/cloud',

@@ -644,7 +644,7 @@ $ architect dev -e new_env_name_here .`));
       component_versions.push(component_version);
     }
 
-    let account_name: string | undefined;  // TODO: error if no account name found
+    let account_name;
     if (flags.account) {
       const account = await AccountUtils.getAccount(this.app, flags.account);
       account_name = account.name;
