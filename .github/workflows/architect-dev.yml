@@ -14,3 +14,5 @@ jobs:
       - run: npm ci
       - run: ./bin/dev dev ./examples/hello-world --detached
       - run: docker ps
+      - run: sleep 5
+      - run: curl --fail -S -I https://hello.localhost.architect.sh || exit 1
