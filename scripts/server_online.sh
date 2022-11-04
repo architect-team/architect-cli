@@ -1,7 +1,7 @@
 attempt_counter=0
 max_attempts=200
 
-running_count=$(architect dev:list | grep running | wc -l)
+running_count=$(./bin/dev dev:list | grep running | wc -l)
 
 while [ ! $running_count -eq 5 ]
 do
@@ -13,7 +13,7 @@ do
     printf '.'
     attempt_counter=$(($attempt_counter+1))
     sleep 10
-    running_count=$(architect dev:list | grep running | wc -l)
+    running_count=$(./bin/dev dev:list | grep running | wc -l)
 done
 
 echo "Containers are started"
