@@ -49,6 +49,7 @@ jobs:
         with:
           node-version: '16'
           cache: 'npm'
+      - uses: crazy-max/ghaction-github-runtime@v2 # Exports internal envs for Github Actions. Required for register caching to work.
       - run: sudo apt-get update && sudo apt-get install curl
       - run: npm ci
       - run: ./bin/dev --version
