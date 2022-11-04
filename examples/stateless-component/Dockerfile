@@ -1,4 +1,3 @@
-# TODO: re-update this and others dependencies, etc
 FROM node:12-alpine
 
 # added to support CI job
