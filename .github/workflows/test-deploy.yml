@@ -30,10 +30,12 @@ jobs:
       - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git # TODO: remove this line when this is merged
       - run: docker volume create volume-key
       - run: ./bin/dev link examples/hello-world/architect.yml
-      - run: ./bin/dev dev -e superset architect-cli/test/mocks/superset/architect.yml --browser=false -s param_unset=test > ./tmp.txt 2>&1 &
+      - run: ./bin/dev dev -e superset architect-cli/test/mocks/superset/architect.yml --browser=false -s param_unset=test -s world_text=Architect > ./tmp.txt 2>&1 &
       - run: sh architect-cli/scripts/server_online.sh
       - name: Check that the app is accessible locally
         run: curl --fail -S -I https://hello.localhost.architect.sh
+      - name: Check that the app returns the expected response
+        run: curl --fail -S https://hello.localhost.architect.sh | grep "Hello Architect!"
 
   test_remote:
     name: Superset remote deployment
@@ -56,10 +58,11 @@ jobs:
       - run: ./bin/dev login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
       - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git # TODO: remove this line when this is merged
       - run: ./bin/dev env:create $ENVIRONMENT_NAME || exit 0 # TODO: remove once 409s can be ignored - https://gitlab.com/architect-io/architect-cli/-/issues/556
-      - run: ./bin/dev deploy -a $ACCOUNT_NAME --auto-approve -e $ENVIRONMENT_NAME architect-cli/test/mocks/superset/architect.yml -s param_unset=test
+      - run: ./bin/dev deploy -a $ACCOUNT_NAME --auto-approve -e $ENVIRONMENT_NAME architect-cli/test/mocks/superset/architect.yml -s param_unset=test -s world_text=Architect
       - run: sleep 180
-      - run: curl --insecure --fail -S -I https://hello.$ENVIRONMENT_NAME.$ACCOUNT_NAME.dev.arcitect.io/ || exit 1
-      - name: Ensure that cert exists for deployed service
+      - name: Check that the app returns the expected response
+        run: curl --insecure --fail -S https://hello.$ENVIRONMENT_NAME.$ACCOUNT_NAME.dev.arcitect.io/ | grep "Hello Architect!"
+      - name: Check that cert exists for deployed service
         run: |
           export CERT_DATA=$(openssl s_client -showcerts -connect hello.$ENVIRONMENT_NAME.$ACCOUNT_NAME.dev.arcitect.io:443 </dev/null | openssl x509 -noout -issuer) # TODO: update app domain, parameterize
           if [[ "$CERT_DATA" = "issuer=C = US, O = Let's Encrypt, CN = R3" || "$CERT_DATA" = "issuer=C = US, O = (STAGING) Let's Encrypt, CN = (STAGING) Artificial Apricot R3" ]]; then echo "Valid cert generated"; else exit 1; fi
