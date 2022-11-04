@@ -57,6 +57,7 @@ jobs:
       - run: ./bin/dev config:set log_level debug
       - run: ./bin/dev login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
       - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git # TODO: remove this line when this is merged
+      - run: ./bin/dev register -a $ACCOUNT_NAME examples/hello-world.architect.yml
       - run: ./bin/dev env:create $ENVIRONMENT_NAME || exit 0 # TODO: remove once 409s can be ignored - https://gitlab.com/architect-io/architect-cli/-/issues/556
       - run: ./bin/dev deploy -a $ACCOUNT_NAME --auto-approve -e $ENVIRONMENT_NAME architect-cli/test/mocks/superset/architect.yml -s param_unset=test -s world_text=Architect
       - run: sleep 180
