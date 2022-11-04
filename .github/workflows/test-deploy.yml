@@ -27,6 +27,7 @@ jobs:
       - run: ./bin/dev config:set api_host https://api.dev.architect.io
       - run: ./bin/dev config:set log_level debug
       - run: ./bin/dev login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
+      - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git # TODO: remove this line when this is merged
       - run: docker volume create volume-key
       - run: ./bin/dev link examples/hello-world/architect.yml
       - run: ./bin/dev dev -e superset architect-cli/test/mocks/superset/architect.yml --browser=false -s param_unset=test > ./tmp.txt 2>&1 &
@@ -54,6 +55,7 @@ jobs:
       - run: architect config:set api_host https://api.dev.architect.io
       - run: architect config:set log_level debug
       - run: architect login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
+      - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git # TODO: remove this line when this is merged
       - run: architect env:create $ENVIRONMENT_NAME || exit 0 # TODO: remove once 409s can be ignored - https://gitlab.com/architect-io/architect-cli/-/issues/556
       - run: architect deploy -a $ACCOUNT_NAME --auto-approve -e $ENVIRONMENT_NAME architect-cli/test/mocks/superset/architect.yml -s param_unset=test
       - run: sleep 180
