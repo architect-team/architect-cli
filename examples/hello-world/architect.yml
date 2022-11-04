@@ -9,7 +9,8 @@ keywords:
 
 services:
   api:
-    image: registry.gitlab.com/architect-io/artifacts/nodejs-hello-world:latest
+    build:
+      context: .
     interfaces:
       main: 3000
 
