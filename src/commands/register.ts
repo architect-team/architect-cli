@@ -435,12 +435,10 @@ export default class ComponentRegister extends BaseCommand {
     const component_warnings: string[] = [];
     const tag_warnings: string[] = [];
     for (const [component_name, valid] of Object.entries(dependencies)) {
-      if (valid.component && valid.component_and_version) {
-        continue;
+      if (!valid.component && !valid.component_and_version) {
+        component_warnings.push(component_name);
       } else if (valid.component && !valid.component_and_version) {
         tag_warnings.push(component_name);
-      } else {
-        component_warnings.push(component_name);
       }
     }
 
