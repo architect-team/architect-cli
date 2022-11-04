@@ -10,10 +10,6 @@ on:
     branches:
       - main
 
-env:
-  ACCOUNT_NAME: architect-ci
-  ENVIRONMENT_NAME: do-k8s
-
 jobs:
   test_local:
     runs-on: ubuntu-latest
@@ -40,31 +36,34 @@ jobs:
       - name: Check that the app is accessible locally
         run: curl --fail -S -I https://hello.localhost.architect.sh
 
-  # test_remote:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: '16'
-  #         cache: 'npm'
-  #     - run: sudo apt-get update && sudo apt-get install curl
-  #     - run: npm install -g @architect-io/cli
-  #     - run: architect --version
-  #     - run: architect config:set registry_host registry.dev.architect.io
-  #     - run: architect config:set api_host https://api.dev.architect.io
-  #     - run: architect config:set log_level debug
-  #     - run: architect login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
-  #     - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git # TODO: remove branch when this is merged
-  #     - run: architect env:create $ENVIRONMENT_NAME || exit 0 # TODO: remove once 409s can be ignored - https://gitlab.com/architect-io/architect-cli/-/issues/556
-  #     - run: architect deploy -a $ACCOUNT_NAME --auto-approve -e $ENVIRONMENT_NAME architect-cli/test/mocks/superset/architect.yml -s param_unset=test
-  #     - run: sleep 180 # TODO: change account back to $ACCOUNT_NAME and environment back to example-environment or something else
-  #     - run: curl --insecure --fail -S -I https://hello.$ENVIRONMENT_NAME.$ACCOUNT_NAME.dev.arcitect.io/ || exit 1
-  #     - name: Ensure that cert exists for deployed service
-  #       run: |
-  #         export CERT_DATA=$(openssl s_client -showcerts -connect hello.$ENVIRONMENT_NAME.$ACCOUNT_NAME.dev.arcitect.io:443 </dev/null | openssl x509 -noout -issuer) # TODO: update app domain, parameterize
-  #         if [[ "$CERT_DATA" = "issuer=C = US, O = Let's Encrypt, CN = R3" || "$CERT_DATA" = "issuer=C = US, O = (STAGING) Let's Encrypt, CN = (STAGING) Artificial Apricot R3" ]]; then echo "Valid cert generated"; else exit 1; fi
-  #     - name: Ensure that network policies are being enforced in the cluster
-  #       run: |
-  #         architect exec -a $ACCOUNT_NAME -e $ENVIRONMENT_NAME superset.services.stateful-api -- sh -c  "curl --connect-timeout 10 --insecure -L -I http://hello-world--api:3000/ || true" > curl_test.txt 2>&1 </dev/null
-  #         if [[ $(cat curl_test.txt) == *"Connection timeout"* ]]; then exit 0; else exit 1; fi
+  test_remote:
+    env:
+      ACCOUNT_NAME: architect-ci
+      ENVIRONMENT_NAME: do-k8s
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+      - run: sudo apt-get update && sudo apt-get install curl
+      - run: npm install -g @architect-io/cli
+      - run: architect --version
+      - run: architect config:set registry_host registry.dev.architect.io
+      - run: architect config:set api_host https://api.dev.architect.io
+      - run: architect config:set log_level debug
+      - run: architect login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
+      - run: git clone -b superset-updates https://github.com/architect-team/architect-cli.git # TODO: remove branch when this is merged
+      - run: architect env:create $ENVIRONMENT_NAME || exit 0 # TODO: remove once 409s can be ignored - https://gitlab.com/architect-io/architect-cli/-/issues/556
+      - run: architect deploy -a $ACCOUNT_NAME --auto-approve -e $ENVIRONMENT_NAME architect-cli/test/mocks/superset/architect.yml -s param_unset=test
+      - run: sleep 180 # TODO: change account back to $ACCOUNT_NAME and environment back to example-environment or something else
+      - run: curl --insecure --fail -S -I https://hello.$ENVIRONMENT_NAME.$ACCOUNT_NAME.dev.arcitect.io/ || exit 1
+      - name: Ensure that cert exists for deployed service
+        run: |
+          export CERT_DATA=$(openssl s_client -showcerts -connect hello.$ENVIRONMENT_NAME.$ACCOUNT_NAME.dev.arcitect.io:443 </dev/null | openssl x509 -noout -issuer) # TODO: update app domain, parameterize
+          if [[ "$CERT_DATA" = "issuer=C = US, O = Let's Encrypt, CN = R3" || "$CERT_DATA" = "issuer=C = US, O = (STAGING) Let's Encrypt, CN = (STAGING) Artificial Apricot R3" ]]; then echo "Valid cert generated"; else exit 1; fi
+      - name: Ensure that network policies are being enforced in the cluster
+        run: |
+          architect exec -a $ACCOUNT_NAME -e $ENVIRONMENT_NAME superset.services.stateful-api -- sh -c  "curl --connect-timeout 10 --insecure -L -I http://hello-world--api:3000/ || true" > curl_test.txt 2>&1 </dev/null
+          if [[ $(cat curl_test.txt) == *"Connection timeout"* ]]; then exit 0; else exit 1; fi
