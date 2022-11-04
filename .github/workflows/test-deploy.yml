@@ -60,8 +60,9 @@ jobs:
           export CERT_DATA=$(openssl s_client -showcerts -connect hello.do-k8s.architect-ci.dev.arcitect.io:443 </dev/null | openssl x509 -noout -issuer) # TODO: update app domain, parameterize
           if [[ "$CERT_DATA" = "issuer=C = US, O = Let's Encrypt, CN = R3" || "$CERT_DATA" = "issuer=C = US, O = (STAGING) Let's Encrypt, CN = (STAGING) Artificial Apricot R3" ]]; then echo "Valid cert generated"; else exit 1; fi
       - name: Check that network policies are being enforced in the cluster
-        run: architect exec -a architect-ci -e do-k8s superset.services.stateful-api -- sh -c  "curl --connect-timeout 5 --insecure -L -I http://hello-world--api:3000/ || true" > curl_test.txt 2>&1 </dev/null && echo "TEST" && cat curl_test.txt
-          # echo "CURL_TEST"
-          # cat curl_test.txt
-          # echo "CURL_TEST"
-          # if [[ $(cat curl_test.txt) == *"Connection timeout"* ]]; then echo 0; else echo 1; fi
+        run: |
+          architect exec -a architect-ci -e do-k8s superset.services.stateful-api -- sh -c  "curl --connect-timeout 5 --insecure -L -I http://hello-world--api:3000/ || true" > curl_test.txt 2>&1 </dev/null
+          echo "CURL_TEST"
+          cat curl_test.txt
+          echo "CURL_TEST"
+          if [[ $(cat curl_test.txt) == *"Connection timeout"* ]]; then echo 0; else echo 1; fi
