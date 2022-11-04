@@ -24,40 +24,12 @@ export default class PromptUtils {
     return !(isCi || !process.stdout.isTTY);
   }
 
-  /**
-   * There is an open issue in inquirer to handle this behavior, eventually we can replace this when it's properly released:
-   * https://github.com/SBoudrias/Inquirer.js/pull/891
-   */
-  public static disable_prompts(): void {
-    // eslint-disable-next-line unicorn/prefer-module
-    const inquirer = require('inquirer');
-    process.stdout.isTTY = false;
-
-    inquirer.prompt = async function (prompts: any) {
-      if (!Array.isArray(prompts)) {
-        prompts = [prompts];
-      }
-      for (const prompt of prompts) {
-        if ((prompt.when && prompt.default === undefined) || prompt.when === undefined) {
-          throw new Error(`${prompt.name} is required`);
-        }
-      }
-      // eslint-disable-next-line unicorn/no-array-reduce,unicorn/prefer-object-from-entries
-      return prompts.reduce((d: any, p: any) => {
-        d[p.name] = p.default;
-        return d;
-      }, {});
-    };
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    inquirer.prompt.registerPrompt = function () { };
-  }
-
   public static allowWhen(error_msg: string, value?: any | undefined): boolean {
     if (value) {
       return false;
     }
 
-    if (isCi) {
+    if (!this.prompts_available()) {
       throw new Error(error_msg);
     }
     return true;
