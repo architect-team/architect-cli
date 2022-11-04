@@ -24,6 +24,7 @@ jobs:
           node-version: '16'
           cache: 'npm'
       - run: sudo apt-get update && sudo apt-get install curl
+      - run: npm ci
       # - run: npm install -g @architect-io/cli
       - run: ./bin/dev --version
       - run: ./bin/dev config:set registry_host registry.dev.architect.io
