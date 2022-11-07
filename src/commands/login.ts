@@ -46,7 +46,7 @@ export default class Login extends BaseCommand {
   }
 
   private async runBrowserFlow() {
-    if (!PromptUtils.prompts_available()) {
+    if (!PromptUtils.promptsAvailable()) {
       throw new Error('We detected that this environment does not have a prompt available. To login in a non-tty environment, please use both the user and password options: `architect login -e <email> -p <password>`');
     }
 
@@ -76,13 +76,15 @@ export default class Login extends BaseCommand {
         type: 'input',
         name: 'email',
         default: flags.email,
-        when: PromptUtils.allowWhen('--email is required in ci pipelines', flags.email),
+        when: !flags.email,
+        ciMessage: '--email flag is required in CI pipelines or by setting ARCHITECT_EMAIL env',
       },
       {
         type: 'password',
         name: 'password',
         default: flags.password,
-        when: PromptUtils.allowWhen('--password is required in ci pipelines', flags.password),
+        when: !flags.password,
+        ciMessage: '--password flag is required in CI pipelines or by setting ARCHITECT_PASSWORD env',
       },
     ]);
 

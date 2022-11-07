@@ -75,6 +75,7 @@ export default class EnvironmentDestroy extends BaseCommand {
         return `Name must match: ${chalk.blue(environment.name)}`;
       },
       when: !flags['auto-approve'],
+      ciMessage: '--auto-approve flag is required in CI pipelines',
     }]);
 
     CliUx.ux.action.start(chalk.blue('Deregistering environment'));

@@ -1,4 +1,5 @@
 import isCi from 'is-ci';
+import { ArchitectError } from '../../dependency-manager/utils/errors';
 
 export default class PromptUtils {
   /**
@@ -6,7 +7,7 @@ export default class PromptUtils {
    * @param {string} message - a string to modify
    *
    */
-  public static strip_ascii_color_codes_from_string(message?: string): string {
+  public static stripAsciiColorCodes(message?: string): string {
     if (!message) {
       return '';
     }
@@ -20,18 +21,36 @@ export default class PromptUtils {
   }
 
   // if we're not running in a CI environment or in a non-tty stdout then prompts should be available
-  public static prompts_available(): boolean {
+  public static promptsAvailable(): boolean {
     return !(isCi || !process.stdout.isTTY);
   }
 
-  public static allowWhen(error_msg: string, value?: any | undefined): boolean {
-    if (value) {
-      return false;
-    }
+  /**
+   * There is an open issue in inquirer to handle this behavior, eventually we can replace this when it's properly released:
+   * https://github.com/SBoudrias/Inquirer.js/pull/891
+   */
+  public static disablePrompts(): void {
+    // eslint-disable-next-line unicorn/prefer-module
+    const inquirer = require('inquirer');
+    process.stdout.isTTY = false;
 
-    if (!this.prompts_available()) {
-      throw new Error(error_msg);
-    }
-    return true;
+    inquirer.prompt = async function (prompts: any) {
+      if (!Array.isArray(prompts)) {
+        prompts = [prompts];
+      }
+      for (const prompt of prompts) {
+        if ((prompt.when && prompt.default === undefined) || prompt.when === undefined) {
+          throw new ArchitectError(prompt.ciMessage || `--${prompt.name} flag is required in CI pipelines`);
+        }
+      }
+
+      // eslint-disable-next-line unicorn/no-array-reduce,unicorn/prefer-object-from-entries
+      return prompts.reduce((d: any, p: any) => {
+        d[p.name] = p.default;
+        return d;
+      }, {});
+    };
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    inquirer.prompt.registerPrompt = function () { };
   }
 }

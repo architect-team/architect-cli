@@ -54,6 +54,7 @@ export class EnvironmentUtils {
             const environments = data.rows as Environment[];
             return environments.map((e) => ({ name: e.name, value: e }));
           },
+          ciMessage: '--environment flag is required in CI pipelines or by setting ARCHITECT_ENVIRONMENT env',
         },
       ]);
       environment = answers.environment;

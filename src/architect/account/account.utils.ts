@@ -105,6 +105,7 @@ export default class AccountUtils {
             }
             return accounts.map((a) => ({ name: a.name, value: a }));
           },
+          ciMessage: '--account flag is required in CI pipelines or by setting ARCHITECT_ACCOUNT env',
         },
       ]);
       account = answers.account;

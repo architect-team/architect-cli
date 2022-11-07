@@ -13,7 +13,6 @@ import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-bu
 import { ComponentVersionSlugUtils } from '../dependency-manager/spec/utils/slugs';
 import Dev from './dev';
 import ComponentRegister from './register';
-import PromptUtils from '../common/utils/prompt-utils';
 
 export abstract class DeployCommand extends BaseCommand {
   static flags = {
@@ -55,12 +54,12 @@ export abstract class DeployCommand extends BaseCommand {
 
     if (!flags['auto-approve']) {
       this.log(`Pipeline ready for review: ${this.app.config.app_host}/${pipeline.environment.account.name}/environments/${pipeline.environment.name}/pipelines/${pipeline.id}`);
-      const confirmation = await inquirer.prompt({
+      const confirmation = await inquirer.prompt([{
         type: 'confirm',
         name: 'deploy',
         message: 'Would you like to apply?',
-        when: PromptUtils.allowWhen('--auto-approve is required in ci pipelines'),
-      });
+        ciMessage: '--auto-approve flag is required in CI pipelines',
+      }]);
       if (!confirmation.deploy) {
         this.warn(`Canceled pipeline`);
         return false;

@@ -74,6 +74,7 @@ export default class ClusterUtils {
             const clusters = data.rows as Cluster[];
             return clusters.map((c) => ({ name: c.name, value: c }));
           },
+          ciMessage: '--cluster flag is required in CI pipelines or by setting ARCHITECT_CLUSTER env',
         },
       ]);
       cluster = answers.cluster;
