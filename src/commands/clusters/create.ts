@@ -14,6 +14,7 @@ import PipelineUtils from '../../architect/pipeline/pipeline.utils';
 import BaseCommand from '../../base-command';
 import { AgentClusterUtils } from '../../common/utils/agent-cluster.utils';
 import { booleanString } from '../../common/utils/oclif';
+import PromptUtils from '../../common/utils/prompt-utils';
 
 export default class ClusterCreate extends BaseCommand {
   static aliases = ['clusters:register', 'cluster:create', 'clusters:create'];
@@ -111,7 +112,7 @@ export default class ClusterCreate extends BaseCommand {
         type: 'input',
         name: 'cluster',
         message: 'What would you like to name your new cluster?',
-        when: !args.cluster,
+        when: PromptUtils.allowWhen('Cluster name is required in ci pipelines', args.cluster),
         filter: value => value.toLowerCase(),
         validate: value => {
           if (Slugs.ArchitectSlugValidator.test(value)) return true;
@@ -217,6 +218,7 @@ export default class ClusterCreate extends BaseCommand {
             // Set the context value to the matching object from the kubeconfig
             return kubeconfig.contexts.find((ctx: any) => ctx.name === value);
           },
+          when: PromptUtils.allowWhen('kube context is required in ci pipelines'),
         },
       ]);
       kube_context = new_cluster_answers.context;

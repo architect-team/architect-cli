@@ -6,6 +6,7 @@ import AppService from '../../../src/app-config/service';
 import PipelineUtils from '../../../src/architect/pipeline/pipeline.utils';
 import ClusterCreate from '../../../src/commands/clusters/create';
 import { AgentClusterUtils } from '../../../src/common/utils/agent-cluster.utils';
+import PromptUtils from '../../../src/common/utils/prompt-utils';
 
 describe('cluster:create', function () {
   const account = {
@@ -127,6 +128,9 @@ describe('cluster:create', function () {
         cluster_type: 'agent (BETA)',
         application_install: true,
       }
+    })
+    .stub(PromptUtils, 'allowWhen', () => {
+      return true;
     })
     .stub(AgentClusterUtils, 'installAgent', sinon.stub().returns(Promise.resolve()))
     .stub(AgentClusterUtils, 'configureAgentCluster', sinon.stub().returns(Promise.resolve()))
