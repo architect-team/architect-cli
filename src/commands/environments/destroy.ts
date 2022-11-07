@@ -68,7 +68,7 @@ export default class EnvironmentDestroy extends BaseCommand {
       type: 'input',
       name: 'destroy',
       message: 'Are you absolutely sure? This will deregister the environment.\nPlease type in the name of the environment to confirm.\n',
-      validate: (value: any, answers: any) => {
+      validate: (value, answers) => {
         if (value === environment.name) {
           return true;
         }

@@ -66,7 +66,7 @@ export default class ClusterDestroy extends BaseCommand {
       type: 'input',
       name: 'destroy',
       message: 'Are you absolutely sure? This will deregister the cluster from the Architect system.\nPlease type in the name of the cluster to confirm.\n',
-      validate: (value: any, answers: any) => {
+      validate: (value, answers) => {
         if (value === cluster.name) {
           return true;
         }

@@ -107,7 +107,7 @@ export default class ClusterCreate extends BaseCommand {
   private async createCluster() {
     const { args, flags } = await this.parse(ClusterCreate);
 
-    const answers: any = await inquirer.prompt([
+    const answers = await inquirer.prompt([
       {
         type: 'input',
         name: 'cluster',

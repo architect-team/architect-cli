@@ -78,7 +78,7 @@ export class EnvironmentUtils {
       if (Object.keys(service_refs).length === 1) {
         filtered_replicas = replicas;
       } else {
-        const answers: any = await inquirer.prompt([
+        const answers = await inquirer.prompt([
           {
             type: 'autocomplete',
             name: 'service',
@@ -103,7 +103,7 @@ export class EnvironmentUtils {
       });
 
       console.log(`Found ${filtered_replicas.length} replicas of service:`);
-      const answers: any = await inquirer.prompt([
+      const answers = await inquirer.prompt([
         {
           type: 'autocomplete',
           name: 'replica',
