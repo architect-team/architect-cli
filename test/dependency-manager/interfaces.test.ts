@@ -681,6 +681,7 @@ describe('interfaces spec v1', () => {
           interfaces:
             smtp:
               port: 1025
+              protocol: smtp
               username: test-user
               password: test-pass
             dashboard: 1080
@@ -720,7 +721,7 @@ describe('interfaces spec v1', () => {
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
-      SMTP_ADDR: `http://test-user:test-pass@${mail_ref}:1025`,
+      SMTP_ADDR: `smtp://test-user:test-pass@${mail_ref}:1025`,
       SMTP_USER: 'test-user',
       SMTP_PASS: 'test-pass',
     });
