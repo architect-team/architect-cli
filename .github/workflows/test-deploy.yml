@@ -1,11 +1,6 @@
 name: Test superset deployment
 
-on:
-  pull_request:
-    types:
-      - opened
-    branches:
-      - main
+on: push
 
 jobs:
   test_local:
@@ -35,6 +30,7 @@ jobs:
 
   test_remote:
     name: Superset remote deployment
+    if: github.ref_name == 'main' || github.ref_name == 'rc'
     env:
       ACCOUNT_NAME: architect-ci
       ENVIRONMENT_NAME: example-environment
