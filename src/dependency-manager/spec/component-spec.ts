@@ -55,7 +55,7 @@ export class IngressSpec {
   @IsOptional()
   @JSONSchema({
     ...ExpressionOr({
-      type: "array",
+      type: 'array',
       items: {
         anyOf: [{ type: 'string', format: 'cidrv4' }, { type: 'string', pattern: '\\${{\\s*secrets\\.[\\w-]+\\s*}}' }],
       },
@@ -309,7 +309,7 @@ export class ComponentSpec {
       additionalProperties: ComponentSlugUtils.Description,
     },
 
-    description: 'A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest` or `architect/cloud: latest`)',
+    description: 'A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)',
   })
   dependencies?: Dictionary<string>;
 

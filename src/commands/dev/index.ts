@@ -12,7 +12,7 @@ import path from 'path';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
-import { default as BaseCommand, default as Command } from '../../base-command';
+import { default as BaseCommand } from '../../base-command';
 import LocalDependencyManager, { ComponentConfigOpts } from '../../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../common/docker-compose';
 import DockerComposeTemplate from '../../common/docker-compose/template';
@@ -30,6 +30,9 @@ type TraefikHttpService = {
 };
 
 const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/);
+
+const rand = () => Math.floor(Math.random() * 255);
+const onlyUnique = <T>(value: T, index: number, self: T[]) => self.indexOf(value) === index;
 
 /**
  * Converts a regular filepath into a path that is valid for a Windows socket
@@ -124,7 +127,7 @@ class UpProcessManager {
   /** Sends the SIGINT signal to the running `docker compose up` process. */
   interrupt() {
     if (!this.compose_process) {
-      throw Error('Must call run() first');
+      throw new Error('Must call run() first');
     }
     process.kill(-this.compose_process.pid, 'SIGINT');
   }
@@ -165,11 +168,10 @@ class UpProcessManager {
    */
   configureLogs() {
     if (!this.compose_process) {
-      throw Error('Must call run() first');
+      throw new Error('Must call run() first');
     }
 
     const service_colors = new Map<string, chalk.Chalk>();
-    const rand = () => Math.floor(Math.random() * 255);
     this.compose_process.stdout?.on('data', (data) => {
       if (this.is_exiting) {
         return;
@@ -190,7 +192,7 @@ class UpProcessManager {
           }
 
           const color = service_colors.get(service) as chalk.Chalk;
-          console.log(color(service + "| ") + newLine);
+          console.log(color(service + '| ') + newLine);
         }
       }
     });
@@ -202,8 +204,9 @@ class UpProcessManager {
     this.configureInterrupts();
     this.configureLogs();
 
-    const container_health = DockerComposeUtils.watchContainersHealth(this.compose_file, this.project_name,
-      () => { return this.is_exiting; });
+    const container_health = DockerComposeUtils.watchContainersHealth(this.compose_file, this.project_name, () => {
+      return this.is_exiting;
+    });
 
     try {
       await this.compose_process;
@@ -255,14 +258,17 @@ export default class Dev extends BaseCommand {
       char: 'o',
       description: 'Path where the compose file should be written to',
       default: '',
-      exclusive: ['environment', 'auto-approve', 'auto_approve', 'refresh'],
+      exclusive: ['environment'],
       sensitive: false,
     }),
     parameter: Flags.string({
       char: 'p',
-      description: `${Command.DEPRECATED} Please use --secret.`,
+      description: `Please use --secret.`,
       multiple: true,
       hidden: true,
+      deprecated: {
+        to: 'secret',
+      },
     }),
     interface: Flags.string({
       char: 'i',
@@ -277,9 +283,12 @@ export default class Dev extends BaseCommand {
       default: [],
     }),
     secrets: Flags.string({
-      description: `${Command.DEPRECATED} Please use --secret-file.`,
+      description: `Please use --secret-file.`,
       multiple: true,
       hidden: true,
+      deprecated: {
+        to: 'secret-file',
+      },
     }),
     secret: Flags.string({
       char: 's',
@@ -305,29 +314,39 @@ export default class Dev extends BaseCommand {
     // Used for proxy from deploy to dev. These will be removed once --local is deprecated
     local: booleanString({
       char: 'l',
-      description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
-      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
+      description: `Deploy the stack locally instead of via Architect Cloud`,
+      exclusive: ['account', 'auto-approve'],
       hidden: true,
       sensitive: false,
-      default: false,
+      default: undefined,
+      deprecated: true,
     }),
     production: booleanString({
-      description: `${Command.DEPRECATED} Please use --environment.`,
+      description: `Please use --environment.`,
       dependsOn: ['local'],
       hidden: true,
       sensitive: false,
       default: undefined,
+      deprecated: {
+        to: 'environment',
+      },
     }),
     compose_file: Flags.string({
-      description: `${Command.DEPRECATED} Please use --compose-file.`,
-      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      description: `Please use --compose-file.`,
+      exclusive: ['account', 'environment'],
       hidden: true,
       sensitive: false,
+      deprecated: {
+        to: 'compose-file',
+      },
     }),
     values: Flags.string({
       char: 'v',
       hidden: true,
-      description: `${Command.DEPRECATED} Please use --secret-file.`,
+      description: `Please use --secret-file.`,
+      deprecated: {
+        to: 'secret-file',
+      },
     }),
     detached: booleanString({
       description: 'Run in detached mode',
@@ -354,13 +373,13 @@ export default class Dev extends BaseCommand {
   static args = [{
     sensitive: false,
     name: 'configs_or_components',
-    description: 'Path to an architect.yml file or component `account/component:latest`. Multiple components are accepted.',
+    description: 'Path to an architect.yml file or component `component:latest`. Multiple components are accepted.',
   }];
 
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
   async parse<F, A extends {
     [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     if (!options) {
       return super.parse(options, argv);
     }
@@ -386,7 +405,7 @@ export default class Dev extends BaseCommand {
       if (service.status !== 'enabled') return false;
       if (!service.serverStatus) return false;
       if (service.provider !== 'docker') return false;
-      return Object.values(service.serverStatus).some(status => status === 'UP');
+      return Object.values(service.serverStatus).includes('UP');
     });
     return healthy_services;
   }
@@ -469,8 +488,7 @@ export default class Dev extends BaseCommand {
       if (!value) {
         throw new Error(`--arg must be in the format key=value: ${arg}`);
       }
-      build_args.push('--build-arg');
-      build_args.push(arg);
+      build_args.push('--build-arg', arg);
     }
 
     await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build', ...build_args], { stdio: 'inherit' });
@@ -497,6 +515,7 @@ export default class Dev extends BaseCommand {
 
     await new UpProcessManager(compose_file, socket, project_name, flags.detached).run();
     fs.removeSync(compose_file);
+    // eslint-disable-next-line no-process-exit
     process.exit();
   }
 
@@ -508,7 +527,7 @@ export default class Dev extends BaseCommand {
           name: 'port',
           message: `Trying to listen on port ${port}, but something is already using it. What port would you like us to run the API gateway on (you can use the '--port' flag to skip this message in the future)?`,
           validate: (value: any) => {
-            if (new RegExp('^[1-9]+[0-9]*$').test(value)) {
+            if (new RegExp('^[1-9]+\\d*$').test(value)) {
               return true;
             }
             return `Port can only be positive number.`;
@@ -554,7 +573,9 @@ export default class Dev extends BaseCommand {
           return handleReject(resolve, reject);
         });
       }).catch(err => {
-        return handleReject(resolve, () => { reject(err); });
+        return handleReject(resolve, () => {
+          reject(err);
+        });
       });
     });
   }
@@ -565,7 +586,7 @@ export default class Dev extends BaseCommand {
       this.downloadFileAndCache('https://storage.googleapis.com/architect-ci-ssl/privkey.pem', path.join(this.app.config.getConfigDir(), 'privkey.pem')),
     ]).catch((err) => {
       this.warn(chalk.yellow('We are unable to download the neccessary ssl certificates. Please try again or use --ssl=false to temporarily disable ssl'));
-      this.error(new ArchitectError(err.message, false));
+      this.error(new ArchitectError(err.message));
     });
   }
 
@@ -585,14 +606,14 @@ $ architect dev:stop ${environment}
 
 To continue running the other environment and create a new one you can run the \`dev\` command with the \`-e\` flag
 $ architect dev -e new_env_name_here .`));
-      this.error(new ArchitectError("Environment name already in use.", false));
+      this.error(new ArchitectError('Environment name already in use.'));
     }
   }
 
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
 
-    if (!args.configs_or_components || !args.configs_or_components.length) {
+    if (!args.configs_or_components || args.configs_or_components.length === 0) {
       args.configs_or_components = ['./architect.yml'];
     }
 
@@ -606,14 +627,13 @@ $ architect dev -e new_env_name_here .`));
     }
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const all_secret_file_values = flags['secret-file'].concat(flags.secrets); // TODO: 404: remove
+    const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
     const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values);
-    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter, all_secret_file_values);
+    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter || [], all_secret_file_values);
 
     const linked_components = this.app.linkedComponents;
     const component_versions: string[] = [];
     for (const config_or_component of args.configs_or_components) {
-
       let component_version = config_or_component;
       // Load architect.yml if passed
       if (!ComponentVersionSlugUtils.Validator.test(config_or_component) && !ComponentSlugUtils.Validator.test(config_or_component)) {
@@ -624,23 +644,24 @@ $ architect dev -e new_env_name_here .`));
       component_versions.push(component_version);
     }
 
+    let account_name;
+    if (flags.account) {
+      const account = await AccountUtils.getAccount(this.app, flags.account);
+      account_name = account.name;
+    } else {
+      const config_account = this.app.config.defaultAccount();
+      if (config_account) {
+        account_name = config_account;
+      }
+    }
     const dependency_manager = new LocalDependencyManager(
       this.app.api,
-      linked_components
+      account_name,
+      linked_components,
     );
 
     dependency_manager.use_ssl = flags.ssl;
     dependency_manager.external_addr = (flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address) + `:${flags.port}`;
-
-    if (flags.account) {
-      const account = await AccountUtils.getAccount(this.app, flags.account);
-      dependency_manager.account = account.name;
-    } else {
-      const config_account = this.app.config.defaultAccount();
-      if (config_account) {
-        dependency_manager.account = config_account;
-      }
-    }
 
     if (flags.environment) {
       dependency_manager.environment = flags.environment;
@@ -653,7 +674,7 @@ $ architect dev -e new_env_name_here .`));
     // Check if multiple instances of the same component are being deployed. This check is needed
     // so that we can disable automatic interface mapping since we can't map a single interface to
     // multiple components at this time
-    const onlyUnique = <T>(value: T, index: number, self: T[]) => self.indexOf(value) === index;
+    // eslint-disable-next-line unicorn/no-array-callback-reference
     const uniqe_names = component_versions.map(name => name.split('@')[0]).filter(onlyUnique);
     const duplicates = uniqe_names.length !== component_versions.length;
 
@@ -686,15 +707,13 @@ $ architect dev -e new_env_name_here .`));
   @RequiresDocker({ compose: true })
   async run(): Promise<void> {
     // Oclif only removes the command name if you are running that command
-    if (this.argv[0] && this.argv[0].toLocaleLowerCase() === "deploy") {
+    if (this.argv[0] && this.argv[0].toLocaleLowerCase() === 'deploy') {
       this.argv.splice(0, 1);
     }
     const { args, flags } = await this.parse(Dev);
 
-    if (args.configs_or_components && args.configs_or_components.length > 1) {
-      if (flags.interface?.length) {
-        throw new Error('Interface flag not supported if deploying multiple components in the same command.');
-      }
+    if (args.configs_or_components && args.configs_or_components.length > 1 && flags.interface?.length) {
+      throw new Error('Interface flag not supported if deploying multiple components in the same command.');
     }
 
     await this.runLocal();

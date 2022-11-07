@@ -18,7 +18,7 @@ describe('component spec unit test', () => {
 
   it('component spec overrides', () => {
     const yml = `
-    name: test/component
+    name: component
     secrets:
       test1: test1
       test2:
@@ -76,7 +76,7 @@ describe('component spec unit test', () => {
     const override_spec = plainToClass(ComponentSpec, yaml.load(override_yml));
     const merged_spec = overrideSpec(component_spec, override_spec);
     expect(classToPlain(merged_spec)).to.deep.equal(yaml.load(`
-    name: test/component
+    name: component
     secrets:
       test1:
         required: false

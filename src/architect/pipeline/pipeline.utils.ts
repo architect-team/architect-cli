@@ -9,18 +9,17 @@ interface PipelineResult {
 }
 
 export default class PipelineUtils {
-
   static POLL_INTERVAL = 10000;
 
   static getDeploymentUrl(app: AppService, deployment: Deployment): string {
     if (deployment.pipeline.environment) {
       const environment = deployment.pipeline.environment;
       return `${app.config.app_host}/${environment.account.name}/environments/${environment.name}/deployments/${deployment.id}`;
-    } else if (deployment.pipeline.platform) {
-      const platform = deployment.pipeline.platform;
-      return `${app.config.app_host}/${platform.account.name}/platforms/${platform.name}`;
+    } else if (deployment.pipeline.cluster) {
+      const cluster = deployment.pipeline.cluster;
+      return `${app.config.app_host}/${cluster.account.name}/clusters/${cluster.name}`; // TODO: how do we want to make this backwards compatible
     } else {
-      throw new Error('deployment was for neither a platform nor environment');
+      throw new Error('deployment was for neither a cluster nor environment');
     }
   }
 
@@ -75,14 +74,14 @@ export default class PipelineUtils {
 
       // Check if the deployment failed due to a user aborting the deployment and build an abort error if so
       const aborted_deployments = deployments.filter((d: Deployment) => d.aborted_at);
-      if (aborted_deployments.length !== 0) {
+      if (aborted_deployments.length > 0) {
         const deployment_url = this.getDeploymentUrl(app, aborted_deployments[0]);
         throw new PipelineAbortedError(aborted_deployments[0].id, deployment_url);
       }
 
       // Build a list of links for the failed deployments
       const failed_deployment_links = deployments
-        .filter((d: any) => d.failed_at)
+        .filter((d) => d.failed_at)
         .map((d: any) => this.getDeploymentUrl(app, d));
       throw new DeploymentFailedError(pipeline.id, failed_deployment_links);
     }

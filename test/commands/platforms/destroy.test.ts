@@ -12,53 +12,53 @@ describe('environment:destroy', () => {
     name: 'test-account'
   }
 
-  const mock_platform = {
-    id: 'test-platform-id',
-    name: 'test-platform'
+  const mock_cluster = {
+    id: 'test-cluster-id',
+    name: 'test-cluster'
   }
 
   const mock_pipeline = {
     id: 'test-pipeline-id'
   }
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(PipelineUtils, 'pollPipeline', async () => null)
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${mock_account.name}`)
       .reply(200, mock_account))
     .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${mock_account.id}/platforms/${mock_platform.name}`)
+      .get(`/accounts/${mock_account.id}/clusters/${mock_cluster.name}`)
       .times(2)
-      .reply(200, mock_platform))
+      .reply(200, mock_cluster))
     .nock(MOCK_API_HOST, api => api
-      .delete(`/platforms/${mock_platform.id}`)
+      .delete(`/clusters/${mock_cluster.id}`)
       .reply(200, mock_pipeline))
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['platforms:destroy', '-a', mock_account.name, mock_platform.name, '--auto-approve'])
+    .command(['platforms:destroy', '-a', mock_account.name, mock_cluster.name, '--auto-approve'])
     .it('should generate destroy deployment', ctx => {
-      expect(ctx.stdout).to.contain('Platform deregistered\n')
+      expect(ctx.stdout).to.contain('Cluster deregistered\n')
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(PipelineUtils, 'pollPipeline', async () => null)
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${mock_account.name}`)
       .reply(200, mock_account))
     .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${mock_account.id}/platforms/${mock_platform.name}`)
+      .get(`/accounts/${mock_account.id}/clusters/${mock_cluster.name}`)
       .times(2)
-      .reply(200, mock_platform))
+      .reply(200, mock_cluster))
     .nock(MOCK_API_HOST, api => api
-      .delete(`/platforms/${mock_platform.id}?force=1`)
+      .delete(`/clusters/${mock_cluster.id}?force=1`)
       .reply(200, mock_pipeline))
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['platforms:destroy', '-a', mock_account.name, mock_platform.name, '--auto-approve', '--force'])
+    .command(['platforms:destroy', '-a', mock_account.name, mock_cluster.name, '--auto-approve', '--force'])
     .it('should force apply destroy job', ctx => {
-      expect(ctx.stdout).to.contain('Platform deregistered\n')
+      expect(ctx.stdout).to.contain('Cluster deregistered\n')
     });
 
 });

@@ -1,5 +1,5 @@
 /* eslint-disable no-empty */
-import { Flags } from '@oclif/core';
+import { Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import fs from 'fs';
 import inquirer from 'inquirer';
@@ -31,11 +31,31 @@ export abstract class InitCommand extends BaseCommand {
 
   static flags = {
     ...BaseCommand.flags,
+    component_file: Flags.string({
+      description: `Please use --component-file.`,
+      hidden: true,
+      sensitive: false,
+      deprecated: {
+        to: 'component-file',
+      },
+    }),
     'component-file': Flags.string({
       char: 'o',
       description: 'Path where the component file should be written to',
       default: 'architect.yml',
       sensitive: false,
+    }),
+    name: Flags.string({
+      char: 'n',
+      sensitive: false,
+    }),
+    from_compose: Flags.string({
+      description: `Please use --from-compose.`,
+      hidden: true,
+      sensitive: false,
+      deprecated: {
+        to: 'from-compose',
+      },
     }),
     'from-compose': Flags.string({
       sensitive: false,
@@ -99,6 +119,21 @@ export abstract class InitCommand extends BaseCommand {
     fs.writeFileSync(component_file, architect_yml);
     this.log(chalk.green(`Converted ${path.basename(from_path)} and wrote Architect component config to ${component_file}`));
     this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://docs.architect.io/components/architect-yml.'));
+  }
+
+
+  async parse<F, A extends {
+    [name: string]: any;
+  }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
+    const flags: any = parsed.flags;
+
+    // Merge any values set via deprecated flags into their supported counterparts
+    flags['component-file'] = flags.component_file ? flags.component_file : flags['component-file'];
+    flags['from-compose'] = flags.from_compose ? flags.from_compose : flags['from-compose'];
+    parsed.flags = flags;
+
+    return parsed;
   }
 
   async run(): Promise<void> {

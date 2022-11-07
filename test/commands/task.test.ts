@@ -18,7 +18,7 @@ describe('task:exec', async function () {
   const mock_env = {
     id: "81ab04df-97d9-43c3-9f1a-b9c891baf37d",
     name: "dev",
-    platform: {
+    cluster: {
       type: "KUBERNETES",
     },
   };
@@ -44,7 +44,7 @@ describe('task:exec', async function () {
   const mock_remote_task_id = 'remote-task-id';
   const mock_local_env_name = 'local';
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account)
@@ -69,7 +69,7 @@ describe('task:exec', async function () {
       expect(ctx.stdout).to.contain(`Successfully kicked off task. kubernetes reference= ${mock_remote_task_id}`);
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account)
@@ -94,7 +94,7 @@ describe('task:exec', async function () {
       expect(ctx.stdout).to.contain(`Successfully kicked off task. kubernetes reference= ${mock_remote_task_id}`);
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account)
@@ -124,7 +124,7 @@ describe('task:exec', async function () {
   const bad_component_name = 'nonexistent-component';
   const namespaced_bad_component_name = ComponentSlugUtils.build(mock_account.name, bad_component_name);
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account)
@@ -141,7 +141,7 @@ describe('task:exec', async function () {
     })
     .it('fails with a useful message if given a bad environment name');
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account)
@@ -178,7 +178,7 @@ describe('task:exec', async function () {
     services: mock_docker_compose_service,
   };
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns(mock_docker_compose))
     .stub(DockerComposeUtils, 'getProjectName', sinon.stub().returns(mock_component.name))
@@ -191,11 +191,11 @@ describe('task:exec', async function () {
       expect(run.calledOnce).to.be.true;
       expect(loadDockerCompose.calledOnce).to.be.true;
 
-      expect(ctx.stdout).to.contain(`Running task ${task_name} in the local ${mock_component.name} environment...`);
+      expect(ctx.stdout).to.contain(`Running task ${task_name} in the local ${DockerComposeUtils.DEFAULT_PROJECT} environment...`);
       expect(ctx.stdout).to.contain('Successfully ran task.');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns(mock_docker_compose))
     .stub(DockerComposeUtils, 'getProjectName', sinon.stub().returns(mock_component.name))
@@ -206,11 +206,11 @@ describe('task:exec', async function () {
       const loadDockerCompose = DockerComposeUtils.loadDockerCompose as sinon.SinonStub;
       const runDockerCompose = DockerComposeUtils.run as sinon.SinonStub;
       expect(runDockerCompose.calledOnce).to.be.true;
-      expect(runDockerCompose.args[0]).to.deep.equal([mock_ref, mock_component.name, path.join('test', 'docker-compose', `${mock_component.name}.yml`)]);
+      expect(runDockerCompose.args[0]).to.deep.equal([mock_ref, 'architect', path.join('test', 'docker-compose', 'architect.yml')]);
       expect(loadDockerCompose.calledOnce).to.be.true;
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns(mock_docker_compose))
     .stub(DockerComposeUtils, 'getProjectName', sinon.stub().returns(mock_local_env_name))
@@ -227,7 +227,7 @@ describe('task:exec', async function () {
       expect(ctx.stdout).to.contain('Successfully ran task.');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns(mock_docker_compose))
     .stub(DockerComposeUtils, 'getProjectName', sinon.stub().returns(mock_local_env_name))
@@ -244,7 +244,7 @@ describe('task:exec', async function () {
       expect(ctx.stdout).to.contain('Successfully ran task.');
     });
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().throws(new Error('docker compose not found')))
     .stub(DockerComposeUtils, 'getProjectName', sinon.stub().returns(mock_component.name))
@@ -252,11 +252,11 @@ describe('task:exec', async function () {
     .stderr({ print })
     .command(['task:exec', '-l', namespaced_component_name, mock_task.name])
     .catch(err => {
-      expect(err.message).to.contain(`Could not find docker compose file at ${DockerComposeUtils.buildComposeFilepath('test', mock_component.name)}. Please run \`architect dev -e ${mock_component.name} ${namespaced_component_name}\` before executing any tasks in your local ${mock_component.name} environment.`);
+      expect(err.message).to.contain(`Could not find docker compose file at ${DockerComposeUtils.buildComposeFilepath('test', DockerComposeUtils.DEFAULT_PROJECT)}. Please run \`architect dev -e ${DockerComposeUtils.DEFAULT_PROJECT} ${namespaced_component_name}\` before executing any tasks in your local ${DockerComposeUtils.DEFAULT_PROJECT} environment.`);
     })
     .it('fails with a useful message if no docker compose file is found');
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().throws(new Error('docker compose not found')))
     .stub(DockerComposeUtils, 'getProjectName', sinon.stub().returns(mock_local_env_name))
@@ -268,7 +268,7 @@ describe('task:exec', async function () {
     })
     .it('fails with a useful message if no docker compose file is found using environment');
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns({ services: {} }))
     .stub(DockerComposeUtils, 'getProjectName', sinon.stub().returns(mock_component.name))
@@ -276,11 +276,11 @@ describe('task:exec', async function () {
     .stderr({ print })
     .command(['task:exec', '-l', namespaced_component_name, mock_task.name])
     .catch(err => {
-      expect(err.message).to.contain(`Could not find ${task_name} running in your local ${mock_component.name} environment`);
+      expect(err.message).to.contain(`Could not find ${task_name} running in your local ${DockerComposeUtils.DEFAULT_PROJECT} environment`);
     })
     .it('fails with a useful message if the specified task is not present in the docker compose');
 
-  mockArchitectAuth
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
     .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns({ services: {} }))
     .stub(DockerComposeUtils, 'getProjectName', sinon.stub().returns(mock_local_env_name))

@@ -3,7 +3,6 @@ import BaseCommand from '../../base-command';
 import InvalidConfigOption from '../../common/errors/invalid-config-option';
 
 export default class ConfigGet extends BaseCommand {
-
   async auth_required(): Promise<boolean> {
     return false;
   }

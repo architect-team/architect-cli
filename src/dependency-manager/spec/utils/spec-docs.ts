@@ -1,3 +1,4 @@
+// eslint-disable-next-line node/no-extraneous-import
 import { ReferenceObject, SchemaObject } from 'openapi3-ts';
 import { ComponentInterfaceSpec, ComponentSpec, SecretDefinitionSpec } from '../component-spec';
 import { ServiceSpec } from '../service-spec';
@@ -162,6 +163,7 @@ const propertyToRegex = (prop_body: SchemaObject | ReferenceObject): string => {
     const pattern = (prop_body as SchemaObject).pattern as string;
     return `Must match: <a target="_blank" href="https://regexr.com/?expression=${encodeURIComponent(pattern)}">Regex</a>`;
   } else if ((prop_body as SchemaObject)?.patternProperties) {
+    // eslint-disable-next-line no-unreachable-loop
     for (const [key, value] of Object.entries((prop_body as SchemaObject)?.patternProperties).slice(0, 1)) {
       return `<a target="_blank" href="https://regexr.com/?expression=${encodeURIComponent(key)}">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=${encodeURIComponent((value as any).pattern)}">ValueRegex</a>, `;
     }
@@ -179,13 +181,11 @@ const propertyToMisc = (prop_body: SchemaObject | ReferenceObject): string => {
     delimiter = ',';
   }
 
-
   if ((prop_body as SchemaObject)?.deprecated) {
     markdown += delimiter;
     markdown += `Deprecated`;
     delimiter = ',';
   }
-
 
   if ((prop_body as SchemaObject)?.externalDocs) {
     const externalDocs = (prop_body as SchemaObject).externalDocs?.url;
@@ -214,7 +214,7 @@ const definitionToMarkdown = (spec_name: string, definition: SchemaObject): stri
   markdown += `| -------------------- | ---------- | -------------- | -------------- |\n`;
 
   for (const [prop_name, prop_body] of Object.entries(definition.properties)) {
-    const required = !!definition.required && definition.required.includes(prop_name);
+    const required = Boolean(definition.required) && Boolean(definition.required?.includes(prop_name));
     markdown += ` | ${propertyToFieldName(prop_name, prop_body, required)}`;
     markdown += ` | ${propertyToType(prop_body)}`;
     markdown += ` | ${propertyToDescription(prop_body)}`;

@@ -19,20 +19,21 @@ export default class LocalDependencyManager extends DependencyManager {
 
   loaded_components: Dictionary<ComponentSpec> = {};
 
-  constructor(api: AxiosInstance, linked_components: Dictionary<string> = {}) {
+  constructor(api: AxiosInstance, account?: string, linked_components: Dictionary<string> = {}) {
     super();
     this.api = api;
+    this.account = account;
     this.linked_components = linked_components;
   }
 
   async loadComponentSpec(component_string: string, options?: ComponentConfigOpts, debug?: boolean): Promise<ComponentSpec> {
     const merged_options = {
-      ...{
-        map_all_interfaces: false,
-      }, ...options,
+
+      map_all_interfaces: false,
+      ...options,
     };
 
-    const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
+    const { component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
     const component_ref = this.getComponentRef(component_string);
 
     if (this.loaded_components[component_ref]) {
@@ -49,10 +50,9 @@ export default class LocalDependencyManager extends DependencyManager {
       instance_date: this.now,
     };
 
-    const account_name = component_account_name || this.account;
-    const linked_component_key = component_ref in this.linked_components ? component_ref : ComponentSlugUtils.build(account_name, component_name);
+    const linked_component_key = component_ref in this.linked_components ? component_ref : ComponentSlugUtils.build(this.account, component_name);
     const linked_component = this.linked_components[linked_component_key];
-    if (!linked_component && !account_name) {
+    if (!linked_component && !this.account) {
       throw new ArchitectError(`Didn't find link for component '${component_ref}'.\nPlease run 'architect link' or specify an account via '--account <account>'.`);
     }
 
@@ -66,7 +66,7 @@ export default class LocalDependencyManager extends DependencyManager {
     } else {
       console.log(`Didn't find link for component '${component_ref}'. Attempting to download from Architect...`);
       // Load remote component config
-      const { data: component_version } = await this.api.get(`/accounts/${account_name}/components/${component_name}/versions/${tag}`).catch((err) => {
+      const { data: component_version } = await this.api.get(`/accounts/${this.account}/components/${component_name}/versions/${tag}`).catch((err) => {
         err.message = `Could not download component for ${component_ref}. \n${err.message}`;
         throw err;
       });
@@ -134,7 +134,7 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const component_refs_queue = [root_component_ref];
 
-    while (component_refs_queue.length) {
+    while (component_refs_queue.length > 0) {
       const component_ref = component_refs_queue.pop() as string;
 
       if (seen_component_refs.has(component_ref)) {

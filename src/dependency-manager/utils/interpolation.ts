@@ -7,7 +7,7 @@ import { matches } from './regex';
 import { CONTEXT_KEY_DELIMITER } from './rules';
 
 export const replaceBrackets = (value: string): string => {
-  return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
+  return value.replace(/\[/g, '.').replace(/["'\\\]|]/g, '');
 };
 
 /*
@@ -25,8 +25,7 @@ export const replaceInterpolationBrackets = (value: string): string => {
 export const buildContextMap = (context: any): any => {
   const context_map: Dictionary<any> = {};
   const queue = [['', context]];
-  while (queue.length) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  while (queue.length > 0) {
     const [prefix, c] = queue.shift()!;
 
     if (c instanceof Object) {
@@ -56,8 +55,8 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
   obj = deepmerge(obj, {}) as T;
 
   const context_map = buildContextMap(context);
-  context_map['_path'] = '';
-  context_map['_obj_map'] = buildContextMap(obj);
+  context_map._path = '';
+  context_map._obj_map = buildContextMap(obj);
 
   // Interpolate only keys first to flatten conditionals
   const options = {
@@ -71,7 +70,7 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
   let errors: ValidationError[] = [];
 
   let queue = [[obj, []]];
-  while (queue.length) {
+  while (queue.length > 0) {
     const [el, path_keys] = queue.shift() as [any, string[]];
     if (el instanceof Object) {
       let has_conditional = false;
@@ -82,7 +81,7 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
           continue;
         }
         const current_path_keys = [...path_keys, key.replace(/\./g, CONTEXT_KEY_DELIMITER)];
-        context_map['_path'] = current_path_keys.join('.');
+        context_map._path = current_path_keys.join('.');
         delete el[key];
         if (options.keys && IF_EXPRESSION_REGEX.test(key)) {
           const parsed_key = parser.parseString(key, context_map);
@@ -108,13 +107,13 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
             to_add.push([value, current_path_keys]);
           }
         }
-        errors = errors.concat(parser.errors);
+        errors = [...errors, ...parser.errors];
         parser.errors = [];
       }
       if (has_conditional) {
         queue.unshift([el, path_keys]);
       } else {
-        queue = queue.concat(to_add);
+        queue = [...queue, ...to_add];
       }
     }
   }
@@ -124,7 +123,7 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
 
 export const interpolateObjectOrReject = <T>(obj: T, context: any, options?: InterpolateObjectOptions): T => {
   const { interpolated_obj, errors } = interpolateObject(obj, context, options);
-  if (errors.length) {
+  if (errors.length > 0) {
     throw new ValidationErrors(errors, options?.file);
   }
   return interpolated_obj;

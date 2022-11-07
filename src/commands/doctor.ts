@@ -2,7 +2,7 @@ import { Flags } from '@oclif/core';
 import chalk from 'chalk';
 import * as fs from 'fs-extra';
 import inquirer from 'inquirer';
-import util from 'util';
+import { inspect } from 'util';
 import BaseCommand from '../base-command';
 
 interface DOCTOR_INPUT_PROPERTIES {
@@ -127,7 +127,7 @@ export default class Doctor extends BaseCommand {
   };
 
   async numRecordsInputIsValid(num?: any): Promise<boolean> {
-    if (!num || isNaN(num)) {
+    if (!num || Number.isNaN(num)) {
       return false;
     }
     return (num >= DOCTOR_PROPERTIES.HISTORY_LENGTH.LOWER_BOUND_INCLUSIVE &&
@@ -136,6 +136,7 @@ export default class Doctor extends BaseCommand {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Doctor);
+    // eslint-disable-next-line unicorn/prefer-module
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
     const answers: any = await inquirer.prompt([
       {
@@ -143,7 +144,7 @@ export default class Doctor extends BaseCommand {
         name: 'history',
         default: DOCTOR_PROPERTIES.HISTORY_LENGTH.DEFAULT_VALUE,
         message: `How many historical commands should we include in the report? (${Doctor.history_length_hint})`,
-        filter: async (input: any) => await this.numRecordsInputIsValid(input as number) ? input : DOCTOR_PROPERTIES.HISTORY_LENGTH.DEFAULT_VALUE,
+        filter: async (input) => await this.numRecordsInputIsValid(input as number) ? input : DOCTOR_PROPERTIES.HISTORY_LENGTH.DEFAULT_VALUE,
       },
       {
         type: 'confirm',
@@ -189,7 +190,7 @@ export default class Doctor extends BaseCommand {
 
     let seen = false;
     if (!flags.output) {
-      console.log(util.inspect(this.history, false, 100, true));
+      console.log(inspect(this.history, false, 100, true));
       seen = true;
       const answers: any = await inquirer.prompt([
         {
@@ -205,15 +206,15 @@ export default class Doctor extends BaseCommand {
     if (flags.output) {
       try {
         fs.writeJson(flags.output, this.history, { spaces: 2 });
-        return console.log(chalk.green("Please submit the generated information file with your support ticket at https://support.architect.io/"));
+        return console.log(chalk.green('Please submit the generated information file with your support ticket at https://support.architect.io/'));
       } catch (e: any) {
         if (!seen) {
-          console.log(util.inspect(this.history, false, 100, true));
+          console.log(inspect(this.history, false, 100, true));
         }
-        console.log(chalk.yellow("Unable to save information file to the specified file path"));
+        console.log(chalk.yellow('Unable to save information file to the specified file path'));
       }
     }
 
-    console.log(chalk.green("Please submit the generated information above with your support ticket at https://support.architect.io/"));
+    console.log(chalk.green('Please submit the generated information above with your support ticket at https://support.architect.io/'));
   }
 }

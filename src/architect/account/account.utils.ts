@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AppService from '../../app-config/service';
 import { DockerHelper } from '../../common/docker/helper';
+import Membership from '../user/user.utils';
 import Account from './account.entity';
 
 export default class AccountUtils {
@@ -27,13 +28,22 @@ export default class AccountUtils {
   static shouldListLocalAccounts(exit_on_failure?: boolean): boolean {
     const daemon_running = DockerHelper.daemonRunning();
     if (exit_on_failure && !daemon_running) {
+      // eslint-disable-next-line no-process-exit
       process.exit();
     }
     return daemon_running;
   }
 
   static isLocalAccount(account: Account): boolean {
-    return account.id === "dev";
+    return account.id === 'dev';
+  }
+
+  static async isValidAccount(app: AppService, account_name: string): Promise<boolean> {
+    const { data: user_data } = await app.api.get('/users/me');
+    if (user_data.memberships?.length > 0) {
+      return user_data.memberships.some((membership: Membership) => membership.account.name === account_name);
+    }
+    return false;
   }
 
   static async getAccount(app: AppService, account_name?: string, options?: { account_message?: string, ask_local_account?: boolean }): Promise<Account> {
@@ -78,6 +88,7 @@ export default class AccountUtils {
         throw new Error(`Could not find account=${account_name}`);
       }
     } else {
+      // eslint-disable-next-line unicorn/prefer-module
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
       const can_run_local = this.shouldListLocalAccounts();
       const answers: { account: Account } = await inquirer.prompt([

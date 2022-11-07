@@ -8,12 +8,12 @@ import { DockerComposeUtils } from '../../src/common/docker-compose';
 
 describe('volumes spec v1', () => {
 
-  const test_component_api_safe_ref = resourceRefToNodeRef('test/component.services.api');
-  const test_component_app_safe_ref = resourceRefToNodeRef('test/component.services.app');
+  const test_component_api_safe_ref = resourceRefToNodeRef('component.services.api');
+  const test_component_app_safe_ref = resourceRefToNodeRef('component.services.app');
 
   it('simple volume', async () => {
     const component_config = `
-      name: test/component
+      name: component
       services:
         api:
           volumes:
@@ -23,11 +23,11 @@ describe('volumes spec v1', () => {
     mock_fs({
       '/component/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component/component.yml'
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component/component.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('test/component')
+      await manager.loadComponentSpec('component')
     ])
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_safe_ref].volumes).has.members(['api-data:/data'])
@@ -35,7 +35,7 @@ describe('volumes spec v1', () => {
 
   it('simple debug volume', async () => {
     const component_config = `
-      name: test/component
+      name: component
       services:
         api:
           debug:
@@ -47,11 +47,11 @@ describe('volumes spec v1', () => {
     mock_fs({
       '/component/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component/component.yml'
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component/component.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('test/component', {}, true)
+      await manager.loadComponentSpec('component', {}, true)
     ]);
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_safe_ref].volumes).has.members([`${path.resolve('/component/data')}:/data`])
@@ -59,7 +59,7 @@ describe('volumes spec v1', () => {
 
   it('simple external volume', async () => {
     const component_config = `
-      name: test/component
+      name: component
       services:
         api:
           volumes:
@@ -70,11 +70,11 @@ describe('volumes spec v1', () => {
     mock_fs({
       '/component/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component/component.yml'
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component/component.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('test/component')
+      await manager.loadComponentSpec('component')
     ])
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_safe_ref].volumes).has.members([`/user/app/data:/data`])
@@ -82,7 +82,7 @@ describe('volumes spec v1', () => {
 
   it('multiple volumes and services', async () => {
     const component_config = `
-      name: test/component
+      name: component
       services:
         api:
           volumes:
@@ -110,11 +110,11 @@ describe('volumes spec v1', () => {
     mock_fs({
       '/component/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component/component.yml'
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component/component.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('test/component', {}, true)
+      await manager.loadComponentSpec('component', {}, true)
     ])
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_safe_ref].volumes).has.members(['api-data:/data', 'api-data2:/data2', `${path.resolve('/component/data3')}:/data3`])

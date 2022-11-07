@@ -50,7 +50,7 @@ export default class Scale extends BaseCommand {
   async run(): Promise<void> {
     this.log(chalk.yellow(
       `This feature is in alpha. While the feature should be stable, it may be changed or removed without prior notice. As such we do not recommend using this feature in any automated pipelines.
-During this time we greatly appreciate any feedback as we continue to finalize the implementation. You can reach us at support@architect.io.`
+During this time we greatly appreciate any feedback as we continue to finalize the implementation. You can reach us at support@architect.io.`,
     ));
     const { args, flags } = await this.parse(Scale);
 
@@ -65,6 +65,7 @@ During this time we greatly appreciate any feedback as we continue to finalize t
         component_version = (await this.app.api.get(`/accounts/${account.id}/components/${flags.component}`)).data;
       }
     } else {
+      // eslint-disable-next-line unicorn/prefer-module
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
       const answers: { component_version: ComponentVersion } = await inquirer.prompt([
         {
@@ -112,7 +113,7 @@ During this time we greatly appreciate any feedback as we continue to finalize t
             name: 'replicas',
             message: `How many replicas should the service be scaled to?`,
             validate: (value: any) => {
-              if (isNaN(value) || value % 1 !== 0) {
+              if (Number.isNaN(value) || value % 1 !== 0) {
                 return 'Must be a whole number';
               }
               return true;
@@ -121,7 +122,7 @@ During this time we greatly appreciate any feedback as we continue to finalize t
         ]);
         replicas = answers.replicas;
       }
-      replicas = parseInt(replicas);
+      replicas = Number.parseInt(replicas);
     }
 
     const environment: Environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
@@ -133,7 +134,7 @@ During this time we greatly appreciate any feedback as we continue to finalize t
     };
     const update_env_dto = {
       ...scaling_dto,
-      clear_scaling: !!flags.clear || undefined,
+      clear_scaling: Boolean(flags.clear) || undefined,
     };
     if (!flags.clear) {
       try {
