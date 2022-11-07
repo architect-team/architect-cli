@@ -10,7 +10,7 @@ describe('login', () => {
     .stderr({ print })
     .command(['login', '-e', 'test-email'])
     .catch(ctx => {
-      expect(ctx.message).to.contain('--password flag is required in CI pipelines or by setting ARCHITECT_PASSWORD env')
+      expect(ctx.message).to.contain('--password flag is required in CI pipelines')
     })
     .it('requires both email and password when not in a tty environment');
 
