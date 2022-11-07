@@ -166,6 +166,7 @@ export default class ComponentRegister extends BaseCommand {
       if (!is_valid_component_account) {
         console.log(chalk.yellow(`The account name '${component_account_name}' was found as part of the component name in your architect.yml file. Either that account does not exist or you do not have permission to access it. You can select from a valid list of your accounts below.\n`));
       }
+      console.log(chalk.yellow('Including account name as part of the component name is being deprecated. Use the `-a` flag instead to specify an account.'));
       component_spec.name = component_name;
     }
     const account_name = is_valid_component_account ? component_account_name : flags.account;
@@ -175,9 +176,8 @@ export default class ComponentRegister extends BaseCommand {
       await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);
     }
 
-    const dependency_manager = new LocalDependencyManager(this.app.api);
+    const dependency_manager = new LocalDependencyManager(this.app.api, selected_account.name);
     dependency_manager.environment = 'production';
-    dependency_manager.account = selected_account.name;
 
     const graph = await dependency_manager.getGraph([classToClass(component_spec)], undefined, { interpolate: false, validate: false });
     // Tmp fix to register host overrides

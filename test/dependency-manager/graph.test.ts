@@ -8,11 +8,11 @@ describe('graph', () => {
 
   it('graph without interpolation', async () => {
     const component_config = `
-      name: architect/component
+      name: component
 
       dependencies:
-        architect/dependency: latest
-        architect/missing-dependency: latest
+        dependency: latest
+        missing-dependency: latest
 
       secrets:
         MYSQL_DATABASE:
@@ -33,14 +33,14 @@ describe('graph', () => {
         core:
           environment:
             ADDR: \${{ ingresses.db.url }}
-            DEP_ADDR: \${{ dependencies.architect/dependency.interfaces.db.url }}
-            DEP_INGRESS_ADDR: \${{ dependencies.architect/dependency.ingresses.db.url }}
-            DEP_MISSING_ADDR: \${{ dependencies.architect/missing-dependency.interfaces.db.url }}
-            DEP_MISSING_INGRESS_ADDR: \${{ dependencies.architect/missing-dependency.ingresses.db.url }}
+            DEP_ADDR: \${{ dependencies.dependency.interfaces.db.url }}
+            DEP_INGRESS_ADDR: \${{ dependencies.dependency.ingresses.db.url }}
+            DEP_MISSING_ADDR: \${{ dependencies.missing-dependency.interfaces.db.url }}
+            DEP_MISSING_INGRESS_ADDR: \${{ dependencies.missing-dependency.ingresses.db.url }}
     `;
 
     const dependency_config = `
-      name: architect/dependency
+      name: dependency
 
       secrets:
         MYSQL_DATABASE:
@@ -64,16 +64,16 @@ describe('graph', () => {
     `;
 
     nock('http://localhost').get('/accounts/architect/components/component/versions/latest')
-      .reply(200, { tag: 'latest', config: yaml.load(component_config), service: { url: 'architect/component:latest' } });
+      .reply(200, { tag: 'latest', config: yaml.load(component_config), service: { url: 'component:latest' } });
 
     nock('http://localhost').get('/accounts/architect/components/dependency/versions/latest')
-      .reply(200, { tag: 'latest', config: yaml.load(dependency_config), service: { url: 'architect/dependency:latest' } });
+      .reply(200, { tag: 'latest', config: yaml.load(dependency_config), service: { url: 'dependency:latest' } });
 
-    const manager = new LocalDependencyManager(axios.create());
+    const manager = new LocalDependencyManager(axios.create(), 'architect');
 
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/component:latest'),
-      await manager.loadComponentSpec('architect/dependency:latest', { interfaces: { db2: 'db' } })
+      await manager.loadComponentSpec('component:latest'),
+      await manager.loadComponentSpec('dependency:latest', { interfaces: { db2: 'db' } })
     ], {}, { interpolate: false });
 
     expect(graph.nodes).to.have.length(7);
@@ -82,10 +82,10 @@ describe('graph', () => {
 
   it('graph without validation', async () => {
     const component_config = `
-      name: architect/component
+      name: component
 
       dependencies:
-        architect/dependency: latest
+        dependency: latest
 
       secrets:
         external_host:
@@ -97,11 +97,11 @@ describe('graph', () => {
               port: 5432
               host: \${{ secrets.external_host }}
           environment:
-            OTHER_DB_ADDR: \${{ dependencies.architect/dependency.interfaces.db.url }}
+            OTHER_DB_ADDR: \${{ dependencies.dependency.interfaces.db.url }}
     `;
 
     const dependency_config = `
-      name: architect/dependency
+      name: dependency
 
       secrets:
         external_host:
@@ -119,16 +119,16 @@ describe('graph', () => {
     `;
 
     nock('http://localhost').get('/accounts/architect/components/component/versions/latest')
-      .reply(200, { tag: 'latest', config: yaml.load(component_config), service: { url: 'architect/component:latest' } });
+      .reply(200, { tag: 'latest', config: yaml.load(component_config), service: { url: 'component:latest' } });
 
     nock('http://localhost').get('/accounts/architect/components/dependency/versions/latest')
-      .reply(200, { tag: 'latest', config: yaml.load(dependency_config), service: { url: 'architect/dependency:latest' } });
+      .reply(200, { tag: 'latest', config: yaml.load(dependency_config), service: { url: 'dependency:latest' } });
 
-    const manager = new LocalDependencyManager(axios.create());
+    const manager = new LocalDependencyManager(axios.create(), 'architect');
 
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/component:latest'),
-      await manager.loadComponentSpec('architect/dependency:latest')
+      await manager.loadComponentSpec('component:latest'),
+      await manager.loadComponentSpec('dependency:latest')
     ], {}, { interpolate: true, validate: false });
 
     expect(graph.nodes).to.have.length(3);
