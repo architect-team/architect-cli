@@ -40,8 +40,8 @@ jobs:
   test_remote:
     name: Superset remote deployment
     env:
-      ACCOUNT_NAME: architect-ci # TODO: update these when TJ knows what we want
-      ENVIRONMENT_NAME: do-k8s
+      ACCOUNT_NAME: architect-ci
+      ENVIRONMENT_NAME: example-environment
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -66,7 +66,7 @@ jobs:
         run: curl --insecure --fail -S https://hello.$ENVIRONMENT_NAME.$ACCOUNT_NAME.dev.arcitect.io/ | grep "Hello Architect!"
       - name: Check that cert exists for deployed service
         run: |
-          export CERT_DATA=$(openssl s_client -showcerts -connect hello.$ENVIRONMENT_NAME.$ACCOUNT_NAME.dev.arcitect.io:443 </dev/null | openssl x509 -noout -issuer) # TODO: update app domain, parameterize
+          export CERT_DATA=$(openssl s_client -showcerts -connect hello.$ENVIRONMENT_NAME.$ACCOUNT_NAME.dev.arcitect.io:443 </dev/null | openssl x509 -noout -issuer)
           if [[ "$CERT_DATA" = "issuer=C = US, O = Let's Encrypt, CN = R3" || "$CERT_DATA" = "issuer=C = US, O = (STAGING) Let's Encrypt, CN = (STAGING) Artificial Apricot R3" ]]; then echo "Valid cert generated"; else exit 1; fi
       - name: Ensure that network policies are being enforced in the cluster
         run: |
