@@ -11,6 +11,7 @@ import AppService from '../../app-config/service';
 import PromptUtils from '../../common/utils/prompt-utils';
 import { EnvironmentSpecValue } from '../../dependency-manager/spec/resource-spec';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
+import inquirerPrompt from 'inquirer-autocomplete-prompt';
 
 interface Selection {
   name: string,
@@ -20,7 +21,6 @@ interface Selection {
 }
 
 export default class ProjectUtils {
-
   static getRootComponent(selections: Dictionary<Selection>): string {
     if (selections.frontend) {
       return selections.frontend.name.toLowerCase();
@@ -42,13 +42,13 @@ export default class ProjectUtils {
       await PromptUtils.oclifTimedSpinner(
         `$ architect link ${component_path}`,
         selection.name.toLowerCase(),
-        `${chalk.green('✓')} ${selection.name.toLowerCase()}`
+        `${chalk.green('✓')} ${selection.name.toLowerCase()}`,
       );
     }
   }
 
   static async prompt(choices: any[], message: string): Promise<any> {
-    inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
+    inquirer.registerPrompt('autocomplete', inquirerPrompt);
     const answers: { selected: any } = await inquirer.prompt([
       {
         type: 'autocomplete',
@@ -90,7 +90,7 @@ export default class ProjectUtils {
         await PromptUtils.oclifTimedSpinner(
           `Pulling down GitHub Repositories (${i}/${Math.max(i, total_repositories_to_clone.length)})`,
            selection.name.toLowerCase(),
-          `${chalk.green('✓')} ${selection.name.toLowerCase()}`
+          `${chalk.green('✓')} ${selection.name.toLowerCase()}`,
         );
         i++;
       }
@@ -99,7 +99,7 @@ export default class ProjectUtils {
   }
 
   static async updateServiceEnvironmentDependencies(service_environment: Dictionary<EnvironmentSpecValue>, dep_key: string): Promise<Dictionary<EnvironmentSpecValue>> {
-    const dependencies_regex = new RegExp("'(.*?)'", 'g');
+    const dependencies_regex = new RegExp('\'(.*?)\'', 'g');
     for (const [env_key, env_val] of Object.entries(service_environment)) {
       if (typeof env_val === 'string' && env_val.includes('dependencies')) {
         const matches = dependencies_regex.exec(env_val);
@@ -124,7 +124,7 @@ export default class ProjectUtils {
         await PromptUtils.oclifTimedSpinner(
           `Adding ${service_key} database service to ${backend_yml.name}`,
           `${service_key}...`,
-          `${chalk.green('✓')} ${service_key}`
+          `${chalk.green('✓')} ${service_key}`,
         );
       }
     }
@@ -180,16 +180,16 @@ Change directory to '../${root_service}', then run the register and deploy comma
 
   static async updateArchitectYamls(app: AppService, selections: Dictionary<any>, project_dir: string): Promise<void> {
     // Update backends first to include selected database
-    const backend = selections['backend'];
+    const backend = selections.backend;
     const backend_yml_path = `./${project_dir}/${backend.name.toLowerCase()}/architect.yml`;
     const backend_yml = yaml.load(fs.readFileSync(backend_yml_path).toString('utf-8')) as ComponentSpec;
-    const database_yml = await this.fetchYamlFromGitHub(selections['database']['architect-file']);
+    const database_yml = await this.fetchYamlFromGitHub(selections.database['architect-file']);
     await this.switchDatabase(database_yml, backend_yml, backend_yml_path);
     console.log(chalk.grey('# Why did we do this? Check out - https://docs.architect.io/components/services/\n'));
 
     // ZDJ - TODO 446 - link front-end to back-end
     // Need better handling for when a frontend requires a backend.
-    const frontend = selections['frontend'];
+    const frontend = selections.frontend;
     if (frontend) {
       const frontend_yml_path = `./${project_dir}/${frontend.name.toLowerCase()}/architect.yml`;
       const frontend_yml = yaml.load(fs.readFileSync(frontend_yml_path).toString('utf-8')) as ComponentSpec;
@@ -218,16 +218,16 @@ Change directory to '../${root_service}', then run the register and deploy comma
     if (type.toLowerCase() === 'full stack') {
       const frontend_opts = choices.filter((item: any) => item.type === 'frontend');
       const frontend = await this.prompt(frontend_opts, 'Select a frontend');
-      selections['frontend'] = frontend;
+      selections.frontend = frontend;
     }
 
     const backend_opts = choices.filter((item: any) => item.type === 'backend');
     const backend = await this.prompt(backend_opts, 'Select a backend');
-    selections['backend'] = backend;
+    selections.backend = backend;
 
     const database_opts = choices.filter((item: any) => item.type === 'database');
     const database = await this.prompt(database_opts, 'Select a database');
-    selections['database'] = database;
+    selections.database = database;
 
     return selections;
   }

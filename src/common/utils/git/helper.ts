@@ -41,7 +41,6 @@ export function RequiresGit(): (target: any, propertyKey: string, descriptor: Pr
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const wrappedFunc = descriptor.value;
     descriptor.value = function (this: any, ...args: any[]) {
-
       // Verify that git is installed
       GitHelper.verifyGit();
 

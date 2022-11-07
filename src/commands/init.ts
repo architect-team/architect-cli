@@ -1,4 +1,3 @@
-/* eslint-disable no-empty */
 import { Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import fs from 'fs';
@@ -121,7 +120,6 @@ export abstract class InitCommand extends BaseCommand {
     this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://docs.architect.io/components/architect-yml.'));
   }
 
-
   async parse<F, A extends {
     [name: string]: any;
   }>(options?: Interfaces.Input<F, A>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
@@ -146,7 +144,8 @@ export abstract class InitCommand extends BaseCommand {
           name: 'chosen',
           message: `Please provide a name for your ${compose_exist ? 'component' : 'project'}:`,
           type: 'input',
-        }]);
+        },
+]);
       args.name = answer.chosen;
     }
 
