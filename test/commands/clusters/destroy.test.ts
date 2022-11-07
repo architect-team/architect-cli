@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import PipelineUtils from '../../../src/architect/pipeline/pipeline.utils';
 import { mockArchitectAuth, MOCK_API_HOST } from '../../utils/mocks';
 
-describe('environment:destroy', () => {
+describe('clusters:destroy', () => {
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;

@@ -521,12 +521,12 @@ export default class Dev extends BaseCommand {
 
   private async getAvailablePort(port: number): Promise<number> {
     while (!(await PortUtil.isPortAvailable(port))) {
-      const answers: any = await inquirer.prompt([
+      const answers = await inquirer.prompt([
         {
           type: 'input',
           name: 'port',
           message: `Trying to listen on port ${port}, but something is already using it. What port would you like us to run the API gateway on (you can use the '--port' flag to skip this message in the future)?`,
-          validate: (value: any) => {
+          validate: (value) => {
             if (new RegExp('^[1-9]+\\d*$').test(value)) {
               return true;
             }

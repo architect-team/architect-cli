@@ -138,7 +138,7 @@ export default class Doctor extends BaseCommand {
     const { args, flags } = await this.parse(Doctor);
     // eslint-disable-next-line unicorn/prefer-module
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
-    const answers: any = await inquirer.prompt([
+    const answers = await inquirer.prompt([
       {
         type: 'number',
         name: 'history',
@@ -192,7 +192,7 @@ export default class Doctor extends BaseCommand {
     if (!flags.output) {
       console.log(inspect(this.history, false, 100, true));
       seen = true;
-      const answers: any = await inquirer.prompt([
+      const answers = await inquirer.prompt([
         {
           type: 'string',
           name: 'output',
