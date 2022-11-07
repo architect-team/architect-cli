@@ -28,7 +28,7 @@ describe('graph', () => {
           interfaces:
             mysql:
               port: 3306
-              protocol: https
+              protocol: mysql
 
         core:
           environment:

@@ -4,10 +4,10 @@ import yaml from 'js-yaml';
 import sinon, { SinonSpy, SinonStub } from 'sinon';
 import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
 import AccountUtils from '../../src/architect/account/account.utils';
+import ComponentRegister from '../../src/commands/register';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
-import PluginManager from '../../src/common/plugins/plugin-manager';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
 import { mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST } from '../utils/mocks';
 
@@ -48,12 +48,12 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         const text_file = fs.readFileSync('test/mocks/superset/filedata.txt');
-        expect(body.config.services['stateless-api'].environment.FILE_DATA).to.eq(text_file.toString().trim());
+        expect(body.config.services['stateful-api'].environment.FILE_DATA).to.eq(text_file.toString().trim());
         return body;
       })
       .reply(200, {})
     )
-    .stub(PluginManager, 'getPlugin', sinon.stub().returns({}))
+    .stub(ComponentRegister.prototype, 'uploadVolume', sinon.stub().returns({}))
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'test/mocks/superset/architect.yml', '-a', 'examples'])
@@ -109,7 +109,7 @@ describe('register', function () {
     )
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
     .stub(fs, 'move', sinon.stub())
-    .stub(PluginManager, 'getPlugin', sinon.stub().returns({}))
+    .stub(ComponentRegister.prototype, 'uploadVolume', sinon.stub().returns({}))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -122,7 +122,7 @@ describe('register', function () {
           if (IF_EXPRESSION_REGEX.test(service_name)) { continue; }
           expect(service.image).not.undefined;
         }
-        for (const [task_name, task] of Object.entries(body.config.tasks) as [string, TaskSpec][]) {
+        for (const [task_name, task] of Object.entries(body.config.tasks || []) as [string, TaskSpec][]) {
           if (IF_EXPRESSION_REGEX.test(task_name)) { continue; }
           expect(task.image).not.undefined;
         }

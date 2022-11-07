@@ -21,10 +21,12 @@ import { validateOrRejectSpec } from './spec/utils/spec-validator';
 import { Dictionary, transformDictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
 import { interpolateObjectLoose, interpolateObjectOrReject, replaceInterpolationBrackets } from './utils/interpolation';
+
 export default abstract class DependencyManager {
   account?: string;
   external_addr = 'arc.localhost:80';
   use_ssl = false;
+  valid_protocols = new Set(['http', 'https']);
 
   getComponentNodes(component: ComponentConfig): DependencyNode[] {
     const nodes = [];
@@ -397,30 +399,17 @@ export default abstract class DependencyManager {
     }
   }
 
-  private validateProtocols(graph: DependencyGraph): void {
-    const valid_protocols = new Set([undefined, 'http', 'https']);
-
-    for (const node of graph.nodes) {
-      if (node.is_external) continue;
-      if (!(node instanceof ComponentNode)) continue;
-
-      const component_interfaces = node.config.interfaces;
-      for (const [component_name, component_interface] of Object.entries(component_interfaces)) {
-        if (!valid_protocols.has(component_interface.protocol)) {
-          // throw new ArchitectError(`Protocol '${component_interface.protocol}' is detected in component '${component_name}'. We currently only support 'http' and 'https' protocols.`);
-        }
-      }
-    }
-  }
-
   validateGraph(graph: DependencyGraph): void {
-    this.validateProtocols(graph);
-
     // Check for duplicate subdomains
     const seen_subdomains: Dictionary<string[]> = {};
     for (const ingress_edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
       for (const { interface_from, interface_to } of ingress_edge.interface_mappings) {
         const component_node = graph.getNodeByRef(ingress_edge.to) as ComponentNode;
+        const component_interface = component_node.config.interfaces[interface_to];
+        if (component_interface.ingress?.subdomain && component_interface.protocol && !this.valid_protocols.has(component_interface.protocol)) {
+          throw new ArchitectError(`Protocol '${component_interface.protocol}' is detected in '${interface_to}'. We currently only support 'http' and 'https' protocols.`);
+        }
+
         const ingress = component_node.config.interfaces[interface_to].ingress;
         const key = ingress?.path ? `${interface_from} with path ${ingress.path}` : interface_from;
         if (!seen_subdomains[key]) {

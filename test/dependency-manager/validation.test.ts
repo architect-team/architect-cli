@@ -4,8 +4,8 @@ import { expect } from 'chai';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
-import TSON from 'typescript-json';
-import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
+import TSON from "typescript-json";
+import { ArchitectError, buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DeepPartial } from '../../src/common/utils/types';
 import { SecretsConfig } from '../../src/dependency-manager/secrets/secrets';
@@ -1281,30 +1281,50 @@ services:
     expect(err).to.be.undefined;
   });
 
-  /*
-  it('invalid tcp component protocol', async () => {
+  it('invalid tcp component protocol through gateway', async () => {
     const component_config = `
       name: component
-      interfaces:
-        main: \${{ services.app.interfaces.main.url }}
+      dependencies:
+        dependency: latest
       services:
         app:
           interfaces:
             main:
-              port: 3000
+              port: 8080
               protocol: tcp
-      `;
+          environment:
+            API_URL: \${{ dependencies.dependency.interfaces.api.url }}
+      interfaces:
+        app:
+          url: \${{ services.app.interfaces.main.url }}
+          ingress:
+            subdomain: app
+    `;
+
+    const dependency_config = `
+      name: dependency
+      services:
+        api:
+          interfaces:
+            api: 443
+      interfaces:
+        api: \${{ services.api.interfaces.api.url }}
+    `;
+
     mock_fs({
       '/component.yml': component_config,
+      '/dependency.yml': dependency_config,
     });
     const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
+      'dependency': '/dependency.yml',
     });
 
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('component'),
+        await manager.loadComponentSpec('component:latest'),
+        await manager.loadComponentSpec('dependency:latest'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1315,38 +1335,58 @@ services:
     expect(process.exitCode).eq(1);
   });
 
-  it('valid component with protocol of undefined', async () => {
+  it('valid dependency tcp protocol that is not exposed through gateway', async () => {
     const component_config = `
       name: component
-      interfaces:
-        main: \${{ services.app.interfaces.mysql.url }}
+      dependencies:
+        dependency: latest
       services:
         app:
-          image: mysql:5.6.35
-          command: mysqld
           interfaces:
-            mysql:
-              port: 3306
-              protocol: https
-      `;
+            main:
+              port: 8080
+          environment:
+            API_URL: \${{ dependencies.dependency.interfaces.api.url }}
+      interfaces:
+        app:
+          url: \${{ services.app.interfaces.main.url }}
+          ingress:
+            subdomain: app
+    `;
+
+    const dependency_config = `
+      name: dependency
+      services:
+        api:
+          interfaces:
+            api:
+              port: 443
+              protocol: tcp
+      interfaces:
+        api: \${{ services.api.interfaces.api.url }}
+    `;
+
     mock_fs({
       '/component.yml': component_config,
+      '/dependency.yml': dependency_config,
     });
     const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'component': '/component.yml',
+      'dependency': '/dependency.yml',
     });
 
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('component'),
-      ], {}, { interpolate: false });
+        await manager.loadComponentSpec('component:latest'),
+        await manager.loadComponentSpec('dependency:latest'),
+      ]);
     } catch (e: any) {
       err = e;
     }
+
     expect(err).to.be.undefined;
   });
-  */
 
   it('invalid component interface number', async () => {
     const component_config = `
