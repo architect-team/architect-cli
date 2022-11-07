@@ -166,6 +166,7 @@ export default class ComponentRegister extends BaseCommand {
       if (!is_valid_component_account) {
         console.log(chalk.yellow(`The account name '${component_account_name}' was found as part of the component name in your architect.yml file. Either that account does not exist or you do not have permission to access it. You can select from a valid list of your accounts below.\n`));
       }
+      console.log(chalk.yellow('Including account name as part of the component name is being deprecated. Use the `-a` flag instead to specify an account.'));
       component_spec.name = component_name;
     }
     const account_name = is_valid_component_account ? component_account_name : flags.account;
@@ -175,9 +176,8 @@ export default class ComponentRegister extends BaseCommand {
       await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);
     }
 
-    const dependency_manager = new LocalDependencyManager(this.app.api);
+    const dependency_manager = new LocalDependencyManager(this.app.api, selected_account.name);
     dependency_manager.environment = 'production';
-    dependency_manager.account = selected_account.name;
 
     const graph = await dependency_manager.getGraph([classToClass(component_spec)], undefined, { interpolate: false, validate: false });
     // Tmp fix to register host overrides
@@ -394,6 +394,10 @@ export default class ComponentRegister extends BaseCommand {
     CliUx.ux.action.stop();
     this.log(chalk.green(`Successfully registered component`));
 
+    if (new_spec.dependencies) {
+      this.generateDependenciesWarnings(new_spec.dependencies, selected_account.name);
+    }
+
     console.timeEnd('Time');
   }
 
@@ -419,5 +423,44 @@ export default class ComponentRegister extends BaseCommand {
 
   public static getTagFromFlags(flags: any): string {
     return flags.environment ? `${ENV_TAG_PREFIX}${flags.environment}` : flags.tag;
+  }
+
+  private async generateDependenciesWarnings(component_dependencies: Dictionary<string>, account_name: string) {
+    const dependency_arr: string[] = [];
+    for (const [component_name, tag] of Object.entries(component_dependencies)) {
+      dependency_arr.push(`${component_name}:${tag}`);
+    }
+    const dependencies: Dictionary<{ component: boolean, component_and_version: boolean }> = (await this.app.api.get(`accounts/${account_name}/components-tags`, { params: { components: dependency_arr } })).data;
+
+    const component_warnings: string[] = [];
+    const tag_warnings: string[] = [];
+    for (const [component_name, valid] of Object.entries(dependencies)) {
+      if (!valid.component && !valid.component_and_version) {
+        component_warnings.push(component_name);
+      } else if (valid.component && !valid.component_and_version) {
+        tag_warnings.push(component_name);
+      }
+    }
+
+    if (component_warnings || tag_warnings) {
+      this.log();
+      this.log(chalk.yellow(`Some required dependencies for this component have not yet been registered to your account. Please make sure to register the following before you try to deploy.`));
+    }
+
+    if (component_warnings.length > 0) {
+      this.log();
+      this.log(chalk.yellow(`The following components do not exist.`));
+      for (const component_name of component_warnings) {
+        this.log(chalk.yellow(`  - ${component_name}`));
+      }
+    }
+
+    if (tag_warnings.length > 0) {
+      this.log();
+      this.log(chalk.yellow(`The following components exist, but do not have the specified tag.`));
+      for (const component_name of tag_warnings) {
+        this.log(chalk.yellow(`  - ${component_name}`));
+      }
+    }
   }
 }

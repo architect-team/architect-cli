@@ -6,7 +6,6 @@ import AppService from '../../../src/app-config/service';
 import PipelineUtils from '../../../src/architect/pipeline/pipeline.utils';
 import ClusterCreate from '../../../src/commands/clusters/create';
 import { AgentClusterUtils } from '../../../src/common/utils/agent-cluster.utils';
-import { KubernetesClusterUtils } from '../../../src/common/utils/kubernetes-cluster.utils';
 
 describe('cluster:create', function () {
   const account = {
@@ -56,7 +55,9 @@ describe('cluster:create', function () {
 
   const k8s_test = (install_applications = false) => {
     return create_test()
-      .stub(KubernetesClusterUtils, 'configureKubernetesCluster', sinon.stub().returns(Promise.resolve({ name: 'new_k8s_cluster', type: 'KUBERNETES' })))
+      .stub(AgentClusterUtils, 'installAgent', sinon.stub().returns(Promise.resolve()))
+      .stub(AgentClusterUtils, 'waitForAgent', sinon.stub().returns(Promise.resolve()))
+      .stub(AgentClusterUtils, 'configureAgentCluster', sinon.stub().returns(Promise.resolve({ name: 'new_k8s_cluster', type: 'AGENT' })))
       .stub(inquirer, 'prompt', () => {
         return {
           context: 'minikube',
@@ -71,11 +72,11 @@ describe('cluster:create', function () {
   k8s_test()
     .it('Does not auto approve creation when auto-approve flag value is false', async () => {
       const create_cluster_applications = ClusterCreate.prototype.createClusterApplications as SinonSpy;
-      const configure_kubernetes = KubernetesClusterUtils.configureKubernetesCluster as SinonSpy;
+      const configure_agent = AgentClusterUtils.configureAgentCluster as SinonSpy;
       const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await ClusterCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=false']);
-      expect(configure_kubernetes.calledOnce).true;
+      await ClusterCreate.run(['cluster-name', '-a', 'test-account-name', '--auto-approve=false']);
+      expect(configure_agent.calledOnce).true;
       expect(create_cluster_applications.calledOnce).false;
       expect(post_to_api.calledOnce).true;
     });
@@ -83,11 +84,11 @@ describe('cluster:create', function () {
   k8s_test()
     .it('Auto approve creation when auto-approve flag value is true', async () => {
       const create_cluster_applications = ClusterCreate.prototype.createClusterApplications as SinonSpy;
-      const configure_kubernetes = KubernetesClusterUtils.configureKubernetesCluster as SinonSpy;
+      const configure_agent = AgentClusterUtils.configureAgentCluster as SinonSpy;
       const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await ClusterCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto-approve=true']);
-      expect(configure_kubernetes.calledOnce).true;
+      await ClusterCreate.run(['cluster-name', '-a', 'test-account-name', '--auto-approve=true']);
+      expect(configure_agent.calledOnce).true;
       expect(create_cluster_applications.calledOnce).true;
       expect(post_to_api.calledOnce).true;
     });
@@ -95,11 +96,11 @@ describe('cluster:create', function () {
   k8s_test(true)
     .it('Auto approve creation when auto-approve flag value is not specified', async () => {
       const create_cluster_applications = ClusterCreate.prototype.createClusterApplications as SinonSpy;
-      const configure_kubernetes = KubernetesClusterUtils.configureKubernetesCluster as SinonSpy;
+      const configure_agent = AgentClusterUtils.configureAgentCluster as SinonSpy;
       const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await ClusterCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes']);
-      expect(configure_kubernetes.calledOnce).true;
+      await ClusterCreate.run(['cluster-name', '-a', 'test-account-name']);
+      expect(configure_agent.calledOnce).true;
       expect(create_cluster_applications.calledOnce).true;
       expect(post_to_api.calledOnce).true;
     });
@@ -107,11 +108,11 @@ describe('cluster:create', function () {
   k8s_test()
     .it('Do not auto approve creation with auto-approve flag default value', async () => {
       const create_cluster_applications = ClusterCreate.prototype.createClusterApplications as SinonSpy;
-      const configure_kubernetes = KubernetesClusterUtils.configureKubernetesCluster as SinonSpy;
+      const configure_agent = AgentClusterUtils.configureAgentCluster as SinonSpy;
       const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await ClusterCreate.run(['cluster-name', '-a', 'test-account-name', '-t', 'kubernetes']);
-      expect(configure_kubernetes.calledOnce).true;
+      await ClusterCreate.run(['cluster-name', '-a', 'test-account-name']);
+      expect(configure_agent.calledOnce).true;
       expect(create_cluster_applications.calledOnce).false;
       expect(post_to_api.calledOnce).true;
     });

@@ -1,4 +1,4 @@
-name: tests/validation_errors
+name: validation_errors
 
 services:
   validation_errors:
