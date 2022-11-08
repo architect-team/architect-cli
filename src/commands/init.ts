@@ -90,13 +90,8 @@ export abstract class InitCommand extends BaseCommand {
     await PromptUtils.oclifTimedSpinner('Creating Project directory');
     await ProjectUtils.downloadGitHubRepos(selections, project_name);
 
-    this.log('\n✨ And now, for some Architect Magic ✨\n');
-    await ProjectUtils.updateArchitectYamls(this.app, selections, project_name);
-    await ProjectUtils.linkSelections(this.app, selections, project_name);
-
     const root_path = path.join(project_name, ProjectUtils.getRootComponent(selections), 'architect.yml');
-    this.log(chalk.grey('# Curious as to why we do this? Check out:\n# https://docs.architect.io/deployments/local-environments/#local-registration\n'));
-    this.log(chalk.green(`Successfully created project ${project_name}.\n`));
+    this.log(chalk.green(`\nSuccessfully created project ${project_name}.\n`));
     this.log(`Your App is ready to be deployed by architect!\nTo Deploy locally, run:\n\t$ architect dev ${root_path}\n`);
   }
 
