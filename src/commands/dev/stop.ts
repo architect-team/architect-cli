@@ -52,7 +52,7 @@ export default class DevStop extends BaseCommand {
   async runComposeStop(project: string): Promise<void> {
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project);
     await DockerComposeUtils.dockerCompose(['-p', project, '-f', compose_file, 'stop']);
-    fs.removeSync(compose_file);
+    fs.removeSync(compose_file); // remove compose file if dev was started in detached mode
   }
 
   @RequiresDocker({ compose: true })
