@@ -49,9 +49,10 @@ export default class DevStop extends BaseCommand {
     return false;
   }
 
-  runComposeStop(project: string): void {
+  async runComposeStop(project: string): Promise<void> {
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project);
-    DockerComposeUtils.dockerCompose(['-p', project, '-f', compose_file, 'stop']);
+    await DockerComposeUtils.dockerCompose(['-p', project, '-f', compose_file, 'stop']);
+    fs.removeSync(compose_file);
   }
 
   @RequiresDocker({ compose: true })
@@ -82,10 +83,10 @@ export default class DevStop extends BaseCommand {
     if (fs.existsSync(socket_path)) {
       const socket = net.createConnection(socket_path);
 
-      socket.on('error', (e: any) => {
+      socket.on('error', async (e: any) => {
         if (e.code === 'ECONNREFUSED') {
           socket.end();
-          this.runComposeStop(name);
+          await this.runComposeStop(name);
         } else {
           throw e;
         }
@@ -96,8 +97,8 @@ export default class DevStop extends BaseCommand {
       });
     } else {
       // If there's no socket at all, dev is running in detached mode and we can stop it with docker compose without
-      // working about the health check restarting anything.
-      this.runComposeStop(name);
+      // worrying about the health check restarting anything.
+      await this.runComposeStop(name);
     }
 
     CliUx.ux.action.start(chalk.blue(`Waiting for ${name} to stop...`));
