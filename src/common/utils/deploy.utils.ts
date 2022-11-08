@@ -6,8 +6,6 @@ import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import { ArchitectError, Dictionary } from '../../';
 
-const COMPONENT_SECRET_PREFIX = 'ARCHITECT_COMPONENT_';
-
 export default class DeployUtils {
   private static getExtraSecrets(secrets: string[] = []): Dictionary<string | number | undefined> {
     const extra_secrets: { [s: string]: string | number | undefined } = {};
@@ -48,28 +46,13 @@ export default class DeployUtils {
     return component_secrets;
   }
 
-  private static readDotEnvSecretsFile(secret_file: string): any {
+  private static readDotEnvSecretsFile(secret_file: string): Dictionary<Dictionary<string | undefined> | undefined> {
     const dot_env_loaded = dotenv.config({ override: true, path: secret_file });
     if (dot_env_loaded.error) {
       throw new Error(`Error loading dotenv file ${secret_file}`);
     }
-    const expanded_dot_env = dotenvExpand.expand(dot_env_loaded); // TODO: should we support this?
-
-    const component_secrets: Dictionary<Dictionary<string>> = {};
-    let component_key = '*';
-    for (const [key, secret] of Object.entries(expanded_dot_env.parsed || {})) {
-      if (key.startsWith(COMPONENT_SECRET_PREFIX)) {
-        component_key = key.replace(COMPONENT_SECRET_PREFIX, '').toLowerCase().replace('_', '-');
-        continue;
-      }
-
-      if (!component_secrets[component_key]) {
-        component_secrets[component_key] = {};
-      }
-      component_secrets[component_key][key] = secret;
-    }
-
-    return component_secrets;
+    const expanded_dot_env = dotenvExpand.expand(dot_env_loaded);
+    return { '*': expanded_dot_env.parsed };
   }
 
   static parseFlags(parsedFlags: any): any {
