@@ -51,7 +51,8 @@ describe('environment:create', () => {
   create_environment
     .command(['environment:create', mock_env.name, '-a', mock_account.name, '--cluster', mock_cluster.name])
     .it('should create an environment with the cluster flag', ctx => {
-      expect(ctx.stderr).to.contain(`Environment created: ${mock_url}`);
+      expect(ctx.stdout).to.contain(`Environment created: ${mock_url}`);
+      expect(ctx.stderr).to.contain('done');
     });
 
   create_environment
@@ -59,7 +60,7 @@ describe('environment:create', () => {
     .command(['environment:create', mock_env.name, '-a', mock_account.name])
     .it('should create an environment with the cluster environment variable', ctx => {
       expect(ctx.stdout).to.contain(`Using cluster from environment variables: ${mock_cluster.name}`);
-      expect(ctx.stderr).to.contain(`Environment created: ${mock_url}`);
+      expect(ctx.stdout).to.contain(`Environment created: ${mock_url}`);
     });
 
   create_duplicate_environment
@@ -73,7 +74,7 @@ describe('environment:create', () => {
     .command(['environment:create', mock_env.name, '-a', mock_account.name, '--platform', mock_cluster.name])
     .it('should create an environment with the platform flag, but with a deprecation warning', ctx => {
       expect(ctx.stderr).to.contain('Warning: The "platform" flag has been deprecated. Use "cluster" instead.');
-      expect(ctx.stderr).to.contain(`Environment created: ${mock_url}`);
+      expect(ctx.stdout).to.contain(`Environment created: ${mock_url}`);
     });
 
   create_environment
@@ -81,7 +82,7 @@ describe('environment:create', () => {
     .command(['environment:create', mock_env.name, '-a', mock_account.name])
     .it('should create an environment with the platform environment variable', ctx => {
       expect(ctx.stdout).to.contain(`Using cluster from environment variables: ${mock_cluster.name}`);
-      expect(ctx.stderr).to.contain(`Environment created: ${mock_url}`);
+      expect(ctx.stdout).to.contain(`Environment created: ${mock_url}`);
     });
 
   mockArchitectAuth()

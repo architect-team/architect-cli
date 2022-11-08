@@ -86,10 +86,14 @@ export default class EnvironmentCreate extends BaseCommand {
     });
 
     const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment_name}`;
-    const environment_create_outcome = _environment_already_exists ?
-      chalk.yellow(`Unable to create new environment '${environment_name}'. Environment name already in use for account '${account.name}'`) :
-      chalk.green(`Environment created: ${environment_url}`);
 
-    CliUx.ux.action.stop(environment_create_outcome);
+    CliUx.ux.action.stop();
+
+    if (_environment_already_exists) {
+      this.warn(`Unable to create new environment '${environment_name}'. Environment name already in use for account '${account.name}'`);
+      return;
+    }
+
+    this.log(chalk.green(`Environment created: ${environment_url}`));
   }
 }
