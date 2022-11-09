@@ -1,10 +1,8 @@
 import { Exclude, Type } from 'class-transformer';
 import { DependencyEdge } from './edge';
 import { IngressEdge } from './edge/ingress';
-import { OutputEdge } from './edge/output';
 import { ServiceEdge } from './edge/service';
 import { DependencyNode } from './node';
-import { ComponentNode } from './node/component';
 import { GatewayNode } from './node/gateway';
 import { ServiceNode } from './node/service';
 import { TaskNode } from './node/task';
@@ -16,7 +14,6 @@ export class DependencyGraphMutable {
       subTypes: [
         { value: ServiceNode, name: 'service' },
         { value: TaskNode, name: 'task' },
-        { value: ComponentNode, name: 'interfaces' },
         { value: GatewayNode, name: 'gateway' },
       ],
     },
@@ -29,7 +26,6 @@ export class DependencyGraphMutable {
       property: '__type',
       subTypes: [
         { value: ServiceEdge, name: 'service' },
-        { value: OutputEdge, name: 'output' },
         { value: IngressEdge, name: 'ingress' },
       ],
     },
@@ -149,43 +145,6 @@ export class DependencyGraphMutable {
     return [...nodes.values()];
   }
 
-  followEdge(root_edge: DependencyEdge): { interface_from: string, interface_to: string, node_to: DependencyNode, node_to_interface_name: string }[] {
-    const queue = [root_edge];
-    const res = [];
-    while (queue.length > 0) {
-      const edge = queue.shift()!;
-      const node_to = this.getNodeByRef(edge.to);
-      if (node_to instanceof ComponentNode) {
-        const child_edges = this.edges.filter(e => e.from === edge.to);
-        for (const child_edge of child_edges) {
-          queue.push(child_edge);
-        }
-      } else if (root_edge === edge) { // Support following ServiceEdge to another service
-        for (const { interface_from, interface_to } of edge.interface_mappings) {
-          res.push({
-            interface_from,
-            interface_to,
-            node_to,
-            node_to_interface_name: interface_to,
-          });
-        }
-      } else {
-        for (const { interface_from, interface_to } of root_edge.interface_mappings) {
-          const interface_mapping = edge.interface_mappings.find((i) => i.interface_from === interface_to);
-          if (interface_mapping) {
-            res.push({
-              interface_from,
-              interface_to,
-              node_to,
-              node_to_interface_name: interface_mapping?.interface_to,
-            });
-          }
-        }
-      }
-    }
-    return res;
-  }
-
   getDependsOn(node: ServiceNode | TaskNode): ServiceNode[] {
     const explicit_depends_on = this.getExplicitDependsOn(node);
     const cross_component_depends_on = this.getInterComponentDependsOn(node);
@@ -208,6 +167,7 @@ export class DependencyGraphMutable {
 
   private getDownstreamServices(node: DependencyNode): ServiceNode[] {
     let downstreams = this.getDownstreamNodes(node);
+    /* TODO:TJ test
     const interfaces = downstreams.filter(n => n instanceof ComponentNode);
     for (const i of interfaces) {
       const interface_downstreams = interfaces.map(i => this.getDownstreamNodes(i));
@@ -215,6 +175,7 @@ export class DependencyGraphMutable {
         downstreams = [...downstreams, ...i_downstream];
       }
     }
+    */
     downstreams = downstreams.filter((node, index, self) => self.findIndex(n => n.ref === node.ref) === index); // dedupe
     return downstreams.filter(n => n instanceof ServiceNode).map(n => n as ServiceNode);
   }

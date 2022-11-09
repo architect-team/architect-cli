@@ -1,4 +1,4 @@
-import { ComponentInstanceMetadata, ComponentSpec } from '../spec/component-spec';
+import { ComponentInstanceMetadata } from '../spec/component-spec';
 import { ComponentSlugUtils, ParsedResourceSlug, ResourceSlugUtils, ResourceType } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
@@ -7,15 +7,18 @@ import { TaskConfig } from './task-config';
 
 export interface IngressConfig {
   enabled?: boolean;
-  subdomain?: string;
+  subdomain: string;
   path?: string;
   ip_whitelist?: string[];
 }
 
+// TODO:TJ remove
+/*
 export interface ComponentNodeConfig {
   outputs: Dictionary<OutputDefinitionConfig>,
   interfaces: Dictionary<ComponentInterfaceConfig>
 }
+*/
 
 export interface ComponentInterfaceConfig {
   description?: string;
@@ -121,8 +124,3 @@ export const buildNodeRef = (component_config: ComponentConfig, resource_type: R
   const service_ref = ResourceSlugUtils.build(parsed.component_account_name, parsed.component_name, resource_type, resource_name, component_config.metadata?.instance_name);
   return resourceRefToNodeRef(service_ref, component_config.metadata?.instance_id, max_length);
 };
-
-export function buildInterfacesRef(component_config: ComponentSpec | ComponentConfig): string {
-  const component_ref = component_config.metadata.ref;
-  return resourceRefToNodeRef(component_ref, component_config.metadata?.instance_id, Refs.DEFAULT_MAX_LENGTH);
-}

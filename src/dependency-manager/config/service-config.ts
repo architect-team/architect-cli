@@ -1,6 +1,7 @@
 import { DeploySpec } from '../spec/service-spec';
 import { Dictionary } from '../utils/dictionary';
 import { LivenessProbeConfig, VolumeConfig } from './common-config';
+import { IngressConfig } from './component-config';
 import { ResourceConfig } from './resource-config';
 
 export interface ScalingMetricsConfig {
@@ -23,6 +24,8 @@ export interface ServiceInterfaceConfig {
   password?: null | string; // TODO:290:string
   url?: string;
   sticky?: boolean | string;
+
+  ingress?: IngressConfig;
 }
 
 export interface ServiceConfig extends ResourceConfig {

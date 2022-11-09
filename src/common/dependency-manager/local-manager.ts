@@ -87,6 +87,7 @@ export default class LocalDependencyManager extends DependencyManager {
         if (!IF_EXPRESSION_REGEX.test(interface_name)) {
           ingresses[interface_name] = {
             enabled: true,
+            subdomain: interface_name,
           };
         }
       }

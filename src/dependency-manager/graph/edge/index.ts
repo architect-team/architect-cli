@@ -6,24 +6,24 @@ export abstract class DependencyEdge {
 
   from: string;
   to: string;
-  interface_mappings: { interface_from: string, interface_to: string }[];
+  interface_to: string;
 
   @Type(() => DependencyState)
   state?: DependencyState;
 
-  constructor(from: string, to: string, interface_mappings: { interface_from: string, interface_to: string }[]) {
+  constructor(from: string, to: string, interface_to: string) {
     this.from = from;
     this.to = to;
-    this.interface_mappings = interface_mappings;
+    this.interface_to = interface_to;
   }
 
   instance_id = '';
 
   toString(): string {
-    return `${this.from} [${this.interface_mappings.map(i => i.interface_from).join(', ')}] -> ${this.to} [${this.interface_mappings.map(i => i.interface_to).join(', ')}]`;
+    return `${this.from} -> ${this.to}[${this.interface_to}]`;
   }
 
   get ref(): string {
-    return `${this.from}.${this.to}.${this.__type}`;
+    return `${this.from}.${this.to}.${this.interface_to}`;
   }
 }

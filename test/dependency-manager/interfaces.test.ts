@@ -852,41 +852,6 @@ describe('interfaces spec v1', () => {
     expect(err).instanceOf(ArchitectError);
   });
 
-  it('followEdge returns proper results when called with ServiceEdge', async () => {
-    const component_config = `
-    name: dependency
-
-    services:
-      db:
-        image: mysql:5.6.35
-        interfaces:
-          mysql:
-            port: 3306
-
-      core:
-        environment:
-          ADDR: \${{ services.db.interfaces.mysql.url }}
-    `;
-
-    mock_fs({
-      '/stack/architect.yml': component_config,
-    });
-
-    const manager = new LocalDependencyManager(axios.create(), 'architect', {
-      'dependency': '/stack/architect.yml',
-    });
-    const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('dependency'));
-
-    expect(graph.edges.length).eq(1);
-
-    const followed_edge = graph.followEdge(graph.edges[0]);
-    expect(followed_edge.length).eq(1);
-    expect(followed_edge[0].interface_from).eq('service->mysql');
-    expect(followed_edge[0].interface_to).eq('mysql');
-    expect(followed_edge[0].node_to_interface_name).eq('mysql');
-  });
-
   it('validation error on interfaces for invalid subdomain passed through secrets', async () => {
     const component_config = `
     name: hello-world

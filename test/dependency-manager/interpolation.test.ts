@@ -3,7 +3,7 @@ import axios from 'axios';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import path from 'path';
-import { buildInterfacesRef, ComponentNode, IngressEdge, OutputEdge, resourceRefToNodeRef, ServiceNode } from '../../src';
+import { resourceRefToNodeRef, ServiceNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
@@ -1151,9 +1151,11 @@ describe('interpolation spec v1', () => {
       DNS_ZONE: 'arc.localhost'
     });
 
+    /* TODO:TJ
     const ingress_edge = graph.edges.find((edge) => edge.to === resourceRefToNodeRef('dependency')) as IngressEdge
     expect(ingress_edge.interface_mappings).to.deep.equal([{ interface_from: 'test-subdomain', interface_to: 'app' }]);
     expect(ingress_edge.consumers_map).keys('app')
+    */
   });
 
   it('interpolate secret for replicas', async () => {
@@ -1312,12 +1314,10 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph(await manager.loadComponentSpecs('hello-world'));
 
     const api_ref = resourceRefToNodeRef('hello-world.services.api');
-    const hello_component = await manager.loadComponentSpec('hello-world')
-    const component_ref = buildInterfacesRef(hello_component);
-    const node = graph.getNodeByRef(component_ref) as ComponentNode;
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.interfaces).to.deep.eq({
       api: {
-        url: `http://${api_ref}:8080`,
+        port: 8080,
         protocol: 'http',
         ingress: {
           subdomain: 'test',
@@ -1361,10 +1361,7 @@ describe('interpolation spec v1', () => {
       { '*': { required_ip_whitelist: ['127.0.0.1/32'] } }
     );
     const api_ref = resourceRefToNodeRef('hello-world.services.api');
-
-    const hello_component = await manager.loadComponentSpec('hello-world')
-    const component_ref = buildInterfacesRef(hello_component);
-    const node = graph.getNodeByRef(component_ref) as ComponentNode;
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.interfaces).to.deep.eq({
       api: {
         url: `http://${api_ref}:8080`,
@@ -1421,10 +1418,7 @@ describe('interpolation spec v1', () => {
       { '*': { ip_whitelist: '1.2.3.4', required_ip_whitelist: '127.0.0.1/32' } }
     );
     const api_ref = resourceRefToNodeRef('hello-world.services.api');
-
-    const hello_component = await manager.loadComponentSpec('hello-world')
-    const component_ref = buildInterfacesRef(hello_component);
-    const node = graph.getNodeByRef(component_ref) as ComponentNode;
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.interfaces).to.deep.eq({
       api: {
         url: `http://${api_ref}:8080`,
@@ -1490,50 +1484,6 @@ describe('interpolation spec v1', () => {
       TOPIC3: 'test',
       TOPIC4: 'test'
     });
-    // Check the component interface node has the outputs set on its config
-    const config = await manager.loadComponentSpec('publisher');
-    const interfaces_ref = buildInterfacesRef(config);
-    const interface_node = graph.getNodeByRef(interfaces_ref) as ComponentNode;
-    expect(interface_node.config.outputs).to.deep.eq({
-      topic1: { value: "test" },
-      topic2: { value: "test" },
-      topic3: { value: "test", description: undefined, },
-      topic4: { value: "test", description: undefined, },
-    });
-  });
-
-  it('interpolating output dependency creates OutputEdge', async () => {
-    const publisher_config = `
-    name: publisher
-    outputs:
-      topic1: test
-    `
-
-    const consumer_config = `
-    name: consumer
-    dependencies:
-      publisher: latest
-    services:
-      api:
-        environment:
-          TOPIC1: \${{ dependencies.publisher.outputs.topic1 }}
-    `
-
-    mock_fs({
-      '/stack/publisher/architect.yml': publisher_config,
-      '/stack/consumer/architect.yml': consumer_config,
-    });
-
-    const manager = new LocalDependencyManager(axios.create(), 'architect', {
-      'publisher': '/stack/publisher/architect.yml',
-      'consumer': '/stack/consumer/architect.yml',
-    });
-    const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('consumer')
-    );
-
-    const output_edges = graph.edges.filter(edge => edge instanceof OutputEdge);
-    expect(output_edges).to.have.lengthOf(1);
   });
 
   it('interpolating outputs dependency with interfaces creates 2 edges', async () => {
