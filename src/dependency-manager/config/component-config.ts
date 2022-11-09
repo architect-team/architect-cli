@@ -12,14 +12,6 @@ export interface IngressConfig {
   ip_whitelist?: string[];
 }
 
-// TODO:TJ remove
-/*
-export interface ComponentNodeConfig {
-  outputs: Dictionary<OutputDefinitionConfig>,
-  interfaces: Dictionary<ComponentInterfaceConfig>
-}
-*/
-
 export interface ComponentInterfaceConfig {
   description?: string;
   host?: null | string;
@@ -68,8 +60,6 @@ export interface ComponentConfig {
   services: Dictionary<ServiceConfig>;
   tasks: Dictionary<TaskConfig>;
   dependencies: Dictionary<string>;
-
-  interfaces: Dictionary<ComponentInterfaceConfig>;
 
   artifact_image?: string;
 }

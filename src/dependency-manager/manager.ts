@@ -382,6 +382,9 @@ export default abstract class DependencyManager {
     for (const [key, value] of Object.entries(component_config.outputs)) {
       context.outputs[key] = value.value;
     }
+    const [external_host, external_port_string] = this.external_addr.split(':');
+    const external_port = Number.parseInt(external_port_string);
+    const external_protocol = this.use_ssl ? 'https' : 'http';
     for (const [service_name, service] of Object.entries(component_config.services)) {
       if (!context.services[service_name]) {
         context.services[service_name] = {
@@ -390,7 +393,7 @@ export default abstract class DependencyManager {
         };
       }
       const service_ref = buildNodeRef(component_config, 'services', service_name);
-      for (const [interface_name, value] of Object.entries(service.interfaces)) {
+      for (const [interface_name, interface_config] of Object.entries(service.interfaces)) {
         const interface_ref = `services.${service_name}.interfaces.${interface_name}`;
 
         const architect_host = service_ref;
@@ -400,70 +403,50 @@ export default abstract class DependencyManager {
           username: '',
           password: '',
           path: '',
-          ...value,
+          ...interface_config,
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
-          external_port: value.port,
-          external_host: value.host,
+          external_port: interface_config.port,
+          external_host: interface_config.host,
           // Return different value for port when a service is refing its own port value
           port: `\${{ ${interface_ref}.external_host || startsWith(_path, 'services.${service_name}.') ? ${interface_ref}.external_port : ${architect_port} }}`,
           host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : '${architect_host}' }}`,
           url: this.generateUrl(interface_ref),
         };
-      }
-    }
 
-    // Set component interfaces
-    const [external_host, external_port_string] = this.external_addr.split(':');
-    const external_port = Number.parseInt(external_port_string);
-    const external_protocol = this.use_ssl ? 'https' : 'http';
-    for (const [interface_name, interface_config] of Object.entries(component_config.interfaces)) {
-      const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
-      const matches = url_regex.exec(interface_config.url);
-      if (matches) {
-        const interface_ref = matches[1];
+        // Set ingresses
+        if (interface_config.deprecated_interface_name) {
+          // Deprecated: context.interfaces
+          context.interfaces[interface_config.deprecated_interface_name] = {
+            host: interface_config.host || `\${{ ${interface_ref}.host }}`,
+            port: interface_config.port || `\${{ ${interface_ref}.port }}`,
+            username: interface_config.username || `\${{ ${interface_ref}.username }}`,
+            password: interface_config.password || `\${{ ${interface_ref}.password }}`,
+            protocol: interface_config.protocol || `\${{ ${interface_ref}.protocol }}`,
+            url: interface_config.url || `\${{ ${interface_ref}.url }}`,
+          };
 
-        const [services_text, service_name, interfaces_text, service_interface_name] = interface_ref.split('.');
-        if (services_text !== 'services') {
-          continue;
-        }
-        if (interfaces_text !== 'interfaces') {
-          continue;
-        }
-        if (!(service_name in context.services)) {
-          continue;
-        }
-        if (!(service_interface_name in context.services[service_name].interfaces)) {
-          continue;
-        }
-        context.interfaces[interface_name] = {
-          host: interface_config.host || `\${{ ${interface_ref}.host }}`,
-          port: interface_config.port || `\${{ ${interface_ref}.port }}`,
-          username: interface_config.username || `\${{ ${interface_ref}.username }}`,
-          password: interface_config.password || `\${{ ${interface_ref}.password }}`,
-          protocol: interface_config.protocol || `\${{ ${interface_ref}.protocol }}`,
-          url: interface_config.url || `\${{ ${interface_ref}.url }}`,
-        };
+          // Deprecated: context.ingresses
+          const ingress_ref = `ingresses.${interface_config.deprecated_interface_name}`;
+          context.ingresses[interface_config.deprecated_interface_name] = {
+            dns_zone: external_host,
+            subdomain: interface_config.ingress?.subdomain || interface_config.deprecated_interface_name,
+            host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : ((${ingress_ref}.subdomain == '@' ? '' : ${ingress_ref}.subdomain + '.') + ${ingress_ref}.dns_zone) }}`,
+            port: `\${{ ${interface_ref}.external_host ? ${interface_ref}.port : ${external_port} }}`,
+            protocol: `\${{ ${interface_ref}.external_host ? ${interface_ref}.protocol : '${external_protocol}' }}`,
+            username: '',
+            password: '',
+            path: interface_config.ingress?.path,
+            url: this.generateUrl(ingress_ref),
+            consumers: [],
+          };
 
-        const ingress_ref = `ingresses.${interface_name}`;
-        context.ingresses[interface_name] = {
-          dns_zone: external_host,
-          subdomain: interface_config.ingress?.subdomain || interface_name,
-          host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : ((${ingress_ref}.subdomain == '@' ? '' : ${ingress_ref}.subdomain + '.') + ${ingress_ref}.dns_zone) }}`,
-          port: `\${{ ${interface_ref}.external_host ? ${interface_ref}.port : ${external_port} }}`,
-          protocol: `\${{ ${interface_ref}.external_host ? ${interface_ref}.protocol : '${external_protocol}' }}`,
-          username: '',
-          password: '',
-          path: interface_config.ingress?.path,
-          url: this.generateUrl(ingress_ref),
-          consumers: [],
-        };
-
-        // Deprecated: environment.ingresses
-        if (!context.environment.ingresses[component_spec.name]) {
-          context.environment.ingresses[component_spec.name] = {};
+          // Deprecated: environment.ingresses
+          if (!context.environment.ingresses[component_spec.name]) {
+            context.environment.ingresses[component_spec.name] = {};
+          }
+          context.environment.ingresses[component_spec.name][interface_config.deprecated_interface_name] = context.ingresses[interface_config.deprecated_interface_name];
         }
-        context.environment.ingresses[component_spec.name][interface_name] = context.ingresses[interface_name];
       }
     }
     return { component_spec, context };
