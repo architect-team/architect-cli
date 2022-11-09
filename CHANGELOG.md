@@ -1,3 +1,19 @@
+# [1.28.0](https://github.com/architect-team/architect-cli/compare/v1.27.0...v1.28.0) (2022-11-09)
+
+
+### Bug Fixes
+
+* **ci:** Add CI error message in prompts ([#752](https://github.com/architect-team/architect-cli/issues/752)) ([4ec5ff4](https://github.com/architect-team/architect-cli/commit/4ec5ff453fb02323b0141eb4afbbfbe028d464b4))
+* **dev:** 554 re-enable http/https validation ([#747](https://github.com/architect-team/architect-cli/issues/747)) ([975e274](https://github.com/architect-team/architect-cli/commit/975e274f0f74b5519eb5f9ef55894cd3617ffae6))
+* **login:** reset docker login on token refresh ([85fdde6](https://github.com/architect-team/architect-cli/commit/85fdde609e0e0a71f284e944715028cb6ea6cf47))
+* **tasks:** 559 fix tasks ([#748](https://github.com/architect-team/architect-cli/issues/748)) ([8c67adc](https://github.com/architect-team/architect-cli/commit/8c67adcd148dd2c8e364a38b7b90efe9c940b927))
+
+
+### Features
+
+* **deploy:** Init volumes ([#735](https://github.com/architect-team/architect-cli/issues/735)) ([711abe7](https://github.com/architect-team/architect-cli/commit/711abe77415b866175019c909df706958392f231))
+* **register:** Warn users if they are missing dependencies ([4767fe0](https://github.com/architect-team/architect-cli/commit/4767fe0d16f5533b4652f057b192076e9e7e8d30))
+
 # [1.27.0](https://github.com/architect-team/architect-cli/compare/v1.26.0...v1.27.0) (2022-10-24)
 
 
