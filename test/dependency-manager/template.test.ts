@@ -125,7 +125,7 @@ describe('template', () => {
   describe('statements', () => {
     it('nested if statements', async () => {
       const component_config = `
-    name: examples/hello-world
+    name: hello-world
     secrets:
       environment: local
 
@@ -159,13 +159,13 @@ describe('template', () => {
         '/stack/architect.yml': component_config,
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
-        'examples/hello-world': '/stack/architect.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'hello-world': '/stack/architect.yml',
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('examples/hello-world', { map_all_interfaces: true }),
+        await manager.loadComponentSpec('hello-world', { map_all_interfaces: true }),
       ]);
-      const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+      const api_ref = resourceRefToNodeRef('hello-world.services.api');
       const node = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(node.config.environment).to.deep.eq({
         LOCAL: '1',
@@ -174,7 +174,7 @@ describe('template', () => {
       });
 
       const graph2 = await manager.getGraph([
-        await manager.loadComponentSpec('examples/hello-world'),
+        await manager.loadComponentSpec('hello-world'),
       ], { '*': { environment: 'prod' } });
       const node2 = graph2.getNodeByRef(api_ref) as ServiceNode;
       expect(node2.config.environment).to.deep.eq({
@@ -186,7 +186,7 @@ describe('template', () => {
 
     it('if statements for host overrides', async () => {
       const component_config = `
-    name: examples/hello-world
+    name: hello-world
     secrets:
       environment: prod
 
@@ -211,13 +211,13 @@ describe('template', () => {
         '/stack/architect.yml': component_config,
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
-        'examples/hello-world': '/stack/architect.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'hello-world': '/stack/architect.yml',
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('examples/hello-world'),
+        await manager.loadComponentSpec('hello-world'),
       ]);
-      const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
+      const api_ref = resourceRefToNodeRef('hello-world.services.api');
       const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(api_node.config.environment).to.deep.eq({
         DB_HOST: 'db.aws.com',
@@ -227,7 +227,7 @@ describe('template', () => {
 
     it('if statements without interpolation', async () => {
       const component_config = `
-    name: examples/hello-world
+    name: hello-world
 
     interfaces:
       \${{ if architect.environment == 'local' }}:
@@ -249,11 +249,11 @@ describe('template', () => {
         '/stack/architect.yml': component_config,
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
-        'examples/hello-world': '/stack/architect.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'hello-world': '/stack/architect.yml',
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('examples/hello-world'),
+        await manager.loadComponentSpec('hello-world'),
       ], undefined, { interpolate: false });
       expect(graph.nodes).lengthOf(0);
       expect(graph.edges).lengthOf(0);

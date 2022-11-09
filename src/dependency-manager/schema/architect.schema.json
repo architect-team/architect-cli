@@ -6,8 +6,8 @@
     "name": {
       "type": "string",
       "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
-      "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).",
-      "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
+      "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+      "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
     },
     "description": {
       "type": "string",
@@ -238,9 +238,9 @@
         }
       },
       "errorMessage": {
-        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
+        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
       },
-      "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest` or `architect/cloud: latest`)",
+      "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
       "additionalProperties": false
     },
     "interfaces": {
@@ -310,8 +310,8 @@
             "name": {
               "type": "string",
               "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
-              "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).",
-              "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
+              "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+              "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
             },
             "description": {
               "type": "string",
@@ -542,9 +542,9 @@
                 }
               },
               "errorMessage": {
-                "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
+                "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
               },
-              "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest` or `architect/cloud: latest`)",
+              "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
               "additionalProperties": false
             },
             "interfaces": {
@@ -3950,8 +3950,8 @@
         "name": {
           "type": "string",
           "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
-          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).",
-          "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
+          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+          "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
         },
         "description": {
           "type": "string",
@@ -4182,9 +4182,9 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
           },
-          "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest` or `architect/cloud: latest`)",
+          "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
           "additionalProperties": false
         },
         "interfaces": {
@@ -4254,8 +4254,8 @@
                 "name": {
                   "type": "string",
                   "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
-                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).",
-                  "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+                  "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                 },
                 "description": {
                   "type": "string",
@@ -4486,9 +4486,9 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest` or `architect/cloud: latest`)",
+                  "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
                   "additionalProperties": false
                 },
                 "interfaces": {
@@ -7771,8 +7771,8 @@
         "name": {
           "type": "string",
           "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
-          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).",
-          "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
+          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+          "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
         },
         "description": {
           "type": "string",
@@ -8003,9 +8003,9 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
           },
-          "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest` or `architect/cloud: latest`)",
+          "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
           "additionalProperties": false
         },
         "interfaces": {
@@ -8072,8 +8072,8 @@
                 "name": {
                   "type": "string",
                   "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
-                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).",
-                  "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+                  "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                 },
                 "description": {
                   "type": "string",
@@ -8304,9 +8304,9 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name)."
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest` or `architect/cloud: latest`)",
+                  "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
                   "additionalProperties": false
                 },
                 "interfaces": {

@@ -8,8 +8,9 @@ const hook: Hook<'init'> = async function (_) {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     readline.Interface.prototype.close = () => { };
   }
-  if (!PromptUtils.prompts_available()) {
-    PromptUtils.disable_prompts();
+
+  if (!PromptUtils.promptsAvailable()) {
+    PromptUtils.disablePrompts();
   }
 };
 

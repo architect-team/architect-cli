@@ -44,7 +44,7 @@ export default class EnvironmentCreate extends BaseCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(EnvironmentCreate);
 
-    const answers: any = await inquirer.prompt([
+    const answers = await inquirer.prompt([
       {
         type: 'input',
         name: 'environment',

@@ -5,13 +5,12 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
 import TSON from "typescript-json";
-import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
+import { ArchitectError, buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DeepPartial } from '../../src/common/utils/types';
 import { SecretsConfig } from '../../src/dependency-manager/secrets/secrets';
 
 describe('validate spec', () => {
-
   describe('component config validation', () => {
     it('valid service ref brackets', async () => {
       const component_config = `
@@ -29,7 +28,7 @@ describe('validate spec', () => {
 
     it('invalid nested debug', async () => {
       const component_config = `
-name: test/component
+name: component
 services:
   stateless-app:
     environment:
@@ -60,37 +59,21 @@ services:
       expect(process.exitCode).eq(1);
     });
 
-    it('invalid host_path outside debug block', async () => {
-      const component_config = `
-name: test/component
-services:
-  stateless-app:
-    environment:
-      LOG_LEVEL: error
-    volumes:
-      test:
-        host_path: ./test
-      `;
-      mock_fs({ '/architect.yml': component_config });
-
-      expect(() => { buildSpecFromPath('/architect.yml'); }).to.throw(ValidationErrors);
-    });
-
     it('invalid replicas value', async () => {
       const component_config = `
-      name: test/component
+      name: component
       services:
         stateless-app:
           replicas: '1'
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/architect.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/architect.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -110,7 +93,7 @@ services:
 
     it('invalid service ref', async () => {
       const component_config = `
-      name: test/component
+      name: component
       services:
         stateless-app:
           interfaces:
@@ -119,13 +102,13 @@ services:
         frontend: \${{ services.fake.interfaces.main.url }}
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/architect.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/architect.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -152,7 +135,7 @@ services:
             TEST: 1
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
         'component': '/architect.yml',
       });
 
@@ -168,7 +151,7 @@ services:
 
     it('valid service depends_on', async () => {
       const component_config = `
-      name: test/component
+      name: component
       services:
         stateful-app:
           depends_on:
@@ -187,20 +170,20 @@ services:
 
     it('invalid task schedule', async () => {
       const component_config = `
-      name: test/component
+      name: component
       tasks:
         some-task:
           schedule: "*/5 * * * ? * * * * *"
           image: ellerbrock/alpine-bash-curl-ssl
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/architect.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/architect.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -214,7 +197,7 @@ services:
 
     it('valid task depends_on', async () => {
       const component_config = `
-      name: test/component
+      name: component
       tasks:
         some-task:
           depends_on:
@@ -237,7 +220,7 @@ services:
 
     it('invalid task depends_on', async () => {
       const component_config = `
-      name: test/component
+      name: component
       tasks:
         some-task:
           schedule: "*/5 * * * ?"
@@ -252,13 +235,13 @@ services:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/architect.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/architect.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -272,7 +255,7 @@ services:
 
     it('invalid service self reference', async () => {
       const component_config = `
-      name: test/component
+      name: component
       services:
         stateless-app:
           depends_on:
@@ -283,13 +266,13 @@ services:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/architect.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/architect.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -303,7 +286,7 @@ services:
 
     it('invalid service depends_on reference', async () => {
       const component_config = `
-      name: test/component
+      name: component
       services:
         stateless-app:
           depends_on:
@@ -314,13 +297,13 @@ services:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/architect.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/architect.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -334,7 +317,7 @@ services:
 
     it('invalid circular service reference', async () => {
       const component_config = `
-      name: test/component
+      name: component
       services:
         stateful-app:
           depends_on:
@@ -351,13 +334,13 @@ services:
       `;
       mock_fs({ '/architect.yml': component_config });
 
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/architect.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/architect.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -374,7 +357,7 @@ services:
 
     it('invalid deep circular service reference', async () => {
       const component_config = `
-      name: test/component
+      name: component
       services:
         stateful-app:
           depends_on:
@@ -395,13 +378,13 @@ services:
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
       `;
       mock_fs({ '/architect.yml': component_config });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/architect.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/architect.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -427,13 +410,13 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/component.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/component.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -445,7 +428,7 @@ services:
       expect(errors.map(e => e.path)).members([
         'name',
       ]);
-      expect(errors[0].message).includes('architect/component-name');
+      expect(errors[0].message).includes('must contain only lower alphanumeric and single hyphens or underscores in the middle;');
       expect(errors[0].component).eq('test_component');
       expect(errors[0].start?.row).eq(2);
       expect(errors[0].start?.column).eq(12);
@@ -456,7 +439,7 @@ services:
 
     it('invalid key value', async () => {
       const component_config = `
-      name: test/component
+      name: component
       secrets:
         environment: missing if
       services:
@@ -469,13 +452,13 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/component.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/component.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -497,7 +480,7 @@ services:
 
     it('invalid component secret keys', async () => {
       const component_config = `
-      name: test/component
+      name: component
       secrets:
         test:
         test2: test
@@ -510,13 +493,13 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/component.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/component.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -535,7 +518,7 @@ services:
 
     it('invalid secret ref', async () => {
       const component_config = `
-      name: test/component
+      name: component
       secrets:
         test: test2
       services:
@@ -547,13 +530,13 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/component.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/component.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -567,7 +550,7 @@ services:
         'services.api.environment.TEST',
       ]);
       expect(errors[0].message).includes('secrets.test');
-      expect(errors[0].component).eq('test/component');
+      expect(errors[0].component).eq('component');
       expect(errors[0].start?.row).eq(8);
       expect(errors[0].start?.column).eq(23);
       expect(errors[0].end?.row).eq(8);
@@ -577,17 +560,17 @@ services:
 
     it('invalid component interfaces ref', async () => {
       const component_config = `
-      name: test/component
+      name: component
       services:
         api:
           environment:
-            OTHER_ADDR: \${{ dependencies.test/other.interfaces.fake.url }}
-            EXT_OTHER_ADDR: \${{ dependencies.test/other.ingresses.fake.url }}
+            OTHER_ADDR: \${{ dependencies.other.interfaces.fake.url }}
+            EXT_OTHER_ADDR: \${{ dependencies.other.ingresses.fake.url }}
       dependencies:
-        test/other: latest
+        other: latest
       `;
       const other_component_config = `
-      name: test/other
+      name: other
       interfaces:
         not-fake: \${{ services.api.interfaces.main.url }}
       services:
@@ -600,15 +583,15 @@ services:
         '/component.yml': component_config,
         '/other-component.yml': other_component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/component.yml',
-        'test/other': '/other-component.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/component.yml',
+        'other': '/other-component.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
-          await manager.loadComponentSpec('test/other'),
+          await manager.loadComponentSpec('component'),
+          await manager.loadComponentSpec('other'),
         ]);
       } catch (e: any) {
         err = e;
@@ -626,7 +609,7 @@ services:
 
     it('invalid services interfaces ref', async () => {
       const component_config = `
-      name: test/component
+      name: component
       interfaces:
         other-api: \${{ services.other-api.interfaces.not-fake.url }}
       services:
@@ -643,13 +626,13 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/component.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/component.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -667,7 +650,7 @@ services:
 
     it('invalid services ref', async () => {
       const component_config = `
-      name: test/component
+      name: component
       interfaces:
         api: \${{ services.app.interfaces.main.url }}
         api2: \${{ service.api.interfaces.main.url }}
@@ -680,13 +663,13 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/component.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/component.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component', { interfaces: { api: 'api', api2: 'api2' } }),
+          await manager.loadComponentSpec('component', { interfaces: { api: 'api', api2: 'api2' } }),
         ]);
       } catch (e: any) {
         err = e;
@@ -705,7 +688,7 @@ services:
 
     it('deploy time validation', async () => {
       const component_config = `
-      name: test/component
+      name: component
       secrets:
         app_liveness_path: /health
       services:
@@ -721,13 +704,13 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/component.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/component.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -736,15 +719,14 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
-        "services.api.liveness_probe.path",
+        'services.api.liveness_probe.path',
       ]);
       expect(process.exitCode).eq(1);
     });
 
-
     it('valid labels', async () => {
       const component_config = `
-      name: test/component
+      name: component
       secrets:
         environment: dev
       services:
@@ -756,13 +738,13 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/component.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/component.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -773,7 +755,7 @@ services:
 
     it('invalid labels', async () => {
       const component_config = `
-      name: test/component
+      name: component
       secrets:
         environment: dev$%^%^%$T
       services:
@@ -786,14 +768,14 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/component.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/component.yml',
       });
 
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -808,7 +790,7 @@ services:
 
     it('invalid labels length', async () => {
       const component_config = `
-      name: test/component
+      name: component
       secrets:
         environment: dev$%^%^%$&T
       services:
@@ -819,13 +801,13 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/component.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/component.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -841,18 +823,18 @@ services:
   describe('component builder validation', () => {
     it('file reference does not misalign validation error line numbers', async () => {
       const component_config = `
-      name: test/component
+      name: component
       services:
         api:
           environment:
             TEST_FILE_TEXT: file:./test-file.txt
-            OTHER_ADDR: \${{ dependencies.test/other.interfaces.fake.url }}
+            OTHER_ADDR: \${{ dependencies.other.interfaces.fake.url }}
       dependencies:
-        test/other: latest
+        other: latest
       `;
 
       const other_component_config = `
-      name: test/other
+      name: other
       services:
         api:
           image: test
@@ -863,15 +845,15 @@ services:
         '/other-component.yml': other_component_config,
       });
 
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/component.yml',
-        'test/other': '/other-component.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/component.yml',
+        'other': '/other-component.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
-          await manager.loadComponentSpec('test/other'),
+          await manager.loadComponentSpec('component'),
+          await manager.loadComponentSpec('other'),
         ]);
       } catch (e: any) {
         err = e;
@@ -888,7 +870,7 @@ services:
       });
       expect(errors[0].end).to.deep.equal({
         row: 7,
-        column: 71,
+        column: 66,
       });
       expect(process.exitCode).eq(1);
     });
@@ -897,7 +879,7 @@ services:
   describe('required secret validation', () => {
     it('required component secrets', async () => {
       const component_config = `
-      name: test/component
+      name: component
       secrets:
         required:
         required-explicit:
@@ -920,13 +902,13 @@ services:
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/component.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'component': '/component.yml',
       });
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -940,17 +922,17 @@ services:
         'secrets.required-explicit',
       ]);
       expect([...new Set(errors.map(e => e.component))]).members([
-        'test/component',
+        'component',
       ]);
       expect(process.exitCode).eq(1);
     });
 
     it('required dependency secret', async () => {
       const component_config = `
-      name: examples/hello-world
+      name: hello-world
 
       dependencies:
-        examples/hello-world2: latest
+        hello-world2: latest
 
       services:
         api:
@@ -964,7 +946,7 @@ services:
       `;
 
       const component_config2 = `
-      name: examples/hello-world2
+      name: hello-world2
 
       secrets:
         aws_secret:
@@ -987,15 +969,16 @@ services:
       });
 
       nock('http://localhost').get('/accounts/examples/components/hello-world2/versions/latest')
-        .reply(200, { tag: 'latest', config: yaml.load(component_config2), service: { url: 'examples/hello-world2:latest' } });
+        .reply(200, { tag: 'latest', config: yaml.load(component_config2), service: { url: 'hello-world2:latest' } });
 
-      const manager = new LocalDependencyManager(axios.create(), {
-        'examples/hello-world': '/architect.yml',
+      const manager = new LocalDependencyManager(axios.create(), 'examples', {
+        'hello-world': '/architect.yml',
       });
+
       let err;
       try {
         await manager.getGraph([
-          ...await manager.loadComponentSpecs('examples/hello-world'),
+          ...await manager.loadComponentSpecs('hello-world'),
         ]);
       } catch (e: any) {
         err = e;
@@ -1007,7 +990,7 @@ services:
         'secrets.aws_secret',
       ]);
       expect([...new Set(errors.map(e => e.component))]).members([
-        'examples/hello-world2',
+        'hello-world2',
       ]);
       expect(process.exitCode).eq(1);
     });
@@ -1015,11 +998,11 @@ services:
 
   it('valid component keys in values files pass validation', () => {
     const values_dict = {
-      "*": {
-        "POSTGRES_HOST": "172.17.0.1",
+      '*': {
+        'POSTGRES_HOST': '172.17.0.1',
       },
-      "architect/cloud": {
-        "TEST": "string",
+      'architect/cloud': {
+        'TEST': 'string',
       },
 
     };
@@ -1034,8 +1017,8 @@ services:
 
   it('invalid component keys in values files fail validation', () => {
     const values_dict = {
-      "architect_cloud:latest": {
-        "TEST": "string",
+      'architect_cloud:latest': {
+        'TEST': 'string',
       },
     };
 
@@ -1054,8 +1037,8 @@ services:
 
   it('invalid value keys in values files fail validation', () => {
     const values_dict = {
-      "architect/cloud": {
-        "TE@ST": "string",
+      'architect/cloud': {
+        'TE@ST': 'string',
       },
     };
 
@@ -1074,8 +1057,8 @@ services:
 
   it('component values are defined in an object', () => {
     const values_dict = {
-      "architect/cloud": [],
-      "architect/cloud@v2": 'string',
+      'architect/cloud': [],
+      'architect/cloud@v2': 'string',
     };
 
     let err;
@@ -1094,13 +1077,13 @@ services:
 
   it('component values are strings only', () => {
     const values_dict = {
-      "architect/cloud": {
+      'architect/cloud': {
         'test': 'test value',
       },
-      "architect/cloud@v2": {
+      'architect/cloud@v2': {
         'ANOTHER_test': 'another value',
       },
-      "architect/*": {
+      'architect/*': {
         'ANOTHER_test': 'another value',
       },
     };
@@ -1116,7 +1099,7 @@ services:
 
   it('AtLeastOne and scaling validation', async () => {
     const component_config = `
-      name: test/component
+      name: component
       services:
         api:
           interfaces:
@@ -1129,13 +1112,13 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1151,7 +1134,7 @@ services:
 
   it('valid interface number', async () => {
     const component_config = `
-      name: test/component
+      name: component
       services:
         app:
           interfaces:
@@ -1160,13 +1143,13 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1177,7 +1160,7 @@ services:
 
   it('invalid interface string', async () => {
     const component_config = `
-      name: test/component
+      name: component
       services:
         app:
           interfaces:
@@ -1186,14 +1169,14 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
 
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1210,7 +1193,7 @@ services:
 
   it('valid interface interpolation reference', async () => {
     const component_config = `
-      name: test/component
+      name: component
       secrets:
         app_port: 3000
       services:
@@ -1221,14 +1204,14 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
 
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1239,7 +1222,7 @@ services:
 
   it('invalid interface string', async () => {
     const component_config = `
-      name: test/component
+      name: component
       services:
         app:
           interfaces:
@@ -1248,14 +1231,14 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
 
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1272,7 +1255,7 @@ services:
 
   it('valid component interface string', async () => {
     const component_config = `
-      name: test/component
+      name: component
       interfaces:
         main: \${{ services.app.interfaces.main.url }}
       services:
@@ -1283,14 +1266,14 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
 
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1298,30 +1281,50 @@ services:
     expect(err).to.be.undefined;
   });
 
-  /*
-  it('invalid tcp component protocol', async () => {
+  it('invalid tcp component protocol through gateway', async () => {
     const component_config = `
-      name: test/component
-      interfaces:
-        main: \${{ services.app.interfaces.main.url }}
+      name: component
+      dependencies:
+        dependency: latest
       services:
         app:
           interfaces:
             main:
-              port: 3000
+              port: 8080
               protocol: tcp
-      `;
+          environment:
+            API_URL: \${{ dependencies.dependency.interfaces.api.url }}
+      interfaces:
+        app:
+          url: \${{ services.app.interfaces.main.url }}
+          ingress:
+            subdomain: app
+    `;
+
+    const dependency_config = `
+      name: dependency
+      services:
+        api:
+          interfaces:
+            api: 443
+      interfaces:
+        api: \${{ services.api.interfaces.api.url }}
+    `;
+
     mock_fs({
       '/component.yml': component_config,
+      '/dependency.yml': dependency_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
+      'dependency': '/dependency.yml',
     });
 
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component:latest'),
+        await manager.loadComponentSpec('dependency:latest'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1332,42 +1335,62 @@ services:
     expect(process.exitCode).eq(1);
   });
 
-  it('valid component with protocol of undefined', async () => {
+  it('valid dependency tcp protocol that is not exposed through gateway', async () => {
     const component_config = `
-      name: test/component
-      interfaces:
-        main: \${{ services.app.interfaces.mysql.url }}
+      name: component
+      dependencies:
+        dependency: latest
       services:
         app:
-          image: mysql:5.6.35
-          command: mysqld
           interfaces:
-            mysql:
-              port: 3306
-              protocol: https
-      `;
+            main:
+              port: 8080
+          environment:
+            API_URL: \${{ dependencies.dependency.interfaces.api.url }}
+      interfaces:
+        app:
+          url: \${{ services.app.interfaces.main.url }}
+          ingress:
+            subdomain: app
+    `;
+
+    const dependency_config = `
+      name: dependency
+      services:
+        api:
+          interfaces:
+            api:
+              port: 443
+              protocol: tcp
+      interfaces:
+        api: \${{ services.api.interfaces.api.url }}
+    `;
+
     mock_fs({
       '/component.yml': component_config,
+      '/dependency.yml': dependency_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
+      'dependency': '/dependency.yml',
     });
 
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
-      ], {}, { interpolate: false });
+        await manager.loadComponentSpec('component:latest'),
+        await manager.loadComponentSpec('dependency:latest'),
+      ]);
     } catch (e: any) {
       err = e;
     }
+
     expect(err).to.be.undefined;
   });
-  */
 
   it('invalid component interface number', async () => {
     const component_config = `
-      name: test/component
+      name: component
       interfaces:
         main: 3000
       services:
@@ -1378,14 +1401,14 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
 
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1401,7 +1424,7 @@ services:
 
   it('invalid component interface number', async () => {
     const component_config = `
-      name: test/component
+      name: component
       interfaces: main
       services:
         app:
@@ -1411,14 +1434,14 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
 
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1433,7 +1456,7 @@ services:
 
   it('valid command', async () => {
     const component_config = `
-      name: test/component
+      name: component
       secrets:
         SPRING_PROFILE: test
       services:
@@ -1443,12 +1466,12 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
 
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('test/component'),
+      await manager.loadComponentSpec('component'),
     ]);
     const service_node = graph.nodes.find((node) => node instanceof ServiceNode) as ServiceNode;
     expect(service_node.config.command).to.deep.equal(['catalina.sh', 'run', '-Pprofile=test', '--test-string', 'two words', '--test-env', '$API_KEY']);
@@ -1456,7 +1479,7 @@ services:
 
   it('liveness_probe rejects command with path', async () => {
     const component_config = `
-      name: test/component
+      name: component
       services:
         api:
           interfaces:
@@ -1470,13 +1493,13 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1492,7 +1515,7 @@ services:
 
   it('liveness_probe rejects command with port', async () => {
     const component_config = `
-      name: test/component
+      name: component
       services:
         api:
           interfaces:
@@ -1506,13 +1529,13 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1528,7 +1551,7 @@ services:
 
   it('liveness_probe accepts command', async () => {
     const component_config = `
-      name: test/component
+      name: component
       services:
         api:
           interfaces:
@@ -1541,13 +1564,13 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1558,7 +1581,7 @@ services:
 
   it('liveness_probe accepts port and path', async () => {
     const component_config = `
-      name: test/component
+      name: component
       services:
         api:
           interfaces:
@@ -1570,13 +1593,13 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1587,7 +1610,7 @@ services:
 
   it('liveness_probe rejects port without path', async () => {
     const component_config = `
-      name: test/component
+      name: component
       services:
         api:
           interfaces:
@@ -1598,13 +1621,13 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1624,7 +1647,7 @@ services:
 
   it('liveness_probe rejects path without port', async () => {
     const component_config = `
-      name: test/component
+      name: component
       services:
         api:
           interfaces:
@@ -1635,13 +1658,13 @@ services:
     mock_fs({
       '/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/component.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
     });
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component'),
+        await manager.loadComponentSpec('component'),
       ]);
     } catch (e: any) {
       err = e;
@@ -1661,7 +1684,7 @@ services:
 
   it('throw error for trying to expose incorrect interface', async () => {
     const yml = `
-    name: test/component
+    name: component
     services:
       app:
         interfaces:
@@ -1674,14 +1697,14 @@ services:
       '/stack/architect.yml': yml,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
-      'test/component': '/stack/architect.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/stack/architect.yml',
     });
 
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component', { interfaces: { 'cloud': 'appppp' } }),
+        await manager.loadComponentSpec('component', { interfaces: { 'cloud': 'appppp' } }),
       ]);
     } catch (e: any) {
       err = e;
@@ -1700,7 +1723,7 @@ services:
   describe('validate if statements', () => {
     it('cannot use if statement at top level of component', async () => {
       const yml = `
-      name: test/component
+      name: component
       \${{ if true }}:
         secrets:
           test: test
@@ -1724,7 +1747,7 @@ services:
 
     it('cannot use if statement in secrets block', async () => {
       const yml = `
-      name: test/component
+      name: component
       secrets:
         \${{ if true }}:
           test: test
@@ -1748,7 +1771,7 @@ services:
 
     it('cannot use if statement in secret value block', async () => {
       const yml = `
-      name: test/component
+      name: component
       secrets:
         test:
           \${{ if true }}:
@@ -1773,10 +1796,10 @@ services:
 
     it('cannot use if statement in dependencies block', async () => {
       const yml = `
-      name: test/component
+      name: component
       dependencies:
         \${{ if true }}:
-          test/dependency: latest
+          dependency: latest
       `;
 
       let err;
@@ -1797,7 +1820,7 @@ services:
 
     it('can use if statement in service block', async () => {
       const yml = `
-      name: test/component
+      name: component
       services:
         app:
           environment:
@@ -1818,11 +1841,11 @@ services:
           template: {
             spec: {
               containers: [{
-                invalid_key: 'wrong'
-              }]
-            }
-          }
-        }
+                invalid_key: 'wrong',
+              }],
+            },
+          },
+        },
       };
 
       const res = TSON.validateEquals<DeepPartial<V1Deployment>>(deployment);
@@ -1830,7 +1853,7 @@ services:
       expect(res.errors.map(error => error.path)).to.have.members([
         '$input.metadata',
         '$input.metadata2',
-        '$input.spec.template.spec.containers[0].invalid_key'
+        '$input.spec.template.spec.containers[0].invalid_key',
       ]);
 
       expect(res.success).to.be.false;
@@ -1838,7 +1861,7 @@ services:
 
     it('invalid deploy overrides for kubernetes', async () => {
       const yml = `
-      name: test/component
+      name: component
       services:
         app:
           deploy:
@@ -1853,12 +1876,14 @@ services:
                         iam.gke.io/gke-metadata-server-enabled: "true"
       `;
 
-      expect(() => { buildSpecFromYml(yml); }).to.throw(ValidationErrors);
+      expect(() => {
+ buildSpecFromYml(yml);
+}).to.throw(ValidationErrors);
     });
 
     it('valid deploy overrides for kubernetes', async () => {
       const yml = `
-      name: test/component
+      name: component
       services:
         app:
           deploy:

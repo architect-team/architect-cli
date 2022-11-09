@@ -27,7 +27,7 @@ export default class ComponentValidate extends BaseCommand {
   static args = [{
     sensitive: false,
     name: 'configs_or_components',
-    description: 'Path to an architect.yml file or component `account/component:latest`. Multiple components are accepted.',
+    description: 'Path to an architect.yml file or component `component:latest`. Multiple components are accepted.',
   }];
 
   // overrides the oclif default parse to allow for configs_or_components to be a list of components

@@ -74,7 +74,7 @@ function parseCurry<S extends string, P extends ParsedSlug>() {
 }
 
 export class ComponentSlugUtils extends SlugUtils {
-  public static Description = `${Slugs.ArchitectSlugDescription}; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).`;
+  public static Description = Slugs.ArchitectSlugDescription;
 
   static RegexName = `(?:(?<component_account_name>${Slugs.ArchitectSlugRegexBase})${Slugs.NAMESPACE_DELIMITER})?(?<component_name>${Slugs.ArchitectSlugRegexBase})`;
   static RegexInstance = `(?:${Slugs.INSTANCE_DELIMITER}(?<instance_name>${Slugs.ComponentTagRegexBase}))?`;

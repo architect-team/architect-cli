@@ -76,14 +76,14 @@ export abstract class InitCommand extends BaseCommand {
     const from_path = await this.getComposeFromPath(flags);
     const docker_compose = DockerComposeUtils.loadDockerCompose(from_path);
 
-    const answers: any = await inquirer.prompt([
+    const answers = await inquirer.prompt([
       {
         type: 'input',
         name: 'name',
         message: 'What should the name of the component be?',
         when: !flags.name,
         filter: value => value.toLowerCase(),
-        validate: (value: any) => {
+        validate: (value) => {
           if ((new RegExp('^[a-z][a-z-]+[a-z]$').test(value))) {
             return true;
           }
@@ -122,12 +122,12 @@ export abstract class InitCommand extends BaseCommand {
           throw new Error(`The Docker Compose file ${from_path} couldn't be found.`);
         }
       } else {
-        const answers: any = await inquirer.prompt([
+        const answers = await inquirer.prompt([
           {
             type: 'input',
             name: 'from_compose',
             message: 'What is the filename of the Docker Compose file you would like to convert?',
-            validate: (value: any) => {
+            validate: (value) => {
               return fs.existsSync(value) && fs.statSync(value).isFile() ? true : `The Docker Compose file ${value} couldn't be found.`;
             },
           },

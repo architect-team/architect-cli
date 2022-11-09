@@ -54,11 +54,12 @@ export abstract class DeployCommand extends BaseCommand {
 
     if (!flags['auto-approve']) {
       this.log(`Pipeline ready for review: ${this.app.config.app_host}/${pipeline.environment.account.name}/environments/${pipeline.environment.name}/pipelines/${pipeline.id}`);
-      const confirmation = await inquirer.prompt({
+      const confirmation = await inquirer.prompt([{
         type: 'confirm',
         name: 'deploy',
         message: 'Would you like to apply?',
-      });
+        ciMessage: '--auto-approve flag is required in CI pipelines',
+      }]);
       if (!confirmation.deploy) {
         this.warn(`Canceled pipeline`);
         return false;
@@ -78,7 +79,7 @@ export default class Deploy extends DeployCommand {
   static description = 'Create a deploy job on Architect Cloud';
 
   static examples = [
-    'architect deploy myaccount/mycomponent:latest',
+    'architect deploy mycomponent:latest',
     'architect deploy ./myfolder/architect.yml --secret-file=./mysecrets.yml --environment=myenvironment --account=myaccount --auto-approve',
   ];
 
@@ -199,7 +200,7 @@ export default class Deploy extends DeployCommand {
   static args = [{
     sensitive: false,
     name: 'configs_or_components',
-    description: 'Path to an architect.yml file or component `account/component:latest`. Multiple components are accepted.',
+    description: 'Path to an architect.yml file or component `component:latest`. Multiple components are accepted.',
   }];
 
   // overrides the oclif default parse to allow for configs_or_components to be a list of components

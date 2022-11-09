@@ -1,4 +1,5 @@
 import { CliUx, Flags, Interfaces } from '@oclif/core';
+import archiver from 'archiver';
 import axios from 'axios';
 import chalk from 'chalk';
 import { classToClass, classToPlain } from 'class-transformer';
@@ -8,7 +9,8 @@ import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, TaskNode, validateInterpolation } from '../';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, TaskNode, validateInterpolation, VolumeSpec } from '../';
+import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
@@ -17,6 +19,9 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DockerBuildXUtils from '../common/docker/buildx.utils';
 import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
+import OrasPlugin from '../common/plugins/oras-plugin';
+import PluginManager from '../common/plugins/plugin-manager';
+import { transformVolumeSpec } from '../dependency-manager/spec/transform/common-transform';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
 tmp.setGracefulCleanup();
@@ -109,6 +114,38 @@ export default class ComponentRegister extends BaseCommand {
     }
   }
 
+  // eslint-disable-next-line max-params
+  private async uploadVolume(component_path: string, file_name: string, tag: string, volume: VolumeSpec, account: Account): Promise<VolumeSpec> {
+    const oras_plugin = await PluginManager.getPlugin<OrasPlugin>(this.app.config.getPluginDirectory(), OrasPlugin);
+
+    if (!volume.host_path) {
+      return classToClass(volume);
+    }
+
+    const tmp_dir = tmp.dirSync();
+    const base_folder = path.join(tmp_dir.name, `/${account.name}`);
+    fs.mkdirpSync(base_folder);
+    const registry_url = new URL(`/${account.name}/${file_name}:${tag}`, 'http://' + this.app.config.registry_host);
+
+    const updated_volume = classToClass(volume);
+    const component_folder = fs.lstatSync(component_path).isFile() ? path.dirname(component_path) : component_path;
+    const host_path = path.resolve(component_folder, untildify(updated_volume.host_path!));
+    updated_volume.host_path = registry_url.href.replace('http://', '');
+
+    const output_file_location = path.join(base_folder, `${file_name}.tar`);
+
+    const output = fs.createWriteStream(output_file_location);
+    const archive = archiver('tar', {
+      zlib: { level: 9 }, // Sets the compression level.
+    });
+    archive.directory(host_path, false).pipe(output);
+
+    await archive.finalize();
+    await oras_plugin.push(updated_volume.host_path, `${file_name}.tar`, base_folder);
+
+    return updated_volume;
+  }
+
   private async registerComponent(config_path: string, tag: string) {
     const { flags } = await this.parse(ComponentRegister);
     console.time('Time');
@@ -129,6 +166,7 @@ export default class ComponentRegister extends BaseCommand {
       if (!is_valid_component_account) {
         console.log(chalk.yellow(`The account name '${component_account_name}' was found as part of the component name in your architect.yml file. Either that account does not exist or you do not have permission to access it. You can select from a valid list of your accounts below.\n`));
       }
+      console.log(chalk.yellow('Including account name as part of the component name is being deprecated. Use the `-a` flag instead to specify an account.'));
       component_spec.name = component_name;
     }
     const account_name = is_valid_component_account ? component_account_name : flags.account;
@@ -138,9 +176,8 @@ export default class ComponentRegister extends BaseCommand {
       await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);
     }
 
-    const dependency_manager = new LocalDependencyManager(this.app.api);
+    const dependency_manager = new LocalDependencyManager(this.app.api, selected_account.name);
     dependency_manager.environment = 'production';
-    dependency_manager.account = selected_account.name;
 
     const graph = await dependency_manager.getGraph([classToClass(component_spec)], undefined, { interpolate: false, validate: false });
     // Tmp fix to register host overrides
@@ -268,6 +305,17 @@ export default class ComponentRegister extends BaseCommand {
     }
 
     const new_spec = classToClass(component_spec);
+
+    for (const [service_name, service] of Object.entries(new_spec.services || {})) {
+      if (IF_EXPRESSION_REGEX.test(service_name)) {
+        continue;
+      }
+      for (const [volume_name, volume] of Object.entries(service.volumes || {})) {
+        const volume_config = transformVolumeSpec(volume_name, volume);
+        (service?.volumes as Dictionary<VolumeSpec>)[volume_name] = await this.uploadVolume(config_path, `${component_name}.services.${service_name}.volumes.${volume_name}`, tag, volume_config, selected_account);
+      }
+    }
+
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
       if (IF_EXPRESSION_REGEX.test(service_name)) {
         continue;
@@ -346,6 +394,10 @@ export default class ComponentRegister extends BaseCommand {
     CliUx.ux.action.stop();
     this.log(chalk.green(`Successfully registered component`));
 
+    if (new_spec.dependencies) {
+      this.generateDependenciesWarnings(new_spec.dependencies, selected_account.name);
+    }
+
     console.timeEnd('Time');
   }
 
@@ -371,5 +423,44 @@ export default class ComponentRegister extends BaseCommand {
 
   public static getTagFromFlags(flags: any): string {
     return flags.environment ? `${ENV_TAG_PREFIX}${flags.environment}` : flags.tag;
+  }
+
+  private async generateDependenciesWarnings(component_dependencies: Dictionary<string>, account_name: string) {
+    const dependency_arr: string[] = [];
+    for (const [component_name, tag] of Object.entries(component_dependencies)) {
+      dependency_arr.push(`${component_name}:${tag}`);
+    }
+    const dependencies: Dictionary<{ component: boolean, component_and_version: boolean }> = (await this.app.api.get(`accounts/${account_name}/components-tags`, { params: { components: dependency_arr } })).data;
+
+    const component_warnings: string[] = [];
+    const tag_warnings: string[] = [];
+    for (const [component_name, valid] of Object.entries(dependencies)) {
+      if (!valid.component && !valid.component_and_version) {
+        component_warnings.push(component_name);
+      } else if (valid.component && !valid.component_and_version) {
+        tag_warnings.push(component_name);
+      }
+    }
+
+    if (component_warnings || tag_warnings) {
+      this.log();
+      this.log(chalk.yellow(`Some required dependencies for this component have not yet been registered to your account. Please make sure to register the following before you try to deploy.`));
+    }
+
+    if (component_warnings.length > 0) {
+      this.log();
+      this.log(chalk.yellow(`The following components do not exist.`));
+      for (const component_name of component_warnings) {
+        this.log(chalk.yellow(`  - ${component_name}`));
+      }
+    }
+
+    if (tag_warnings.length > 0) {
+      this.log();
+      this.log(chalk.yellow(`The following components exist, but do not have the specified tag.`));
+      for (const component_name of tag_warnings) {
+        this.log(chalk.yellow(`  - ${component_name}`));
+      }
+    }
   }
 }

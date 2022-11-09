@@ -13,7 +13,6 @@ import { CreateClusterInput } from '../../architect/cluster/cluster.utils';
 import PipelineUtils from '../../architect/pipeline/pipeline.utils';
 import BaseCommand from '../../base-command';
 import { AgentClusterUtils } from '../../common/utils/agent-cluster.utils';
-import { KubernetesClusterUtils } from '../../common/utils/kubernetes-cluster.utils';
 import { booleanString } from '../../common/utils/oclif';
 
 export default class ClusterCreate extends BaseCommand {
@@ -46,7 +45,8 @@ export default class ClusterCreate extends BaseCommand {
     // TODO https://gitlab.com/architect-io/architect-cli/-/issues/514
     type: Flags.string({
       char: 't',
-      options: ['KUBERNETES', 'kubernetes'],
+      deprecated: true,
+      options: ['AGENT', 'agent'],
       sensitive: false,
     }),
     host: Flags.string({
@@ -106,7 +106,7 @@ export default class ClusterCreate extends BaseCommand {
   private async createCluster() {
     const { args, flags } = await this.parse(ClusterCreate);
 
-    const answers: any = await inquirer.prompt([
+    const answers = await inquirer.prompt([
       {
         type: 'input',
         name: 'cluster',
@@ -117,6 +117,7 @@ export default class ClusterCreate extends BaseCommand {
           if (Slugs.ArchitectSlugValidator.test(value)) return true;
           return `cluster ${Slugs.ArchitectSlugDescription}`;
         },
+        ciMessage: 'Cluster name is required in CI pipelines ex. architect cluster:create <name> --auto-approve',
       },
     ]);
 
@@ -137,7 +138,7 @@ export default class ClusterCreate extends BaseCommand {
     try {
       const cluster_dto = {
         name: cluster_name,
-        ...await this.createArchitectCluster(flags, kube_contexts.current_context),
+        ...await AgentClusterUtils.configureAgentCluster(flags, kube_contexts.current_context.name),
         flags: flags_map,
       };
 
@@ -146,52 +147,14 @@ export default class ClusterCreate extends BaseCommand {
       CliUx.ux.action.stop();
       this.log(`Cluster registered: ${this.app.config.app_host}/${account.name}/clusters/new?cluster_id=${created_cluster.id}`);
 
-      if (flags.type?.toLowerCase() === 'agent') {
-        CliUx.ux.action.start(chalk.blue('Installing the agent'));
-        await AgentClusterUtils.installAgent(flags, created_cluster.token.access_token, AgentClusterUtils.getServerAgentHost(this.app.config.agent_server_host), this.app.config);
-        await AgentClusterUtils.waitForAgent(flags);
-        CliUx.ux.action.stop();
-        await this.installAppliations(flags, created_cluster, cluster_name, account.name);
-      } else {
-        await this.installAppliations(flags, created_cluster, cluster_name, account.name);
-      }
+      CliUx.ux.action.start(chalk.blue('Installing the agent'));
+      await AgentClusterUtils.installAgent(flags, created_cluster.token.access_token, AgentClusterUtils.getServerAgentHost(this.app.config.agent_server_host), this.app.config);
+      await AgentClusterUtils.waitForAgent(flags);
+      CliUx.ux.action.stop();
+      await this.installAppliations(flags, created_cluster, cluster_name, account.name);
       return created_cluster;
     } finally {
       await this.setContext(flags, kube_contexts.original_context);
-    }
-  }
-
-  async createArchitectCluster(flags: any, context: any): Promise<CreateClusterInput> {
-    const agent_display_name = 'agent (BETA)';
-    const cluster_type_answers: any = await inquirer.prompt([
-      {
-        when: !flags.type,
-        type: 'list',
-        name: 'cluster_type',
-        message: 'What type of cluster would you like to register?',
-        choices: [
-          'kubernetes',
-          agent_display_name,
-          // ...(this.app.config.environment !== ENVIRONMENT.PRODUCTION ? [agent_display_name] : []),
-        ],
-      },
-    ]);
-    if (!flags.type && cluster_type_answers.cluster_type === agent_display_name) {
-      cluster_type_answers.cluster_type = 'agent';
-    }
-
-    const selected_type = (flags.type || cluster_type_answers.cluster_type).toLowerCase();
-
-    flags.type = selected_type;
-    switch (selected_type) {
-      case 'agent':
-        return AgentClusterUtils.configureAgentCluster(flags, context.name);
-      case 'kubernetes':
-        return KubernetesClusterUtils.configureKubernetesCluster(flags, this.app.config.environment, context);
-      case 'architect':
-        throw new Error(`You cannot create an Architect cluster from the CLI. One Architect cluster is registered by default per account.`);
-      default:
-        throw new Error(`ClusterType=${selected_type} is not currently supported`);
     }
   }
 
@@ -255,6 +218,7 @@ export default class ClusterCreate extends BaseCommand {
             // Set the context value to the matching object from the kubeconfig
             return kubeconfig.contexts.find((ctx: any) => ctx.name === value);
           },
+          ciMessage: '--kubeconfig or --auto-approve flag is required in CI pipelines',
         },
       ]);
       kube_context = new_cluster_answers.context;

@@ -373,7 +373,7 @@ export default class Dev extends BaseCommand {
   static args = [{
     sensitive: false,
     name: 'configs_or_components',
-    description: 'Path to an architect.yml file or component `account/component:latest`. Multiple components are accepted.',
+    description: 'Path to an architect.yml file or component `component:latest`. Multiple components are accepted.',
   }];
 
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
@@ -521,12 +521,12 @@ export default class Dev extends BaseCommand {
 
   private async getAvailablePort(port: number): Promise<number> {
     while (!(await PortUtil.isPortAvailable(port))) {
-      const answers: any = await inquirer.prompt([
+      const answers = await inquirer.prompt([
         {
           type: 'input',
           name: 'port',
           message: `Trying to listen on port ${port}, but something is already using it. What port would you like us to run the API gateway on (you can use the '--port' flag to skip this message in the future)?`,
-          validate: (value: any) => {
+          validate: (value) => {
             if (new RegExp('^[1-9]+\\d*$').test(value)) {
               return true;
             }
@@ -644,23 +644,24 @@ $ architect dev -e new_env_name_here .`));
       component_versions.push(component_version);
     }
 
+    let account_name;
+    if (flags.account) {
+      const account = await AccountUtils.getAccount(this.app, flags.account);
+      account_name = account.name;
+    } else {
+      const config_account = this.app.config.defaultAccount();
+      if (config_account) {
+        account_name = config_account;
+      }
+    }
     const dependency_manager = new LocalDependencyManager(
       this.app.api,
+      account_name,
       linked_components,
     );
 
     dependency_manager.use_ssl = flags.ssl;
     dependency_manager.external_addr = (flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address) + `:${flags.port}`;
-
-    if (flags.account) {
-      const account = await AccountUtils.getAccount(this.app, flags.account);
-      dependency_manager.account = account.name;
-    } else {
-      const config_account = this.app.config.defaultAccount();
-      if (config_account) {
-        dependency_manager.account = config_account;
-      }
-    }
 
     if (flags.environment) {
       dependency_manager.environment = flags.environment;
