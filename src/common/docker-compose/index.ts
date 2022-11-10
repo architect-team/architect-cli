@@ -705,7 +705,7 @@ export class DockerComposeUtils {
             if (container_docker_inspect && container_docker_inspect.State.Health.Log?.length > 0) {
               const log_size = container_docker_inspect.State.Health.Log.length;
               console.log(chalk.red(`\nThe liveness probe has detected an error starting the service '${full_service_name}'.`));
-              console.log(chalk.red(`The service may try to restart and/or never reach a running state`));
+              console.log(chalk.red(`The service may try to restart and/or never reach a stable state`));
               console.log(chalk.red(`ERROR: ${container_docker_inspect.State.Health.Log[log_size - 1].Output}\n`));
             }
           }
