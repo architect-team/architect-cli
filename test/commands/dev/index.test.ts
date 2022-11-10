@@ -1,11 +1,12 @@
 import { expect, test } from '@oclif/test';
+import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
 import sinon from 'sinon';
 import { buildSpecFromYml, ComponentConfig, resourceRefToNodeRef } from '../../../src';
 import AppService from '../../../src/app-config/service';
 import SecretUtils from '../../../src/architect/secret/secret.utils';
-import Dev from '../../../src/commands/dev';
+import Dev, { UpProcessManager } from '../../../src/commands/dev';
 import { DockerComposeUtils } from '../../../src/common/docker-compose';
 import DockerComposeTemplate from '../../../src/common/docker-compose/template';
 import DeployUtils from '../../../src/common/utils/deploy.utils';
@@ -641,7 +642,29 @@ describe('local dev environment', function () {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
       expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
+    });
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return getHelloComponentConfig();
     })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'buildImage', sinon.stub().returns(['project_name', 'compose_file']))
+    .stub(Dev.prototype, 'setupTraefikServiceMap', sinon.stub().returns({}))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stub(UpProcessManager.prototype, 'run', sinon.stub().returns(undefined))
+    .stub(fs, 'removeSync', sinon.stub().returns(null))
+    .stub(process, 'exit', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml', '-d', '--ssl=false'])
+    .it(`Run a component locally in detached mode and check that the compose file doesn't get deleted`, ctx => {
+      expect(ctx.stdout).to.contain('Starting containers...');
+
+      const remove_sync = fs.removeSync as sinon.SinonStub;
+      expect(remove_sync.calledOnce).false;
+    });
 
   test
     .timeout(20000)
