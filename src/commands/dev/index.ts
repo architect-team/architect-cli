@@ -249,7 +249,7 @@ export default class Dev extends BaseCommand {
 
   static examples = [
     'architect dev ./mycomponent/architect.yml',
-    'architect dev ./mycomponent/architect.yml -a myaccount --secrets-from=myenvironment',
+    'architect dev ./mycomponent/architect.yml -a myaccount --secrets-env=myenvironment',
     'architect dev --port=81 --browser=false --debug=true --secret-file=./mycomponent/mysecrets.yml ./mycomponent/architect.yml',
   ];
 
@@ -281,7 +281,7 @@ export default class Dev extends BaseCommand {
       default: [],
       sensitive: false,
     }),
-    'secrets-from': Flags.string({
+    'secrets-env': Flags.string({
       description: 'Environment to load secrets from',
     }),
     'secret-file': Flags.string({
@@ -649,9 +649,9 @@ $ architect dev -e new_env_name_here .`));
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
 
     let env_secrets: SecretsDict = {};
-    if (flags['secrets-from']) {
+    if (flags['secrets-env']) {
       const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: false });
-      env_secrets = await this.getEnvironmentSecrets(account, flags['secrets-from']);
+      env_secrets = await this.getEnvironmentSecrets(account, flags['secrets-env']);
       flags.account = account.name;
     }
 

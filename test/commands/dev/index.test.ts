@@ -994,7 +994,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secrets-from=env', '-a', 'examples', '--ssl=false'])
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secrets-env=env', '-a', 'examples', '--ssl=false'])
     .it('Create a local dev with a basic component and an environment secret', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -1022,7 +1022,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secret-file', './examples/hello-world/secrets.yml', '--secrets-from=env', '-a', 'examples', '--ssl=false'])
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secret-file', './examples/hello-world/secrets.yml', '--secrets-env=env', '-a', 'examples', '--ssl=false'])
     .it('Create a local dev with a basic component, a secret file, and an overwritten environment secret', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
