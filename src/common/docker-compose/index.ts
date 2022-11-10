@@ -380,10 +380,10 @@ export class DockerComposeUtils {
           service_to.labels.push(`traefik.port=${gateway_port}`);
         }
 
-        // TODO:TJ
-        const ingress = node_to_interface.ingress!;
+        const ingress = node_to_interface.ingress;
+        const subdomain = ingress?.subdomain || edge.interface_to;
 
-        const host = ingress.subdomain === '@' ? external_addr : `${ingress.subdomain}.${external_addr}`;
+        const host = subdomain === '@' ? external_addr : `${subdomain}.${external_addr}`;
         const traefik_service = `${node_to.ref}-${edge.interface_to}`;
 
         if (ingress?.path) {

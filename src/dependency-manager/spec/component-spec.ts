@@ -37,13 +37,13 @@ export class IngressSpec {
   })
   enabled?: boolean;
 
-  @Allow()
+  @IsOptional()
   @JSONSchema({
     ...ExpressionOr({ type: 'string', pattern: Slugs.ComponentSubdomainValidator.source }),
     description: 'The subdomain that will be used if the interface is exposed externally',
     errorMessage: Slugs.ComponentSubdomainDescription,
   })
-  subdomain!: string;
+  subdomain?: string;
 
   @IsOptional()
   @JSONSchema({

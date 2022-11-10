@@ -277,12 +277,13 @@ export default abstract class DependencyManager {
         continue;
       }
       const ingress = interface_spec.ingress;
+      const subdomain = ingress.subdomain || ingress_edge.interface_to;
 
       if (ingress.subdomain && interface_spec.protocol && !this.valid_protocols.has(interface_spec.protocol)) {
         throw new ArchitectError(`Protocol '${interface_spec.protocol}' is detected in '${ingress_edge.interface_to}'. We currently only support 'http' and 'https' protocols.`);
       }
 
-      const key = ingress?.path ? `${ingress.subdomain} with path ${ingress.path}` : ingress.subdomain;
+      const key = ingress?.path ? `${subdomain} with path ${ingress.path}` : subdomain;
       if (!seen_subdomains[key]) {
         seen_subdomains[key] = [];
       }
@@ -358,20 +359,6 @@ export default abstract class DependencyManager {
     if (options.validate) {
       this.validateReservedNodeNames([...nodes, ...graph.nodes]);
     }
-
-    /* TODO:TJ
-    const has_interfaces = Object.keys(component_config.interfaces).length > 0;
-    const has_outputs = Object.keys(component_config.outputs).length > 0;
-    if (has_interfaces || has_outputs) {
-      const ref = component_config.metadata.ref;
-      const config = {
-        outputs: component_config.outputs,
-        interfaces: component_config.interfaces,
-      };
-      const node = new ComponentNode(buildInterfacesRef(component_config), ref, config);
-      nodes.push(node);
-    }
-    */
 
     for (const node of nodes) {
       node.instance_id = component_config.metadata?.instance_id || '';
@@ -578,20 +565,6 @@ export default abstract class DependencyManager {
       }
 
       const component_config = transformComponentSpec(component_spec);
-
-      /* TODO:TJ
-      // Add interfaces to ComponentNode of the tree if there are any interfaces defined
-      if (Object.keys(component_config.interfaces).length > 0) {
-        const component_node = graph.getNodeByRef(buildInterfacesRef(component_config)) as ComponentNode;
-        component_node.config.interfaces = component_config.interfaces;
-      }
-
-      // Add outputs to ComponentNode of the tree if there are any outputs defined
-      if (Object.keys(component_config.outputs).length > 0) {
-        const component_node = graph.getNodeByRef(buildInterfacesRef(component_config)) as ComponentNode;
-        component_node.config.outputs = component_config.outputs;
-      }
-      */
 
       const services = Object.entries(component_config.services).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'services' as ResourceType, resource_config }));
       const tasks = Object.entries(component_config.tasks).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'tasks' as ResourceType, resource_config }));
