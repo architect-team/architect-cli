@@ -402,7 +402,7 @@ export class DockerComposeUtils {
           service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`, `traefik.http.routers.${traefik_service}.tls=true`);
         }
 
-        if (node_to_interface.protocol) {
+        if (node_to_interface.protocol && node_to_interface.protocol !== 'http') {
           service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.scheme=${node_to_interface.protocol}`);
         }
       }

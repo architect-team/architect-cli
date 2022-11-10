@@ -23,7 +23,7 @@ export interface ComponentInstanceMetadata {
     contents: string;
   }
 
-  interpolated?: boolean;
+  deprecated_interfaces_map: Dictionary<string | undefined>;
 }
 
 @JSONSchema({

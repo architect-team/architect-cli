@@ -44,6 +44,7 @@ export default class LocalDependencyManager extends DependencyManager {
       instance_name,
       instance_id: options?.instance_id || component_ref,
       instance_date: this.now,
+      deprecated_interfaces_map: {},
     };
 
     const linked_component_key = component_ref in this.linked_components ? component_ref : ComponentSlugUtils.build(this.account, component_name);

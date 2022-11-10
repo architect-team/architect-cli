@@ -121,6 +121,7 @@ export default abstract class DependencyManager {
       }
 
       // TODO:TJ support dependencies.<name>.services.<name>.interfaces.<name>
+      // TODO:TJ add tests
 
       // Deprecated: Add edges between services and interface dependencies inside the component
       const dep_interface_regex = new RegExp(`\\\${{\\s*dependencies\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
@@ -134,13 +135,10 @@ export default abstract class DependencyManager {
         const dependency = dependency_map[dep_ref];
         if (!dependency) continue;
 
-        let to = '';
-        // TODO:TJ cleanup hack
-        for (const [dep_service_name, dep_service] of Object.entries(dependency.services)) {
-          if (Object.keys(dep_service.interfaces).includes(interface_name)) {
-            to = buildNodeRef(dependency, 'services', dep_service_name);
-          }
-        }
+        const dep_service_name = dependency.metadata.deprecated_interfaces_map[interface_name];
+        if (!dep_service_name) continue;
+
+        const to = buildNodeRef(dependency, 'services', dep_service_name);
 
         if (!graph.nodes_map.has(to)) continue;
 
@@ -405,11 +403,10 @@ export default abstract class DependencyManager {
         // TODO:TJ set context for services.<name>.interfaces.<name>.ingress.url
 
         // Set ingresses
-        // TODO:TJ only set for old interfaces
-        const deprecated_interface_name = interface_name;
-        if (deprecated_interface_name) {
+        const is_deprecated_interface = Boolean(component_config.metadata.deprecated_interfaces_map[interface_name]);
+        if (is_deprecated_interface) {
           // Deprecated: context.interfaces
-          context.interfaces[deprecated_interface_name] = {
+          context.interfaces[interface_name] = {
             host: interface_config.host || `\${{ ${interface_ref}.host }}`,
             port: interface_config.port || `\${{ ${interface_ref}.port }}`,
             username: interface_config.username || `\${{ ${interface_ref}.username }}`,
@@ -419,10 +416,10 @@ export default abstract class DependencyManager {
           };
 
           // Deprecated: context.ingresses
-          const ingress_ref = `ingresses.${deprecated_interface_name}`;
-          context.ingresses[deprecated_interface_name] = {
+          const ingress_ref = `ingresses.${interface_name}`;
+          context.ingresses[interface_name] = {
             dns_zone: external_host,
-            subdomain: interface_config.ingress?.subdomain || deprecated_interface_name,
+            subdomain: interface_config.ingress?.subdomain || interface_name,
             host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : ((${ingress_ref}.subdomain == '@' ? '' : ${ingress_ref}.subdomain + '.') + ${ingress_ref}.dns_zone) }}`,
             port: `\${{ ${interface_ref}.external_host ? ${interface_ref}.port : ${external_port} }}`,
             protocol: `\${{ ${interface_ref}.external_host ? ${interface_ref}.protocol : '${external_protocol}' }}`,
@@ -437,7 +434,7 @@ export default abstract class DependencyManager {
           if (!context.environment.ingresses[component_spec.name]) {
             context.environment.ingresses[component_spec.name] = {};
           }
-          context.environment.ingresses[component_spec.name][deprecated_interface_name] = context.ingresses[deprecated_interface_name];
+          context.environment.ingresses[component_spec.name][interface_name] = context.ingresses[interface_name];
         }
       }
     }
@@ -561,7 +558,6 @@ export default abstract class DependencyManager {
       }
 
       if (options.validate) {
-        component_spec.metadata.interpolated = true;
         validateOrRejectSpec(classToPlain(plainToClass(ComponentSpec, component_spec)), component_spec.metadata);
       }
 

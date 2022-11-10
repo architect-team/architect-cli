@@ -66,7 +66,6 @@ describe('interfaces spec v1', () => {
     });
 
     const branch_ref = resourceRefToNodeRef('branch.services.api');
-    const leaf_interfaces_ref = resourceRefToNodeRef('leaf');
     const leaf_db_ref = resourceRefToNodeRef('leaf.services.db');
     const leaf_api_resource_ref = 'leaf.services.api';
     const leaf_api_ref = resourceRefToNodeRef(leaf_api_resource_ref);
@@ -124,13 +123,10 @@ describe('interfaces spec v1', () => {
         branch_ref,
         leaf_db_ref,
         leaf_api_ref,
-        leaf_interfaces_ref,
       ]);
       expect(graph.edges.map((e) => e.toString())).has.members([
         `${leaf_api_ref} -> ${leaf_db_ref}[postgres]`,
-        `${leaf_interfaces_ref} -> ${leaf_api_ref}[main]`,
-
-        `${branch_ref} -> ${leaf_interfaces_ref}[api]`,
+        `${branch_ref} -> ${leaf_api_ref}[api]`,
       ]);
       const branch_api_node = graph.getNodeByRef(branch_ref) as ServiceNode;
 
@@ -197,7 +193,6 @@ describe('interfaces spec v1', () => {
         await manager.loadComponentSpec('other-leaf', { interfaces: { publicv1: 'api' } }),
       ]);
 
-      const other_leaf_interfaces_ref = resourceRefToNodeRef('other-leaf');
       const other_leaf_api_ref = resourceRefToNodeRef('other-leaf.services.api');
       const other_leaf_db_ref = resourceRefToNodeRef('other-leaf.services.db');
 
@@ -206,25 +201,21 @@ describe('interfaces spec v1', () => {
 
         branch_ref,
 
-        leaf_interfaces_ref,
         leaf_api_ref,
         leaf_db_ref,
 
-        other_leaf_interfaces_ref,
         other_leaf_api_ref,
         other_leaf_db_ref,
       ]);
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `gateway -> ${leaf_interfaces_ref}[api]`,
-        `gateway -> ${other_leaf_interfaces_ref}[api]`,
+        `gateway -> ${leaf_api_ref}[api]`,
+        `gateway -> ${other_leaf_api_ref}[api]`,
 
         `${leaf_api_ref} -> ${leaf_db_ref}[postgres]`,
-        `${leaf_interfaces_ref} -> ${leaf_api_ref}[main]`,
 
         `${other_leaf_api_ref} -> ${other_leaf_db_ref}[postgres]`,
-        `${other_leaf_interfaces_ref} -> ${other_leaf_api_ref}[main]`,
 
-        `${branch_ref} -> ${leaf_interfaces_ref}[api]`,
+        `${branch_ref} -> ${leaf_api_ref}[api]`,
       ]);
       const branch_api_node = graph.getNodeByRef(branch_ref) as ServiceNode;
       expect(Object.entries(branch_api_node.config.environment).map(([k, v]) => `${k}=${v}`)).has.members([
@@ -292,7 +283,6 @@ describe('interfaces spec v1', () => {
           `traefik.http.routers.${leaf_api_ref}-api.rule=Host(\`public.arc.localhost\`)`,
           `traefik.http.routers.${leaf_api_ref}-api.service=${leaf_api_ref}-api-service`,
           `traefik.http.services.${leaf_api_ref}-api-service.loadbalancer.server.port=8080`,
-          `traefik.http.services.${leaf_api_ref}-api-service.loadbalancer.server.scheme=http`
         ],
         image: 'api:latest',
         ports: ['50001:8080'],
@@ -330,7 +320,6 @@ describe('interfaces spec v1', () => {
           `traefik.http.routers.${other_leaf_api_ref}-api.rule=Host(\`publicv1.arc.localhost\`)`,
           `traefik.http.routers.${other_leaf_api_ref}-api.service=${other_leaf_api_ref}-api-service`,
           `traefik.http.services.${other_leaf_api_ref}-api-service.loadbalancer.server.port=8080`,
-          `traefik.http.services.${other_leaf_api_ref}-api-service.loadbalancer.server.scheme=http`
         ],
         image: 'api:latest',
         ports: ['50003:8080'],
@@ -349,13 +338,13 @@ describe('interfaces spec v1', () => {
       services: {
         api: {
           interfaces: {
-            main: 8080,
+            app: 8080,
             admin: 8081,
           },
         },
       },
       interfaces: {
-        app: '${{ services.api.interfaces.main.url }}',
+        app: '${{ services.api.interfaces.app.url }}',
         admin: '${{ services.api.interfaces.admin.url }}',
       },
     };
@@ -371,20 +360,16 @@ describe('interfaces spec v1', () => {
       await manager.loadComponentSpec('cloud', { interfaces: { app: 'app', admin: 'admin' } }),
     ]);
 
-    const cloud_interfaces_ref = resourceRefToNodeRef('cloud');
     const api_resource_ref = 'cloud.services.api';
     const api_ref = resourceRefToNodeRef(api_resource_ref);
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
-      cloud_interfaces_ref,
       api_ref,
     ]);
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${cloud_interfaces_ref} -> ${api_ref}[main]`,
-      `${cloud_interfaces_ref} -> ${api_ref}[admin]`,
-      `gateway -> ${cloud_interfaces_ref}[app]`,
-      `gateway -> ${cloud_interfaces_ref}[admin]`,
+      `gateway -> ${api_ref}[app]`,
+      `gateway -> ${api_ref}[admin]`,
     ]);
 
     const template = await DockerComposeUtils.generate(graph);
@@ -397,11 +382,9 @@ describe('interfaces spec v1', () => {
         `traefik.http.routers.${api_ref}-app.rule=Host(\`app.arc.localhost\`)`,
         `traefik.http.routers.${api_ref}-app.service=${api_ref}-app-service`,
         `traefik.http.services.${api_ref}-app-service.loadbalancer.server.port=8080`,
-        `traefik.http.services.${api_ref}-app-service.loadbalancer.server.scheme=http`,
         `traefik.http.routers.${api_ref}-admin.rule=Host(\`admin.arc.localhost\`)`,
         `traefik.http.routers.${api_ref}-admin.service=${api_ref}-admin-service`,
         `traefik.http.services.${api_ref}-admin-service.loadbalancer.server.port=8081`,
-        `traefik.http.services.${api_ref}-admin-service.loadbalancer.server.scheme=http`
       ],
       "external_links": [
         "gateway:app.arc.localhost",
@@ -470,18 +453,14 @@ describe('interfaces spec v1', () => {
     ]);
 
     const admin_ref = resourceRefToNodeRef('admin-ui.services.dashboard');
-    const catalog_interfaces_ref = resourceRefToNodeRef('product-catalog');
     const api_ref = resourceRefToNodeRef('product-catalog.services.api');
 
     expect(graph.edges.map(e => e.toString())).members([
-      `${catalog_interfaces_ref} -> ${api_ref}[public]`,
-      `${catalog_interfaces_ref} -> ${api_ref}[admin]`,
-      `${catalog_interfaces_ref} -> ${api_ref}[private]`,
-      `${admin_ref} -> ${catalog_interfaces_ref}[public]`,
-      `${admin_ref} -> ${catalog_interfaces_ref}[admin]`,
-      `${admin_ref} -> ${catalog_interfaces_ref}[private]`,
-      `gateway -> ${catalog_interfaces_ref}[public]`,
-      `gateway -> ${catalog_interfaces_ref}[admin]`,
+      `${admin_ref} -> ${api_ref}[public]`,
+      `${admin_ref} -> ${api_ref}[admin]`,
+      `${admin_ref} -> ${api_ref}[private]`,
+      `gateway -> ${api_ref}[public]`,
+      `gateway -> ${api_ref}[admin]`,
     ]);
 
     const dashboard_node = graph.getNodeByRef(admin_ref) as ServiceNode;

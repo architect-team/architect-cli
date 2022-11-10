@@ -253,6 +253,7 @@ function deprecatedInterfaces(spec: ComponentSpec) {
           new_interface.ingress = interface_config.ingress;
         }
         service_interfaces[interface_name] = new_interface;
+        spec.metadata.deprecated_interfaces_map[interface_name] = service_name;
       }
     }
   }
@@ -267,14 +268,15 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
 
   const component_spec = plainToClass(ComponentSpec, parsed_yml);
 
-  deprecatedInterfaces(component_spec);
-
   component_spec.metadata = metadata ? metadata : {
     ref: component_spec.name,
     architect_ref: component_spec.name,
     tag: 'latest',
     instance_date: new Date(),
+    deprecated_interfaces_map: {},
   };
+
+  deprecatedInterfaces(component_spec);
 
   for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
     if (service_spec.deploy && service_spec.deploy.kubernetes.deployment) {

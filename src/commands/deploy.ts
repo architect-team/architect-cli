@@ -139,10 +139,12 @@ export default class Deploy extends DeployCommand {
     }),
     interface: Flags.string({
       char: 'i',
-      description: 'Component interfaces',
+      description: 'Deprecated: Please use ingress.subdomain https://docs.architect.io/components/ingress-rules/',
       multiple: true,
       default: [],
       sensitive: false,
+      deprecated: true,
+      hidden: true,
     }),
     'secret-file': Flags.string({
       description: 'Path of secrets file',
