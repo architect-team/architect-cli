@@ -118,8 +118,8 @@ describe('auto-approve flag with underscore style still works', function () {
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
     .it('works but also emits a deprecation warning', ctx => {
       // Remove whitespace from stderr due to small terminal size w/ output
-      ctx.stderr.replace(/\n/g, '');
-      expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated. Use "auto-approve" instead.');
+      const ctx_output = ctx.stderr.replace(/\n/g, '');
+      expect(ctx_output).to.contain('Warning: The "auto_approve" flag has been deprecated. Use "auto-approve" instead.');
       expect(ctx.stdout).to.contain('Deployed');
     });
 
@@ -127,8 +127,8 @@ describe('auto-approve flag with underscore style still works', function () {
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve=true', 'examples/echo:latest'])
     .it('works but also emits a deprecation warning 2', ctx => {
       // Remove whitespace from stderr due to small terminal size w/ output
-      ctx.stderr.replace(/\n/g, '');
-      expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated. Use "auto-approve" instead.');
+      const ctx_output = ctx.stderr.replace(/\n/g, '');
+      expect(ctx_output).to.contain('Warning: The "auto_approve" flag has been deprecated. Use "auto-approve" instead.');
       expect(ctx.stdout).to.contain('Deployed');
     });
 });

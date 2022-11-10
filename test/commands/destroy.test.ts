@@ -47,8 +47,8 @@ describe('destroy', function () {
     .command(['destroy', '-a', mock_account.name, '-e', mock_env.name, '--auto_approve'])
     .it('destroy completes with a warning when using a deprecated flag', ctx => {
       // Remove whitespace from stderr due to small terminal size w/ output
-      ctx.stderr.replace(/\n/g, '');
-      expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated. Use "auto-approve" instead.');
+      const ctx_output = ctx.stderr.replace(/\n/g, '');
+      expect(ctx_output).to.contain('Warning: The "auto_approve" flag has been deprecated. Use "auto-approve" instead.');
       expect(ctx.stdout).to.contain('Deployed\n');
     });
 });
