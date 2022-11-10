@@ -50,6 +50,22 @@ describe('dev:stop', () => {
     });
 
   mockArchitectAuth()
+    .stub(DockerComposeUtils, 'getLocalEnvironments', sinon.stub().returns(env_names))
+    .stub(DevStop.prototype, 'waitForEnviromentToStop', sinon.stub().returns(true))
+    .stub(DevStop.prototype, 'log', sinon.fake.returns(null))
+    .stub(fs, 'existsSync', sinon.stub().returns(false))
+    .stub(net, 'createConnection', sinon.stub().returns(mocked_connection))
+    .stub(fs, 'removeSync', sinon.stub().returns(null))
+    .command(['dev:stop', 'test_env'])
+    .it('stop a detached local deployment and remove left over compose file from when it started', ctx => {
+      const log_spy = DevStop.prototype.log as SinonSpy;
+      expect(log_spy.firstCall.args[0]).to.contain("Successfully stopped local deployment");
+
+      const remove_sync = fs.removeSync as sinon.SinonStub;
+      expect(remove_sync.calledOnce).true;
+    });
+
+  mockArchitectAuth()
     .stub(DockerComposeUtils, 'getLocalEnvironments', sinon.stub().returns([]))
     .stub(DevStop.prototype, 'waitForEnviromentToStop', sinon.stub().returns(true))
     .stub(DevStop.prototype, 'log', sinon.fake.returns(null))
