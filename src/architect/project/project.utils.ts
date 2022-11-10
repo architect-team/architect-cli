@@ -72,7 +72,6 @@ export default class ProjectUtils {
     const config_file = 'https://raw.githubusercontent.com/architect-team/template-configs/main/config.json';
     const config_json = await this.fetchJsonFromGitHub(config_file) as Dictionary<any>;
 
-    console.log(config_json);
     const choices = config_json.choices;
 
     const project = await this.prompt(choices, 'Please select a framework/language for your project');

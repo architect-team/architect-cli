@@ -149,7 +149,7 @@ export abstract class InitCommand extends BaseCommand {
           },
         },
       ]);
-      args.name = answers.chosen;
+      args.name = answers.name;
     }
 
     while (!ComponentSlugUtils.Validator.test(args.name)) {
