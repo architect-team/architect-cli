@@ -112,7 +112,7 @@ During this time we greatly appreciate any feedback as we continue to finalize t
             type: 'input',
             name: 'replicas',
             message: `How many replicas should the service be scaled to?`,
-            validate: (value: any) => {
+            validate: (value) => {
               if (Number.isNaN(value) || value % 1 !== 0) {
                 return 'Must be a whole number';
               }

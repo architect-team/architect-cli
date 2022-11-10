@@ -1,4 +1,5 @@
 import isCi from 'is-ci';
+import { ArchitectError } from '../../dependency-manager/utils/errors';
 
 export default class PromptUtils {
   /**
@@ -6,7 +7,7 @@ export default class PromptUtils {
    * @param {string} message - a string to modify
    *
    */
-  public static strip_ascii_color_codes_from_string(message?: string): string {
+  public static stripAsciiColorCodes(message?: string): string {
     if (!message) {
       return '';
     }
@@ -20,7 +21,7 @@ export default class PromptUtils {
   }
 
   // if we're not running in a CI environment or in a non-tty stdout then prompts should be available
-  public static prompts_available(): boolean {
+  public static promptsAvailable(): boolean {
     return !(isCi || !process.stdout.isTTY);
   }
 
@@ -28,7 +29,7 @@ export default class PromptUtils {
    * There is an open issue in inquirer to handle this behavior, eventually we can replace this when it's properly released:
    * https://github.com/SBoudrias/Inquirer.js/pull/891
    */
-  public static disable_prompts(): void {
+  public static disablePrompts(): void {
     // eslint-disable-next-line unicorn/prefer-module
     const inquirer = require('inquirer');
     process.stdout.isTTY = false;
@@ -39,9 +40,10 @@ export default class PromptUtils {
       }
       for (const prompt of prompts) {
         if ((prompt.when && prompt.default === undefined) || prompt.when === undefined) {
-          throw new Error(`${prompt.name} is required`);
+          throw new ArchitectError(prompt.ciMessage || `--${prompt.name} flag is required in CI pipelines`);
         }
       }
+
       // eslint-disable-next-line unicorn/no-array-reduce,unicorn/prefer-object-from-entries
       return prompts.reduce((d: any, p: any) => {
         d[p.name] = p.default;

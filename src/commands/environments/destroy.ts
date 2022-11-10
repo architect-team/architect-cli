@@ -68,13 +68,14 @@ export default class EnvironmentDestroy extends BaseCommand {
       type: 'input',
       name: 'destroy',
       message: 'Are you absolutely sure? This will deregister the environment.\nPlease type in the name of the environment to confirm.\n',
-      validate: (value: any, answers: any) => {
+      validate: (value, answers) => {
         if (value === environment.name) {
           return true;
         }
         return `Name must match: ${chalk.blue(environment.name)}`;
       },
       when: !flags['auto-approve'],
+      ciMessage: '--auto-approve flag is required in CI pipelines',
     }]);
 
     CliUx.ux.action.start(chalk.blue('Deregistering environment'));

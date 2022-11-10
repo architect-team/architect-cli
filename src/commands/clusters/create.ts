@@ -106,7 +106,7 @@ export default class ClusterCreate extends BaseCommand {
   private async createCluster() {
     const { args, flags } = await this.parse(ClusterCreate);
 
-    const answers: any = await inquirer.prompt([
+    const answers = await inquirer.prompt([
       {
         type: 'input',
         name: 'cluster',
@@ -117,6 +117,7 @@ export default class ClusterCreate extends BaseCommand {
           if (Slugs.ArchitectSlugValidator.test(value)) return true;
           return `cluster ${Slugs.ArchitectSlugDescription}`;
         },
+        ciMessage: 'Cluster name is required in CI pipelines ex. architect cluster:create <name> --auto-approve',
       },
     ]);
 
@@ -217,6 +218,7 @@ export default class ClusterCreate extends BaseCommand {
             // Set the context value to the matching object from the kubeconfig
             return kubeconfig.contexts.find((ctx: any) => ctx.name === value);
           },
+          ciMessage: '--kubeconfig or --auto-approve flag is required in CI pipelines',
         },
       ]);
       kube_context = new_cluster_answers.context;
