@@ -244,8 +244,8 @@ describe('components with reserved_name field set', function () {
         db_ref
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `${app_ref} [service->main] -> ${api_ref} [main]`,
-        `${api_ref} [service->main] -> ${db_ref} [main]`
+        `${app_ref} -> ${api_ref}[main]`,
+        `${api_ref} -> ${db_ref}[main]`
       ])
       // Test parameter values
       const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
@@ -365,21 +365,17 @@ describe('components with reserved_name field set', function () {
         ...await manager.loadComponentSpecs('cloud:latest'),
       ]);
       const api_ref = resourceRefToNodeRef('cloud.services.api');
-      const ci_ref = resourceRefToNodeRef('ci');
       const web_ref = resourceRefToNodeRef('ci.services.web');
       const worker_ref = reserved_name;
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         api_ref,
-
-        ci_ref,
         web_ref,
         worker_ref
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `${worker_ref} [service->main] -> ${web_ref} [main]`,
-        `${ci_ref} [web] -> ${web_ref} [main]`,
-        `${api_ref} [service->web] -> ${ci_ref} [web]`
+        `${worker_ref} -> ${web_ref}[main]`,
+        `${api_ref} -> ${web_ref}[web]`
       ])
 
       // Test parameter values

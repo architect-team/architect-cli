@@ -5,6 +5,7 @@ import addFormats from 'ajv-formats';
 import { plainToClass } from 'class-transformer';
 import cron from 'cron-validate';
 import TSON from 'typescript-json';
+import { ServiceInterfaceSpec } from '../../..';
 import { DeepPartial } from '../../../common/utils/types';
 import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
@@ -242,12 +243,16 @@ function deprecatedInterfaces(spec: ComponentSpec) {
 
       const service_interface_obj = service_interface instanceof Object ? service_interface : { port: service_interface };
       if (service_interface_obj) {
-        service_interfaces[interface_name] = {
+        const new_interface: ServiceInterfaceSpec = {
           ...service_interface_obj,
-          sticky: interface_config.sticky,
-          ingress: interface_config.ingress,
-          // TODO:TJ deprecated_interface: true
         };
+        if (interface_config.sticky !== undefined) {
+          new_interface.sticky = interface_config.sticky;
+        }
+        if (interface_config.ingress !== undefined) {
+          new_interface.ingress = interface_config.ingress;
+        }
+        service_interfaces[interface_name] = new_interface;
       }
     }
   }

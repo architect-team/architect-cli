@@ -61,7 +61,7 @@ export default abstract class DependencyManager {
   addIngressEdges(graph: DependencyGraph, component_config: ComponentConfig): void {
     for (const [service_name, service] of Object.entries(component_config.services)) {
       for (const [interface_name, interface_spec] of Object.entries(service.interfaces)) {
-        if (interface_spec.ingress) {
+        if (interface_spec.ingress?.enabled || interface_spec.ingress?.subdomain) {
           const gateway_host = this.external_addr.split(':')[0];
           const gateway_port = Number.parseInt(this.external_addr.split(':')[1] || '443');
 
@@ -120,10 +120,10 @@ export default abstract class DependencyManager {
         graph.addEdge(edge);
       }
 
+      // TODO:TJ support dependencies.<name>.services.<name>.interfaces.<name>
+
       // Deprecated: Add edges between services and interface dependencies inside the component
-      /* TODO:TJ
       const dep_interface_regex = new RegExp(`\\\${{\\s*dependencies\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
-      const dep_service_edge_map: Dictionary<Dictionary<string>> = {};
       while ((matches = dep_interface_regex.exec(service_string)) !== null) {
         if (!matches.groups) {
           continue;
@@ -133,19 +133,20 @@ export default abstract class DependencyManager {
 
         const dependency = dependency_map[dep_ref];
         if (!dependency) continue;
-        const to = buildInterfacesRef(dependency);
+
+        let to = '';
+        // TODO:TJ cleanup hack
+        for (const [dep_service_name, dep_service] of Object.entries(dependency.services)) {
+          if (Object.keys(dep_service.interfaces).includes(interface_name)) {
+            to = buildNodeRef(dependency, 'services', dep_service_name);
+          }
+        }
 
         if (!graph.nodes_map.has(to)) continue;
 
-        if (!dep_service_edge_map[to]) dep_service_edge_map[to] = {};
-        dep_service_edge_map[to][`service->${interface_name}`] = interface_name;
-      }
-      for (const [to, interfaces_map] of Object.entries(dep_service_edge_map)) {
-        const interface_mappings = Object.entries(interfaces_map).map(([interface_from, interface_to]) => ({ interface_from, interface_to }));
-        const edge = new ServiceEdge(from, to, interface_mappings);
+        const edge = new ServiceEdge(from, to, interface_name);
         graph.addEdge(edge);
       }
-      */
     }
   }
 

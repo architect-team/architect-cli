@@ -209,7 +209,7 @@ describe('external spec v1', () => {
       api_ref
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${app_ref} [service->main] -> ${api_ref} [main]`
+      `${app_ref} -> ${api_ref}[main]`
     ])
     const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(app_node.is_external).to.be.false;

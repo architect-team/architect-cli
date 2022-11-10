@@ -154,8 +154,8 @@ describe('interpolation spec v1', () => {
       worker_ref
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${web_interfaces_ref} [main] -> ${web_ref} [main]`,
-      `${worker_ref} [service->main] -> ${web_interfaces_ref} [main]`
+      `${web_interfaces_ref} -> ${web_ref}[main]`,
+      `${worker_ref} -> ${web_interfaces_ref}[main]`
     ])
 
     const web_node = graph.getNodeByRef(web_ref);
@@ -218,9 +218,9 @@ describe('interpolation spec v1', () => {
       worker_ref
     ])
     expect(public_graph.edges.map((e) => e.toString())).has.members([
-      `gateway [public] -> ${web_interfaces_ref} [main]`,
-      `${web_interfaces_ref} [main] -> ${web_ref} [main]`,
-      `${worker_ref} [service->main] -> ${web_interfaces_ref} [main]`
+      `gateway -> ${web_interfaces_ref}[main]`,
+      `${web_interfaces_ref} -> ${web_ref}[main]`,
+      `${worker_ref} -> ${web_interfaces_ref}[main]`
     ])
 
     const public_template = await DockerComposeUtils.generate(public_graph);
@@ -1527,9 +1527,9 @@ describe('interpolation spec v1', () => {
     const publisher_api_ref = resourceRefToNodeRef('publisher.services.publisher-api');
     const consumer_api_ref = resourceRefToNodeRef('consumer.services.consumer-api');
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${publisher_component_ref} [api] -> ${publisher_api_ref} [main]`,
-      `${consumer_api_ref} [service->api] -> ${publisher_component_ref} [api]`,
-      `${consumer_api_ref} [output->topic1] -> ${publisher_component_ref} [topic1]`
+      `${publisher_component_ref} -> ${publisher_api_ref}[main]`,
+      `${consumer_api_ref} -> ${publisher_component_ref}[api]`,
+      `${consumer_api_ref} -> ${publisher_component_ref}[topic1]`
     ])
   });
 
@@ -1575,8 +1575,8 @@ describe('interpolation spec v1', () => {
     const app_ref = resourceRefToNodeRef('test.services.app');
     const api_ref = resourceRefToNodeRef('test.services.api');
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${test_component_ref} [api] -> ${api_ref} [main]`,
-      `${app_ref} [service->main] -> ${api_ref} [main]`,
+      `${test_component_ref} -> ${api_ref}[main]`,
+      `${app_ref} -> ${api_ref}[main]`,
     ]);
   });
 });
