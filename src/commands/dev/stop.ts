@@ -79,6 +79,7 @@ export default class DevStop extends BaseCommand {
       throw new Error(chalk.red(`No local deployment named '${name}'. Use command 'architect dev:list' to list local deployments.`));
     }
 
+    CliUx.ux.action.start(chalk.blue(`Waiting for ${name} to stop...`));
     const socket_path = socketPath(path.join(this.app.config.getConfigDir(), LocalPaths.LOCAL_DEPLOY_PATH, name));
     if (fs.existsSync(socket_path)) {
       const socket = net.createConnection(socket_path);
@@ -101,7 +102,6 @@ export default class DevStop extends BaseCommand {
       await this.runComposeStop(name);
     }
 
-    CliUx.ux.action.start(chalk.blue(`Waiting for ${name} to stop...`));
     const did_stop = await this.waitForEnviromentToStop(name);
     CliUx.ux.action.stop();
     if (did_stop) {
