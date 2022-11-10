@@ -310,21 +310,18 @@ describe('components spec v1', function () {
         ...await manager.loadComponentSpecs('cloud:latest'),
       ]);
       const api_ref = resourceRefToNodeRef('cloud.services.api');
-      const ci_ref = resourceRefToNodeRef('ci');
       const web_ref = resourceRefToNodeRef('ci.services.web');
       const worker_ref = resourceRefToNodeRef('ci.services.worker');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         api_ref,
 
-        ci_ref,
         web_ref,
         worker_ref,
       ]);
       expect(graph.edges.map((e) => e.toString())).has.members([
         `${worker_ref} -> ${web_ref}[main]`,
-        `${ci_ref} -> ${web_ref}[main]`,
-        `${api_ref} -> ${ci_ref}[web]`,
+        `${api_ref} -> ${web_ref}[web]`,
       ]);
 
       // Test secret values

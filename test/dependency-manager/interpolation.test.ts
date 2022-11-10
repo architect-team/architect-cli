@@ -1521,13 +1521,11 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph(
       await manager.loadComponentSpecs('consumer')
     );
-    const publisher_component_ref = resourceRefToNodeRef('publisher');
     const publisher_api_ref = resourceRefToNodeRef('publisher.services.publisher-api');
     const consumer_api_ref = resourceRefToNodeRef('consumer.services.consumer-api');
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${publisher_component_ref} -> ${publisher_api_ref}[main]`,
-      `${consumer_api_ref} -> ${publisher_component_ref}[api]`,
-      `${consumer_api_ref} -> ${publisher_component_ref}[topic1]`
+      `${consumer_api_ref} -> ${publisher_api_ref}[api]`,
+      `${consumer_api_ref} -> ${publisher_api_ref}[topic1]`
     ])
   });
 
@@ -1569,11 +1567,9 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentSpecs('test')
     );
 
-    const test_component_ref = resourceRefToNodeRef('test');
     const app_ref = resourceRefToNodeRef('test.services.app');
     const api_ref = resourceRefToNodeRef('test.services.api');
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${test_component_ref} -> ${api_ref}[main]`,
       `${app_ref} -> ${api_ref}[main]`,
     ]);
   });
