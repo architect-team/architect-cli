@@ -28,11 +28,11 @@ jobs:
       - name: Check that the app returns the expected response
         run: curl --fail -S https://hello.localhost.architect.sh | grep "Hello Architect!"
       - name: Run a local task
-        run: ./bin/dev task superset curler-build --local
+        run: ./bin/dev task superset curler-build --local -e superset
 
   test_remote:
     name: Superset remote deployment
-    # if: github.ref_name == 'main' || github.ref_name == 'rc' // TODO: uncomment
+    if: github.ref_name == 'main' || github.ref_name == 'rc'
     env:
       ACCOUNT_NAME: architect-ci
       ENVIRONMENT_NAME: example-environment
