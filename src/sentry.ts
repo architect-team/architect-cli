@@ -58,7 +58,7 @@ export default class SentryService {
         },
         beforeBreadcrumb(breadcrumb: any) {
           if (breadcrumb.category === 'console') {
-            breadcrumb.message = PromptUtils.strip_ascii_color_codes_from_string(breadcrumb.message);
+            breadcrumb.message = PromptUtils.stripAsciiColorCodes(breadcrumb.message);
           }
           return breadcrumb;
         },
@@ -118,7 +118,7 @@ export default class SentryService {
       const config_directory_files = error ? await this.getFilenamesFromDirectory() : [];
 
       if (error) {
-        error.stack = PromptUtils.strip_ascii_color_codes_from_string(error.stack);
+        error.stack = PromptUtils.stripAsciiColorCodes(error.stack);
       }
 
       const sentry_session_metadata = await {

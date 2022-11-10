@@ -134,14 +134,22 @@ export abstract class InitCommand extends BaseCommand {
 
     const compose_exist = await this.doesDockerComposeYmlExist();
     if (!args.name) {
-      const answer: { chosen: any } = await inquirer.prompt([
+      const answers = await inquirer.prompt([
         {
-          name: 'chosen',
-          message: `Please provide a name for your ${compose_exist ? 'component' : 'project'}:`,
           type: 'input',
+          name: 'name',
+          message: 'What should the name of the component be?',
+          when: !flags.name,
+          filter: value => value.toLowerCase(),
+          validate: (value) => {
+            if ((new RegExp('^[a-z][a-z-]+[a-z]$').test(value))) {
+              return true;
+            }
+            return `Component name can only contain lowercase letters and dashes, and must start and end with a letter.`;
+          },
         },
-]);
-      args.name = answer.chosen;
+      ]);
+      args.name = answers.chosen;
     }
 
     while (!ComponentSlugUtils.Validator.test(args.name)) {
@@ -176,12 +184,12 @@ export abstract class InitCommand extends BaseCommand {
         }
         await this.runArchitectYamlConversion(from_path, args.name, flags['component-file']);
       } else {
-        const answers: any = await inquirer.prompt([
+        const answers = await inquirer.prompt([
           {
             type: 'input',
             name: 'from_compose',
             message: 'What is the filename of the Docker Compose file you would like to convert?',
-            validate: (value: any) => {
+            validate: (value) => {
               return fs.existsSync(value) && fs.statSync(value).isFile() ? true : `The Docker Compose file ${value} couldn't be found.`;
             },
           },
