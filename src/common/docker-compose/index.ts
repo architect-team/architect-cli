@@ -10,7 +10,7 @@ import path from 'path';
 import untildify from 'untildify';
 import { ArchitectError, ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
-import { restart } from '../docker/cmd';
+import { docker, restart } from '../docker/cmd';
 import { DockerHelper, RequiresDocker } from '../docker/helper';
 import PortUtil from '../utils/port';
 import { DockerComposeProject, DockerComposeProjectWithConfig } from './project';
@@ -481,6 +481,15 @@ export class DockerComposeUtils {
   }
 
   /**
+  * Runs `docker inspect` on a container ID and returns the resulting json as a DockerInspect object.
+  */
+  public static async getContainerInfo(container_id: string): Promise<DockerInspect | undefined> {
+    if (!container_id) return;
+    const inspect_cmd = await docker(['inspect', '--format=\'{{json .}}\'', container_id], { stdout: false });
+    return JSON.parse(inspect_cmd.stdout.substring(1, inspect_cmd.stdout.length - 1)) as DockerInspect;
+  }
+
+  /**
    * Runs `docker inspect` on all containers and returns the resulting json as an array of objects.
    */
   public static async getAllContainerInfo(): Promise<DockerInspect[]> {
@@ -690,6 +699,16 @@ export class DockerComposeUtils {
 
           const bad_state = state !== 'running' && container_state.ExitCode !== 0;
           const bad_health = health === 'unhealthy';
+
+          if (health === '' && state === 'exited') {
+            const container_docker_inspect: DockerInspect | undefined = await this.getContainerInfo(container_state.ID);
+            if (container_docker_inspect && container_docker_inspect.State.Health.Log?.length > 0) {
+              const log_size = container_docker_inspect.State.Health.Log.length;
+              console.log(chalk.red(`\nThe liveness probe has detected an error starting the service '${full_service_name}'.`));
+              console.log(chalk.red(`The service may try to restart and/or never reach a running state`));
+              console.log(chalk.red(`ERROR: ${container_docker_inspect.State.Health.Log[log_size - 1].Output}\n`));
+            }
+          }
 
           if (!service_data_dictionary[service_ref]) {
             service_data_dictionary[service_ref] = {
