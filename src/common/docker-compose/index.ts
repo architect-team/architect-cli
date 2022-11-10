@@ -99,12 +99,11 @@ export class DockerComposeUtils {
     const gateway_links = new Set<string>();
     if (gateway_node) {
       for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
-        /* TODO:TJ
-        for (const { interface_from } of edge.interface_mappings) {
-          const host = interface_from === '@' ? external_addr : `${interface_from}.${external_addr}`;
-          gateway_links.add(`${gateway_node.ref}:${host}`);
-        }
-        */
+        const service_node = graph.getNodeByRef(edge.to);
+        const service_interface = service_node.interfaces[edge.interface_to];
+        const subdomain = service_interface.ingress?.subdomain || edge.interface_to;
+        const host = subdomain === '@' ? external_addr : `${subdomain}.${external_addr}`;
+        gateway_links.add(`${gateway_node.ref}:${host}`);
       }
 
       compose.services[gateway_node.ref] = {

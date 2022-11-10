@@ -1877,8 +1877,8 @@ services:
       `;
 
       expect(() => {
- buildSpecFromYml(yml);
-}).to.throw(ValidationErrors);
+        buildSpecFromYml(yml);
+      }).to.throw(ValidationErrors);
     });
 
     it('valid deploy overrides for kubernetes', async () => {

@@ -414,10 +414,14 @@ export default abstract class DependencyManager {
           url: this.generateUrl(interface_ref),
         };
 
+        // TODO:TJ set context for services.<name>.interfaces.<name>.ingress.url
+
         // Set ingresses
-        if (interface_config.deprecated_interface_name) {
+        // TODO:TJ only set for old interfaces
+        const deprecated_interface_name = interface_name;
+        if (deprecated_interface_name) {
           // Deprecated: context.interfaces
-          context.interfaces[interface_config.deprecated_interface_name] = {
+          context.interfaces[deprecated_interface_name] = {
             host: interface_config.host || `\${{ ${interface_ref}.host }}`,
             port: interface_config.port || `\${{ ${interface_ref}.port }}`,
             username: interface_config.username || `\${{ ${interface_ref}.username }}`,
@@ -427,10 +431,10 @@ export default abstract class DependencyManager {
           };
 
           // Deprecated: context.ingresses
-          const ingress_ref = `ingresses.${interface_config.deprecated_interface_name}`;
-          context.ingresses[interface_config.deprecated_interface_name] = {
+          const ingress_ref = `ingresses.${deprecated_interface_name}`;
+          context.ingresses[deprecated_interface_name] = {
             dns_zone: external_host,
-            subdomain: interface_config.ingress?.subdomain || interface_config.deprecated_interface_name,
+            subdomain: interface_config.ingress?.subdomain || deprecated_interface_name,
             host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : ((${ingress_ref}.subdomain == '@' ? '' : ${ingress_ref}.subdomain + '.') + ${ingress_ref}.dns_zone) }}`,
             port: `\${{ ${interface_ref}.external_host ? ${interface_ref}.port : ${external_port} }}`,
             protocol: `\${{ ${interface_ref}.external_host ? ${interface_ref}.protocol : '${external_protocol}' }}`,
@@ -445,7 +449,7 @@ export default abstract class DependencyManager {
           if (!context.environment.ingresses[component_spec.name]) {
             context.environment.ingresses[component_spec.name] = {};
           }
-          context.environment.ingresses[component_spec.name][interface_config.deprecated_interface_name] = context.ingresses[interface_config.deprecated_interface_name];
+          context.environment.ingresses[component_spec.name][deprecated_interface_name] = context.ingresses[deprecated_interface_name];
         }
       }
     }

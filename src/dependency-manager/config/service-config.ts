@@ -26,7 +26,6 @@ export interface ServiceInterfaceConfig {
   sticky?: boolean | string;
 
   ingress?: IngressConfig;
-  deprecated_interface_name?: string;
 }
 
 export interface ServiceConfig extends ResourceConfig {

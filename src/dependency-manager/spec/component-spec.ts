@@ -323,9 +323,10 @@ export class ComponentSpec {
       additionalProperties: Slugs.ArchitectSlugDescription,
     },
     description: 'A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.',
+    deprecated: true,
   })
   @Transform(transformObject(ComponentInterfaceSpec))
-  interfaces?: Dictionary<string | ComponentInterfaceSpec>;
+  protected interfaces?: Dictionary<string | ComponentInterfaceSpec>;
 
   @IsOptional()
   @JSONSchema({
@@ -334,4 +335,8 @@ export class ComponentSpec {
     description: '-',
   })
   artifact_image?: string;
+
+  get deprecated_interfaces(): Dictionary<string | ComponentInterfaceSpec> {
+    return this.interfaces || {};
+  }
 }

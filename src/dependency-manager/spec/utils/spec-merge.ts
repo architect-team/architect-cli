@@ -1,12 +1,13 @@
 import { plainToClass } from 'class-transformer';
 import deepmerge, { Options } from 'deepmerge';
 import { Dictionary } from '../../utils/dictionary';
-import { ValidationError, ValidationErrors } from '../../utils/errors';
-import { findPotentialMatch } from '../../utils/match';
 import { RecursivePartial } from '../../utils/types';
 import { ComponentSpec, IngressSpec } from '../component-spec';
 
 export function generateIngressesOverrideSpec(component_spec: ComponentSpec, ingresses: Dictionary<IngressSpec>): RecursivePartial<ComponentSpec> {
+  return {};
+
+  /* TODO:TJ
   const spec: RecursivePartial<ComponentSpec> = {};
   spec.interfaces = {};
 
@@ -45,6 +46,7 @@ export function generateIngressesOverrideSpec(component_spec: ComponentSpec, ing
   }
 
   return plainToClass(ComponentSpec, spec);
+  */
 }
 
 const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;

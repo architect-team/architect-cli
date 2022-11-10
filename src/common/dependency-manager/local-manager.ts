@@ -3,11 +3,9 @@ import chalk from 'chalk';
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
 import DependencyManager, { ArchitectContext, ArchitectError, buildSpecFromPath, buildSpecFromYml, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary, generateIngressesOverrideSpec, IngressSpec, overrideSpec } from '../../';
-import { IF_EXPRESSION_REGEX } from '../../dependency-manager/spec/utils/interpolation';
 
 export interface ComponentConfigOpts {
   interfaces?: Dictionary<string>;
-  map_all_interfaces?: boolean;
   instance_id?: string;
 }
 
@@ -28,8 +26,6 @@ export default class LocalDependencyManager extends DependencyManager {
 
   async loadComponentSpec(component_string: string, options?: ComponentConfigOpts, debug?: boolean): Promise<ComponentSpec> {
     const merged_options = {
-
-      map_all_interfaces: false,
       ...options,
     };
 
@@ -82,16 +78,6 @@ export default class LocalDependencyManager extends DependencyManager {
     };
 
     const ingresses: Dictionary<IngressSpec> = {};
-    if (merged_options.map_all_interfaces) {
-      for (const interface_name of Object.keys(spec.interfaces || {})) {
-        if (!IF_EXPRESSION_REGEX.test(interface_name)) {
-          ingresses[interface_name] = {
-            enabled: true,
-            subdomain: interface_name,
-          };
-        }
-      }
-    }
     for (const [subdomain, interface_name] of Object.entries(options?.interfaces || {})) {
       ingresses[interface_name] = {
         enabled: true,

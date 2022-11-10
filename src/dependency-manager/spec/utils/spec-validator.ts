@@ -211,6 +211,48 @@ export const validateDependsOn = (component: ComponentSpec): ValidationError[] =
   return errors;
 };
 
+function deprecatedInterfaces(spec: ComponentSpec) {
+  const services = spec.services || {};
+  const interfaces = spec.deprecated_interfaces;
+  for (const [interface_name, interface_config_or_string] of Object.entries(interfaces)) {
+    const interface_config = interface_config_or_string instanceof Object ? interface_config_or_string : { url: interface_config_or_string };
+
+    const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
+    const matches = url_regex.exec(interface_config.url);
+    if (matches) {
+      const interface_ref = matches[1];
+
+      const [services_text, service_name, interfaces_text, service_interface_name] = interface_ref.split('.');
+      if (services_text !== 'services') {
+        continue;
+      }
+      if (interfaces_text !== 'interfaces') {
+        continue;
+      }
+      if (!(service_name in services)) {
+        continue;
+      }
+
+      const service_interfaces = services[service_name].interfaces;
+      if (!service_interfaces) {
+        continue;
+      }
+
+      const service_interface = service_interfaces[service_interface_name];
+
+      const service_interface_obj = service_interface instanceof Object ? service_interface : { port: service_interface };
+      if (service_interface_obj) {
+        service_interfaces[interface_name] = {
+          ...service_interface_obj,
+          sticky: interface_config.sticky,
+          ingress: interface_config.ingress,
+          // TODO:TJ deprecated_interface: true
+        };
+      }
+    }
+  }
+}
+
 export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMetadata): ComponentSpec => {
   const errors = validateSpec(parsed_yml);
 
@@ -219,6 +261,8 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
   }
 
   const component_spec = plainToClass(ComponentSpec, parsed_yml);
+
+  deprecatedInterfaces(component_spec);
 
   component_spec.metadata = metadata ? metadata : {
     ref: component_spec.name,

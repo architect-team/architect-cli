@@ -5,6 +5,7 @@ import { JSONSchema } from 'class-validator-jsonschema';
 import { DeepPartial } from '../../common/utils/types';
 import { Dictionary } from '../utils/dictionary';
 import { LivenessProbeSpec, VolumeSpec } from './common-spec';
+import { IngressSpec } from './component-spec';
 import { ResourceSpec } from './resource-spec';
 import { transformObject } from './transform/common-transform';
 import { AnyOf, ExclusiveOr, ExpressionOr, ExpressionOrString, RequiredOr } from './utils/json-schema-annotations';
@@ -143,6 +144,10 @@ export class ServiceInterfaceSpec {
     default: false,
   })
   sticky?: boolean | string;
+
+  @IsOptional()
+  @ValidateNested()
+  ingress?: IngressSpec;
 }
 
 @JSONSchema({
