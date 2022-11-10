@@ -4,6 +4,7 @@ import path from 'path';
 import sinon from 'sinon';
 import { buildSpecFromYml, ComponentConfig, resourceRefToNodeRef } from '../../../src';
 import AppService from '../../../src/app-config/service';
+import SecretUtils from '../../../src/architect/secret/secret.utils';
 import Dev from '../../../src/commands/dev';
 import { DockerComposeUtils } from '../../../src/common/docker-compose';
 import DockerComposeTemplate from '../../../src/common/docker-compose/template';
@@ -189,6 +190,22 @@ describe('local dev environment', function () {
       'another_required_key': 'another_value_which_will_be_overwritten'
     }
   }
+
+  const environment = {
+    id: 'ee475441-a499-4646-b553-7ce8dd476e92',
+    name: 'env',
+    account: account
+  }
+  const environment_secrets = [
+    {
+      id: '582d5f03-edd5-4b3d-b3f7-8597163b351f',
+      key: 'env_key',
+      value: 'env_value',
+      scope: '*',
+      value_type: 'string',
+      environment: environment
+    }
+  ];
 
   const local_component_config_with_dependency = {
     "name": "hello-world",
@@ -923,6 +940,33 @@ describe('local dev environment', function () {
       expect(runCompose.calledOnce).to.be.true;
       const hello_world_service = runCompose.firstCall.args[0].services[hello_api_ref] as any;
       expect(hello_world_service.environment.compose_escaped_variable).to.equal('variable_split_$$_with_dollar$$signs');
+    })
+  
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+      return buildSpecFromYml(local_component_config_with_secrets)
+    })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, account))
+    .stub(DeployUtils, 'readSecretsFile', () => {
+      return basic_secrets;
+    })
+    .stub(SecretUtils, 'getSecrets', () => {
+      return environment_secrets;
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secret-file', './examples/hello-world/secrets.yml', '--secrets-from=env', '-a', 'examples', '--ssl=false'])
+    .it('Create a local dev with a basic component, a secret file, and environment secrets', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
+      expect(hello_world_environment.env_key).to.equal('env_value');
     })
 
   describe('linked dev', function () {

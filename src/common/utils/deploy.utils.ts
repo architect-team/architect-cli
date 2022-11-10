@@ -3,6 +3,7 @@ import deepmerge from 'deepmerge';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import { ArchitectError, Dictionary } from '../../';
+import { SecretsDict, SecretType } from '../../dependency-manager/secrets/type';
 
 export default class DeployUtils {
   private static getExtraSecrets(secrets: string[] = []): Dictionary<string | number | undefined> {
@@ -60,9 +61,9 @@ export default class DeployUtils {
     return flags;
   }
 
-  static getComponentSecrets(individual_secrets: string[], secrets_file: string[]): Dictionary<Dictionary<string | number | null>> {
+  static getComponentSecrets(individual_secrets: string[], secrets_file: string[], env_secrets?: SecretsDict): SecretsDict {
     // Check to see if there are multiple secret files; else, just read the single secret file
-    let component_secrets: any = {};
+    let component_secrets: SecretsDict = env_secrets ? env_secrets : {};
     for (const secret_file of secrets_file) {
       const output_catch = DeployUtils.readSecretsFile(secret_file);
       // Deep merge to ensure all values from files are captured
@@ -76,7 +77,7 @@ export default class DeployUtils {
         component_secrets['*'] = {};
       }
       // Shallow merge to ensure CLI arguments replace anything from the secrets file
-      component_secrets['*'] = { ...component_secrets['*'], ...extra_secrets };
+      component_secrets['*'] = { ...component_secrets['*'], ...extra_secrets } as Dictionary<SecretType>;
     }
     return component_secrets;
   }
