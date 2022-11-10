@@ -199,42 +199,42 @@ services:
       environment:
         API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
 
-# tasks: # TODO: add back in once https://gitlab.com/architect-io/architect-cli/-/issues/559 is fixed
-#   curler:
-#     schedule: '*/5 * * * ?'
-#     image: ellerbrock/alpine-bash-curl-ssl
-#     command:
-#       - sh
-#       - -c
-#       - $RUN_CURL && $SERVER_URL
+tasks:
+  curler:
+    schedule: '*/5 * * * ?'
+    image: ellerbrock/alpine-bash-curl-ssl
+    command:
+      - sh
+      - -c
+      - $RUN_CURL && curl $SERVER_URL
 
-#     environment:
-#       SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
-#       RUN_CURL: ${{ secrets.param_boolean }}
+    environment:
+      SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
+      RUN_CURL: ${{ secrets.param_boolean }}
 
-#   curler-build:
-#     schedule: '*/5 * * * ?'
-#     build:
-#       context: ./task
-#     command:
-#       - sh
-#       - -c
-#       - curl $SERVER_URL
-#     environment:
-#       SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
-#       RUN_CURL: ${{ secrets.param_boolean }}
-#   ${{ if architect.environment == 'local' }}:
-#     curler-build-local:
-#       build:
-#         context: ./task
-#         dockerfile: ./Dockerfile
-#       command:
-#       - sh
-#       - -c
-#       - curl $SERVER_URL
-#       environment:
-#         SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
-#         RUN_CURL: ${{ secrets.param_boolean }}
+  curler-build:
+    schedule: '*/5 * * * ?'
+    build:
+      context: ../../../examples/scheduled-tasks/
+    command:
+      - sh
+      - -c
+      - $RUN_CURL && curl $SERVER_URL
+    environment:
+      SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
+      RUN_CURL: ${{ secrets.param_boolean }}
+  ${{ if architect.environment == 'local' }}:
+    curler-build-local:
+      build:
+        context: ../../../examples/scheduled-tasks/
+        dockerfile: ./Dockerfile
+      command:
+      - sh
+      - -c
+      - $RUN_CURL && curl $SERVER_URL
+      environment:
+        SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
+        RUN_CURL: ${{ secrets.param_boolean }}
 
 interfaces:
   stateless:
