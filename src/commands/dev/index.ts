@@ -10,6 +10,7 @@ import net from 'net';
 import opener from 'opener';
 import path from 'path';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
+import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import SecretUtils from '../../architect/secret/secret.utils';
@@ -617,8 +618,7 @@ $ architect dev -e new_env_name_here .`));
     }
   }
 
-  private async getEnvironmentSecrets(account_name: string, environment_name: string, cluster_name?: string): Promise<SecretsDict> {
-    const account = await AccountUtils.getAccount(this.app, account_name);
+  private async getEnvironmentSecrets(account: Account, environment_name: string, cluster_name?: string): Promise<SecretsDict> {
     const secrets = await SecretUtils.getSecrets(this.app, account, { cluster_name, environment_name }, true);
 
     const env_secrets: SecretsDict = {};
@@ -649,11 +649,9 @@ $ architect dev -e new_env_name_here .`));
 
     let env_secrets: SecretsDict = {};
     if (flags['secrets-from']) {
-      if (!flags.account) {
-        const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: false });
-        flags.account = account.name;
-      }
-      env_secrets = await this.getEnvironmentSecrets(flags.account, flags['secrets-from']);
+      const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: false });
+      env_secrets = await this.getEnvironmentSecrets(account, flags['secrets-from']);
+      flags.account = account.name;
     }
 
     const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
