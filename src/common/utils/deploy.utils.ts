@@ -62,8 +62,9 @@ export default class DeployUtils {
   }
 
   static getComponentSecrets(individual_secrets: string[], secrets_file: string[], env_secrets?: SecretsDict): SecretsDict {
-    // Check to see if there are multiple secret files; else, just read the single secret file
     let component_secrets: SecretsDict = env_secrets ? env_secrets : {};
+
+    // Check to see if there are multiple secret files; else, just read the single secret file
     for (const secret_file of secrets_file) {
       const output_catch = DeployUtils.readSecretsFile(secret_file);
       // Deep merge to ensure all values from files are captured

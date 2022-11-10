@@ -127,6 +127,26 @@ describe('local dev environment', function () {
       hello:
         url: \${{ services.api.interfaces.main.url }}
     `;
+  
+  const local_component_config_with_environment_secret = `
+    name: hello-world
+
+    secrets:
+      a_required_key:
+        required: true
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+        environment:
+          a_required_key: \${{ secrets.a_required_key }}
+
+    interfaces:
+      hello:
+        url: \${{ services.api.interfaces.main.url }}
+    `;
 
   // TODO: 404: remove
   const deprecated_local_component_config_with_parameters = `
@@ -191,19 +211,11 @@ describe('local dev environment', function () {
     }
   }
 
-  const environment = {
-    id: 'ee475441-a499-4646-b553-7ce8dd476e92',
-    name: 'env',
-    account: account
-  }
   const environment_secrets = [
     {
-      id: '582d5f03-edd5-4b3d-b3f7-8597163b351f',
-      key: 'env_key',
+      key: 'a_required_key',
       value: 'env_value',
-      scope: '*',
-      value_type: 'string',
-      environment: environment
+      scope: '*'
     }
   ];
 
@@ -945,11 +957,37 @@ describe('local dev environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      return buildSpecFromYml(local_component_config_with_secrets)
+      return buildSpecFromYml(local_component_config_with_environment_secret)
     })
     .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples`)
-      .reply(200, account))
+      .get(`/accounts/${account.name}`)
+      .reply(200, account)
+      .persist())
+    .stub(SecretUtils, 'getSecrets', () => {
+      return environment_secrets;
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secrets-from=env', '-a', 'examples', '--ssl=false'])
+    .it('Create a local dev with a basic component and an environment secret', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
+      expect(hello_world_environment.a_required_key).to.equal('env_value');
+    })
+  
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+      return buildSpecFromYml(local_component_config_with_environment_secret)
+    })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account)
+      .persist())
     .stub(DeployUtils, 'readSecretsFile', () => {
       return basic_secrets;
     })
@@ -962,11 +1000,11 @@ describe('local dev environment', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secret-file', './examples/hello-world/secrets.yml', '--secrets-from=env', '-a', 'examples', '--ssl=false'])
-    .it('Create a local dev with a basic component, a secret file, and environment secrets', ctx => {
+    .it('Create a local dev with a basic component, a secret file, and an overwritten environment secret', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
-      expect(hello_world_environment.env_key).to.equal('env_value');
+      expect(hello_world_environment.a_required_key).to.equal('some_value');
     })
 
   describe('linked dev', function () {
