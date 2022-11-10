@@ -14,18 +14,18 @@ const print = false;
 
 const account = {
   id: 'test-account-id',
-  name: 'test-account'
-}
+  name: 'test-account',
+};
 
 const environment = {
   id: 'test-env-id',
   name: 'test-env',
   account,
-}
+};
 
 const mock_pipeline = {
-  id: 'test-pipeline-id'
-}
+  id: 'test-pipeline-id',
+};
 
 describe('remote deploy environment', function () {
   const remoteDeploy = mockArchitectAuth()
@@ -43,13 +43,13 @@ describe('remote deploy environment', function () {
       .post(`/pipelines/${mock_pipeline.id}/approve`)
       .reply(200, {}))
     .stdout({ print })
-    .stderr({ print })
+    .stderr({ print });
 
   remoteDeploy
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
     .it('Creates a remote deployment when env exists with env and account flags', ctx => {
       expect(ctx.stdout).to.contain('Deployed');
-    })
+    });
 
   remoteDeploy
     .stub(ComponentRegister.prototype, 'run', sinon.stub().returns(Promise.resolve()))
@@ -61,7 +61,7 @@ describe('remote deploy environment', function () {
       expect(build_spec.getCalls().length).to.equal(1);
       expect(build_spec.firstCall.args[0]).eq('test/mocks/superset/architect.yml');
       expect(ctx.stdout).to.contain('Deployed');
-    })
+    });
 
   remoteDeploy
     .nock(MOCK_API_HOST, api => api
@@ -85,14 +85,14 @@ describe('remote deploy environment', function () {
       expect(slug_validator.firstCall.args[0]).eq(`${account.name}/superset:latest`);
 
       expect(ctx.stdout).to.contain('Deployed');
-    })
+    });
 
   describe('instance deploys', function () {
     remoteDeploy
       .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest@tenant-1'])
       .it('Creates a remote deployment when env exists with env and account flags', ctx => {
-        expect(ctx.stdout).to.contain('Deployed')
-      })
+        expect(ctx.stdout).to.contain('Deployed');
+      });
   });
 });
 
@@ -112,11 +112,13 @@ describe('auto-approve flag with underscore style still works', function () {
       .post(`/pipelines/${mock_pipeline.id}/approve`)
       .reply(200, {}))
     .stdout({ print })
-    .stderr({ print })
+    .stderr({ print });
 
   remoteDeploy
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
     .it('works but also emits a deprecation warning', ctx => {
+      // Remove whitespace from stderr due to small terminal size w/ output
+      ctx.stderr.replace(/\n/g, '');
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated. Use "auto-approve" instead.');
       expect(ctx.stdout).to.contain('Deployed');
     });
@@ -124,19 +126,21 @@ describe('auto-approve flag with underscore style still works', function () {
   remoteDeploy
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve=true', 'examples/echo:latest'])
     .it('works but also emits a deprecation warning 2', ctx => {
+      // Remove whitespace from stderr due to small terminal size w/ output
+      ctx.stderr.replace(/\n/g, '');
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated. Use "auto-approve" instead.');
       expect(ctx.stdout).to.contain('Deployed');
     });
 });
 
 describe('pollPipeline handles failed deployments', () => {
-  let randomId = () => (Math.random() + 1).toString(36).substring(2);
+  const randomId = () => (Math.random() + 1).toString(36).substring(2);
 
   const mock_cluster = {
     id: randomId(),
     name: 'my-mocked-cluster',
     account,
-  }
+  };
   const failed_pipeline = {
     id: mock_pipeline.id,
     failed_at: new Date(),
@@ -159,7 +163,7 @@ describe('pollPipeline handles failed deployments', () => {
   const failed_environment_deployment_2 = {
     ...failed_environment_deployment,
     id: randomId(),
-  }
+  };
   const failed_cluster_deployment = {
     id: randomId(),
     failed_at: new Date(),
@@ -195,7 +199,7 @@ describe('pollPipeline handles failed deployments', () => {
     .it('when deployment is aborted it prints useful error with expected url', (ctx) => {
       const message = `Deployment ${aborted_deployment.id} was aborted. See the deployment log for more details:`;
       const link = `${app_host}/${account.name}/environments/${aborted_deployment.pipeline.environment.name}/deployments/${aborted_deployment.id}`;
-      const expected_error = `${message}\n${link}`
+      const expected_error = `${message}\n${link}`;
       expect((Deploy.prototype.warn as SinonSpy).getCalls().length).to.equal(1);
       expect((Deploy.prototype.warn as SinonSpy).firstCall.args[0]).to.equal(expected_error);
     });
@@ -211,7 +215,7 @@ describe('pollPipeline handles failed deployments', () => {
     .it('when environment deployment fails it prints useful error with expected url', ctx => {
       const message = `Pipeline ${mock_pipeline.id} failed because 1 deployment failed:`;
       const link = `- ${app_host}/${account.name}/environments/${failed_environment_deployment.pipeline.environment!.name}/deployments/${failed_environment_deployment.id}`;
-      const expected_error = `${message}\n${link}`
+      const expected_error = `${message}\n${link}`;
       expect((Deploy.prototype.warn as SinonSpy).getCalls().length).to.equal(1);
       expect((Deploy.prototype.warn as SinonSpy).firstCall.args[0]).to.equal(expected_error);
     });
@@ -227,7 +231,7 @@ describe('pollPipeline handles failed deployments', () => {
     .it('when pipeline deployment fails it prints useful error with expected url', ctx => {
       const message = `Pipeline ${mock_pipeline.id} failed because 1 deployment failed:`;
       const link = `- ${app_host}/${account.name}/clusters/${failed_cluster_deployment.pipeline.cluster!.name}`;
-      const expected_error = `${message}\n${link}`
+      const expected_error = `${message}\n${link}`;
       expect((Deploy.prototype.warn as SinonSpy).getCalls().length).to.equal(1);
       expect((Deploy.prototype.warn as SinonSpy).firstCall.args[0]).to.equal(expected_error);
     });
@@ -244,7 +248,7 @@ describe('pollPipeline handles failed deployments', () => {
       const message = `Pipeline ${mock_pipeline.id} failed because 2 deployments failed:`;
       const link1 = `- ${app_host}/${account.name}/environments/${failed_environment_deployment.pipeline.environment.name}/deployments/${failed_environment_deployment.id}`;
       const link2 = `- ${app_host}/${account.name}/environments/${failed_environment_deployment_2.pipeline.environment.name}/deployments/${failed_environment_deployment_2.id}`;
-      const expected_error = `${message}\n${link1}\n${link2}`
+      const expected_error = `${message}\n${link1}\n${link2}`;
       expect((Deploy.prototype.warn as SinonSpy).getCalls().length).to.equal(1);
       expect((Deploy.prototype.warn as SinonSpy).firstCall.args[0]).to.equal(expected_error);
     });
@@ -256,7 +260,7 @@ describe('pollPipeline handles failed deployments', () => {
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
     .it('when polling times out it prints expected message', ctx => {
-      const expected_error = 'Timeout while polling the pipeline'
+      const expected_error = 'Timeout while polling the pipeline';
       expect((Deploy.prototype.warn as SinonSpy).getCalls().length).to.equal(1);
       expect((Deploy.prototype.warn as SinonSpy).firstCall.args[0]).to.equal(expected_error);
     });
@@ -267,12 +271,12 @@ describe('deployment secrets', function () {
     'echo': {
       'a_required_key': 'some_value',
       'api_port': 3000,
-      'one_more_required_secret': 'one_more_value'
+      'one_more_required_secret': 'one_more_value',
     },
     '*': {
-      'another_required_key': 'required_value'
-    }
-  }
+      'another_required_key': 'required_value',
+    },
+  };
 
   mockArchitectAuth()
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
@@ -357,9 +361,9 @@ describe('deployment secrets', function () {
     .nock(MOCK_API_HOST, api => api
       .post(`/environments/${environment.id}/deploy`, (body) => {
         expect(body.values['*'].another_required_key).to.eq('required_value');
-        expect(body.values['echo'].a_required_key).to.eq('some_value');
-        expect(body.values['echo'].api_port).to.eq(3000);
-        expect(body.values['echo'].one_more_required_secret).to.eq('one_more_value');
+        expect(body.values.echo.a_required_key).to.eq('some_value');
+        expect(body.values.echo.api_port).to.eq(3000);
+        expect(body.values.echo.one_more_required_secret).to.eq('one_more_value');
         return body;
       })
       .reply(200, mock_pipeline))
@@ -385,9 +389,9 @@ describe('deployment secrets', function () {
     .nock(MOCK_API_HOST, api => api
       .post(`/environments/${environment.id}/deploy`, (body) => {
         expect(body.values['*'].another_required_key).to.eq('required_value');
-        expect(body.values['echo'].a_required_key).to.eq('some_value');
-        expect(body.values['echo'].api_port).to.eq(3000);
-        expect(body.values['echo'].one_more_required_secret).to.eq('one_more_value');
+        expect(body.values.echo.a_required_key).to.eq('some_value');
+        expect(body.values.echo.api_port).to.eq(3000);
+        expect(body.values.echo.one_more_required_secret).to.eq('one_more_value');
         return body;
       })
       .reply(200, mock_pipeline))

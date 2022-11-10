@@ -3,23 +3,22 @@ import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('destroy', function () {
-
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
   const mock_account = {
     id: 'test-account-id',
-    name: 'test-account'
-  }
+    name: 'test-account',
+  };
 
   const mock_env = {
     id: 'test-env-id',
-    name: 'test-env'
-  }
+    name: 'test-env',
+  };
 
   const mock_pipeline = {
-    id: 'test-pipeline-id'
-  }
+    id: 'test-pipeline-id',
+  };
 
   const destroy = mockArchitectAuth()
     .stub(PipelineUtils, 'pollPipeline', async () => null)
@@ -42,13 +41,14 @@ describe('destroy', function () {
   destroy
     .command(['destroy', '-a', mock_account.name, '-e', mock_env.name, '--auto-approve'])
     .it('destroy completes', ctx => {
-      expect(ctx.stdout).to.contain('Deployed\n')
+      expect(ctx.stdout).to.contain('Deployed\n');
     });
-
   destroy
     .command(['destroy', '-a', mock_account.name, '-e', mock_env.name, '--auto_approve'])
     .it('destroy completes with a warning when using a deprecated flag', ctx => {
+      // Remove whitespace from stderr due to small terminal size w/ output
+      ctx.stderr.replace(/\n/g, '');
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated. Use "auto-approve" instead.');
-      expect(ctx.stdout).to.contain('Deployed\n')
+      expect(ctx.stdout).to.contain('Deployed\n');
     });
 });
