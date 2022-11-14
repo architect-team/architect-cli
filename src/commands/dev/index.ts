@@ -53,7 +53,7 @@ export function socketPath(path: string): string {
  * Gracefully stops running containers when the process is interrupted, and
  * stops containers when the underlying process returns with an error.
  */
-class UpProcessManager {
+export class UpProcessManager {
   compose_file: string;
   server?: net.Server;
   socket: string;
@@ -125,14 +125,14 @@ class UpProcessManager {
   }
 
   /** Sends the SIGINT signal to the running `docker compose up` process. */
-  interrupt() {
+  interrupt(): void {
     if (!this.compose_process) {
       throw new Error('Must call run() first');
     }
     process.kill(-this.compose_process.pid, 'SIGINT');
   }
 
-  configureInterrupts() {
+  configureInterrupts(): void {
     process.on('SIGINT', () => {
       this.handleInterrupt();
     });
@@ -144,7 +144,7 @@ class UpProcessManager {
     });
   }
 
-  async handleInterrupt() {
+  async handleInterrupt(): Promise<void> {
     // If a user SIGINT's between when docker compose outputs "Attaching to ..." and starts printing logs,
     // the containers will not be stopped and `docker compose stop` won't yet work.
     // We stop SIGINT from doing anything until we know for sure we can stop gracefully.
@@ -166,7 +166,7 @@ class UpProcessManager {
    * Handles printing logs from the attached docker images.
    * Stops printing logs once `handleInterrupt` is called and containers are being stopped.
    */
-  configureLogs() {
+  configureLogs(): void {
     if (!this.compose_process) {
       throw new Error('Must call run() first');
     }
@@ -198,7 +198,7 @@ class UpProcessManager {
     });
   }
 
-  async run() {
+  async run(): Promise<void> {
     this.compose_process = this.start();
 
     this.configureInterrupts();
@@ -516,7 +516,9 @@ export default class Dev extends BaseCommand {
     }
 
     await new UpProcessManager(compose_file, socket, project_name, flags.detached).run();
-    fs.removeSync(compose_file);
+    if (!flags.detached) {
+      fs.removeSync(compose_file);
+    }
     // eslint-disable-next-line no-process-exit
     process.exit();
   }
