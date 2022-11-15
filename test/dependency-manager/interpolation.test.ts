@@ -151,7 +151,7 @@ describe('interpolation spec v1', () => {
       worker_ref
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${worker_ref} -> ${web_ref}[main]`
+      `service: ${worker_ref} -> ${web_ref}[main]`
     ])
 
     const web_node = graph.getNodeByRef(web_ref);
@@ -213,8 +213,8 @@ describe('interpolation spec v1', () => {
       worker_ref
     ])
     expect(public_graph.edges.map((e) => e.toString())).has.members([
-      `gateway -> ${web_ref}[main]`,
-      `${worker_ref} -> ${web_ref}[main]`
+      `ingress: gateway -> ${web_ref}[main]`,
+      `service: ${worker_ref} -> ${web_ref}[main]`
     ])
 
     const public_template = await DockerComposeUtils.generate(public_graph);
@@ -1521,7 +1521,7 @@ describe('interpolation spec v1', () => {
     const publisher_api_ref = resourceRefToNodeRef('publisher.services.publisher-api');
     const consumer_api_ref = resourceRefToNodeRef('consumer.services.consumer-api');
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${consumer_api_ref} -> ${publisher_api_ref}[api]`,
+      `service: ${consumer_api_ref} -> ${publisher_api_ref}[api]`,
     ])
   });
 
@@ -1566,7 +1566,7 @@ describe('interpolation spec v1', () => {
     const app_ref = resourceRefToNodeRef('test.services.app');
     const api_ref = resourceRefToNodeRef('test.services.api');
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${app_ref} -> ${api_ref}[main]`,
+      `service: ${app_ref} -> ${api_ref}[main]`,
     ]);
   });
 });

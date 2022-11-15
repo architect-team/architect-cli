@@ -29,6 +29,7 @@ export class DeprecatedInterfacesSpec extends DeprecatedSpec {
         const resource_string = replaceInterpolationBrackets(serialize(resource_config));
         const from = buildNodeRef(component_config, resource_type, resource_name);
         this.addEnvironmentIngresses(graph, component_configs, from, resource_string);
+        this.addIngresses(graph, component_config, from, resource_string);
         this.addDependencyInterfacesIngresses(graph, component_configs, from, resource_string);
       }
     }
@@ -55,6 +56,33 @@ export class DeprecatedInterfacesSpec extends DeprecatedSpec {
       }
 
       const to = buildNodeRef(dep_component_config, 'services', dep_service_name);
+
+      const gateway_node = this.manager.getGatewayNode();
+      graph.addNode(gateway_node);
+
+      const ingress_edge = new IngressEdge(gateway_node.ref, to, interface_name);
+      graph.addEdge(ingress_edge);
+
+      const ingress_consumer_edge = new IngressConsumerEdge(from, to, interface_name);
+      graph.addEdge(ingress_consumer_edge);
+    }
+  }
+
+  protected addIngresses(graph: DependencyGraph, component_config: ComponentConfig, from: string, resource_string: string): void {
+    const ingresses_regex = new RegExp(`\\\${{\\s*ingresses\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
+    let matches;
+    while ((matches = ingresses_regex.exec(resource_string)) !== null) {
+      if (!matches.groups) {
+        continue;
+      }
+      const { interface_name } = matches.groups;
+
+      const dep_service_name = component_config.metadata.deprecated_interfaces_map[interface_name];
+      if (!dep_service_name) {
+        continue;
+      }
+
+      const to = buildNodeRef(component_config, 'services', dep_service_name);
 
       const gateway_node = this.manager.getGatewayNode();
       graph.addNode(gateway_node);

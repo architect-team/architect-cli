@@ -20,10 +20,10 @@ export abstract class DependencyEdge {
   instance_id = '';
 
   toString(): string {
-    return `${this.from} -> ${this.to}[${this.interface_to}]`;
+    return `${this.__type}: ${this.from} -> ${this.to}[${this.interface_to}]`;
   }
 
   get ref(): string {
-    return `${this.from}.${this.to}.${this.interface_to}`;
+    return `${this.__type}.${this.from}.${this.to}.${this.interface_to}`;
   }
 }
