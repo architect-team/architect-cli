@@ -2,6 +2,7 @@ import { classToPlain, plainToClass, serialize } from 'class-transformer';
 import { isMatch } from 'matcher';
 import { buildNodeRef, ComponentConfig } from './config/component-config';
 import { ArchitectContext, ComponentContext, SecretValue } from './config/component-context';
+import { DeprecatedInterfacesSpec } from './deprecated-spec/interfaces';
 import { DependencyGraph, DependencyGraphMutable } from './graph';
 import { IngressEdge } from './graph/edge/ingress';
 import { ServiceEdge } from './graph/edge/service';
@@ -58,32 +59,29 @@ export default abstract class DependencyManager {
     return component_ref;
   }
 
+  getGatewayNode(): GatewayNode {
+    const gateway_host = this.external_addr.split(':')[0];
+    const gateway_port = Number.parseInt(this.external_addr.split(':')[1] || '443');
+    const gateway_node = new GatewayNode(gateway_host, gateway_port);
+    gateway_node.instance_id = gateway_node.ref;
+    return gateway_node;
+  }
+
   addIngressEdges(graph: DependencyGraph, component_config: ComponentConfig): void {
     for (const [service_name, service] of Object.entries(component_config.services)) {
       for (const [interface_name, interface_spec] of Object.entries(service.interfaces)) {
         if (interface_spec.ingress?.enabled || interface_spec.ingress?.subdomain) {
-          const gateway_host = this.external_addr.split(':')[0];
-          const gateway_port = Number.parseInt(this.external_addr.split(':')[1] || '443');
-
-          const gateway_node = new GatewayNode(gateway_host, gateway_port);
-          gateway_node.instance_id = gateway_node.ref;
+          const gateway_node = this.getGatewayNode();
           graph.addNode(gateway_node);
 
           const ingress_edge = new IngressEdge(gateway_node.ref, buildNodeRef(component_config, 'services', service_name), interface_name);
           graph.addEdge(ingress_edge);
         }
-
-        /* TODO:TJ add back consumers
-        if (!ingress_edge.consumers_map[interface_name]) {
-          ingress_edge.consumers_map[interface_name] = new Set();
-        }
-        ingress_edge.consumers_map[interface_name].add(from);
-        */
       }
     }
   }
 
-  addComponentEdges(graph: DependencyGraph, component_config: ComponentConfig, dependency_configs: ComponentConfig[], context_map: Dictionary<ComponentContext>): void {
+  addComponentEdges(graph: DependencyGraph, component_config: ComponentConfig, dependency_configs: ComponentConfig[]): void {
     const component = component_config;
 
     const dependency_map: Dictionary<ComponentConfig> = {};
@@ -99,9 +97,8 @@ export default abstract class DependencyManager {
     const tasks = Object.entries(component_config.tasks).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'tasks' as ResourceType, resource_config }));
     for (const { resource_config, resource_name, resource_type } of [...services, ...tasks]) {
       const from = buildNodeRef(component, resource_type, resource_name);
-      const copy = { ...resource_config } as any;
-      delete copy.metadata;
-      const service_string = replaceInterpolationBrackets(serialize(copy));
+
+      const service_string = replaceInterpolationBrackets(serialize(resource_config));
       let matches;
 
       // Add edges between services
@@ -122,29 +119,6 @@ export default abstract class DependencyManager {
 
       // TODO:TJ support dependencies.<name>.services.<name>.interfaces.<name>
       // TODO:TJ add tests
-
-      // Deprecated: Add edges between services and interface dependencies inside the component
-      const dep_interface_regex = new RegExp(`\\\${{\\s*dependencies\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
-      while ((matches = dep_interface_regex.exec(service_string)) !== null) {
-        if (!matches.groups) {
-          continue;
-        }
-        const { dependency_name, interface_name } = matches.groups;
-        const dep_ref = this.getComponentRef(dependency_name);
-
-        const dependency = dependency_map[dep_ref];
-        if (!dependency) continue;
-
-        const dep_service_name = dependency.metadata.deprecated_interfaces_map[interface_name];
-        if (!dep_service_name) continue;
-
-        const to = buildNodeRef(dependency, 'services', dep_service_name);
-
-        if (!graph.nodes_map.has(to)) continue;
-
-        const edge = new ServiceEdge(from, to, interface_name);
-        graph.addEdge(edge);
-      }
     }
   }
 
@@ -475,21 +449,31 @@ export default abstract class DependencyManager {
       evaluated_component_specs.push(component_spec);
     }
 
+    const component_configs = evaluated_component_specs.map((component_spec) => transformComponentSpec(component_spec));
+
+    const deprecated_features = [new DeprecatedInterfacesSpec(this)];
+    for (const deprecated_feature of deprecated_features) {
+      if (deprecated_feature.shouldRun(component_configs)) {
+        deprecated_feature.transformGraph(graph, component_configs);
+      }
+    }
+
+    // TODO:TJ remove getDependencyComponents?
     // Add edges to graph
     for (const component_spec of evaluated_component_specs) {
       const component_config = transformComponentSpec(component_spec);
       const dependency_specs = this.getDependencyComponents(component_spec, component_specs);
       const dependency_configs = Object.values(dependency_specs).map(d => transformComponentSpec(d));
-      this.addComponentEdges(graph, component_config, dependency_configs, dependency_context_map);
+      this.addComponentEdges(graph, component_config, dependency_configs);
+    }
 
-      for (const edge of graph.edges) {
-        const from_node = graph.getNodeByRef(edge.from);
-        if (from_node instanceof GatewayNode) {
-          const to_node = graph.getNodeByRef(edge.to);
-          edge.instance_id = to_node.instance_id;
-        } else {
-          edge.instance_id = from_node.instance_id;
-        }
+    for (const edge of graph.edges) {
+      const from_node = graph.getNodeByRef(edge.from);
+      if (from_node instanceof GatewayNode) {
+        const to_node = graph.getNodeByRef(edge.to);
+        edge.instance_id = to_node.instance_id;
+      } else {
+        edge.instance_id = from_node.instance_id;
       }
     }
 

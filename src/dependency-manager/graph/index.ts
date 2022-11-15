@@ -1,6 +1,7 @@
 import { Exclude, Type } from 'class-transformer';
 import { DependencyEdge } from './edge';
 import { IngressEdge } from './edge/ingress';
+import { IngressConsumerEdge } from './edge/ingress-consumer';
 import { ServiceEdge } from './edge/service';
 import { DependencyNode } from './node';
 import { GatewayNode } from './node/gateway';
@@ -27,6 +28,7 @@ export class DependencyGraphMutable {
       subTypes: [
         { value: ServiceEdge, name: 'service' },
         { value: IngressEdge, name: 'ingress' },
+        { value: IngressConsumerEdge, name: 'ingress-consumer' },
       ],
     },
     keepDiscriminatorProperty: true,

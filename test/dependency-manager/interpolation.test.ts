@@ -1522,7 +1522,6 @@ describe('interpolation spec v1', () => {
     const consumer_api_ref = resourceRefToNodeRef('consumer.services.consumer-api');
     expect(graph.edges.map((e) => e.toString())).has.members([
       `${consumer_api_ref} -> ${publisher_api_ref}[api]`,
-      `${consumer_api_ref} -> ${publisher_api_ref}[topic1]`
     ])
   });
 
