@@ -6,6 +6,7 @@ export default class PlatformCreate extends ClusterCreate {
   static deprecationOptions = {
     to: 'cluster:register',
   };
+  static hidden = true;
 
   async run(): Promise<void> {
     await super.run();

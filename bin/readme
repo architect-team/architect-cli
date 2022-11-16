@@ -2,4 +2,4 @@
 
 require('reflect-metadata')
 const ReadmeCommand = require('oclif/lib/commands/readme')
-ReadmeCommand.default.run()
+ReadmeCommand.default.run(['--no-aliases'])

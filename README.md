@@ -39,7 +39,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (--version)
-@architect-io/cli/1.28.0-rc.4 linux-x64 node-v16.18.0
+@architect-io/cli/1.28.0 linux-x64 node-v16.18.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -51,31 +51,7 @@ USAGE
 
 <!-- commands -->
 * [`architect autocomplete [SHELL]`](#architect-autocomplete-shell)
-* [`architect c:register [COMPONENT]`](#architect-cregister-component)
-* [`architect c:validate [CONFIGS_OR_COMPONENTS]`](#architect-cvalidate-configs_or_components)
-* [`architect cluster [QUERY]`](#architect-cluster-query)
-* [`architect cluster:create [CLUSTER]`](#architect-clustercreate-cluster)
-* [`architect cluster:destroy [CLUSTER]`](#architect-clusterdestroy-cluster)
-* [`architect cluster:search [QUERY]`](#architect-clustersearch-query)
-* [`architect clusters [QUERY]`](#architect-clusters-query)
-* [`architect clusters:create [CLUSTER]`](#architect-clusterscreate-cluster)
-* [`architect clusters:deregister [CLUSTER]`](#architect-clustersderegister-cluster)
-* [`architect clusters:destroy [CLUSTER]`](#architect-clustersdestroy-cluster)
-* [`architect clusters:register [CLUSTER]`](#architect-clustersregister-cluster)
-* [`architect clusters:search [QUERY]`](#architect-clusterssearch-query)
-* [`architect comp:register [COMPONENT]`](#architect-compregister-component)
-* [`architect comp:validate [CONFIGS_OR_COMPONENTS]`](#architect-compvalidate-configs_or_components)
-* [`architect component:register [COMPONENT]`](#architect-componentregister-component)
-* [`architect component:search [QUERY]`](#architect-componentsearch-query)
-* [`architect component:validate [CONFIGS_OR_COMPONENTS]`](#architect-componentvalidate-configs_or_components)
-* [`architect component:version [COMPONENT_NAME]`](#architect-componentversion-component_name)
-* [`architect component:versions [COMPONENT_NAME]`](#architect-componentversions-component_name)
-* [`architect components [QUERY]`](#architect-components-query)
-* [`architect components:register [COMPONENT]`](#architect-componentsregister-component)
-* [`architect components:search [QUERY]`](#architect-componentssearch-query)
-* [`architect components:validate [CONFIGS_OR_COMPONENTS]`](#architect-componentsvalidate-configs_or_components)
 * [`architect components:versions [COMPONENT_NAME]`](#architect-componentsversions-component_name)
-* [`architect config`](#architect-config)
 * [`architect config:get OPTION`](#architect-configget-option)
 * [`architect config:set OPTION VALUE`](#architect-configset-option-value)
 * [`architect config:view`](#architect-configview)
@@ -85,22 +61,8 @@ USAGE
 * [`architect dev:list`](#architect-devlist)
 * [`architect dev:stop [NAME]`](#architect-devstop-name)
 * [`architect doctor`](#architect-doctor)
-* [`architect env [QUERY]`](#architect-env-query)
-* [`architect env:create [ENVIRONMENT]`](#architect-envcreate-environment)
-* [`architect env:deregister [ENVIRONMENT]`](#architect-envderegister-environment)
-* [`architect env:destroy [ENVIRONMENT]`](#architect-envdestroy-environment)
-* [`architect env:search [QUERY]`](#architect-envsearch-query)
-* [`architect environment:create [ENVIRONMENT]`](#architect-environmentcreate-environment)
-* [`architect environment:deregister [ENVIRONMENT]`](#architect-environmentderegister-environment)
-* [`architect environment:destroy [ENVIRONMENT]`](#architect-environmentdestroy-environment)
-* [`architect environments [QUERY]`](#architect-environments-query)
 * [`architect environments:create [ENVIRONMENT]`](#architect-environmentscreate-environment)
 * [`architect environments:destroy [ENVIRONMENT]`](#architect-environmentsdestroy-environment)
-* [`architect environments:search [QUERY]`](#architect-environmentssearch-query)
-* [`architect envs [QUERY]`](#architect-envs-query)
-* [`architect envs:create [ENVIRONMENT]`](#architect-envscreate-environment)
-* [`architect envs:destroy [ENVIRONMENT]`](#architect-envsdestroy-environment)
-* [`architect envs:search [QUERY]`](#architect-envssearch-query)
 * [`architect exec [RESOURCE] [FLAGS] -- [COMMAND]`](#architect-exec-resource-flags----command)
 * [`architect help [COMMAND]`](#architect-help-command)
 * [`architect init`](#architect-init)
@@ -109,28 +71,12 @@ USAGE
 * [`architect login`](#architect-login)
 * [`architect logout`](#architect-logout)
 * [`architect logs [RESOURCE]`](#architect-logs-resource)
-* [`architect platform [QUERY]`](#architect-platform-query)
-* [`architect platform:create [CLUSTER]`](#architect-platformcreate-cluster)
-* [`architect platform:destroy [CLUSTER]`](#architect-platformdestroy-cluster)
-* [`architect platform:search [QUERY]`](#architect-platformsearch-query)
-* [`architect platforms [QUERY]`](#architect-platforms-query)
-* [`architect platforms:create [CLUSTER]`](#architect-platformscreate-cluster)
-* [`architect platforms:deregister [CLUSTER]`](#architect-platformsderegister-cluster)
-* [`architect platforms:destroy [CLUSTER]`](#architect-platformsdestroy-cluster)
-* [`architect platforms:register [CLUSTER]`](#architect-platformsregister-cluster)
-* [`architect platforms:search [QUERY]`](#architect-platformssearch-query)
 * [`architect register [COMPONENT]`](#architect-register-component)
 * [`architect scale [SERVICE]`](#architect-scale-service)
-* [`architect secrets SECRETS_FILE`](#architect-secrets-secrets_file)
-* [`architect secrets/get SECRETS_FILE`](#architect-secretsget-secrets_file)
 * [`architect secrets:download SECRETS_FILE`](#architect-secretsdownload-secrets_file)
-* [`architect secrets:set SECRETS_FILE`](#architect-secretsset-secrets_file)
 * [`architect secrets:upload SECRETS_FILE`](#architect-secretsupload-secrets_file)
 * [`architect task COMPONENT TASK`](#architect-task-component-task)
-* [`architect task:exec COMPONENT TASK`](#architect-taskexec-component-task)
 * [`architect unlink [COMPONENTPATHORNAME]`](#architect-unlink-componentpathorname)
-* [`architect validate [CONFIGS_OR_COMPONENTS]`](#architect-validate-configs_or_components)
-* [`architect whoami`](#architect-whoami)
 
 ## `architect autocomplete [SHELL]`
 
@@ -161,735 +107,6 @@ EXAMPLES
 
 _See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v1.2.0/src/commands/autocomplete/index.ts)_
 
-## `architect c:register [COMPONENT]`
-
-Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.
-
-```
-USAGE
-  $ architect c:register [COMPONENT] [-a <value>] [--arg <value>] [-t <value> | ] [--architecture <value>]
-    [--cache-directory <value>]
-
-ARGUMENTS
-  COMPONENT  [default: ./] Path to the component(s) to register
-
-FLAGS
-  -a, --account=<value>      Architect account
-  -t, --tag=<value>          [default: latest] Tag to give to the new component
-  --architecture=<value>...  [default: amd64] Architecture(s) to target for Docker image builds
-  --arg=<value>...           Build arg(s) to pass to docker build
-  --cache-directory=<value>  Directory to write build cache to. Do not use in Github Actions:
-                             https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs
-
-DESCRIPTION
-  Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified,
-  the same command arg(s) and flag(s) will be applied to each component.
-
-ALIASES
-  $ architect component:register
-  $ architect components:register
-  $ architect c:register
-  $ architect comp:register
-
-EXAMPLES
-  $ architect register
-
-  $ architect register -t latest
-
-  $ architect register -a myaccount -t latest ./architect.yml ../myothercomponent/architect.yml
-
-  $ architect register -a myaccount -t latest --arg NODE_ENV=dev ./architect.yml
-```
-
-## `architect c:validate [CONFIGS_OR_COMPONENTS]`
-
-Validate that an architect.yml is syntactically correct.
-
-```
-USAGE
-  $ architect c:validate [CONFIGS_OR_COMPONENTS]
-
-ARGUMENTS
-  CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `component:latest`. Multiple components are
-                         accepted.
-
-DESCRIPTION
-  Validate that an architect.yml is syntactically correct.
-
-ALIASES
-  $ architect component:validate
-  $ architect components:validate
-  $ architect c:validate
-  $ architect comp:validate
-  $ architect validate
-
-EXAMPLES
-  $ architect validate .
-
-  $ architect validate ../mycomponent/architect.yml ../myothercomponent/architect.yml
-```
-
-## `architect cluster [QUERY]`
-
-Search for clusters on Architect Cloud
-
-```
-USAGE
-  $ architect cluster [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search query used to filter results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search for clusters on Architect Cloud
-
-ALIASES
-  $ architect cluster
-  $ architect cluster:search
-  $ architect clusters
-  $ architect clusters:search
-
-EXAMPLES
-  $ architect clusters
-
-  $ architect clusters --account=myaccount mycluster
-```
-
-## `architect cluster:create [CLUSTER]`
-
-Register a new cluster with Architect Cloud
-
-```
-USAGE
-  $ architect cluster:create [CLUSTER] [-a <value>] [--auto-approve <value>] [-t AGENT|agent] [-k <value> | -h
-    <value>] [--flag <value>]
-
-ARGUMENTS
-  CLUSTER  Name to give the cluster
-
-FLAGS
-  -a, --account=<value>     Architect account
-  -h, --host=<value>
-  -k, --kubeconfig=<value>  [default: ~/.kube/config]
-  -t, --type=<option>       <options: AGENT|agent>
-  --auto-approve=<value>
-  --flag=<value>...         [default: ]
-
-DESCRIPTION
-  Register a new cluster with Architect Cloud
-
-ALIASES
-  $ architect clusters:register
-  $ architect cluster:create
-  $ architect clusters:create
-
-EXAMPLES
-  $ architect clusters:create --account=myaccount
-
-  $ architect clusters:register --account=myaccount --type=kubernetes --kubeconfig=~/.kube/config --auto-approve
-```
-
-## `architect cluster:destroy [CLUSTER]`
-
-Deregister a cluster from Architect
-
-```
-USAGE
-  $ architect cluster:destroy [CLUSTER] [-a <value>] [--auto-approve <value>] [-f <value>]
-
-ARGUMENTS
-  CLUSTER  Name of the cluster to deregister
-
-FLAGS
-  -a, --account=<value>   Architect account
-  -f, --force=<value>     Force the deletion even if the cluster is not empty
-  --auto-approve=<value>  Automatically apply the changes
-
-DESCRIPTION
-  Deregister a cluster from Architect
-
-ALIASES
-  $ architect clusters:deregister
-  $ architect cluster:destroy
-  $ architect clusters:destroy
-
-EXAMPLES
-  $ architect cluster:destroy --account=myaccount architect
-
-  $ architect clusters:deregister --account=myaccount --auto-approve --force architect
-```
-
-## `architect cluster:search [QUERY]`
-
-Search for clusters on Architect Cloud
-
-```
-USAGE
-  $ architect cluster:search [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search query used to filter results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search for clusters on Architect Cloud
-
-ALIASES
-  $ architect cluster
-  $ architect cluster:search
-  $ architect clusters
-  $ architect clusters:search
-
-EXAMPLES
-  $ architect clusters
-
-  $ architect clusters --account=myaccount mycluster
-```
-
-## `architect clusters [QUERY]`
-
-Search for clusters on Architect Cloud
-
-```
-USAGE
-  $ architect clusters [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search query used to filter results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search for clusters on Architect Cloud
-
-ALIASES
-  $ architect cluster
-  $ architect cluster:search
-  $ architect clusters
-  $ architect clusters:search
-
-EXAMPLES
-  $ architect clusters
-
-  $ architect clusters --account=myaccount mycluster
-```
-
-_See code: [src/commands/clusters/index.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/clusters/index.ts)_
-
-## `architect clusters:create [CLUSTER]`
-
-Register a new cluster with Architect Cloud
-
-```
-USAGE
-  $ architect clusters:create [CLUSTER] [-a <value>] [--auto-approve <value>] [-t AGENT|agent] [-k <value> | -h
-    <value>] [--flag <value>]
-
-ARGUMENTS
-  CLUSTER  Name to give the cluster
-
-FLAGS
-  -a, --account=<value>     Architect account
-  -h, --host=<value>
-  -k, --kubeconfig=<value>  [default: ~/.kube/config]
-  -t, --type=<option>       <options: AGENT|agent>
-  --auto-approve=<value>
-  --flag=<value>...         [default: ]
-
-DESCRIPTION
-  Register a new cluster with Architect Cloud
-
-ALIASES
-  $ architect clusters:register
-  $ architect cluster:create
-  $ architect clusters:create
-
-EXAMPLES
-  $ architect clusters:create --account=myaccount
-
-  $ architect clusters:register --account=myaccount --type=kubernetes --kubeconfig=~/.kube/config --auto-approve
-```
-
-_See code: [src/commands/clusters/create.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/clusters/create.ts)_
-
-## `architect clusters:deregister [CLUSTER]`
-
-Deregister a cluster from Architect
-
-```
-USAGE
-  $ architect clusters:deregister [CLUSTER] [-a <value>] [--auto-approve <value>] [-f <value>]
-
-ARGUMENTS
-  CLUSTER  Name of the cluster to deregister
-
-FLAGS
-  -a, --account=<value>   Architect account
-  -f, --force=<value>     Force the deletion even if the cluster is not empty
-  --auto-approve=<value>  Automatically apply the changes
-
-DESCRIPTION
-  Deregister a cluster from Architect
-
-ALIASES
-  $ architect clusters:deregister
-  $ architect cluster:destroy
-  $ architect clusters:destroy
-
-EXAMPLES
-  $ architect cluster:destroy --account=myaccount architect
-
-  $ architect clusters:deregister --account=myaccount --auto-approve --force architect
-```
-
-## `architect clusters:destroy [CLUSTER]`
-
-Deregister a cluster from Architect
-
-```
-USAGE
-  $ architect clusters:destroy [CLUSTER] [-a <value>] [--auto-approve <value>] [-f <value>]
-
-ARGUMENTS
-  CLUSTER  Name of the cluster to deregister
-
-FLAGS
-  -a, --account=<value>   Architect account
-  -f, --force=<value>     Force the deletion even if the cluster is not empty
-  --auto-approve=<value>  Automatically apply the changes
-
-DESCRIPTION
-  Deregister a cluster from Architect
-
-ALIASES
-  $ architect clusters:deregister
-  $ architect cluster:destroy
-  $ architect clusters:destroy
-
-EXAMPLES
-  $ architect cluster:destroy --account=myaccount architect
-
-  $ architect clusters:deregister --account=myaccount --auto-approve --force architect
-```
-
-_See code: [src/commands/clusters/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/clusters/destroy.ts)_
-
-## `architect clusters:register [CLUSTER]`
-
-Register a new cluster with Architect Cloud
-
-```
-USAGE
-  $ architect clusters:register [CLUSTER] [-a <value>] [--auto-approve <value>] [-t AGENT|agent] [-k <value> | -h
-    <value>] [--flag <value>]
-
-ARGUMENTS
-  CLUSTER  Name to give the cluster
-
-FLAGS
-  -a, --account=<value>     Architect account
-  -h, --host=<value>
-  -k, --kubeconfig=<value>  [default: ~/.kube/config]
-  -t, --type=<option>       <options: AGENT|agent>
-  --auto-approve=<value>
-  --flag=<value>...         [default: ]
-
-DESCRIPTION
-  Register a new cluster with Architect Cloud
-
-ALIASES
-  $ architect clusters:register
-  $ architect cluster:create
-  $ architect clusters:create
-
-EXAMPLES
-  $ architect clusters:create --account=myaccount
-
-  $ architect clusters:register --account=myaccount --type=kubernetes --kubeconfig=~/.kube/config --auto-approve
-```
-
-## `architect clusters:search [QUERY]`
-
-Search for clusters on Architect Cloud
-
-```
-USAGE
-  $ architect clusters:search [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search query used to filter results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search for clusters on Architect Cloud
-
-ALIASES
-  $ architect cluster
-  $ architect cluster:search
-  $ architect clusters
-  $ architect clusters:search
-
-EXAMPLES
-  $ architect clusters
-
-  $ architect clusters --account=myaccount mycluster
-```
-
-## `architect comp:register [COMPONENT]`
-
-Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.
-
-```
-USAGE
-  $ architect comp:register [COMPONENT] [-a <value>] [--arg <value>] [-t <value> | ] [--architecture <value>]
-    [--cache-directory <value>]
-
-ARGUMENTS
-  COMPONENT  [default: ./] Path to the component(s) to register
-
-FLAGS
-  -a, --account=<value>      Architect account
-  -t, --tag=<value>          [default: latest] Tag to give to the new component
-  --architecture=<value>...  [default: amd64] Architecture(s) to target for Docker image builds
-  --arg=<value>...           Build arg(s) to pass to docker build
-  --cache-directory=<value>  Directory to write build cache to. Do not use in Github Actions:
-                             https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs
-
-DESCRIPTION
-  Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified,
-  the same command arg(s) and flag(s) will be applied to each component.
-
-ALIASES
-  $ architect component:register
-  $ architect components:register
-  $ architect c:register
-  $ architect comp:register
-
-EXAMPLES
-  $ architect register
-
-  $ architect register -t latest
-
-  $ architect register -a myaccount -t latest ./architect.yml ../myothercomponent/architect.yml
-
-  $ architect register -a myaccount -t latest --arg NODE_ENV=dev ./architect.yml
-```
-
-## `architect comp:validate [CONFIGS_OR_COMPONENTS]`
-
-Validate that an architect.yml is syntactically correct.
-
-```
-USAGE
-  $ architect comp:validate [CONFIGS_OR_COMPONENTS]
-
-ARGUMENTS
-  CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `component:latest`. Multiple components are
-                         accepted.
-
-DESCRIPTION
-  Validate that an architect.yml is syntactically correct.
-
-ALIASES
-  $ architect component:validate
-  $ architect components:validate
-  $ architect c:validate
-  $ architect comp:validate
-  $ architect validate
-
-EXAMPLES
-  $ architect validate .
-
-  $ architect validate ../mycomponent/architect.yml ../myothercomponent/architect.yml
-```
-
-## `architect component:register [COMPONENT]`
-
-Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.
-
-```
-USAGE
-  $ architect component:register [COMPONENT] [-a <value>] [--arg <value>] [-t <value> | ] [--architecture <value>]
-    [--cache-directory <value>]
-
-ARGUMENTS
-  COMPONENT  [default: ./] Path to the component(s) to register
-
-FLAGS
-  -a, --account=<value>      Architect account
-  -t, --tag=<value>          [default: latest] Tag to give to the new component
-  --architecture=<value>...  [default: amd64] Architecture(s) to target for Docker image builds
-  --arg=<value>...           Build arg(s) to pass to docker build
-  --cache-directory=<value>  Directory to write build cache to. Do not use in Github Actions:
-                             https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs
-
-DESCRIPTION
-  Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified,
-  the same command arg(s) and flag(s) will be applied to each component.
-
-ALIASES
-  $ architect component:register
-  $ architect components:register
-  $ architect c:register
-  $ architect comp:register
-
-EXAMPLES
-  $ architect register
-
-  $ architect register -t latest
-
-  $ architect register -a myaccount -t latest ./architect.yml ../myothercomponent/architect.yml
-
-  $ architect register -a myaccount -t latest --arg NODE_ENV=dev ./architect.yml
-```
-
-## `architect component:search [QUERY]`
-
-Search components you have access to
-
-```
-USAGE
-  $ architect component:search [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search term used to filter the results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search components you have access to
-
-ALIASES
-  $ architect components
-  $ architect components:search
-  $ architect component:search
-  $ architect component:search
-
-EXAMPLES
-  $ architect components
-
-  $ architect components --account=myaccount
-
-  $ architect components mycomponent
-```
-
-## `architect component:validate [CONFIGS_OR_COMPONENTS]`
-
-Validate that an architect.yml is syntactically correct.
-
-```
-USAGE
-  $ architect component:validate [CONFIGS_OR_COMPONENTS]
-
-ARGUMENTS
-  CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `component:latest`. Multiple components are
-                         accepted.
-
-DESCRIPTION
-  Validate that an architect.yml is syntactically correct.
-
-ALIASES
-  $ architect component:validate
-  $ architect components:validate
-  $ architect c:validate
-  $ architect comp:validate
-  $ architect validate
-
-EXAMPLES
-  $ architect validate .
-
-  $ architect validate ../mycomponent/architect.yml ../myothercomponent/architect.yml
-```
-
-## `architect component:version [COMPONENT_NAME]`
-
-Search component versions of a particular component
-
-```
-USAGE
-  $ architect component:version [COMPONENT_NAME] [-a <value>]
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search component versions of a particular component
-
-ALIASES
-  $ architect component:versions
-  $ architect component:version
-
-EXAMPLES
-  $ architect component:versions mycomponent
-
-  $ architect component:versions --account=myaccount mycomponent
-```
-
-## `architect component:versions [COMPONENT_NAME]`
-
-Search component versions of a particular component
-
-```
-USAGE
-  $ architect component:versions [COMPONENT_NAME] [-a <value>]
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search component versions of a particular component
-
-ALIASES
-  $ architect component:versions
-  $ architect component:version
-
-EXAMPLES
-  $ architect component:versions mycomponent
-
-  $ architect component:versions --account=myaccount mycomponent
-```
-
-## `architect components [QUERY]`
-
-Search components you have access to
-
-```
-USAGE
-  $ architect components [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search term used to filter the results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search components you have access to
-
-ALIASES
-  $ architect components
-  $ architect components:search
-  $ architect component:search
-  $ architect component:search
-
-EXAMPLES
-  $ architect components
-
-  $ architect components --account=myaccount
-
-  $ architect components mycomponent
-```
-
-_See code: [src/commands/components/index.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/components/index.ts)_
-
-## `architect components:register [COMPONENT]`
-
-Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified, the same command arg(s) and flag(s) will be applied to each component.
-
-```
-USAGE
-  $ architect components:register [COMPONENT] [-a <value>] [--arg <value>] [-t <value> | ] [--architecture <value>]
-    [--cache-directory <value>]
-
-ARGUMENTS
-  COMPONENT  [default: ./] Path to the component(s) to register
-
-FLAGS
-  -a, --account=<value>      Architect account
-  -t, --tag=<value>          [default: latest] Tag to give to the new component
-  --architecture=<value>...  [default: amd64] Architecture(s) to target for Docker image builds
-  --arg=<value>...           Build arg(s) to pass to docker build
-  --cache-directory=<value>  Directory to write build cache to. Do not use in Github Actions:
-                             https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs
-
-DESCRIPTION
-  Register a new Component with Architect Cloud. Multiple components are accepted. If multiple components are specified,
-  the same command arg(s) and flag(s) will be applied to each component.
-
-ALIASES
-  $ architect component:register
-  $ architect components:register
-  $ architect c:register
-  $ architect comp:register
-
-EXAMPLES
-  $ architect register
-
-  $ architect register -t latest
-
-  $ architect register -a myaccount -t latest ./architect.yml ../myothercomponent/architect.yml
-
-  $ architect register -a myaccount -t latest --arg NODE_ENV=dev ./architect.yml
-```
-
-## `architect components:search [QUERY]`
-
-Search components you have access to
-
-```
-USAGE
-  $ architect components:search [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search term used to filter the results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search components you have access to
-
-ALIASES
-  $ architect components
-  $ architect components:search
-  $ architect component:search
-  $ architect component:search
-
-EXAMPLES
-  $ architect components
-
-  $ architect components --account=myaccount
-
-  $ architect components mycomponent
-```
-
-## `architect components:validate [CONFIGS_OR_COMPONENTS]`
-
-Validate that an architect.yml is syntactically correct.
-
-```
-USAGE
-  $ architect components:validate [CONFIGS_OR_COMPONENTS]
-
-ARGUMENTS
-  CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `component:latest`. Multiple components are
-                         accepted.
-
-DESCRIPTION
-  Validate that an architect.yml is syntactically correct.
-
-ALIASES
-  $ architect component:validate
-  $ architect components:validate
-  $ architect c:validate
-  $ architect comp:validate
-  $ architect validate
-
-EXAMPLES
-  $ architect validate .
-
-  $ architect validate ../mycomponent/architect.yml ../myothercomponent/architect.yml
-```
-
 ## `architect components:versions [COMPONENT_NAME]`
 
 Search component versions of a particular component
@@ -914,25 +131,7 @@ EXAMPLES
   $ architect component:versions --account=myaccount mycomponent
 ```
 
-_See code: [src/commands/components/versions.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/components/versions.ts)_
-
-## `architect config`
-
-View all the CLI configuration settings
-
-```
-USAGE
-  $ architect config
-
-DESCRIPTION
-  View all the CLI configuration settings
-
-ALIASES
-  $ architect config
-
-EXAMPLES
-  $ architect config
-```
+_See code: [src/commands/components/versions.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/components/versions.ts)_
 
 ## `architect config:get OPTION`
 
@@ -952,7 +151,7 @@ EXAMPLES
   $ architect config:get log_level
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/config/get.ts)_
 
 ## `architect config:set OPTION VALUE`
 
@@ -973,7 +172,7 @@ EXAMPLES
   $ architect config:set log_level info
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/config/set.ts)_
 
 ## `architect config:view`
 
@@ -993,7 +192,7 @@ EXAMPLES
   $ architect config
 ```
 
-_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/config/view.ts)_
+_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/config/view.ts)_
 
 ## `architect deploy [CONFIGS_OR_COMPONENTS]`
 
@@ -1034,7 +233,7 @@ EXAMPLES
   $ architect deploy ./myfolder/architect.yml --secret-file=./mysecrets.yml --environment=myenvironment --account=myaccount --auto-approve
 ```
 
-_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/deploy.ts)_
+_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/deploy.ts)_
 
 ## `architect destroy`
 
@@ -1060,7 +259,7 @@ EXAMPLES
   $ architect destroy --account=myaccount --environment=myenvironment --auto-approve
 ```
 
-_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/destroy.ts)_
+_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/destroy.ts)_
 
 ## `architect dev [CONFIGS_OR_COMPONENTS]`
 
@@ -1101,7 +300,7 @@ EXAMPLES
   $ architect dev --port=81 --browser=false --debug=true --secret-file=./mycomponent/mysecrets.yml ./mycomponent/architect.yml
 ```
 
-_See code: [src/commands/dev/index.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/dev/index.ts)_
+_See code: [src/commands/dev/index.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/dev/index.ts)_
 
 ## `architect dev:list`
 
@@ -1122,7 +321,7 @@ EXAMPLES
   $ architect dev:list
 ```
 
-_See code: [src/commands/dev/list.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/dev/list.ts)_
+_See code: [src/commands/dev/list.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/dev/list.ts)_
 
 ## `architect dev:stop [NAME]`
 
@@ -1142,7 +341,7 @@ EXAMPLES
   $ architect dev:stop <local-environment-name>
 ```
 
-_See code: [src/commands/dev/stop.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/dev/stop.ts)_
+_See code: [src/commands/dev/stop.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/dev/stop.ts)_
 
 ## `architect doctor`
 
@@ -1164,302 +363,7 @@ EXAMPLES
   $ architect doctor -o ./myoutput.yml
 ```
 
-_See code: [src/commands/doctor.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/doctor.ts)_
-
-## `architect env [QUERY]`
-
-Search environments you have access to
-
-```
-USAGE
-  $ architect env [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search term used to filter the results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search environments you have access to
-
-ALIASES
-  $ architect environments
-  $ architect envs
-  $ architect env
-  $ architect environments:search
-  $ architect envs:search
-  $ architect env:search
-
-EXAMPLES
-  $ architect environments
-
-  $ architect environments --account=myaccount
-
-  $ architect environments myenvironment
-```
-
-## `architect env:create [ENVIRONMENT]`
-
-Register a new environment with Architect Cloud
-
-```
-USAGE
-  $ architect env:create [ENVIRONMENT] [-a <value>] [--cluster <value> | --platform <value>] [--description
-    <value>] [--ttl <value>]
-
-ARGUMENTS
-  ENVIRONMENT  Name to give the environment
-
-FLAGS
-  -a, --account=<value>  Architect account
-  --cluster=<value>      Architect cluster
-  --description=<value>  Environment Description
-  --platform=<value>     Architect cluster
-  --ttl=<value>          The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m
-
-DESCRIPTION
-  Register a new environment with Architect Cloud
-
-ALIASES
-  $ architect environment:create
-  $ architect envs:create
-  $ architect env:create
-
-EXAMPLES
-  environment:create --account=myaccount myenvironment
-
-  environment:create --account=myaccount --ttl=5days --description="My new temporary Architect environment" myenvironment
-```
-
-## `architect env:deregister [ENVIRONMENT]`
-
-Deregister an environment
-
-```
-USAGE
-  $ architect env:deregister [ENVIRONMENT] [-a <value>] [--auto-approve <value>] [-f <value>]
-
-ARGUMENTS
-  ENVIRONMENT  Name of the environment to deregister
-
-FLAGS
-  -a, --account=<value>   Architect account
-  -f, --force=<value>     Force the deletion even if the environment is not empty
-  --auto-approve=<value>  Automatically apply the changes
-
-DESCRIPTION
-  Deregister an environment
-
-ALIASES
-  $ architect environment:destroy
-  $ architect envs:destroy
-  $ architect env:destroy
-  $ architect env:deregister
-  $ architect environment:deregister
-
-EXAMPLES
-  $ architect environment:destroy --account=myaccount myenvironment
-
-  $ architect environment:deregister --account=myaccount --auto-approve --force myenvironment
-```
-
-## `architect env:destroy [ENVIRONMENT]`
-
-Deregister an environment
-
-```
-USAGE
-  $ architect env:destroy [ENVIRONMENT] [-a <value>] [--auto-approve <value>] [-f <value>]
-
-ARGUMENTS
-  ENVIRONMENT  Name of the environment to deregister
-
-FLAGS
-  -a, --account=<value>   Architect account
-  -f, --force=<value>     Force the deletion even if the environment is not empty
-  --auto-approve=<value>  Automatically apply the changes
-
-DESCRIPTION
-  Deregister an environment
-
-ALIASES
-  $ architect environment:destroy
-  $ architect envs:destroy
-  $ architect env:destroy
-  $ architect env:deregister
-  $ architect environment:deregister
-
-EXAMPLES
-  $ architect environment:destroy --account=myaccount myenvironment
-
-  $ architect environment:deregister --account=myaccount --auto-approve --force myenvironment
-```
-
-## `architect env:search [QUERY]`
-
-Search environments you have access to
-
-```
-USAGE
-  $ architect env:search [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search term used to filter the results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search environments you have access to
-
-ALIASES
-  $ architect environments
-  $ architect envs
-  $ architect env
-  $ architect environments:search
-  $ architect envs:search
-  $ architect env:search
-
-EXAMPLES
-  $ architect environments
-
-  $ architect environments --account=myaccount
-
-  $ architect environments myenvironment
-```
-
-## `architect environment:create [ENVIRONMENT]`
-
-Register a new environment with Architect Cloud
-
-```
-USAGE
-  $ architect environment:create [ENVIRONMENT] [-a <value>] [--cluster <value> | --platform <value>] [--description
-    <value>] [--ttl <value>]
-
-ARGUMENTS
-  ENVIRONMENT  Name to give the environment
-
-FLAGS
-  -a, --account=<value>  Architect account
-  --cluster=<value>      Architect cluster
-  --description=<value>  Environment Description
-  --platform=<value>     Architect cluster
-  --ttl=<value>          The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m
-
-DESCRIPTION
-  Register a new environment with Architect Cloud
-
-ALIASES
-  $ architect environment:create
-  $ architect envs:create
-  $ architect env:create
-
-EXAMPLES
-  environment:create --account=myaccount myenvironment
-
-  environment:create --account=myaccount --ttl=5days --description="My new temporary Architect environment" myenvironment
-```
-
-## `architect environment:deregister [ENVIRONMENT]`
-
-Deregister an environment
-
-```
-USAGE
-  $ architect environment:deregister [ENVIRONMENT] [-a <value>] [--auto-approve <value>] [-f <value>]
-
-ARGUMENTS
-  ENVIRONMENT  Name of the environment to deregister
-
-FLAGS
-  -a, --account=<value>   Architect account
-  -f, --force=<value>     Force the deletion even if the environment is not empty
-  --auto-approve=<value>  Automatically apply the changes
-
-DESCRIPTION
-  Deregister an environment
-
-ALIASES
-  $ architect environment:destroy
-  $ architect envs:destroy
-  $ architect env:destroy
-  $ architect env:deregister
-  $ architect environment:deregister
-
-EXAMPLES
-  $ architect environment:destroy --account=myaccount myenvironment
-
-  $ architect environment:deregister --account=myaccount --auto-approve --force myenvironment
-```
-
-## `architect environment:destroy [ENVIRONMENT]`
-
-Deregister an environment
-
-```
-USAGE
-  $ architect environment:destroy [ENVIRONMENT] [-a <value>] [--auto-approve <value>] [-f <value>]
-
-ARGUMENTS
-  ENVIRONMENT  Name of the environment to deregister
-
-FLAGS
-  -a, --account=<value>   Architect account
-  -f, --force=<value>     Force the deletion even if the environment is not empty
-  --auto-approve=<value>  Automatically apply the changes
-
-DESCRIPTION
-  Deregister an environment
-
-ALIASES
-  $ architect environment:destroy
-  $ architect envs:destroy
-  $ architect env:destroy
-  $ architect env:deregister
-  $ architect environment:deregister
-
-EXAMPLES
-  $ architect environment:destroy --account=myaccount myenvironment
-
-  $ architect environment:deregister --account=myaccount --auto-approve --force myenvironment
-```
-
-## `architect environments [QUERY]`
-
-Search environments you have access to
-
-```
-USAGE
-  $ architect environments [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search term used to filter the results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search environments you have access to
-
-ALIASES
-  $ architect environments
-  $ architect envs
-  $ architect env
-  $ architect environments:search
-  $ architect envs:search
-  $ architect env:search
-
-EXAMPLES
-  $ architect environments
-
-  $ architect environments --account=myaccount
-
-  $ architect environments myenvironment
-```
-
-_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/environments/index.ts)_
+_See code: [src/commands/doctor.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/doctor.ts)_
 
 ## `architect environments:create [ENVIRONMENT]`
 
@@ -1494,7 +398,7 @@ EXAMPLES
   environment:create --account=myaccount --ttl=5days --description="My new temporary Architect environment" myenvironment
 ```
 
-_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/environments/create.ts)_
+_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/environments/create.ts)_
 
 ## `architect environments:destroy [ENVIRONMENT]`
 
@@ -1528,171 +432,7 @@ EXAMPLES
   $ architect environment:deregister --account=myaccount --auto-approve --force myenvironment
 ```
 
-_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/environments/destroy.ts)_
-
-## `architect environments:search [QUERY]`
-
-Search environments you have access to
-
-```
-USAGE
-  $ architect environments:search [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search term used to filter the results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search environments you have access to
-
-ALIASES
-  $ architect environments
-  $ architect envs
-  $ architect env
-  $ architect environments:search
-  $ architect envs:search
-  $ architect env:search
-
-EXAMPLES
-  $ architect environments
-
-  $ architect environments --account=myaccount
-
-  $ architect environments myenvironment
-```
-
-## `architect envs [QUERY]`
-
-Search environments you have access to
-
-```
-USAGE
-  $ architect envs [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search term used to filter the results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search environments you have access to
-
-ALIASES
-  $ architect environments
-  $ architect envs
-  $ architect env
-  $ architect environments:search
-  $ architect envs:search
-  $ architect env:search
-
-EXAMPLES
-  $ architect environments
-
-  $ architect environments --account=myaccount
-
-  $ architect environments myenvironment
-```
-
-## `architect envs:create [ENVIRONMENT]`
-
-Register a new environment with Architect Cloud
-
-```
-USAGE
-  $ architect envs:create [ENVIRONMENT] [-a <value>] [--cluster <value> | --platform <value>] [--description
-    <value>] [--ttl <value>]
-
-ARGUMENTS
-  ENVIRONMENT  Name to give the environment
-
-FLAGS
-  -a, --account=<value>  Architect account
-  --cluster=<value>      Architect cluster
-  --description=<value>  Environment Description
-  --platform=<value>     Architect cluster
-  --ttl=<value>          The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m
-
-DESCRIPTION
-  Register a new environment with Architect Cloud
-
-ALIASES
-  $ architect environment:create
-  $ architect envs:create
-  $ architect env:create
-
-EXAMPLES
-  environment:create --account=myaccount myenvironment
-
-  environment:create --account=myaccount --ttl=5days --description="My new temporary Architect environment" myenvironment
-```
-
-## `architect envs:destroy [ENVIRONMENT]`
-
-Deregister an environment
-
-```
-USAGE
-  $ architect envs:destroy [ENVIRONMENT] [-a <value>] [--auto-approve <value>] [-f <value>]
-
-ARGUMENTS
-  ENVIRONMENT  Name of the environment to deregister
-
-FLAGS
-  -a, --account=<value>   Architect account
-  -f, --force=<value>     Force the deletion even if the environment is not empty
-  --auto-approve=<value>  Automatically apply the changes
-
-DESCRIPTION
-  Deregister an environment
-
-ALIASES
-  $ architect environment:destroy
-  $ architect envs:destroy
-  $ architect env:destroy
-  $ architect env:deregister
-  $ architect environment:deregister
-
-EXAMPLES
-  $ architect environment:destroy --account=myaccount myenvironment
-
-  $ architect environment:deregister --account=myaccount --auto-approve --force myenvironment
-```
-
-## `architect envs:search [QUERY]`
-
-Search environments you have access to
-
-```
-USAGE
-  $ architect envs:search [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search term used to filter the results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search environments you have access to
-
-ALIASES
-  $ architect environments
-  $ architect envs
-  $ architect env
-  $ architect environments:search
-  $ architect envs:search
-  $ architect env:search
-
-EXAMPLES
-  $ architect environments
-
-  $ architect environments --account=myaccount
-
-  $ architect environments myenvironment
-```
+_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/environments/destroy.ts)_
 
 ## `architect exec [RESOURCE] [FLAGS] -- [COMMAND]`
 
@@ -1728,7 +468,7 @@ EXAMPLES
   $ architect exec --account myaccount --environment myenvironment --replica 0 -- /bin/sh
 ```
 
-_See code: [src/commands/exec.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/exec.ts)_
+_See code: [src/commands/exec.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/exec.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -1774,7 +514,7 @@ EXAMPLES
   $ architect init --from-compose=mycompose.yml --component-file=architect.yml
 ```
 
-_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/init.ts)_
 
 ## `architect link [COMPONENTPATH]`
 
@@ -1796,7 +536,7 @@ EXAMPLES
   $ architect link -p ./mycomponent/architect.yml
 ```
 
-_See code: [src/commands/link/index.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/link/index.ts)_
+_See code: [src/commands/link/index.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/link/index.ts)_
 
 ## `architect link:list`
 
@@ -1813,7 +553,7 @@ EXAMPLES
   $ architect link:list
 ```
 
-_See code: [src/commands/link/list.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/link/list.ts)_
+_See code: [src/commands/link/list.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/link/list.ts)_
 
 ## `architect login`
 
@@ -1836,7 +576,7 @@ EXAMPLES
   $ architect login -e my-email-address@my-email-domain.com
 ```
 
-_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/login.ts)_
 
 ## `architect logout`
 
@@ -1853,7 +593,7 @@ EXAMPLES
   $ architect logout
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/logout.ts)_
 
 ## `architect logs [RESOURCE]`
 
@@ -1887,321 +627,7 @@ EXAMPLES
   $ architect logs --follow --raw --timestamps
 ```
 
-_See code: [src/commands/logs.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/logs.ts)_
-
-## `architect platform [QUERY]`
-
-Search for clusters on Architect Cloud
-
-```
-USAGE
-  $ architect platform [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search query used to filter results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search for clusters on Architect Cloud
-
-ALIASES
-  $ architect platform
-  $ architect platform:search
-  $ architect platforms
-  $ architect platforms:search
-
-EXAMPLES
-  $ architect clusters
-
-  $ architect clusters --account=myaccount mycluster
-```
-
-## `architect platform:create [CLUSTER]`
-
-Register a new cluster with Architect Cloud
-
-```
-USAGE
-  $ architect platform:create [CLUSTER] [-a <value>] [--auto-approve <value>] [-t AGENT|agent] [-k <value> | -h
-    <value>] [--flag <value>]
-
-ARGUMENTS
-  CLUSTER  Name to give the cluster
-
-FLAGS
-  -a, --account=<value>     Architect account
-  -h, --host=<value>
-  -k, --kubeconfig=<value>  [default: ~/.kube/config]
-  -t, --type=<option>       <options: AGENT|agent>
-  --auto-approve=<value>
-  --flag=<value>...         [default: ]
-
-DESCRIPTION
-  Register a new cluster with Architect Cloud
-
-ALIASES
-  $ architect platforms:register
-  $ architect platform:create
-  $ architect platforms:create
-
-EXAMPLES
-  $ architect clusters:create --account=myaccount
-
-  $ architect clusters:register --account=myaccount --type=kubernetes --kubeconfig=~/.kube/config --auto-approve
-```
-
-## `architect platform:destroy [CLUSTER]`
-
-Deregister a cluster from Architect
-
-```
-USAGE
-  $ architect platform:destroy [CLUSTER] [-a <value>] [--auto-approve <value>] [-f <value>]
-
-ARGUMENTS
-  CLUSTER  Name of the cluster to deregister
-
-FLAGS
-  -a, --account=<value>   Architect account
-  -f, --force=<value>     Force the deletion even if the cluster is not empty
-  --auto-approve=<value>  Automatically apply the changes
-
-DESCRIPTION
-  Deregister a cluster from Architect
-
-ALIASES
-  $ architect platforms:deregister
-  $ architect platform:destroy
-  $ architect platforms:destroy
-
-EXAMPLES
-  $ architect cluster:destroy --account=myaccount architect
-
-  $ architect clusters:deregister --account=myaccount --auto-approve --force architect
-```
-
-## `architect platform:search [QUERY]`
-
-Search for clusters on Architect Cloud
-
-```
-USAGE
-  $ architect platform:search [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search query used to filter results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search for clusters on Architect Cloud
-
-ALIASES
-  $ architect platform
-  $ architect platform:search
-  $ architect platforms
-  $ architect platforms:search
-
-EXAMPLES
-  $ architect clusters
-
-  $ architect clusters --account=myaccount mycluster
-```
-
-## `architect platforms [QUERY]`
-
-Search for clusters on Architect Cloud
-
-```
-USAGE
-  $ architect platforms [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search query used to filter results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search for clusters on Architect Cloud
-
-ALIASES
-  $ architect platform
-  $ architect platform:search
-  $ architect platforms
-  $ architect platforms:search
-
-EXAMPLES
-  $ architect clusters
-
-  $ architect clusters --account=myaccount mycluster
-```
-
-_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/platforms/index.ts)_
-
-## `architect platforms:create [CLUSTER]`
-
-Register a new cluster with Architect Cloud
-
-```
-USAGE
-  $ architect platforms:create [CLUSTER] [-a <value>] [--auto-approve <value>] [-t AGENT|agent] [-k <value> | -h
-    <value>] [--flag <value>]
-
-ARGUMENTS
-  CLUSTER  Name to give the cluster
-
-FLAGS
-  -a, --account=<value>     Architect account
-  -h, --host=<value>
-  -k, --kubeconfig=<value>  [default: ~/.kube/config]
-  -t, --type=<option>       <options: AGENT|agent>
-  --auto-approve=<value>
-  --flag=<value>...         [default: ]
-
-DESCRIPTION
-  Register a new cluster with Architect Cloud
-
-ALIASES
-  $ architect platforms:register
-  $ architect platform:create
-  $ architect platforms:create
-
-EXAMPLES
-  $ architect clusters:create --account=myaccount
-
-  $ architect clusters:register --account=myaccount --type=kubernetes --kubeconfig=~/.kube/config --auto-approve
-```
-
-_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/platforms/create.ts)_
-
-## `architect platforms:deregister [CLUSTER]`
-
-Deregister a cluster from Architect
-
-```
-USAGE
-  $ architect platforms:deregister [CLUSTER] [-a <value>] [--auto-approve <value>] [-f <value>]
-
-ARGUMENTS
-  CLUSTER  Name of the cluster to deregister
-
-FLAGS
-  -a, --account=<value>   Architect account
-  -f, --force=<value>     Force the deletion even if the cluster is not empty
-  --auto-approve=<value>  Automatically apply the changes
-
-DESCRIPTION
-  Deregister a cluster from Architect
-
-ALIASES
-  $ architect platforms:deregister
-  $ architect platform:destroy
-  $ architect platforms:destroy
-
-EXAMPLES
-  $ architect cluster:destroy --account=myaccount architect
-
-  $ architect clusters:deregister --account=myaccount --auto-approve --force architect
-```
-
-## `architect platforms:destroy [CLUSTER]`
-
-Deregister a cluster from Architect
-
-```
-USAGE
-  $ architect platforms:destroy [CLUSTER] [-a <value>] [--auto-approve <value>] [-f <value>]
-
-ARGUMENTS
-  CLUSTER  Name of the cluster to deregister
-
-FLAGS
-  -a, --account=<value>   Architect account
-  -f, --force=<value>     Force the deletion even if the cluster is not empty
-  --auto-approve=<value>  Automatically apply the changes
-
-DESCRIPTION
-  Deregister a cluster from Architect
-
-ALIASES
-  $ architect platforms:deregister
-  $ architect platform:destroy
-  $ architect platforms:destroy
-
-EXAMPLES
-  $ architect cluster:destroy --account=myaccount architect
-
-  $ architect clusters:deregister --account=myaccount --auto-approve --force architect
-```
-
-_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/platforms/destroy.ts)_
-
-## `architect platforms:register [CLUSTER]`
-
-Register a new cluster with Architect Cloud
-
-```
-USAGE
-  $ architect platforms:register [CLUSTER] [-a <value>] [--auto-approve <value>] [-t AGENT|agent] [-k <value> | -h
-    <value>] [--flag <value>]
-
-ARGUMENTS
-  CLUSTER  Name to give the cluster
-
-FLAGS
-  -a, --account=<value>     Architect account
-  -h, --host=<value>
-  -k, --kubeconfig=<value>  [default: ~/.kube/config]
-  -t, --type=<option>       <options: AGENT|agent>
-  --auto-approve=<value>
-  --flag=<value>...         [default: ]
-
-DESCRIPTION
-  Register a new cluster with Architect Cloud
-
-ALIASES
-  $ architect platforms:register
-  $ architect platform:create
-  $ architect platforms:create
-
-EXAMPLES
-  $ architect clusters:create --account=myaccount
-
-  $ architect clusters:register --account=myaccount --type=kubernetes --kubeconfig=~/.kube/config --auto-approve
-```
-
-## `architect platforms:search [QUERY]`
-
-Search for clusters on Architect Cloud
-
-```
-USAGE
-  $ architect platforms:search [QUERY] [-a <value>]
-
-ARGUMENTS
-  QUERY  Search query used to filter results
-
-FLAGS
-  -a, --account=<value>  Architect account
-
-DESCRIPTION
-  Search for clusters on Architect Cloud
-
-ALIASES
-  $ architect platform
-  $ architect platform:search
-  $ architect platforms
-  $ architect platforms:search
-
-EXAMPLES
-  $ architect clusters
-
-  $ architect clusters --account=myaccount mycluster
-```
+_See code: [src/commands/logs.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/logs.ts)_
 
 ## `architect register [COMPONENT]`
 
@@ -2243,7 +669,7 @@ EXAMPLES
   $ architect register -a myaccount -t latest --arg NODE_ENV=dev ./architect.yml
 ```
 
-_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/register.ts)_
+_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/register.ts)_
 
 ## `architect scale [SERVICE]`
 
@@ -2274,69 +700,7 @@ EXAMPLES
   $ architect scale api --component my-component --clear
 ```
 
-_See code: [src/commands/scale.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/scale.ts)_
-
-## `architect secrets SECRETS_FILE`
-
-Download secrets from an account or an environment
-
-```
-USAGE
-  $ architect secrets [SECRETS_FILE] [-a <value>] [-e <value>] [--cluster <value>]
-
-ARGUMENTS
-  SECRETS_FILE  Secrets filename to download secrets
-
-FLAGS
-  -a, --account=<value>      Architect account
-  -e, --environment=<value>  Architect environment
-  --cluster=<value>          Architect cluster
-
-DESCRIPTION
-  Download secrets from an account or an environment
-
-ALIASES
-  $ architect secrets
-  $ architect secrets/get
-
-EXAMPLES
-  $ architect secrets --account=myaccount ./mysecrets.yml
-
-  $ architect secrets --account=myaccount --cluster=mycluster ./mysecrets.yml
-
-  $ architect secrets --account=myaccount --environment=myenvironment ./mysecrets.yml
-```
-
-## `architect secrets/get SECRETS_FILE`
-
-Download secrets from an account or an environment
-
-```
-USAGE
-  $ architect secrets/get [SECRETS_FILE] [-a <value>] [-e <value>] [--cluster <value>]
-
-ARGUMENTS
-  SECRETS_FILE  Secrets filename to download secrets
-
-FLAGS
-  -a, --account=<value>      Architect account
-  -e, --environment=<value>  Architect environment
-  --cluster=<value>          Architect cluster
-
-DESCRIPTION
-  Download secrets from an account or an environment
-
-ALIASES
-  $ architect secrets
-  $ architect secrets/get
-
-EXAMPLES
-  $ architect secrets --account=myaccount ./mysecrets.yml
-
-  $ architect secrets --account=myaccount --cluster=mycluster ./mysecrets.yml
-
-  $ architect secrets --account=myaccount --environment=myenvironment ./mysecrets.yml
-```
+_See code: [src/commands/scale.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/scale.ts)_
 
 ## `architect secrets:download SECRETS_FILE`
 
@@ -2369,44 +733,7 @@ EXAMPLES
   $ architect secrets --account=myaccount --environment=myenvironment ./mysecrets.yml
 ```
 
-_See code: [src/commands/secrets/download.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/secrets/download.ts)_
-
-## `architect secrets:set SECRETS_FILE`
-
-Upload secrets from a file to an account or an environment
-
-```
-USAGE
-  $ architect secrets:set [SECRETS_FILE] [-a <value>] [-e <value>] [--cluster <value>] [--override <value>]
-
-ARGUMENTS
-  SECRETS_FILE  Secrets file to be uploaded
-
-FLAGS
-  -a, --account=<value>      Architect account
-  -e, --environment=<value>  Architect environment
-  --cluster=<value>          Architect cluster
-  --override=<value>         Allow override of existing secrets
-
-DESCRIPTION
-  Upload secrets from a file to an account or an environment
-
-ALIASES
-  $ architect secrets:set
-
-EXAMPLES
-  $ architect secrets:set --account=myaccount ./mysecrets.yml
-
-  $ architect secrets:set --account=myaccount --override ./mysecrets.yml
-
-  $ architect secrets:set --account=myaccount --cluster=mycluster ./mysecrets.yml
-
-  $ architect secrets:set --account=myaccount --cluster=mycluster --override ./mysecrets.yml
-
-  $ architect secrets:set --account=myaccount --environment=myenvironment ./mysecrets.yml
-
-  $ architect secrets:set --account=myaccount --environment=myenvironment --override ./mysecrets.yml
-```
+_See code: [src/commands/secrets/download.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/secrets/download.ts)_
 
 ## `architect secrets:upload SECRETS_FILE`
 
@@ -2445,7 +772,7 @@ EXAMPLES
   $ architect secrets:set --account=myaccount --environment=myenvironment --override ./mysecrets.yml
 ```
 
-_See code: [src/commands/secrets/upload.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/secrets/upload.ts)_
+_See code: [src/commands/secrets/upload.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/secrets/upload.ts)_
 
 ## `architect task COMPONENT TASK`
 
@@ -2475,35 +802,7 @@ EXAMPLES
   $ architect task --account=myaccount --environment=myenvironment mycomponent:latest mytask
 ```
 
-_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/task.ts)_
-
-## `architect task:exec COMPONENT TASK`
-
-Execute a task in the given environment
-
-```
-USAGE
-  $ architect task:exec [COMPONENT] [TASK] [-l <value> | -a <value>] [-o <value> |  | -e <value>]
-
-ARGUMENTS
-  COMPONENT  The name of the component that contains the task to execute
-  TASK       The name of the task to execute
-
-FLAGS
-  -a, --account=<value>       Architect account
-  -e, --environment=<value>   Architect environment
-  -l, --local=<value>         Deploy the stack locally instead of via Architect Cloud
-  -o, --compose-file=<value>  Path where the compose file should be written to
-
-DESCRIPTION
-  Execute a task in the given environment
-
-ALIASES
-  $ architect task:exec
-
-EXAMPLES
-  $ architect task --account=myaccount --environment=myenvironment mycomponent:latest mytask
-```
+_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/task.ts)_
 
 ## `architect unlink [COMPONENTPATHORNAME]`
 
@@ -2527,55 +826,5 @@ EXAMPLES
   $ architect unlink -p mycomponent
 ```
 
-_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/unlink.ts)_
-
-## `architect validate [CONFIGS_OR_COMPONENTS]`
-
-Validate that an architect.yml is syntactically correct.
-
-```
-USAGE
-  $ architect validate [CONFIGS_OR_COMPONENTS]
-
-ARGUMENTS
-  CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `component:latest`. Multiple components are
-                         accepted.
-
-DESCRIPTION
-  Validate that an architect.yml is syntactically correct.
-
-ALIASES
-  $ architect component:validate
-  $ architect components:validate
-  $ architect c:validate
-  $ architect comp:validate
-  $ architect validate
-
-EXAMPLES
-  $ architect validate .
-
-  $ architect validate ../mycomponent/architect.yml ../myothercomponent/architect.yml
-```
-
-_See code: [src/commands/validate.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/validate.ts)_
-
-## `architect whoami`
-
-Get the logged in user
-
-```
-USAGE
-  $ architect whoami
-
-DESCRIPTION
-  Get the logged in user
-
-ALIASES
-  $ architect whoami
-
-EXAMPLES
-  $ architect whoami
-```
-
-_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0-rc.4/src/commands/whoami.ts)_
+_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v1.28.0/src/commands/unlink.ts)_
 <!-- commandsstop -->
