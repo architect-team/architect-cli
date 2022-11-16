@@ -5,6 +5,7 @@ import { ArchitectContext, ComponentContext, SecretValue } from './config/compon
 import { DeprecatedInterfacesSpec } from './deprecated-spec/interfaces';
 import { DependencyGraph, DependencyGraphMutable } from './graph';
 import { IngressEdge } from './graph/edge/ingress';
+import { IngressConsumerEdge } from './graph/edge/ingress-consumer';
 import { ServiceEdge } from './graph/edge/service';
 import { DependencyNode } from './graph/node';
 import { GatewayNode } from './graph/node/gateway';
@@ -451,13 +452,6 @@ export default abstract class DependencyManager {
 
     const component_configs = evaluated_component_specs.map((component_spec) => transformComponentSpec(component_spec));
 
-    const deprecated_features = [new DeprecatedInterfacesSpec(this)];
-    for (const deprecated_feature of deprecated_features) {
-      if (deprecated_feature.shouldRun(component_configs)) {
-        deprecated_feature.transformGraph(graph, component_configs);
-      }
-    }
-
     // TODO:TJ remove getDependencyComponents?
     // Add edges to graph
     for (const component_spec of evaluated_component_specs) {
@@ -465,6 +459,13 @@ export default abstract class DependencyManager {
       const dependency_specs = this.getDependencyComponents(component_spec, component_specs);
       const dependency_configs = Object.values(dependency_specs).map(d => transformComponentSpec(d));
       this.addComponentEdges(graph, component_config, dependency_configs);
+    }
+
+    const deprecated_features = [new DeprecatedInterfacesSpec(this)];
+    for (const deprecated_feature of deprecated_features) {
+      if (deprecated_feature.shouldRun(component_configs)) {
+        deprecated_feature.transformGraph(graph, component_configs);
+      }
     }
 
     for (const edge of graph.edges) {
@@ -489,6 +490,20 @@ export default abstract class DependencyManager {
           };
         }
         context.services[service_name].environment = service.environment;
+
+        const to = buildNodeRef(transformComponentSpec(component_spec), 'services', service_name);
+        // Generate consumers context
+        for (const interface_name of Object.keys(service.interfaces || {})) {
+          // TODO:TJ don't force transform?
+          const consumer_edges = graph.edges.filter((edge) => edge instanceof IngressConsumerEdge && edge.to === to && edge.interface_to === interface_name);
+          const consumer_node_refs = new Set(consumer_edges.map(edge => edge.from));
+
+          const consumers = new Set<string>();
+          for (const consumer_node_ref of consumer_node_refs) {
+            console.log(consumer_node_ref);
+            // TODO:TJ context.services
+          }
+        }
       }
 
       for (const [task_name, task] of Object.entries(component_spec.tasks || {})) {
@@ -508,7 +523,7 @@ export default abstract class DependencyManager {
           outputs: dependency_context.outputs || {},
         };
 
-        // Deprecated: environment.ingresses
+        // TODO:TJ move to DeprecateInterfaceSpec
         if (!context.environment.ingresses[dep_name]) {
           context.environment.ingresses[dep_name] = {};
         }
@@ -516,26 +531,6 @@ export default abstract class DependencyManager {
           context.environment.ingresses[dep_name][dep_ingress_name] = dep_ingress;
         }
       }
-
-      /* TODO:TJ
-      const ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && edge.to.startsWith(`${component_spec.name}.`)) as IngressEdge[];
-      // Set consumers context
-      if (ingress_edge) {
-        for (const [interface_name, consumer_refs] of Object.entries(ingress_edge.consumers_map)) {
-          const interfaces_refs = new Set(graph.edges.filter(edge => consumer_refs.has(edge.to) && graph.getNodeByRef(edge.from) instanceof ComponentNode).map(edge => edge.from));
-          const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && interfaces_refs.has(edge.to)) as IngressEdge[];
-          const consumers = new Set<string>();
-          for (const consumer_ingress_edge of consumer_ingress_edges) {
-            const interface_node = graph.getNodeByRef(consumer_ingress_edge.to) as ComponentNode;
-            const consumer_interface = dependency_context_map[interface_node.slug].ingresses || {};
-            for (const { interface_to: consumer_interface_to } of consumer_ingress_edge.interface_mappings) {
-              consumers.add(consumer_interface[consumer_interface_to].url);
-            }
-          }
-          context.ingresses[interface_name].consumers = [...consumers].sort();
-        }
-      }
-      */
 
       if (options.interpolate) {
         component_spec = interpolateObject(component_spec, context, { keys: false, values: true, file: component_spec.metadata.file });
