@@ -1,17 +1,11 @@
 import axios from 'axios';
 import chalk from 'chalk';
 import execa from 'execa';
-import fs from 'fs-extra';
 import inquirer from 'inquirer';
-import yaml from 'js-yaml';
-import path from 'path';
-import untildify from 'untildify';
-import { buildSpecFromPath, ComponentSpec } from '../../';
-import AppService from '../../app-config/service';
 import PromptUtils from '../../common/utils/prompt-utils';
-import { EnvironmentSpecValue } from '../../dependency-manager/spec/resource-spec';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
 import inquirerPrompt from 'inquirer-autocomplete-prompt';
+import LocalPaths from '../../paths';
 
 interface Selection {
   name: string,
@@ -21,15 +15,6 @@ interface Selection {
 }
 
 export default class ProjectUtils {
-  static getRootComponent(selections: Dictionary<Selection>): string {
-    if (selections.frontend) {
-      return selections.frontend.name.toLowerCase();
-    } else if (selections.backend) {
-      return selections.backend.name.toLowerCase();
-    }
-    return '';
-  }
-
   static async prompt(choices: any[], message: string): Promise<any> {
     inquirer.registerPrompt('autocomplete', inquirerPrompt);
     const answers: { selected: any } = await inquirer.prompt([
@@ -69,7 +54,7 @@ export default class ProjectUtils {
 
   static async getSelections(): Promise<Dictionary<Selection>> {
     // get choices from template-configs repository
-    const config_file = 'https://raw.githubusercontent.com/architect-team/template-configs/main/config.json';
+    const config_file = LocalPaths.GITHUB_TEMPLATE_CONFIG_URL;
     const config_json = await this.fetchJsonFromGitHub(config_file) as Dictionary<any>;
 
     const choices = config_json.choices;
