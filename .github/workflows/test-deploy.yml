@@ -1,6 +1,12 @@
 name: Test superset deployment
 
-on: push
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
 
 jobs:
   test_local:
@@ -32,7 +38,7 @@ jobs:
 
   test_remote:
     name: Superset remote deployment
-    if: github.ref_name == 'main'
+    if: github.ref_name == 'rc'
     env:
       ACCOUNT_NAME: architect-ci
       ENVIRONMENT_NAME: example-environment
@@ -52,7 +58,7 @@ jobs:
       - run: ./bin/dev config:set log_level debug
       - run: ./bin/dev login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
       - run: ./bin/dev register -a $ACCOUNT_NAME examples/hello-world/architect.yml
-      - run: ./bin/dev env:create || exit 0 # TODO: remove once 409s can be ignored - https://gitlab.com/architect-io/architect-cli/-/issues/556
+      - run: ./bin/dev env:create $ENVIRONMENT_NAME || exit 0 # TODO: remove once 409s can be ignored - https://gitlab.com/architect-io/architect-cli/-/issues/556
       - run: ./bin/dev deploy -a $ACCOUNT_NAME --auto-approve -e $ENVIRONMENT_NAME test/mocks/superset/architect.yml -s param_unset=test -s world_text=Architect
       - run: sleep 180
       - name: Check that the app returns the expected response
