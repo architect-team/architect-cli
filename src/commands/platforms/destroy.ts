@@ -6,6 +6,7 @@ export default class PlatformDestroy extends ClusterDestroy {
   static deprecationOptions = {
     to: 'cluster:deregister',
   };
+  static hidden = true;
 
   async run(): Promise<void> {
     await super.run();
