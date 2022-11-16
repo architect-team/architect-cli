@@ -486,7 +486,7 @@ export class DockerComposeUtils {
   public static async getContainerInfo(container_id: string): Promise<DockerInspect | undefined> {
     if (!container_id) return;
     const inspect_cmd = await docker(['inspect', '--format=\'{{json .}}\'', container_id], { stdout: false });
-    return JSON.parse(inspect_cmd.stdout.substring(1, inspect_cmd.stdout.length - 1)) as DockerInspect;
+    return await JSON.parse(inspect_cmd.stdout.substring(1, inspect_cmd.stdout.length - 1)) as DockerInspect;
   }
 
   /**
