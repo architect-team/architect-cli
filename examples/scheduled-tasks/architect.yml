@@ -4,7 +4,8 @@ homepage: https://github.com/architect-team/architect-cli/tree/main/examples/sch
 
 tasks:
   curler:
-    image: ellerbrock/alpine-bash-curl-ssl # useful public image with bash and curl pre-installed
+    build:
+      context: .
     schedule: '0 0 * * *' # every day at 12:00am
     command:
       - sh
