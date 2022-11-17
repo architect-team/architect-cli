@@ -23,7 +23,7 @@ export class DeprecatedInterfacesSpec extends DeprecatedSpec {
 
   public transformContext(component_configs: ComponentConfig[], context_map: Dictionary<ComponentContext>): void {
     for (const component_config of component_configs) {
-      // TODO:TJ
+      // TODO:TJ any
       const context = context_map[component_config.metadata.ref] as any;
 
       context.interfaces = {};
@@ -44,31 +44,16 @@ export class DeprecatedInterfacesSpec extends DeprecatedSpec {
         }
         context.environment.ingresses[component_config.name][deprecated_interface_name] = interface_context.ingress;
       }
-
-      /*
-      context.dependencies[dep_name] = {
-        ingresses: dependency_context.ingresses || {},
-        interfaces: dependency_context.interfaces || {},
-        outputs: dependency_context.outputs || {},
-      };
-
-      // TODO:TJ move to DeprecateInterfaceSpec
-      if (!context.environment.ingresses[dep_name]) {
-        context.environment.ingresses[dep_name] = {};
-      }
-      for (const [dep_ingress_name, dep_ingress] of Object.entries(context.dependencies[dep_name].ingresses)) {
-        context.environment.ingresses[dep_name][dep_ingress_name] = dep_ingress;
-      }
-      */
     }
 
     for (const component_config of component_configs) {
+      // TODO:TJ any
       const context = context_map[component_config.metadata.ref] as any;
 
       for (const dep_name of Object.keys(context.dependencies)) {
         const dependency_context = context_map[dep_name] as any;
-        context.dependencies[dep_name].interfaces = dependency_context.interfaces;
-        context.dependencies[dep_name].ingresses = dependency_context.ingresses;
+        context.dependencies[dep_name].interfaces = dependency_context.interfaces || {};
+        context.dependencies[dep_name].ingresses = dependency_context.ingresses || {};
 
         if (!context.environment.ingresses[dep_name]) {
           context.environment.ingresses[dep_name] = {};

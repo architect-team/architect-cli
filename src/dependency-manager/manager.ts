@@ -119,7 +119,6 @@ export default abstract class DependencyManager {
         graph.addEdge(edge);
       }
 
-      // TODO:TJ support dependencies.<name>.services.<name>.interfaces.<name>
       // TODO:TJ add tests
     }
   }
@@ -365,28 +364,27 @@ export default abstract class DependencyManager {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           external_port: interface_config.port,
-          external_host: interface_config.host,
+          external_host: interface_config.host || '',
           // Return different value for port when a service is refing its own port value
           port: `\${{ ${interface_ref}.external_host || startsWith(_path, 'services.${service_name}.') ? ${interface_ref}.external_port : ${architect_port} }}`,
           host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : '${architect_host}' }}`,
           url: this.generateUrl(interface_ref),
         };
 
-        if (interface_config.ingress) {
-          const ingress_ref = `${interface_ref}.ingress`;
-          context.services[service_name].interfaces[interface_name].ingress = {
-            dns_zone: external_host,
-            subdomain: interface_config.ingress.subdomain || interface_name,
-            host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : ((${ingress_ref}.subdomain == '@' ? '' : ${ingress_ref}.subdomain + '.') + ${ingress_ref}.dns_zone) }}`,
-            port: `\${{ ${interface_ref}.external_host ? ${interface_ref}.port : ${external_port} }}`,
-            protocol: `\${{ ${interface_ref}.external_host ? ${interface_ref}.protocol : '${external_protocol}' }}`,
-            username: '',
-            password: '',
-            path: interface_config.ingress?.path,
-            url: this.generateUrl(ingress_ref),
-            consumers: [],
-          };
-        }
+        const ingress_ref = `${interface_ref}.ingress`;
+        const subdomain = interface_config.ingress?.subdomain || interface_name;
+        context.services[service_name].interfaces[interface_name].ingress = {
+          dns_zone: external_host,
+          subdomain: subdomain || interface_name,
+          host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : ((${ingress_ref}.subdomain == '@' ? '' : ${ingress_ref}.subdomain + '.') + ${ingress_ref}.dns_zone) }}`,
+          port: `\${{ ${interface_ref}.external_host ? ${interface_ref}.port : ${external_port} }}`,
+          protocol: `\${{ ${interface_ref}.external_host ? ${interface_ref}.protocol : '${external_protocol}' }}`,
+          username: '',
+          password: '',
+          path: interface_config.ingress?.path,
+          url: this.generateUrl(ingress_ref),
+          consumers: [],
+        };
       }
     }
     return { component_spec, context };
@@ -409,7 +407,6 @@ export default abstract class DependencyManager {
     const graph = new DependencyGraphMutable();
 
     const context_map: Dictionary<ComponentContext> = {};
-    const dependency_context_map: Dictionary<ComponentContext> = {};
 
     const evaluated_component_specs: ComponentSpec[] = [];
     for (const raw_component_spec of component_specs) {
@@ -417,12 +414,10 @@ export default abstract class DependencyManager {
 
       if (options.interpolate) {
         // Interpolate interfaces/ingresses/services for dependencies
-        dependency_context_map[component_spec.metadata.ref] = interpolateObject(context, context, { keys: false, values: true, file: component_spec.metadata.file });
+        context_map[component_spec.metadata.ref] = interpolateObject(context, context, { keys: false, values: true, file: component_spec.metadata.file });
       } else {
-        dependency_context_map[component_spec.metadata.ref] = context;
+        context_map[component_spec.metadata.ref] = context;
       }
-
-      context_map[component_spec.metadata.ref] = context;
       evaluated_component_specs.push(component_spec);
     }
 
@@ -455,7 +450,7 @@ export default abstract class DependencyManager {
     }
 
     // Generate context for dependencies/consumers
-    for (let component_spec of evaluated_component_specs) {
+    for (const component_spec of evaluated_component_specs) {
       const context = context_map[component_spec.metadata.ref];
 
       for (const [service_name, service] of Object.entries(component_spec.services || {})) {
@@ -467,6 +462,7 @@ export default abstract class DependencyManager {
         }
         context.services[service_name].environment = service.environment;
 
+        // TODO:TJ don't force transform?
         const to = buildNodeRef(transformComponentSpec(component_spec), 'services', service_name);
         // Generate consumers context
         for (const interface_name of Object.keys(service.interfaces || {})) {
@@ -475,7 +471,6 @@ export default abstract class DependencyManager {
             continue;
           }
 
-          // TODO:TJ don't force transform?
           const consumer_edges = graph.edges.filter(edge => edge instanceof IngressConsumerEdge && edge.to === to && edge.interface_to === interface_name);
           const consumer_node_refs = new Set(consumer_edges.map(edge => edge.from));
           const consumer_nodes = [...consumer_node_refs].map(node_ref => graph.getNodeByRef(node_ref)).filter(node => node instanceof ServiceNode) as ServiceNode[];
@@ -506,34 +501,22 @@ export default abstract class DependencyManager {
       const dependency_specs = this.getDependencyComponents(component_spec, component_specs);
       context.dependencies = {};
       for (const [dep_name, dependency_spec] of Object.entries(dependency_specs)) {
-        const dependency_context = dependency_context_map[dependency_spec.metadata.ref];
+        const dependency_context = context_map[dependency_spec.metadata.ref];
         context.dependencies[dep_name] = {
           services: dependency_context.services || {},
           outputs: dependency_context.outputs || {},
         };
-
-        /* TODO:TJ
-        context.dependencies[dep_name] = {
-          ingresses: dependency_context.ingresses || {},
-          interfaces: dependency_context.interfaces || {},
-          outputs: dependency_context.outputs || {},
-        };
-
-        // TODO:TJ move to DeprecateInterfaceSpec
-        if (!context.environment.ingresses[dep_name]) {
-          context.environment.ingresses[dep_name] = {};
-        }
-        for (const [dep_ingress_name, dep_ingress] of Object.entries(context.dependencies[dep_name].ingresses)) {
-          context.environment.ingresses[dep_name][dep_ingress_name] = dep_ingress;
-        }
-        */
       }
+    }
 
-      for (const deprecated_feature of deprecated_features) {
-        if (deprecated_feature.shouldRun(component_configs)) {
-          deprecated_feature.transformContext(component_configs, context_map);
-        }
+    for (const deprecated_feature of deprecated_features) {
+      if (deprecated_feature.shouldRun(component_configs)) {
+        deprecated_feature.transformContext(component_configs, context_map);
       }
+    }
+
+    for (let component_spec of evaluated_component_specs) {
+      const context = context_map[component_spec.metadata.ref];
 
       if (options.interpolate) {
         component_spec = interpolateObject(component_spec, context, { keys: false, values: true, file: component_spec.metadata.file });
