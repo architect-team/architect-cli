@@ -13,7 +13,7 @@ import * as ComponentBuilder from '../../../src/dependency-manager/spec/utils/co
 import { MOCK_API_HOST } from '../../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = false;
+const print = true; // TODO: undo
 
 const account = {
   id: 'test-account-id',
@@ -176,6 +176,15 @@ describe('local dev environment', function () {
     },
     '*': {
       'another_required_key': 'required_value'
+    }
+  }
+  const dotenv_wildcard_secrets = {
+    '*': {
+      'a_required_key': 'some_value',
+      'another_required_key': 'required_value',
+      'one_more_required_secret': 'one_more_value',
+      'compose_escaped_variable': 'variable_split_$_with_dollar$signs',
+      'api_port': 3000
     }
   }
   const stacked_secrets = {
@@ -749,6 +758,30 @@ describe('local dev environment', function () {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose);
+    })
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+      return buildSpecFromYml(local_component_config_with_secrets)
+    })
+    .stub(DeployUtils, 'readDotEnvSecretsFile', () => {
+      return dotenv_wildcard_secrets;
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secret-file', './examples/hello-world/.env', '--ssl=false'])
+    .it('Create a local dev with a basic component and a basic .env secrets file', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      const hello_world_service = runCompose.firstCall.args[0].services[hello_api_ref] as any;
+      expect(hello_world_service.external_links).to.contain('gateway:test.arc.localhost');
+      expect(hello_world_service.environment.a_required_key).to.equal('some_value');
+      expect(hello_world_service.environment.another_required_key).to.equal('required_value');
+      expect(hello_world_service.environment.one_more_required_secret).to.equal('one_more_value');
     })
 
   test

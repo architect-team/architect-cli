@@ -273,6 +273,14 @@ describe('deployment secrets', function () {
       'another_required_key': 'required_value'
     }
   }
+  const dotenv_wildcard_secrets = {
+    '*': {
+      'another_required_key': 'required_value',
+      'a_required_key': 'some_value',
+      'api_port': 3000,
+      'one_more_required_secret': 'one_more_value'
+    }
+  }
 
   mockArchitectAuth()
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
@@ -367,6 +375,34 @@ describe('deployment secrets', function () {
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--secret-file', './examples/echo/secrets.yml'])
     .it('passing a secrets file', ctx => {
+      expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
+    });
+
+  mockArchitectAuth()
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
+    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
+    .stub(DeployUtils, 'readDotEnvSecretsFile', () => {
+      return dotenv_wildcard_secrets;
+    })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.id}/environments/${environment.name}`)
+      .reply(200, environment))
+    .nock(MOCK_API_HOST, api => api
+      .post(`/environments/${environment.id}/deploy`, (body) => {
+        expect(body.values['*'].another_required_key).to.eq('required_value');
+        expect(body.values['*'].a_required_key).to.eq('some_value');
+        expect(body.values['*'].api_port).to.eq(3000);
+        expect(body.values['*'].one_more_required_secret).to.eq('one_more_value');
+        return body;
+      })
+      .reply(200, mock_pipeline))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--secret-file', './examples/echo/.env'])
+    .it('passing a dotenv secrets file', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
 
