@@ -58,8 +58,8 @@ services:
       PARAM_STRING: ${{ secrets.param_string }}
       PARAM_REQUIRED: ${{ secrets.param_required }}
       PARAM_OPTIONAL: ${{ secrets.log_level }}
-    cpu: 2
-    memory: 4GB
+    cpu: 1
+    memory: 1GB
     replicas: 2
     scaling:
       min_replicas: 1
@@ -84,9 +84,9 @@ services:
       POSTGRES_USER: ${{ secrets.db_user }}
       POSTGRES_PASSWORD: ${{ secrets.db_pass }}
       POSTGRES_DB: ${{ secrets.db_name }}
-    volumes:
-      volume-object:
-        mount_path: /usr/data
+    # volumes: # TODO: uncomment when volumes are updated - https://gitlab.com/architect-io/hub-api/-/issues/671
+    #   volume-object:
+    #     mount_path: /usr/data
     ${{ if architect.environment == 'local' }}:
       description: api-db service debug
       image: postgres:12
@@ -108,8 +108,8 @@ services:
           host_path: ./test
           description: Volume description
           readonly: false
-      cpu: 2
-      memory: 4GB
+      cpu: 1
+      memory: 1GB
       interfaces:
         postgres:
           port: 5432
@@ -172,12 +172,12 @@ services:
       - npm
       - run
       - start
-    volumes:
-      volume-string: /usr/src/app/some-volume
-      volume-object:
-        mount_path: /usr/src/app/mount-path
-        description: Volume description
-        readonly: false
+    # volumes: # TODO: uncomment when volumes are updated - https://gitlab.com/architect-io/hub-api/-/issues/671
+    #   volume-string: /usr/src/app/some-volume
+    #   volume-object:
+    #     mount_path: /usr/src/app/mount-path
+    #     description: Volume description
+    #     readonly: false
     ${{ if architect.environment == 'local' }}:
       build:
         args:
@@ -199,42 +199,42 @@ services:
       environment:
         API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
 
-# tasks: # TODO: add back in once https://gitlab.com/architect-io/architect-cli/-/issues/559 is fixed
-#   curler:
-#     schedule: '*/5 * * * ?'
-#     image: ellerbrock/alpine-bash-curl-ssl
-#     command:
-#       - sh
-#       - -c
-#       - $RUN_CURL && $SERVER_URL
+tasks:
+  curler:
+    schedule: '*/5 * * * ?'
+    image: ellerbrock/alpine-bash-curl-ssl
+    command:
+      - sh
+      - -c
+      - $RUN_CURL && curl $SERVER_URL
 
-#     environment:
-#       SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
-#       RUN_CURL: ${{ secrets.param_boolean }}
+    environment:
+      SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
+      RUN_CURL: ${{ secrets.param_boolean }}
 
-#   curler-build:
-#     schedule: '*/5 * * * ?'
-#     build:
-#       context: ./task
-#     command:
-#       - sh
-#       - -c
-#       - curl $SERVER_URL
-#     environment:
-#       SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
-#       RUN_CURL: ${{ secrets.param_boolean }}
-#   ${{ if architect.environment == 'local' }}:
-#     curler-build-local:
-#       build:
-#         context: ./task
-#         dockerfile: ./Dockerfile
-#       command:
-#       - sh
-#       - -c
-#       - curl $SERVER_URL
-#       environment:
-#         SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
-#         RUN_CURL: ${{ secrets.param_boolean }}
+  curler-build:
+    schedule: '*/5 * * * ?'
+    build:
+      context: ../../../examples/scheduled-tasks/
+    command:
+      - sh
+      - -c
+      - $RUN_CURL && curl $SERVER_URL
+    environment:
+      SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
+      RUN_CURL: ${{ secrets.param_boolean }}
+  ${{ if architect.environment == 'local' }}:
+    curler-build-local:
+      build:
+        context: ../../../examples/scheduled-tasks/
+        dockerfile: ./Dockerfile
+      command:
+      - sh
+      - -c
+      - $RUN_CURL && curl $SERVER_URL
+      environment:
+        SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
+        RUN_CURL: ${{ secrets.param_boolean }}
 
 interfaces:
   stateless:

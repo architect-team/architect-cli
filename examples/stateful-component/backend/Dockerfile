@@ -1,4 +1,4 @@
-FROM node:12-alpine
+FROM node:18-alpine
 
 # added to support superset liveness probe
 RUN apk update && apk upgrade && \
