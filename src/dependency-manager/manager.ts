@@ -355,7 +355,7 @@ export default abstract class DependencyManager {
 
         const architect_host = service_ref;
         const architect_port = `${interface_ref}.external_port`;
-        const ingress_ref = `services.${service_name}.interfaces.${interface_name}.ingress`;
+
         context.services[service_name].interfaces[interface_name] = {
           protocol: 'http',
           username: '',
@@ -370,41 +370,13 @@ export default abstract class DependencyManager {
           port: `\${{ ${interface_ref}.external_host || startsWith(_path, 'services.${service_name}.') ? ${interface_ref}.external_port : ${architect_port} }}`,
           host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : '${architect_host}' }}`,
           url: this.generateUrl(interface_ref),
-
-          // TODO:TJ don't set if there is no ingress
-          ingress: {
-            dns_zone: external_host,
-            subdomain: interface_config.ingress?.subdomain || interface_name,
-            host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : ((${ingress_ref}.subdomain == '@' ? '' : ${ingress_ref}.subdomain + '.') + ${ingress_ref}.dns_zone) }}`,
-            port: `\${{ ${interface_ref}.external_host ? ${interface_ref}.port : ${external_port} }}`,
-            protocol: `\${{ ${interface_ref}.external_host ? ${interface_ref}.protocol : '${external_protocol}' }}`,
-            username: '',
-            password: '',
-            path: interface_config.ingress?.path,
-            url: this.generateUrl(ingress_ref),
-            consumers: [],
-          },
         };
 
-        /* TODO:TJ
-        // Set ingresses
-        const is_deprecated_interface = Boolean(component_config.metadata.deprecated_interfaces_map[interface_name]);
-        if (is_deprecated_interface) {
-          // Deprecated: context.interfaces
-          context.interfaces[interface_name] = {
-            host: interface_config.host || `\${{ ${interface_ref}.host }}`,
-            port: interface_config.port || `\${{ ${interface_ref}.port }}`,
-            username: interface_config.username || `\${{ ${interface_ref}.username }}`,
-            password: interface_config.password || `\${{ ${interface_ref}.password }}`,
-            protocol: interface_config.protocol || `\${{ ${interface_ref}.protocol }}`,
-            url: interface_config.url || `\${{ ${interface_ref}.url }}`,
-          };
-
-          // Deprecated: context.ingresses
-          const ingress_ref = `ingresses.${interface_name}`;
-          context.ingresses[interface_name] = {
+        if (interface_config.ingress) {
+          const ingress_ref = `${interface_ref}.ingress`;
+          context.services[service_name].interfaces[interface_name].ingress = {
             dns_zone: external_host,
-            subdomain: interface_config.ingress?.subdomain || interface_name,
+            subdomain: interface_config.ingress.subdomain || interface_name,
             host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : ((${ingress_ref}.subdomain == '@' ? '' : ${ingress_ref}.subdomain + '.') + ${ingress_ref}.dns_zone) }}`,
             port: `\${{ ${interface_ref}.external_host ? ${interface_ref}.port : ${external_port} }}`,
             protocol: `\${{ ${interface_ref}.external_host ? ${interface_ref}.protocol : '${external_protocol}' }}`,
@@ -414,14 +386,7 @@ export default abstract class DependencyManager {
             url: this.generateUrl(ingress_ref),
             consumers: [],
           };
-
-          // Deprecated: environment.ingresses
-          if (!context.environment.ingresses[component_spec.name]) {
-            context.environment.ingresses[component_spec.name] = {};
-          }
-          context.environment.ingresses[component_spec.name][interface_name] = context.ingresses[interface_name];
         }
-        */
       }
     }
     return { component_spec, context };
@@ -562,6 +527,12 @@ export default abstract class DependencyManager {
           context.environment.ingresses[dep_name][dep_ingress_name] = dep_ingress;
         }
         */
+      }
+
+      for (const deprecated_feature of deprecated_features) {
+        if (deprecated_feature.shouldRun(component_configs)) {
+          deprecated_feature.transformContext(component_configs, context_map);
+        }
       }
 
       if (options.interpolate) {

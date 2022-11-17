@@ -1,5 +1,5 @@
 import { serialize } from 'class-transformer';
-import { buildNodeRef, ComponentConfig, ComponentSlugUtils, IngressEdge, ResourceType, ServiceEdge, Slugs } from '../..';
+import { buildNodeRef, ComponentConfig, ComponentContext, ComponentSlugUtils, Dictionary, IngressEdge, ResourceType, ServiceEdge, Slugs } from '../..';
 import { DependencyGraph } from '../graph';
 import { IngressConsumerEdge } from '../graph/edge/ingress-consumer';
 import DependencyManager from '../manager';
@@ -19,6 +19,65 @@ abstract class DeprecatedSpec {
 export class DeprecatedInterfacesSpec extends DeprecatedSpec {
   public shouldRun(component_configs: ComponentConfig[]): boolean {
     return component_configs.some(component_config => Object.keys(component_config.metadata.deprecated_interfaces_map).length > 0);
+  }
+
+  public transformContext(component_configs: ComponentConfig[], context_map: Dictionary<ComponentContext>): void {
+    for (const component_config of component_configs) {
+      // TODO:TJ
+      const context = context_map[component_config.metadata.ref] as any;
+
+      context.interfaces = {};
+      context.ingresses = {};
+      if (!context.environment) {
+        context.environment = {};
+      }
+      context.environment.ingresses = {};
+
+      for (const [deprecated_interface_name, service_name] of Object.entries(component_config.metadata.deprecated_interfaces_map) as [string, string][]) {
+        const interface_context = context.services[service_name].interfaces[deprecated_interface_name];
+
+        context.interfaces[deprecated_interface_name] = interface_context;
+        context.ingresses[deprecated_interface_name] = interface_context.ingress;
+
+        if (!context.environment.ingresses[component_config.name]) {
+          context.environment.ingresses[component_config.name] = {};
+        }
+        context.environment.ingresses[component_config.name][deprecated_interface_name] = interface_context.ingress;
+      }
+
+      /*
+      context.dependencies[dep_name] = {
+        ingresses: dependency_context.ingresses || {},
+        interfaces: dependency_context.interfaces || {},
+        outputs: dependency_context.outputs || {},
+      };
+
+      // TODO:TJ move to DeprecateInterfaceSpec
+      if (!context.environment.ingresses[dep_name]) {
+        context.environment.ingresses[dep_name] = {};
+      }
+      for (const [dep_ingress_name, dep_ingress] of Object.entries(context.dependencies[dep_name].ingresses)) {
+        context.environment.ingresses[dep_name][dep_ingress_name] = dep_ingress;
+      }
+      */
+    }
+
+    for (const component_config of component_configs) {
+      const context = context_map[component_config.metadata.ref] as any;
+
+      for (const dep_name of Object.keys(context.dependencies)) {
+        const dependency_context = context_map[dep_name] as any;
+        context.dependencies[dep_name].interfaces = dependency_context.interfaces;
+        context.dependencies[dep_name].ingresses = dependency_context.ingresses;
+
+        if (!context.environment.ingresses[dep_name]) {
+          context.environment.ingresses[dep_name] = {};
+        }
+        for (const [interface_name, ingress_context] of Object.entries(context.dependencies[dep_name].ingresses)) {
+          context.environment.ingresses[dep_name][interface_name] = ingress_context;
+        }
+      }
+    }
   }
 
   public transformGraph(graph: DependencyGraph, component_configs: ComponentConfig[]): void {
