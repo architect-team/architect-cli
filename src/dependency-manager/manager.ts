@@ -83,14 +83,8 @@ export default abstract class DependencyManager {
     }
   }
 
-  addComponentEdges(graph: DependencyGraph, component_config: ComponentConfig, dependency_configs: ComponentConfig[]): void {
+  addComponentEdges(graph: DependencyGraph, component_config: ComponentConfig): void {
     const component = component_config;
-
-    const dependency_map: Dictionary<ComponentConfig> = {};
-    for (const dependency_component of dependency_configs) {
-      const dependency_ref = dependency_component.metadata.ref;
-      dependency_map[dependency_ref] = dependency_component;
-    }
 
     this.addIngressEdges(graph, component_config);
 
@@ -163,62 +157,6 @@ export default abstract class DependencyManager {
     const url_port = `((${interface_ref}.port == 80 || ${interface_ref}.port == 443) ? '' : ':' + ${interface_ref}.port)`;
     const url_path = `(${interface_ref}.path ? ${interface_ref}.path : '')`;
     return `\${{ ${url_protocol} + ${interface_ref}.host + ${url_port} + ${url_path} }}`;
-  }
-
-  findClosestComponent(component_configs: ComponentSpec[], date: Date): ComponentSpec | undefined {
-    if (component_configs.length === 0) {
-      return;
-    }
-    if (component_configs.length === 1) {
-      return component_configs[0];
-    }
-
-    const target_time = date.getTime();
-
-    let res;
-    let best_diff = Number.NEGATIVE_INFINITY;
-    for (const component_config of component_configs) {
-      if (!component_config.metadata) {
-        throw new Error(`Metadata has not been set on component`);
-      }
-      const current_time = component_config.metadata.instance_date.getTime();
-      const current_diff = current_time - target_time;
-      if (current_diff <= 0 && current_diff > best_diff) {
-        best_diff = current_diff;
-        res = component_config;
-      }
-    }
-    return res;
-  }
-
-  getDependencyComponents(component_spec: ComponentSpec, component_specs: ComponentSpec[]): Dictionary<ComponentSpec> {
-    const component_map: Dictionary<ComponentSpec[]> = {};
-    for (const component_spec of component_specs) {
-      const ref = component_spec.metadata.ref;
-      if (!component_map[ref]) {
-        component_map[ref] = [];
-      }
-      // Potentially multiple components with the same ref and different instance ids
-      component_map[ref].push(component_spec);
-    }
-
-    const dependency_components: Dictionary<ComponentSpec> = {};
-    for (const dep_name of Object.keys(component_spec.dependencies || {})) {
-      const dep_ref = this.getComponentRef(dep_name);
-      if (!component_map[dep_ref]) {
-        continue;
-      }
-      const dep_components = component_map[dep_ref];
-      if (!component_spec.metadata) {
-        throw new Error(`Metadata has not been set on component`);
-      }
-      const dep_component = this.findClosestComponent(dep_components, component_spec.metadata.instance_date);
-      if (!dep_component) {
-        continue;
-      }
-      dependency_components[dep_name] = dep_component;
-    }
-    return dependency_components;
   }
 
   validateRequiredSecrets(component: ComponentConfig, secrets: Dictionary<SecretValue>): void { // TODO: 404: update
@@ -423,13 +361,10 @@ export default abstract class DependencyManager {
 
     const component_configs = evaluated_component_specs.map((component_spec) => transformComponentSpec(component_spec));
 
-    // TODO:TJ remove getDependencyComponents?
     // Add edges to graph
     for (const component_spec of evaluated_component_specs) {
       const component_config = transformComponentSpec(component_spec);
-      const dependency_specs = this.getDependencyComponents(component_spec, component_specs);
-      const dependency_configs = Object.values(dependency_specs).map(d => transformComponentSpec(d));
-      this.addComponentEdges(graph, component_config, dependency_configs);
+      this.addComponentEdges(graph, component_config);
     }
 
     const deprecated_features = [new DeprecatedInterfacesSpec(this)];
@@ -501,10 +436,11 @@ export default abstract class DependencyManager {
         context.tasks[task_name].environment = task.environment;
       }
 
-      const dependency_specs = this.getDependencyComponents(component_spec, component_specs);
       context.dependencies = {};
-      for (const [dep_name, dependency_spec] of Object.entries(dependency_specs)) {
-        const dependency_context = context_map[dependency_spec.metadata.ref];
+      for (const dep_name of Object.keys(component_spec.dependencies || {})) {
+        const dependency_context = context_map[dep_name];
+        if (!dependency_context) continue;
+
         context.dependencies[dep_name] = {
           services: dependency_context.services || {},
           outputs: dependency_context.outputs || {},
