@@ -34,6 +34,7 @@ export default abstract class DependencyManager {
     for (const [service_name, service_config] of Object.entries(component.services)) {
       const node = new ServiceNode({
         ref: buildNodeRef(component, 'services', service_name),
+        component_ref: component.metadata.ref,
         config: service_config,
         local_path: component.metadata.file?.path,
         artifact_image: component.artifact_image,
@@ -289,12 +290,7 @@ export default abstract class DependencyManager {
     let context: ComponentContext = {
       name: component_spec.name,
       architect: this.getArchitectContext(),
-      environment: {
-        ingresses: {},
-      },
       dependencies: {},
-      ingresses: {},
-      interfaces: {},
       outputs: {},
       parameters: {},
       secrets: {},
@@ -359,6 +355,7 @@ export default abstract class DependencyManager {
 
         const architect_host = service_ref;
         const architect_port = `${interface_ref}.external_port`;
+        const ingress_ref = `services.${service_name}.interfaces.${interface_name}.ingress`;
         context.services[service_name].interfaces[interface_name] = {
           protocol: 'http',
           username: '',
@@ -373,10 +370,23 @@ export default abstract class DependencyManager {
           port: `\${{ ${interface_ref}.external_host || startsWith(_path, 'services.${service_name}.') ? ${interface_ref}.external_port : ${architect_port} }}`,
           host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : '${architect_host}' }}`,
           url: this.generateUrl(interface_ref),
+
+          // TODO:TJ don't set if there is no ingress
+          ingress: {
+            dns_zone: external_host,
+            subdomain: interface_config.ingress?.subdomain || interface_name,
+            host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : ((${ingress_ref}.subdomain == '@' ? '' : ${ingress_ref}.subdomain + '.') + ${ingress_ref}.dns_zone) }}`,
+            port: `\${{ ${interface_ref}.external_host ? ${interface_ref}.port : ${external_port} }}`,
+            protocol: `\${{ ${interface_ref}.external_host ? ${interface_ref}.protocol : '${external_protocol}' }}`,
+            username: '',
+            password: '',
+            path: interface_config.ingress?.path,
+            url: this.generateUrl(ingress_ref),
+            consumers: [],
+          },
         };
 
-        // TODO:TJ set context for services.<name>.interfaces.<name>.ingress.url
-
+        /* TODO:TJ
         // Set ingresses
         const is_deprecated_interface = Boolean(component_config.metadata.deprecated_interfaces_map[interface_name]);
         if (is_deprecated_interface) {
@@ -411,6 +421,7 @@ export default abstract class DependencyManager {
           }
           context.environment.ingresses[component_spec.name][interface_name] = context.ingresses[interface_name];
         }
+        */
       }
     }
     return { component_spec, context };
@@ -494,15 +505,29 @@ export default abstract class DependencyManager {
         const to = buildNodeRef(transformComponentSpec(component_spec), 'services', service_name);
         // Generate consumers context
         for (const interface_name of Object.keys(service.interfaces || {})) {
+          const ingress = context.services[service_name].interfaces[interface_name].ingress;
+          if (!ingress) {
+            continue;
+          }
+
           // TODO:TJ don't force transform?
-          const consumer_edges = graph.edges.filter((edge) => edge instanceof IngressConsumerEdge && edge.to === to && edge.interface_to === interface_name);
+          const consumer_edges = graph.edges.filter(edge => edge instanceof IngressConsumerEdge && edge.to === to && edge.interface_to === interface_name);
           const consumer_node_refs = new Set(consumer_edges.map(edge => edge.from));
+          const consumer_nodes = [...consumer_node_refs].map(node_ref => graph.getNodeByRef(node_ref)).filter(node => node instanceof ServiceNode) as ServiceNode[];
 
           const consumers = new Set<string>();
-          for (const consumer_node_ref of consumer_node_refs) {
-            console.log(consumer_node_ref);
-            // TODO:TJ context.services
+          for (const consumer_node of consumer_nodes) {
+            const consumer_context = context_map[consumer_node.component_ref];
+            const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && edge.to === consumer_node.ref);
+            const consumer_interface_names = consumer_ingress_edges.map(edge => edge.interface_to);
+            for (const consumer_interface_name of consumer_interface_names) {
+              const consumer_url = consumer_context.services[consumer_node.service_name].interfaces[consumer_interface_name].ingress?.url;
+              if (consumer_url) {
+                consumers.add(consumer_url);
+              }
+            }
           }
+          ingress.consumers = [...consumers].sort();
         }
       }
 
@@ -518,6 +543,12 @@ export default abstract class DependencyManager {
       for (const [dep_name, dependency_spec] of Object.entries(dependency_specs)) {
         const dependency_context = dependency_context_map[dependency_spec.metadata.ref];
         context.dependencies[dep_name] = {
+          services: dependency_context.services || {},
+          outputs: dependency_context.outputs || {},
+        };
+
+        /* TODO:TJ
+        context.dependencies[dep_name] = {
           ingresses: dependency_context.ingresses || {},
           interfaces: dependency_context.interfaces || {},
           outputs: dependency_context.outputs || {},
@@ -530,6 +561,7 @@ export default abstract class DependencyManager {
         for (const [dep_ingress_name, dep_ingress] of Object.entries(context.dependencies[dep_name].ingresses)) {
           context.environment.ingresses[dep_name][dep_ingress_name] = dep_ingress;
         }
+        */
       }
 
       if (options.interpolate) {

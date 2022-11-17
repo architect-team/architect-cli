@@ -10,24 +10,17 @@ export interface IngressConfig {
   subdomain?: string;
   path?: string;
   ip_whitelist?: string[];
-}
+  sticky?: boolean | string;
 
-export interface ComponentInterfaceConfig {
-  description?: string;
+  // Context
+  consumers?: string[];
+  dns_zone?: string;
   host?: null | string;
   port?: number | string;
   protocol?: string;
   username?: null | string;
   password?: null | string;
-  url: string;
-  sticky?: boolean | string;
-
-  ingress?: IngressConfig;
-
-  consumers?: string[];
-  dns_zone?: string;
-  subdomain?: string;
-  path?: string;
+  url?: string;
 }
 
 export interface SecretDefinitionConfig {

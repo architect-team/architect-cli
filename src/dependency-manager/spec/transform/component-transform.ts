@@ -1,7 +1,7 @@
 import deepmerge from 'deepmerge';
-import { ComponentConfig, ComponentInterfaceConfig, OutputDefinitionConfig, SecretDefinitionConfig } from '../../config/component-config';
+import { ComponentConfig, OutputDefinitionConfig, SecretDefinitionConfig } from '../../config/component-config';
 import { transformDictionary } from '../../utils/dictionary';
-import { ComponentInterfaceSpec, ComponentSpec, OutputDefinitionSpec, SecretDefinitionSpec } from '../component-spec';
+import { ComponentSpec, OutputDefinitionSpec, SecretDefinitionSpec } from '../component-spec';
 import { Slugs } from '../utils/slugs';
 import { transformServiceSpec } from './service-transform';
 import { transformTaskSpec } from './task-transform';
@@ -55,16 +55,6 @@ const getProtocol = (url: string): string | undefined => {
   } catch {
     return undefined;
   }
-};
-
-export const transformComponentInterfaceSpec = function (_: string, interface_spec: ComponentInterfaceSpec | string): ComponentInterfaceConfig {
-  return typeof interface_spec === 'string' ? {
-    url: interface_spec,
-    protocol: getProtocol(interface_spec),
-  } : {
-    ...interface_spec,
-    protocol: getProtocol(interface_spec.url),
-  };
 };
 
 export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => {
