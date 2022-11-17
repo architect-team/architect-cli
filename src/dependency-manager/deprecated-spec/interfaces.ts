@@ -107,8 +107,10 @@ export class DeprecatedInterfacesSpec extends DeprecatedSpec {
       const ingress_edge = new IngressEdge(gateway_node.ref, to, interface_name);
       graph.addEdge(ingress_edge);
 
-      const ingress_consumer_edge = new IngressConsumerEdge(from, to, interface_name);
-      graph.addEdge(ingress_consumer_edge);
+      if (from !== to) {
+        const ingress_consumer_edge = new IngressConsumerEdge(from, to, interface_name);
+        graph.addEdge(ingress_consumer_edge);
+      }
     }
   }
 
@@ -134,8 +136,10 @@ export class DeprecatedInterfacesSpec extends DeprecatedSpec {
       const ingress_edge = new IngressEdge(gateway_node.ref, to, interface_name);
       graph.addEdge(ingress_edge);
 
-      const ingress_consumer_edge = new IngressConsumerEdge(from, to, interface_name);
-      graph.addEdge(ingress_consumer_edge);
+      if (from !== to) {
+        const ingress_consumer_edge = new IngressConsumerEdge(from, to, interface_name);
+        graph.addEdge(ingress_consumer_edge);
+      }
     }
   }
 
@@ -160,6 +164,7 @@ export class DeprecatedInterfacesSpec extends DeprecatedSpec {
       if (!graph.nodes_map.has(to)) continue;
 
       if (interface_type === 'interfaces') {
+        if (from === to) continue;
         const edge = new ServiceEdge(from, to, interface_name);
         graph.addEdge(edge);
       } else if (interface_type === 'ingresses') {
@@ -169,8 +174,10 @@ export class DeprecatedInterfacesSpec extends DeprecatedSpec {
         const ingress_edge = new IngressEdge(gateway_node.ref, to, interface_name);
         graph.addEdge(ingress_edge);
 
-        const ingress_consumer_edge = new IngressConsumerEdge(from, to, interface_name);
-        graph.addEdge(ingress_consumer_edge);
+        if (from !== to) {
+          const ingress_consumer_edge = new IngressConsumerEdge(from, to, interface_name);
+          graph.addEdge(ingress_consumer_edge);
+        }
       }
     }
   }

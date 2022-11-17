@@ -87,7 +87,7 @@ describe('interfaces spec v1', () => {
         leaf_api_ref,
       ]);
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `${leaf_api_ref} -> ${leaf_db_ref}[postgres]`,
+        `service: ${leaf_api_ref} -> ${leaf_db_ref}[postgres]`,
       ]);
       const api_node = graph.getNodeByRef(leaf_api_ref) as ServiceNode;
       expect(Object.entries(api_node.config.environment).map(([k, v]) => `${k}=${v}`)).has.members([
@@ -125,8 +125,8 @@ describe('interfaces spec v1', () => {
         leaf_api_ref,
       ]);
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `${leaf_api_ref} -> ${leaf_db_ref}[postgres]`,
-        `${branch_ref} -> ${leaf_api_ref}[api]`,
+        `service: ${leaf_api_ref} -> ${leaf_db_ref}[postgres]`,
+        `service: ${branch_ref} -> ${leaf_api_ref}[api]`,
       ]);
       const branch_api_node = graph.getNodeByRef(branch_ref) as ServiceNode;
 
@@ -208,14 +208,14 @@ describe('interfaces spec v1', () => {
         other_leaf_db_ref,
       ]);
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `gateway -> ${leaf_api_ref}[api]`,
-        `gateway -> ${other_leaf_api_ref}[api]`,
+        `ingress: gateway -> ${leaf_api_ref}[api]`,
+        `ingress: gateway -> ${other_leaf_api_ref}[api]`,
 
-        `${leaf_api_ref} -> ${leaf_db_ref}[postgres]`,
+        `service: ${leaf_api_ref} -> ${leaf_db_ref}[postgres]`,
 
-        `${other_leaf_api_ref} -> ${other_leaf_db_ref}[postgres]`,
+        `service: ${other_leaf_api_ref} -> ${other_leaf_db_ref}[postgres]`,
 
-        `${branch_ref} -> ${leaf_api_ref}[api]`,
+        `service: ${branch_ref} -> ${leaf_api_ref}[api]`,
       ]);
       const branch_api_node = graph.getNodeByRef(branch_ref) as ServiceNode;
       expect(Object.entries(branch_api_node.config.environment).map(([k, v]) => `${k}=${v}`)).has.members([
@@ -368,8 +368,8 @@ describe('interfaces spec v1', () => {
       api_ref,
     ]);
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `gateway -> ${api_ref}[app]`,
-      `gateway -> ${api_ref}[admin]`,
+      `ingress: gateway -> ${api_ref}[app]`,
+      `ingress: gateway -> ${api_ref}[admin]`,
     ]);
 
     const template = await DockerComposeUtils.generate(graph);
@@ -456,11 +456,11 @@ describe('interfaces spec v1', () => {
     const api_ref = resourceRefToNodeRef('product-catalog.services.api');
 
     expect(graph.edges.map(e => e.toString())).members([
-      `${admin_ref} -> ${api_ref}[public]`,
-      `${admin_ref} -> ${api_ref}[admin]`,
-      `${admin_ref} -> ${api_ref}[private]`,
-      `gateway -> ${api_ref}[public]`,
-      `gateway -> ${api_ref}[admin]`,
+      `service: ${admin_ref} -> ${api_ref}[public]`,
+      `service: ${admin_ref} -> ${api_ref}[admin]`,
+      `service: ${admin_ref} -> ${api_ref}[private]`,
+      `ingress: gateway -> ${api_ref}[public]`,
+      `ingress: gateway -> ${api_ref}[admin]`,
     ]);
 
     const dashboard_node = graph.getNodeByRef(admin_ref) as ServiceNode;

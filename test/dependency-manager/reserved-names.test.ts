@@ -244,8 +244,8 @@ describe('components with reserved_name field set', function () {
         db_ref
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `${app_ref} -> ${api_ref}[main]`,
-        `${api_ref} -> ${db_ref}[main]`
+        `service: ${app_ref} -> ${api_ref}[main]`,
+        `service: ${api_ref} -> ${db_ref}[main]`
       ])
       // Test parameter values
       const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
@@ -374,8 +374,8 @@ describe('components with reserved_name field set', function () {
         worker_ref
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `${worker_ref} -> ${web_ref}[main]`,
-        `${api_ref} -> ${web_ref}[web]`
+        `service: ${worker_ref} -> ${web_ref}[main]`,
+        `service: ${api_ref} -> ${web_ref}[web]`
       ])
 
       // Test parameter values

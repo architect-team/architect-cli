@@ -28,7 +28,7 @@ describe('graph', () => {
           interfaces:
             mysql:
               port: 3306
-              protocol: mysql
+              protocol: http
 
         core:
           environment:
@@ -56,7 +56,7 @@ describe('graph', () => {
           interfaces:
             mysql:
               port: 3306
-              protocol: mysql
+              protocol: http
 
         core:
           environment:
@@ -76,8 +76,8 @@ describe('graph', () => {
       await manager.loadComponentSpec('dependency:latest', { interfaces: { db2: 'db' } })
     ], {}, { interpolate: false });
 
-    expect(graph.nodes).to.have.length(7);
-    expect(graph.edges).to.have.length(5);
+    expect(graph.nodes).to.have.length(5);
+    expect(graph.edges).to.have.length(10);
   });
 
   it('graph without validation', async () => {

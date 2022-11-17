@@ -193,8 +193,8 @@ describe('components spec v1', function () {
         db_ref,
       ]);
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `${app_ref} -> ${api_ref}[main]`,
-        `${api_ref} -> ${db_ref}[main]`,
+        `service: ${app_ref} -> ${api_ref}[main]`,
+        `service: ${api_ref} -> ${db_ref}[main]`,
       ]);
       // Test secret values
       const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
@@ -320,8 +320,8 @@ describe('components spec v1', function () {
         worker_ref,
       ]);
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `${worker_ref} -> ${web_ref}[main]`,
-        `${api_ref} -> ${web_ref}[web]`,
+        `service: ${worker_ref} -> ${web_ref}[main]`,
+        `service: ${api_ref} -> ${web_ref}[web]`,
       ]);
 
       // Test secret values

@@ -462,6 +462,8 @@ export default abstract class DependencyManager {
         }
         context.services[service_name].environment = service.environment;
 
+        const service_nodes = graph.nodes.filter(node => node instanceof ServiceNode && node.component_ref === component_spec.metadata.ref) as ServiceNode[];
+
         // TODO:TJ don't force transform?
         const to = buildNodeRef(transformComponentSpec(component_spec), 'services', service_name);
         // Generate consumers context
@@ -471,12 +473,13 @@ export default abstract class DependencyManager {
             continue;
           }
 
+          // TODO:TJ add IngressConsumerEdge to graph
           const consumer_edges = graph.edges.filter(edge => edge instanceof IngressConsumerEdge && edge.to === to && edge.interface_to === interface_name);
           const consumer_node_refs = new Set(consumer_edges.map(edge => edge.from));
           const consumer_nodes = [...consumer_node_refs].map(node_ref => graph.getNodeByRef(node_ref)).filter(node => node instanceof ServiceNode) as ServiceNode[];
 
           const consumers = new Set<string>();
-          for (const consumer_node of consumer_nodes) {
+          for (const consumer_node of [...consumer_nodes, ...service_nodes]) {
             const consumer_context = context_map[consumer_node.component_ref];
             const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && edge.to === consumer_node.ref);
             const consumer_interface_names = consumer_ingress_edges.map(edge => edge.interface_to);

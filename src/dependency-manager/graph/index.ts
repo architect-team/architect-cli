@@ -63,6 +63,10 @@ export class DependencyGraphMutable {
   }
 
   addEdge(edge: DependencyEdge): DependencyEdge {
+    if (edge.from === edge.to) {
+      throw new Error(`Edge cannot be self referential: ${edge.toString()}`);
+    }
+
     if (!this.edges_map.has(edge.ref)) {
       // Ensure the nodes exist in the pool
       this.getNodeByRef(edge.from);
