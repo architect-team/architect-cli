@@ -282,7 +282,8 @@ export default class Dev extends BaseCommand {
       sensitive: false,
     }),
     'secrets-env': Flags.string({
-      description: 'Environment to load secrets from',
+      description: 'Environment to load secrets from [beta]',
+      hidden: true,
     }),
     'secret-file': Flags.string({
       description: 'Path of secrets file',
