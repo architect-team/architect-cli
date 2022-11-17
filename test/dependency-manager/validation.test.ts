@@ -678,8 +678,8 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(2);
       expect(errors.map(e => e.path)).members([
-        'interfaces.api.url',
-        'interfaces.api2.url',
+        'interfaces.api',
+        'interfaces.api2',
       ]);
       expect(errors[0].message).includes('services.api.interfaces.main.url');
       expect(errors[1].message).includes('services.api.interfaces.main.url');

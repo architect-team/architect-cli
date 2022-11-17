@@ -100,12 +100,12 @@ export default abstract class DependencyManager {
     for (const { resource_config, resource_name, resource_type } of [...services, ...tasks]) {
       const from = buildNodeRef(component, resource_type, resource_name);
 
-      const service_string = replaceInterpolationBrackets(serialize(resource_config));
+      const resource_string = replaceInterpolationBrackets(serialize(resource_config, { excludePrefixes: ['metadata'] }));
       let matches;
 
       // Add edges between services
       const services_regex = new RegExp(`\\\${{\\s*services\\.(?<service_name>${Slugs.ArchitectSlugRegexBase})\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
-      while ((matches = services_regex.exec(service_string)) !== null) {
+      while ((matches = services_regex.exec(resource_string)) !== null) {
         if (!matches.groups) {
           continue;
         }

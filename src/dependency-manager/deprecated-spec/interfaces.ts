@@ -70,7 +70,7 @@ export class DeprecatedInterfacesSpec extends DeprecatedSpec {
       const services = Object.entries(component_config.services).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'services' as ResourceType, resource_config }));
       const tasks = Object.entries(component_config.tasks).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'tasks' as ResourceType, resource_config }));
       for (const { resource_config, resource_name, resource_type } of [...services, ...tasks]) {
-        const resource_string = replaceInterpolationBrackets(serialize(resource_config));
+        const resource_string = replaceInterpolationBrackets(serialize(resource_config, { excludePrefixes: ['metadata'] }));
         const from = buildNodeRef(component_config, resource_type, resource_name);
         this.addEnvironmentIngresses(graph, component_configs, from, resource_string);
         this.addIngresses(graph, component_config, from, resource_string);

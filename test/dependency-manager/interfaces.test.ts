@@ -210,6 +210,7 @@ describe('interfaces spec v1', () => {
       expect(graph.edges.map((e) => e.toString())).has.members([
         `ingress: gateway -> ${leaf_api_ref}[api]`,
         `ingress: gateway -> ${other_leaf_api_ref}[api]`,
+        `ingress-consumer: ${branch_ref} -> ${leaf_api_ref}[api]`,
 
         `service: ${leaf_api_ref} -> ${leaf_db_ref}[postgres]`,
 
@@ -461,6 +462,7 @@ describe('interfaces spec v1', () => {
       `service: ${admin_ref} -> ${api_ref}[private]`,
       `ingress: gateway -> ${api_ref}[public]`,
       `ingress: gateway -> ${api_ref}[admin]`,
+      `ingress-consumer: ${admin_ref} -> ${api_ref}[public]`
     ]);
 
     const dashboard_node = graph.getNodeByRef(admin_ref) as ServiceNode;
