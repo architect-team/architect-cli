@@ -19,10 +19,7 @@ services:
     build:
       context: ../hello-world
     interfaces:
-      main: 3000
-
-interfaces:
-  api:
-    url: ${{ services.api.interfaces.main.url }}
-    ingress:
-      subdomain: api
+      main:
+        port: 3000
+        ingress:
+          subdomain: api

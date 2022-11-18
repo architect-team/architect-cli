@@ -28,7 +28,10 @@ services:
       context: ./
       dockerfile: Dockerfile
     interfaces:
-      main: 3000
+      main:
+        port: 3000
+        ingress:
+          subdomain: app
     environment:
       DATABASE_HOST: ${{ services.my-demo-db.interfaces.postgres.host }}
       DATABASE_PORT: ${{ services.my-demo-db.interfaces.postgres.port }}
@@ -45,10 +48,3 @@ services:
       POSTGRES_DB: ${{ secrets.db_name }}
       POSTGRES_USER: ${{ secrets.db_user }}
       POSTGRES_PASSWORD: ${{ secrets.db_pass }}
-
-interfaces:
-  main:
-    description: Exposes the app to upstream traffic
-    url: ${{ services.app.interfaces.main.url }}
-    ingress:
-      subdomain: app

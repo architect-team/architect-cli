@@ -14,20 +14,16 @@ services:
     build:
       context: ./
     interfaces:
-      main: 3000
+      main:
+        port: 3000
+        ingress:
+          subdomain: app
     environment:
-      HELLO_SERVICE_HOST: ${{ dependencies['nestjs-simple'].interfaces.main.host }}
-      HELLO_SERVICE_PORT: ${{ dependencies['nestjs-simple'].interfaces.main.port }}
-    ${{ if architect.environment == 'local' }}:
+      HELLO_SERVICE_HOST: ${{ dependencies['nestjs-simple'].services.api.interfaces.main.host }}
+      HELLO_SERVICE_PORT: ${{ dependencies['nestjs-simple'].services.api.interfaces.main.port }}
+    debug:
       command: npm run start:dev
       volumes:
         src:
           host_path: ./src/
           mount_path: /usr/src/app/src/
-
-interfaces:
-  main:
-    description: Exposes the app
-    url: ${{ services.client.interfaces.main.url }}
-    ingress:
-      subdomain: app

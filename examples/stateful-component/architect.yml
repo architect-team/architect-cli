@@ -44,13 +44,9 @@ services:
     build:
       context: ./frontend
     interfaces:
-      web: 8081
+      web:
+        port: 8081
+        ingress:
+          subdomain: frontend
     environment:
       API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
-
-interfaces:
-  frontend:
-    description: Exposes the sign in webapp to upstreams
-    url: ${{ services.frontend.interfaces.web.url }}
-    ingress:
-      subdomain: frontend
