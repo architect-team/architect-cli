@@ -813,6 +813,7 @@ describe('components spec v1', function () {
           dependency: 'cloud-api',
           account: 'architect',
         },
+
         // Other
         {
           cloud: 'architect/cloud',
@@ -891,7 +892,6 @@ describe('components spec v1', function () {
           'gateway',
           resourceRefToNodeRef(`${combination.account && cloud_account_name === combination.account ? '' : `${cloud_account_name}/`}cloud.services.app`),
           api_node_ref,
-          resourceRefToNodeRef(`${(combination.account && api_account_name === combination.account) || !api_account_name ? '' : `${api_account_name}/`}cloud-api`),
         ]);
 
         expect(graph.edges).lengthOf(3);

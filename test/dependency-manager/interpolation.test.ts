@@ -1142,12 +1142,6 @@ describe('interpolation spec v1', () => {
       CORS_URLS: '["http://api.arc.localhost","http://test-subdomain.arc.localhost"]',
       DNS_ZONE: 'arc.localhost'
     });
-
-    /* TODO:TJ
-    const ingress_edge = graph.edges.find((edge) => edge.to === resourceRefToNodeRef('dependency')) as IngressEdge
-    expect(ingress_edge.interface_mappings).to.deep.equal([{ interface_from: 'test-subdomain', interface_to: 'app' }]);
-    expect(ingress_edge.consumers_map).keys('app')
-    */
   });
 
   it('interpolate secret for replicas', async () => {

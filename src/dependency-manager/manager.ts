@@ -227,6 +227,29 @@ export default abstract class DependencyManager {
 
   abstract getArchitectContext(): ArchitectContext;
 
+  protected getConsumers(graph: DependencyGraph, context_map: Dictionary<ComponentContext>, current_node: ServiceNode, interface_name: string): string[] {
+    const service_nodes = graph.nodes.filter(node => node instanceof ServiceNode && node.component_ref === current_node.component_ref) as ServiceNode[];
+    const to = current_node.ref;
+
+    const consumer_edges = graph.edges.filter(edge => edge instanceof IngressConsumerEdge && edge.to === to && edge.interface_to === interface_name);
+    const consumer_node_refs = new Set(consumer_edges.map(edge => edge.from));
+    const consumer_nodes = [...consumer_node_refs].map(node_ref => graph.getNodeByRef(node_ref)).filter(node => node instanceof ServiceNode) as ServiceNode[];
+
+    const consumers = new Set<string>();
+    for (const consumer_node of [...consumer_nodes, ...service_nodes]) {
+      const consumer_context = context_map[consumer_node.component_ref];
+      const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && edge.to === consumer_node.ref);
+      const consumer_interface_names = consumer_ingress_edges.map(edge => edge.interface_to);
+      for (const consumer_interface_name of consumer_interface_names) {
+        const consumer_url = consumer_context.services[consumer_node.service_name].interfaces[consumer_interface_name].ingress?.url;
+        if (consumer_url) {
+          consumers.add(consumer_url);
+        }
+      }
+    }
+    return [...consumers].sort();
+  }
+
   async getComponentSpecContext(graph: DependencyGraph, component_spec: ComponentSpec, all_secrets: SecretsDict, options: GraphOptions): Promise<{ component_spec: ComponentSpec, context: ComponentContext }> {
     const interpolateObject = options.validate ? interpolateObjectOrReject : interpolateObjectLoose;
 
@@ -362,6 +385,18 @@ export default abstract class DependencyManager {
       } else {
         context_map[component_spec.metadata.ref] = context;
       }
+
+      const parsed = ComponentVersionSlugUtils.parse(component_spec.metadata.ref);
+      if (parsed.component_account_name && parsed.component_account_name === this.account) {
+        const ref_without_account = ComponentSlugUtils.build(undefined, parsed.component_name, parsed.instance_name);
+        // Hack to support optional account prefixes
+        context_map[ref_without_account] = context_map[component_spec.metadata.ref];
+      } else if (!parsed.component_account_name && this.account) {
+        const ref_with_account = ComponentSlugUtils.build(this.account, parsed.component_name, parsed.instance_name);
+        // Hack to support optional account prefixes
+        context_map[ref_with_account] = context_map[component_spec.metadata.ref];
+      }
+
       evaluated_component_specs.push(component_spec);
     }
 
@@ -404,34 +439,15 @@ export default abstract class DependencyManager {
           }
           context.services[service_name].environment = service.environment;
 
-          const service_nodes = graph.nodes.filter(node => node instanceof ServiceNode && node.component_ref === component_spec.metadata.ref) as ServiceNode[];
-
           const to = buildNodeRef(component_spec, 'services', service_name);
+          const current_node = graph.getNodeByRef(to) as ServiceNode;
           // Generate consumers context
           for (const interface_name of Object.keys(service.interfaces || {})) {
             const ingress = context.services[service_name].interfaces[interface_name].ingress;
             if (!ingress) {
               continue;
             }
-
-            const consumer_edges = graph.edges.filter(edge => edge instanceof IngressConsumerEdge && edge.to === to && edge.interface_to === interface_name);
-            const consumer_node_refs = new Set(consumer_edges.map(edge => edge.from));
-            const consumer_nodes = [...consumer_node_refs].map(node_ref => graph.getNodeByRef(node_ref)).filter(node => node instanceof ServiceNode) as ServiceNode[];
-
-            const consumers = new Set<string>();
-            for (const consumer_node of [...consumer_nodes, ...service_nodes]) {
-              const consumer_context = context_map[consumer_node.component_ref];
-              const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && edge.to === consumer_node.ref);
-              const consumer_interface_names = consumer_ingress_edges.map(edge => edge.interface_to);
-              for (const consumer_interface_name of consumer_interface_names) {
-                const consumer_url = consumer_context.services[consumer_node.service_name].interfaces[consumer_interface_name].ingress?.url;
-                // eslint-disable-next-line max-depth
-                if (consumer_url) {
-                  consumers.add(consumer_url);
-                }
-              }
-            }
-            ingress.consumers = [...consumers].sort();
+            ingress.consumers = this.getConsumers(graph, context_map, current_node, interface_name);
           }
         }
 
