@@ -634,10 +634,6 @@ describe('components spec v1', function () {
       const api_ref = resourceRefToNodeRef('cloud.services.api');
 
       expect(graph.edges.filter(e => e instanceof IngressEdge).length).eq(1);
-      /* TODO:TJ
-      const ingress_edge = graph.edges.find(e => e instanceof IngressEdge);
-      expect(ingress_edge!.interface_mappings).to.deep.equal([{ interface_from: 'api', interface_to: 'api-interface' }]);
-      */
       const cloud_api_node = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(cloud_api_node.config.environment.EXTERNAL_APP_URL).eq('http://api.arc.localhost');
       expect(cloud_api_node.config.environment.EXTERNAL_APP_URL2).eq('http://api.arc.localhost');

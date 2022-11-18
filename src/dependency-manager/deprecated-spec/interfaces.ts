@@ -1,20 +1,9 @@
 import { serialize } from 'class-transformer';
+import { DeprecatedSpec } from '.';
 import { buildNodeRef, ComponentConfig, ComponentContext, ComponentSlugUtils, Dictionary, IngressEdge, ResourceType, ServiceEdge, Slugs } from '../..';
 import { DependencyGraph } from '../graph';
 import { IngressConsumerEdge } from '../graph/edge/ingress-consumer';
-import DependencyManager from '../manager';
 import { replaceInterpolationBrackets } from '../utils/interpolation';
-
-// TODO:TJ move to own file
-abstract class DeprecatedSpec {
-  protected manager: DependencyManager;
-  constructor(manager: DependencyManager) {
-    this.manager = manager;
-  }
-
-  public abstract shouldRun(component_configs: ComponentConfig[]): boolean;
-  public abstract transformGraph(graph: DependencyGraph, component_configs: ComponentConfig[]): void;
-}
 
 export class DeprecatedInterfacesSpec extends DeprecatedSpec {
   public shouldRun(component_configs: ComponentConfig[]): boolean {

@@ -99,22 +99,26 @@ export default abstract class DependencyManager {
       let matches;
 
       // Add edges between services
-      const services_regex = new RegExp(`\\\${{\\s*services\\.(?<service_name>${Slugs.ArchitectSlugRegexBase})\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
+      const services_regex = new RegExp(`\\\${{\\s*services\\.(?<service_name>${Slugs.ArchitectSlugRegexBase})\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.(?<interface_key>${Slugs.ArchitectSlugRegexBase})`, 'g');
       while ((matches = services_regex.exec(resource_string)) !== null) {
         if (!matches.groups) {
           continue;
         }
-        const { service_name, interface_name } = matches.groups;
+        const { service_name, interface_name, interface_key } = matches.groups;
         const to = buildNodeRef(component, 'services', service_name);
 
         if (to === from) continue;
 
-        const edge = new ServiceEdge(from, to, interface_name);
         if (!graph.nodes_map.has(to)) continue;
-        graph.addEdge(edge);
-      }
 
-      // TODO:TJ add tests
+        if (interface_key === 'ingress') {
+          const edge = new IngressConsumerEdge(from, to, interface_name);
+          graph.addEdge(edge);
+        } else {
+          const edge = new ServiceEdge(from, to, interface_name);
+          graph.addEdge(edge);
+        }
+      }
     }
   }
 
@@ -205,6 +209,7 @@ export default abstract class DependencyManager {
 
     for (const [subdomain, values] of Object.entries(seen_subdomains)) {
       if (values.length > 1) {
+        // TODO:TJ cleanup error msg
         throw new ArchitectError(`The subdomain ${subdomain} is claimed by multiple component interfaces:\n[${values.sort().join(', ')}]\nPlease set interfaces.<name>.ingress.subdomain=<subdomain> or interfaces.<name>.ingress.path=<path> to avoid conflicts.`);
       }
     }
@@ -409,7 +414,6 @@ export default abstract class DependencyManager {
               continue;
             }
 
-            // TODO:TJ add IngressConsumerEdge to graph
             const consumer_edges = graph.edges.filter(edge => edge instanceof IngressConsumerEdge && edge.to === to && edge.interface_to === interface_name);
             const consumer_node_refs = new Set(consumer_edges.map(edge => edge.from));
             const consumer_nodes = [...consumer_node_refs].map(node_ref => graph.getNodeByRef(node_ref)).filter(node => node instanceof ServiceNode) as ServiceNode[];

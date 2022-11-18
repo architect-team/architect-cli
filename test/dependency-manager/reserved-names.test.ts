@@ -421,12 +421,6 @@ describe('components with reserved_name field set', function () {
       const graph = await manager.getGraph([
         await manager.loadComponentSpec('cloud:latest', { interfaces: { api: 'api-interface' } })
       ]);
-
-      /* TODO:TJ
-      expect(graph.edges.filter(e => e instanceof IngressEdge).length).eq(1);
-      const ingress_edge = graph.edges.find(e => e instanceof IngressEdge);
-      expect(ingress_edge!.interface_mappings).to.deep.equal([{ interface_from: 'api', interface_to: 'api-interface' }]);
-      */
       const cloud_api_node = graph.getNodeByRef(reserved_name) as ServiceNode;
       expect(cloud_api_node.config.environment['EXTERNAL_APP_URL']).eq('http://api.arc.localhost');
       expect(cloud_api_node.config.environment['EXTERNAL_APP_URL2']).eq('http://api.arc.localhost');

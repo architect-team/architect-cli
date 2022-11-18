@@ -4,7 +4,8 @@ import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { findPotentialMatch } from '../../utils/match';
 import { RecursivePartial } from '../../utils/types';
-import { ComponentSpec, IngressSpec } from '../component-spec';
+import { ComponentSpec } from '../component-spec';
+import { IngressSpec } from '../service-spec';
 
 export function generateIngressesOverrideSpec(component_spec: ComponentSpec, ingresses: Dictionary<IngressSpec>): RecursivePartial<ComponentSpec> {
   const spec: RecursivePartial<ComponentSpec> = {};
