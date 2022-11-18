@@ -78,7 +78,10 @@ export interface DockerInspectHealth {
 }
 
 export interface DockerInspect {
+  Service: string,
+  ID: string,
   State: {
+    Running: boolean,
     Status: string,
     Health: DockerInspectHealth
   },

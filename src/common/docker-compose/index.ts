@@ -481,6 +481,29 @@ export class DockerComposeUtils {
   }
 
   /**
+  * Prints an error message and updates given a set of container ID values and current container state
+  * Liveness node fails.
+  */
+  public static async printLivenessNodeFailureErrors(container_state: any): Promise<void> {
+    // this is an inneficient but thorough approach to checking all local docker inspect states
+    const local_environments = await this.getLocalEnvironmentContainerMap();
+    for (const local_environment_name of Object.keys(local_environments)) {
+      const container_docker_inspects = local_environments[local_environment_name].filter(inspect => {
+          const logs = inspect.State?.Health?.Log;
+          return container_state?.ExitCode !== 0 || logs[logs.length - 1].ExitCode !== 0;
+        });
+
+      for (const container_docker_inspect of container_docker_inspects) {
+        const log_size = (container_docker_inspect?.State?.Health?.Log || []).length;
+        console.log(chalk.red(`The liveness probe has encountered an error trying to start the service '${container_docker_inspect.Config.Labels['com.docker.compose.service']}'.`));
+        if (log_size > 0) {
+          console.log(chalk.red(`ERROR: ${container_docker_inspect.State.Health.Log[log_size - 1].Output}`));
+        }
+      }
+    }
+  }
+
+  /**
   * Runs `docker inspect` on a container ID and returns the resulting json as a DockerInspect object.
   */
   public static async getContainerInfo(container_id: string): Promise<DockerInspect | undefined> {
@@ -674,6 +697,7 @@ export class DockerComposeUtils {
     }
 
     const service_data_dictionary: Dictionary<{ last_restart_ms: number }> = {};
+    const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
 
     // If the last time this loop runs, a container was restarted, we may have to run `docker compose stop`
     // because the restart can happen after the compose process was killed.
@@ -681,11 +705,11 @@ export class DockerComposeUtils {
     while (!should_stop()) {
       try {
         restarted = false;
-        const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
         for (const container_state of container_states) {
           const id = container_state.ID;
           const full_service_name = container_state.Service;
 
+          await this.printLivenessNodeFailureErrors(container_state);
           const service_ref = service_ref_map[full_service_name];
           if (!service_ref) {
             continue;
@@ -699,16 +723,6 @@ export class DockerComposeUtils {
 
           const bad_state = state !== 'running' && container_state.ExitCode !== 0;
           const bad_health = health === 'unhealthy';
-
-          if (health === '' && state === 'exited') {
-            const container_docker_inspect: DockerInspect | undefined = await this.getContainerInfo(container_state.ID);
-            if (container_docker_inspect && container_docker_inspect.State.Health.Log?.length > 0) {
-              const log_size = container_docker_inspect.State.Health.Log.length;
-              console.log(chalk.red(`\nThe liveness probe has encountered an error trying to start the service '${full_service_name}'.`));
-              console.log(chalk.red(`The service may try to restart and/or never reach a stable state`));
-              console.log(chalk.red(`ERROR: ${container_docker_inspect.State.Health.Log[log_size - 1].Output}\n`));
-            }
-          }
 
           if (!service_data_dictionary[service_ref]) {
             service_data_dictionary[service_ref] = {
