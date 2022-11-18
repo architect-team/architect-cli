@@ -252,9 +252,8 @@ describe('graph depends_on', () => {
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
-    expect(app_depends_on.length).to.equal(2);
+    expect(app_depends_on.length).to.equal(1);
     expect(app_depends_on[0].ref).to.equal(api_ref);
-    expect(app_depends_on[1].ref).to.equal(db_ref);
 
     const api_depends_on = graph.getDependsOn(api);
     expect(api_depends_on.length).to.equal(0);
@@ -378,7 +377,7 @@ describe('graph depends_on', () => {
     expect(api_depends_on.length).to.equal(0);
   });
 
-  it('cross component chained depends_on', async () => {
+  it('cross component depends_on', async () => {
     const component_config = `
       name: cloud
       dependencies:
@@ -430,9 +429,8 @@ describe('graph depends_on', () => {
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
-    expect(app_depends_on.length).to.equal(2);
+    expect(app_depends_on.length).to.equal(1);
     expect(app_depends_on[0].ref).to.equal(api_ref);
-    expect(app_depends_on[1].ref).to.equal(db_ref);
 
     const api_depends_on = graph.getDependsOn(api);
     expect(api_depends_on.length).to.equal(1);

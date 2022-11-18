@@ -35,6 +35,7 @@ export default abstract class DependencyManager {
       const node = new ServiceNode({
         ref: buildNodeRef(component, 'services', service_name),
         component_ref: component.metadata.ref,
+        service_name,
         config: service_config,
         local_path: component.metadata.file?.path,
         artifact_image: component.artifact_image,
@@ -384,73 +385,75 @@ export default abstract class DependencyManager {
       }
     }
 
-    // Generate context for dependencies/consumers
-    for (const component_spec of evaluated_component_specs) {
-      const context = context_map[component_spec.metadata.ref];
+    if (options.interpolate) {
+      // Generate context for dependencies/consumers
+      for (const component_spec of evaluated_component_specs) {
+        const context = context_map[component_spec.metadata.ref];
 
-      for (const [service_name, service] of Object.entries(component_spec.services || {})) {
-        if (!context.services[service_name]) {
-          context.services[service_name] = {
-            interfaces: {},
-            environment: {},
-          };
-        }
-        context.services[service_name].environment = service.environment;
-
-        const service_nodes = graph.nodes.filter(node => node instanceof ServiceNode && node.component_ref === component_spec.metadata.ref) as ServiceNode[];
-
-        // TODO:TJ don't force transform?
-        const to = buildNodeRef(transformComponentSpec(component_spec), 'services', service_name);
-        // Generate consumers context
-        for (const interface_name of Object.keys(service.interfaces || {})) {
-          const ingress = context.services[service_name].interfaces[interface_name].ingress;
-          if (!ingress) {
-            continue;
+        for (const [service_name, service] of Object.entries(component_spec.services || {})) {
+          if (!context.services[service_name]) {
+            context.services[service_name] = {
+              interfaces: {},
+              environment: {},
+            };
           }
+          context.services[service_name].environment = service.environment;
 
-          // TODO:TJ add IngressConsumerEdge to graph
-          const consumer_edges = graph.edges.filter(edge => edge instanceof IngressConsumerEdge && edge.to === to && edge.interface_to === interface_name);
-          const consumer_node_refs = new Set(consumer_edges.map(edge => edge.from));
-          const consumer_nodes = [...consumer_node_refs].map(node_ref => graph.getNodeByRef(node_ref)).filter(node => node instanceof ServiceNode) as ServiceNode[];
+          const service_nodes = graph.nodes.filter(node => node instanceof ServiceNode && node.component_ref === component_spec.metadata.ref) as ServiceNode[];
 
-          const consumers = new Set<string>();
-          for (const consumer_node of [...consumer_nodes, ...service_nodes]) {
-            const consumer_context = context_map[consumer_node.component_ref];
-            const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && edge.to === consumer_node.ref);
-            const consumer_interface_names = consumer_ingress_edges.map(edge => edge.interface_to);
-            for (const consumer_interface_name of consumer_interface_names) {
-              const consumer_url = consumer_context.services[consumer_node.service_name].interfaces[consumer_interface_name].ingress?.url;
-              if (consumer_url) {
-                consumers.add(consumer_url);
+          const to = buildNodeRef(component_spec, 'services', service_name);
+          // Generate consumers context
+          for (const interface_name of Object.keys(service.interfaces || {})) {
+            const ingress = context.services[service_name].interfaces[interface_name].ingress;
+            if (!ingress) {
+              continue;
+            }
+
+            // TODO:TJ add IngressConsumerEdge to graph
+            const consumer_edges = graph.edges.filter(edge => edge instanceof IngressConsumerEdge && edge.to === to && edge.interface_to === interface_name);
+            const consumer_node_refs = new Set(consumer_edges.map(edge => edge.from));
+            const consumer_nodes = [...consumer_node_refs].map(node_ref => graph.getNodeByRef(node_ref)).filter(node => node instanceof ServiceNode) as ServiceNode[];
+
+            const consumers = new Set<string>();
+            for (const consumer_node of [...consumer_nodes, ...service_nodes]) {
+              const consumer_context = context_map[consumer_node.component_ref];
+              const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && edge.to === consumer_node.ref);
+              const consumer_interface_names = consumer_ingress_edges.map(edge => edge.interface_to);
+              for (const consumer_interface_name of consumer_interface_names) {
+                const consumer_url = consumer_context.services[consumer_node.service_name].interfaces[consumer_interface_name].ingress?.url;
+                // eslint-disable-next-line max-depth
+                if (consumer_url) {
+                  consumers.add(consumer_url);
+                }
               }
             }
+            ingress.consumers = [...consumers].sort();
           }
-          ingress.consumers = [...consumers].sort();
+        }
+
+        for (const [task_name, task] of Object.entries(component_spec.tasks || {})) {
+          if (!context.tasks[task_name]) {
+            context.tasks[task_name] = {};
+          }
+          context.tasks[task_name].environment = task.environment;
+        }
+
+        context.dependencies = {};
+        for (const dep_name of Object.keys(component_spec.dependencies || {})) {
+          const dependency_context = context_map[dep_name];
+          if (!dependency_context) continue;
+
+          context.dependencies[dep_name] = {
+            services: dependency_context.services || {},
+            outputs: dependency_context.outputs || {},
+          };
         }
       }
 
-      for (const [task_name, task] of Object.entries(component_spec.tasks || {})) {
-        if (!context.tasks[task_name]) {
-          context.tasks[task_name] = {};
+      for (const deprecated_feature of deprecated_features) {
+        if (deprecated_feature.shouldRun(component_configs)) {
+          deprecated_feature.transformContext(component_configs, context_map);
         }
-        context.tasks[task_name].environment = task.environment;
-      }
-
-      context.dependencies = {};
-      for (const dep_name of Object.keys(component_spec.dependencies || {})) {
-        const dependency_context = context_map[dep_name];
-        if (!dependency_context) continue;
-
-        context.dependencies[dep_name] = {
-          services: dependency_context.services || {},
-          outputs: dependency_context.outputs || {},
-        };
-      }
-    }
-
-    for (const deprecated_feature of deprecated_features) {
-      if (deprecated_feature.shouldRun(component_configs)) {
-        deprecated_feature.transformContext(component_configs, context_map);
       }
     }
 

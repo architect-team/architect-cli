@@ -106,15 +106,13 @@ export class DependencyGraphMutable {
   }
 
   getDownstreamNodes(node: DependencyNode): DependencyNode[] {
-    const nodes: Map<string, DependencyNode> = new Map();
-
+    const nodes = [];
     for (const edge of this.edges) {
       if (edge.from === node.ref) {
-        nodes.set(edge.to, this.getNodeByRef(edge.to));
+        nodes.push(this.getNodeByRef(edge.to));
       }
     }
-
-    return [...nodes.values()];
+    return nodes;
   }
 
   removeNode(node_ref: string, cleanup_dangling: boolean): void {
@@ -151,70 +149,34 @@ export class DependencyGraphMutable {
     return [...nodes.values()];
   }
 
-  getDependsOn(node: ServiceNode | TaskNode): ServiceNode[] {
-    const explicit_depends_on = this.getExplicitDependsOn(node);
-    const cross_component_depends_on = this.getInterComponentDependsOn(node);
-    const all_depends_on = [...explicit_depends_on, ...cross_component_depends_on];
-    return all_depends_on.filter(n => !n.is_external);
-  }
+  getDependsOn(current_node: (ServiceNode | TaskNode)): (ServiceNode | TaskNode)[] {
+    const simplified_edge_refs = new Set(this.edges.map(edge => `${edge.from}.${edge.to}`));
 
-  private getExplicitDependsOn(node: ServiceNode | TaskNode): ServiceNode[] {
-    return this.nodes
-      .filter(n => n.instance_id === node.instance_id && node.config.depends_on.includes((n as ServiceNode | TaskNode)?.config?.reserved_name || (n as ServiceNode | TaskNode)?.config?.name))
-      .filter(n => n instanceof ServiceNode)
-      .map(n => n as ServiceNode);
-  }
+    const downstream_nodes = this.getDownstreamNodes(current_node);
+    const depends_on_nodes = this.nodes
+      .filter(node =>
+        node.instance_id === current_node.instance_id &&
+        node instanceof ServiceNode &&
+        current_node.config.depends_on.includes(node.service_name),
+      );
 
-  private getInterComponentDependsOn(node: ServiceNode | TaskNode): ServiceNode[] {
-    const downstreams = this.getDownstreamServices(node);
-    const inter_component_downstreams = downstreams.filter(n => n.instance_id !== node.instance_id); // filter out intra-component dependencies
-    return inter_component_downstreams.filter(n => !this.isPartOfCircularDependency(n));
-  }
+    const dependent_node_refs = new Set([
+      ...downstream_nodes.map(node => node.ref),
+      ...depends_on_nodes.map(node => node.ref),
+    ]);
 
-  private getDownstreamServices(node: DependencyNode): ServiceNode[] {
-    let downstreams = this.getDownstreamNodes(node);
-    /* TODO:TJ test
-    const interfaces = downstreams.filter(n => n instanceof ComponentNode);
-    for (const i of interfaces) {
-      const interface_downstreams = interfaces.map(i => this.getDownstreamNodes(i));
-      for (const i_downstream of interface_downstreams) {
-        downstreams = [...downstreams, ...i_downstream];
-      }
-    }
-    */
-    downstreams = downstreams.filter((node, index, self) => self.findIndex(n => n.ref === node.ref) === index); // dedupe
-    return downstreams.filter(n => n instanceof ServiceNode).map(n => n as ServiceNode);
-  }
+    const dependent_nodes: (ServiceNode | TaskNode)[] = [];
+    for (const dependent_node_ref of dependent_node_refs) {
+      const dependent_node = this.getNodeByRef(dependent_node_ref);
+      if (dependent_node.is_external) continue;
+      if (!(dependent_node instanceof ServiceNode || dependent_node instanceof TaskNode)) continue;
+      // Check for circular dependency
+      if (simplified_edge_refs.has(`${dependent_node.ref}.${current_node.ref}`)) continue;
 
-  private isPartOfCircularDependency(search_node: ServiceNode | TaskNode, current_node?: ServiceNode | TaskNode, seen_nodes: string[] = []) {
-    const next_node = current_node || search_node;
-    const dependencies = this.getDownstreamNodes(next_node)
-      .filter(n => n instanceof ServiceNode)
-      .map(n => n as ServiceNode);
-
-    // we're in a circular ref but not one that the search_node is a part of
-    if (seen_nodes.includes(next_node.ref)) {
-      return false;
+      dependent_nodes.push(dependent_node);
     }
 
-    seen_nodes.push(next_node.ref);
-
-    if (!dependencies?.length) {
-      return false;
-    }
-
-    // search all dependencies and return true if one matches or one has a dependency that matches the original search_node
-    for (const dependency of dependencies) {
-      if (dependency.ref === search_node.ref) {
-        return true;
-      } else if (this.isPartOfCircularDependency(search_node, dependency, seen_nodes)) {
-        return true;
-      }
-      // keep searching dependencies
-    }
-
-    // searched all dependencies and didn't find any circular dependencies
-    return false;
+    return dependent_nodes;
   }
 }
 

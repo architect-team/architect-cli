@@ -18,8 +18,6 @@ export interface TaskContext {
 export interface DependencyContext {
   outputs: Dictionary<OutputValue>;
   services: Dictionary<ServiceContext>;
-  // TODO:TJ ingresses: Dictionary<ComponentInterfaceConfig>;
-  // TODO:TJ interfaces: Dictionary<ComponentInterfaceConfig>;
 }
 
 export interface ArchitectContext {
@@ -32,17 +30,8 @@ export interface ComponentContext {
   parameters: Dictionary<SecretValue>; // TODO: 404: remove
   secrets: Dictionary<SecretValue>;
   outputs: Dictionary<OutputValue>;
-  // TODO:TJ ingresses: Dictionary<ComponentInterfaceConfig>;
-  // TODO:TJ interfaces: Dictionary<ComponentInterfaceConfig>;
   services: Dictionary<ServiceContext>;
   tasks: Dictionary<TaskContext>;
 
   architect: ArchitectContext;
-
-  /* TODO:TJ
-  // Deprecated
-  environment: {
-    ingresses: Dictionary<Dictionary<ComponentInterfaceConfig>>;
-  };
-  */
 }

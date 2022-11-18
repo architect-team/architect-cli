@@ -1,4 +1,4 @@
-import { ComponentInstanceMetadata } from '../spec/component-spec';
+import { ComponentInstanceMetadata, ComponentSpec } from '../spec/component-spec';
 import { ComponentSlugUtils, ParsedResourceSlug, ResourceSlugUtils, ResourceType } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
@@ -94,9 +94,10 @@ export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max
   }
 };
 
-export const buildNodeRef = (component_config: ComponentConfig, resource_type: ResourceType, resource_name: string, max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
-  if (component_config[resource_type][resource_name]) {
-    const reserved_name = component_config[resource_type][resource_name].reserved_name;
+export const buildNodeRef = (component_config: ComponentSpec | ComponentConfig, resource_type: ResourceType, resource_name: string, max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
+  const resource = component_config[resource_type];
+  if (resource && resource[resource_name]) {
+    const reserved_name = resource[resource_name].reserved_name;
     if (reserved_name) {
       return reserved_name;
     }
