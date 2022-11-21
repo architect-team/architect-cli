@@ -206,7 +206,6 @@ export default abstract class DependencyManager {
       }
       seen_subdomains[key].push(`${service_node.config.metadata.ref}.interfaces.${ingress_edge.interface_to}`);
     }
-
     for (const [subdomain, values] of Object.entries(seen_subdomains)) {
       if (values.length > 1) {
         const msg = `The subdomain ${subdomain} is claimed by multiple component interfaces:
