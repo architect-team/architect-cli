@@ -403,8 +403,7 @@ export default abstract class DependencyManager {
     const component_configs = evaluated_component_specs.map((component_spec) => transformComponentSpec(component_spec));
 
     // Add edges to graph
-    for (const component_spec of evaluated_component_specs) {
-      const component_config = transformComponentSpec(component_spec);
+    for (const component_config of component_configs) {
       this.addComponentEdges(graph, component_config);
     }
 

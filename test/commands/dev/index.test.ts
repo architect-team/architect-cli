@@ -13,7 +13,7 @@ import * as ComponentBuilder from '../../../src/dependency-manager/spec/utils/co
 import { MOCK_API_HOST } from '../../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = true;
+const print = false;
 
 const account = {
   id: 'test-account-id',
@@ -962,8 +962,9 @@ describe('local dev environment', function () {
 
     const local_dev = test
       .timeout(20000)
-      .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-        return buildSpecFromYml(getHelloComponentConfig())
+      // @ts-ignore
+      .stub(ComponentBuilder, 'buildSpecFromPath', (_, metadata) => {
+        return buildSpecFromYml(getHelloComponentConfig(), metadata)
       })
       .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
       .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'hello-world': './examples/hello-world/architect.yml' }))
@@ -993,10 +994,11 @@ describe('local dev environment', function () {
     local_dev
       .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
       .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-      .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+      // @ts-ignore
+      .stub(ComponentBuilder, 'buildSpecFromPath', (_, metadata) => {
         const hello_json = yaml.load(getHelloComponentConfig()) as any;
         hello_json.services.api.environment.SELF_URL = `\${{ services.api.interfaces.hello.ingress.url }}`
-        return buildSpecFromYml(yaml.dump(hello_json));
+        return buildSpecFromYml(yaml.dump(hello_json), metadata);
       })
       .stub(DeployUtils, 'readSecretsFile', () => {
         return {

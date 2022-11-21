@@ -651,13 +651,13 @@ services:
     it('invalid services ref', async () => {
       const component_config = `
       name: component
-      interfaces:
-        api: \${{ services.app.interfaces.main.url }}
-        api2: \${{ service.api.interfaces.main.url }}
       services:
         api:
           interfaces:
             main: 8080
+          environment:
+            API_URL: \${{ service.api.interfaces.main.url }}
+            APP_URL: \${{ services.app.interfaces.main.url }}
       `;
 
       mock_fs({
@@ -669,7 +669,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('component', { interfaces: { api: 'api', api2: 'api2' } }),
+          await manager.loadComponentSpec('component'),
         ]);
       } catch (e: any) {
         err = e;
@@ -678,8 +678,8 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(2);
       expect(errors.map(e => e.path)).members([
-        'interfaces.api',
-        'interfaces.api2',
+        'services.api.environment.API_URL',
+        'services.api.environment.APP_URL',
       ]);
       expect(errors[0].message).includes('services.api.interfaces.main.url');
       expect(errors[1].message).includes('services.api.interfaces.main.url');
