@@ -197,20 +197,22 @@ export default abstract class DependencyManager {
       const subdomain = ingress.subdomain || ingress_edge.interface_to;
 
       if (ingress.subdomain && interface_spec.protocol && !this.valid_protocols.has(interface_spec.protocol)) {
-        throw new ArchitectError(`Protocol '${interface_spec.protocol}' is detected in '${ingress_edge.interface_to}'. We currently only support 'http' and 'https' protocols.`);
+        throw new ArchitectError(`Protocol '${interface_spec.protocol}' is detected in '${service_node.config.metadata.ref}.interfaces.${ingress_edge.interface_to}'. We currently only support 'http' and 'https' protocols.`);
       }
 
       const key = ingress?.path ? `${subdomain} with path ${ingress.path}` : subdomain;
       if (!seen_subdomains[key]) {
         seen_subdomains[key] = [];
       }
-      seen_subdomains[key].push(`${service_node.ref}.${ingress_edge.interface_to}`);
+      seen_subdomains[key].push(`${service_node.config.metadata.ref}.interfaces.${ingress_edge.interface_to}`);
     }
 
     for (const [subdomain, values] of Object.entries(seen_subdomains)) {
       if (values.length > 1) {
-        // TODO:TJ cleanup error msg
-        throw new ArchitectError(`The subdomain ${subdomain} is claimed by multiple component interfaces:\n[${values.sort().join(', ')}]\nPlease set interfaces.<name>.ingress.subdomain=<subdomain> or interfaces.<name>.ingress.path=<path> to avoid conflicts.`);
+        const msg = `The subdomain ${subdomain} is claimed by multiple component interfaces:
+          \n[${values.sort().join(', ')}]
+          \nPlease set services.<name>.interfaces.<name>.ingress.subdomain=<subdomain> or services.<name>.interfaces.<name>.ingress.path=<path> to avoid conflicts.`;
+        throw new ArchitectError(msg);
       }
     }
   }
