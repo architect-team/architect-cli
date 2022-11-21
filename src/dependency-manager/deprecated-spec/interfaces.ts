@@ -1,5 +1,6 @@
 import { serialize } from 'class-transformer';
 import { DeprecatedSpec } from '.';
+import { IngressConfig } from '../..';
 import { buildNodeRef, ComponentConfig } from '../config/component-config';
 import { ComponentContext } from '../config/component-context';
 import { DependencyGraph } from '../graph';
@@ -10,49 +11,72 @@ import { ComponentSlugUtils, ResourceType, Slugs } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
 import { replaceInterpolationBrackets } from '../utils/interpolation';
 
+type DeprecatedComponentContext = {
+  interfaces?: Dictionary<IngressConfig>;
+  ingresses?: Dictionary<IngressConfig>;
+  environment?: {
+    ingresses?: Dictionary<Dictionary<IngressConfig>>;
+  };
+  dependencies?: Dictionary<{
+    interfaces?: Dictionary<IngressConfig>;
+    ingresses?: Dictionary<IngressConfig>;
+  }>;
+};
+
 export class DeprecatedInterfacesSpec extends DeprecatedSpec {
   public shouldRun(component_configs: ComponentConfig[]): boolean {
     return component_configs.some(component_config => Object.keys(component_config.metadata.deprecated_interfaces_map).length > 0);
   }
 
-  public transformContext(component_configs: ComponentConfig[], context_map: Dictionary<ComponentContext>): void {
+  public transformContext(component_configs: ComponentConfig[], context_map: Dictionary<ComponentContext & DeprecatedComponentContext>): void {
     for (const component_config of component_configs) {
-      // TODO:TJ any
-      const context = context_map[component_config.metadata.ref] as any;
+      const context = context_map[component_config.metadata.ref];
 
       context.interfaces = {};
       context.ingresses = {};
       if (!context.environment) {
         context.environment = {};
       }
-      context.environment.ingresses = {};
+      if (!context.environment.ingresses) {
+        context.environment.ingresses = {};
+      }
 
       for (const [deprecated_interface_name, service_name] of Object.entries(component_config.metadata.deprecated_interfaces_map) as [string, string][]) {
         const interface_context = context.services[service_name].interfaces[deprecated_interface_name];
 
         context.interfaces[deprecated_interface_name] = interface_context;
-        context.ingresses[deprecated_interface_name] = interface_context.ingress;
+        if (interface_context.ingress) {
+          context.ingresses[deprecated_interface_name] = interface_context.ingress;
+        }
 
         if (!context.environment.ingresses[component_config.name]) {
           context.environment.ingresses[component_config.name] = {};
         }
-        context.environment.ingresses[component_config.name][deprecated_interface_name] = interface_context.ingress;
+        if (interface_context.ingress) {
+          context.environment.ingresses[component_config.name][deprecated_interface_name] = interface_context.ingress;
+        }
       }
     }
 
     for (const component_config of component_configs) {
-      // TODO:TJ any
-      const context = context_map[component_config.metadata.ref] as any;
+      const context = context_map[component_config.metadata.ref];
 
       for (const dep_name of Object.keys(context.dependencies)) {
-        const dependency_context = context_map[dep_name] as any;
+        const dependency_context = context_map[dep_name];
         context.dependencies[dep_name].interfaces = dependency_context.interfaces || {};
         context.dependencies[dep_name].ingresses = dependency_context.ingresses || {};
+
+        if (!context.environment) {
+          context.environment = {};
+        }
+        if (!context.environment.ingresses) {
+          context.environment.ingresses = {};
+        }
 
         if (!context.environment.ingresses[dep_name]) {
           context.environment.ingresses[dep_name] = {};
         }
-        for (const [interface_name, ingress_context] of Object.entries(context.dependencies[dep_name].ingresses)) {
+        for (const [interface_name, ingress_context] of Object.entries(context.dependencies[dep_name].ingresses || {})) {
           context.environment.ingresses[dep_name][interface_name] = ingress_context;
         }
       }
