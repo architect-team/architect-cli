@@ -1,8 +1,8 @@
 import { serialize } from 'class-transformer';
 import { DeprecatedSpec } from '.';
-import { IngressConfig } from '../..';
 import { buildNodeRef, ComponentConfig } from '../config/component-config';
 import { ComponentContext } from '../config/component-context';
+import { IngressConfig } from '../config/service-config';
 import { DependencyGraph } from '../graph';
 import { IngressEdge } from '../graph/edge/ingress';
 import { IngressConsumerEdge } from '../graph/edge/ingress-consumer';
