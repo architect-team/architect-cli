@@ -481,24 +481,19 @@ export class DockerComposeUtils {
   }
 
   /**
-  * Prints an error message and updates given a set of container ID values and current container state
-  * Liveness node fails.
+  * Prints a docker inspect health log output error message when a service liveness node has failed.
   */
-  public static async printLivenessNodeFailureErrors(container_state: any): Promise<void> {
-    // this is an inneficient but thorough approach to checking all local docker inspect states
-    const local_environments = await this.getLocalEnvironmentContainerMap();
-    for (const local_environment_name of Object.keys(local_environments)) {
-      const container_docker_inspects = local_environments[local_environment_name].filter(inspect => {
-          const logs = inspect.State?.Health?.Log;
-          return container_state?.ExitCode !== 0 || logs[logs.length - 1].ExitCode !== 0;
-        });
-
-      for (const container_docker_inspect of container_docker_inspects) {
-        const log_size = (container_docker_inspect?.State?.Health?.Log || []).length;
-        console.log(chalk.red(`The liveness probe has encountered an error trying to start the service '${container_docker_inspect.Config.Labels['com.docker.compose.service']}'.`));
-        if (log_size > 0) {
-          console.log(chalk.red(`ERROR: ${container_docker_inspect.State.Health.Log[log_size - 1].Output}`));
-        }
+  public static async printLivenessNodeFailureError(): Promise<void> {
+    const running_containers = await this.getAllContainerInfo();
+    for (const local_container of running_containers) {
+      const error_logs = (local_container.State?.Health?.Log || []).filter(log => log.ExitCode !== 0);
+      const failure_state = error_logs.length > 0 && error_logs[error_logs.length - 1].ExitCode !== 0;
+      if (failure_state) {
+        const log_output_error = error_logs[error_logs.length - 1].Output;
+        const local_container_service_name = local_container.Config.Labels['architect.ref'] || local_container.Config.Labels['com.docker.compose.service'];
+        console.log(chalk.red(`The liveness probe has encountered an error trying to start the service '${local_container_service_name}'.`));
+        console.log(chalk.red(`ERROR: ${log_output_error}`));
+        return;
       }
     }
   }
@@ -506,10 +501,10 @@ export class DockerComposeUtils {
   /**
   * Runs `docker inspect` on a container ID and returns the resulting json as a DockerInspect object.
   */
-  public static async getContainerInfo(container_id: string): Promise<DockerInspect | undefined> {
-    if (!container_id) return;
+  public static async getContainerInfo(container_id: string): Promise<DockerInspect> {
     const inspect_cmd = await docker(['inspect', '--format=\'{{json .}}\'', container_id], { stdout: false });
-    return await JSON.parse(inspect_cmd.stdout.substring(1, inspect_cmd.stdout.length - 1)) as DockerInspect;
+    const container_status = await JSON.parse(inspect_cmd.stdout.substring(1, inspect_cmd.stdout.length - 1));
+    return container_status;
   }
 
   /**
@@ -521,8 +516,14 @@ export class DockerComposeUtils {
       return [];
     }
     const containers = container_cmd.stdout.split('\n');
-    const inspect_cmd = await execa('docker', ['inspect', '--format=\'{{json .}}\'', ...containers]);
-    return inspect_cmd.stdout.split('\n').map(data => JSON.parse(data.substring(1, data.length - 1)));
+
+    const inspect_cmd = await docker(['inspect', '--format=\'{{json .}}\'', ...containers], { stdout: false });
+
+    // const inspect_cmd = await execa('docker', ['inspect', '--format=\'{{json .}}\'', ...containers]);
+    const container_states = inspect_cmd.stdout.split('\n').map((data: any) => JSON.parse(data.substring(1, data.length - 1)));
+    // console.error(inspect(container_states.map((state: any) => state.State), { depth: 15 }));
+    // console.error('inspected');
+    return container_states;
   }
 
   /**
@@ -697,19 +698,29 @@ export class DockerComposeUtils {
     }
 
     const service_data_dictionary: Dictionary<{ last_restart_ms: number }> = {};
-    const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
 
     // If the last time this loop runs, a container was restarted, we may have to run `docker compose stop`
     // because the restart can happen after the compose process was killed.
     let restarted = false;
+    const container_states = await this.getAllContainerInfo();
+
     while (!should_stop()) {
       try {
         restarted = false;
-        for (const container_state of container_states) {
-          const id = container_state.ID;
-          const full_service_name = container_state.Service;
 
-          await this.printLivenessNodeFailureErrors(container_state);
+        for (const container_state_id of container_states.map(state => state.Id)) {
+          const container_state = await this.getContainerInfo(container_state_id);
+
+          const id = container_state.Id;
+          const full_service_name = container_state.Config.Labels['architect.ref'];
+
+          const inspect_error_health_logs = container_state.State?.Health?.Log?.filter(log => log.ExitCode !== 0) || [];
+          if (full_service_name && container_state.State.Status.toLowerCase() !== 'healthy' &&
+            (container_state.State?.ExitCode !== 0 || inspect_error_health_logs.length > 0)) {
+            console.log(chalk.red(`The liveness probe has detected an error starting '${full_service_name}'`));
+            console.log(chalk.red(`ERROR: ${inspect_error_health_logs[inspect_error_health_logs.length - 1].Output}`));
+          }
+
           const service_ref = service_ref_map[full_service_name];
           if (!service_ref) {
             continue;
@@ -718,10 +729,10 @@ export class DockerComposeUtils {
           const { resource_type } = ResourceSlugUtils.parse(service_ref);
           if (resource_type !== 'services') continue;
 
-          const state = container_state.State.toLowerCase();
-          const health = container_state.Health.toLowerCase();
+          const state = container_state.State.Status.toLowerCase();
+          const health = container_state.State?.Health?.Status?.toLowerCase();
 
-          const bad_state = state !== 'running' && container_state.ExitCode !== 0;
+          const bad_state = state !== 'running' && container_state.State.ExitCode !== 0;
           const bad_health = health === 'unhealthy';
 
           if (!service_data_dictionary[service_ref]) {
