@@ -5,7 +5,6 @@ import addFormats from 'ajv-formats';
 import { plainToClass } from 'class-transformer';
 import cron from 'cron-validate';
 import TSON from 'typescript-json';
-import { ServiceInterfaceSpec } from '../../..';
 import { DeepPartial } from '../../../common/utils/types';
 import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
@@ -14,6 +13,7 @@ import { findPotentialMatch } from '../../utils/match';
 import { RequiredInterpolationRule } from '../../utils/rules';
 import { ParsedYaml } from '../../utils/types';
 import { ComponentInstanceMetadata, ComponentSpec } from '../component-spec';
+import { ServiceInterfaceSpec } from '../service-spec';
 import { findDefinition, getArchitectJSONSchema } from './json-schema';
 
 export type AjvError = ErrorObject[] | null | undefined;

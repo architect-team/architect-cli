@@ -1,8 +1,25 @@
 import { DeploySpec } from '../spec/service-spec';
 import { Dictionary } from '../utils/dictionary';
 import { LivenessProbeConfig, VolumeConfig } from './common-config';
-import { IngressConfig } from './component-config';
 import { ResourceConfig } from './resource-config';
+
+export interface IngressConfig {
+  enabled?: boolean;
+  subdomain?: string;
+  path?: string;
+  ip_whitelist?: string[];
+  sticky?: boolean | string;
+
+  // Context
+  consumers?: string[];
+  dns_zone?: string;
+  host?: null | string;
+  port?: number | string;
+  protocol?: string;
+  username?: null | string;
+  password?: null | string;
+  url?: string;
+}
 
 export interface ScalingMetricsConfig {
   cpu?: number | string; // TODO:290:number

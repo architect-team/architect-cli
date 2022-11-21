@@ -1,8 +1,13 @@
 import { serialize } from 'class-transformer';
 import { DeprecatedSpec } from '.';
-import { buildNodeRef, ComponentConfig, ComponentContext, ComponentSlugUtils, Dictionary, IngressEdge, ResourceType, ServiceEdge, Slugs } from '../..';
+import { buildNodeRef, ComponentConfig } from '../config/component-config';
+import { ComponentContext } from '../config/component-context';
 import { DependencyGraph } from '../graph';
+import { IngressEdge } from '../graph/edge/ingress';
 import { IngressConsumerEdge } from '../graph/edge/ingress-consumer';
+import { ServiceEdge } from '../graph/edge/service';
+import { ComponentSlugUtils, ResourceType, Slugs } from '../spec/utils/slugs';
+import { Dictionary } from '../utils/dictionary';
 import { replaceInterpolationBrackets } from '../utils/interpolation';
 
 export class DeprecatedInterfacesSpec extends DeprecatedSpec {

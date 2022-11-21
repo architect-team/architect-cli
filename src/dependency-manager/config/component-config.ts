@@ -5,24 +5,6 @@ import { Refs } from '../utils/refs';
 import { ServiceConfig } from './service-config';
 import { TaskConfig } from './task-config';
 
-export interface IngressConfig {
-  enabled?: boolean;
-  subdomain?: string;
-  path?: string;
-  ip_whitelist?: string[];
-  sticky?: boolean | string;
-
-  // Context
-  consumers?: string[];
-  dns_zone?: string;
-  host?: null | string;
-  port?: number | string;
-  protocol?: string;
-  username?: null | string;
-  password?: null | string;
-  url?: string;
-}
-
 export interface SecretDefinitionConfig {
   required?: boolean | string;
 
