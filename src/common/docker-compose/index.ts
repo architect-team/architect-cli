@@ -499,15 +499,6 @@ export class DockerComposeUtils {
   }
 
   /**
-  * Runs `docker inspect` on a container ID and returns the resulting json as a DockerInspect object.
-  */
-  public static async getContainerInfo(container_id: string): Promise<DockerInspect> {
-    const inspect_cmd = await docker(['inspect', '--format=\'{{json .}}\'', container_id], { stdout: false });
-    const container_status = await JSON.parse(inspect_cmd.stdout.substring(1, inspect_cmd.stdout.length - 1));
-    return container_status;
-  }
-
-  /**
    * Runs `docker inspect` on all containers and returns the resulting json as an array of objects.
    */
   public static async getAllContainerInfo(): Promise<DockerInspect[]> {
@@ -702,15 +693,14 @@ export class DockerComposeUtils {
     // If the last time this loop runs, a container was restarted, we may have to run `docker compose stop`
     // because the restart can happen after the compose process was killed.
     let restarted = false;
-    const container_states = await this.getAllContainerInfo();
 
     while (!should_stop()) {
+      const container_map = await this.getLocalEnvironmentContainerMap();
+      const container_states = container_map[environment_name] || [];
       try {
         restarted = false;
 
-        for (const container_state_id of container_states.map(state => state.Id)) {
-          const container_state = await this.getContainerInfo(container_state_id);
-
+        for (const container_state of container_states) {
           const id = container_state.Id;
           const full_service_name = container_state.Config.Labels['architect.ref'];
 
