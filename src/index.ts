@@ -9,6 +9,7 @@ export * from './dependency-manager/config/task-config';
 export * from './dependency-manager/graph';
 export * from './dependency-manager/graph/edge';
 export * from './dependency-manager/graph/edge/ingress';
+export * from './dependency-manager/graph/edge/ingress-consumer';
 export * from './dependency-manager/graph/edge/service';
 export * from './dependency-manager/graph/node';
 export * from './dependency-manager/graph/node/gateway';
