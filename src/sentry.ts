@@ -140,9 +140,10 @@ export default class SentryService {
         os_hostname: os.hostname() || '',
         error_context: !error ? undefined : { name: error.name, message: error.message, stack: error.stack },
       };
+      const updated_tags = this.flattenNestedJson(sentry_session_metadata);
 
       const update_scope = Sentry.getCurrentHub().getScope();
-      update_scope?.setExtras(sentry_session_metadata);
+      update_scope?.setTags(updated_tags);
     } catch {
       this.command.debug('SENTRY: Unable to attach metadata to the current transaction');
     }
@@ -169,11 +170,14 @@ export default class SentryService {
       ]);
 
       try {
+        // set both filtered args and flags as tags for sentry
         const filtered_sentry_args = await this.filterNonSensitiveSentryMetadata(non_sensitive, args);
-        const filtered_sentry_flags = await this.filterNonSensitiveSentryMetadata(non_sensitive, flags);
+        const filtered_sentry_args_tags = this.flattenNestedJson(filtered_sentry_args, 'command_args');
+        await this.setTags(filtered_sentry_args_tags);
 
-        await this.setScopeExtra('command_args', filtered_sentry_args);
-        await this.setScopeExtra('command_flags', filtered_sentry_flags);
+        const filtered_sentry_flags = await this.filterNonSensitiveSentryMetadata(non_sensitive, flags);
+        const filtered_sentry_flags_tags = this.flattenNestedJson(filtered_sentry_flags, 'command_flags');
+        await this.setTags(filtered_sentry_flags_tags);
       } catch (err) {
         this.command.debug('Unable to add extra sentry metadata');
       }
@@ -199,12 +203,42 @@ export default class SentryService {
   /*
   * Helper Functions
   */
-  async setScopeExtra(key: string, value: any): Promise<void> {
+  async setTags(tags: { [key: string]: number | string }): Promise<void> {
     try {
       const update_scope = Sentry.getCurrentHub().getScope();
-      update_scope?.setExtra(key, value);
+      update_scope?.setTags(tags);
     } catch {
-      this.command.debug('SENTRY: Unable to add extra metadata element to the current transaction');
+      this.command.debug('SENTRY: Unable to add tags element to the current transaction');
+    }
+  }
+
+  flattenNestedJson(dictionary: Record<string, unknown>, init_vector?: string): { [key: string]: number | string } {
+    return _doFlattening(init_vector || '', {}, dictionary);
+
+    function _doFlattening(key: string, accumulator: { [key: string]: any }, dictionary: any): { [key: string]: number | string; } {
+      // if the next property is an array, we don't want to index the position
+      // in the keyname: eg command_flags.0.account => command_flags.account
+      const subkey = Array.isArray(dictionary) ? key : null;
+      if (!key) { // if we're at the root
+        for (const property in dictionary) {
+          // if it's a primitive
+          if (Object(dictionary[property]) !== dictionary[property]) {
+            accumulator[property] = dictionary[property];
+          } else {
+            // go further
+            _doFlattening(property, accumulator, dictionary[property]);
+          }
+        }
+      } else { // if we're nested: prepend parent key (if not array index)
+        for (const property in dictionary) {
+          if (Object(dictionary[property]) !== dictionary[property]) {
+            accumulator[subkey || `${key}.${property}`] = dictionary[property];
+          } else {
+            _doFlattening(subkey || `${key}.${property}`, accumulator, dictionary[property]);
+          }
+        }
+      }
+      return accumulator;
     }
   }
 
