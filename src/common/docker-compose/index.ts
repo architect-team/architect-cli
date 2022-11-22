@@ -10,7 +10,7 @@ import path from 'path';
 import untildify from 'untildify';
 import { ArchitectError, ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
-import { restart } from '../docker/cmd';
+import { docker, restart } from '../docker/cmd';
 import { DockerHelper, RequiresDocker } from '../docker/helper';
 import PortUtil from '../utils/port';
 import { DockerComposeProject, DockerComposeProjectWithConfig } from './project';
@@ -489,8 +489,9 @@ export class DockerComposeUtils {
       return [];
     }
     const containers = container_cmd.stdout.split('\n');
-    const inspect_cmd = await execa('docker', ['inspect', '--format=\'{{json .}}\'', ...containers]);
-    return inspect_cmd.stdout.split('\n').map(data => JSON.parse(data.substring(1, data.length - 1)));
+    const inspect_cmd = await docker(['inspect', '--format=\'{{json .}}\'', ...containers], { stdout: false });
+    const container_states = inspect_cmd.stdout.split('\n').map((data: any) => JSON.parse(data.substring(1, data.length - 1)));
+    return container_states;
   }
 
   /**
@@ -669,13 +670,31 @@ export class DockerComposeUtils {
     // If the last time this loop runs, a container was restarted, we may have to run `docker compose stop`
     // because the restart can happen after the compose process was killed.
     let restarted = false;
+
     while (!should_stop()) {
+      // Fetch latest container mapping to check for the latest status every iteration
+      const container_map = await this.getLocalEnvironmentContainerMap();
+      // Only verify container status a part of the environment
+      const container_states = container_map[environment_name] || [];
       try {
         restarted = false;
-        const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
+
         for (const container_state of container_states) {
-          const id = container_state.ID;
-          const full_service_name = container_state.Service;
+          const id = container_state.Id;
+          const full_service_name = container_state.Config.Labels['architect.ref'];
+
+          // Filter the container docker inspect result's health logs to only contain entries that have an exit code other than 0, if any
+          const inspect_error_health_logs = container_state.State?.Health?.Log?.filter(log => log.ExitCode !== 0) || [];
+
+          // full_service_name: skip logging errors not implicitly part of their config, such as gateway that does not have an architect.ref label
+          // container_state.State.Status: anything other than healthy is a problematic state: eg. exited, unhealthy, or empty
+          // container_state.State?.ExitCode !== 0: last known container exit status ended in a problematic state
+          // inspect_error_health_logs.length: there is an error log entry to display on screen
+          if (full_service_name && container_state.State.Status.toLowerCase() !== 'healthy' &&
+            (container_state.State?.ExitCode !== 0 || inspect_error_health_logs.length > 0)) {
+            console.log(chalk.red(`\nThe liveness probe has detected an error starting '${full_service_name}'`));
+            console.log(chalk.red(`ERROR: ${inspect_error_health_logs[inspect_error_health_logs.length - 1].Output}`));
+          }
 
           const service_ref = service_ref_map[full_service_name];
           if (!service_ref) {
@@ -685,10 +704,10 @@ export class DockerComposeUtils {
           const { resource_type } = ResourceSlugUtils.parse(service_ref);
           if (resource_type !== 'services') continue;
 
-          const state = container_state.State.toLowerCase();
-          const health = container_state.Health.toLowerCase();
+          const state = container_state.State.Status.toLowerCase();
+          const health = container_state.State?.Health?.Status?.toLowerCase();
 
-          const bad_state = state !== 'running' && container_state.ExitCode !== 0;
+          const bad_state = state !== 'running' && container_state.State.ExitCode !== 0;
           const bad_health = health === 'unhealthy';
 
           if (!service_data_dictionary[service_ref]) {
