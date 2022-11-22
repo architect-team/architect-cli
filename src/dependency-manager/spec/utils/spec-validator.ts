@@ -259,13 +259,7 @@ function deprecatedInterfaces(spec: ComponentSpec) {
   }
 }
 
-export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMetadata): ComponentSpec => {
-  const errors = validateSpec(parsed_yml);
-
-  if (errors && errors.length > 0) {
-    throw new ValidationErrors(errors);
-  }
-
+export const buildSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMetadata): ComponentSpec => {
   const component_spec = plainToClass(ComponentSpec, parsed_yml);
 
   component_spec.metadata = metadata ? metadata : {
@@ -277,6 +271,18 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
   };
 
   deprecatedInterfaces(component_spec);
+
+  return component_spec;
+};
+
+export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMetadata): ComponentSpec => {
+  const errors = validateSpec(parsed_yml);
+
+  if (errors && errors.length > 0) {
+    throw new ValidationErrors(errors);
+  }
+
+  const component_spec = buildSpec(parsed_yml, metadata);
 
   for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
     if (service_spec.deploy && service_spec.deploy.kubernetes.deployment) {
