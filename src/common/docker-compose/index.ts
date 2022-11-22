@@ -481,24 +481,6 @@ export class DockerComposeUtils {
   }
 
   /**
-  * Prints a docker inspect health log output error message when a service liveness node has failed.
-  */
-  public static async printLivenessNodeFailureError(): Promise<void> {
-    const running_containers = await this.getAllContainerInfo();
-    for (const local_container of running_containers) {
-      const error_logs = (local_container.State?.Health?.Log || []).filter(log => log.ExitCode !== 0);
-      const failure_state = error_logs.length > 0 && error_logs[error_logs.length - 1].ExitCode !== 0;
-      if (failure_state) {
-        const log_output_error = error_logs[error_logs.length - 1].Output;
-        const local_container_service_name = local_container.Config.Labels['architect.ref'] || local_container.Config.Labels['com.docker.compose.service'];
-        console.log(chalk.red(`The liveness probe has encountered an error trying to start the service '${local_container_service_name}'.`));
-        console.log(chalk.red(`ERROR: ${log_output_error}`));
-        return;
-      }
-    }
-  }
-
-  /**
    * Runs `docker inspect` on all containers and returns the resulting json as an array of objects.
    */
   public static async getAllContainerInfo(): Promise<DockerInspect[]> {
@@ -507,13 +489,8 @@ export class DockerComposeUtils {
       return [];
     }
     const containers = container_cmd.stdout.split('\n');
-
     const inspect_cmd = await docker(['inspect', '--format=\'{{json .}}\'', ...containers], { stdout: false });
-
-    // const inspect_cmd = await execa('docker', ['inspect', '--format=\'{{json .}}\'', ...containers]);
     const container_states = inspect_cmd.stdout.split('\n').map((data: any) => JSON.parse(data.substring(1, data.length - 1)));
-    // console.error(inspect(container_states.map((state: any) => state.State), { depth: 15 }));
-    // console.error('inspected');
     return container_states;
   }
 
@@ -695,7 +672,9 @@ export class DockerComposeUtils {
     let restarted = false;
 
     while (!should_stop()) {
+      // Fetch latest container mapping to check for the latest status every iteration
       const container_map = await this.getLocalEnvironmentContainerMap();
+      // Only verify container status a part of the environment
       const container_states = container_map[environment_name] || [];
       try {
         restarted = false;
@@ -704,10 +683,16 @@ export class DockerComposeUtils {
           const id = container_state.Id;
           const full_service_name = container_state.Config.Labels['architect.ref'];
 
+          // Filter the container docker inspect result's health logs to only contain entries that have an exit code other than 0, if any
           const inspect_error_health_logs = container_state.State?.Health?.Log?.filter(log => log.ExitCode !== 0) || [];
+
+          // full_service_name: skip logging errors not implicitly part of their config, such as gateway that does not have an architect.ref label
+          // container_state.State.Status: anything other than healthy is a problematic state: eg. exited, unhealthy, or empty
+          // container_state.State?.ExitCode !== 0: last known container exit status ended in a problematic state
+          // inspect_error_health_logs.length: there is an error log entry to display on screen
           if (full_service_name && container_state.State.Status.toLowerCase() !== 'healthy' &&
             (container_state.State?.ExitCode !== 0 || inspect_error_health_logs.length > 0)) {
-            console.log(chalk.red(`The liveness probe has detected an error starting '${full_service_name}'`));
+            console.log(chalk.red(`\nThe liveness probe has detected an error starting '${full_service_name}'`));
             console.log(chalk.red(`ERROR: ${inspect_error_health_logs[inspect_error_health_logs.length - 1].Output}`));
           }
 
