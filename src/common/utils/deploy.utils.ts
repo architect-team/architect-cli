@@ -72,13 +72,13 @@ export default class DeployUtils {
       component_secrets = deepmerge(component_secrets, output_catch);
     }
 
-    const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets);
+    const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets) as Dictionary<SecretType>;
     if (extra_secrets && Object.keys(extra_secrets).length > 0) {
       if (!component_secrets['*']) {
         component_secrets['*'] = {};
       }
       // Shallow merge to ensure CLI arguments replace anything from the secrets file
-      component_secrets['*'] = { ...component_secrets['*'], ...extra_secrets } as Dictionary<SecretType>;
+      component_secrets['*'] = { ...component_secrets['*'], ...extra_secrets };
     }
     return component_secrets;
   }

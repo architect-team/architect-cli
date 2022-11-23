@@ -5,6 +5,7 @@ import path from 'path';
 import sinon from 'sinon';
 import { buildSpecFromYml, ComponentConfig, resourceRefToNodeRef } from '../../../src';
 import AppService from '../../../src/app-config/service';
+import AccountUtils from '../../../src/architect/account/account.utils';
 import SecretUtils from '../../../src/architect/secret/secret.utils';
 import Dev, { UpProcessManager } from '../../../src/commands/dev';
 import { DockerComposeUtils } from '../../../src/common/docker-compose';
@@ -1028,6 +1029,52 @@ describe('local dev environment', function () {
       expect(runCompose.calledOnce).to.be.true;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
+    })
+  
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+      return buildSpecFromYml(local_component_config_with_environment_secret)
+    })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account)
+      .persist())
+    .stub(SecretUtils, 'getSecrets', sinon.stub().throws(new Error(`Could not find entity of type "Environment"`)))
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secrets-env=non-existent-env', '-a', 'examples', '--ssl=false'])
+    .catch(err => {
+      expect(process.exitCode).eq(1);
+      expect(`${err}`).to.contain(`Could not find entity of type "Environment"`);
+    })
+    .it('Throw an error when the environment to pull secrets from does not exist');
+  
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+      return buildSpecFromYml(local_component_config_with_environment_secret)
+    })
+    .stub(AccountUtils, 'getAccount', () => {
+      return account;
+    })
+    .stub(SecretUtils, 'getSecrets', () => {
+      return environment_secrets;
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secrets-env=env', '--ssl=false'])
+    .it('Get an account if not provided to pull secrets from an environment', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
+      expect(hello_world_environment.a_required_key).to.equal('env_value');
     })
 
   describe('linked dev', function () {

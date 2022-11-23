@@ -653,7 +653,6 @@ $ architect dev -e new_env_name_here .`));
     if (flags['secrets-env']) {
       const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: false });
       env_secrets = await this.getEnvironmentSecrets(account, flags['secrets-env']);
-      flags.account = account.name;
     }
 
     const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
