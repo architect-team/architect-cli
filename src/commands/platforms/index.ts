@@ -6,6 +6,7 @@ export default class Platforms extends Clusters {
   static deprecationOptions = {
     to: 'clusters',
   };
+  static hidden = true;
 
   async run(): Promise<void> {
     await super.run();

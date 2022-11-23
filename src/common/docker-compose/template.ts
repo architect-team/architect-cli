@@ -66,12 +66,27 @@ export default interface DockerComposeTemplate {
   volumes: { [key: string]: { external?: boolean } };
 }
 
+export interface DockerInspectHealth {
+  Status: string;
+  FailingStreak: number;
+  Log: {
+    Start: string,
+    End: string,
+    ExitCode: number,
+    Output: string
+  }[]
+}
+
 export interface DockerInspect {
+  Id: string,
   State: {
-    Status: string
+    Status: string,
+    Health: DockerInspectHealth,
+    ExitCode: number
   },
   Name: string,
   Config: {
     Labels: { [key: string]: string }
   }
 }
+

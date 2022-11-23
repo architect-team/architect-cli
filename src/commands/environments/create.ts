@@ -76,10 +76,24 @@ export default class EnvironmentCreate extends BaseCommand {
     if (flags.ttl) {
       dto.ttl = flags.ttl;
     }
-    await this.app.api.post(`/accounts/${account.id}/environments`, dto);
+
+    let _environment_already_exists = false;
+    await this.app.api.post(`/accounts/${account.id}/environments`, dto, {
+      validateStatus: function (status): boolean {
+        _environment_already_exists = status === 409;
+        return status === 201 || _environment_already_exists;
+      },
+    });
 
     const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment_name}`;
+
     CliUx.ux.action.stop();
+
+    if (_environment_already_exists) {
+      this.warn(`Unable to create new environment '${environment_name}'. Environment name already in use for account '${account.name}'`);
+      return;
+    }
+
     this.log(chalk.green(`Environment created: ${environment_url}`));
   }
 }
