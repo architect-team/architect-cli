@@ -60,7 +60,6 @@ export default class ProjectUtils {
         `${chalk.green('✓')} ${selection.name.toLowerCase()}`,
       );
     }
-    await new Promise(resolve => setTimeout(resolve, 2000));
   }
 
   static async getSelections(): Promise<Selection> {
