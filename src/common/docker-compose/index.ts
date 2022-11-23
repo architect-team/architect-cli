@@ -10,7 +10,7 @@ import path from 'path';
 import untildify from 'untildify';
 import { ArchitectError, ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
-import { restart } from '../docker/cmd';
+import { docker, restart } from '../docker/cmd';
 import { DockerHelper, RequiresDocker } from '../docker/helper';
 import PortUtil from '../utils/port';
 import { DockerComposeProject, DockerComposeProjectWithConfig } from './project';
@@ -489,8 +489,9 @@ export class DockerComposeUtils {
       return [];
     }
     const containers = container_cmd.stdout.split('\n');
-    const inspect_cmd = await execa('docker', ['inspect', '--format=\'{{json .}}\'', ...containers]);
-    return inspect_cmd.stdout.split('\n').map(data => JSON.parse(data.substring(1, data.length - 1)));
+    const inspect_cmd = await docker(['inspect', '--format=\'{{json .}}\'', ...containers], { stdout: false });
+    const container_states = inspect_cmd.stdout.split('\n').map((data: any) => JSON.parse(data.substring(1, data.length - 1)));
+    return container_states;
   }
 
   /**
@@ -657,44 +658,64 @@ export class DockerComposeUtils {
 
     const compose = yaml.load(fs.readFileSync(compose_file).toString()) as DockerComposeTemplate;
 
-    const service_ref_map: Dictionary<string | undefined> = {};
-    for (const [service_name, service] of Object.entries(compose.services)) {
+    const services_watched: Set<string> = new Set();
+    for (const service of Object.values(compose.services)) {
       const service_ref = service.labels?.find((label) => label.startsWith('architect.ref='))?.split('=')[1];
       if (!service_ref) continue;
-      service_ref_map[service_name] = service_ref;
+      services_watched.add(service_ref);
     }
 
-    const service_data_dictionary: Dictionary<{ last_restart_ms: number }> = {};
+    const last_restart_map: Dictionary<number> = {};
+    const last_health_failure_map: Dictionary<string> = {};
 
     // If the last time this loop runs, a container was restarted, we may have to run `docker compose stop`
     // because the restart can happen after the compose process was killed.
     let restarted = false;
+
     while (!should_stop()) {
       try {
         restarted = false;
-        const container_states = JSON.parse((await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'ps', '--format', 'json'])).stdout);
-        for (const container_state of container_states) {
-          const id = container_state.ID;
-          const full_service_name = container_state.Service;
 
-          const service_ref = service_ref_map[full_service_name];
-          if (!service_ref) {
+        // Fetch latest container mapping to check for the latest status every iteration
+        const container_map = await this.getLocalEnvironmentContainerMap();
+        // Only verify container status a part of the environment
+        const container_states = container_map[environment_name] || [];
+
+        for (const container_state of container_states) {
+          const id = container_state.Id;
+          const full_service_name = container_state.Name.substring(1);  // Remove preceding '/'
+          const service_ref = container_state.Config.Labels['architect.ref'];
+
+          if (!services_watched.has(service_ref)) {
             continue;
           }
 
           const { resource_type } = ResourceSlugUtils.parse(service_ref);
           if (resource_type !== 'services') continue;
 
-          const state = container_state.State.toLowerCase();
-          const health = container_state.Health.toLowerCase();
+          const state = container_state.State.Status.toLowerCase();
+          const health = container_state.State?.Health?.Status?.toLowerCase();
 
-          const bad_state = state !== 'running' && container_state.ExitCode !== 0;
+          const bad_state = state !== 'running' && container_state.State.ExitCode !== 0;
           const bad_health = health === 'unhealthy';
 
-          if (!service_data_dictionary[service_ref]) {
-            service_data_dictionary[service_ref] = {
-              last_restart_ms: Date.now(),
-            };
+          const failed_health_logs = container_state.State?.Health?.Log?.filter(log => log.ExitCode !== 0) || [];
+
+          if (health !== 'healthy' && failed_health_logs.length > 0) {
+            const latest_health_failure = failed_health_logs[failed_health_logs.length - 1];
+
+            // Prevent liveness error probe failure from logging more often than the liveness probe runs.
+            // Default liveness probe interval is 30s and without checking last error time, this message will
+            // print every loop iteration.
+            if (!last_health_failure_map[service_ref] || last_health_failure_map[service_ref] !== latest_health_failure.Start) {
+              console.log(chalk.red(`\nThe liveness probe has failed for '${service_ref}'`));
+              console.log(chalk.red(`ERROR: ${latest_health_failure.Output}`));
+              last_health_failure_map[service_ref] = latest_health_failure.Start;
+            }
+          }
+
+          if (!last_restart_map[service_ref]) {
+            last_restart_map[service_ref] = Date.now();
 
             // Docker compose will only exit containers when stopping an up
             // If we had no service data and the container state is bad,
@@ -707,9 +728,8 @@ export class DockerComposeUtils {
           }
 
           if (bad_state || bad_health) {
-            const service_data = service_data_dictionary[service_ref];
+            last_restart_map[service_ref] = Date.now();
 
-            service_data.last_restart_ms = Date.now();
             // Ensure the containers aren't terminating before we attempt to restart the container.
             // If the dev command gets killed between the start of this loop and here, the restart will cause the
             // containers to never stop and leave the command hanging.
@@ -730,7 +750,7 @@ export class DockerComposeUtils {
             // If all containers go down at the same time it will wait for the restart and just move on. So only need this
             // for the case of 1 container with a health check.
             if (container_states.length === 1) {
-              DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(service_data.last_restart_ms).toISOString()], { stdout: 'inherit' });
+              DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(last_restart_map[service_ref]).toISOString()], { stdout: 'inherit' });
             }
           }
         }
