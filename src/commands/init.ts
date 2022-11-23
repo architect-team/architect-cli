@@ -177,8 +177,8 @@ export abstract class InitCommand extends BaseCommand {
     }
 
     if (compose_exist) {
-      const init_comp = await ProjectUtils.prompt(['yes', 'no'], `Would you like to convert from ${from_path}?`);
-      if (init_comp === 'yes') {
+      const init_comp = await ProjectUtils.conversionPrompt(`Would you like to convert from ${from_path}?`);
+      if (init_comp) {
         if (!from_path) {
           throw new Error(`The Docker Compose file ${from_path} couldn't be found.`);
         }
