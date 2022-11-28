@@ -63,7 +63,7 @@ export abstract class InitCommand extends BaseCommand {
 
   static args = [{
     name: 'name',
-    description: 'Name of your component or project',
+    description: 'Name of your project',
     required: false,
   }];
 
@@ -80,19 +80,18 @@ export abstract class InitCommand extends BaseCommand {
       console.log(chalk.red(`The folder ./${project_name} already exists. Please choose a different project name or remove the folder`));
       return;
     }
-    this.log(`Start the process to create your project '${project_name}'.`);
     const selections = await ProjectUtils.getSelections();
 
     this.log('\n######################################');
-    this.log('##### Let\'s set up your Project! #####');
+    this.log('##### Let\'s set up your project! #####');
     this.log('######################################\n');
 
-    await PromptUtils.oclifTimedSpinner('Creating Project directory');
+    await PromptUtils.oclifTimedSpinner('Creating project directory');
     await ProjectUtils.downloadGitHubRepos(selections, project_name);
 
     const root_path = path.join(project_name, 'architect.yml');
     this.log(chalk.green(`\nSuccessfully created project ${project_name}.\n`));
-    this.log(`Your App is ready to be deployed by architect!\nTo Deploy locally, run:\n\t$ architect dev ${root_path}\n`);
+    this.log(`Your project is ready to be deployed by Architect!\nTo deploy locally, run:\n\t$ architect dev ${root_path}\n`);
   }
 
   async runArchitectYamlConversion(from_path: string, component_name: string, component_file: string): Promise<void> {
@@ -138,7 +137,7 @@ export abstract class InitCommand extends BaseCommand {
         {
           type: 'input',
           name: 'name',
-          message: 'What should the name of the component be?',
+          message: 'What is the name of your project?',
           when: !flags.name,
           filter: value => value.toLowerCase(),
           validate: (value) => {

@@ -53,9 +53,9 @@ export default class ProjectUtils {
   static async downloadGitHubRepos(selection: Selection, project_dir: string): Promise<void> {
     // download repositories
     if (selection.repository) {
-      await execa('git', ['clone', selection.repository.toString(), project_dir + '/' + selection.name.toLowerCase()], { stdio: 'ignore' });
+      await execa('git', ['clone', selection.repository.toString(), project_dir], { stdio: 'ignore' });
       await PromptUtils.oclifTimedSpinner(
-        `Pulling down GitHub Repository`,
+        `Pulling down GitHub repository`,
          selection.name.toLowerCase(),
         `${chalk.green('✓')} ${selection.name.toLowerCase()}`,
       );
