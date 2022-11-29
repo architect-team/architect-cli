@@ -93,7 +93,7 @@ export default class ComponentRegister extends BaseCommand {
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    parsed.args.component = [...new Set(parsed.argv)];
+    parsed.args.component = parsed.argv;
 
     return parsed;
   }
@@ -106,14 +106,13 @@ export default class ComponentRegister extends BaseCommand {
       args.component = ['./architect.yml'];
     }
 
-    for (const component of args.component) {
-      const config_path = path.resolve(untildify(component));
-
+    const resolved_components: string[] = args.component.map((provided: string) => path.resolve(untildify(provided)));
+    for (const component of new Set(resolved_components)) {
       if (!Slugs.ComponentTagValidator.test(flags.tag)) {
         throw new ArchitectError(Slugs.ComponentTagDescription);
       }
 
-      await this.registerComponent(config_path, ComponentRegister.getTagFromFlags(flags));
+      await this.registerComponent(component, ComponentRegister.getTagFromFlags(flags));
     }
   }
 
