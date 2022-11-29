@@ -77,7 +77,6 @@ export default class ComponentRegister extends BaseCommand {
     sensitive: false,
     name: 'component',
     description: 'Path to the component(s) to register',
-    default: './',
   }];
 
   // overrides the oclif default parse to allow for component to be a list of components
@@ -92,10 +91,9 @@ export default class ComponentRegister extends BaseCommand {
       options.args.push({ name: 'filler' });
     }
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
-    const absolute_component_path_argv = (parsed.argv || []).map(argv => path.resolve(argv));
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    parsed.args.component = new Set(absolute_component_path_argv);
+    parsed.args.component = [...new Set(parsed.argv)];
 
     return parsed;
   }
@@ -103,6 +101,11 @@ export default class ComponentRegister extends BaseCommand {
   @RequiresDocker({ buildx: true })
   async run(): Promise<void> {
     const { args, flags } = await this.parse(ComponentRegister);
+
+    if (!args.component || args.component.length === 0) {
+      args.component = ['./architect.yml'];
+    }
+
     for (const component of args.component) {
       const config_path = path.resolve(untildify(component));
 
