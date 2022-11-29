@@ -1,6 +1,8 @@
 import { expect } from 'chai';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
+import path from 'path';
+import untildify from 'untildify';
 import sinon, { SinonSpy, SinonStub } from 'sinon';
 import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
 import AccountUtils from '../../src/architect/account/account.utils';
@@ -34,6 +36,17 @@ describe('register', function () {
     ...mock_account_response,
     name: 'architect',
   };
+
+  mockArchitectAuth()
+    .stub(fs, 'move', sinon.stub())
+    .stub(ComponentRegister, 'registerComponent', sinon.stub().returns({}))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', '-a', 'examples'])
+    .catch(e => {
+      expect(e.message).contains(path.resolve(untildify('./architect.yml')));
+    })
+    .it('expect default project path to be ./architect.yml if not provided');
 
   mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
