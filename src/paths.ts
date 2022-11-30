@@ -3,6 +3,7 @@ export default class LocalPaths {
   static LINKED_COMPONENT_MAP_FILENAME = 'linked-components.json';
   static LOCAL_DEPLOY_PATH = 'docker-compose';
   static SENTRY_FILENAME = 'sentry-history.json';
+  static GITHUB_TEMPLATE_CONFIG_URL = 'https://raw.githubusercontent.com/architect-team/template-configs/main/config.json';
   // eslint-disable-next-line unicorn/prefer-module
   static SENTRY_ROOT_PATH = __dirname || process.cwd();
 }

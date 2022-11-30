@@ -5,6 +5,7 @@ import * as dotenvExpand from 'dotenv-expand';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import { ArchitectError, Dictionary } from '../../';
+import { SecretsDict, SecretType } from '../../dependency-manager/secrets/type';
 
 export default class DeployUtils {
   private static getExtraSecrets(secrets: string[] = []): Dictionary<string | number | undefined> {
@@ -71,9 +72,10 @@ export default class DeployUtils {
     return flags;
   }
 
-  static getComponentSecrets(individual_secrets: string[], secrets_file: string[]): Dictionary<Dictionary<string | number | null>> {
+  static getComponentSecrets(individual_secrets: string[], secrets_file: string[], env_secrets?: SecretsDict): SecretsDict {
+    let component_secrets: SecretsDict = env_secrets ? env_secrets : {};
+
     // Check to see if there are multiple secret files; else, just read the single secret file
-    let component_secrets: any = {};
     for (const secret_file of secrets_file) {
       let secrets_from_file = {};
       if (secret_file.includes('.env')) {
@@ -86,7 +88,7 @@ export default class DeployUtils {
       component_secrets = deepmerge(component_secrets, secrets_from_file);
     }
 
-    const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets);
+    const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets) as Dictionary<SecretType>;
     if (extra_secrets && Object.keys(extra_secrets).length > 0) {
       if (!component_secrets['*']) {
         component_secrets['*'] = {};

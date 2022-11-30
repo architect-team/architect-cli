@@ -12,6 +12,6 @@ oclif.manifest.json
 *.env
 .DS_Store
 tsconfig.tsbuildinfo
-test/creds.json
+creds.json
 test/sentry-history.json
 .npmrc

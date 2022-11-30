@@ -77,7 +77,6 @@ export default class ComponentRegister extends BaseCommand {
     sensitive: false,
     name: 'component',
     description: 'Path to the component(s) to register',
-    default: './',
   }];
 
   // overrides the oclif default parse to allow for component to be a list of components
@@ -92,10 +91,9 @@ export default class ComponentRegister extends BaseCommand {
       options.args.push({ name: 'filler' });
     }
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
-    const absolute_component_path_argv = (parsed.argv || []).map(argv => path.resolve(argv));
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    parsed.args.component = new Set(absolute_component_path_argv);
+    parsed.args.component = parsed.argv;
 
     return parsed;
   }
@@ -103,14 +101,18 @@ export default class ComponentRegister extends BaseCommand {
   @RequiresDocker({ buildx: true })
   async run(): Promise<void> {
     const { args, flags } = await this.parse(ComponentRegister);
-    for (const component of args.component) {
-      const config_path = path.resolve(untildify(component));
 
+    if (!args.component || args.component.length === 0) {
+      args.component = ['./architect.yml'];
+    }
+
+    const resolved_components: string[] = args.component.map((provided: string) => path.resolve(untildify(provided)));
+    for (const component of new Set(resolved_components)) {
       if (!Slugs.ComponentTagValidator.test(flags.tag)) {
         throw new ArchitectError(Slugs.ComponentTagDescription);
       }
 
-      await this.registerComponent(config_path, ComponentRegister.getTagFromFlags(flags));
+      await this.registerComponent(component, ComponentRegister.getTagFromFlags(flags));
     }
   }
 
@@ -442,22 +444,19 @@ export default class ComponentRegister extends BaseCommand {
       }
     }
 
-    if (component_warnings || tag_warnings) {
-      this.log();
-      this.log(chalk.yellow(`Some required dependencies for this component have not yet been registered to your account. Please make sure to register the following before you try to deploy.`));
+    if (component_warnings.length > 0 || tag_warnings.length > 0) {
+      this.log(chalk.yellow(`\nSome required dependencies for this component have not yet been registered to your account. Please make sure to register the following before you try to deploy.`));
     }
 
     if (component_warnings.length > 0) {
-      this.log();
-      this.log(chalk.yellow(`The following components do not exist.`));
+      this.log(chalk.yellow(`\nThe following components do not exist.`));
       for (const component_name of component_warnings) {
         this.log(chalk.yellow(`  - ${component_name}`));
       }
     }
 
     if (tag_warnings.length > 0) {
-      this.log();
-      this.log(chalk.yellow(`The following components exist, but do not have the specified tag.`));
+      this.log(chalk.yellow(`\nThe following components exist, but do not have the specified tag.`));
       for (const component_name of tag_warnings) {
         this.log(chalk.yellow(`  - ${component_name}`));
       }

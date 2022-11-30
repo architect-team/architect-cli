@@ -67,7 +67,8 @@ describe('environment:create', () => {
     .env({ ARCHITECT_CLUSTER: mock_cluster.name })
     .command(['environment:create', mock_env.name, '-a', mock_account.name])
     .it('should print warning when an environment name is already in use for an account', ctx => {
-      expect(ctx.stderr).to.contain(`Unable to create new environment '${mock_env.name}'. Environment name already in use for account '${mock_account.name}'`);
+      expect(ctx.stderr).to.contain(`Unable to create new environment '${mock_env.name}'.`);
+      expect(ctx.stderr).to.contain(`in use for account '${mock_account.name}'`);
     });
 
   create_environment
