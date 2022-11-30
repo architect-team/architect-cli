@@ -442,22 +442,19 @@ export default class ComponentRegister extends BaseCommand {
       }
     }
 
-    if (component_warnings || tag_warnings) {
-      this.log();
-      this.log(chalk.yellow(`Some required dependencies for this component have not yet been registered to your account. Please make sure to register the following before you try to deploy.`));
+    if (component_warnings.length > 0 || tag_warnings.length > 0) {
+      this.log(chalk.yellow(`\nSome required dependencies for this component have not yet been registered to your account. Please make sure to register the following before you try to deploy.`));
     }
 
     if (component_warnings.length > 0) {
-      this.log();
-      this.log(chalk.yellow(`The following components do not exist.`));
+      this.log(chalk.yellow(`\nThe following components do not exist.`));
       for (const component_name of component_warnings) {
         this.log(chalk.yellow(`  - ${component_name}`));
       }
     }
 
     if (tag_warnings.length > 0) {
-      this.log();
-      this.log(chalk.yellow(`The following components exist, but do not have the specified tag.`));
+      this.log(chalk.yellow(`\nThe following components exist, but do not have the specified tag.`));
       for (const component_name of tag_warnings) {
         this.log(chalk.yellow(`  - ${component_name}`));
       }
