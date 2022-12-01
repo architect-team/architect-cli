@@ -307,7 +307,9 @@ export default class Deploy extends DeployCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Deploy);
 
-    if (args.configs_or_components && args.configs_or_components.length > 1 && flags.interface?.length) {
+    if (args.configs_or_components.length === 0) {
+      throw new Error('Missing required arg: CONFIGS_OR_COMPONENTS');
+    } else if (args.configs_or_components.length > 1 && flags.interface?.length) {
       throw new Error('Interface flag not supported if deploying multiple components in the same command.');
     }
 
