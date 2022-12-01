@@ -291,13 +291,6 @@ export default class Deploy extends DeployCommand {
         return PipelineUtils.pollPipeline(this.app, pipeline.pipeline.id)
           .then(() => {
             this.log(chalk.green(`${pipeline.component_name} Deployed`));
-          })
-          .catch((err) => {
-            if (err instanceof PipelineAbortedError || err instanceof DeploymentFailedError || err instanceof PollingTimeout) {
-              this.warn(err.message);
-            } else {
-              throw err;
-            }
           });
       }),
     );
