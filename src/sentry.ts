@@ -175,7 +175,7 @@ export default class SentryService {
         await this.setScopeExtra('args', filtered_sentry_args);
         await this.setScopeExtra('flags', filtered_sentry_flags);
         // set both filtered flags as tags for sentry
-        const filtered_sentry_flags_tags = this.flattenNestedJson(filtered_sentry_flags, 'flags');
+        const filtered_sentry_flags_tags = this.flattenNestedJson(filtered_sentry_flags, 'flag');
         await this.setTags(filtered_sentry_flags_tags);
       } catch (err) {
         this.command.debug('Unable to add extra sentry metadata');
