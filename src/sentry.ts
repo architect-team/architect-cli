@@ -172,10 +172,10 @@ export default class SentryService {
         const filtered_sentry_args = await this.filterNonSensitiveSentryMetadata(non_sensitive, args);
         const filtered_sentry_flags = await this.filterNonSensitiveSentryMetadata(non_sensitive, flags);
 
-        await this.setScopeExtra('command_args', filtered_sentry_args);
-        await this.setScopeExtra('command_flags', filtered_sentry_flags);
+        await this.setScopeExtra('args', filtered_sentry_args);
+        await this.setScopeExtra('flags', filtered_sentry_flags);
         // set both filtered flags as tags for sentry
-        const filtered_sentry_flags_tags = this.flattenNestedJson(filtered_sentry_flags, 'command_flags');
+        const filtered_sentry_flags_tags = this.flattenNestedJson(filtered_sentry_flags, 'flags');
         await this.setTags(filtered_sentry_flags_tags);
       } catch (err) {
         this.command.debug('Unable to add extra sentry metadata');
