@@ -18,6 +18,13 @@ describe('slugs validators', () => {
     '2',
   ];
 
+  const case_insensitive_valid_slugs = [
+    ...valid_slugs,
+    'MyUsername',
+    'anOtherUs3rn4me',
+    'Dashed-Username'
+  ];
+
   const valid_tags = [
     valid_tag,
     '1-0-0',
@@ -54,13 +61,20 @@ describe('slugs validators', () => {
     'other;punctuation',
   ];
 
-  const invalid_slugs = [
+  const case_insensitive_invalid_slugs = [
     invalid_slug,
     '-leading-dashes',
     'trailingdashes-',
     'something-33-characters-loooooong',
     'other.punctuation',
-    ...globally_invalid_punctuation
+    ...globally_invalid_punctuation,
+  ];
+
+  const invalid_slugs = [
+    'MyUsername',
+    'anOtherUs3rn4me',
+    'Dashed-Username',
+    ...case_insensitive_invalid_slugs,
   ];
 
   const invalid_tags = [
@@ -77,6 +91,18 @@ describe('slugs validators', () => {
   it(`invalid slugs are NOT acceptable to ArchitectSlugValidator`, async () => {
     for (const slug of invalid_slugs) {
       expect(Slugs.ArchitectSlugValidator.test(slug)).to.be.false
+    }
+  });
+
+  it(`valid slugs are acceptable to ArchitectSlugValidatorCaseInsensitive`, async () => {
+    for (const slug of case_insensitive_valid_slugs) {
+      expect(Slugs.ArchitectSlugValidatorCaseInsensitive.test(slug)).to.be.true
+    }
+  });
+
+  it(`invalid slugs are NOT acceptable to ArchitectSlugValidatorCaseInsensitive`, async () => {
+    for (const slug of case_insensitive_invalid_slugs) {
+      expect(Slugs.ArchitectSlugValidatorCaseInsensitive.test(slug)).to.be.false
     }
   });
 

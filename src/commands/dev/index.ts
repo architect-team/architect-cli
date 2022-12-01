@@ -10,8 +10,10 @@ import net from 'net';
 import opener from 'opener';
 import path from 'path';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
+import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
+import SecretUtils from '../../architect/secret/secret.utils';
 import { default as BaseCommand } from '../../base-command';
 import LocalDependencyManager, { ComponentConfigOpts } from '../../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../common/docker-compose';
@@ -20,6 +22,7 @@ import { RequiresDocker } from '../../common/docker/helper';
 import DeployUtils from '../../common/utils/deploy.utils';
 import { booleanString } from '../../common/utils/oclif';
 import PortUtil from '../../common/utils/port';
+import { SecretsDict } from '../../dependency-manager/secrets/type';
 import LocalPaths from '../../paths';
 
 type TraefikHttpService = {
@@ -53,7 +56,7 @@ export function socketPath(path: string): string {
  * Gracefully stops running containers when the process is interrupted, and
  * stops containers when the underlying process returns with an error.
  */
-class UpProcessManager {
+export class UpProcessManager {
   compose_file: string;
   server?: net.Server;
   socket: string;
@@ -125,14 +128,14 @@ class UpProcessManager {
   }
 
   /** Sends the SIGINT signal to the running `docker compose up` process. */
-  interrupt() {
+  interrupt(): void {
     if (!this.compose_process) {
       throw new Error('Must call run() first');
     }
     process.kill(-this.compose_process.pid, 'SIGINT');
   }
 
-  configureInterrupts() {
+  configureInterrupts(): void {
     process.on('SIGINT', () => {
       this.handleInterrupt();
     });
@@ -144,7 +147,7 @@ class UpProcessManager {
     });
   }
 
-  async handleInterrupt() {
+  async handleInterrupt(): Promise<void> {
     // If a user SIGINT's between when docker compose outputs "Attaching to ..." and starts printing logs,
     // the containers will not be stopped and `docker compose stop` won't yet work.
     // We stop SIGINT from doing anything until we know for sure we can stop gracefully.
@@ -166,7 +169,7 @@ class UpProcessManager {
    * Handles printing logs from the attached docker images.
    * Stops printing logs once `handleInterrupt` is called and containers are being stopped.
    */
-  configureLogs() {
+  configureLogs(): void {
     if (!this.compose_process) {
       throw new Error('Must call run() first');
     }
@@ -198,7 +201,7 @@ class UpProcessManager {
     });
   }
 
-  async run() {
+  async run(): Promise<void> {
     this.compose_process = this.start();
 
     this.configureInterrupts();
@@ -246,6 +249,7 @@ export default class Dev extends BaseCommand {
 
   static examples = [
     'architect dev ./mycomponent/architect.yml',
+    'architect dev ./mycomponent/architect.yml -a myaccount --secrets-env=myenvironment',
     'architect dev --port=81 --browser=false --debug=true --secret-file=./mycomponent/mysecrets.yml ./mycomponent/architect.yml',
   ];
 
@@ -276,6 +280,10 @@ export default class Dev extends BaseCommand {
       multiple: true,
       default: [],
       sensitive: false,
+    }),
+    'secrets-env': Flags.string({
+      description: 'Environment to load secrets from [beta]',
+      hidden: true,
     }),
     'secret-file': Flags.string({
       description: 'Path of secrets file',
@@ -514,7 +522,9 @@ export default class Dev extends BaseCommand {
     }
 
     await new UpProcessManager(compose_file, socket, project_name, flags.detached).run();
-    fs.removeSync(compose_file);
+    if (!flags.detached) {
+      fs.removeSync(compose_file);
+    }
     // eslint-disable-next-line no-process-exit
     process.exit();
   }
@@ -610,6 +620,17 @@ $ architect dev -e new_env_name_here .`));
     }
   }
 
+  private async getEnvironmentSecrets(account: Account, environment_name: string, cluster_name?: string): Promise<SecretsDict> {
+    const secrets = await SecretUtils.getSecrets(this.app, account, { cluster_name, environment_name }, true);
+
+    const env_secrets: SecretsDict = {};
+    for (const secret of secrets) {
+      env_secrets[secret.scope] = env_secrets[secret.scope] || {};
+      env_secrets[secret.scope][secret.key] = secret.value;
+    }
+    return env_secrets;
+  }
+
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
 
@@ -627,8 +648,15 @@ $ architect dev -e new_env_name_here .`));
     }
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
+
+    let env_secrets: SecretsDict = {};
+    if (flags['secrets-env']) {
+      const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: false });
+      env_secrets = await this.getEnvironmentSecrets(account, flags['secrets-env']);
+    }
+
     const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
-    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values);
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values, env_secrets);
     const component_parameters = DeployUtils.getComponentSecrets(flags.parameter || [], all_secret_file_values);
 
     const linked_components = this.app.linkedComponents;

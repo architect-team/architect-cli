@@ -1,8 +1,11 @@
 import { isNumberString } from 'class-validator';
 import deepmerge from 'deepmerge';
+import * as dotenv from 'dotenv';
+import * as dotenvExpand from 'dotenv-expand';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import { ArchitectError, Dictionary } from '../../';
+import { SecretsDict, SecretType } from '../../dependency-manager/secrets/type';
 
 export default class DeployUtils {
   private static getExtraSecrets(secrets: string[] = []): Dictionary<string | number | undefined> {
@@ -44,6 +47,15 @@ export default class DeployUtils {
     return component_secrets;
   }
 
+  private static readDotEnvSecretsFile(secret_file: string): Dictionary<Dictionary<string | undefined> | undefined> {
+    const dot_env_loaded = dotenv.config({ override: true, path: secret_file });
+    if (dot_env_loaded.error) {
+      throw new Error(`Error loading dotenv file ${secret_file}`);
+    }
+    const expanded_dot_env = dotenvExpand.expand(dot_env_loaded);
+    return { '*': expanded_dot_env.parsed };
+  }
+
   static parseFlags(parsedFlags: any): any {
     // Merge any values set via deprecated flags into their supported counterparts
     const flags: any = parsedFlags;
@@ -60,17 +72,23 @@ export default class DeployUtils {
     return flags;
   }
 
-  static getComponentSecrets(individual_secrets: string[], secrets_file: string[]): Dictionary<Dictionary<string | number | null>> {
+  static getComponentSecrets(individual_secrets: string[], secrets_file: string[], env_secrets?: SecretsDict): SecretsDict {
+    let component_secrets: SecretsDict = env_secrets ? env_secrets : {};
+
     // Check to see if there are multiple secret files; else, just read the single secret file
-    let component_secrets: any = {};
     for (const secret_file of secrets_file) {
-      const output_catch = DeployUtils.readSecretsFile(secret_file);
+      let secrets_from_file = {};
+      if (secret_file.includes('.env')) {
+        secrets_from_file = DeployUtils.readDotEnvSecretsFile(secret_file);
+      } else {
+        secrets_from_file = DeployUtils.readSecretsFile(secret_file);
+      }
       // Deep merge to ensure all values from files are captured
       // By default, the last file in the array will always supersede any other values
-      component_secrets = deepmerge(component_secrets, output_catch);
+      component_secrets = deepmerge(component_secrets, secrets_from_file);
     }
 
-    const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets);
+    const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets) as Dictionary<SecretType>;
     if (extra_secrets && Object.keys(extra_secrets).length > 0) {
       if (!component_secrets['*']) {
         component_secrets['*'] = {};

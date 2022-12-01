@@ -17,6 +17,10 @@ export class Slugs {
   public static ArchitectSlugRegexBase = `(?!-)(?!.{0,${Slugs.SLUG_CHAR_LIMIT}}--)[a-z0-9-]{1,${Slugs.SLUG_CHAR_LIMIT}}(?<!-)`;
   public static ArchitectSlugValidator = new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`);
 
+  public static ArchitectSlugDescriptionCaseInsensitive = `must contain only alphanumeric and single hyphens or underscores in the middle; max length ${Slugs.SLUG_CHAR_LIMIT}`;
+  public static ArchitectSlugRegexBaseCaseInsensitive = `(?!-)(?!.{0,${Slugs.SLUG_CHAR_LIMIT}}--)[A-Za-z0-9-]{1,${Slugs.SLUG_CHAR_LIMIT}}(?<!-)`;
+  public static ArchitectSlugValidatorCaseInsensitive = new RegExp(`^${Slugs.ArchitectSlugRegexBaseCaseInsensitive}$`);
+
   public static LabelMax = 63;
   public static LabelSlugDescription = `max length ${Slugs.LabelMax} characters, must begin and end with an alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), dots (.), and alphanumerics between.`;
   public static LabelValueSlugRegexNoMaxLength = '(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?';
