@@ -140,10 +140,9 @@ export default class SentryService {
         os_hostname: os.hostname() || '',
         error_context: !error ? undefined : { name: error.name, message: error.message, stack: error.stack },
       };
-      const updated_tags = this.flattenNestedJson(sentry_session_metadata);
 
       const update_scope = Sentry.getCurrentHub().getScope();
-      update_scope?.setTags(updated_tags);
+      update_scope?.setExtras(sentry_session_metadata);
     } catch {
       this.command.debug('SENTRY: Unable to attach metadata to the current transaction');
     }
@@ -172,10 +171,11 @@ export default class SentryService {
       try {
         // set both filtered args and flags as tags for sentry
         const filtered_sentry_args = await this.filterNonSensitiveSentryMetadata(non_sensitive, args);
-        const filtered_sentry_args_tags = this.flattenNestedJson(filtered_sentry_args, 'command_args');
-        await this.setTags(filtered_sentry_args_tags);
-
         const filtered_sentry_flags = await this.filterNonSensitiveSentryMetadata(non_sensitive, flags);
+
+        await this.setScopeExtra('command_args', filtered_sentry_args);
+        await this.setScopeExtra('command_flags', filtered_sentry_flags);
+
         const filtered_sentry_flags_tags = this.flattenNestedJson(filtered_sentry_flags, 'command_flags');
         await this.setTags(filtered_sentry_flags_tags);
       } catch (err) {
@@ -209,6 +209,15 @@ export default class SentryService {
       update_scope?.setTags(tags);
     } catch {
       this.command.debug('SENTRY: Unable to add tags element to the current transaction');
+    }
+  }
+
+  async setScopeExtra(key: string, value: any): Promise<void> {
+    try {
+      const update_scope = Sentry.getCurrentHub().getScope();
+      update_scope?.setExtra(key, value);
+    } catch {
+      this.command.debug('SENTRY: Unable to add extra metadata element to the current transaction');
     }
   }
 
