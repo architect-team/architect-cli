@@ -31,8 +31,8 @@ export default class EnvironmentDestroy extends BaseCommand {
       sensitive: false,
     }),
     'skip-deregistered': booleanString({
-      description: 'If set to true, does not throw error when an environment cannot be found to deregister',
-      default: false,
+      description: 'If set to false, throws an error when an environment cannot be found to deregister',
+      default: true,
       sensitive: false,
     }),
     force: booleanString({
