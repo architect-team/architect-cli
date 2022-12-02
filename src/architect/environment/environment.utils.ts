@@ -25,14 +25,21 @@ export class EnvironmentUtils {
     }),
   };
 
-  static async getEnvironment(api: AxiosInstance, account: Account, environment_name?: string): Promise<Environment> {
+  static async getEnvironment(api: AxiosInstance, account: Account, environment_name?: string, skip_deregistered = false): Promise<Environment> {
     if (process.env.ARCHITECT_ENVIRONMENT === environment_name && process.env.ARCHITECT_ENVIRONMENT) {
       console.log(chalk.blue(`Using environment from environment variables: `) + environment_name);
     }
 
     let environment: Environment;
     if (environment_name) {
-      environment = (await api.get(`/accounts/${account.id}/environments/${environment_name}`)).data;
+      let _environment_not_found = false;
+      const response = await api.get(`/accounts/${account.id}/environments/${environment_name}`, {
+        validateStatus: function (status): boolean {
+          _environment_not_found = status === 404;
+          return status === 200 || (_environment_not_found && skip_deregistered);
+        },
+      });
+      environment = await response?.data;
     } else {
       // eslint-disable-next-line unicorn/prefer-module
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));

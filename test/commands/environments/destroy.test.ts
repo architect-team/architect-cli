@@ -21,6 +21,60 @@ describe('environment:destroy', () => {
     id: 'test-pipeline-id'
   }
 
+  const failing_mock_env = {
+    id: null,
+    name: 'failing-test-env'
+  }
+
+  mockArchitectAuth()
+    .stub(PipelineUtils, 'pollPipeline', async () => null)
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account.name}`)
+      .reply(200, mock_account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account.id}/environments/${failing_mock_env.name}`)
+      .reply(200, failing_mock_env))
+    .stdout({ print })
+    .stderr({ print })
+    .timeout(20000)
+    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--skip-deregistered'])
+    .it('should warn and exit with non-error status when skip-deregistered is provided', ctx => {
+      expect(ctx.stderr).contains(`Warning: No configured environments found matching ${failing_mock_env.name}.`);
+    });
+
+  mockArchitectAuth()
+    .stub(PipelineUtils, 'pollPipeline', async () => null)
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account.name}`)
+      .reply(200, mock_account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account.id}/environments/${failing_mock_env.name}`)
+      .reply(200, failing_mock_env))
+    .stdout({ print })
+    .stderr({ print })
+    .timeout(20000)
+    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--skip-deregistered=true'])
+    .it('should warn and exit with non-error status when skip-deregistered is set explicitly to true', ctx => {
+      expect(ctx.stderr).to.contain(`Warning: No configured environments found matching ${failing_mock_env.name}.`);
+    });
+
+  mockArchitectAuth()
+    .stub(PipelineUtils, 'pollPipeline', async () => null)
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account.name}`)
+      .reply(200, mock_account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account.id}/environments/${failing_mock_env.name}`)
+      .reply(404))
+    .stdout({ print })
+    .stderr({ print })
+    .timeout(20000)
+    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--skip-deregistered=false'])
+    .catch(e => {
+      expect(e.message).to.contain('Request failed with status code 404');
+    })
+    .it('should exit with error status when skip-deregistered is set explicitly to false');
+
   mockArchitectAuth()
     .stub(PipelineUtils, 'pollPipeline', async () => null)
     .nock(MOCK_API_HOST, api => api
