@@ -1,4 +1,4 @@
-import { V1Deployment } from '@kubernetes/client-node';
+import type { V1Deployment } from '@kubernetes/client-node';
 import Ajv, { ErrorObject, ValidateFunction } from 'ajv';
 import ajv_errors from 'ajv-errors';
 import addFormats from 'ajv-formats';
