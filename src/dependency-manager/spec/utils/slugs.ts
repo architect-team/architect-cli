@@ -6,7 +6,7 @@ export type ComponentTag = string; // "tag"
 // Check to see if lookbehind is supported https://github.com/WebKit/WebKit/pull/7109
 let REGEX_LOOKBEHIND = true;
 try {
-  /(?!-)(?!.{0,10}--)[\da-z-]{1,10}(?<!-)/.test('support');
+  new RegExp('(?!-)(?!.{0,10}--)[a-z0-9-]{1,10}(?<!-)').test('support');
 } catch {
   REGEX_LOOKBEHIND = false;
 }
