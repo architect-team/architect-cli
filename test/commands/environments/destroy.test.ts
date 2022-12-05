@@ -3,28 +3,27 @@ import PipelineUtils from '../../../src/architect/pipeline/pipeline.utils';
 import { mockArchitectAuth, MOCK_API_HOST } from '../../utils/mocks';
 
 describe('environment:destroy', () => {
-
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
   const mock_account = {
     id: 'test-account-id',
-    name: 'test-account'
-  }
+    name: 'test-account',
+  };
 
   const mock_env = {
     id: 'test-env-id',
-    name: 'test-env'
-  }
+    name: 'test-env',
+  };
 
   const mock_pipeline = {
-    id: 'test-pipeline-id'
-  }
+    id: 'test-pipeline-id',
+  };
 
   const failing_mock_env = {
     id: null,
-    name: 'failing-test-env'
-  }
+    name: 'failing-test-env',
+  };
 
   mockArchitectAuth()
     .stub(PipelineUtils, 'pollPipeline', async () => null)
@@ -37,8 +36,8 @@ describe('environment:destroy', () => {
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--skip-deregistered'])
-    .it('should warn and exit with non-error status when skip-deregistered is provided', ctx => {
+    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve'])
+    .it('should warn and exit with non-error status when --fail-if-does-not-exist is not specified', ctx => {
       expect(ctx.stderr).contains(`Warning: No configured environments found matching ${failing_mock_env.name}.`);
     });
 
@@ -53,8 +52,8 @@ describe('environment:destroy', () => {
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--skip-deregistered=true'])
-    .it('should warn and exit with non-error status when skip-deregistered is set explicitly to true', ctx => {
+    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--fail-if-does-not-exist=false'])
+    .it('should warn and exit with non-error status when --fail-if-does-not-exist is set explicitly to false', ctx => {
       expect(ctx.stderr).to.contain(`Warning: No configured environments found matching ${failing_mock_env.name}.`);
     });
 
@@ -69,11 +68,11 @@ describe('environment:destroy', () => {
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--skip-deregistered=false'])
+    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--fail-if-does-not-exist=true'])
     .catch(e => {
       expect(e.message).to.contain('Request failed with status code 404');
     })
-    .it('should exit with error status when skip-deregistered is set explicitly to false');
+    .it('should exit with error status when --fail-if-does-not-exist is set explicitly to true');
 
   mockArchitectAuth()
     .stub(PipelineUtils, 'pollPipeline', async () => null)
@@ -92,7 +91,7 @@ describe('environment:destroy', () => {
     .timeout(20000)
     .command(['environments:destroy', '-a', mock_account.name, mock_env.name, '--auto-approve'])
     .it('should generate destroy deployment', ctx => {
-      expect(ctx.stdout).to.contain('Environment deregistered\n')
+      expect(ctx.stdout).to.contain('Environment deregistered\n');
     });
 
   mockArchitectAuth()
@@ -112,7 +111,6 @@ describe('environment:destroy', () => {
     .timeout(20000)
     .command(['environments:destroy', '-a', mock_account.name, mock_env.name, '--auto-approve', '--force'])
     .it('should force apply destroy job', ctx => {
-      expect(ctx.stdout).to.contain('Environment deregistered\n')
+      expect(ctx.stdout).to.contain('Environment deregistered\n');
     });
-
 });
