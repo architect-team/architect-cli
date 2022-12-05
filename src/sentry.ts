@@ -84,7 +84,22 @@ export default class SentryService {
 
       const sentry_user = await this.getUser();
 
-      const sentry_tags = {
+      const command_class = this.command.getClass();
+      const { args, flags, metadata } = await this.command.parse(command_class);
+
+      const default_flags = new Set(Object.entries(metadata.flags)
+        .filter(([flag_name, flag_metadata]) => flag_metadata?.setFromDefault)
+        .map(([flag_name]) => flag_name));
+
+      const non_default_flags = Object.keys({ ...flags })
+        .filter((flag_name) => !default_flags.has(flag_name));
+
+      const used_flags: { [key: string]: string | undefined } = {};
+      for (const flag of non_default_flags) {
+        used_flags[flag] = command_class.flags[flag].sensitive ? 'Filtered' : flags[flag];
+      }
+
+      const sentry_tags: { [key: string]: string | undefined } = {
         environment: this.command.app.config.environment,
         cli: this.command.app.version,
         node_runtime: process.version,
@@ -92,6 +107,7 @@ export default class SentryService {
         shell: this.command.config.shell,
         user: sentry_user?.id,
         'user-email': sentry_user?.email,
+        ...used_flags,
       };
 
       const transaction = Sentry.startTransaction({
@@ -101,11 +117,21 @@ export default class SentryService {
         name: this.command.constructor.name,
       });
 
+      const non_sensitive = new Set([
+        ...Object.entries(command_class.flags || {}).filter(([_, value]) => value.sensitive === false).map(([key, _]) => key),
+        ...Object.entries(command_class.args || {}).filter(([_, value]) => (value as any).sensitive === false).map(([_, value]) => (value as any).name),
+      ]);
+
+      const filtered_sentry_args = await this.filterNonSensitiveSentryMetadata(non_sensitive, args);
+      const filtered_sentry_flags = await this.filterNonSensitiveSentryMetadata(non_sensitive, flags);
+
       return Sentry.configureScope(scope => {
         scope.setSpan(transaction);
         if (sentry_user) {
           scope.setUser(sentry_user);
         }
+        scope.setExtra('args', filtered_sentry_args);
+        scope.setExtra('flags', filtered_sentry_flags);
         scope.setTags(sentry_tags);
       });
     }, 'SENTRY: an error occurred starting transaction');
@@ -160,27 +186,6 @@ export default class SentryService {
         Sentry.close(0);
         return;
       }
-
-      const command_class = this.command.getClass();
-      const { args, flags } = await this.command.parse(command_class);
-      const non_sensitive = new Set([
-        ...Object.entries(command_class.flags || {}).filter(([_, value]) => value.sensitive === false).map(([key, _]) => key),
-        ...Object.entries(command_class.args || {}).filter(([_, value]) => (value as any).sensitive === false).map(([_, value]) => (value as any).name),
-      ]);
-
-      try {
-        const filtered_sentry_args = await this.filterNonSensitiveSentryMetadata(non_sensitive, args);
-        const filtered_sentry_flags = await this.filterNonSensitiveSentryMetadata(non_sensitive, flags);
-
-        await this.setScopeExtra('args', filtered_sentry_args);
-        await this.setScopeExtra('flags', filtered_sentry_flags);
-        // set both filtered flags as tags for sentry
-        const filtered_sentry_flags_tags = this.flattenNestedJson(filtered_sentry_flags, 'flag');
-        await this.setTags(filtered_sentry_flags_tags);
-      } catch (err) {
-        this.command.debug('Unable to add extra sentry metadata');
-      }
-
       await this.updateSentryTransaction(error);
 
       if (this.file_out) {
@@ -202,14 +207,6 @@ export default class SentryService {
   /*
   * Helper Functions
   */
-  async setTags(tags: { [key: string]: number | string }): Promise<void> {
-    try {
-      const update_scope = Sentry.getCurrentHub().getScope();
-      update_scope?.setTags(tags);
-    } catch {
-      this.command.debug('SENTRY: Unable to add tags element to the current transaction');
-    }
-  }
 
   async setScopeExtra(key: string, value: any): Promise<void> {
     try {
@@ -217,36 +214,6 @@ export default class SentryService {
       update_scope?.setExtra(key, value);
     } catch {
       this.command.debug('SENTRY: Unable to add extra metadata element to the current transaction');
-    }
-  }
-
-  flattenNestedJson(dictionary: Record<string, unknown>, init_vector?: string): { [key: string]: number | string } {
-    return _doFlattening(init_vector || '', {}, dictionary);
-
-    function _doFlattening(key: string, accumulator: { [key: string]: any }, dictionary: any): { [key: string]: number | string; } {
-      // if the next property is an array, we don't want to index the position
-      // in the keyname: eg command_flags.0.account => command_flags.account
-      const subkey = Array.isArray(dictionary) ? key : null;
-      if (!key) { // if we're at the root
-        for (const property in dictionary) {
-          // if it's a primitive
-          if (Object(dictionary[property]) !== dictionary[property]) {
-            accumulator[property] = dictionary[property];
-          } else {
-            // go further
-            _doFlattening(property, accumulator, dictionary[property]);
-          }
-        }
-      } else { // if we're nested: prepend parent key (if not array index)
-        for (const property in dictionary) {
-          if (Object(dictionary[property]) !== dictionary[property]) {
-            accumulator[subkey || `${key}.${property}`] = dictionary[property];
-          } else {
-            _doFlattening(subkey || `${key}.${property}`, accumulator, dictionary[property]);
-          }
-        }
-      }
-      return accumulator;
     }
   }
 
