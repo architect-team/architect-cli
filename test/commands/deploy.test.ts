@@ -27,6 +27,30 @@ const mock_pipeline = {
   id: 'test-pipeline-id',
 };
 
+const mock_certificates = [
+  {
+    metadata: {
+      labels: {
+        'architect.io/component': 'echo',
+        'architect.io/component-tag': 'latest',
+      },
+    },
+    spec: {
+      dnsNames: ['env--foobar', 'app.test-env.examples.arc.test'],
+    },
+  }, {
+    metadata: {
+      labels: {
+        'architect.io/component': 'not-echo',
+        'architect.io/component-tag': 'not-latestlatest',
+      },
+    },
+    spec: {
+      dnsNames: ['env--foobar', 'app.doesnt.get.output'],
+    },
+  },
+];
+
 describe('remote deploy environment', function () {
   const remoteDeploy = mockArchitectAuth()
     .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
@@ -39,6 +63,9 @@ describe('remote deploy environment', function () {
     .nock(MOCK_API_HOST, api => api
       .post(`/environments/${environment.id}/deploy`)
       .reply(200, mock_pipeline))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/environments/${environment.id}/certificates`)
+      .reply(200, mock_certificates))
     .nock(MOCK_API_HOST, api => api
       .post(`/pipelines/${mock_pipeline.id}/approve`)
       .reply(200, {}))
@@ -54,7 +81,7 @@ describe('remote deploy environment', function () {
     .it('Errors if no components or configs are passed');
 
   remoteDeploy
-    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .it('Creates a remote deployment when env exists with env and account flags', ctx => {
       expect(ctx.stdout).to.contain('Deployed');
     });
@@ -95,9 +122,16 @@ describe('remote deploy environment', function () {
       expect(ctx.stdout).to.contain('Deployed');
     });
 
+  remoteDeploy
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
+    .it('Remote deployment outputs URLs from for the deployed component and not other components in the same environment', ctx => {
+      expect(ctx.stdout).to.contain('app.test-env.examples.arc.test');
+      expect(ctx.stdout).to.not.contain('app.doesnt.get.output');
+    });
+
   describe('instance deploys', function () {
     remoteDeploy
-      .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest@tenant-1'])
+      .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest@tenant-1'])
       .it('Creates a remote deployment when env exists with env and account flags', ctx => {
         expect(ctx.stdout).to.contain('Deployed');
       });
@@ -114,6 +148,9 @@ describe('auto-approve flag with underscore style still works', function () {
       .get(`/accounts/${account.id}/environments/${environment.name}`)
       .reply(200, environment))
     .nock(MOCK_API_HOST, api => api
+      .get(`/environments/${environment.id}/certificates`)
+      .reply(200, mock_certificates))
+    .nock(MOCK_API_HOST, api => api
       .post(`/environments/${environment.id}/deploy`)
       .reply(200, mock_pipeline))
     .nock(MOCK_API_HOST, api => api
@@ -123,14 +160,14 @@ describe('auto-approve flag with underscore style still works', function () {
     .stderr({ print });
 
   remoteDeploy
-    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'echo:latest'])
     .it('works but also emits a deprecation warning', ctx => {
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated.');
       expect(ctx.stdout).to.contain('Deployed');
     });
 
   remoteDeploy
-    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve=true', 'examples/echo:latest'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve=true', 'echo:latest'])
     .it('works but also emits a deprecation warning 2', ctx => {
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated.');
       expect(ctx.stdout).to.contain('Deployed');
@@ -198,7 +235,7 @@ describe('pollPipeline handles failed deployments', () => {
       .reply(200, [aborted_deployment]))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .catch(err => {
       const message = `Deployment ${aborted_deployment.id} was aborted. See the deployment log for more details:`;
       const link = `${app_host}/${account.name}/environments/${aborted_deployment.pipeline.environment.name}/deployments/${aborted_deployment.id}`;
@@ -213,7 +250,7 @@ describe('pollPipeline handles failed deployments', () => {
       .reply(200, [failed_environment_deployment]))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .catch(err => {
       const message = `Pipeline ${mock_pipeline.id} failed because 1 deployment failed:`;
       const link = `- ${app_host}/${account.name}/environments/${failed_environment_deployment.pipeline.environment!.name}/deployments/${failed_environment_deployment.id}`;
@@ -228,7 +265,7 @@ describe('pollPipeline handles failed deployments', () => {
       .reply(200, [failed_cluster_deployment]))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .catch(err => {
       const message = `Pipeline ${mock_pipeline.id} failed because 1 deployment failed:`;
       const link = `- ${app_host}/${account.name}/clusters/${failed_cluster_deployment.pipeline.cluster!.name}`;
@@ -243,7 +280,7 @@ describe('pollPipeline handles failed deployments', () => {
       .reply(200, [failed_environment_deployment, failed_environment_deployment_2]))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .catch(err => {
       const message = `Pipeline ${mock_pipeline.id} failed because 2 deployments failed:`;
       const link1 = `- ${app_host}/${account.name}/environments/${failed_environment_deployment.pipeline.environment.name}/deployments/${failed_environment_deployment.id}`;
@@ -258,7 +295,7 @@ describe('pollPipeline handles failed deployments', () => {
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .catch(err => {
       const expected_error = 'Timeout while polling the pipeline';
       expect(err.message).to.equal(expected_error);
@@ -303,7 +340,7 @@ describe('deployment secrets', function () {
       .reply(200, mock_pipeline))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--secret', 'app_replicas=4'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--secret', 'app_replicas=4'])
     .it('a numeric secret is passed to the API as a number and not converted to a string', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
@@ -326,7 +363,7 @@ describe('deployment secrets', function () {
       .reply(200, mock_pipeline))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--secret', 'test_secret=test', '--secret', 'another_secret=another_test'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--secret', 'test_secret=test', '--secret', 'another_secret=another_test'])
     .it('passing multiple secrets inline', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
@@ -349,7 +386,7 @@ describe('deployment secrets', function () {
       .reply(200, mock_pipeline))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--parameter', 'test_secret=test', '--parameter', 'another_secret=another_test'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--parameter', 'test_secret=test', '--parameter', 'another_secret=another_test'])
     .it('passing multiple deprecated parameters inline', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
@@ -377,7 +414,7 @@ describe('deployment secrets', function () {
       .reply(200, mock_pipeline))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--secret-file', './examples/echo/secrets.yml'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--secret-file', './examples/echo/secrets.yml'])
     .it('passing a secrets file', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
@@ -405,7 +442,7 @@ describe('deployment secrets', function () {
       .reply(200, mock_pipeline))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--secret-file', './examples/echo/.env'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--secret-file', './examples/echo/.env'])
     .it('passing a dotenv secrets file', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
@@ -433,7 +470,7 @@ describe('deployment secrets', function () {
       .reply(200, mock_pipeline))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, 'examples/echo:latest', '--values', './examples/echo/secrets.yml'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--values', './examples/echo/secrets.yml'])
     .it('passing a secrets file with the deprecated values flag', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
