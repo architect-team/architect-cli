@@ -29,8 +29,8 @@ export default class EnvironmentCreate extends BaseCommand {
       description: 'Environment Description',
       sensitive: false,
     }),
-    'fail-if-exists': booleanString({
-      description: 'If set to true, throws an error when creating an environment that already exists',
+    strict: booleanString({
+      description: 'If set to true, throws an error when attempting to create an environment that already exists',
       default: false,
       sensitive: false,
     }),
@@ -87,7 +87,7 @@ export default class EnvironmentCreate extends BaseCommand {
     await this.app.api.post(`/accounts/${account.id}/environments`, dto, {
       validateStatus: function (status): boolean {
         _environment_already_exists = status === 409;
-        return status === 201 || (_environment_already_exists && !flags['fail-if-exists']);
+        return status === 201 || (_environment_already_exists && !flags.strict);
       },
     });
 
@@ -95,7 +95,7 @@ export default class EnvironmentCreate extends BaseCommand {
 
     CliUx.ux.action.stop();
 
-    if (_environment_already_exists) {
+    if (_environment_already_exists && !flags.strict) {
       this.warn(`Unable to create new environment '${environment_name}'. Environment name already in use for account '${account.name}'`);
       return;
     }

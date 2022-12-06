@@ -25,7 +25,7 @@ export class EnvironmentUtils {
     }),
   };
 
-  static async getEnvironment(api: AxiosInstance, account: Account, environment_name?: string, fail_if_does_not_exist = true): Promise<Environment> {
+  static async getEnvironment(api: AxiosInstance, account: Account, environment_name?: string, strict = true): Promise<Environment> {
     if (process.env.ARCHITECT_ENVIRONMENT === environment_name && process.env.ARCHITECT_ENVIRONMENT) {
       console.log(chalk.blue(`Using environment from environment variables: `) + environment_name);
     }
@@ -35,7 +35,7 @@ export class EnvironmentUtils {
       const response = await api.get(`/accounts/${account.id}/environments/${environment_name}`, {
         validateStatus: function (status): boolean {
           const _environment_not_found = status === 404;
-          return status === 200 || (_environment_not_found && !fail_if_does_not_exist);
+          return status === 200 || (_environment_not_found && !strict);
         },
       });
       environment = await response?.data;

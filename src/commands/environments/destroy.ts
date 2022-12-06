@@ -30,7 +30,7 @@ export default class EnvironmentDestroy extends BaseCommand {
       default: false,
       sensitive: false,
     }),
-    'fail-if-does-not-exist': booleanString({
+    strict: booleanString({
       description: 'If set to true, throws an error when an environment cannot be found to deregister',
       default: false,
       sensitive: false,
@@ -67,9 +67,9 @@ export default class EnvironmentDestroy extends BaseCommand {
     const { args, flags } = await this.parse(EnvironmentDestroy);
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, args.environment, flags['fail-if-does-not-exist']);
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, args.environment, flags.strict);
 
-    if (!environment.id && !flags['fail-if-does-not-exist']) {
+    if (!environment.id && !flags.strict) {
       this.warn(`No configured environments found matching ${args?.environment}.`);
       return;
     }

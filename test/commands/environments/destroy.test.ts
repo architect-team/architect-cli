@@ -32,14 +32,15 @@ describe('environment:destroy', () => {
       .reply(200, mock_account))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${mock_account.id}/environments/${failing_mock_env.name}`)
-      .reply(200, failing_mock_env))
+      .reply(404))
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve'])
-    .it('should warn and exit with non-error status when --fail-if-does-not-exist is not specified', ctx => {
-      expect(ctx.stderr).contains(`Warning: No configured environments found matching ${failing_mock_env.name}.`);
-    });
+    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--strict=true'])
+    .catch(e => {
+      expect(e.message).to.contain('Request failed with status code 404');
+    })
+    .it('should exit with error status when --strict is set explicitly to true');
 
   mockArchitectAuth()
     .stub(PipelineUtils, 'pollPipeline', async () => null)
@@ -52,8 +53,8 @@ describe('environment:destroy', () => {
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--fail-if-does-not-exist=false'])
-    .it('should warn and exit with non-error status when --fail-if-does-not-exist is set explicitly to false', ctx => {
+    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--strict=false'])
+    .it('should warn and exit with non-error status when --strict is set explicitly to false', ctx => {
       expect(ctx.stderr).to.contain(`Warning: No configured environments found matching ${failing_mock_env.name}.`);
     });
 
@@ -68,11 +69,27 @@ describe('environment:destroy', () => {
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--fail-if-does-not-exist=true'])
+    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--strict'])
     .catch(e => {
       expect(e.message).to.contain('Request failed with status code 404');
     })
-    .it('should exit with error status when --fail-if-does-not-exist is set explicitly to true');
+    .it('should exit with error status when --strict is passed without explicit mapping');
+
+  mockArchitectAuth()
+    .stub(PipelineUtils, 'pollPipeline', async () => null)
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account.name}`)
+      .reply(200, mock_account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account.id}/environments/${failing_mock_env.name}`)
+      .reply(200, failing_mock_env))
+    .stdout({ print })
+    .stderr({ print })
+    .timeout(20000)
+    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve'])
+    .it('should warn and exit with non-error status when --strict is not used', ctx => {
+      expect(ctx.stderr).contains(`Warning: No configured environments found matching ${failing_mock_env.name}.`);
+    });
 
   mockArchitectAuth()
     .stub(PipelineUtils, 'pollPipeline', async () => null)
