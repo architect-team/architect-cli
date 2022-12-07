@@ -96,7 +96,7 @@ export default class SentryService {
 
       const used_flags: { [key: string]: string | undefined } = {};
       for (const flag of non_default_flags) {
-        used_flags[flag] = command_class.flags[flag].sensitive ? 'Filtered' : flags[flag];
+        used_flags[`flag.${flag}`] = command_class.flags[flag].sensitive ? 'Filtered' : flags[flag];
       }
 
       const sentry_tags: { [key: string]: string | undefined } = {
