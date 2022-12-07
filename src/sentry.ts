@@ -94,21 +94,25 @@ export default class SentryService {
       const non_default_flags = Object.keys({ ...flags })
         .filter((flag_name) => !default_flags.has(flag_name));
 
-      const used_flags: { [key: string]: string | undefined } = {};
-      for (const flag of non_default_flags) {
-        used_flags[`flag.${flag}`] = command_class.flags[flag].sensitive ? 'Filtered' : flags[flag];
-      }
-
-      const sentry_tags: { [key: string]: string | undefined } = {
+      const sentry_tags: { [key: string]: string } = {
         environment: this.command.app.config.environment,
         cli: this.command.app.version,
         node_runtime: process.version,
         os: os.platform(),
         shell: this.command.config.shell,
-        user: sentry_user?.id,
-        'user-email': sentry_user?.email,
-        ...used_flags,
       };
+
+      for (const flag of non_default_flags) {
+        sentry_tags[`flag.${flag}`] = command_class.flags[flag].sensitive ? 'Filtered' : flags[flag];
+      }
+
+      if (sentry_user?.email) {
+        sentry_tags['user-email'] = sentry_user.email;
+      }
+
+      if (sentry_user?.id) {
+        sentry_tags.user = sentry_user.id;
+      }
 
       const transaction = Sentry.startTransaction({
         op: this.command.id,
