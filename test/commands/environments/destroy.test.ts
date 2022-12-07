@@ -36,7 +36,7 @@ describe('environment:destroy', () => {
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--strict=true'])
+    .command(['environment:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--strict=true'])
     .catch(e => {
       expect(e.message).to.contain('Request failed with status code 404');
     })
@@ -53,7 +53,7 @@ describe('environment:destroy', () => {
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--strict=false'])
+    .command(['environment:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--strict=false'])
     .it('should warn and exit with non-error status when --strict is set explicitly to false', ctx => {
       expect(ctx.stderr).to.contain(`Warning: No configured environments found matching ${failing_mock_env.name}.`);
     });
@@ -69,7 +69,7 @@ describe('environment:destroy', () => {
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--strict'])
+    .command(['environment:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve', '--strict'])
     .catch(e => {
       expect(e.message).to.contain('Request failed with status code 404');
     })
@@ -86,7 +86,7 @@ describe('environment:destroy', () => {
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['environments:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve'])
+    .command(['environment:destroy', '-a', mock_account.name, failing_mock_env.name, '--auto-approve'])
     .it('should warn and exit with non-error status when --strict is not used', ctx => {
       expect(ctx.stderr).contains(`Warning: No configured environments found matching ${failing_mock_env.name}.`);
     });
@@ -106,7 +106,7 @@ describe('environment:destroy', () => {
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['environments:destroy', '-a', mock_account.name, mock_env.name, '--auto-approve'])
+    .command(['environment:destroy', '-a', mock_account.name, mock_env.name, '--auto-approve'])
     .it('should generate destroy deployment', ctx => {
       expect(ctx.stdout).to.contain('Environment deregistered\n');
     });
@@ -126,7 +126,7 @@ describe('environment:destroy', () => {
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['environments:destroy', '-a', mock_account.name, mock_env.name, '--auto-approve', '--force'])
+    .command(['environment:destroy', '-a', mock_account.name, mock_env.name, '--auto-approve', '--force'])
     .it('should force apply destroy job', ctx => {
       expect(ctx.stdout).to.contain('Environment deregistered\n');
     });

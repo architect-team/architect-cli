@@ -62,7 +62,7 @@ USAGE
 * [`architect dev:stop [NAME]`](#architect-devstop-name)
 * [`architect doctor`](#architect-doctor)
 * [`architect environments:create [ENVIRONMENT]`](#architect-environmentscreate-environment)
-* [`architect environments:destroy [ENVIRONMENT]`](#architect-environmentsdestroy-environment)
+* [`architect environment:destroy [ENVIRONMENT]`](#architect-environmentsdestroy-environment)
 * [`architect exec [RESOURCE] [FLAGS] -- [COMMAND]`](#architect-exec-resource-flags----command)
 * [`architect help [COMMAND]`](#architect-help-command)
 * [`architect init [NAME]`](#architect-init-name)
@@ -402,13 +402,13 @@ EXAMPLES
 
 _See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.29.0-rc.5/src/commands/environments/create.ts)_
 
-## `architect environments:destroy [ENVIRONMENT]`
+## `architect environment:destroy [ENVIRONMENT]`
 
 Deregister an environment
 
 ```
 USAGE
-  $ architect environments:destroy [ENVIRONMENT] [-a <value>] [--auto-approve <value>] [-f <value>]
+  $ architect environment:destroy [ENVIRONMENT] [-a <value>] [--auto-approve <value>] [-f <value>]
 
 ARGUMENTS
   ENVIRONMENT  Name of the environment to deregister
