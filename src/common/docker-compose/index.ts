@@ -636,6 +636,7 @@ export class DockerComposeUtils {
       '-p',
       project_name,
       'run',
+      '--no-deps',
       '--rm',
       service_name,
     ], { stdio: 'inherit' });
