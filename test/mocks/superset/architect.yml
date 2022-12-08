@@ -86,6 +86,14 @@ services:
       - api-db
     labels:
       label-string: some_label
+    liveness_probe:
+      success_threshold: 1
+      failure_threshold: 3
+      timeout: '10s'
+      interval: '10s'
+      initial_delay: '5s'
+      path: /
+      port: 8080
     ${{ if architect.environment == 'local' }}:
       command: 'npm run start'
 
@@ -149,11 +157,11 @@ services:
       DB_PASS: ${{ secrets.db_pass }}
       FILE_DATA: file:./filedata.txt
     liveness_probe:
-      success_threshold: 3
+      success_threshold: 1
       failure_threshold: 3
       timeout: '10s'
-      interval: '20s'
-      initial_delay: '30s'
+      interval: '10s'
+      initial_delay: '5s'
       path: /
       port: 8080
     ${{ if architect.environment == 'local' }}:
@@ -248,9 +256,9 @@ tasks:
         context: ../../../examples/scheduled-tasks/
         dockerfile: ./Dockerfile
       command:
-      - sh
-      - -c
-      - $RUN_CURL && curl $SERVER_URL
+        - sh
+        - -c
+        - $RUN_CURL && curl $SERVER_URL
       environment:
         SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
         RUN_CURL: ${{ secrets.param_boolean }}
