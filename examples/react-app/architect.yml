@@ -8,12 +8,6 @@ keywords:
   - express
   - postgres
 
-interfaces:
-  app:
-    url: ${{ services.app.interfaces.main.url }}
-    ingress:
-      subdomain: app
-
 secrets:
   api_db_host:
     description: API database host override
@@ -92,7 +86,10 @@ services:
       args:
         NODE_ENV: production
     interfaces:
-      main: &app-port 8080
+      main:
+        port: &app-port 8080
+        ingress:
+          subdomain: app
     liveness_probe:
       command: curl --fail localhost:8080/api/names
       interval: 10s

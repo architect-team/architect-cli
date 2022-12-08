@@ -39,6 +39,7 @@ secrets:
 
 dependencies:
   hello-world: latest
+  deprecated-hello-world: latest
 
 services:
   stateless-app:
@@ -49,11 +50,26 @@ services:
       dockerfile: Dockerfile
     command: 'npm run start'
     interfaces:
-      http: 8080
+      http:
+        port: 8080
+        ingress:
+          enabled: true
+      unused:
+        port: 8080
+        ingress:
+          ip_whitelist:
+            - 0.0.0.0
+          path: /api
     environment:
       LOG_LEVEL: ${{ secrets.log_level }}
-      HELLO_WORLD_ADDR: ${{ dependencies.hello-world.interfaces.hello.url }}
-      UNUSED_INGRESS_ADDR: ${{ ingresses.stateless-unused.url }}
+      URL: ${{ services.stateless-app.interfaces.http.url }}
+      EXT_URL: ${{ services.stateless-app.interfaces.http.ingress.url }}
+      HELLO_WORLD_ADDR: ${{ dependencies.hello-world.services.api.interfaces.main.url }}
+      EXT_HELLO_WORLD_ADDR: ${{ dependencies.hello-world.services.api.interfaces.main.ingress.url }}
+      DEPRECATED_HELLO_WORLD_ADDR: ${{ dependencies.deprecated-hello-world.interfaces.hello.url }}
+      DEPRECATED_EXT_HELLO_WORLD_ADDR: ${{ dependencies.deprecated-hello-world.ingresses.hello.url }}
+      DEPRECATED_EXT_HELLO_WORLD_ADDR2: ${{ environment.ingresses.deprecated-hello-world.hello.url }} # Deprecated
+      UNUSED_INGRESS_ADDR: ${{ services.stateless-app.interfaces.unused.ingress.url }}
       ENVIRONMENT_UNSET:
       PARAM_STRING: ${{ secrets.param_string }}
       PARAM_REQUIRED: ${{ secrets.param_required }}
@@ -165,7 +181,10 @@ services:
     build:
       context: ../../../examples/stateful-component/frontend/
     interfaces:
-      web: 8081
+      web:
+        port: 8081
+        ingress:
+          subdomain: stateful
     environment:
       API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
     entrypoint:
@@ -235,22 +254,5 @@ tasks:
       environment:
         SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
         RUN_CURL: ${{ secrets.param_boolean }}
-
-interfaces:
-  stateless:
-    url: ${{ services.stateless-app.interfaces.http.url }}
-    ingress:
-      enabled: true
-  stateless-unused:
-    url: ${{ services.stateless-app.interfaces.http.url }}
-    ingress:
-      ip_whitelist:
-        - 0.0.0.0
-      path: /api
-  stateful:
-    description: Exposes the sign in webapp to upstreams
-    url: ${{ services.stateful-frontend.interfaces.web.url }}
-    ingress:
-      subdomain: stateful
 
 artifact_image: architect-artifact-image

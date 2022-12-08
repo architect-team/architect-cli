@@ -1,6 +1,5 @@
 import { EnvironmentSpecValue } from '../spec/resource-spec';
 import { Dictionary } from '../utils/dictionary';
-import { ComponentInterfaceConfig } from './component-config';
 import { ServiceInterfaceConfig } from './service-config';
 
 export type OutputValue = string | number | boolean | null;
@@ -18,8 +17,7 @@ export interface TaskContext {
 
 export interface DependencyContext {
   outputs: Dictionary<OutputValue>;
-  ingresses: Dictionary<ComponentInterfaceConfig>;
-  interfaces: Dictionary<ComponentInterfaceConfig>;
+  services: Dictionary<ServiceContext>;
 }
 
 export interface ArchitectContext {
@@ -32,15 +30,8 @@ export interface ComponentContext {
   parameters: Dictionary<SecretValue>; // TODO: 404: remove
   secrets: Dictionary<SecretValue>;
   outputs: Dictionary<OutputValue>;
-  ingresses: Dictionary<ComponentInterfaceConfig>;
-  interfaces: Dictionary<ComponentInterfaceConfig>;
   services: Dictionary<ServiceContext>;
   tasks: Dictionary<TaskContext>;
 
   architect: ArchitectContext;
-
-  // Deprecated
-  environment: {
-    ingresses: Dictionary<Dictionary<ComponentInterfaceConfig>>;
-  };
 }

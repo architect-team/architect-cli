@@ -11,6 +11,45 @@ import { AnyOf, ExclusiveOr, ExpressionOr, ExpressionOrString, RequiredOr } from
 import { Slugs } from './utils/slugs';
 
 @JSONSchema({
+  description: 'An ingress exposes an interface to external network traffic through an architect-deployed gateway.',
+})
+export class IngressSpec {
+  @IsOptional()
+  @JSONSchema({
+    type: 'boolean',
+    description: 'Marks the interface as an ingress.',
+  })
+  enabled?: boolean;
+
+  @IsOptional()
+  @JSONSchema({
+    ...ExpressionOr({ type: 'string', pattern: Slugs.ComponentSubdomainValidator.source }),
+    description: 'The subdomain that will be used if the interface is exposed externally',
+    errorMessage: Slugs.ComponentSubdomainDescription,
+  })
+  subdomain?: string;
+
+  @IsOptional()
+  @JSONSchema({
+    ...ExpressionOr({ type: 'string', pattern: '^\\/.*$' }),
+    description: 'The path of the interface used for path based routing',
+  })
+  path?: string;
+
+  @IsOptional()
+  @JSONSchema({
+    ...ExpressionOr({
+      type: 'array',
+      items: {
+        anyOf: [{ type: 'string', format: 'cidrv4' }, { type: 'string', pattern: '\\${{\\s*secrets\\.[\\w-]+\\s*}}' }],
+      },
+    }),
+    description: 'IP addresses that are allowed to access the interface',
+  })
+  ip_whitelist?: string[];
+}
+
+@JSONSchema({
   ...RequiredOr('cpu', 'memory'),
   description: 'Scaling metrics define the upper bound of resource consumption before spinning up an additional replica.',
 })
@@ -143,6 +182,10 @@ export class ServiceInterfaceSpec {
     default: false,
   })
   sticky?: boolean | string;
+
+  @IsOptional()
+  @ValidateNested()
+  ingress?: IngressSpec;
 }
 
 @JSONSchema({

@@ -3,6 +3,24 @@ import { Dictionary } from '../utils/dictionary';
 import { LivenessProbeConfig, VolumeConfig } from './common-config';
 import { ResourceConfig } from './resource-config';
 
+export interface IngressConfig {
+  enabled?: boolean;
+  subdomain?: string;
+  path?: string;
+  ip_whitelist?: string[];
+  sticky?: boolean | string;
+
+  // Context
+  consumers?: string[];
+  dns_zone?: string;
+  host?: null | string;
+  port?: number | string;
+  protocol?: string;
+  username?: null | string;
+  password?: null | string;
+  url?: string;
+}
+
 export interface ScalingMetricsConfig {
   cpu?: number | string; // TODO:290:number
   memory?: number | string;
@@ -23,6 +41,8 @@ export interface ServiceInterfaceConfig {
   password?: null | string; // TODO:290:string
   url?: string;
   sticky?: boolean | string;
+
+  ingress?: IngressConfig;
 }
 
 export interface ServiceConfig extends ResourceConfig {

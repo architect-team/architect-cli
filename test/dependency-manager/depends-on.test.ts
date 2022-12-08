@@ -1,8 +1,9 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
-import { resourceRefToNodeRef, ServiceNode } from '../../src';
+import { resourceRefToNodeRef, ServiceEdge, ServiceNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
+import { IngressConsumerEdge } from '../../src/dependency-manager/graph/edge/ingress-consumer';
 
 describe('graph depends_on', () => {
   it('happy path depends_on', async () => {
@@ -53,6 +54,46 @@ describe('graph depends_on', () => {
 
     const db_depends_on = graph.getDependsOn(db);
     expect(db_depends_on.length).to.equal(0);
+  });
+
+  it('depends_on via ingress ref', async () => {
+    const component_config = `
+      name: cloud
+      services:
+        app:
+          interfaces:
+            main: 8080
+          environment:
+            API_ADDR: \${{ services.api.interfaces.main.ingress.url }}
+        api:
+          interfaces:
+            main:
+              port: 8080
+              ingress:
+                subdomain: api
+    `;
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'cloud': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentSpec('cloud:latest'),
+    ]);
+
+    const app_ref = resourceRefToNodeRef('cloud.services.app');
+    const app = graph.getNodeByRef(app_ref) as ServiceNode;
+
+    const api_ref = resourceRefToNodeRef('cloud.services.api');
+
+    expect(graph.edges.filter(edge => edge instanceof ServiceEdge)).lengthOf(0);
+    expect(graph.edges.filter(edge => edge instanceof IngressConsumerEdge)).lengthOf(1);
+
+    const app_depends_on = graph.getDependsOn(app);
+    expect(app_depends_on.length).to.equal(1);
+    expect(app_depends_on[0].ref).to.equal(api_ref);
   });
 
   it('multiple depends_on', async () => {
@@ -252,9 +293,8 @@ describe('graph depends_on', () => {
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
-    expect(app_depends_on.length).to.equal(2);
+    expect(app_depends_on.length).to.equal(1);
     expect(app_depends_on[0].ref).to.equal(api_ref);
-    expect(app_depends_on[1].ref).to.equal(db_ref);
 
     const api_depends_on = graph.getDependsOn(api);
     expect(api_depends_on.length).to.equal(0);
@@ -378,7 +418,7 @@ describe('graph depends_on', () => {
     expect(api_depends_on.length).to.equal(0);
   });
 
-  it('cross component chained depends_on', async () => {
+  it('cross component depends_on', async () => {
     const component_config = `
       name: cloud
       dependencies:
@@ -430,9 +470,8 @@ describe('graph depends_on', () => {
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
-    expect(app_depends_on.length).to.equal(2);
+    expect(app_depends_on.length).to.equal(1);
     expect(app_depends_on[0].ref).to.equal(api_ref);
-    expect(app_depends_on[1].ref).to.equal(db_ref);
 
     const api_depends_on = graph.getDependsOn(api);
     expect(api_depends_on.length).to.equal(1);

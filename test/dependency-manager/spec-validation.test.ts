@@ -10,17 +10,19 @@ describe('superset spec validation', function () {
     it(`test/mocks/superset/architect.yml passes ajv json schema validation`, async () => {
       const component_spec = buildSpecFromPath(`test/mocks/superset/architect.yml`);
       const dependency_component_spec = buildSpecFromPath('examples/hello-world/architect.yml');
+      const deprecated_component_spec = buildSpecFromPath(`test/mocks/superset/deprecated.architect.yml`);
 
       expect(component_spec.metadata.file?.path).to.equal(`test/mocks/superset/architect.yml`);
       expect(component_spec).to.not.be.undefined;
 
       const manager = new LocalDependencyManager(axios.create());
-      await manager.getGraph([component_spec, dependency_component_spec], { '*': { param_unset: 'test' } });
+      await manager.getGraph([component_spec, dependency_component_spec, deprecated_component_spec], { '*': { param_unset: 'test' } });
     });
 
     it(`config interpolation works with multiline secrets`, async () => {
       const component_spec = buildSpecFromPath(`test/mocks/superset/architect.yml`);
       const dependency_component_spec = buildSpecFromPath('examples/hello-world/architect.yml');
+      const deprecated_component_spec = buildSpecFromPath(`test/mocks/superset/deprecated.architect.yml`);
 
       const secrets_yml = `
         '*':
@@ -33,7 +35,7 @@ describe('superset spec validation', function () {
       const secrets_obj = parseSourceYml(secrets_yml) as any;
 
       const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([component_spec, dependency_component_spec], secrets_obj);
+      const graph = await manager.getGraph([component_spec, dependency_component_spec, deprecated_component_spec], secrets_obj);
 
       const app_ref = resourceRefToNodeRef(`${component_spec.name}.services.stateless-app`);
       const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
@@ -47,6 +49,7 @@ describe('superset spec validation', function () {
     it(`config interpolation works with multiline secrets 2`, async () => {
       const component_spec = buildSpecFromPath(`test/mocks/superset/architect.yml`);
       const dependency_component_spec = buildSpecFromPath('examples/hello-world/architect.yml');
+      const deprecated_component_spec = buildSpecFromPath(`test/mocks/superset/deprecated.architect.yml`);
 
       const secrets_yml = `
         '*':
@@ -58,7 +61,7 @@ describe('superset spec validation', function () {
       const secrets_obj = parseSourceYml(secrets_yml) as any;
 
       const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([component_spec, dependency_component_spec], secrets_obj);
+      const graph = await manager.getGraph([component_spec, dependency_component_spec, deprecated_component_spec], secrets_obj);
 
       const app_ref = resourceRefToNodeRef(`${component_spec.name}.services.stateless-app`);
       const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
