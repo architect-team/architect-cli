@@ -13,6 +13,7 @@ import { findPotentialMatch } from '../../utils/match';
 import { RequiredInterpolationRule } from '../../utils/rules';
 import { ParsedYaml } from '../../utils/types';
 import { ComponentInstanceMetadata, ComponentSpec } from '../component-spec';
+import { ServiceInterfaceSpec } from '../service-spec';
 import { findDefinition, getArchitectJSONSchema } from './json-schema';
 
 export type AjvError = ErrorObject[] | null | undefined;
@@ -211,13 +212,54 @@ export const validateDependsOn = (component: ComponentSpec): ValidationError[] =
   return errors;
 };
 
-export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMetadata): ComponentSpec => {
-  const errors = validateSpec(parsed_yml);
+function deprecatedInterfaces(spec: ComponentSpec) {
+  const services = spec.services || {};
+  const interfaces = spec.deprecated_interfaces;
+  for (const [interface_name, interface_config_or_string] of Object.entries(interfaces)) {
+    const interface_config = interface_config_or_string instanceof Object ? interface_config_or_string : { url: interface_config_or_string };
 
-  if (errors && errors.length > 0) {
-    throw new ValidationErrors(errors);
+    const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
+    const matches = url_regex.exec(interface_config.url);
+    if (matches) {
+      const interface_ref = matches[1];
+
+      const [services_text, service_name, interfaces_text, service_interface_name] = interface_ref.split('.');
+      if (services_text !== 'services') {
+        continue;
+      }
+      if (interfaces_text !== 'interfaces') {
+        continue;
+      }
+      if (!(service_name in services)) {
+        continue;
+      }
+
+      const service_interfaces = services[service_name].interfaces;
+      if (!service_interfaces) {
+        continue;
+      }
+
+      const service_interface = service_interfaces[service_interface_name];
+
+      const service_interface_obj = service_interface instanceof Object ? service_interface : { port: service_interface };
+      if (service_interface_obj) {
+        const new_interface: ServiceInterfaceSpec = {
+          ...service_interface_obj,
+        };
+        if (interface_config.sticky !== undefined) {
+          new_interface.sticky = interface_config.sticky;
+        }
+        if (interface_config.ingress !== undefined) {
+          new_interface.ingress = interface_config.ingress;
+        }
+        service_interfaces[interface_name] = new_interface;
+        spec.metadata.deprecated_interfaces_map[interface_name] = service_name;
+      }
+    }
   }
+}
 
+export const buildSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMetadata): ComponentSpec => {
   const component_spec = plainToClass(ComponentSpec, parsed_yml);
 
   component_spec.metadata = metadata ? metadata : {
@@ -225,7 +267,22 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
     architect_ref: component_spec.name,
     tag: 'latest',
     instance_date: new Date(),
+    deprecated_interfaces_map: {},
   };
+
+  deprecatedInterfaces(component_spec);
+
+  return component_spec;
+};
+
+export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMetadata): ComponentSpec => {
+  const errors = validateSpec(parsed_yml);
+
+  if (errors && errors.length > 0) {
+    throw new ValidationErrors(errors);
+  }
+
+  const component_spec = buildSpec(parsed_yml, metadata);
 
   for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
     if (service_spec.deploy && service_spec.deploy.kubernetes.deployment) {

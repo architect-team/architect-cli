@@ -14,7 +14,10 @@ services:
       args:
         NODE_ENV: production
     interfaces:
-      main: 8080
+      main:
+        port: 8080
+        ingress:
+          subdomain: api
     debug:
       command: npm run dev
       build:
@@ -25,10 +28,3 @@ services:
           description: Mount the src dir when running locally so code changes can be detected
           mount_path: /usr/src/app/src
           host_path: ./src/
-
-interfaces:
-  http:
-    description: Exposes the API service to upstreams
-    url: ${{ services.api.interfaces.main.url }}
-    ingress:
-      subdomain: api

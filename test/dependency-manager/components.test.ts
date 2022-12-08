@@ -193,8 +193,8 @@ describe('components spec v1', function () {
         db_ref,
       ]);
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `${app_ref} [service->main] -> ${api_ref} [main]`,
-        `${api_ref} [service->main] -> ${db_ref} [main]`,
+        `service: ${app_ref} -> ${api_ref}[main]`,
+        `service: ${api_ref} -> ${db_ref}[main]`,
       ]);
       // Test secret values
       const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
@@ -310,21 +310,18 @@ describe('components spec v1', function () {
         ...await manager.loadComponentSpecs('cloud:latest'),
       ]);
       const api_ref = resourceRefToNodeRef('cloud.services.api');
-      const ci_ref = resourceRefToNodeRef('ci');
       const web_ref = resourceRefToNodeRef('ci.services.web');
       const worker_ref = resourceRefToNodeRef('ci.services.worker');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         api_ref,
 
-        ci_ref,
         web_ref,
         worker_ref,
       ]);
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `${worker_ref} [service->main] -> ${web_ref} [main]`,
-        `${ci_ref} [web] -> ${web_ref} [main]`,
-        `${api_ref} [service->web] -> ${ci_ref} [web]`,
+        `service: ${worker_ref} -> ${web_ref}[main]`,
+        `service: ${api_ref} -> ${web_ref}[web]`,
       ]);
 
       // Test secret values
@@ -637,8 +634,6 @@ describe('components spec v1', function () {
       const api_ref = resourceRefToNodeRef('cloud.services.api');
 
       expect(graph.edges.filter(e => e instanceof IngressEdge).length).eq(1);
-      const ingress_edge = graph.edges.find(e => e instanceof IngressEdge);
-      expect(ingress_edge!.interface_mappings).to.deep.equal([{ interface_from: 'api', interface_to: 'api-interface' }]);
       const cloud_api_node = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(cloud_api_node.config.environment.EXTERNAL_APP_URL).eq('http://api.arc.localhost');
       expect(cloud_api_node.config.environment.EXTERNAL_APP_URL2).eq('http://api.arc.localhost');
@@ -818,6 +813,7 @@ describe('components spec v1', function () {
           dependency: 'cloud-api',
           account: 'architect',
         },
+
         // Other
         {
           cloud: 'architect/cloud',
@@ -896,7 +892,6 @@ describe('components spec v1', function () {
           'gateway',
           resourceRefToNodeRef(`${combination.account && cloud_account_name === combination.account ? '' : `${cloud_account_name}/`}cloud.services.app`),
           api_node_ref,
-          resourceRefToNodeRef(`${(combination.account && api_account_name === combination.account) || !api_account_name ? '' : `${api_account_name}/`}cloud-api`),
         ]);
 
         expect(graph.edges).lengthOf(3);

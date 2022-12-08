@@ -93,6 +93,8 @@ describe('component spec unit test', () => {
           main:
             host: app.aws.com
             port: 8080
+          app:
+            port: 8080
           admin:
             host: admin.aws.com
             port: 8081

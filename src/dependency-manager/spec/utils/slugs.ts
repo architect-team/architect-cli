@@ -54,7 +54,7 @@ export interface ParsedSlug {
   component_account_name?: string;
 }
 
-export type ComponentSlug = string; // "<account-name>/<component-name>"
+export type ComponentSlug = string; // "<component-name>"
 export interface ParsedComponentSlug extends ParsedSlug {
   component_account_name?: string;
   component_name: string;
@@ -108,7 +108,7 @@ export class ComponentSlugUtils extends SlugUtils {
   public static parse = parseCurry<ComponentSlug, ParsedComponentSlug>();
 }
 
-export type ComponentVersionSlug = string; // "<account-name>/<component-name>:<tag>"
+export type ComponentVersionSlug = string; // "<component-name>:<tag>"
 export interface ParsedComponentVersionSlug extends ParsedSlug {
   component_account_name?: string;
   component_name: string;
@@ -150,7 +150,7 @@ export interface ParsedResourceSlug extends ParsedSlug {
   instance_name?: string;
 }
 export class ResourceSlugUtils extends SlugUtils {
-  public static Description = 'must be of the form <account-name>/<component-name>.services|tasks.<resource-name>';
+  public static Description = 'must be of the form <component-name>.services|tasks.<resource-name>';
 
   public static RegexResource = `${ComponentSlugUtils.RegexName}\\${Slugs.RESOURCE_DELIMITER}(?<resource_type>services|tasks)\\${Slugs.RESOURCE_DELIMITER}(?<resource_name>${Slugs.ArchitectSlugRegexBase})`;
 

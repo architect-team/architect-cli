@@ -163,7 +163,7 @@ describe('template', () => {
         'hello-world': '/stack/architect.yml',
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world', { map_all_interfaces: true }),
+        await manager.loadComponentSpec('hello-world'),
       ]);
       const api_ref = resourceRefToNodeRef('hello-world.services.api');
       const node = graph.getNodeByRef(api_ref) as ServiceNode;

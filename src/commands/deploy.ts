@@ -139,10 +139,12 @@ export default class Deploy extends DeployCommand {
     }),
     interface: Flags.string({
       char: 'i',
-      description: 'Component interfaces',
+      description: 'Deprecated: Please use ingress.subdomain https://docs.architect.io/components/ingress-rules/',
       multiple: true,
-      default: [],
+      default: undefined,
       sensitive: false,
+      deprecated: true,
+      hidden: true,
     }),
     'secret-file': Flags.string({
       description: 'Path of secrets file',
@@ -227,7 +229,7 @@ export default class Deploy extends DeployCommand {
 
     const components = args.configs_or_components;
 
-    const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
+    const interfaces_map = DeployUtils.getInterfacesMap(flags.interface || []);
     const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
     const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values); // TODO: 404: update
     const component_parameters = DeployUtils.getComponentSecrets(flags.parameter || [], all_secret_file_values); // TODO: 404: remove

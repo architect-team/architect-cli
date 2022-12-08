@@ -6,12 +6,6 @@ keywords:
   - examples
   - microservices
 
-interfaces:
-  main:
-    url: ${{ services.api.interfaces.main.url }}
-    ingress:
-      subdomain: api
-
 services:
   api:
     build:
@@ -21,6 +15,8 @@ services:
     interfaces:
       main:
         port: 8080
+        ingress:
+          subdomain: api
     debug:
       command: npm run start:dev
       build:
