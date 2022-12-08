@@ -79,7 +79,7 @@ describe('environment:create', () => {
     });
 
   create_environment
-  .env({ ARCHITECT_PLATFORM: mock_cluster.name })
+    .env({ ARCHITECT_PLATFORM: mock_cluster.name })
     .command(['environment:create', mock_env.name, '-a', mock_account.name])
     .it('should create an environment with the platform environment variable', ctx => {
       expect(ctx.stdout).to.contain(`Using cluster from environment variables: ${mock_cluster.name}`);

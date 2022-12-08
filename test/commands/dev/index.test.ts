@@ -124,7 +124,7 @@ describe('local dev environment', function () {
           one_more_required_secret: \${{ secrets.one_more_required_secret }}
           compose_escaped_variable: \${{ secrets.compose_escaped_variable }}
     `;
-  
+
   const local_component_config_with_environment_secret = `
     name: hello-world
 
@@ -791,12 +791,12 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secret-file', './examples/hello-world/.env', '--ssl=false'])
+    .command(['dev', './examples/hello-world/architect.yml', '--secret-file', './examples/hello-world/.env', '--ssl=false'])
     .it('Create a local dev with a basic component and a basic .env secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       const hello_world_service = runCompose.firstCall.args[0].services[hello_api_ref] as any;
-      expect(hello_world_service.external_links).to.contain('gateway:test.arc.localhost');
+      expect(hello_world_service.external_links).to.contain('gateway:hello.arc.localhost');
       expect(hello_world_service.environment.a_required_key).to.equal('some_value');
       expect(hello_world_service.environment.another_required_key).to.equal('required_value');
       expect(hello_world_service.environment.one_more_required_secret).to.equal('one_more_value');
@@ -998,7 +998,7 @@ describe('local dev environment', function () {
       const hello_world_service = runCompose.firstCall.args[0].services[hello_api_ref] as any;
       expect(hello_world_service.environment.compose_escaped_variable).to.equal('variable_split_$$_with_dollar$$signs');
     })
-  
+
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
@@ -1023,7 +1023,7 @@ describe('local dev environment', function () {
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('env_value');
     })
-  
+
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
@@ -1051,7 +1051,7 @@ describe('local dev environment', function () {
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
     })
-  
+
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
@@ -1073,7 +1073,7 @@ describe('local dev environment', function () {
       expect(`${err}`).to.contain(`Could not find entity of type "Environment"`);
     })
     .it('Throw an error when the environment to pull secrets from does not exist');
-  
+
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
