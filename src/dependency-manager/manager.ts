@@ -84,7 +84,7 @@ export default abstract class DependencyManager {
     }
   }
 
-  addComponentEdges(graph: DependencyGraph, component_config: ComponentConfig): void {
+  addComponentEdges(graph: DependencyGraph, component_config: ComponentConfig, component_configs: ComponentConfig[]): void {
     const component = component_config;
 
     this.addIngressEdges(graph, component_config);
@@ -99,13 +99,16 @@ export default abstract class DependencyManager {
       let matches;
 
       // Add edges between services
-      const services_regex = new RegExp(`\\\${{\\s*services\\.(?<service_name>${Slugs.ArchitectSlugRegexBase})\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.(?<interface_key>${Slugs.ArchitectSlugRegexBase})`, 'g');
+      const services_regex = new RegExp(`\\\${{\\s*(dependencies\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.)?services\\.(?<service_name>${Slugs.ArchitectSlugRegexBase})\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.(?<interface_key>${Slugs.ArchitectSlugRegexBase})`, 'g');
       while ((matches = services_regex.exec(resource_string)) !== null) {
         if (!matches.groups) {
           continue;
         }
-        const { service_name, interface_name, interface_key } = matches.groups;
-        const to = buildNodeRef(component, 'services', service_name);
+        const { dependency_name, service_name, interface_name, interface_key } = matches.groups;
+
+        const dependency = component_configs.find(c => c.name === dependency_name) || component;
+
+        const to = buildNodeRef(dependency, 'services', service_name);
 
         if (to === from) continue;
 
@@ -405,7 +408,7 @@ export default abstract class DependencyManager {
 
     // Add edges to graph
     for (const component_config of component_configs) {
-      this.addComponentEdges(graph, component_config);
+      this.addComponentEdges(graph, component_config, component_configs);
     }
 
     const deprecated_features = [new DeprecatedInterfacesSpec(this)];

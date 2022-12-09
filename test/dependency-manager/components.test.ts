@@ -900,5 +900,57 @@ describe('components spec v1', function () {
         expect(api_node.config.replicas).to.equal(2);
       }
     });
+
+    it('component with dependency to deprecated interfaces', async () => {
+      const component_a = `
+      name: component-a
+      dependencies:
+        component-b: latest
+      services:
+        app:
+          image: test:v1
+          environment:
+            B_ADDR: \${{ dependencies.component-b.services.api.interfaces.main.url }}
+            B_EXT_ADDR: \${{ dependencies.component-b.services.api.interfaces.main.ingress.url }}
+      `;
+
+      const component_b = `
+      name: component-b
+      services:
+        api:
+          image: test:v1
+          interfaces:
+            main: 3000
+      interfaces:
+        main:
+          url: \${{ services.api.interfaces.main.url }}
+          ingress:
+            subdomain: api
+      `;
+
+      mock_fs({
+        '/a/architect.yaml': component_a,
+        '/b/architect.yaml': component_b,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'examples', {
+        'component-a': '/a/architect.yaml',
+        'component-b': '/b/architect.yaml',
+      });
+      const graph = await manager.getGraph([
+        ...await manager.loadComponentSpecs('component-a'),
+        ...await manager.loadComponentSpecs('component-b'),
+      ]);
+
+      expect(graph.edges).to.have.lengthOf(3);
+      const a_ref = resourceRefToNodeRef('component-a.services.app');
+      const b_ref = resourceRefToNodeRef('component-b.services.api');
+
+      const a_node = graph.getNodeByRef(a_ref) as ServiceNode;
+      expect(a_node.config.environment).to.deep.equal({
+        B_ADDR: `http://${b_ref}:3000`,
+        B_EXT_ADDR: `http://api.arc.localhost`,
+      });
+    });
   });
 });
