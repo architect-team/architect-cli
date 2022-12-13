@@ -331,8 +331,7 @@ export class DockerComposeUtils {
       if (service.build) {
         if (!service.image) {
           // eslint-disable-next-line unicorn/consistent-destructuring
-          const image = options.getImage ? options.getImage(node.config.metadata.ref) : node.ref;
-          service.image = image;
+          service.image = options.getImage ? options.getImage(node.config.metadata.architect_ref) : node.ref;
         }
 
         // Optimization to check if multiple services share the same dockerfile/build config and avoid building unnecessarily

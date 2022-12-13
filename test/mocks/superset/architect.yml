@@ -140,6 +140,7 @@ services:
           protocol: postgresql
 
   stateful-api:
+    reserved_name: stateful-api
     build:
       args:
         build_arg_string: arg_value
