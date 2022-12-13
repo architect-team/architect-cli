@@ -140,7 +140,7 @@ services:
           protocol: postgresql
 
   stateful-api:
-    reserved_name: stateful-api
+    reserved_name: stateful-reserved-name
     build:
       args:
         build_arg_string: arg_value
@@ -211,7 +211,7 @@ services:
         args:
           NODE_ENV: development
       depends_on:
-        - stateful-api
+        - stateful-reserved-name
       scaling:
         min_replicas: 1
         max_replicas: 3
