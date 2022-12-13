@@ -8,6 +8,7 @@ import { RequiresDocker } from '../common/docker/helper';
 import PortUtil from '../common/utils/port';
 import PromptUtils from '../common/utils/prompt-utils';
 import inquirer = require('inquirer');
+import { ArchitectError } from '../dependency-manager/utils/errors';
 
 export default class Login extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -47,7 +48,7 @@ export default class Login extends BaseCommand {
 
   private async runBrowserFlow() {
     if (!PromptUtils.promptsAvailable()) {
-      throw new Error('We detected that this environment does not have a prompt available. To login in a non-tty environment, please use both the user and password options: `architect login -e <email> -p <password>`');
+      throw new ArchitectError('We detected that this environment does not have a prompt available. To login in a non-tty environment, please use both the user and password options: `architect login -e <email> -p <password>`');
     }
 
     const port = await PortUtil.getAvailablePort(60000);
