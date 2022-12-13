@@ -16,7 +16,7 @@ import { mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST } from '../utils/m
 describe('register', function () {
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-  const print = true; // TODO: undo
+  const print = false;
 
   const mock_account_response = {
     created_at: "2020-06-02T15:33:27.870Z",
