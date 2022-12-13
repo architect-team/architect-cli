@@ -222,7 +222,7 @@ export class DockerComposeUtils {
         service.labels = [];
       }
 
-      service.labels.push(`architect.ref=${node.config.metadata.architect_ref}`);
+      service.labels.push(`architect.ref=${node.config.metadata.ref}`);
 
       // Set liveness and healthcheck for services (not supported by Tasks)
       if (node instanceof ServiceNode) {
@@ -331,7 +331,7 @@ export class DockerComposeUtils {
       if (service.build) {
         if (!service.image) {
           // eslint-disable-next-line unicorn/consistent-destructuring
-          service.image = options.getImage ? options.getImage(node.config.metadata.architect_ref) : node.ref;
+          service.image = options.getImage ? options.getImage(node.config.metadata.ref) : node.ref;
         }
 
         // Optimization to check if multiple services share the same dockerfile/build config and avoid building unnecessarily

@@ -18,7 +18,6 @@ describe('component transform unit test', function () {
 
     const metadata: ComponentInstanceMetadata = {
       ref,
-      architect_ref: ref,
       tag: 'latest',
       instance_name: 'instance-1',
       instance_id: 'test-instance-id',
