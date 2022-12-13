@@ -389,7 +389,7 @@ describe('components with reserved_name field set', function () {
       expect(worker_node.config.name).to.eq('worker');
       expect(worker_node.ref).to.eq(reserved_name);
       expect(worker_node.config.metadata.tag).to.eq('6.2');
-      expect(worker_node.config.metadata.ref).to.eq(reserved_name);
+      expect(worker_node.config.metadata.ref).to.eq('ci.services.worker');
     });
 
     it('environment ingress context produces the correct values for a simple external interface', async () => {

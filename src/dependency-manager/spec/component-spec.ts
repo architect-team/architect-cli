@@ -12,7 +12,6 @@ import { ComponentSlugUtils, Slugs } from './utils/slugs';
 export interface ComponentInstanceMetadata {
   readonly tag: string;
   readonly ref: string;
-  readonly architect_ref: string;
 
   readonly instance_name?: string;
   readonly instance_id?: string;

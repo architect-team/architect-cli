@@ -264,7 +264,6 @@ export const buildSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMe
 
   component_spec.metadata = metadata ? metadata : {
     ref: component_spec.name,
-    architect_ref: component_spec.name,
     tag: 'latest',
     instance_date: new Date(),
     deprecated_interfaces_map: {},

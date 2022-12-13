@@ -35,7 +35,6 @@ export default class LocalDependencyManager extends DependencyManager {
     let spec: ComponentSpec;
     const metadata: ComponentInstanceMetadata = {
       ref: component_ref,
-      architect_ref: component_ref,
       tag: tag,
       instance_name,
       instance_id: options?.instance_id || component_ref,
