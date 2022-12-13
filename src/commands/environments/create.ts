@@ -95,8 +95,8 @@ export default class EnvironmentCreate extends BaseCommand {
 
     CliUx.ux.action.stop();
 
-    if (_environment_already_exists && !flags.strict) {
-      this.warn(`Unable to create new environment '${environment_name}'. Environment name already in use for account '${account.name}'`);
+    if (_environment_already_exists) {
+      this.warn(`Unable to create new environment '${environment_name}'.\nEnvironment name already in use for account '${account.name}'`);
       return;
     }
 
