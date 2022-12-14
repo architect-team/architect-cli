@@ -8,7 +8,7 @@ import os from 'os';
 import pLimit from 'p-limit';
 import path from 'path';
 import untildify from 'untildify';
-import { ArchitectError, ComponentNode, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
+import { ArchitectError, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
 import { docker, restart } from '../docker/cmd';
 import { DockerHelper, RequiresDocker } from '../docker/helper';
@@ -99,10 +99,11 @@ export class DockerComposeUtils {
     const gateway_links = new Set<string>();
     if (gateway_node) {
       for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
-        for (const { interface_from } of edge.interface_mappings) {
-          const host = interface_from === '@' ? external_addr : `${interface_from}.${external_addr}`;
-          gateway_links.add(`${gateway_node.ref}:${host}`);
-        }
+        const service_node = graph.getNodeByRef(edge.to);
+        const service_interface = service_node.interfaces[edge.interface_to];
+        const subdomain = service_interface.ingress?.subdomain || edge.interface_to;
+        const host = subdomain === '@' ? external_addr : `${subdomain}.${external_addr}`;
+        gateway_links.add(`${gateway_node.ref}:${host}`);
       }
 
       compose.services[gateway_node.ref] = {
@@ -221,7 +222,7 @@ export class DockerComposeUtils {
         service.labels = [];
       }
 
-      service.labels.push(`architect.ref=${node.config.metadata.architect_ref}`);
+      service.labels.push(`architect.ref=${node.config.metadata.ref}`);
 
       // Set liveness and healthcheck for services (not supported by Tasks)
       if (node instanceof ServiceNode) {
@@ -330,8 +331,7 @@ export class DockerComposeUtils {
       if (service.build) {
         if (!service.image) {
           // eslint-disable-next-line unicorn/consistent-destructuring
-          const image = options.getImage ? options.getImage(node.config.metadata.ref) : node.ref;
-          service.image = image;
+          service.image = options.getImage ? options.getImage(node.config.metadata.ref) : node.ref;
         }
 
         // Optimization to check if multiple services share the same dockerfile/build config and avoid building unnecessarily
@@ -358,52 +358,51 @@ export class DockerComposeUtils {
     for (const edge of graph.edges) {
       const node_from = graph.getNodeByRef(edge.from);
 
-      if (node_from instanceof ComponentNode) continue;
+      const node_to = graph.getNodeByRef(edge.to);
 
-      for (const { interface_from, interface_to, node_to, node_to_interface_name } of graph.followEdge(edge)) {
-        if (!(node_to instanceof ServiceNode)) continue;
-        if (node_to.is_external) continue;
+      if (!(node_to instanceof ServiceNode)) continue;
+      if (node_to.is_external) continue;
 
-        if (edge instanceof IngressEdge) {
-          const service_to = compose.services[node_to.ref];
-          const node_to_interface = node_to.interfaces[node_to_interface_name];
-          service_to.environment = service_to.environment || {};
+      if (edge instanceof IngressEdge) {
+        const service_to = compose.services[node_to.ref];
+        const node_to_interface = node_to.interfaces[edge.interface_to];
+        service_to.environment = service_to.environment || {};
 
-          if (!service_to.labels) {
-            service_to.labels = [];
-          }
+        if (!service_to.labels) {
+          service_to.labels = [];
+        }
 
-          if (!service_to.labels.includes(`traefik.enable=true`)) {
-            service_to.labels.push(`traefik.enable=true`);
-          }
-          if (!service_to.labels.includes(`traefik.port=${gateway_port}`)) {
-            service_to.labels.push(`traefik.port=${gateway_port}`);
-          }
+        if (!service_to.labels.includes(`traefik.enable=true`)) {
+          service_to.labels.push(`traefik.enable=true`);
+        }
+        if (!service_to.labels.includes(`traefik.port=${gateway_port}`)) {
+          service_to.labels.push(`traefik.port=${gateway_port}`);
+        }
 
-          const host = interface_from === '@' ? external_addr : `${interface_from}.${external_addr}`;
-          const traefik_service = `${node_to.ref}-${interface_to}`;
+        const ingress = node_to_interface.ingress;
+        const subdomain = ingress?.subdomain || edge.interface_to;
 
-          const component_node = graph.getNodeByRef(edge.to) as ComponentNode;
-          const component_interface = component_node.config.interfaces[interface_to];
-          if (component_interface?.ingress?.path) {
-            service_to.labels.push(`traefik.http.routers.${traefik_service}.rule=Host(\`${host}\`) && PathPrefix(\`${component_interface.ingress.path}\`)`);
-          } else {
-            service_to.labels.push(`traefik.http.routers.${traefik_service}.rule=Host(\`${host}\`)`);
-          }
-          if (!service_to.labels.includes(`traefik.http.routers.${traefik_service}.service=${traefik_service}-service`)) {
-            service_to.labels.push(`traefik.http.routers.${traefik_service}.service=${traefik_service}-service`);
-          }
-          service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.port=${node_to_interface.port}`);
-          if (node_to_interface.sticky) {
-            service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadBalancer.sticky.cookie=true`);
-          }
-          if (ssl_cert && ssl_key) {
-            service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`, `traefik.http.routers.${traefik_service}.tls=true`);
-          }
+        const host = subdomain === '@' ? external_addr : `${subdomain}.${external_addr}`;
+        const traefik_service = `${node_to.ref}-${edge.interface_to}`;
 
-          if (component_interface?.protocol) {
-            service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.scheme=${component_interface?.protocol}`);
-          }
+        if (ingress?.path) {
+          service_to.labels.push(`traefik.http.routers.${traefik_service}.rule=Host(\`${host}\`) && PathPrefix(\`${ingress.path}\`)`);
+        } else {
+          service_to.labels.push(`traefik.http.routers.${traefik_service}.rule=Host(\`${host}\`)`);
+        }
+        if (!service_to.labels.includes(`traefik.http.routers.${traefik_service}.service=${traefik_service}-service`)) {
+          service_to.labels.push(`traefik.http.routers.${traefik_service}.service=${traefik_service}-service`);
+        }
+        service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.port=${node_to_interface.port}`);
+        if (node_to_interface.sticky) {
+          service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadBalancer.sticky.cookie=true`);
+        }
+        if (ssl_cert && ssl_key) {
+          service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`, `traefik.http.routers.${traefik_service}.tls=true`);
+        }
+
+        if (node_to_interface.protocol && node_to_interface.protocol !== 'http') {
+          service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.scheme=${node_to_interface.protocol}`);
         }
       }
     }
@@ -636,6 +635,7 @@ export class DockerComposeUtils {
       '-p',
       project_name,
       'run',
+      '--no-deps',
       '--rm',
       service_name,
     ], { stdio: 'inherit' });

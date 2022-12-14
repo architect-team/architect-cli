@@ -4,13 +4,14 @@ import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { findPotentialMatch } from '../../utils/match';
 import { RecursivePartial } from '../../utils/types';
-import { ComponentSpec, IngressSpec } from '../component-spec';
+import { ComponentSpec } from '../component-spec';
+import { IngressSpec } from '../service-spec';
 
 export function generateIngressesOverrideSpec(component_spec: ComponentSpec, ingresses: Dictionary<IngressSpec>): RecursivePartial<ComponentSpec> {
   const spec: RecursivePartial<ComponentSpec> = {};
-  spec.interfaces = {};
+  spec.services = {};
 
-  const interface_names = Object.keys(component_spec.interfaces || {});
+  const interface_names = Object.keys(component_spec.metadata.deprecated_interfaces_map || {});
   const errors = [];
   for (const [interface_name, ingress] of Object.entries(ingresses)) {
     if (!interface_names.includes(interface_name)) {
@@ -32,10 +33,20 @@ export function generateIngressesOverrideSpec(component_spec: ComponentSpec, ing
       errors.push(error);
     }
 
-    if (!spec.interfaces[interface_name]) {
-      spec.interfaces[interface_name] = {};
+    const service_name = component_spec.metadata.deprecated_interfaces_map[interface_name];
+    if (!service_name) continue;
+
+    if (!spec.services[service_name]) {
+      spec.services[service_name] = {};
     }
-    spec.interfaces[interface_name] = {
+    const service = spec.services[service_name]!;
+    if (!service.interfaces) {
+      service.interfaces = {};
+    }
+    if (!service.interfaces[interface_name]) {
+      service.interfaces[interface_name] = {};
+    }
+    service.interfaces[interface_name] = {
       ingress,
     };
   }

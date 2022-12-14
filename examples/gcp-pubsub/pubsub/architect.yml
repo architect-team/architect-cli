@@ -33,10 +33,5 @@ services:
         host: ${{ secrets.service_endpoint }}
         protocol: ${{ secrets.service_protocol }}
         port: ${{ secrets.service_port }}
-
-interfaces:
-  pubsub:
-    description: Connects to the GCP pub/sub service
-    url: ${{ services.pubsub.interfaces.main.url }}
-    ingress:
-      subdomain: pubsub
+        ingress:
+          subdomain: pubsub

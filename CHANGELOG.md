@@ -1,3 +1,41 @@
+# [1.30.0](https://github.com/architect-team/architect-cli/compare/v1.29.0...v1.30.0) (2022-12-14)
+
+
+### Bug Fixes
+
+* **graph:** Fix dependency edges for new interfaces spec ([#776](https://github.com/architect-team/architect-cli/issues/776)) ([1913d8e](https://github.com/architect-team/architect-cli/commit/1913d8ee044ccf6ef23da5b022945fd5c81f1f08))
+* **register:** Fixing register for services with reserved names ([#777](https://github.com/architect-team/architect-cli/issues/777)) ([6f465af](https://github.com/architect-team/architect-cli/commit/6f465af9cd0cccc7e6cd2364f750abc8a2e46ae0))
+* **reserved_name:** Remove architect_ref to avoid confusion ([#778](https://github.com/architect-team/architect-cli/issues/778)) ([4967e7d](https://github.com/architect-team/architect-cli/commit/4967e7d89e4bd927bbcb5c701d8433ee2ddc960e))
+* **sentry:** Log flags/commands as tags for searching ([#762](https://github.com/architect-team/architect-cli/issues/762)) ([d821dea](https://github.com/architect-team/architect-cli/commit/d821dea129164ec92d768650d586113753f7d95c))
+* **webkit:** Add check for regex lookbehind support ([#770](https://github.com/architect-team/architect-cli/issues/770)) ([8698a2d](https://github.com/architect-team/architect-cli/commit/8698a2d4a45c12afb7f61a7a0cf171577dafcdde))
+* **webkit:** regex ([#771](https://github.com/architect-team/architect-cli/issues/771)) ([b74cccd](https://github.com/architect-team/architect-cli/commit/b74cccd44c4a91d2a739339fd790d8dc76f16629))
+* **webkit:** Use RegExp so catch triggers ([cccfded](https://github.com/architect-team/architect-cli/commit/cccfdedf10223cc7ce5350612bdcc9dbc24c9f96))
+
+
+### Features
+
+* **spec:** Deprecate top level interfaces block ([#775](https://github.com/architect-team/architect-cli/issues/775)) ([9144120](https://github.com/architect-team/architect-cli/commit/91441202a9177e4df32f94723419d6845ef16ffd))
+
+# [1.29.0](https://github.com/architect-team/architect-cli/compare/v1.28.0...v1.29.0) (2022-12-01)
+
+
+### Bug Fixes
+
+* **cluster:** Updated examples to remove type flag. ([4e58979](https://github.com/architect-team/architect-cli/commit/4e5897909c9e1bb571a9cad1f157fe427579b105))
+* **dev:** Fix race condition inspecting containers that no longer exist, fixed bug with service_ref / full_service_name being incorrect, only log healthcheck once each time it happens ([#763](https://github.com/architect-team/architect-cli/issues/763)) ([734356a](https://github.com/architect-team/architect-cli/commit/734356a60553984e0ac5fef2aa7014dc56ecfb50))
+* **register:** Default register path to ./architect.yml ([#765](https://github.com/architect-team/architect-cli/issues/765)) ([01fa335](https://github.com/architect-team/architect-cli/commit/01fa335c8ce42c0ff5c1be3303656827bf37b936))
+* **register:** Fix warning when dependencies are already registered ([#766](https://github.com/architect-team/architect-cli/issues/766)) ([a593ea9](https://github.com/architect-team/architect-cli/commit/a593ea9286eccdae0d1a8b79cb3a70c79e7e0553))
+* **validation:** validator for looser validation on account names ([#761](https://github.com/architect-team/architect-cli/issues/761)) ([93d6859](https://github.com/architect-team/architect-cli/commit/93d6859d156e0153115f13e6baaa5c67d17e54ae))
+
+
+### Features
+
+* **dev:** loading a .env file for architect environment variables ([#753](https://github.com/architect-team/architect-cli/issues/753)) ([dc0f0bc](https://github.com/architect-team/architect-cli/commit/dc0f0bca3591a8cca1a39cc20c5fec1498d021d6))
+* **dev:** Log errors when liveness probe fails ([#759](https://github.com/architect-team/architect-cli/issues/759)) ([0c65d19](https://github.com/architect-team/architect-cli/commit/0c65d194b8f0dd4a3816406d43e454b7a0cb9ca7))
+* **environment:create:** Warn when environment creation fails due to already existing environment ([#556](https://github.com/architect-team/architect-cli/issues/556)) ([bb17f80](https://github.com/architect-team/architect-cli/commit/bb17f80912cbd6a38b32f45978180c5d3d2f7822))
+* **init:** Support creating projects from Architect templates ([#612](https://github.com/architect-team/architect-cli/issues/612)) ([45283a0](https://github.com/architect-team/architect-cli/commit/45283a0eeaad8f9b70af32845f18a1ba6eaa9e3e)), closes [#695](https://github.com/architect-team/architect-cli/issues/695)
+* **secrets:** Allow secrets from a remote env to be used in local development ([012e459](https://github.com/architect-team/architect-cli/commit/012e4594090612dd551d13884201550590e83599))
+
 # [1.28.0](https://github.com/architect-team/architect-cli/compare/v1.27.0...v1.28.0) (2022-11-09)
 
 

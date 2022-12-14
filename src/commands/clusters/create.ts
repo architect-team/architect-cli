@@ -20,7 +20,7 @@ export default class ClusterCreate extends BaseCommand {
   static description = 'Register a new cluster with Architect Cloud';
   static examples = [
     'architect clusters:create --account=myaccount',
-    'architect clusters:register --account=myaccount --type=kubernetes --kubeconfig=~/.kube/config --auto-approve',
+    'architect clusters:register --account=myaccount --kubeconfig=~/.kube/config --auto-approve',
   ];
   static args = [{
     sensitive: false,

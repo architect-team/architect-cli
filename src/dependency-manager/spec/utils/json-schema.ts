@@ -1,6 +1,6 @@
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 // eslint-disable-next-line node/no-extraneous-import
-import { SchemaObject } from 'openapi3-ts';
+import type { SchemaObject } from 'openapi3-ts';
 import { Dictionary } from '../../utils/dictionary';
 import { ComponentSpec } from '../component-spec';
 import { ResourceSpec } from '../resource-spec';

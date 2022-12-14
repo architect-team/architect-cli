@@ -5,7 +5,7 @@ import mock_fs from 'mock-fs';
 import nock from 'nock';
 import path from 'path';
 import sinon from 'sinon';
-import { IngressEdge, resourceRefToNodeRef, ServiceNode, ValidationError, ValidationErrors } from '../../src';
+import { resourceRefToNodeRef, ServiceNode, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
@@ -244,8 +244,8 @@ describe('components with reserved_name field set', function () {
         db_ref
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `${app_ref} [service->main] -> ${api_ref} [main]`,
-        `${api_ref} [service->main] -> ${db_ref} [main]`
+        `service: ${app_ref} -> ${api_ref}[main]`,
+        `service: ${api_ref} -> ${db_ref}[main]`
       ])
       // Test parameter values
       const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
@@ -365,21 +365,17 @@ describe('components with reserved_name field set', function () {
         ...await manager.loadComponentSpecs('cloud:latest'),
       ]);
       const api_ref = resourceRefToNodeRef('cloud.services.api');
-      const ci_ref = resourceRefToNodeRef('ci');
       const web_ref = resourceRefToNodeRef('ci.services.web');
       const worker_ref = reserved_name;
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         api_ref,
-
-        ci_ref,
         web_ref,
         worker_ref
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `${worker_ref} [service->main] -> ${web_ref} [main]`,
-        `${ci_ref} [web] -> ${web_ref} [main]`,
-        `${api_ref} [service->web] -> ${ci_ref} [web]`
+        `service: ${worker_ref} -> ${web_ref}[main]`,
+        `service: ${api_ref} -> ${web_ref}[web]`
       ])
 
       // Test parameter values
@@ -393,7 +389,7 @@ describe('components with reserved_name field set', function () {
       expect(worker_node.config.name).to.eq('worker');
       expect(worker_node.ref).to.eq(reserved_name);
       expect(worker_node.config.metadata.tag).to.eq('6.2');
-      expect(worker_node.config.metadata.ref).to.eq(reserved_name);
+      expect(worker_node.config.metadata.ref).to.eq('ci.services.worker');
     });
 
     it('environment ingress context produces the correct values for a simple external interface', async () => {
@@ -425,10 +421,6 @@ describe('components with reserved_name field set', function () {
       const graph = await manager.getGraph([
         await manager.loadComponentSpec('cloud:latest', { interfaces: { api: 'api-interface' } })
       ]);
-
-      expect(graph.edges.filter(e => e instanceof IngressEdge).length).eq(1);
-      const ingress_edge = graph.edges.find(e => e instanceof IngressEdge);
-      expect(ingress_edge!.interface_mappings).to.deep.equal([{ interface_from: 'api', interface_to: 'api-interface' }]);
       const cloud_api_node = graph.getNodeByRef(reserved_name) as ServiceNode;
       expect(cloud_api_node.config.environment['EXTERNAL_APP_URL']).eq('http://api.arc.localhost');
       expect(cloud_api_node.config.environment['EXTERNAL_APP_URL2']).eq('http://api.arc.localhost');

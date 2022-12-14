@@ -1,7 +1,9 @@
 import { expect } from 'chai';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
+import path from 'path';
 import sinon, { SinonSpy, SinonStub } from 'sinon';
+import untildify from 'untildify';
 import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
 import AccountUtils from '../../src/architect/account/account.utils';
 import ComponentRegister from '../../src/commands/register';
@@ -34,6 +36,17 @@ describe('register', function () {
     ...mock_account_response,
     name: 'architect',
   };
+
+  mockArchitectAuth()
+    .stub(fs, 'move', sinon.stub())
+    .stub(ComponentRegister, 'registerComponent', sinon.stub().returns({}))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', '-a', 'examples'])
+    .catch(e => {
+      expect(e.message).contains(path.resolve(untildify('./architect.yml')));
+    })
+    .it('expect default project path to be ./architect.yml if not provided');
 
   mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
@@ -177,6 +190,42 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'examples/gcp-pubsub/pubsub/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('it reports to the user that the component was registered successfully', ctx => {
+      expect(ctx.stdout).to.contain('Successfully registered component');
+    });
+
+  mockArchitectAuth()
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
+    )
+    .nock(MOCK_API_HOST, api => api
+      .post(/\/accounts\/.*\/components/, (body) => body)
+      .reply(200)
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/superset/versions/1.0.0`)
+      .reply(200)
+    )
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .head(`/v2/examples/superset.services.stateless-app/manifests/1.0.0`)
+      .reply(200)
+    )
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .head(`/v2/examples/superset.services.stateful-api/manifests/1.0.0`)
+      .reply(200)
+    )
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .head(`/v2/examples/superset.services.stateful-frontend/manifests/1.0.0`)
+      .reply(200)
+    )
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .head(`/v2/examples/superset.tasks.curler-build/manifests/1.0.0`)
+      .reply(200)
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .it('it reports to the user that the superset was registered successfully', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 

@@ -5,36 +5,6 @@ import { Refs } from '../utils/refs';
 import { ServiceConfig } from './service-config';
 import { TaskConfig } from './task-config';
 
-export interface IngressConfig {
-  enabled?: boolean;
-  subdomain?: string;
-  path?: string;
-  ip_whitelist?: string[];
-}
-
-export interface ComponentNodeConfig {
-  outputs: Dictionary<OutputDefinitionConfig>,
-  interfaces: Dictionary<ComponentInterfaceConfig>
-}
-
-export interface ComponentInterfaceConfig {
-  description?: string;
-  host?: null | string;
-  port?: number | string;
-  protocol?: string;
-  username?: null | string;
-  password?: null | string;
-  url: string;
-  sticky?: boolean | string;
-
-  ingress?: IngressConfig;
-
-  consumers?: string[];
-  dns_zone?: string;
-  subdomain?: string;
-  path?: string;
-}
-
 export interface SecretDefinitionConfig {
   required?: boolean | string;
 
@@ -65,8 +35,6 @@ export interface ComponentConfig {
   services: Dictionary<ServiceConfig>;
   tasks: Dictionary<TaskConfig>;
   dependencies: Dictionary<string>;
-
-  interfaces: Dictionary<ComponentInterfaceConfig>;
 
   artifact_image?: string;
 }
@@ -108,9 +76,10 @@ export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max
   }
 };
 
-export const buildNodeRef = (component_config: ComponentConfig, resource_type: ResourceType, resource_name: string, max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
-  if (component_config[resource_type][resource_name]) {
-    const reserved_name = component_config[resource_type][resource_name].reserved_name;
+export const buildNodeRef = (component_config: ComponentSpec | ComponentConfig, resource_type: ResourceType, resource_name: string, max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
+  const resource = component_config[resource_type];
+  if (resource && resource[resource_name]) {
+    const reserved_name = resource[resource_name].reserved_name;
     if (reserved_name) {
       return reserved_name;
     }
@@ -121,8 +90,3 @@ export const buildNodeRef = (component_config: ComponentConfig, resource_type: R
   const service_ref = ResourceSlugUtils.build(parsed.component_account_name, parsed.component_name, resource_type, resource_name, component_config.metadata?.instance_name);
   return resourceRefToNodeRef(service_ref, component_config.metadata?.instance_id, max_length);
 };
-
-export function buildInterfacesRef(component_config: ComponentSpec | ComponentConfig): string {
-  const component_ref = component_config.metadata.ref;
-  return resourceRefToNodeRef(component_ref, component_config.metadata?.instance_id, Refs.DEFAULT_MAX_LENGTH);
-}
