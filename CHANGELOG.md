@@ -1,3 +1,21 @@
+# [1.30.0](https://github.com/architect-team/architect-cli/compare/v1.29.0...v1.30.0) (2022-12-14)
+
+
+### Bug Fixes
+
+* **graph:** Fix dependency edges for new interfaces spec ([#776](https://github.com/architect-team/architect-cli/issues/776)) ([1913d8e](https://github.com/architect-team/architect-cli/commit/1913d8ee044ccf6ef23da5b022945fd5c81f1f08))
+* **register:** Fixing register for services with reserved names ([#777](https://github.com/architect-team/architect-cli/issues/777)) ([6f465af](https://github.com/architect-team/architect-cli/commit/6f465af9cd0cccc7e6cd2364f750abc8a2e46ae0))
+* **reserved_name:** Remove architect_ref to avoid confusion ([#778](https://github.com/architect-team/architect-cli/issues/778)) ([4967e7d](https://github.com/architect-team/architect-cli/commit/4967e7d89e4bd927bbcb5c701d8433ee2ddc960e))
+* **sentry:** Log flags/commands as tags for searching ([#762](https://github.com/architect-team/architect-cli/issues/762)) ([d821dea](https://github.com/architect-team/architect-cli/commit/d821dea129164ec92d768650d586113753f7d95c))
+* **webkit:** Add check for regex lookbehind support ([#770](https://github.com/architect-team/architect-cli/issues/770)) ([8698a2d](https://github.com/architect-team/architect-cli/commit/8698a2d4a45c12afb7f61a7a0cf171577dafcdde))
+* **webkit:** regex ([#771](https://github.com/architect-team/architect-cli/issues/771)) ([b74cccd](https://github.com/architect-team/architect-cli/commit/b74cccd44c4a91d2a739339fd790d8dc76f16629))
+* **webkit:** Use RegExp so catch triggers ([cccfded](https://github.com/architect-team/architect-cli/commit/cccfdedf10223cc7ce5350612bdcc9dbc24c9f96))
+
+
+### Features
+
+* **spec:** Deprecate top level interfaces block ([#775](https://github.com/architect-team/architect-cli/issues/775)) ([9144120](https://github.com/architect-team/architect-cli/commit/91441202a9177e4df32f94723419d6845ef16ffd))
+
 # [1.29.0](https://github.com/architect-team/architect-cli/compare/v1.28.0...v1.29.0) (2022-12-01)
 
 
