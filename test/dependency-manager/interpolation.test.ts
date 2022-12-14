@@ -3,7 +3,7 @@ import axios from 'axios';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import path from 'path';
-import { buildInterfacesRef, ComponentNode, IngressEdge, OutputEdge, resourceRefToNodeRef, ServiceNode } from '../../src';
+import { resourceRefToNodeRef, ServiceNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
@@ -142,20 +142,16 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentSpec('web'),
       await manager.loadComponentSpec('worker')
     ]);
-
-    const web_interfaces_ref = resourceRefToNodeRef('web');
     const web_resource_ref = 'web.services.web';
     const web_ref = resourceRefToNodeRef(web_resource_ref);
     const worker_ref = resourceRefToNodeRef('worker.services.worker');
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
-      web_interfaces_ref,
       web_ref,
       worker_ref
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${web_interfaces_ref} [main] -> ${web_ref} [main]`,
-      `${worker_ref} [service->main] -> ${web_interfaces_ref} [main]`
+      `service: ${worker_ref} -> ${web_ref}[main]`
     ])
 
     const web_node = graph.getNodeByRef(web_ref);
@@ -213,14 +209,12 @@ describe('interpolation spec v1', () => {
 
     expect(public_graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
-      web_interfaces_ref,
       web_ref,
       worker_ref
     ])
     expect(public_graph.edges.map((e) => e.toString())).has.members([
-      `gateway [public] -> ${web_interfaces_ref} [main]`,
-      `${web_interfaces_ref} [main] -> ${web_ref} [main]`,
-      `${worker_ref} [service->main] -> ${web_interfaces_ref} [main]`
+      `ingress: gateway -> ${web_ref}[main]`,
+      `service: ${worker_ref} -> ${web_ref}[main]`
     ])
 
     const public_template = await DockerComposeUtils.generate(public_graph);
@@ -233,7 +227,6 @@ describe('interpolation spec v1', () => {
         `traefik.http.routers.${web_ref}-main.rule=Host(\`public.arc.localhost\`)`,
         `traefik.http.routers.${web_ref}-main.service=${web_ref}-main-service`,
         `traefik.http.services.${web_ref}-main-service.loadbalancer.server.port=8080`,
-        `traefik.http.services.${web_ref}-main-service.loadbalancer.server.scheme=http`,
       ],
       external_links: [
         'gateway:public.arc.localhost'
@@ -324,7 +317,6 @@ describe('interpolation spec v1', () => {
       `traefik.http.routers.${backend_interface_ref}.rule=Host(\`main.arc.localhost\`)`,
       `traefik.http.routers.${backend_interface_ref}.service=${backend_interface_ref}-service`,
       `traefik.http.services.${backend_interface_ref}-service.loadbalancer.server.port=8081`,
-      `traefik.http.services.${backend_interface_ref}-service.loadbalancer.server.scheme=http`
     ])
   });
 
@@ -1150,10 +1142,6 @@ describe('interpolation spec v1', () => {
       CORS_URLS: '["http://api.arc.localhost","http://test-subdomain.arc.localhost"]',
       DNS_ZONE: 'arc.localhost'
     });
-
-    const ingress_edge = graph.edges.find((edge) => edge.to === resourceRefToNodeRef('dependency')) as IngressEdge
-    expect(ingress_edge.interface_mappings).to.deep.equal([{ interface_from: 'test-subdomain', interface_to: 'app' }]);
-    expect(ingress_edge.consumers_map).keys('app')
   });
 
   it('interpolate secret for replicas', async () => {
@@ -1312,16 +1300,16 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph(await manager.loadComponentSpecs('hello-world'));
 
     const api_ref = resourceRefToNodeRef('hello-world.services.api');
-    const hello_component = await manager.loadComponentSpec('hello-world')
-    const component_ref = buildInterfacesRef(hello_component);
-    const node = graph.getNodeByRef(component_ref) as ComponentNode;
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.interfaces).to.deep.eq({
       api: {
-        url: `http://${api_ref}:8080`,
-        protocol: 'http',
+        port: 8080,
         ingress: {
           subdomain: 'test',
         }
+      },
+      main: {
+        port: 8080
       }
     });
   });
@@ -1361,24 +1349,22 @@ describe('interpolation spec v1', () => {
       { '*': { required_ip_whitelist: ['127.0.0.1/32'] } }
     );
     const api_ref = resourceRefToNodeRef('hello-world.services.api');
-
-    const hello_component = await manager.loadComponentSpec('hello-world')
-    const component_ref = buildInterfacesRef(hello_component);
-    const node = graph.getNodeByRef(component_ref) as ComponentNode;
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.interfaces).to.deep.eq({
       api: {
-        url: `http://${api_ref}:8080`,
-        protocol: 'http',
+        port: 8080,
         ingress: {
           ip_whitelist: ['127.0.0.1']
         }
       },
       api2: {
-        url: `http://${api_ref}:8080`,
-        protocol: 'http',
+        port: 8080,
         ingress: {
           ip_whitelist: ['127.0.0.1/32']
         }
+      },
+      main: {
+        port: 8080
       }
     });
   });
@@ -1417,28 +1403,25 @@ describe('interpolation spec v1', () => {
     });
     const graph = await manager.getGraph(
       await manager.loadComponentSpecs('hello-world'),
-      // @ts-ignore
       { '*': { ip_whitelist: '1.2.3.4', required_ip_whitelist: '127.0.0.1/32' } }
     );
     const api_ref = resourceRefToNodeRef('hello-world.services.api');
-
-    const hello_component = await manager.loadComponentSpec('hello-world')
-    const component_ref = buildInterfacesRef(hello_component);
-    const node = graph.getNodeByRef(component_ref) as ComponentNode;
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.interfaces).to.deep.eq({
       api: {
-        url: `http://${api_ref}:8080`,
-        protocol: 'http',
+        port: 8080,
         ingress: {
           ip_whitelist: ['1.2.3.4']
         }
       },
       api2: {
-        url: `http://${api_ref}:8080`,
-        protocol: 'http',
+        port: 8080,
         ingress: {
           ip_whitelist: ['127.0.0.1/32']
         }
+      },
+      main: {
+        port: 8080
       }
     });
   });
@@ -1490,50 +1473,6 @@ describe('interpolation spec v1', () => {
       TOPIC3: 'test',
       TOPIC4: 'test'
     });
-    // Check the component interface node has the outputs set on its config
-    const config = await manager.loadComponentSpec('publisher');
-    const interfaces_ref = buildInterfacesRef(config);
-    const interface_node = graph.getNodeByRef(interfaces_ref) as ComponentNode;
-    expect(interface_node.config.outputs).to.deep.eq({
-      topic1: { value: "test" },
-      topic2: { value: "test" },
-      topic3: { value: "test", description: undefined, },
-      topic4: { value: "test", description: undefined, },
-    });
-  });
-
-  it('interpolating output dependency creates OutputEdge', async () => {
-    const publisher_config = `
-    name: publisher
-    outputs:
-      topic1: test
-    `
-
-    const consumer_config = `
-    name: consumer
-    dependencies:
-      publisher: latest
-    services:
-      api:
-        environment:
-          TOPIC1: \${{ dependencies.publisher.outputs.topic1 }}
-    `
-
-    mock_fs({
-      '/stack/publisher/architect.yml': publisher_config,
-      '/stack/consumer/architect.yml': consumer_config,
-    });
-
-    const manager = new LocalDependencyManager(axios.create(), 'architect', {
-      'publisher': '/stack/publisher/architect.yml',
-      'consumer': '/stack/consumer/architect.yml',
-    });
-    const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('consumer')
-    );
-
-    const output_edges = graph.edges.filter(edge => edge instanceof OutputEdge);
-    expect(output_edges).to.have.lengthOf(1);
   });
 
   it('interpolating outputs dependency with interfaces creates 2 edges', async () => {
@@ -1573,13 +1512,10 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph(
       await manager.loadComponentSpecs('consumer')
     );
-    const publisher_component_ref = resourceRefToNodeRef('publisher');
     const publisher_api_ref = resourceRefToNodeRef('publisher.services.publisher-api');
     const consumer_api_ref = resourceRefToNodeRef('consumer.services.consumer-api');
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${publisher_component_ref} [api] -> ${publisher_api_ref} [main]`,
-      `${consumer_api_ref} [service->api] -> ${publisher_component_ref} [api]`,
-      `${consumer_api_ref} [output->topic1] -> ${publisher_component_ref} [topic1]`
+      `service: ${consumer_api_ref} -> ${publisher_api_ref}[api]`,
     ])
   });
 
@@ -1621,12 +1557,10 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentSpecs('test')
     );
 
-    const test_component_ref = resourceRefToNodeRef('test');
     const app_ref = resourceRefToNodeRef('test.services.app');
     const api_ref = resourceRefToNodeRef('test.services.api');
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${test_component_ref} [api] -> ${api_ref} [main]`,
-      `${app_ref} [service->main] -> ${api_ref} [main]`,
+      `service: ${app_ref} -> ${api_ref}[main]`,
     ]);
   });
 });

@@ -276,6 +276,7 @@
                 "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
               },
               "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+              "deprecated": true,
               "additionalProperties": false
             }
           ]
@@ -285,6 +286,7 @@
         "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
       },
       "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+      "deprecated": true,
       "additionalProperties": false
     },
     "artifact_image": {
@@ -580,6 +582,7 @@
                         "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                       },
                       "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+                      "deprecated": true,
                       "additionalProperties": false
                     }
                   ]
@@ -589,6 +592,7 @@
                 "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
               },
               "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+              "deprecated": true,
               "additionalProperties": false
             },
             "artifact_image": {
@@ -1351,6 +1355,161 @@
         }
       }
     },
+    "IngressSpec": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Marks the interface as an ingress."
+        },
+        "subdomain": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^([A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])|[^\\W\\D\\s\\t\\n\\r\\/]+|[\\@\\*]?)$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "The subdomain that will be used if the interface is exposed externally",
+          "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\/.*$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "The path of the interface used for path based routing"
+        },
+        "ip_whitelist": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "cidrv4"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "IP addresses that are allowed to access the interface"
+        }
+      },
+      "type": "object",
+      "description": "An ingress exposes an interface to external network traffic through an architect-deployed gateway.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#ingressspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Marks the interface as an ingress."
+                },
+                "subdomain": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^([A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])|[^\\W\\D\\s\\t\\n\\r\\/]+|[\\@\\*]?)$"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The subdomain that will be used if the interface is exposed externally",
+                  "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
+                },
+                "path": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^\\/.*$"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The path of the interface used for path based routing"
+                },
+                "ip_whitelist": {
+                  "anyOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "cidrv4"
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "IP addresses that are allowed to access the interface"
+                }
+              },
+              "type": "object",
+              "description": "An ingress exposes an interface to external network traffic through an architect-deployed gateway.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#ingressspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
     "ScalingMetricsSpec": {
       "properties": {
         "cpu": {
@@ -1831,6 +1990,9 @@
           ],
           "description": "Denotes that if this interface is made external, the gateway should use sticky sessions",
           "default": false
+        },
+        "ingress": {
+          "$ref": "#/definitions/IngressSpec"
         }
       },
       "type": "object",
@@ -2023,6 +2185,9 @@
                   ],
                   "description": "Denotes that if this interface is made external, the gateway should use sticky sessions",
                   "default": false
+                },
+                "ingress": {
+                  "$ref": "#/definitions/IngressSpec"
                 }
               },
               "type": "object",
@@ -3456,161 +3621,6 @@
         }
       }
     },
-    "IngressSpec": {
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "description": "Marks the interface as an ingress."
-        },
-        "subdomain": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^([A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])|[^\\W\\D\\s\\t\\n\\r\\/]+|[\\@\\*]?)$"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-              }
-            }
-          ],
-          "description": "The subdomain that will be used if the interface is exposed externally (defaults to the interface name)",
-          "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
-        },
-        "path": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^\\/.*$"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-              }
-            }
-          ],
-          "description": "The path of the interface used for path based routing"
-        },
-        "ip_whitelist": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "format": "cidrv4"
-                  },
-                  {
-                    "type": "string",
-                    "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
-                  }
-                ]
-              }
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-              }
-            }
-          ],
-          "description": "IP addresses that are allowed to access the interface"
-        }
-      },
-      "type": "object",
-      "description": "An ingress exposes an interface to external network traffic through an architect-deployed gateway.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://docs.architect.io/reference/architect-yml#ingressspec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "enabled": {
-                  "type": "boolean",
-                  "description": "Marks the interface as an ingress."
-                },
-                "subdomain": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "pattern": "^([A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])|[^\\W\\D\\s\\t\\n\\r\\/]+|[\\@\\*]?)$"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The subdomain that will be used if the interface is exposed externally (defaults to the interface name)",
-                  "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
-                },
-                "path": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "pattern": "^\\/.*$"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The path of the interface used for path based routing"
-                },
-                "ip_whitelist": {
-                  "anyOf": [
-                    {
-                      "type": "array",
-                      "items": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "format": "cidrv4"
-                          },
-                          {
-                            "type": "string",
-                            "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-                      }
-                    }
-                  ],
-                  "description": "IP addresses that are allowed to access the interface"
-                }
-              },
-              "type": "object",
-              "description": "An ingress exposes an interface to external network traffic through an architect-deployed gateway.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://docs.architect.io/reference/architect-yml#ingressspec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
     "ComponentInterfaceSpec": {
       "properties": {
         "ingress": {
@@ -4220,6 +4230,7 @@
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
                   "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+                  "deprecated": true,
                   "additionalProperties": false
                 }
               ]
@@ -4229,6 +4240,7 @@
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
           },
           "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+          "deprecated": true,
           "additionalProperties": false
         },
         "artifact_image": {
@@ -4524,6 +4536,7 @@
                             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                           },
                           "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+                          "deprecated": true,
                           "additionalProperties": false
                         }
                       ]
@@ -4533,6 +4546,7 @@
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
                   "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+                  "deprecated": true,
                   "additionalProperties": false
                 },
                 "artifact_image": {
@@ -5221,6 +5235,161 @@
         }
       }
     },
+    "_DebugIngressSpec": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Marks the interface as an ingress."
+        },
+        "subdomain": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^([A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])|[^\\W\\D\\s\\t\\n\\r\\/]+|[\\@\\*]?)$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "The subdomain that will be used if the interface is exposed externally",
+          "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\/.*$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "The path of the interface used for path based routing"
+        },
+        "ip_whitelist": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "cidrv4"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "IP addresses that are allowed to access the interface"
+        }
+      },
+      "type": "object",
+      "description": "An ingress exposes an interface to external network traffic through an architect-deployed gateway.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#ingressspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Marks the interface as an ingress."
+                },
+                "subdomain": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^([A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])|[^\\W\\D\\s\\t\\n\\r\\/]+|[\\@\\*]?)$"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The subdomain that will be used if the interface is exposed externally",
+                  "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
+                },
+                "path": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^\\/.*$"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The path of the interface used for path based routing"
+                },
+                "ip_whitelist": {
+                  "anyOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "cidrv4"
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "IP addresses that are allowed to access the interface"
+                }
+              },
+              "type": "object",
+              "description": "An ingress exposes an interface to external network traffic through an architect-deployed gateway.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#ingressspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
     "_DebugScalingMetricsSpec": {
       "properties": {
         "cpu": {
@@ -5651,6 +5820,9 @@
           ],
           "description": "Denotes that if this interface is made external, the gateway should use sticky sessions",
           "default": false
+        },
+        "ingress": {
+          "$ref": "#/definitions/_DebugIngressSpec"
         }
       },
       "type": "object",
@@ -5826,6 +5998,9 @@
                   ],
                   "description": "Denotes that if this interface is made external, the gateway should use sticky sessions",
                   "default": false
+                },
+                "ingress": {
+                  "$ref": "#/definitions/_DebugIngressSpec"
                 }
               },
               "type": "object",
@@ -7230,161 +7405,6 @@
         }
       }
     },
-    "_DebugIngressSpec": {
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "description": "Marks the interface as an ingress."
-        },
-        "subdomain": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^([A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])|[^\\W\\D\\s\\t\\n\\r\\/]+|[\\@\\*]?)$"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-              }
-            }
-          ],
-          "description": "The subdomain that will be used if the interface is exposed externally (defaults to the interface name)",
-          "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
-        },
-        "path": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^\\/.*$"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-              }
-            }
-          ],
-          "description": "The path of the interface used for path based routing"
-        },
-        "ip_whitelist": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "format": "cidrv4"
-                  },
-                  {
-                    "type": "string",
-                    "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
-                  }
-                ]
-              }
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-              }
-            }
-          ],
-          "description": "IP addresses that are allowed to access the interface"
-        }
-      },
-      "type": "object",
-      "description": "An ingress exposes an interface to external network traffic through an architect-deployed gateway.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://docs.architect.io/reference/architect-yml#ingressspec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "enabled": {
-                  "type": "boolean",
-                  "description": "Marks the interface as an ingress."
-                },
-                "subdomain": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "pattern": "^([A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])|[^\\W\\D\\s\\t\\n\\r\\/]+|[\\@\\*]?)$"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The subdomain that will be used if the interface is exposed externally (defaults to the interface name)",
-                  "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
-                },
-                "path": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "pattern": "^\\/.*$"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The path of the interface used for path based routing"
-                },
-                "ip_whitelist": {
-                  "anyOf": [
-                    {
-                      "type": "array",
-                      "items": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "format": "cidrv4"
-                          },
-                          {
-                            "type": "string",
-                            "pattern": "\\${{\\s*secrets\\.[\\w-]+\\s*}}"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-                      }
-                    }
-                  ],
-                  "description": "IP addresses that are allowed to access the interface"
-                }
-              },
-              "type": "object",
-              "description": "An ingress exposes an interface to external network traffic through an architect-deployed gateway.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://docs.architect.io/reference/architect-yml#ingressspec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
     "_DebugComponentInterfaceSpec": {
       "properties": {
         "ingress": {
@@ -8041,6 +8061,7 @@
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
                   "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+                  "deprecated": true,
                   "additionalProperties": false
                 }
               ]
@@ -8050,6 +8071,7 @@
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
           },
           "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+          "deprecated": true,
           "additionalProperties": false
         },
         "artifact_image": {
@@ -8342,6 +8364,7 @@
                             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                           },
                           "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+                          "deprecated": true,
                           "additionalProperties": false
                         }
                       ]
@@ -8351,6 +8374,7 @@
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
                   "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+                  "deprecated": true,
                   "additionalProperties": false
                 },
                 "artifact_image": {

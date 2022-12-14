@@ -16,13 +16,9 @@ services:
     build:
       context: .
     interfaces:
-      main: 3000
+      main:
+        port: 3000
+        ingress:
+          subdomain: hello
     environment:
       WORLD_TEXT: ${{ secrets.world_text }}
-
-interfaces:
-  hello:
-    description: Connects to the hello-world service to return "Hello World!" on-demand
-    url: ${{ services.api.interfaces.main.url }}
-    ingress:
-      subdomain: hello

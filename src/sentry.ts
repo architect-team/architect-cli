@@ -84,15 +84,35 @@ export default class SentryService {
 
       const sentry_user = await this.getUser();
 
-      const sentry_tags = {
+      const command_class = this.command.getClass();
+      const { args, flags, metadata } = await this.command.parse(command_class);
+
+      const default_flags = new Set(Object.entries(metadata.flags)
+        .filter(([flag_name, flag_metadata]) => flag_metadata?.setFromDefault)
+        .map(([flag_name]) => flag_name));
+
+      const non_default_flags = Object.keys({ ...flags })
+        .filter((flag_name) => !default_flags.has(flag_name));
+
+      const sentry_tags: { [key: string]: string } = {
         environment: this.command.app.config.environment,
         cli: this.command.app.version,
         node_runtime: process.version,
         os: os.platform(),
         shell: this.command.config.shell,
-        user: sentry_user?.id,
-        'user-email': sentry_user?.email,
       };
+
+      for (const flag of non_default_flags) {
+        sentry_tags[`flag.${flag}`] = command_class.flags[flag].sensitive ? 'Filtered' : flags[flag];
+      }
+
+      if (sentry_user?.email) {
+        sentry_tags['user-email'] = sentry_user.email;
+      }
+
+      if (sentry_user?.id) {
+        sentry_tags.user = sentry_user.id;
+      }
 
       const transaction = Sentry.startTransaction({
         op: this.command.id,
@@ -101,11 +121,21 @@ export default class SentryService {
         name: this.command.constructor.name,
       });
 
+      const non_sensitive = new Set([
+        ...Object.entries(command_class.flags || {}).filter(([_, value]) => value.sensitive === false).map(([key, _]) => key),
+        ...Object.entries(command_class.args || {}).filter(([_, value]) => (value as any).sensitive === false).map(([_, value]) => (value as any).name),
+      ]);
+
+      const filtered_sentry_args = await this.filterNonSensitiveSentryMetadata(non_sensitive, args);
+      const filtered_sentry_flags = await this.filterNonSensitiveSentryMetadata(non_sensitive, flags);
+
       return Sentry.configureScope(scope => {
         scope.setSpan(transaction);
         if (sentry_user) {
           scope.setUser(sentry_user);
         }
+        scope.setExtra('args', filtered_sentry_args);
+        scope.setExtra('flags', filtered_sentry_flags);
         scope.setTags(sentry_tags);
       });
     }, 'SENTRY: an error occurred starting transaction');
@@ -160,24 +190,6 @@ export default class SentryService {
         Sentry.close(0);
         return;
       }
-
-      const command_class = this.command.getClass();
-      const { args, flags } = await this.command.parse(command_class);
-      const non_sensitive = new Set([
-        ...Object.entries(command_class.flags || {}).filter(([_, value]) => value.sensitive === false).map(([key, _]) => key),
-        ...Object.entries(command_class.args || {}).filter(([_, value]) => (value as any).sensitive === false).map(([_, value]) => (value as any).name),
-      ]);
-
-      try {
-        const filtered_sentry_args = await this.filterNonSensitiveSentryMetadata(non_sensitive, args);
-        const filtered_sentry_flags = await this.filterNonSensitiveSentryMetadata(non_sensitive, flags);
-
-        await this.setScopeExtra('command_args', filtered_sentry_args);
-        await this.setScopeExtra('command_flags', filtered_sentry_flags);
-      } catch (err) {
-        this.command.debug('Unable to add extra sentry metadata');
-      }
-
       await this.updateSentryTransaction(error);
 
       if (this.file_out) {
@@ -199,6 +211,7 @@ export default class SentryService {
   /*
   * Helper Functions
   */
+
   async setScopeExtra(key: string, value: any): Promise<void> {
     try {
       const update_scope = Sentry.getCurrentHub().getScope();

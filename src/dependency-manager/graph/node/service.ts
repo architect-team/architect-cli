@@ -1,9 +1,10 @@
 import { DependencyNode, DependencyNodeOptions } from '.';
 import { ServiceConfig, ServiceInterfaceConfig } from '../../config/service-config';
-import { Refs } from '../../utils/refs';
 
 export interface ServiceNodeOptions {
   ref: string;
+  component_ref: string;
+  service_name: string;
   config: ServiceConfig;
   local_path?: string;
   artifact_image?: string;
@@ -15,6 +16,8 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   config!: ServiceConfig;
 
   ref!: string;
+  component_ref!: string;
+  service_name!: string;
   local_path!: string;
   artifact_image?: string;
 
@@ -22,6 +25,8 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     super();
     if (options) {
       this.ref = options.ref;
+      this.component_ref = options.component_ref;
+      this.service_name = options.service_name;
       this.config = options.config;
       this.local_path = options.local_path || '';
       this.artifact_image = options.artifact_image;
