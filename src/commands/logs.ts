@@ -7,7 +7,7 @@ import { ArchitectError, parseUnknownSlug, ResourceSlugUtils } from '../';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import Environment from '../architect/environment/environment.entity';
-import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
+import { EnvironmentUtils, GetEnvironmentOptions, Replica } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { RequiresDocker } from '../common/docker/helper';
@@ -151,8 +151,8 @@ export default class Logs extends BaseCommand {
 
   async runRemote(account: Account): Promise<void> {
     const { args, flags } = await this.parse(Logs);
-
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
+    const getEnvironmentOptions: GetEnvironmentOptions = { environment_name: flags.environment };
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, getEnvironmentOptions);
 
     let component_account_name: string | undefined;
     let component_name: string | undefined;

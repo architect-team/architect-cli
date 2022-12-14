@@ -31,6 +31,7 @@ export default class EnvironmentCreate extends BaseCommand {
     }),
     strict: booleanString({
       description: 'If set to true, throws an error when attempting to create an environment that already exists',
+      hidden: true,
       default: false,
       sensitive: false,
     }),

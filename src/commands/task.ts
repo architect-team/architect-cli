@@ -2,7 +2,7 @@ import { CliUx, Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import { ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils } from '../';
 import AccountUtils from '../architect/account/account.utils';
-import { EnvironmentUtils } from '../architect/environment/environment.utils';
+import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { RequiresDocker } from '../common/docker/helper';
@@ -130,7 +130,8 @@ export default class TaskExec extends BaseCommand {
     const { flags, args } = await this.parse(TaskExec);
 
     const selected_account = await AccountUtils.getAccount(this.app, flags.account);
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);
+    const getEnvironmentOptions: GetEnvironmentOptions = { environment_name: flags.environment };
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, selected_account, getEnvironmentOptions);
 
     let parsed_slug;
     try {

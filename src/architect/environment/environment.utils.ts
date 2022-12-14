@@ -14,6 +14,11 @@ export interface Replica {
   display_name?: string;
 }
 
+export interface GetEnvironmentOptions {
+  environment_name?: string;
+  strict?: boolean;
+}
+
 export class EnvironmentUtils {
   static flags = {
     environment: Flags.string({
@@ -25,7 +30,9 @@ export class EnvironmentUtils {
     }),
   };
 
-  static async getEnvironment(api: AxiosInstance, account: Account, environment_name?: string, strict = true): Promise<Environment> {
+  static async getEnvironment(api: AxiosInstance, account: Account, options?: GetEnvironmentOptions): Promise<Environment> {
+    const environment_name = options?.environment_name;
+    const strict = options?.strict;
     if (process.env.ARCHITECT_ENVIRONMENT === environment_name && process.env.ARCHITECT_ENVIRONMENT) {
       console.log(chalk.blue(`Using environment from environment variables: `) + environment_name);
     }
