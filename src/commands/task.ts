@@ -130,8 +130,8 @@ export default class TaskExec extends BaseCommand {
     const { flags, args } = await this.parse(TaskExec);
 
     const selected_account = await AccountUtils.getAccount(this.app, flags.account);
-    const getEnvironmentOptions: GetEnvironmentOptions = { environment_name: flags.environment };
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, selected_account, getEnvironmentOptions);
+    const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, selected_account, get_environment_options);
 
     let parsed_slug;
     try {

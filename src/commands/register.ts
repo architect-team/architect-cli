@@ -175,8 +175,8 @@ export default class ComponentRegister extends BaseCommand {
     const selected_account = await AccountUtils.getAccount(this.app, account_name);
 
     if (flags.environment) { // will throw an error if a user specifies an environment that doesn't exist
-      const getEnvironmentOptions: GetEnvironmentOptions = { environment_name: flags.environment };
-      await EnvironmentUtils.getEnvironment(this.app.api, selected_account, getEnvironmentOptions);
+      const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
+      await EnvironmentUtils.getEnvironment(this.app.api, selected_account, get_environment_options);
     }
 
     const dependency_manager = new LocalDependencyManager(this.app.api, selected_account.name);

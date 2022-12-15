@@ -124,8 +124,8 @@ During this time we greatly appreciate any feedback as we continue to finalize t
       }
       replicas = Number.parseInt(replicas);
     }
-    const getEnvironmentOptions: GetEnvironmentOptions = { environment_name: flags.environment };
-    const environment: Environment = await EnvironmentUtils.getEnvironment(this.app.api, account, getEnvironmentOptions);
+    const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
+    const environment: Environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
 
     const resource_slug = ResourceSlugUtils.build(undefined, component_version.component.name, 'services', service_name);
     const scaling_dto = {

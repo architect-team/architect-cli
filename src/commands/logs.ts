@@ -151,8 +151,8 @@ export default class Logs extends BaseCommand {
 
   async runRemote(account: Account): Promise<void> {
     const { args, flags } = await this.parse(Logs);
-    const getEnvironmentOptions: GetEnvironmentOptions = { environment_name: flags.environment };
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, getEnvironmentOptions);
+    const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
 
     let component_account_name: string | undefined;
     let component_name: string | undefined;

@@ -236,8 +236,8 @@ export default class Deploy extends DeployCommand {
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
-    const getEnvironmentOptions: GetEnvironmentOptions = { environment_name: flags.environment };
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, getEnvironmentOptions);
+    const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
 
     const component_names: string[] = [];
     for (const component of components) {

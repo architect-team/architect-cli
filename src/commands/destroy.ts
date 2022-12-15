@@ -35,8 +35,8 @@ export default class Destroy extends DeployCommand {
     const { flags } = await this.parse(Destroy);
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
-    const getEnvironmentOptions: GetEnvironmentOptions = { environment_name: flags.environment };
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, getEnvironmentOptions);
+    const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
 
     CliUx.ux.action.start(chalk.blue('Creating pipeline'));
     let instance_ids;

@@ -30,9 +30,9 @@ export class EnvironmentUtils {
     }),
   };
 
-  static async getEnvironment(api: AxiosInstance, account: Account, options?: GetEnvironmentOptions): Promise<Environment> {
-    const environment_name = options?.environment_name;
-    const strict = options?.strict;
+  static async getEnvironment(api: AxiosInstance, account: Account, get_environment_options?: GetEnvironmentOptions): Promise<Environment> {
+    const environment_name = get_environment_options?.environment_name;
+    const strict = get_environment_options?.strict;
     if (process.env.ARCHITECT_ENVIRONMENT === environment_name && process.env.ARCHITECT_ENVIRONMENT) {
       console.log(chalk.blue(`Using environment from environment variables: `) + environment_name);
     }
