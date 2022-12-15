@@ -24,7 +24,7 @@ export class IngressSpec {
   @IsOptional()
   @JSONSchema({
     ...ExpressionOr({ type: 'string', pattern: Slugs.ComponentSubdomainValidator.source }),
-    description: 'The subdomain that will be used if the interface is exposed externally',
+    description: 'The subdomain that will be used if the interface is exposed externally. Use `subdomain: @` to target the base domain.',
     errorMessage: Slugs.ComponentSubdomainDescription,
   })
   subdomain?: string;
