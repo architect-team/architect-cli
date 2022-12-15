@@ -43,7 +43,7 @@ jobs:
     env:
       ACCOUNT_NAME: architect-ci
       ENVIRONMENT_NAME: example-environment
-      CLUSTER_NAME: architect
+      CLUSTER_NAME: architect-ci-do
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
