@@ -71,6 +71,7 @@ services:
       DEPRECATED_EXT_HELLO_WORLD_ADDR2: ${{ environment.ingresses.deprecated-hello-world.hello.url }} # Deprecated
       UNUSED_INGRESS_ADDR: ${{ services.stateless-app.interfaces.unused.ingress.url }}
       ENVIRONMENT_UNSET:
+        required: false
       PARAM_STRING: ${{ secrets.param_string }}
       PARAM_REQUIRED: ${{ secrets.param_required }}
       PARAM_OPTIONAL: ${{ secrets.log_level }}

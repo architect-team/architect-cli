@@ -1,4 +1,5 @@
 import { classToPlain, plainToClass, serialize } from 'class-transformer';
+import yaml from 'js-yaml';
 import { isMatch } from 'matcher';
 import { buildNodeRef, ComponentConfig } from './config/component-config';
 import { ArchitectContext, ComponentContext, SecretValue } from './config/component-context';
@@ -159,6 +160,22 @@ export default abstract class DependencyManager {
     return res;
   }
 
+  getImpliedTopLevelSecrets(component_spec: ComponentSpec): Dictionary<any> { // TODO: type
+    const implied_secrets: Dictionary<any> = {}; //TODO: type
+
+    for (const service of Object.values(component_spec.services || {})) {
+      for (const [env_var_name, env_var_spec] of Object.entries(service.environment || {})) {
+        if (env_var_spec === null) {
+          implied_secrets[env_var_name] = { required: true };
+        } else if (typeof env_var_spec !== 'string') {
+          implied_secrets[env_var_name] = env_var_spec;
+        }
+      }
+    }
+
+    return implied_secrets;
+  }
+
   generateUrl(interface_ref: string): string {
     const url_auth = `(${interface_ref}.password ? (${interface_ref}.username + ':' + ${interface_ref}.password + '@') : '')`;
     const url_protocol = `(${interface_ref}.protocol == 'grpc' ? '' : (${interface_ref}.protocol + '://' + ${url_auth}))`;
@@ -171,7 +188,7 @@ export default abstract class DependencyManager {
     const validation_errors = [];
     // Check required parameters and secrets for components
     for (const [key, value] of Object.entries(component.secrets)) {
-      if (value.required !== false && secrets[key] === undefined) {
+      if (value.required !== false && secrets[key] === undefined && !value.default) {
         const validation_error = new ValidationError({
           component: component.name,
           path: `secrets.${key}`,
@@ -363,7 +380,6 @@ export default abstract class DependencyManager {
 
   async getGraph(component_specs: ComponentSpec[], all_secrets: SecretsDict = {}, options?: GraphOptions): Promise<DependencyGraph> {
     options = {
-
       interpolate: true,
       validate: true,
       ...options,
@@ -378,6 +394,32 @@ export default abstract class DependencyManager {
     const graph = new DependencyGraphMutable();
 
     const context_map: Dictionary<ComponentContext> = {};
+
+    for (const component_spec of component_specs) {
+      if (component_spec.metadata.file?.contents) {
+        const implied_top_level_secrets = this.getImpliedTopLevelSecrets(component_spec);
+
+        for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) { // TODO: also modify task environments?
+          for (const [k, v] of Object.entries(service_spec.environment || {})) {
+            if (component_spec.services) {
+              const service_environment = component_spec.services[service_name].environment;
+              if (service_environment) {
+                if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+                  service_environment[k] = `${v}`;
+                } else {
+                  service_environment[k] = `\${{ secrets.${k} }}`
+                }
+              }
+            }
+          }
+        }
+
+        component_spec.secrets = { ...component_spec.secrets, ...implied_top_level_secrets };
+        if (component_spec.metadata.file) { // should always exist
+          component_spec.metadata.file.contents = yaml.dump(component_spec);
+        }
+      }
+    }
 
     const evaluated_component_specs: ComponentSpec[] = [];
     for (const raw_component_spec of component_specs) {

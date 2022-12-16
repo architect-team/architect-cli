@@ -49,14 +49,6 @@ export const transformOutputDefinitionSpec = (key: string, output_spec: string |
   }
 };
 
-const getProtocol = (url: string): string | undefined => {
-  try {
-    return (new URL(url)).protocol.slice(0, -1);
-  } catch {
-    return undefined;
-  }
-};
-
 export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => {
   const secrets = transformDictionary(transformSecretDefinitionSpec, deepmerge(spec.parameters || {}, spec.secrets || {})); // TODO: update
   const outputs = transformDictionary(transformOutputDefinitionSpec, spec.outputs);
