@@ -14,9 +14,9 @@ export interface Replica {
   display_name?: string;
 }
 
-export interface GetEnvironmentOptions {
+export class GetEnvironmentOptions {
   environment_name?: string;
-  strict?: boolean;
+  strict? = true;
 }
 
 export class EnvironmentUtils {
@@ -32,7 +32,6 @@ export class EnvironmentUtils {
 
   static async getEnvironment(api: AxiosInstance, account: Account, get_environment_options?: GetEnvironmentOptions): Promise<Environment> {
     const environment_name = get_environment_options?.environment_name;
-    const strict = get_environment_options?.strict;
     if (process.env.ARCHITECT_ENVIRONMENT === environment_name && process.env.ARCHITECT_ENVIRONMENT) {
       console.log(chalk.blue(`Using environment from environment variables: `) + environment_name);
     }
@@ -42,7 +41,7 @@ export class EnvironmentUtils {
       const response = await api.get(`/accounts/${account.id}/environments/${environment_name}`, {
         validateStatus: function (status): boolean {
           const _environment_not_found = status === 404;
-          return status === 200 || (_environment_not_found && !strict);
+          return status === 200 || (_environment_not_found && get_environment_options?.strict === false);
         },
       });
       environment = await response?.data;
