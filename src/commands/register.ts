@@ -91,9 +91,11 @@ export default class ComponentRegister extends BaseCommand {
       options.args.push({ name: 'filler' });
     }
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    parsed.args.component = parsed.argv;
+    if (parsed.argv.length > 0) {
+      parsed.args.component = parsed.argv;
+    } else {
+      parsed.args.component = ['./architect.yml'];
+    }
 
     return parsed;
   }
@@ -101,10 +103,6 @@ export default class ComponentRegister extends BaseCommand {
   @RequiresDocker({ buildx: true })
   async run(): Promise<void> {
     const { args, flags } = await this.parse(ComponentRegister);
-
-    if (!args.component || args.component.length === 0) {
-      args.component = ['./architect.yml'];
-    }
 
     const resolved_components: string[] = args.component.map((provided: string) => path.resolve(untildify(provided)));
     for (const component of new Set(resolved_components)) {

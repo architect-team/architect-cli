@@ -398,9 +398,11 @@ export default class Dev extends BaseCommand {
       options.args.push({ name: 'filler' });
     }
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    parsed.args.configs_or_components = parsed.argv;
+    if (parsed.argv.length > 0) {
+      parsed.args.configs_or_components = parsed.argv;
+    } else {
+      parsed.args.configs_or_components = ['./architect.yml'];
+    }
 
     parsed.flags = DeployUtils.parseFlags(parsed.flags);
 
@@ -635,10 +637,6 @@ $ architect dev -e new_env_name_here .`));
 
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
-
-    if (!args.configs_or_components || args.configs_or_components.length === 0) {
-      args.configs_or_components = ['./architect.yml'];
-    }
 
     const environment = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
     await this.failIfEnvironmentExists(environment);
