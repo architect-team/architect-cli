@@ -161,7 +161,7 @@ export default abstract class DependencyManager {
   }
 
   getImpliedTopLevelSecrets(component_spec: ComponentSpec): Dictionary<any> { // TODO: type
-    const implied_secrets: Dictionary<any> = {}; //TODO: type
+    const implied_secrets: Dictionary<any> = {}; // TODO: type
 
     for (const service of Object.values(component_spec.services || {})) {
       for (const [env_var_name, env_var_spec] of Object.entries(service.environment || {})) {
@@ -395,7 +395,7 @@ export default abstract class DependencyManager {
 
     const context_map: Dictionary<ComponentContext> = {};
 
-    for (const component_spec of component_specs) {
+    for (const component_spec of component_specs) { // TODO: rather than modifying the object, interpolate on this as a dummy object, then merge back to the original one?
       if (component_spec.metadata.file?.contents) {
         const implied_top_level_secrets = this.getImpliedTopLevelSecrets(component_spec);
 
@@ -403,12 +403,14 @@ export default abstract class DependencyManager {
           for (const [k, v] of Object.entries(service_spec.environment || {})) {
             if (component_spec.services) {
               const service_environment = component_spec.services[service_name].environment;
-              if (service_environment) {
-                if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
-                  service_environment[k] = `${v}`;
-                } else {
-                  service_environment[k] = `\${{ secrets.${k} }}`
-                }
+              if (!service_environment) {
+                continue;
+              }
+
+              if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+                service_environment[k] = `${v}`;
+              } else {
+                service_environment[k] = `\${{ secrets.${k} }}`;
               }
             }
           }
