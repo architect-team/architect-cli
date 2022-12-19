@@ -1,8 +1,8 @@
 import { expect, test } from '@oclif/test';
+import AccountUtils from '../../../src/architect/account/account.utils';
 import { EnvironmentUtils } from '../../../src/architect/environment/environment.utils';
 import PipelineUtils from '../../../src/architect/pipeline/pipeline.utils';
 import { MOCK_API_HOST } from '../../utils/mocks';
-import AccountUtils from '../../../src/architect/account/account.utils';
 
 describe('environment:destroy', () => {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
@@ -37,12 +37,12 @@ describe('environment:destroy', () => {
     .stub(PipelineUtils, 'pollPipeline', async () => null)
     .stub(EnvironmentUtils, 'getEnvironment', () => mock_env)
     .nock(MOCK_API_HOST, api => api
-      .get(new RegExp(`/accounts/${mock_account.id}/environments.*`))
+      .get(new RegExp(`/accounts/${mock_account.id}/environments/${mock_env.name}`))
       .reply(201, mock_env));
 
   const failing_mock_test_strict = mock_test_common
     .nock(MOCK_API_HOST, api => api
-      .get(new RegExp(`/accounts/${mock_account.id}/environments.*`))
+      .get(new RegExp(`/accounts/${mock_account.id}/environments/${failing_mock_env.name}`))
       .reply(404));
 
   const failing_mock_test_not_strict = mock_test_common
