@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import fs from 'fs';
 import inquirer from 'inquirer';
 import AccountUtils from '../architect/account/account.utils';
-import { EnvironmentUtils } from '../architect/environment/environment.utils';
+import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
 import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import BaseCommand from '../base-command';
 import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../common/errors/pipeline-errors';
@@ -238,7 +238,8 @@ export default class Deploy extends DeployCommand {
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
+    const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
 
     const component_names: string[] = [];
     for (const component of components) {

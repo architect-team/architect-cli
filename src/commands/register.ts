@@ -12,7 +12,7 @@ import untildify from 'untildify';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, TaskNode, validateInterpolation, VolumeSpec } from '../';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
-import { EnvironmentUtils } from '../architect/environment/environment.utils';
+import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
@@ -173,7 +173,8 @@ export default class ComponentRegister extends BaseCommand {
     const selected_account = await AccountUtils.getAccount(this.app, account_name);
 
     if (flags.environment) { // will throw an error if a user specifies an environment that doesn't exist
-      await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);
+      const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
+      await EnvironmentUtils.getEnvironment(this.app.api, selected_account, get_environment_options);
     }
 
     const dependency_manager = new LocalDependencyManager(this.app.api, selected_account.name);

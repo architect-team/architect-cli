@@ -5,7 +5,7 @@ import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { ComponentVersion } from '../architect/component/component-version.entity';
 import Environment from '../architect/environment/environment.entity';
-import { EnvironmentUtils } from '../architect/environment/environment.utils';
+import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 import { ComponentVersionSlugUtils, ResourceSlugUtils } from '../dependency-manager/spec/utils/slugs';
@@ -124,8 +124,8 @@ During this time we greatly appreciate any feedback as we continue to finalize t
       }
       replicas = Number.parseInt(replicas);
     }
-
-    const environment: Environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
+    const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
+    const environment: Environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
 
     const resource_slug = ResourceSlugUtils.build(undefined, component_version.component.name, 'services', service_name);
     const scaling_dto = {

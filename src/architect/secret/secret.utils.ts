@@ -1,7 +1,7 @@
 import AppService from '../../app-config/service';
 import Account from '../account/account.entity';
 import ClusterUtils from '../cluster/cluster.utils';
-import { EnvironmentUtils } from '../environment/environment.utils';
+import { EnvironmentUtils, GetEnvironmentOptions } from '../environment/environment.utils';
 
 export interface Secret {
   scope: string;
@@ -18,7 +18,8 @@ export default class SecretUtils {
   static async getSecrets(app: AppService, account: Account, options?: SecretOptions, inherited?: boolean) : Promise<Secret[]> {
     let secrets: Secret[] = [];
     if (options?.environment_name) {
-      const environment = await EnvironmentUtils.getEnvironment(app.api, account, options?.environment_name);
+      const get_environment_options: GetEnvironmentOptions = { environment_name: options.environment_name };
+      const environment = await EnvironmentUtils.getEnvironment(app.api, account, get_environment_options);
       secrets = (await app.api.get(`environments/${environment.id}/secrets/values`, { params: { inherited: true } })).data;
     } else if (options?.cluster_name) {
       const cluster = await ClusterUtils.getCluster(app.api, account, options?.cluster_name);
@@ -32,7 +33,8 @@ export default class SecretUtils {
 
   static async batchUpdateSecrets(app: AppService, secrets: Secret[], account: Account, options?: SecretOptions): Promise<void> {
     if (options?.environment_name) {
-      const environment = await EnvironmentUtils.getEnvironment(app.api, account, options?.environment_name);
+      const get_environment_options: GetEnvironmentOptions = { environment_name: options.environment_name };
+      const environment = await EnvironmentUtils.getEnvironment(app.api, account, get_environment_options);
       await app.api.post(`/environments/${environment.id}/secrets/batch`, secrets);
     } else if (options?.cluster_name) {
       const cluster = await ClusterUtils.getCluster(app.api, account, options?.cluster_name);

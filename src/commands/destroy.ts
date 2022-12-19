@@ -2,7 +2,7 @@ import { CliUx, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import AccountUtils from '../architect/account/account.utils';
 import Deployment from '../architect/deployment/deployment.entity';
-import { EnvironmentUtils } from '../architect/environment/environment.utils';
+import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
 import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import { DeployCommand } from './deploy';
 
@@ -35,7 +35,8 @@ export default class Destroy extends DeployCommand {
     const { flags } = await this.parse(Destroy);
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
+    const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
 
     CliUx.ux.action.start(chalk.blue('Creating pipeline'));
     let instance_ids;
