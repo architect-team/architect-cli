@@ -37,12 +37,12 @@ describe('environment:destroy', () => {
     .stub(PipelineUtils, 'pollPipeline', async () => null)
     .stub(EnvironmentUtils, 'getEnvironment', () => mock_env)
     .nock(MOCK_API_HOST, api => api
-      .get(new RegExp(`/accounts/${mock_account.id}/environments/${mock_env.name}`))
+      .get(`/accounts/${mock_account.id}/environments/${mock_env.name}`)
       .reply(201, mock_env));
 
   const failing_mock_test_strict = mock_test_common
     .nock(MOCK_API_HOST, api => api
-      .get(new RegExp(`/accounts/${mock_account.id}/environments/${failing_mock_env.name}`))
+      .get(`/accounts/${mock_account.id}/environments/${failing_mock_env.name}`)
       .reply(404));
 
   const failing_mock_test_not_strict = mock_test_common
