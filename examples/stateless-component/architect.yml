@@ -24,14 +24,10 @@ services:
     build:
       context: ./
     interfaces:
-      http: 8080
+      http:
+        port: 8080
+        ingress:
+          subdomain: frontend
     environment:
       LOG_LEVEL: ${{ secrets.log_level }}
-      HELLO_WORLD_ADDR: ${{ dependencies.hello-world.interfaces.hello.url }}
-
-interfaces:
-  frontend:
-    description: Exposes the app to upstream traffic
-    url: ${{ services.stateless-app.interfaces.http.url }}
-    ingress:
-      subdomain: frontend
+      HELLO_WORLD_ADDR: ${{ dependencies.hello-world.services.api.interfaces.main.url }}

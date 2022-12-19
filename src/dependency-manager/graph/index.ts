@@ -1,10 +1,9 @@
 import { Exclude, Type } from 'class-transformer';
 import { DependencyEdge } from './edge';
 import { IngressEdge } from './edge/ingress';
-import { OutputEdge } from './edge/output';
+import { IngressConsumerEdge } from './edge/ingress-consumer';
 import { ServiceEdge } from './edge/service';
 import { DependencyNode } from './node';
-import { ComponentNode } from './node/component';
 import { GatewayNode } from './node/gateway';
 import { ServiceNode } from './node/service';
 import { TaskNode } from './node/task';
@@ -16,7 +15,6 @@ export class DependencyGraphMutable {
       subTypes: [
         { value: ServiceNode, name: 'service' },
         { value: TaskNode, name: 'task' },
-        { value: ComponentNode, name: 'interfaces' },
         { value: GatewayNode, name: 'gateway' },
       ],
     },
@@ -29,8 +27,8 @@ export class DependencyGraphMutable {
       property: '__type',
       subTypes: [
         { value: ServiceEdge, name: 'service' },
-        { value: OutputEdge, name: 'output' },
         { value: IngressEdge, name: 'ingress' },
+        { value: IngressConsumerEdge, name: 'ingress-consumer' },
       ],
     },
     keepDiscriminatorProperty: true,
@@ -65,6 +63,10 @@ export class DependencyGraphMutable {
   }
 
   addEdge(edge: DependencyEdge): DependencyEdge {
+    if (edge.from === edge.to) {
+      throw new Error(`Edge cannot be self referential: ${edge.toString()}`);
+    }
+
     if (!this.edges_map.has(edge.ref)) {
       // Ensure the nodes exist in the pool
       this.getNodeByRef(edge.from);
@@ -104,15 +106,13 @@ export class DependencyGraphMutable {
   }
 
   getDownstreamNodes(node: DependencyNode): DependencyNode[] {
-    const nodes: Map<string, DependencyNode> = new Map();
-
+    const nodes = [];
     for (const edge of this.edges) {
       if (edge.from === node.ref) {
-        nodes.set(edge.to, this.getNodeByRef(edge.to));
+        nodes.push(this.getNodeByRef(edge.to));
       }
     }
-
-    return [...nodes.values()];
+    return nodes;
   }
 
   removeNode(node_ref: string, cleanup_dangling: boolean): void {
@@ -149,105 +149,34 @@ export class DependencyGraphMutable {
     return [...nodes.values()];
   }
 
-  followEdge(root_edge: DependencyEdge): { interface_from: string, interface_to: string, node_to: DependencyNode, node_to_interface_name: string }[] {
-    const queue = [root_edge];
-    const res = [];
-    while (queue.length > 0) {
-      const edge = queue.shift()!;
-      const node_to = this.getNodeByRef(edge.to);
-      if (node_to instanceof ComponentNode) {
-        const child_edges = this.edges.filter(e => e.from === edge.to);
-        for (const child_edge of child_edges) {
-          queue.push(child_edge);
-        }
-      } else if (root_edge === edge) { // Support following ServiceEdge to another service
-        for (const { interface_from, interface_to } of edge.interface_mappings) {
-          res.push({
-            interface_from,
-            interface_to,
-            node_to,
-            node_to_interface_name: interface_to,
-          });
-        }
-      } else {
-        for (const { interface_from, interface_to } of root_edge.interface_mappings) {
-          const interface_mapping = edge.interface_mappings.find((i) => i.interface_from === interface_to);
-          if (interface_mapping) {
-            res.push({
-              interface_from,
-              interface_to,
-              node_to,
-              node_to_interface_name: interface_mapping?.interface_to,
-            });
-          }
-        }
-      }
-    }
-    return res;
-  }
+  getDependsOn(current_node: (ServiceNode | TaskNode)): (ServiceNode | TaskNode)[] {
+    const simplified_edge_refs = new Set(this.edges.map(edge => `${edge.from}.${edge.to}`));
 
-  getDependsOn(node: ServiceNode | TaskNode): ServiceNode[] {
-    const explicit_depends_on = this.getExplicitDependsOn(node);
-    const cross_component_depends_on = this.getInterComponentDependsOn(node);
-    const all_depends_on = [...explicit_depends_on, ...cross_component_depends_on];
-    return all_depends_on.filter(n => !n.is_external);
-  }
+    const downstream_nodes = this.getDownstreamNodes(current_node);
+    const depends_on_nodes = this.nodes
+      .filter(node =>
+        node.instance_id === current_node.instance_id &&
+        node instanceof ServiceNode &&
+        current_node.config.depends_on.includes(node.service_name),
+      );
 
-  private getExplicitDependsOn(node: ServiceNode | TaskNode): ServiceNode[] {
-    return this.nodes
-      .filter(n => n.instance_id === node.instance_id && node.config.depends_on.includes((n as ServiceNode | TaskNode)?.config?.reserved_name || (n as ServiceNode | TaskNode)?.config?.name))
-      .filter(n => n instanceof ServiceNode)
-      .map(n => n as ServiceNode);
-  }
+    const dependent_node_refs = new Set([
+      ...downstream_nodes.map(node => node.ref),
+      ...depends_on_nodes.map(node => node.ref),
+    ]);
 
-  private getInterComponentDependsOn(node: ServiceNode | TaskNode): ServiceNode[] {
-    const downstreams = this.getDownstreamServices(node);
-    const inter_component_downstreams = downstreams.filter(n => n.instance_id !== node.instance_id); // filter out intra-component dependencies
-    return inter_component_downstreams.filter(n => !this.isPartOfCircularDependency(n));
-  }
+    const dependent_nodes: (ServiceNode | TaskNode)[] = [];
+    for (const dependent_node_ref of dependent_node_refs) {
+      const dependent_node = this.getNodeByRef(dependent_node_ref);
+      if (dependent_node.is_external) continue;
+      if (!(dependent_node instanceof ServiceNode || dependent_node instanceof TaskNode)) continue;
+      // Check for circular dependency
+      if (simplified_edge_refs.has(`${dependent_node.ref}.${current_node.ref}`)) continue;
 
-  private getDownstreamServices(node: DependencyNode): ServiceNode[] {
-    let downstreams = this.getDownstreamNodes(node);
-    const interfaces = downstreams.filter(n => n instanceof ComponentNode);
-    for (const i of interfaces) {
-      const interface_downstreams = interfaces.map(i => this.getDownstreamNodes(i));
-      for (const i_downstream of interface_downstreams) {
-        downstreams = [...downstreams, ...i_downstream];
-      }
-    }
-    downstreams = downstreams.filter((node, index, self) => self.findIndex(n => n.ref === node.ref) === index); // dedupe
-    return downstreams.filter(n => n instanceof ServiceNode).map(n => n as ServiceNode);
-  }
-
-  private isPartOfCircularDependency(search_node: ServiceNode | TaskNode, current_node?: ServiceNode | TaskNode, seen_nodes: string[] = []) {
-    const next_node = current_node || search_node;
-    const dependencies = this.getDownstreamNodes(next_node)
-      .filter(n => n instanceof ServiceNode)
-      .map(n => n as ServiceNode);
-
-    // we're in a circular ref but not one that the search_node is a part of
-    if (seen_nodes.includes(next_node.ref)) {
-      return false;
+      dependent_nodes.push(dependent_node);
     }
 
-    seen_nodes.push(next_node.ref);
-
-    if (!dependencies?.length) {
-      return false;
-    }
-
-    // search all dependencies and return true if one matches or one has a dependency that matches the original search_node
-    for (const dependency of dependencies) {
-      if (dependency.ref === search_node.ref) {
-        return true;
-      } else if (this.isPartOfCircularDependency(search_node, dependency, seen_nodes)) {
-        return true;
-      }
-      // keep searching dependencies
-    }
-
-    // searched all dependencies and didn't find any circular dependencies
-    return false;
+    return dependent_nodes;
   }
 }
 

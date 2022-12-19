@@ -14,6 +14,11 @@ export interface Replica {
   display_name?: string;
 }
 
+export class GetEnvironmentOptions {
+  environment_name?: string;
+  strict? = true;
+}
+
 export class EnvironmentUtils {
   static flags = {
     environment: Flags.string({
@@ -25,14 +30,21 @@ export class EnvironmentUtils {
     }),
   };
 
-  static async getEnvironment(api: AxiosInstance, account: Account, environment_name?: string): Promise<Environment> {
+  static async getEnvironment(api: AxiosInstance, account: Account, get_environment_options?: GetEnvironmentOptions): Promise<Environment> {
+    const environment_name = get_environment_options?.environment_name;
     if (process.env.ARCHITECT_ENVIRONMENT === environment_name && process.env.ARCHITECT_ENVIRONMENT) {
       console.log(chalk.blue(`Using environment from environment variables: `) + environment_name);
     }
 
     let environment: Environment;
     if (environment_name) {
-      environment = (await api.get(`/accounts/${account.id}/environments/${environment_name}`)).data;
+      const response = await api.get(`/accounts/${account.id}/environments/${environment_name}`, {
+        validateStatus: function (status): boolean {
+          const _environment_not_found = status === 404;
+          return status === 200 || (_environment_not_found && get_environment_options?.strict === false);
+        },
+      });
+      environment = await response?.data;
     } else {
       // eslint-disable-next-line unicorn/prefer-module
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));

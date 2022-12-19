@@ -4,7 +4,7 @@ import fs from 'fs';
 import inquirer from 'inquirer';
 import { inspect } from 'util';
 import AccountUtils from '../architect/account/account.utils';
-import { EnvironmentUtils } from '../architect/environment/environment.utils';
+import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
 import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import BaseCommand from '../base-command';
 import DeployUtils from '../common/utils/deploy.utils';
@@ -139,10 +139,12 @@ export default class Deploy extends DeployCommand {
     }),
     interface: Flags.string({
       char: 'i',
-      description: 'Component interfaces',
+      description: 'Deprecated: Please use ingress.subdomain https://docs.architect.io/components/ingress-rules/',
       multiple: true,
-      default: [],
+      default: undefined,
       sensitive: false,
+      deprecated: true,
+      hidden: true,
     }),
     'secret-file': Flags.string({
       description: 'Path of secrets file',
@@ -215,9 +217,11 @@ export default class Deploy extends DeployCommand {
       options.args.push({ name: 'filler' });
     }
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    parsed.args.configs_or_components = parsed.argv;
+    if (parsed.argv.length > 0) {
+      parsed.args.configs_or_components = parsed.argv;
+    } else {
+      parsed.args.configs_or_components = ['./architect.yml'];
+    }
     parsed.flags = DeployUtils.parseFlags(parsed.flags);
     return parsed;
   }
@@ -227,14 +231,15 @@ export default class Deploy extends DeployCommand {
 
     const components = args.configs_or_components;
 
-    const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
+    const interfaces_map = DeployUtils.getInterfacesMap(flags.interface || []);
     const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
     const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values); // TODO: 404: update
     const component_parameters = DeployUtils.getComponentSecrets(flags.parameter || [], all_secret_file_values); // TODO: 404: remove
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
+    const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
 
     const component_names: string[] = [];
     for (const component of components) {

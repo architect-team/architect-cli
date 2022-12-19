@@ -3,11 +3,9 @@ import chalk from 'chalk';
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
 import DependencyManager, { ArchitectContext, ArchitectError, buildSpecFromPath, buildSpecFromYml, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary, generateIngressesOverrideSpec, IngressSpec, overrideSpec } from '../../';
-import { IF_EXPRESSION_REGEX } from '../../dependency-manager/spec/utils/interpolation';
 
 export interface ComponentConfigOpts {
   interfaces?: Dictionary<string>;
-  map_all_interfaces?: boolean;
   instance_id?: string;
 }
 
@@ -27,12 +25,6 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async loadComponentSpec(component_string: string, options?: ComponentConfigOpts, debug?: boolean): Promise<ComponentSpec> {
-    const merged_options = {
-
-      map_all_interfaces: false,
-      ...options,
-    };
-
     const { component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
     const component_ref = this.getComponentRef(component_string);
 
@@ -43,13 +35,12 @@ export default class LocalDependencyManager extends DependencyManager {
     let spec: ComponentSpec;
     const metadata: ComponentInstanceMetadata = {
       ref: component_ref,
-      architect_ref: component_ref,
       tag: tag,
       instance_name,
       instance_id: options?.instance_id || component_ref,
       instance_date: this.now,
+      deprecated_interfaces_map: {},
     };
-
     const linked_component_key = component_ref in this.linked_components ? component_ref : ComponentSlugUtils.build(this.account, component_name);
     const linked_component = this.linked_components[linked_component_key];
     if (!linked_component && !this.account) {
@@ -76,21 +67,7 @@ export default class LocalDependencyManager extends DependencyManager {
       spec = buildSpecFromYml(config_yaml, metadata);
     }
 
-    spec.metadata = {
-      ...spec.metadata,
-      ...metadata,
-    };
-
     const ingresses: Dictionary<IngressSpec> = {};
-    if (merged_options.map_all_interfaces) {
-      for (const interface_name of Object.keys(spec.interfaces || {})) {
-        if (!IF_EXPRESSION_REGEX.test(interface_name)) {
-          ingresses[interface_name] = {
-            enabled: true,
-          };
-        }
-      }
-    }
     for (const [subdomain, interface_name] of Object.entries(options?.interfaces || {})) {
       ingresses[interface_name] = {
         enabled: true,

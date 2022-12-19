@@ -4,7 +4,7 @@ const addLineNumbers = (value: string, errors: ValidationError[]): void => {
   const rows = value.split('\n');
   const total_rows = rows.length;
   for (const error of errors) {
-    const keys = error.path.split(/(?<!\${{)\.(?![^.]+})/); // Split on periods except when inside ${{ }}
+    const keys = error.path.split(new RegExp('(?<!\\${{)\\.(?![^.]+})')); // Split on periods except when inside ${{ }}
     let pattern = '(.*?)' + keys.map((key) => `${escapeRegex(key)}:`).join('(.*?)');
 
     const target_value = `${error.value}`.split('\n')[0];

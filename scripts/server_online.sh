@@ -1,9 +1,9 @@
 attempt_counter=0
-max_attempts=200
+max_attempts=100
 
 running_count=$(./bin/dev dev:list | grep running | wc -l)
 
-while [ ! $running_count -eq 5 ]
+while [ ! $running_count -eq 6 ]
 do
     if [ ${attempt_counter} -eq ${max_attempts} ];then
       echo "Max attempts reached"

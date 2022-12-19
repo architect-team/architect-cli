@@ -16,15 +16,14 @@ describe('component transform unit test', function () {
     const { source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset/architect.yml`);
     const ref = 'tests/superset@instance-1';
 
-    const metadata = {
+    const metadata: ComponentInstanceMetadata = {
       ref,
-      architect_ref: ref,
       tag: 'latest',
       instance_name: 'instance-1',
       instance_id: 'test-instance-id',
       instance_date: new Date(),
-      interfaces: {}
-    } as ComponentInstanceMetadata;
+      deprecated_interfaces_map: {}
+    };
     const spec = buildSpecFromYml(source_yml, metadata);
     const config = transformComponentSpec(spec);
 

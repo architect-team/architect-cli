@@ -3,7 +3,7 @@ import { Exclude, Transform } from 'class-transformer';
 import { Allow, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
-import { ServiceSpec } from './service-spec';
+import { IngressSpec, ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
 import { transformObject } from './transform/common-transform';
 import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString } from './utils/json-schema-annotations';
@@ -12,7 +12,6 @@ import { ComponentSlugUtils, Slugs } from './utils/slugs';
 export interface ComponentInstanceMetadata {
   readonly tag: string;
   readonly ref: string;
-  readonly architect_ref: string;
 
   readonly instance_name?: string;
   readonly instance_id?: string;
@@ -23,46 +22,7 @@ export interface ComponentInstanceMetadata {
     contents: string;
   }
 
-  interpolated?: boolean;
-}
-
-@JSONSchema({
-  description: 'An ingress exposes an interface to external network traffic through an architect-deployed gateway.',
-})
-export class IngressSpec {
-  @IsOptional()
-  @JSONSchema({
-    type: 'boolean',
-    description: 'Marks the interface as an ingress.',
-  })
-  enabled?: boolean;
-
-  @IsOptional()
-  @JSONSchema({
-    ...ExpressionOr({ type: 'string', pattern: Slugs.ComponentSubdomainValidator.source }),
-    description: 'The subdomain that will be used if the interface is exposed externally (defaults to the interface name)',
-    errorMessage: Slugs.ComponentSubdomainDescription,
-  })
-  subdomain?: string;
-
-  @IsOptional()
-  @JSONSchema({
-    ...ExpressionOr({ type: 'string', pattern: '^\\/.*$' }),
-    description: 'The path of the interface used for path based routing',
-  })
-  path?: string;
-
-  @IsOptional()
-  @JSONSchema({
-    ...ExpressionOr({
-      type: 'array',
-      items: {
-        anyOf: [{ type: 'string', format: 'cidrv4' }, { type: 'string', pattern: '\\${{\\s*secrets\\.[\\w-]+\\s*}}' }],
-      },
-    }),
-    description: 'IP addresses that are allowed to access the interface',
-  })
-  ip_whitelist?: string[];
+  deprecated_interfaces_map: Dictionary<string | undefined>;
 }
 
 @JSONSchema({
@@ -323,9 +283,10 @@ export class ComponentSpec {
       additionalProperties: Slugs.ArchitectSlugDescription,
     },
     description: 'A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.',
+    deprecated: true,
   })
   @Transform(transformObject(ComponentInterfaceSpec))
-  interfaces?: Dictionary<string | ComponentInterfaceSpec>;
+  protected interfaces?: Dictionary<string | ComponentInterfaceSpec>;
 
   @IsOptional()
   @JSONSchema({
@@ -334,4 +295,8 @@ export class ComponentSpec {
     description: '-',
   })
   artifact_image?: string;
+
+  get deprecated_interfaces(): Dictionary<string | ComponentInterfaceSpec> {
+    return this.interfaces || {};
+  }
 }

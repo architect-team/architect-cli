@@ -5,6 +5,7 @@ import { Slugs } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
 import ClusterUtils from '../../architect/cluster/cluster.utils';
 import BaseCommand from '../../base-command';
+import { booleanString } from '../../common/utils/oclif';
 
 interface CreateEnvironmentDto {
   name: string;
@@ -26,6 +27,12 @@ export default class EnvironmentCreate extends BaseCommand {
     ...ClusterUtils.flags,
     description: Flags.string({
       description: 'Environment Description',
+      sensitive: false,
+    }),
+    strict: booleanString({
+      description: 'If set to true, throws an error when attempting to create an environment that already exists',
+      hidden: true,
+      default: false,
       sensitive: false,
     }),
     ttl: Flags.string({
@@ -81,7 +88,7 @@ export default class EnvironmentCreate extends BaseCommand {
     await this.app.api.post(`/accounts/${account.id}/environments`, dto, {
       validateStatus: function (status): boolean {
         _environment_already_exists = status === 409;
-        return status === 201 || _environment_already_exists;
+        return status === 201 || (_environment_already_exists && flags.strict === false);
       },
     });
 
@@ -90,7 +97,7 @@ export default class EnvironmentCreate extends BaseCommand {
     CliUx.ux.action.stop();
 
     if (_environment_already_exists) {
-      this.warn(`Unable to create new environment '${environment_name}'. Environment name already in use for account '${account.name}'`);
+      this.warn(`Unable to create new environment '${environment_name}'.\nEnvironment name already in use for account '${account.name}'`);
       return;
     }
 

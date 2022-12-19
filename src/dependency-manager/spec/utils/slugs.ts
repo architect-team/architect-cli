@@ -3,6 +3,14 @@ import { ArchitectError } from '../../utils/errors';
 export type ArchitectSlug = string; // a string that passes Slugs.ArchitectSlugValidator (ie "account-name")
 export type ComponentTag = string; // "tag"
 
+// Check to see if lookbehind is supported https://github.com/WebKit/WebKit/pull/7109
+let REGEX_LOOKBEHIND = true;
+try {
+  new RegExp('(?!-)(?!.{0,10}--)[a-z0-9-]{1,10}(?<!-)').test('support');
+} catch {
+  REGEX_LOOKBEHIND = false;
+}
+
 export class Slugs {
   public static DEFAULT_TAG = 'latest';
 
@@ -13,12 +21,11 @@ export class Slugs {
   public static SLUG_CHAR_LIMIT = 32;
 
   public static ArchitectSlugDescription = `must contain only lower alphanumeric and single hyphens or underscores in the middle; max length ${Slugs.SLUG_CHAR_LIMIT}`;
-  static CharacterCountLookahead = `(?=.{1,${Slugs.SLUG_CHAR_LIMIT}}(\\${Slugs.NAMESPACE_DELIMITER}|${Slugs.TAG_DELIMITER}|$))`;
-  public static ArchitectSlugRegexBase = `(?!-)(?!.{0,${Slugs.SLUG_CHAR_LIMIT}}--)[a-z0-9-]{1,${Slugs.SLUG_CHAR_LIMIT}}(?<!-)`;
+  public static ArchitectSlugRegexBase = REGEX_LOOKBEHIND ? `(?!-)(?!.{0,${Slugs.SLUG_CHAR_LIMIT}}--)[a-z0-9-]{1,${Slugs.SLUG_CHAR_LIMIT}}(?<!-)` : `[a-z0-9]+(-[a-z0-9]+)*`;
   public static ArchitectSlugValidator = new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`);
 
   public static ArchitectSlugDescriptionCaseInsensitive = `must contain only alphanumeric and single hyphens or underscores in the middle; max length ${Slugs.SLUG_CHAR_LIMIT}`;
-  public static ArchitectSlugRegexBaseCaseInsensitive = `(?!-)(?!.{0,${Slugs.SLUG_CHAR_LIMIT}}--)[A-Za-z0-9-]{1,${Slugs.SLUG_CHAR_LIMIT}}(?<!-)`;
+  public static ArchitectSlugRegexBaseCaseInsensitive = REGEX_LOOKBEHIND ? `(?!-)(?!.{0,${Slugs.SLUG_CHAR_LIMIT}}--)[A-Za-z0-9-]{1,${Slugs.SLUG_CHAR_LIMIT}}(?<!-)` : `[A-Za-z0-9]+(-[A-Za-z0-9]+)*`;
   public static ArchitectSlugValidatorCaseInsensitive = new RegExp(`^${Slugs.ArchitectSlugRegexBaseCaseInsensitive}$`);
 
   public static LabelMax = 63;
@@ -47,7 +54,7 @@ export interface ParsedSlug {
   component_account_name?: string;
 }
 
-export type ComponentSlug = string; // "<account-name>/<component-name>"
+export type ComponentSlug = string; // "<component-name>"
 export interface ParsedComponentSlug extends ParsedSlug {
   component_account_name?: string;
   component_name: string;
@@ -101,7 +108,7 @@ export class ComponentSlugUtils extends SlugUtils {
   public static parse = parseCurry<ComponentSlug, ParsedComponentSlug>();
 }
 
-export type ComponentVersionSlug = string; // "<account-name>/<component-name>:<tag>"
+export type ComponentVersionSlug = string; // "<component-name>:<tag>"
 export interface ParsedComponentVersionSlug extends ParsedSlug {
   component_account_name?: string;
   component_name: string;
@@ -143,7 +150,7 @@ export interface ParsedResourceSlug extends ParsedSlug {
   instance_name?: string;
 }
 export class ResourceSlugUtils extends SlugUtils {
-  public static Description = 'must be of the form <account-name>/<component-name>.services|tasks.<resource-name>';
+  public static Description = 'must be of the form <component-name>.services|tasks.<resource-name>';
 
   public static RegexResource = `${ComponentSlugUtils.RegexName}\\${Slugs.RESOURCE_DELIMITER}(?<resource_type>services|tasks)\\${Slugs.RESOURCE_DELIMITER}(?<resource_name>${Slugs.ArchitectSlugRegexBase})`;
 

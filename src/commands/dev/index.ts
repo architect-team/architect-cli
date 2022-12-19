@@ -276,10 +276,12 @@ export default class Dev extends BaseCommand {
     }),
     interface: Flags.string({
       char: 'i',
-      description: 'Component interfaces',
+      description: 'Deprecated: Please use ingress.subdomain https://docs.architect.io/components/ingress-rules/',
       multiple: true,
-      default: [],
+      default: undefined,
       sensitive: false,
+      deprecated: true,
+      hidden: true,
     }),
     'secrets-env': Flags.string({
       description: 'Environment to load secrets from [beta]',
@@ -396,9 +398,11 @@ export default class Dev extends BaseCommand {
       options.args.push({ name: 'filler' });
     }
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    parsed.args.configs_or_components = parsed.argv;
+    if (parsed.argv.length > 0) {
+      parsed.args.configs_or_components = parsed.argv;
+    } else {
+      parsed.args.configs_or_components = ['./architect.yml'];
+    }
 
     parsed.flags = DeployUtils.parseFlags(parsed.flags);
 
@@ -634,10 +638,6 @@ $ architect dev -e new_env_name_here .`));
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
 
-    if (!args.configs_or_components || args.configs_or_components.length === 0) {
-      args.configs_or_components = ['./architect.yml'];
-    }
-
     const environment = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
     await this.failIfEnvironmentExists(environment);
 
@@ -647,7 +647,7 @@ $ architect dev -e new_env_name_here .`));
       await this.downloadSSLCerts();
     }
 
-    const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
+    const interfaces_map = DeployUtils.getInterfacesMap(flags.interface || []);
 
     let env_secrets: SecretsDict = {};
     if (flags['secrets-env']) {
@@ -699,14 +699,7 @@ $ architect dev -e new_env_name_here .`));
 
     const component_specs: ComponentSpec[] = [];
 
-    // Check if multiple instances of the same component are being deployed. This check is needed
-    // so that we can disable automatic interface mapping since we can't map a single interface to
-    // multiple components at this time
-    // eslint-disable-next-line unicorn/no-array-callback-reference
-    const uniqe_names = component_versions.map(name => name.split('@')[0]).filter(onlyUnique);
-    const duplicates = uniqe_names.length !== component_versions.length;
-
-    const component_options: ComponentConfigOpts = { map_all_interfaces: !flags.production && !duplicates, interfaces: interfaces_map };
+    const component_options: ComponentConfigOpts = { interfaces: interfaces_map };
 
     for (const component_version of component_versions) {
       const component_config = await dependency_manager.loadComponentSpec(component_version, component_options, flags.debug);

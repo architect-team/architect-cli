@@ -29,7 +29,7 @@ The top level object of the `architect.yml`; defines a deployable Architect Comp
  | `services` | Dict&lt;string&gt; | A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `tasks` | Dict&lt;string&gt; | A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `dependencies` | Dict&lt;string&gt; | A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`) | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3A(%3F%3Ccomponent_account_name%3E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-))%5C%2F)%3F(%3F%3Ccomponent_name%3E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-))(%3F%3A%40(%3F%3Cinstance_name%3E%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D))%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=%5E%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D%24">ValueRegex</a>,  |
- | `interfaces` | Dict&lt;string&gt; | A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
+ | ~~`interfaces`~~ | Dict&lt;string&gt; | A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, Deprecated |
  | ~~`artifact_image`~~ | string | - | Deprecated |
 
 
@@ -151,6 +151,18 @@ An object containing the details necessary for Architect to build the service vi
  | `target` | string \| [Expression](https://docs.architect.io/reference/contexts) | The stage to build in the Dockerfile |  |
 
 
+## IngressSpec
+
+An ingress exposes an interface to external network traffic through an architect-deployed gateway.
+
+| Field  (*=required)  | Type       | Description    | Misc           |
+| -------------------- | ---------- | -------------- | -------------- |
+ | `enabled` | boolean | Marks the interface as an ingress. |  |
+ | `subdomain` | string \| [Expression](https://docs.architect.io/reference/contexts) | The subdomain that will be used if the interface is exposed externally. Use `subdomain: @` to target the base domain. |  |
+ | `path` | string \| [Expression](https://docs.architect.io/reference/contexts) | The path of the interface used for path based routing |  |
+ | `ip_whitelist` | Array&lt;string \| string&gt; \| [Expression](https://docs.architect.io/reference/contexts) | IP addresses that are allowed to access the interface |  |
+
+
 ## ScalingMetricsSpec
 
 Scaling metrics define the upper bound of resource consumption before spinning up an additional replica.
@@ -205,18 +217,7 @@ A service interface exposes service functionality over the network to other serv
  | `path` | string \| [Expression](https://docs.architect.io/reference/contexts) | The path of the interface |  |
  | `url` | string \| [Expression](https://docs.architect.io/reference/contexts) | The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url. |  |
  | `sticky` | boolean \| [Expression](https://docs.architect.io/reference/contexts) | Denotes that if this interface is made external, the gateway should use sticky sessions |  |
-
-
-## IngressSpec
-
-An ingress exposes an interface to external network traffic through an architect-deployed gateway.
-
-| Field  (*=required)  | Type       | Description    | Misc           |
-| -------------------- | ---------- | -------------- | -------------- |
- | `enabled` | boolean | Marks the interface as an ingress. |  |
- | `subdomain` | string \| [Expression](https://docs.architect.io/reference/contexts) | The subdomain that will be used if the interface is exposed externally (defaults to the interface name) |  |
- | `path` | string \| [Expression](https://docs.architect.io/reference/contexts) | The path of the interface used for path based routing |  |
- | `ip_whitelist` | Array&lt;string \| string&gt; \| [Expression](https://docs.architect.io/reference/contexts) | IP addresses that are allowed to access the interface |  |
+ | `ingress` | [IngressSpec](#ingressspec) |  |  |
 
 
 ## OutputDefinitionSpec

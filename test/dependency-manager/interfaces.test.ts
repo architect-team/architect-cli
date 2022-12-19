@@ -66,7 +66,6 @@ describe('interfaces spec v1', () => {
     });
 
     const branch_ref = resourceRefToNodeRef('branch.services.api');
-    const leaf_interfaces_ref = resourceRefToNodeRef('leaf');
     const leaf_db_ref = resourceRefToNodeRef('leaf.services.db');
     const leaf_api_resource_ref = 'leaf.services.api';
     const leaf_api_ref = resourceRefToNodeRef(leaf_api_resource_ref);
@@ -88,7 +87,7 @@ describe('interfaces spec v1', () => {
         leaf_api_ref,
       ]);
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `${leaf_api_ref} [service->postgres] -> ${leaf_db_ref} [postgres]`,
+        `service: ${leaf_api_ref} -> ${leaf_db_ref}[postgres]`,
       ]);
       const api_node = graph.getNodeByRef(leaf_api_ref) as ServiceNode;
       expect(Object.entries(api_node.config.environment).map(([k, v]) => `${k}=${v}`)).has.members([
@@ -124,13 +123,10 @@ describe('interfaces spec v1', () => {
         branch_ref,
         leaf_db_ref,
         leaf_api_ref,
-        leaf_interfaces_ref,
       ]);
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `${leaf_api_ref} [service->postgres] -> ${leaf_db_ref} [postgres]`,
-        `${leaf_interfaces_ref} [api] -> ${leaf_api_ref} [main]`,
-
-        `${branch_ref} [service->api] -> ${leaf_interfaces_ref} [api]`,
+        `service: ${leaf_api_ref} -> ${leaf_db_ref}[postgres]`,
+        `service: ${branch_ref} -> ${leaf_api_ref}[api]`,
       ]);
       const branch_api_node = graph.getNodeByRef(branch_ref) as ServiceNode;
 
@@ -197,7 +193,6 @@ describe('interfaces spec v1', () => {
         await manager.loadComponentSpec('other-leaf', { interfaces: { publicv1: 'api' } }),
       ]);
 
-      const other_leaf_interfaces_ref = resourceRefToNodeRef('other-leaf');
       const other_leaf_api_ref = resourceRefToNodeRef('other-leaf.services.api');
       const other_leaf_db_ref = resourceRefToNodeRef('other-leaf.services.db');
 
@@ -206,25 +201,22 @@ describe('interfaces spec v1', () => {
 
         branch_ref,
 
-        leaf_interfaces_ref,
         leaf_api_ref,
         leaf_db_ref,
 
-        other_leaf_interfaces_ref,
         other_leaf_api_ref,
         other_leaf_db_ref,
       ]);
       expect(graph.edges.map((e) => e.toString())).has.members([
-        `gateway [public] -> ${leaf_interfaces_ref} [api]`,
-        `gateway [publicv1] -> ${other_leaf_interfaces_ref} [api]`,
+        `ingress: gateway -> ${leaf_api_ref}[api]`,
+        `ingress: gateway -> ${other_leaf_api_ref}[api]`,
+        `ingress-consumer: ${branch_ref} -> ${leaf_api_ref}[api]`,
 
-        `${leaf_api_ref} [service->postgres] -> ${leaf_db_ref} [postgres]`,
-        `${leaf_interfaces_ref} [api] -> ${leaf_api_ref} [main]`,
+        `service: ${leaf_api_ref} -> ${leaf_db_ref}[postgres]`,
 
-        `${other_leaf_api_ref} [service->postgres] -> ${other_leaf_db_ref} [postgres]`,
-        `${other_leaf_interfaces_ref} [api] -> ${other_leaf_api_ref} [main]`,
+        `service: ${other_leaf_api_ref} -> ${other_leaf_db_ref}[postgres]`,
 
-        `${branch_ref} [service->api] -> ${leaf_interfaces_ref} [api]`,
+        `service: ${branch_ref} -> ${leaf_api_ref}[api]`,
       ]);
       const branch_api_node = graph.getNodeByRef(branch_ref) as ServiceNode;
       expect(Object.entries(branch_api_node.config.environment).map(([k, v]) => `${k}=${v}`)).has.members([
@@ -292,7 +284,6 @@ describe('interfaces spec v1', () => {
           `traefik.http.routers.${leaf_api_ref}-api.rule=Host(\`public.arc.localhost\`)`,
           `traefik.http.routers.${leaf_api_ref}-api.service=${leaf_api_ref}-api-service`,
           `traefik.http.services.${leaf_api_ref}-api-service.loadbalancer.server.port=8080`,
-          `traefik.http.services.${leaf_api_ref}-api-service.loadbalancer.server.scheme=http`
         ],
         image: 'api:latest',
         ports: ['50001:8080'],
@@ -330,7 +321,6 @@ describe('interfaces spec v1', () => {
           `traefik.http.routers.${other_leaf_api_ref}-api.rule=Host(\`publicv1.arc.localhost\`)`,
           `traefik.http.routers.${other_leaf_api_ref}-api.service=${other_leaf_api_ref}-api-service`,
           `traefik.http.services.${other_leaf_api_ref}-api-service.loadbalancer.server.port=8080`,
-          `traefik.http.services.${other_leaf_api_ref}-api-service.loadbalancer.server.scheme=http`
         ],
         image: 'api:latest',
         ports: ['50003:8080'],
@@ -349,13 +339,13 @@ describe('interfaces spec v1', () => {
       services: {
         api: {
           interfaces: {
-            main: 8080,
+            app: 8080,
             admin: 8081,
           },
         },
       },
       interfaces: {
-        app: '${{ services.api.interfaces.main.url }}',
+        app: '${{ services.api.interfaces.app.url }}',
         admin: '${{ services.api.interfaces.admin.url }}',
       },
     };
@@ -371,18 +361,16 @@ describe('interfaces spec v1', () => {
       await manager.loadComponentSpec('cloud', { interfaces: { app: 'app', admin: 'admin' } }),
     ]);
 
-    const cloud_interfaces_ref = resourceRefToNodeRef('cloud');
     const api_resource_ref = 'cloud.services.api';
     const api_ref = resourceRefToNodeRef(api_resource_ref);
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
-      cloud_interfaces_ref,
       api_ref,
     ]);
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${cloud_interfaces_ref} [app, admin] -> ${api_ref} [main, admin]`,
-      `gateway [app, admin] -> ${cloud_interfaces_ref} [app, admin]`,
+      `ingress: gateway -> ${api_ref}[app]`,
+      `ingress: gateway -> ${api_ref}[admin]`,
     ]);
 
     const template = await DockerComposeUtils.generate(graph);
@@ -395,111 +383,13 @@ describe('interfaces spec v1', () => {
         `traefik.http.routers.${api_ref}-app.rule=Host(\`app.arc.localhost\`)`,
         `traefik.http.routers.${api_ref}-app.service=${api_ref}-app-service`,
         `traefik.http.services.${api_ref}-app-service.loadbalancer.server.port=8080`,
-        `traefik.http.services.${api_ref}-app-service.loadbalancer.server.scheme=http`,
         `traefik.http.routers.${api_ref}-admin.rule=Host(\`admin.arc.localhost\`)`,
         `traefik.http.routers.${api_ref}-admin.service=${api_ref}-admin-service`,
         `traefik.http.services.${api_ref}-admin-service.loadbalancer.server.port=8081`,
-        `traefik.http.services.${api_ref}-admin-service.loadbalancer.server.scheme=http`
       ],
       "external_links": [
         "gateway:app.arc.localhost",
         "gateway:admin.arc.localhost",
-      ],
-      "ports": [
-        "50000:8080",
-        "50001:8081",
-      ],
-      "build": {
-        "context": path.resolve("/stack"),
-      },
-      image: api_ref,
-    };
-    expect(template.services[api_ref]).to.be.deep.equal(expected_compose);
-  });
-
-  it('automatically maps interfaces when map_all_interfaces = true', async () => {
-    const component_config = {
-      name: 'cloud',
-      services: {
-        api: {
-          interfaces: {
-            main: 8080,
-            admin: 8081,
-          },
-        },
-      },
-      interfaces: {
-        app: '${{ services.api.interfaces.main.url }}',
-        admin: {
-          url: '${{ services.api.interfaces.admin.url }}',
-          ingress: {
-            subdomain: 'staff',
-          },
-        },
-        admin2: '${{ services.api.interfaces.admin.url }}',
-        admin3: {
-          url: '${{ services.api.interfaces.admin.url }}',
-          ingress: {
-            subdomain: 'wrong',
-          },
-        },
-      },
-    };
-
-    mock_fs({
-      '/stack/architect.yml': yaml.dump(component_config),
-    });
-
-    const manager = new LocalDependencyManager(axios.create(), 'architect', {
-      'cloud': '/stack/architect.yml',
-    });
-    const graph = await manager.getGraph([
-      await manager.loadComponentSpec('cloud', { map_all_interfaces: true, interfaces: { 'staff2': 'admin2', 'staff3': 'admin3' } }),
-    ]);
-
-    const cloud_interfaces_ref = resourceRefToNodeRef('cloud');
-    const api_resource_ref = 'cloud.services.api';
-    const api_ref = resourceRefToNodeRef(api_resource_ref);
-
-    expect(graph.nodes.map((n) => n.ref)).has.members([
-      'gateway',
-      cloud_interfaces_ref,
-      api_ref,
-    ]);
-    expect(graph.edges.map((e) => e.toString())).has.members([
-      `${cloud_interfaces_ref} [app, admin, admin2, admin3] -> ${api_ref} [main, admin, admin, admin]`,
-      `gateway [app, staff, staff2, staff3] -> ${cloud_interfaces_ref} [app, admin, admin2, admin3]`,
-    ]);
-
-    const template = await DockerComposeUtils.generate(graph);
-    const expected_compose: DockerService = {
-      "environment": {},
-      "labels": [
-        `architect.ref=${api_resource_ref}`,
-        "traefik.enable=true",
-        "traefik.port=80",
-        `traefik.http.routers.${api_ref}-app.rule=Host(\`app.arc.localhost\`)`,
-        `traefik.http.routers.${api_ref}-app.service=${api_ref}-app-service`,
-        `traefik.http.services.${api_ref}-app-service.loadbalancer.server.port=8080`,
-        `traefik.http.services.${api_ref}-app-service.loadbalancer.server.scheme=http`,
-        `traefik.http.routers.${api_ref}-admin.rule=Host(\`staff.arc.localhost\`)`,
-        `traefik.http.routers.${api_ref}-admin.service=${api_ref}-admin-service`,
-        `traefik.http.services.${api_ref}-admin-service.loadbalancer.server.port=8081`,
-        `traefik.http.services.${api_ref}-admin-service.loadbalancer.server.scheme=http`,
-        `traefik.http.routers.${api_ref}-admin2.rule=Host(\`staff2.arc.localhost\`)`,
-        `traefik.http.routers.${api_ref}-admin2.service=${api_ref}-admin2-service`,
-        `traefik.http.services.${api_ref}-admin2-service.loadbalancer.server.port=8081`,
-        `traefik.http.services.${api_ref}-admin2-service.loadbalancer.server.scheme=http`,
-        `traefik.http.routers.${api_ref}-admin3.rule=Host(\`staff3.arc.localhost\`)`,
-        `traefik.http.routers.${api_ref}-admin3.service=${api_ref}-admin3-service`,
-        `traefik.http.services.${api_ref}-admin3-service.loadbalancer.server.port=8081`,
-        `traefik.http.services.${api_ref}-admin3-service.loadbalancer.server.scheme=http`,
-      ],
-      "external_links": [
-        "gateway:app.arc.localhost",
-        "gateway:staff.arc.localhost",
-        "gateway:staff2.arc.localhost",
-        "gateway:staff3.arc.localhost",
       ],
       "ports": [
         "50000:8080",
@@ -564,13 +454,15 @@ describe('interfaces spec v1', () => {
     ]);
 
     const admin_ref = resourceRefToNodeRef('admin-ui.services.dashboard');
-    const catalog_interfaces_ref = resourceRefToNodeRef('product-catalog');
     const api_ref = resourceRefToNodeRef('product-catalog.services.api');
 
     expect(graph.edges.map(e => e.toString())).members([
-      `${catalog_interfaces_ref} [public, admin, private] -> ${api_ref} [public, admin, private]`,
-      `${admin_ref} [service->public, service->admin, service->private] -> ${catalog_interfaces_ref} [public, admin, private]`,
-      `gateway [public2, admin2] -> ${catalog_interfaces_ref} [public, admin]`,
+      `service: ${admin_ref} -> ${api_ref}[public]`,
+      `service: ${admin_ref} -> ${api_ref}[admin]`,
+      `service: ${admin_ref} -> ${api_ref}[private]`,
+      `ingress: gateway -> ${api_ref}[public]`,
+      `ingress: gateway -> ${api_ref}[admin]`,
+      `ingress-consumer: ${admin_ref} -> ${api_ref}[public]`
     ]);
 
     const dashboard_node = graph.getNodeByRef(admin_ref) as ServiceNode;
@@ -850,41 +742,6 @@ describe('interfaces spec v1', () => {
       err = e;
     }
     expect(err).instanceOf(ArchitectError);
-  });
-
-  it('followEdge returns proper results when called with ServiceEdge', async () => {
-    const component_config = `
-    name: dependency
-
-    services:
-      db:
-        image: mysql:5.6.35
-        interfaces:
-          mysql:
-            port: 3306
-
-      core:
-        environment:
-          ADDR: \${{ services.db.interfaces.mysql.url }}
-    `;
-
-    mock_fs({
-      '/stack/architect.yml': component_config,
-    });
-
-    const manager = new LocalDependencyManager(axios.create(), 'architect', {
-      'dependency': '/stack/architect.yml',
-    });
-    const graph = await manager.getGraph(
-      await manager.loadComponentSpecs('dependency'));
-
-    expect(graph.edges.length).eq(1);
-
-    const followed_edge = graph.followEdge(graph.edges[0]);
-    expect(followed_edge.length).eq(1);
-    expect(followed_edge[0].interface_from).eq('service->mysql');
-    expect(followed_edge[0].interface_to).eq('mysql');
-    expect(followed_edge[0].node_to_interface_name).eq('mysql');
   });
 
   it('validation error on interfaces for invalid subdomain passed through secrets', async () => {
