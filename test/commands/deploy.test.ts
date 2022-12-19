@@ -1,4 +1,4 @@
-import test, { expect } from '@oclif/test';
+import { expect } from '@oclif/test';
 import sinon, { SinonSpy } from 'sinon';
 import { ComponentVersionSlugUtils } from '../../src';
 import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
@@ -71,14 +71,6 @@ describe('remote deploy environment', function () {
       .reply(200, {}))
     .stdout({ print })
     .stderr({ print });
-
-  test
-    .stderr({ print })
-    .command(['deploy'])
-    .catch(err => {
-      expect(err.message).to.contain('Missing required arg: CONFIGS_OR_COMPONENTS');
-    })
-    .it('Errors if no components or configs are passed');
 
   remoteDeploy
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
