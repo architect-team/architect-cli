@@ -68,7 +68,7 @@ export default class EnvironmentDestroy extends BaseCommand {
     const { args, flags } = await this.parse(EnvironmentDestroy);
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
-    const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment, strict: flags.strict };
+    const get_environment_options: GetEnvironmentOptions = { environment_name: args.environment, strict: flags.strict };
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
 
     if (!environment.id && !flags.strict) {

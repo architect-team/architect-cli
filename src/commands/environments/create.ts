@@ -88,7 +88,7 @@ export default class EnvironmentCreate extends BaseCommand {
     await this.app.api.post(`/accounts/${account.id}/environments`, dto, {
       validateStatus: function (status): boolean {
         _environment_already_exists = status === 409;
-        return status === 201 || (_environment_already_exists && !flags.strict);
+        return status === 201 || (_environment_already_exists && flags.strict === false);
       },
     });
 
