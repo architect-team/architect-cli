@@ -158,7 +158,7 @@ An ingress exposes an interface to external network traffic through an architect
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
  | `enabled` | boolean | Marks the interface as an ingress. |  |
- | `subdomain` | string \| [Expression](https://docs.architect.io/reference/contexts) | The subdomain that will be used if the interface is exposed externally |  |
+ | `subdomain` | string \| [Expression](https://docs.architect.io/reference/contexts) | The subdomain that will be used if the interface is exposed externally. Use `subdomain: @` to target the base domain. |  |
  | `path` | string \| [Expression](https://docs.architect.io/reference/contexts) | The path of the interface used for path based routing |  |
  | `ip_whitelist` | Array&lt;string \| string&gt; \| [Expression](https://docs.architect.io/reference/contexts) | IP addresses that are allowed to access the interface |  |
 

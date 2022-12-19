@@ -1375,7 +1375,7 @@
               }
             }
           ],
-          "description": "The subdomain that will be used if the interface is exposed externally",
+          "description": "The subdomain that will be used if the interface is exposed externally. Use `subdomain: @` to target the base domain.",
           "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
         },
         "path": {
@@ -1451,7 +1451,7 @@
                       }
                     }
                   ],
-                  "description": "The subdomain that will be used if the interface is exposed externally",
+                  "description": "The subdomain that will be used if the interface is exposed externally. Use `subdomain: @` to target the base domain.",
                   "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
                 },
                 "path": {
@@ -5255,7 +5255,7 @@
               }
             }
           ],
-          "description": "The subdomain that will be used if the interface is exposed externally",
+          "description": "The subdomain that will be used if the interface is exposed externally. Use `subdomain: @` to target the base domain.",
           "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
         },
         "path": {
@@ -5331,7 +5331,7 @@
                       }
                     }
                   ],
-                  "description": "The subdomain that will be used if the interface is exposed externally",
+                  "description": "The subdomain that will be used if the interface is exposed externally. Use `subdomain: @` to target the base domain.",
                   "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
                 },
                 "path": {
