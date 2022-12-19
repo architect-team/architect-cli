@@ -41,7 +41,7 @@ export class EnvironmentUtils {
       const response = await api.get(`/accounts/${account.id}/environments/${environment_name}`, {
         validateStatus: function (status): boolean {
           const _environment_not_found = status === 404;
-          return status === 200 || (_environment_not_found && get_environment_options?.strict === false);
+          return status === 200 || (_environment_not_found && !get_environment_options?.strict);
         },
       });
       environment = await response?.data;
