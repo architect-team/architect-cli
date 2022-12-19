@@ -6,7 +6,6 @@ import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
 import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import BaseCommand from '../base-command';
-import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../common/errors/pipeline-errors';
 import DeployUtils from '../common/utils/deploy.utils';
 import { booleanString } from '../common/utils/oclif';
 import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-builder';
@@ -296,23 +295,38 @@ export default class Deploy extends DeployCommand {
         return PipelineUtils.pollPipeline(this.app, pipeline.pipeline.id)
           .then(() => {
             this.log(chalk.green(`${pipeline.component_name} Deployed`));
-          })
-          .catch((err) => {
-            if (err instanceof PipelineAbortedError || err instanceof DeploymentFailedError || err instanceof PollingTimeout) {
-              this.warn(err.message);
-            } else {
-              throw err;
-            }
           });
       }),
     );
     CliUx.ux.action.stop();
+
+    // Get available URLs from CertManager data
+    const { data: cert_data } = await this.app.api.get(`/environments/${environment.id}/certificates`);
+    const available_urls = [];
+
+    for (const data of cert_data) {
+      const deployed_component_name = `${data.metadata.labels['architect.io/component']}:${data.metadata.labels['architect.io/component-tag']}`;
+      if (component_names.includes(deployed_component_name)) {
+        for (const dns_name of data.spec.dnsNames) {
+          if (!dns_name.startsWith('env--')) {
+            available_urls.push(`https://${dns_name}`);
+          }
+        }
+      }
+    }
+
+    if (available_urls) {
+      this.log('Deployed services are now available at the following URLs:\n');
+      for (const url of available_urls) {
+        this.log(`\t${url}`);
+      }
+    }
   }
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Deploy);
 
-    if (args.configs_or_components && args.configs_or_components.length > 1 && flags.interface?.length) {
+    if (args.configs_or_components.length > 1 && flags.interface?.length) {
       throw new Error('Interface flag not supported if deploying multiple components in the same command.');
     }
 
