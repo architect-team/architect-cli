@@ -2,7 +2,7 @@ import { CliUx, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AccountUtils from '../../architect/account/account.utils';
-import { EnvironmentUtils } from '../../architect/environment/environment.utils';
+import { EnvironmentUtils, GetEnvironmentOptions } from '../../architect/environment/environment.utils';
 import BaseCommand from '../../base-command';
 import { booleanString } from '../../common/utils/oclif';
 
@@ -27,6 +27,12 @@ export default class EnvironmentDestroy extends BaseCommand {
     }),
     'auto-approve': booleanString({
       description: 'Automatically apply the changes',
+      default: false,
+      sensitive: false,
+    }),
+    strict: booleanString({
+      description: 'If set to true, throws an error when an environment cannot be found to deregister',
+      hidden: true,
       default: false,
       sensitive: false,
     }),
@@ -62,7 +68,13 @@ export default class EnvironmentDestroy extends BaseCommand {
     const { args, flags } = await this.parse(EnvironmentDestroy);
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, args.environment);
+    const get_environment_options: GetEnvironmentOptions = { environment_name: args.environment, strict: flags.strict };
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
+
+    if (!environment.id && !flags.strict) {
+      this.warn(`No configured environments found matching ${args?.environment}.`);
+      return;
+    }
 
     let answers = await inquirer.prompt([{
       type: 'input',

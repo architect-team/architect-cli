@@ -65,8 +65,32 @@ describe('environment:create', () => {
 
   create_duplicate_environment
     .env({ ARCHITECT_CLUSTER: mock_cluster.name })
+    .command(['environment:create', mock_env.name, '-a', mock_account.name, '--strict'])
+    .catch(err => {
+      expect(err.message).to.contain('Request failed with status code 409');
+    })
+    .it('should error when an environment name is already in use for an account and --strict is provided');
+
+  create_duplicate_environment
+    .env({ ARCHITECT_CLUSTER: mock_cluster.name })
+    .command(['environment:create', mock_env.name, '-a', mock_account.name, '--strict=true'])
+    .catch(err => {
+      expect(err.message).to.contain('Request failed with status code 409');
+    })
+    .it('should error when an environment name is already in use for an account and --strict is explicitly set to true');
+
+  create_duplicate_environment
+    .env({ ARCHITECT_CLUSTER: mock_cluster.name })
+    .command(['environment:create', mock_env.name, '-a', mock_account.name, '--strict=false'])
+    .it('should print warning when an environment name is already in use for an account and --strict is explicitly set to false', ctx => {
+      expect(ctx.stderr).to.contain(`Unable to create new environment '${mock_env.name}'.`);
+      expect(ctx.stderr).to.contain(`in use for account '${mock_account.name}'`);
+    });
+
+  create_duplicate_environment
+    .env({ ARCHITECT_CLUSTER: mock_cluster.name })
     .command(['environment:create', mock_env.name, '-a', mock_account.name])
-    .it('should print warning when an environment name is already in use for an account', ctx => {
+    .it('should print warning when an environment name is already in use for an account and --strict is not provided', ctx => {
       expect(ctx.stderr).to.contain(`Unable to create new environment '${mock_env.name}'.`);
       expect(ctx.stderr).to.contain(`in use for account '${mock_account.name}'`);
     });
