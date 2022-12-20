@@ -14,7 +14,7 @@ import { TaskNode } from './graph/node/task';
 import { GraphOptions } from './graph/type';
 import { SecretsConfig } from './secrets/secrets';
 import { SecretsDict } from './secrets/type';
-import { ComponentSpec } from './spec/component-spec';
+import { ComponentSpec, SecretDefinitionSpec } from './spec/component-spec';
 import { transformComponentSpec, transformSecretDefinitionSpec } from './spec/transform/component-transform';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, ResourceType, Slugs } from './spec/utils/slugs';
 import { validateOrRejectSpec } from './spec/utils/spec-validator';
@@ -176,7 +176,6 @@ export default abstract class DependencyManager {
           component: component.name,
           path: `secrets.${key}`,
           message: `required secret '${key}' was not provided`,
-          value: value.default,
         });
         validation_errors.push(validation_error);
       }
@@ -361,6 +360,44 @@ export default abstract class DependencyManager {
     return { component_spec, context };
   }
 
+  validateServiceEnvironments(component_specs: ComponentSpec[], secrets: SecretsDict): void { // TODO: remove?
+    for (const component_spec of component_specs) {
+      const validation_errors: ValidationError[] = [];
+      for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
+        for (const [env_var_key, env_var_value] of Object.entries(service_spec.environment || {})) {
+          if (component_spec.services) {
+            const service_environment = component_spec.services[service_name].environment;
+            if (!service_environment) {
+              continue;
+            }
+
+            if (typeof env_var_value === 'object' && env_var_value) {
+              const secret_definition_spec = env_var_value as SecretDefinitionSpec;
+
+              if (secret_definition_spec.required !== false && !secret_definition_spec.default) {
+                // TODO: if secret is also defined in the same way at the top level of the spec, ignore and continue?
+                const all_components_secret_exists = secrets['*'] && secrets['*'][env_var_key] !== undefined; // TODO: should this also match with the account included?
+                const component_secret_exists = secrets[component_spec.name] && secrets[component_spec.name][env_var_key] !== undefined; // TODO: should this also match with the account included?
+
+                if (!all_components_secret_exists && !component_secret_exists) {
+                  const validation_error = new ValidationError({
+                    component: component_spec.name,
+                    path: `services.${service_name}.environment.${env_var_key}`,
+                    message: `required service-level secret '${env_var_key}' was not provided`,
+                  });
+                  validation_errors.push(validation_error);
+                }
+              }
+            }
+          }
+        }
+      }
+      if (validation_errors.length > 0) {
+        throw new ValidationErrors(validation_errors, component_spec.metadata.file);
+      }
+    }
+  }
+
   async getGraph(component_specs: ComponentSpec[], all_secrets: SecretsDict = {}, options?: GraphOptions): Promise<DependencyGraph> {
     options = {
       interpolate: true,
@@ -370,6 +407,7 @@ export default abstract class DependencyManager {
 
     if (options.validate) {
       SecretsConfig.validate(all_secrets);
+      this.validateServiceEnvironments(component_specs, all_secrets);
     }
 
     const interpolateObject = options.validate ? interpolateObjectOrReject : interpolateObjectLoose;
@@ -378,32 +416,40 @@ export default abstract class DependencyManager {
 
     const context_map: Dictionary<ComponentContext> = {};
 
-    for (const component_spec of component_specs) { // TODO: rather than modifying the object, tack on a dummy object, then merge into to the original one?
-      if (component_spec.metadata.file?.contents) {
-        for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) { // TODO: also modify task environments?
-          for (const [k, v] of Object.entries(service_spec.environment || {})) {
-            if (component_spec.services) {
-              const service_environment = component_spec.services[service_name].environment;
-              if (!service_environment) {
-                continue;
-              }
+// TODO: validate new service-level environment block format
 
-              if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
-                service_environment[k] = `${v}`;
-              } else if (typeof v === 'object' && v?.default) {
-                service_environment[k] = v.default;
-              } else {
-                // TODO: error if this doesn't exist
-                console.log(`${k} => ${all_secrets['*'][k]}`)
-                service_environment[k] = all_secrets['*'][k]; // `\${{ secrets.${k} }}`; // set value here directly
+    for (const component_spec of component_specs) { // TODO: rather than modifying the object, tack on a dummy object, then merge into to the original one?
+      for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) { // TODO: also modify task environments?
+        for (const [env_var_key, env_var_value] of Object.entries(service_spec.environment || {})) {
+          if (component_spec.services) {
+            const service_environment = component_spec.services[service_name].environment;
+            if (!service_environment) {
+              continue;
+            }
+
+            if (['string', 'number', 'boolean'].includes(typeof env_var_value)) {
+              service_environment[env_var_key] = `${env_var_value}`;
+            } else if (env_var_value && typeof env_var_value === 'object' && (env_var_value as SecretDefinitionSpec).default) { // TODO: check instanceof SecretDefinitionSpec?
+              const secret_definition_spec = env_var_value as SecretDefinitionSpec;
+              service_environment[env_var_key] = !!secret_definition_spec.default ? secret_definition_spec.default : null;
+            } else {
+              if (all_secrets[component_spec.name] && all_secrets[component_spec.name][env_var_key]) { // TODO: should this also match with the account included?
+                service_environment[env_var_key] = all_secrets[component_spec.name][env_var_key]; // TODO: should this also match with the account included?
+              } else if (all_secrets['*'] && all_secrets['*'][env_var_key]) {
+                service_environment[env_var_key] = all_secrets['*'][env_var_key];
+              } else if (env_var_value && typeof env_var_value === 'object' && (env_var_value as SecretDefinitionSpec).required === false) {
+                service_environment[env_var_key] = null; // no matching secret passed in, environment variable optional
               }
+              // TODO: else error?
             }
           }
         }
       }
     }
 
+    // TODO: remove
     // architect dev examples/hello-world/architect.yml -e test -s world_text_5=FIVE -s WORLD_TEXT=ONE -s WORLD_TEXT_4=something -s WORLD_TEXT_3=another-one
+    // architect dev examples/hello-world/architect.yml -e test -s world_text_5=FIVE -s WORLD_TEXT_4=something -s WORLD_TEXT_3=another-one --secret-file=test-secrets.yml
 
     const evaluated_component_specs: ComponentSpec[] = [];
     for (const raw_component_spec of component_specs) {
