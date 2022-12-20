@@ -1,5 +1,4 @@
 import { classToPlain, plainToClass, serialize } from 'class-transformer';
-import yaml from 'js-yaml';
 import { isMatch } from 'matcher';
 import { buildNodeRef, ComponentConfig } from './config/component-config';
 import { ArchitectContext, ComponentContext, SecretValue } from './config/component-context';
@@ -158,22 +157,6 @@ export default abstract class DependencyManager {
       }
     }
     return res;
-  }
-
-  getImpliedTopLevelSecrets(component_spec: ComponentSpec): Dictionary<any> { // TODO: type
-    const implied_secrets: Dictionary<any> = {}; // TODO: type
-
-    for (const service of Object.values(component_spec.services || {})) {
-      for (const [env_var_name, env_var_spec] of Object.entries(service.environment || {})) {
-        if (env_var_spec === null) {
-          implied_secrets[env_var_name] = { required: true };
-        } else if (typeof env_var_spec !== 'string') {
-          implied_secrets[env_var_name] = env_var_spec;
-        }
-      }
-    }
-
-    return implied_secrets;
   }
 
   generateUrl(interface_ref: string): string {
@@ -395,10 +378,8 @@ export default abstract class DependencyManager {
 
     const context_map: Dictionary<ComponentContext> = {};
 
-    for (const component_spec of component_specs) { // TODO: rather than modifying the object, interpolate on this as a dummy object, then merge back to the original one?
+    for (const component_spec of component_specs) { // TODO: rather than modifying the object, tack on a dummy object, then merge into to the original one?
       if (component_spec.metadata.file?.contents) {
-        const implied_top_level_secrets = this.getImpliedTopLevelSecrets(component_spec);
-
         for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) { // TODO: also modify task environments?
           for (const [k, v] of Object.entries(service_spec.environment || {})) {
             if (component_spec.services) {
@@ -409,19 +390,20 @@ export default abstract class DependencyManager {
 
               if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
                 service_environment[k] = `${v}`;
+              } else if (typeof v === 'object' && v?.default) {
+                service_environment[k] = v.default;
               } else {
-                service_environment[k] = `\${{ secrets.${k} }}`;
+                // TODO: error if this doesn't exist
+                console.log(`${k} => ${all_secrets['*'][k]}`)
+                service_environment[k] = all_secrets['*'][k]; // `\${{ secrets.${k} }}`; // set value here directly
               }
             }
           }
         }
-
-        component_spec.secrets = { ...component_spec.secrets, ...implied_top_level_secrets };
-        if (component_spec.metadata.file) { // should always exist
-          component_spec.metadata.file.contents = yaml.dump(component_spec);
-        }
       }
     }
+
+    // architect dev examples/hello-world/architect.yml -e test -s world_text_5=FIVE -s WORLD_TEXT=ONE -s WORLD_TEXT_4=something -s WORLD_TEXT_3=another-one
 
     const evaluated_component_specs: ComponentSpec[] = [];
     for (const raw_component_spec of component_specs) {
