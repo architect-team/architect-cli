@@ -720,4 +720,34 @@ describe('Service-level secrets', () => {
     const api_node_eact_app = graph.getNodeByRef(api_ref_react_app) as ServiceNode;
     expect(api_node_eact_app.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
   });
+
+  it('user-defined object passed in as an environment variable', async () => {
+    const component_config = `
+    name: hello-world
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+        environment:
+          NOT_A_SECRET_DEFINITION:
+            complete: and
+            total: nonsense
+    `;
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentSpec('hello-world'),
+    ]);
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.environment).to.deep.eq({ NOT_A_SECRET_DEFINITION: '{\"complete\":\"and\",\"total\":\"nonsense\"}' });
+  });
 });
