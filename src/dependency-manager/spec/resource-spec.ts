@@ -95,7 +95,7 @@ export abstract class ResourceSpec {
     errorMessage: {
       additionalProperties: Slugs.ArchitectSlugDescription,
     },
-    description: 'A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.',
+    description: 'A set of key-value pairs or secret definitions that describes environment variables and their values.',
     externalDocs: { url: 'https://docs.architect.io/components/services/#local-configuration' },
   })
   environment?: Dictionary<EnvironmentSpecValue>;
