@@ -365,14 +365,14 @@ export default abstract class DependencyManager {
       const validation_errors: ValidationError[] = [];
       for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
         for (const [env_var_key, env_var_value] of Object.entries(service_spec.environment || {})) {
-          if (env_var_value && typeof env_var_value === 'object') {
-            const secret_definition_spec = env_var_value as SecretDefinitionSpec;
+          const all_components_secret_exists = secrets['*'] && secrets['*'][env_var_key] !== undefined; // TODO: should this also match with the account included?
+          const component_secret_exists = secrets[component_spec.name] && secrets[component_spec.name][env_var_key] !== undefined; // TODO: should this also match with the account included?
+          if (all_components_secret_exists || component_secret_exists) {
+            continue;
+          }
 
-            const secret_required = secret_definition_spec.required && !secret_definition_spec.default;
-            const all_components_secret_exists = secrets['*'] && secrets['*'][env_var_key] !== undefined; // TODO: should this also match with the account included?
-            const component_secret_exists = secrets[component_spec.name] && secrets[component_spec.name][env_var_key] !== undefined; // TODO: should this also match with the account included?
-
-            if (secret_required && !all_components_secret_exists && !component_secret_exists) {
+          const required_no_default = env_var_value && typeof env_var_value === 'object' && (env_var_value as SecretDefinitionSpec).required && !(env_var_value as SecretDefinitionSpec).default;
+          if (required_no_default || env_var_value === null) {
               const validation_error = new ValidationError({
                 component: component_spec.name,
                 path: `services.${service_name}.environment.${env_var_key}`,
@@ -380,20 +380,6 @@ export default abstract class DependencyManager {
                 invalid_key: true,
               });
               validation_errors.push(validation_error);
-            }
-          } else if (env_var_value === null) { // implies that the secret will be passed in and that required === true
-            const all_components_secret_exists = secrets['*'] && secrets['*'][env_var_key] !== undefined; // TODO: should this also match with the account included?
-            const component_secret_exists = secrets[component_spec.name] && secrets[component_spec.name][env_var_key] !== undefined; // TODO: should this also match with the account included?
-
-            if (!all_components_secret_exists && !component_secret_exists) {
-              const validation_error = new ValidationError({
-                component: component_spec.name,
-                path: `services.${service_name}.environment.${env_var_key}`,
-                message: `Required service-level secret '${env_var_key}' was not provided`,
-                invalid_key: true,
-              });
-              validation_errors.push(validation_error);
-            }
           }
         }
       }
@@ -414,15 +400,17 @@ export default abstract class DependencyManager {
               continue;
             }
 
-            if (env_var_value && typeof env_var_value === 'object' && (env_var_value as SecretDefinitionSpec).default) { // TODO: check instanceof SecretDefinitionSpec?
-              const secret_definition_spec = env_var_value as SecretDefinitionSpec;
-              service_environment[env_var_key] = secret_definition_spec.default || null;
-            } else if (all_secrets[component_spec.name] && all_secrets[component_spec.name][env_var_key]) { // TODO: should this also match with the account included?
+            if (all_secrets[component_spec.name] && all_secrets[component_spec.name][env_var_key]) { // TODO: should this also match with the account included?
               service_environment[env_var_key] = all_secrets[component_spec.name][env_var_key]; // TODO: should this also match with the account included?
             } else if (all_secrets['*'] && all_secrets['*'][env_var_key]) {
               service_environment[env_var_key] = all_secrets['*'][env_var_key];
-            } else if (env_var_value && typeof env_var_value === 'object' && (env_var_value as SecretDefinitionSpec).required === false) {
-              service_environment[env_var_key] = null; // no matching secret passed in, environment variable optional
+            } else if (env_var_value && typeof env_var_value === 'object') {
+              const secret_definition_spec = env_var_value as SecretDefinitionSpec;
+              if (secret_definition_spec.default) {
+                service_environment[env_var_key] = secret_definition_spec.default || null;
+              } else if (secret_definition_spec.required === false) {
+                service_environment[env_var_key] = null; // no matching secret passed in, environment variable optional
+              }
             }
           }
         }
