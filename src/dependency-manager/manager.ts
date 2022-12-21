@@ -360,7 +360,7 @@ export default abstract class DependencyManager {
     return { component_spec, context };
   }
 
-  validateServiceEnvironments(component_specs: ComponentSpec[], secrets: SecretsDict): void { // TODO: remove?
+  validateServiceEnvironments(component_specs: ComponentSpec[], secrets: SecretsDict): void {
     for (const component_spec of component_specs) {
       const validation_errors: ValidationError[] = [];
       for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
@@ -383,7 +383,8 @@ export default abstract class DependencyManager {
                   const validation_error = new ValidationError({
                     component: component_spec.name,
                     path: `services.${service_name}.environment.${env_var_key}`,
-                    message: `required service-level secret '${env_var_key}' was not provided`,
+                    message: `Required service-level secret '${env_var_key}' was not provided`,
+                    invalid_key: true,
                   });
                   validation_errors.push(validation_error);
                 }
@@ -416,9 +417,7 @@ export default abstract class DependencyManager {
 
     const context_map: Dictionary<ComponentContext> = {};
 
-// TODO: validate new service-level environment block format
-
-    for (const component_spec of component_specs) { // TODO: rather than modifying the object, tack on a dummy object, then merge into to the original one?
+    for (const component_spec of component_specs) {
       for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) { // TODO: also modify task environments?
         for (const [env_var_key, env_var_value] of Object.entries(service_spec.environment || {})) {
           if (component_spec.services) {
@@ -440,16 +439,11 @@ export default abstract class DependencyManager {
               } else if (env_var_value && typeof env_var_value === 'object' && (env_var_value as SecretDefinitionSpec).required === false) {
                 service_environment[env_var_key] = null; // no matching secret passed in, environment variable optional
               }
-              // TODO: else error?
             }
           }
         }
       }
     }
-
-    // TODO: remove
-    // architect dev examples/hello-world/architect.yml -e test -s world_text_5=FIVE -s WORLD_TEXT=ONE -s WORLD_TEXT_4=something -s WORLD_TEXT_3=another-one
-    // architect dev examples/hello-world/architect.yml -e test -s world_text_5=FIVE -s WORLD_TEXT_4=something -s WORLD_TEXT_3=another-one --secret-file=test-secrets.yml
 
     const evaluated_component_specs: ComponentSpec[] = [];
     for (const raw_component_spec of component_specs) {
