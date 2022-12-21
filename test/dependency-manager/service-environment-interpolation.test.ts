@@ -101,7 +101,6 @@ describe('Service-level secrets', () => {
     expect(errors[0].start?.column).eq(11);
     expect(errors[0].end?.row).eq(10);
     expect(errors[0].end?.column).eq(25);
-    // expect(process.exitCode).eq(1); // TODO: why is this undefined?
   });
 
   it('required secret/environment variable with component-targeted secret, but incorrect component target', async () => {
@@ -144,7 +143,6 @@ describe('Service-level secrets', () => {
     expect(errors[0].start?.column).eq(11);
     expect(errors[0].end?.row).eq(10);
     expect(errors[0].end?.column).eq(26);
-    // expect(process.exitCode).eq(1); // TODO: why is this undefined?
   });
 
   it('optional environment variable with null passed in as the value', async () => {
@@ -274,7 +272,6 @@ describe('Service-level secrets', () => {
     expect(errors[0].start?.column).eq(11);
     expect(errors[0].end?.row).eq(10);
     expect(errors[0].end?.column).eq(19);
-    // expect(process.exitCode).eq(1); // TODO: why is this undefined?
   });
 
   it('multiple required environment variables not included', async () => {
@@ -327,7 +324,6 @@ describe('Service-level secrets', () => {
     expect(errors[1].start?.column).eq(11);
     expect(errors[1].end?.row).eq(12);
     expect(errors[1].end?.column).eq(21);
-    // expect(process.exitCode).eq(1); // TODO: why is this undefined?
   });
 
   it('required environment variable included', async () => {
@@ -725,5 +721,3 @@ describe('Service-level secrets', () => {
     expect(api_node_eact_app.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
   });
 });
-
-// TODO: an implied secret should also be required, if it will follow our existing top-level spec

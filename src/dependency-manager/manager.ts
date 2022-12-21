@@ -365,8 +365,8 @@ export default abstract class DependencyManager {
       const validation_errors: ValidationError[] = [];
       for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
         for (const [env_var_key, env_var_value] of Object.entries(service_spec.environment || {})) {
-          const all_components_secret_exists = secrets['*'] && secrets['*'][env_var_key] !== undefined; // TODO: should this also match with the account included?
-          const component_secret_exists = secrets[component_spec.name] && secrets[component_spec.name][env_var_key] !== undefined; // TODO: should this also match with the account included?
+          const all_components_secret_exists = secrets['*'] && secrets['*'][env_var_key] !== undefined;
+          const component_secret_exists = secrets[component_spec.name] && secrets[component_spec.name][env_var_key] !== undefined;
           if (all_components_secret_exists || component_secret_exists) {
             continue;
           }
@@ -392,7 +392,7 @@ export default abstract class DependencyManager {
   updateServiceEnvironmentSecrets(component_specs: ComponentSpec[], all_secrets: SecretsDict): ComponentSpec[] {
     const updated_component_specs = [];
     for (const component_spec of component_specs) {
-      for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) { // TODO: also modify task environments?
+      for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
         for (const [env_var_key, env_var_value] of Object.entries(service_spec.environment || {})) {
           if (component_spec.services) {
             const service_environment = component_spec.services[service_name].environment;
@@ -400,8 +400,8 @@ export default abstract class DependencyManager {
               continue;
             }
 
-            if (all_secrets[component_spec.name] && all_secrets[component_spec.name][env_var_key]) { // TODO: should this also match with the account included?
-              service_environment[env_var_key] = all_secrets[component_spec.name][env_var_key]; // TODO: should this also match with the account included?
+            if (all_secrets[component_spec.name] && all_secrets[component_spec.name][env_var_key]) {
+              service_environment[env_var_key] = all_secrets[component_spec.name][env_var_key];
             } else if (all_secrets['*'] && all_secrets['*'][env_var_key]) {
               service_environment[env_var_key] = all_secrets['*'][env_var_key];
             } else if (env_var_value && typeof env_var_value === 'object') {
