@@ -381,6 +381,19 @@ export default abstract class DependencyManager {
               });
               validation_errors.push(validation_error);
             }
+          } else if (env_var_value === null) { // implies that the secret will be passed in and that required === true
+            const all_components_secret_exists = secrets['*'] && secrets['*'][env_var_key] !== undefined; // TODO: should this also match with the account included?
+            const component_secret_exists = secrets[component_spec.name] && secrets[component_spec.name][env_var_key] !== undefined; // TODO: should this also match with the account included?
+
+            if (!all_components_secret_exists && !component_secret_exists) {
+              const validation_error = new ValidationError({
+                component: component_spec.name,
+                path: `services.${service_name}.environment.${env_var_key}`,
+                message: `Required service-level secret '${env_var_key}' was not provided`,
+                invalid_key: true,
+              });
+              validation_errors.push(validation_error);
+            }
           }
         }
       }

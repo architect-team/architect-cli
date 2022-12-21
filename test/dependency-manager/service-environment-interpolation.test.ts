@@ -62,7 +62,7 @@ describe('Service-level secrets', () => {
     expect(node.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
   });
 
-  it('implied environment variable, but secret valaue not provided', async () => {
+  it('implied environment variable, but secret value not provided', async () => {
     const component_config = `
     name: hello-world
 
@@ -82,12 +82,26 @@ describe('Service-level secrets', () => {
     const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'hello-world': '/stack/architect.yml',
     });
-    const graph = await manager.getGraph([
-      await manager.loadComponentSpec('hello-world'),
-    ]);
-    const api_ref = resourceRefToNodeRef('hello-world.services.api');
-    const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.config.environment).to.deep.eq({});
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentSpec('hello-world'),
+      ]);
+    } catch (e: any) {
+      err = e;
+    }
+
+    expect(err).instanceOf(ValidationErrors);
+    const errors = JSON.parse(err.message);
+    expect(errors).lengthOf(1);
+    expect(errors[0].path).eq(`services.api.environment.IMPLIED_SECRET`);
+    expect(errors[0].message).includes(`Required service-level secret 'IMPLIED_SECRET' was not provided`);
+    expect(errors[0].start?.row).eq(10);
+    expect(errors[0].start?.column).eq(11);
+    expect(errors[0].end?.row).eq(10);
+    expect(errors[0].end?.column).eq(25);
+    // expect(process.exitCode).eq(1); // TODO: why is this undefined?
   });
 
   it('required secret/environment variable with component-targeted secret, but incorrect component target', async () => {
@@ -576,6 +590,7 @@ describe('Service-level secrets', () => {
           main: 3000
         environment:
           IMPLIED_SECRET:
+            required: false
     `;
 
     const react_app_component_config = `
@@ -710,3 +725,5 @@ describe('Service-level secrets', () => {
     expect(api_node_eact_app.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
   });
 });
+
+// TODO: an implied secret should also be required, if it will follow our existing top-level spec
