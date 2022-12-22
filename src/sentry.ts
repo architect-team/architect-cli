@@ -33,7 +33,7 @@ export default class SentryService {
   initSentry(): void {
     this.ignoreTryCatch(async () => {
       Sentry.init({
-        enabled: process.env.TEST !== '1' && process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== ENVIRONMENT.PREVIEW,
+        enabled: false, // process.env.TEST !== '1' && process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== ENVIRONMENT.PREVIEW,
         dsn: CLI_SENTRY_DSN,
         debug: false,
         environment: process.env?.NODE_ENV ?? 'production',
@@ -91,8 +91,9 @@ export default class SentryService {
         .filter(([flag_name, flag_metadata]) => flag_metadata?.setFromDefault)
         .map(([flag_name]) => flag_name));
 
+      const present_flags_keys = new Set(Object.keys(command_class.flags));
       const non_default_flags = Object.keys({ ...flags })
-        .filter((flag_name) => !default_flags.has(flag_name));
+        .filter((flag_name) => !default_flags.has(flag_name) && present_flags_keys.has(flag_name));
 
       const sentry_tags: { [key: string]: string } = {
         environment: this.command.app.config.environment,
@@ -103,7 +104,7 @@ export default class SentryService {
       };
 
       for (const flag of non_default_flags) {
-        sentry_tags[`flag.${flag}`] = command_class.flags[flag].sensitive ? 'Filtered' : flags[flag];
+        sentry_tags[`flag.${flag}`] = command_class.flags?.[flag]?.sensitive ? 'Filtered' : flags?.[flag];
       }
 
       if (sentry_user?.email) {
