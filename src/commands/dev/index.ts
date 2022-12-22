@@ -2,7 +2,7 @@ import { Flags, Interfaces } from '@oclif/core';
 import axios from 'axios';
 import chalk from 'chalk';
 import { ExecaChildProcess } from 'execa';
-import fs, { createWriteStream } from 'fs-extra';
+import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
@@ -398,9 +398,11 @@ export default class Dev extends BaseCommand {
       options.args.push({ name: 'filler' });
     }
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    parsed.args.configs_or_components = parsed.argv;
+    if (parsed.argv.length > 0) {
+      parsed.args.configs_or_components = parsed.argv;
+    } else {
+      parsed.args.configs_or_components = ['./architect.yml'];
+    }
 
     parsed.flags = DeployUtils.parseFlags(parsed.flags);
 
@@ -578,9 +580,14 @@ export default class Dev extends BaseCommand {
         if (response.status > 399) {
           return handleReject(resolve, reject);
         }
-        const writer = createWriteStream(output_location);
-        response.data.pipe(writer);
-        response.data.on('end', resolve);
+        let file_contents = '';
+        response.data.on('data', (chunk: Buffer) => {
+          file_contents += chunk.toString();
+        });
+        response.data.on('end', () => {
+          fs.writeFileSync(output_location, file_contents);
+          resolve();
+        });
         response.data.on('error', () => {
           return handleReject(resolve, reject);
         });
@@ -635,10 +642,6 @@ $ architect dev -e new_env_name_here .`));
 
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
-
-    if (!args.configs_or_components || args.configs_or_components.length === 0) {
-      args.configs_or_components = ['./architect.yml'];
-    }
 
     const environment = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
     await this.failIfEnvironmentExists(environment);

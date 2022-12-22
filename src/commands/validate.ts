@@ -42,9 +42,11 @@ export default class ComponentValidate extends BaseCommand {
       options.args.push({ name: 'filler' });
     }
     const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    parsed.args.configs_or_components = parsed.argv;
+    if (parsed.argv.length > 0) {
+      parsed.args.configs_or_components = parsed.argv;
+    } else {
+      parsed.args.configs_or_components = ['./architect.yml'];
+    }
 
     // Merge any values set via deprecated flags into their supported counterparts
     const flags: any = parsed.flags;
