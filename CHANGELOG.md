@@ -1,3 +1,15 @@
+# [1.31.0](https://github.com/architect-team/architect-cli/compare/v1.30.0...v1.31.0) (2022-12-22)
+
+
+### Bug Fixes
+
+* **dev:** Fix default args for multiple args ([#786](https://github.com/architect-team/architect-cli/issues/786)) ([5cdbdc1](https://github.com/architect-team/architect-cli/commit/5cdbdc113ba1c0971b45a0c95543fb95e72268c5))
+
+
+### Features
+
+* **deploy:** Deployment UX updates ([#769](https://github.com/architect-team/architect-cli/issues/769)) ([37aea9b](https://github.com/architect-team/architect-cli/commit/37aea9b2460ca0d488c92eb665d1b60a0cd254b6))
+
 # [1.30.0](https://github.com/architect-team/architect-cli/compare/v1.29.0...v1.30.0) (2022-12-14)
 
 
