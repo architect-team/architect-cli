@@ -104,7 +104,7 @@ export default class SentryService {
       };
 
       for (const flag of non_default_flags) {
-        sentry_tags[`flag.${flag}`] = command_class.flags?.[flag]?.sensitive ? 'Filtered' : flags?.[flag];
+        sentry_tags[`flag.${flag}`] = command_class.flags[flag].sensitive ? 'Filtered' : flags[flag];
       }
 
       if (sentry_user?.email) {
