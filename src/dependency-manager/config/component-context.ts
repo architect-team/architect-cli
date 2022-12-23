@@ -6,6 +6,16 @@ export type OutputValue = string | number | boolean | null;
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type SecretValue = string | number | boolean | null | object | undefined;
 
+export interface DatabaseContext {
+  protocol: string;
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  database: string;
+  dsn: string;
+}
+
 export interface ServiceContext {
   environment?: Dictionary<EnvironmentSpecValue>;
   interfaces: Dictionary<ServiceInterfaceConfig>;
@@ -30,6 +40,7 @@ export interface ComponentContext {
   parameters: Dictionary<SecretValue>; // TODO: 404: remove
   secrets: Dictionary<SecretValue>;
   outputs: Dictionary<OutputValue>;
+  databases: Dictionary<DatabaseContext>;
   services: Dictionary<ServiceContext>;
   tasks: Dictionary<TaskContext>;
 

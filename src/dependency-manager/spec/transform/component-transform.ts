@@ -3,6 +3,7 @@ import { ComponentConfig, OutputDefinitionConfig, SecretDefinitionConfig } from 
 import { transformDictionary } from '../../utils/dictionary';
 import { ComponentSpec, OutputDefinitionSpec, SecretDefinitionSpec } from '../component-spec';
 import { Slugs } from '../utils/slugs';
+import { transformDatabaseSpec } from './database-transform';
 import { transformServiceSpec } from './service-transform';
 import { transformTaskSpec } from './task-transform';
 
@@ -49,20 +50,17 @@ export const transformOutputDefinitionSpec = (key: string, output_spec: string |
   }
 };
 
-const getProtocol = (url: string): string | undefined => {
-  try {
-    return (new URL(url)).protocol.slice(0, -1);
-  } catch {
-    return undefined;
-  }
-};
-
 export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => {
   const secrets = transformDictionary(transformSecretDefinitionSpec, deepmerge(spec.parameters || {}, spec.secrets || {})); // TODO: update
   const outputs = transformDictionary(transformOutputDefinitionSpec, spec.outputs);
   const services = transformDictionary(transformServiceSpec, spec.services, spec.metadata);
   const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.metadata);
   const dependencies = spec.dependencies || {};
+  const databases = transformDictionary(transformDatabaseSpec, spec.databases, spec.metadata);
+  for (const [key, value] of Object.entries(databases)) {
+    databases[`${key}-db`] = value;
+    delete databases[key];
+  }
 
   return {
     name: spec.name,
@@ -77,7 +75,10 @@ export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => 
     secrets,
     outputs,
 
-    services,
+    services: {
+      ...services,
+      ...databases,
+    },
     tasks,
 
     dependencies,

@@ -48,6 +48,10 @@ export class Slugs {
   public static ComponentSubdomainRegexBase = '([A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])|[^\\W\\D\\s\\t\\n\\r\\/]+|[\\@\\*]?)';
   public static ComponentSubdomainDescription = 'must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between.';
   public static ComponentSubdomainValidator = new RegExp(`^${Slugs.ComponentSubdomainRegexBase}$`);
+
+  public static ComponentDatabaseDescription = 'must be of the format <engine>:<version> (e.g. postgres:13)';
+  public static ComponentDatabaseRegexBase = `([^:]+):([0-9]+)`;
+  public static ComponentDatabaseValidator = new RegExp(`^${Slugs.ComponentDatabaseRegexBase}$`);
 }
 
 export interface ParsedSlug {

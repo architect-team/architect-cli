@@ -3,6 +3,7 @@ import { Exclude, Transform } from 'class-transformer';
 import { Allow, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
+import { DatabaseSpec } from './database-spec';
 import { IngressSpec, ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
 import { transformObject } from './transform/common-transform';
@@ -225,6 +226,19 @@ export class ComponentSpec {
   })
   @Transform(transformObject(OutputDefinitionSpec))
   outputs?: Dictionary<string | number | boolean | OutputDefinitionSpec | null>;
+
+  @IsOptional()
+  @JSONSchema({
+    type: 'object',
+    patternProperties: {
+      [Slugs.ArchitectSlugValidator.source]: AnyOf(DatabaseSpec),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescription,
+    },
+    description: 'A database represents a stateful service powered by one of several supported database engines.',
+  })
+  databases?: Dictionary<DatabaseSpec>;
 
   @IsOptional()
   @JSONSchema({

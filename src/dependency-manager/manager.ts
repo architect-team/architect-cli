@@ -122,6 +122,24 @@ export default abstract class DependencyManager {
           graph.addEdge(edge);
         }
       }
+
+      const database_regex = new RegExp(`\\\${{\\s*(dependencies\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.)?databases\\.(?<database_name>${Slugs.ArchitectSlugRegexBase})\\.(?<database_key>${Slugs.ArchitectSlugRegexBase})`, 'g');
+      while ((matches = database_regex.exec(resource_string)) !== null) {
+        if (!matches.groups) continue;
+
+        const { dependency_name, database_name } = matches.groups;
+
+        const dependency = component_configs.find(c => c.name === dependency_name) || component;
+
+        const to = buildNodeRef(dependency, 'services', `${database_name}-db`);
+
+        if (to === from) continue;
+
+        if (!graph.nodes_map.has(to)) continue;
+
+        const edge = new ServiceEdge(from, to, 'main');
+        graph.addEdge(edge);
+      }
     }
   }
 
@@ -264,6 +282,7 @@ export default abstract class DependencyManager {
       outputs: {},
       parameters: {},
       secrets: {},
+      databases: {},
       services: {},
       tasks: {},
     };
@@ -319,12 +338,24 @@ export default abstract class DependencyManager {
           environment: {},
         };
       }
+
       const service_ref = buildNodeRef(component_config, 'services', service_name);
       for (const [interface_name, interface_config] of Object.entries(service.interfaces)) {
         const interface_ref = `services.${service_name}.interfaces.${interface_name}`;
 
         const architect_host = service_ref;
         const architect_port = `${interface_ref}.external_port`;
+
+        // TODO: Remove once databases get their own node type
+        context.databases[service_name.replace(/-db$/, '')] = {
+          host: interface_config.host || architect_host,
+          port: interface_config.port as number,
+          username: interface_config.username!,
+          password: interface_config.password!,
+          protocol: interface_config.protocol!,
+          database: interface_config.path?.replace(/^\/+/, '') || '',
+          dsn: this.generateUrl(interface_ref),
+        };
 
         context.services[service_name].interfaces[interface_name] = {
           protocol: 'http',
@@ -358,6 +389,7 @@ export default abstract class DependencyManager {
         };
       }
     }
+
     return { component_spec, context };
   }
 
