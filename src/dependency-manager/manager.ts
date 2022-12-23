@@ -15,6 +15,7 @@ import { GraphOptions } from './graph/type';
 import { SecretsConfig } from './secrets/secrets';
 import { SecretsDict } from './secrets/type';
 import { ComponentSpec, SecretDefinitionSpec } from './spec/component-spec';
+import { ResourceSpec } from './spec/resource-spec';
 import { transformComponentSpec, transformSecretDefinitionSpec } from './spec/transform/component-transform';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, ResourceType, Slugs } from './spec/utils/slugs';
 import { validateOrRejectSpec } from './spec/utils/spec-validator';
@@ -360,62 +361,76 @@ export default abstract class DependencyManager {
     return { component_spec, context };
   }
 
-  validateServiceEnvironments(component_specs: ComponentSpec[], secrets: SecretsDict): void {
-    for (const component_spec of component_specs) {
-      const validation_errors: ValidationError[] = [];
-      for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
-        for (const [env_var_key, env_var_value] of Object.entries(service_spec.environment || {})) {
-          const all_components_secret_exists = secrets['*'] && secrets['*'][env_var_key] !== undefined;
-          const component_secret_exists = secrets[component_spec.name] && secrets[component_spec.name][env_var_key] !== undefined;
-          if (all_components_secret_exists || component_secret_exists) {
-            continue;
-          }
+  validateComponentResourceSpecs(resource_specs: Dictionary<ResourceSpec> = {}, secrets: SecretsDict, component_name: string, path_prefix: string): ValidationError[] {
+    const validation_errors: ValidationError[] = [];
+    for (const [resource_name, resource_spec] of Object.entries(resource_specs)) {
+      for (const [env_var_key, env_var_value] of Object.entries(resource_spec.environment || {})) {
+        const all_components_secret_exists = secrets['*'] && secrets['*'][env_var_key] !== undefined;
+        const component_secret_exists = secrets[component_name] && secrets[component_name][env_var_key] !== undefined;
+        if (all_components_secret_exists || component_secret_exists) {
+          continue;
+        }
 
-          const required_no_default = env_var_value && typeof env_var_value === 'object' && (env_var_value as SecretDefinitionSpec).required && !(env_var_value as SecretDefinitionSpec).default;
-          if (required_no_default || env_var_value === null) {
-              const validation_error = new ValidationError({
-                component: component_spec.name,
-                path: `services.${service_name}.environment.${env_var_key}`,
-                message: `Required service-level secret '${env_var_key}' was not provided`,
-                invalid_key: true,
-              });
-              validation_errors.push(validation_error);
-          }
+        const required_no_default = env_var_value && typeof env_var_value === 'object' && (env_var_value as SecretDefinitionSpec).required && !(env_var_value as SecretDefinitionSpec).default;
+        if (required_no_default || env_var_value === null) {
+            const validation_error = new ValidationError({
+              component: component_name,
+              path: `${path_prefix}.${resource_name}.environment.${env_var_key}`,
+              message: `Required ${path_prefix}-level secret '${env_var_key}' was not provided`,
+              invalid_key: true,
+            });
+            validation_errors.push(validation_error);
         }
       }
+    }
+    return validation_errors;
+  }
+
+  validateEnvironments(component_specs: ComponentSpec[], secrets: SecretsDict): void {
+    for (const component_spec of component_specs) {
+      const validation_errors = [
+        ...this.validateComponentResourceSpecs(component_spec.services, secrets, component_spec.name, 'services'),
+        ...this.validateComponentResourceSpecs(component_spec.tasks, secrets, component_spec.name, 'tasks'),
+      ];
       if (validation_errors.length > 0) {
         throw new ValidationErrors(validation_errors, component_spec.metadata.file);
       }
     }
   }
 
-  updateServiceEnvironmentSecrets(component_specs: ComponentSpec[], all_secrets: SecretsDict): ComponentSpec[] {
-    const updated_component_specs = [];
-    for (const component_spec of component_specs) {
-      for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
-        for (const [env_var_key, env_var_value] of Object.entries(service_spec.environment || {})) {
-          if (component_spec.services) {
-            const service_environment = component_spec.services[service_name].environment;
-            if (!service_environment) {
-              continue;
-            }
+  updateResourceEnvironmentSecrets(resource_specs: Dictionary<ResourceSpec> = {}, all_secrets: SecretsDict, component_name: string): Dictionary<ResourceSpec> {
+    for (const [resource_name, resource_spec] of Object.entries(resource_specs)) {
+      for (const [env_var_key, env_var_value] of Object.entries(resource_spec.environment || {})) {
+          const resource_environment = resource_specs[resource_name].environment;
+          if (!resource_environment) {
+            continue;
+          }
 
-            if (all_secrets[component_spec.name] && all_secrets[component_spec.name][env_var_key]) {
-              service_environment[env_var_key] = all_secrets[component_spec.name][env_var_key];
-            } else if (all_secrets['*'] && all_secrets['*'][env_var_key]) {
-              service_environment[env_var_key] = all_secrets['*'][env_var_key];
-            } else if (env_var_value && typeof env_var_value === 'object') {
-              const secret_definition_spec = env_var_value as SecretDefinitionSpec;
-              if (secret_definition_spec.default) {
-                service_environment[env_var_key] = secret_definition_spec.default || null;
-              } else if (secret_definition_spec.required === false) {
-                service_environment[env_var_key] = null; // no matching secret passed in, environment variable optional
-              }
+          if (all_secrets[component_name] && all_secrets[component_name][env_var_key]) {
+            resource_environment[env_var_key] = all_secrets[component_name][env_var_key];
+          } else if (all_secrets['*'] && all_secrets['*'][env_var_key]) {
+            resource_environment[env_var_key] = all_secrets['*'][env_var_key];
+          } else if (env_var_value && typeof env_var_value === 'object') {
+            const secret_definition_spec = env_var_value as SecretDefinitionSpec;
+            if (secret_definition_spec.default) {
+              resource_environment[env_var_key] = secret_definition_spec.default || null;
+            } else if (secret_definition_spec.required === false) {
+              resource_environment[env_var_key] = null; // no matching secret passed in, environment variable optional
             }
           }
         }
       }
-      updated_component_specs.push(component_spec);
+
+    return resource_specs;
+  }
+
+  updateResources(component_specs: ComponentSpec[], all_secrets: SecretsDict): ComponentSpec[] {
+    const updated_component_specs = [];
+    for (const component_spec of component_specs) {
+      const updated_component_spec = component_spec;
+      updated_component_spec.services = this.updateResourceEnvironmentSecrets(component_spec.services, all_secrets, component_spec.name);
+      updated_component_spec.tasks = this.updateResourceEnvironmentSecrets(component_spec.tasks, all_secrets, component_spec.name);
+      updated_component_specs.push(updated_component_spec);
     }
     return updated_component_specs;
   }
@@ -429,7 +444,7 @@ export default abstract class DependencyManager {
 
     if (options.validate) {
       SecretsConfig.validate(all_secrets);
-      this.validateServiceEnvironments(original_component_specs, all_secrets);
+      this.validateEnvironments(original_component_specs, all_secrets);
     }
 
     const interpolateObject = options.validate ? interpolateObjectOrReject : interpolateObjectLoose;
@@ -438,7 +453,7 @@ export default abstract class DependencyManager {
 
     const context_map: Dictionary<ComponentContext> = {};
 
-    const component_specs = this.updateServiceEnvironmentSecrets(original_component_specs, all_secrets);
+    const component_specs = this.updateResources(original_component_specs, all_secrets);
 
     const evaluated_component_specs: ComponentSpec[] = [];
     for (const raw_component_spec of component_specs) {
