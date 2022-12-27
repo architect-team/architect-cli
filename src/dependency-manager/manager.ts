@@ -367,12 +367,11 @@ export default abstract class DependencyManager {
       for (const [env_var_key, env_var_value] of Object.entries(resource_spec.environment || {})) {
         const all_components_secret_exists = secrets['*'] && secrets['*'][env_var_key] !== undefined;
         const component_secret_exists = secrets[component_name] && secrets[component_name][env_var_key] !== undefined;
-        if (all_components_secret_exists || component_secret_exists) {
-          continue;
-        }
 
-        const required_no_default = env_var_value && typeof env_var_value === 'object' && (env_var_value as SecretDefinitionSpec).required && !(env_var_value as SecretDefinitionSpec).default;
-        if (required_no_default || env_var_value === null) {
+        if (!all_components_secret_exists && !component_secret_exists) {
+          const required_no_default = env_var_value && typeof env_var_value === 'object' && (env_var_value as SecretDefinitionSpec).required && !(env_var_value as SecretDefinitionSpec).default;
+
+          if (required_no_default || env_var_value === null) {
             const validation_error = new ValidationError({
               component: component_name,
               path: `${path_prefix}.${resource_name}.environment.${env_var_key}`,
@@ -380,6 +379,7 @@ export default abstract class DependencyManager {
               invalid_key: true,
             });
             validation_errors.push(validation_error);
+          }
         }
       }
     }
@@ -400,31 +400,32 @@ export default abstract class DependencyManager {
 
   updateResourceEnvironmentSecrets(resource_specs: Dictionary<ResourceSpec> = {}, all_secrets: SecretsDict, component_name: string): Dictionary<ResourceSpec> {
     for (const [resource_name, resource_spec] of Object.entries(resource_specs)) {
-      for (const [env_var_key, env_var_value] of Object.entries(resource_spec.environment || {})) {
-          const resource_environment = resource_specs[resource_name].environment;
-          if (!resource_environment) {
-            continue;
-          }
+      const resource_environment = resource_specs[resource_name].environment;
 
-          if (all_secrets[component_name] && all_secrets[component_name][env_var_key]) {
-            resource_environment[env_var_key] = all_secrets[component_name][env_var_key];
-          } else if (all_secrets['*'] && all_secrets['*'][env_var_key]) {
-            resource_environment[env_var_key] = all_secrets['*'][env_var_key];
-          } else if (env_var_value && typeof env_var_value === 'object') {
-            const secret_definition_spec = env_var_value as SecretDefinitionSpec;
-            if (secret_definition_spec.default) {
-              resource_environment[env_var_key] = secret_definition_spec.default || null;
-            } else if (secret_definition_spec.required === false) {
-              resource_environment[env_var_key] = null; // no matching secret passed in, environment variable optional
+      if (resource_environment) {
+        for (const [env_var_key, env_var_value] of Object.entries(resource_spec.environment || {})) {
+          if (typeof resource_environment[env_var_key] !== 'string') { // don't overwrite hardcoded environment variables or interpolation references
+            if (all_secrets[component_name] && all_secrets[component_name][env_var_key]) {
+              resource_environment[env_var_key] = all_secrets[component_name][env_var_key];
+            } else if (all_secrets['*'] && all_secrets['*'][env_var_key]) {
+              resource_environment[env_var_key] = all_secrets['*'][env_var_key];
+            } else if (env_var_value && typeof env_var_value === 'object') {
+              const secret_definition_spec = env_var_value as SecretDefinitionSpec;
+              if (secret_definition_spec.default) {
+                resource_environment[env_var_key] = secret_definition_spec.default || null;
+              } else if (secret_definition_spec.required === false) {
+                resource_environment[env_var_key] = null; // no matching secret passed in, environment variable optional
+              }
             }
           }
         }
       }
+    }
 
     return resource_specs;
   }
 
-  updateResources(component_specs: ComponentSpec[], all_secrets: SecretsDict): ComponentSpec[] {
+  updateResourceEnvironments(component_specs: ComponentSpec[], all_secrets: SecretsDict): ComponentSpec[] {
     const updated_component_specs = [];
     for (const component_spec of component_specs) {
       const updated_component_spec = component_spec;
@@ -453,7 +454,7 @@ export default abstract class DependencyManager {
 
     const context_map: Dictionary<ComponentContext> = {};
 
-    const component_specs = this.updateResources(original_component_specs, all_secrets);
+    const component_specs = this.updateResourceEnvironments(original_component_specs, all_secrets);
 
     const evaluated_component_specs: ComponentSpec[] = [];
     for (const raw_component_spec of component_specs) {

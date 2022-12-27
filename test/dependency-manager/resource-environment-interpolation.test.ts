@@ -750,6 +750,66 @@ describe('Resource-level secrets', () => {
       const node = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(node.config.environment).to.deep.eq({ NOT_A_SECRET_DEFINITION: '{\"complete\":\"and\",\"total\":\"nonsense\"}' });
     });
+
+    it(`a hardcoded environment variable isn't overwritten by a secret passed in from the command line`, async () => {
+      const component_config = `
+      name: hello-world
+
+      services:
+        api:
+          image: heroku/nodejs-hello-world
+          interfaces:
+            main: 3000
+          environment:
+            HARDCODED_SECRET: VALUE
+      `;
+
+      mock_fs({
+        '/stack/architect.yml': component_config,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'hello-world': '/stack/architect.yml',
+      });
+      const graph = await manager.getGraph([
+        await manager.loadComponentSpec('hello-world'),
+      ], { '*': { HARDCODED_SECRET: 'SOMETHING ELSE' } });
+      const api_ref = resourceRefToNodeRef('hello-world.services.api');
+      const node = graph.getNodeByRef(api_ref) as ServiceNode;
+      expect(node.config.environment).to.deep.eq({ HARDCODED_SECRET: 'VALUE' });
+    });
+
+    it(`a top-level secret and interpolated environment variable is overwritten by a secret passed in from the command line`, async () => {
+      const component_config = `
+      name: hello-world
+
+      secrets:
+        HARDCODED_SECRET:
+          default: VALUE
+
+      services:
+        api:
+          image: heroku/nodejs-hello-world
+          interfaces:
+            main: 3000
+          environment:
+            HARDCODED_SECRET: \${{ secrets.HARDCODED_SECRET }}
+      `;
+
+      mock_fs({
+        '/stack/architect.yml': component_config,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'hello-world': '/stack/architect.yml',
+      });
+      const graph = await manager.getGraph([
+        await manager.loadComponentSpec('hello-world'),
+      ], { '*': { HARDCODED_SECRET: 'SOMETHING ELSE' } });
+      const api_ref = resourceRefToNodeRef('hello-world.services.api');
+      const node = graph.getNodeByRef(api_ref) as ServiceNode;
+      expect(node.config.environment).to.deep.eq({ HARDCODED_SECRET: 'SOMETHING ELSE' });
+    });
   });
 
   describe('Task-level secrets', () => {
@@ -1444,6 +1504,62 @@ describe('Resource-level secrets', () => {
       const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
       const node = graph.getNodeByRef(api_ref) as TaskNode;
       expect(node.config.environment).to.deep.eq({ NOT_A_SECRET_DEFINITION: '{\"complete\":\"and\",\"total\":\"nonsense\"}' });
+    });
+
+    it(`a hardcoded environment variable isn't overwritten by a secret passed in from the command line`, async () => {
+      const component_config = `
+      name: hello-world
+
+      tasks:
+        api:
+          image: heroku/nodejs-hello-world
+          environment:
+            HARDCODED_SECRET: VALUE
+      `;
+
+      mock_fs({
+        '/stack/architect.yml': component_config,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'hello-world': '/stack/architect.yml',
+      });
+      const graph = await manager.getGraph([
+        await manager.loadComponentSpec('hello-world'),
+      ], { '*': { HARDCODED_SECRET: 'SOMETHING ELSE' } });
+      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
+      const node = graph.getNodeByRef(api_ref) as TaskNode;
+      expect(node.config.environment).to.deep.eq({ HARDCODED_SECRET: 'VALUE' });
+    });
+
+    it(`a top-level secret and interpolated environment variable is overwritten by a secret passed in from the command line`, async () => {
+      const component_config = `
+      name: hello-world
+
+      secrets:
+        HARDCODED_SECRET:
+          default: VALUE
+
+      tasks:
+        api:
+          image: heroku/nodejs-hello-world
+          environment:
+            HARDCODED_SECRET: \${{ secrets.HARDCODED_SECRET }}
+      `;
+
+      mock_fs({
+        '/stack/architect.yml': component_config,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'architect', {
+        'hello-world': '/stack/architect.yml',
+      });
+      const graph = await manager.getGraph([
+        await manager.loadComponentSpec('hello-world'),
+      ], { '*': { HARDCODED_SECRET: 'SOMETHING ELSE' } });
+      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
+      const node = graph.getNodeByRef(api_ref) as TaskNode;
+      expect(node.config.environment).to.deep.eq({ HARDCODED_SECRET: 'SOMETHING ELSE' });
     });
   });
 });
