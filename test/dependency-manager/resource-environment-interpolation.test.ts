@@ -752,8 +752,6 @@ describe('Resource-level secrets', () => {
     });
   });
 
-  // TODO: add a bunch of things for tasks
-
   describe('Task-level secrets', () => {
     it('implied secret/environment variable with asterisk-targeted secret', async () => {
       const component_config = `
