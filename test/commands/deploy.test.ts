@@ -121,6 +121,13 @@ describe('remote deploy environment', function () {
       expect(ctx.stdout).to.not.contain('app.doesnt.get.output');
     });
 
+  remoteDeploy
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo'])
+    .it('Remote deployment outputs URLs from for the deployed component with no tag and not other components in the same environment', ctx => {
+      expect(ctx.stdout).to.contain('app.test-env.examples.arc.test');
+      expect(ctx.stdout).to.not.contain('app.doesnt.get.output');
+    });
+
   describe('instance deploys', function () {
     remoteDeploy
       .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest@tenant-1'])

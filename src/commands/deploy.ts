@@ -305,8 +305,9 @@ export default class Deploy extends DeployCommand {
     const available_urls = [];
 
     for (const data of cert_data) {
-      const deployed_component_name = `${data.metadata.labels['architect.io/component']}:${data.metadata.labels['architect.io/component-tag']}`;
-      if (component_names.includes(deployed_component_name)) {
+      const deployed_component_name_with_tag = `${data.metadata.labels['architect.io/component']}:${data.metadata.labels['architect.io/component-tag']}`;
+      const deployed_component_name_without_tag = `${data.metadata.labels['architect.io/component']}`;
+      if (component_names.includes(deployed_component_name_with_tag) || component_names.includes(deployed_component_name_without_tag)) {
         for (const dns_name of data.spec.dnsNames) {
           if (!dns_name.startsWith('env--')) {
             available_urls.push(`https://${dns_name}`);
