@@ -302,7 +302,7 @@ export default class Deploy extends DeployCommand {
 
     // Get available URLs from CertManager data
     const { data: cert_data } = await this.app.api.get(`/environments/${environment.id}/certificates`);
-    const available_urls = [];
+    const available_urls: Set<string> = new Set<string>();
 
     for (const data of cert_data) {
       const cert_component_name = data.metadata.labels['architect.io/component'];
@@ -311,7 +311,7 @@ export default class Deploy extends DeployCommand {
       if ((new Set([...component_names].filter(n => label_set.has(n)))).size > 0) {
         for (const dns_name of data.spec.dnsNames) {
           if (!dns_name.startsWith('env--')) {
-            available_urls.push(`https://${dns_name}`);
+            available_urls.add(`https://${dns_name}`);
           }
         }
       }
