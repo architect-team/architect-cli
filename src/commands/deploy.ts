@@ -240,16 +240,16 @@ export default class Deploy extends DeployCommand {
     const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
 
-    const component_names: string[] = [];
+    const component_names: Set<string> = new Set<string>();
     for (const component of components) {
       if (fs.existsSync(component)) {
         const register = new ComponentRegister([component, '-a', account.name, '-e', environment.name], this.config);
         register.app = this.app;
         await register.run();
         const component_spec = buildSpecFromPath(component);
-        component_names.push(`${component_spec.name}:${ComponentRegister.getTagFromFlags({ environment: environment.name })}`); // component_spec.name can be either account-name/component-name or just component-name
+        component_names.add(`${component_spec.name}:${ComponentRegister.getTagFromFlags({ environment: environment.name })}`); // component_spec.name can be either account-name/component-name or just component-name
       } else if (ComponentVersionSlugUtils.Validator.test(component)) {
-        component_names.push(component);
+        component_names.add(component);
       } else {
         throw new Error(`${component} isn't either the name of a component or a path to an existing component file.`);
       }
@@ -305,9 +305,10 @@ export default class Deploy extends DeployCommand {
     const available_urls = [];
 
     for (const data of cert_data) {
-      const deployed_component_name_with_tag = `${data.metadata.labels['architect.io/component']}:${data.metadata.labels['architect.io/component-tag']}`;
-      const deployed_component_name_without_tag = `${data.metadata.labels['architect.io/component']}`;
-      if (component_names.includes(deployed_component_name_with_tag) || component_names.includes(deployed_component_name_without_tag)) {
+      const cert_component_name = data.metadata.labels['architect.io/component'];
+      const deployed_component_name_with_tag = `${cert_component_name}:${data.metadata.labels['architect.io/component-tag']}`;
+      const label_set = new Set<string>([deployed_component_name_with_tag, cert_component_name]);
+      if ((new Set([...component_names].filter(n => label_set.has(n)))).size > 0) {
         for (const dns_name of data.spec.dnsNames) {
           if (!dns_name.startsWith('env--')) {
             available_urls.push(`https://${dns_name}`);
