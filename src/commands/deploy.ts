@@ -317,7 +317,7 @@ export default class Deploy extends DeployCommand {
       }
     }
 
-    if (available_urls.size) {
+    if (available_urls.size > 0) {
       this.log('Deployed services are now available at the following URLs:\n');
       for (const url of available_urls) {
         this.log(`\t${url}`);
