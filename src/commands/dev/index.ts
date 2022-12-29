@@ -503,7 +503,14 @@ export default class Dev extends BaseCommand {
       build_args.push('--build-arg', arg);
     }
 
-    await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build', ...build_args], { stdio: 'inherit' });
+    try {
+      await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build', ...build_args], { stdio: 'inherit' });
+    } catch (e: any) {
+      if (e.failed && !e.signal && !e.isCancelled && !e.killed) {
+        // eslint-disable-next-line no-process-exit
+        process.exit(e.exitCode || 1);
+      }
+    }
     return [project_name, compose_file];
   }
 

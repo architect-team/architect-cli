@@ -38,7 +38,7 @@ export const insertFileDataFromRefs = (file_contents: string, config_path: strin
 };
 
 export const replaceFileReference = (parsed_yml: ParsedYaml, config_path: string): string => {
-  const source_as_json = JSON.stringify(parsed_yml, null, 2);
+  const source_as_json = JSON.stringify(parsed_yml || {}, null, 2);
   const replaced_source = insertFileDataFromRefs(source_as_json, config_path);
   const replaced_object = JSON.parse(replaced_source);
 
