@@ -256,7 +256,10 @@ describe('interpolation spec v1', () => {
         'DOUBLE_QUOTE': `${web_ref}:2222`,
       },
       'build': {
-        'context': path.resolve('/stack')
+        'context': path.resolve('/stack'),
+        'labels': [
+          'architect.io'
+        ],
       },
       image: worker_ref,
       depends_on: [web_ref],
