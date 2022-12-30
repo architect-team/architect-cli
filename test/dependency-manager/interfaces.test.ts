@@ -397,6 +397,9 @@ describe('interfaces spec v1', () => {
       ],
       "build": {
         "context": path.resolve("/stack"),
+        "labels": [
+          "architect.io"
+        ],
       },
       image: api_ref,
     };

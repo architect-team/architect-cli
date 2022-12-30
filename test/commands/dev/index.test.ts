@@ -454,6 +454,9 @@ describe('local dev environment', function () {
           "context": path.resolve('./examples/database-seeding'),
           "dockerfile": "Dockerfile",
           "target": "production",
+          "labels": [
+            "architect.io"
+          ],
         },
         "image": seed_app_ref,
         "external_links": [

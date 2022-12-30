@@ -18,6 +18,8 @@ import { default as BaseCommand } from '../../base-command';
 import LocalDependencyManager, { ComponentConfigOpts } from '../../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../common/docker-compose';
 import DockerComposeTemplate from '../../common/docker-compose/template';
+import { DOCKER_IMAGE_LABEL } from '../../common/docker/buildx.utils';
+import { docker } from '../../common/docker/cmd';
 import { RequiresDocker } from '../../common/docker/helper';
 import DeployUtils from '../../common/utils/deploy.utils';
 import { booleanString } from '../../common/utils/oclif';
@@ -529,6 +531,10 @@ export default class Dev extends BaseCommand {
     if (!flags.detached) {
       fs.removeSync(compose_file);
     }
+
+    // remove build cache layers with our label that are older than 7 days
+    await docker(['builder', 'prune', '--filter', `label=${DOCKER_IMAGE_LABEL}`, '--filter', `unused-for=${7 * 24}h`, '-af'], { stdout: false });
+
     // eslint-disable-next-line no-process-exit
     process.exit();
   }

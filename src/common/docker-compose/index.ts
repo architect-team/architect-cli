@@ -10,6 +10,7 @@ import path from 'path';
 import untildify from 'untildify';
 import { ArchitectError, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
+import { DOCKER_IMAGE_LABEL } from '../docker/buildx.utils';
 import { docker, restart } from '../docker/cmd';
 import { DockerHelper, RequiresDocker } from '../docker/helper';
 import PortUtil from '../utils/port';
@@ -221,7 +222,6 @@ export class DockerComposeUtils {
       if (!service.labels) {
         service.labels = [];
       }
-
       service.labels.push(`architect.ref=${node.config.metadata.ref}`);
 
       // Set liveness and healthcheck for services (not supported by Tasks)
@@ -349,6 +349,13 @@ export class DockerComposeUtils {
             delete service.build;
           }
         }
+      }
+
+      if (service.build) {
+        if (!service.build.labels) {
+          service.build.labels = [];
+        }
+        service.build.labels.push(DOCKER_IMAGE_LABEL);
       }
 
       compose.services[node.ref] = service;

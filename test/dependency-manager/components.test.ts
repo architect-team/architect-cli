@@ -53,6 +53,9 @@ describe('components spec v1', function () {
             ],
             'build': {
               'context': path.resolve('/stack'),
+              "labels": [
+                "architect.io"
+              ],
             },
             'image': app_ref,
             labels: ['architect.ref=cloud.services.app'],
@@ -64,6 +67,9 @@ describe('components spec v1', function () {
             ],
             'build': {
               'context': path.resolve('/stack'),
+              "labels": [
+                "architect.io"
+              ],
             },
             image: api_ref,
             labels: ['architect.ref=cloud.services.api'],
@@ -218,6 +224,9 @@ describe('components spec v1', function () {
             ],
             'build': {
               'context': path.resolve('/stack'),
+              "labels": [
+                "architect.io"
+              ],
             },
             image: api_ref,
             labels: ['architect.ref=cloud.services.api'],
@@ -234,6 +243,9 @@ describe('components spec v1', function () {
             ],
             'build': {
               'context': path.resolve('/stack'),
+              "labels": [
+                "architect.io"
+              ],
             },
             image: app_ref,
             labels: ['architect.ref=cloud.services.app'],
@@ -245,6 +257,9 @@ describe('components spec v1', function () {
             ],
             'build': {
               'context': path.resolve('/stack'),
+              "labels": [
+                "architect.io"
+              ],
             },
             image: db_ref,
             labels: ['architect.ref=cloud.services.db'],
