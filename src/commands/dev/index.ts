@@ -506,9 +506,10 @@ export default class Dev extends BaseCommand {
     try {
       await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build', ...build_args], { stdio: 'inherit' });
     } catch (e: any) {
-      if (e.failed && !e.signal && !e.isCancelled && !e.killed) {
-        // eslint-disable-next-line no-process-exit
-        process.exit(e.exitCode || 1);
+      const pattern = new RegExp('Command failed with exit code 17: docker compose -f [-p architect build]?', 'g');
+      const error = e?.message || '';
+      if (pattern.test(error)) {
+        throw new ArchitectError(`Docker compose has encountered an error building the image specified in ${compose_file}`, false);
       }
     }
     return [project_name, compose_file];
