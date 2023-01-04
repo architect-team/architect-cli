@@ -508,9 +508,7 @@ export default class Dev extends BaseCommand {
     } catch (e: any) {
       const pattern = new RegExp('Command failed with exit code 17: docker compose -f [-p architect build]?', 'g');
       const error = e?.message || '';
-      if (pattern.test(error)) {
-        throw new ArchitectError(`Docker compose has encountered an error building the image specified in ${compose_file}`, false);
-      }
+      throw new ArchitectError(`Docker compose has encountered an error building the image specified in ${compose_file}`, !pattern.test(error));
     }
     return [project_name, compose_file];
   }
