@@ -1330,4 +1330,21 @@ describe('local dev environment', function () {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.false;
     });
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return '';
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns('fake-cert'))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './examples/hello-world/architect.yml'])
+    .catch(err => {
+      expect(err.message).to.include('For help getting started take a look at our documentation here: https://docs.architect.io/reference/architect-yml');
+    })
+    .it('Provide error if architect.yml is empty');
 });
