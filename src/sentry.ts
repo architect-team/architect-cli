@@ -91,8 +91,9 @@ export default class SentryService {
         .filter(([flag_name, flag_metadata]) => flag_metadata?.setFromDefault)
         .map(([flag_name]) => flag_name));
 
+      const present_flags_keys = new Set(Object.keys(command_class.flags));
       const non_default_flags = Object.keys({ ...flags })
-        .filter((flag_name) => !default_flags.has(flag_name));
+        .filter((flag_name) => !default_flags.has(flag_name) && present_flags_keys.has(flag_name));
 
       const sentry_tags: { [key: string]: string } = {
         environment: this.command.app.config.environment,
