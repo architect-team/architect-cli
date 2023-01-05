@@ -503,12 +503,17 @@ export default class Dev extends BaseCommand {
       build_args.push('--build-arg', arg);
     }
 
+    const cmd = DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build', ...build_args], { stdin: 'inherit', stdout: 'inherit', stderr: 'pipe' });
+
+    let stderr_message = '';
     try {
-      await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build', ...build_args], { stdio: 'inherit' });
+      cmd.stderr?.on('data', (bytes) => {
+        stderr_message = (bytes.toString() || '').trim();
+      });
+      await cmd;
     } catch (e: any) {
-      const pattern = new RegExp('Command failed with exit code 17: docker compose -f [-p architect build]?', 'g');
-      const error = e?.message || '';
-      throw new ArchitectError(`Docker compose has encountered an error building the image specified in ${compose_file}`, !pattern.test(error));
+      this.logToStderr(chalk.red('Docker compose has encounted an error building the specified image:'));
+      throw new ArchitectError(stderr_message, e.exitCode !== 17);
     }
     return [project_name, compose_file];
   }
