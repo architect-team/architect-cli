@@ -512,8 +512,10 @@ export default class Dev extends BaseCommand {
       });
       await cmd;
     } catch (e: any) {
-      this.logToStderr(chalk.red('Docker compose has encounted an error building the specified image:'));
-      throw new ArchitectError(stderr_message, e.exitCode !== 17);
+      if (e.exitCode !== 0) {
+        this.logToStderr(chalk.red('Docker compose has encounted an error building the specified image:'));
+        throw new ArchitectError(stderr_message);
+      }
     }
     return [project_name, compose_file];
   }
