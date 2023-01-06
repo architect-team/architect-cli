@@ -16,13 +16,15 @@ import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environmen
 import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
-import DockerComposeTemplate from '../common/docker-compose/template';
+import DockerComposeTemplate, { DockerService } from '../common/docker-compose/template';
 import DockerBuildXUtils from '../common/docker/buildx.utils';
 import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
 import OrasPlugin from '../common/plugins/oras-plugin';
 import PluginManager from '../common/plugins/plugin-manager';
 import { transformVolumeSpec } from '../dependency-manager/spec/transform/common-transform';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
+import { inspect } from 'node:util';
+import execa, { Options } from 'execa';
 
 tmp.setGracefulCleanup();
 
@@ -146,6 +148,20 @@ export default class ComponentRegister extends BaseCommand {
     return updated_volume;
   }
 
+  private async pushImageToRegistry(service: DockerService, ref_with_account: string, getImage: (ref: string) => string) {
+    const image_ref = getImage(ref_with_account);
+
+    await execa('docker', ['tag', `${service.image}`, `${image_ref}`]);
+    const cmd = await execa('docker', ['push', `${image_ref}`]);
+    this.log(cmd.stdout);
+
+    const digest = await this.getDigest(image_ref);
+
+    const image_without_tag = stripTagFromImage(image_ref);
+    service.image = `${image_without_tag}@${digest}`;
+    return service;
+  }
+
   private async registerComponent(config_path: string, tag: string) {
     const { flags } = await this.parse(ComponentRegister);
     console.time('Time');
@@ -208,13 +224,11 @@ export default class ComponentRegister extends BaseCommand {
     const seen_cache_dir = new Set<string>();
 
     // Set image name in compose
-    let service_build = false;
     for (const [service_name, service] of Object.entries(full_compose.services)) {
       const node = graph.getNodeByRef(service_name);
       if ((node instanceof ServiceNode || node instanceof TaskNode) && !node.config.build) continue;
 
       if (service.labels) {
-        service_build = true;
         const ref_label = service.labels.find(label => label.startsWith('architect.ref='));
         if (!ref_label) continue;
         const ref = ref_label.replace('architect.ref=', '');
@@ -262,6 +276,18 @@ export default class ComponentRegister extends BaseCommand {
           build: service.build,
           image: service.image,
         };
+
+        if ((node instanceof ServiceNode || node instanceof TaskNode) && node.config.build && node.config.image) {
+          const image_ref = getImage(ref_with_account);
+          await execa('docker', ['tag', `${service.image}`, `${image_ref}`]);
+          const cmd = await execa('docker', ['push', `${image_ref}`]);
+          this.log(cmd.stdout);
+
+          if (component_spec.services) {
+            delete component_spec.services[resource_name].build;
+          }
+          compose.services[service_name].image = image_ref;
+        }
         image_mapping[ref_with_account] = compose.services[service_name].image;
       }
     }
@@ -288,7 +314,8 @@ export default class ComponentRegister extends BaseCommand {
       return arr;
     }, [] as string[]);
 
-    if (service_build) {
+    const has_build = Object.values(compose.services).some(service => service.build);
+    if (has_build) {
       const builder = await DockerBuildXUtils.getBuilder(this.app.config);
 
       try {
@@ -369,10 +396,25 @@ export default class ComponentRegister extends BaseCommand {
       previous_config_data = (await this.app.api.get(`/accounts/${selected_account.name}/components/${component_name}/versions/${tag || 'latest'}`)).data.config;
     } catch { }
 
+    this.outputDiff(previous_config_data, component_dto.config);
+
+    CliUx.ux.action.start(chalk.blue(`Registering component ${new_spec.name}:${tag} with Architect Cloud...`));
+    await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
+    CliUx.ux.action.stop();
+    this.log(chalk.green(`Successfully registered component`));
+
+    if (new_spec.dependencies) {
+      this.generateDependenciesWarnings(new_spec.dependencies, selected_account.name);
+    }
+
+    console.timeEnd('Time');
+  }
+
+  private outputDiff(previous_config_data: any, component_config: any) {
     this.log(chalk.blue(`Begin component config diff`));
     const previous_source_yml = dumpToYml(previous_config_data, { lineWidth: -1 });
 
-    const new_source_yml = dumpToYml(component_dto.config, { lineWidth: -1 });
+    const new_source_yml = dumpToYml(component_config, { lineWidth: -1 });
     const component_config_diff = Diff.diffLines(previous_source_yml, new_source_yml);
     for (const diff_section of component_config_diff) {
       const line_parts = diff_section.value.split('\n');
@@ -389,17 +431,6 @@ export default class ComponentRegister extends BaseCommand {
       }
     }
     this.log(chalk.blue(`End component config diff`));
-
-    CliUx.ux.action.start(chalk.blue(`Registering component ${new_spec.name}:${tag} with Architect Cloud...`));
-    await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
-    CliUx.ux.action.stop();
-    this.log(chalk.green(`Successfully registered component`));
-
-    if (new_spec.dependencies) {
-      this.generateDependenciesWarnings(new_spec.dependencies, selected_account.name);
-    }
-
-    console.timeEnd('Time');
   }
 
   private async getDigest(image: string) {
