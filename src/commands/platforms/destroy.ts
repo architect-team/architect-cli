@@ -4,7 +4,7 @@ export default class PlatformDestroy extends ClusterDestroy {
   static aliases = ['platforms:deregister', 'platform:destroy', 'platforms:destroy'];
   static state = 'deprecated';
   static deprecationOptions = {
-    to: 'cluster:deregister',
+    to: 'clusters:deregister',
   };
   static hidden = true;
 
