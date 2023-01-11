@@ -1,5 +1,6 @@
 import { expect } from 'chai';
-import { buildSpecFromYml, validateInterpolation, ValidationErrors } from '../../src';
+import { validateInterpolation, ValidationErrors } from '../../src';
+import { buildSpecFromYml } from '../../src/dependency-manager/spec/utils/component-builder';
 
 describe('interpolation-validation', () => {
 

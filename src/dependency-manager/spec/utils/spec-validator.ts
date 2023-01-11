@@ -1,6 +1,6 @@
 import type { V1Deployment } from '@kubernetes/client-node';
 import Ajv, { ErrorObject, ValidateFunction } from 'ajv';
-import ajv_errors from 'ajv-errors';
+// import ajv_errors from 'ajv-errors';
 import addFormats from 'ajv-formats';
 import { plainToClass } from 'class-transformer';
 import cron from 'cron-validate';
@@ -120,13 +120,14 @@ let _cached_validate: ValidateFunction;
 export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
   if (!_cached_validate) {
     // TODO:288 enable strict mode?
-    const ajv = new Ajv({ allErrors: true, unicodeRegExp: false });
+    const ajv = new Ajv({ allErrors: true, unicodeRegExp: false, code: { source: true, esm: true } });
     addFormats(ajv);
     ajv.addFormat('cidrv4', /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?:\/(?:3[0-2]|[12]?\d))?$/);
     ajv.addFormat('cron', (value: string): boolean => value === '' || cron(value, cron_options).isValid());
     ajv.addKeyword('externalDocs');
+    ajv.addKeyword('errorMessage');
     // https://github.com/ajv-validator/ajv-errors
-    ajv_errors(ajv);
+    // ajv_errors(ajv);
     _cached_validate = ajv.compile(getArchitectJSONSchema());
   }
 

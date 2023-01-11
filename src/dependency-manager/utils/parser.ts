@@ -3,7 +3,7 @@ import { isIdentifierChar, isIdentifierStart } from 'acorn';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { LooseParser } from 'acorn-loose';
-import assert from 'assert';
+// import assert from 'assert';
 import estraverse from 'estraverse';
 import { EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { ValidationError } from './errors';
@@ -226,7 +226,10 @@ export class ArchitectParser {
     if (_depth === 0) {
       this.errors = [];
     }
-    assert(_depth < 25);
+    if (_depth >= 25) {
+      throw new Error('Exceeded max depth');
+    }
+    // assert(_depth < 25);
     let res = program;
 
     let last_value;

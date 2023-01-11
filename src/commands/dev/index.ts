@@ -9,7 +9,7 @@ import yaml from 'js-yaml';
 import net from 'net';
 import opener from 'opener';
 import path from 'path';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
+import { ArchitectError, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
 import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
@@ -23,6 +23,7 @@ import DeployUtils from '../../common/utils/deploy.utils';
 import { booleanString } from '../../common/utils/oclif';
 import PortUtil from '../../common/utils/port';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
+import { buildSpecFromPath } from '../../dependency-manager/spec/utils/component-builder';
 import LocalPaths from '../../paths';
 
 type TraefikHttpService = {

@@ -4,10 +4,12 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import path from 'path';
 import sinon from 'sinon';
-import { buildConfigFromYml, Slugs } from '../../src';
+import { Slugs } from '../../src';
 import ProjectUtils from '../../src/architect/project/project.utils';
 import { InitCommand } from '../../src/commands/init';
+import { buildConfigFromYml } from '../../src/dependency-manager/spec/utils/component-builder';
 import { mockArchitectAuth } from '../utils/mocks';
+
 
 describe('init', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr

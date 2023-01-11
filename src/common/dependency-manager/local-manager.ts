@@ -2,7 +2,9 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
-import DependencyManager, { ArchitectContext, ArchitectError, buildSpecFromPath, buildSpecFromYml, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary, generateIngressesOverrideSpec, IngressSpec, overrideSpec } from '../../';
+import { ArchitectContext, ArchitectError, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary, generateIngressesOverrideSpec, IngressSpec, overrideSpec } from '../../';
+import { DependencyManager } from '../../dependency-manager/manager';
+import { buildSpecFromPath, buildSpecFromYml } from '../../dependency-manager/spec/utils/component-builder';
 
 export interface ComponentConfigOpts {
   interfaces?: Dictionary<string>;

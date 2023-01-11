@@ -3,9 +3,9 @@ import chalk from 'chalk';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import { buildSpecFromPath } from '../';
 import BaseCommand from '../base-command';
 import MissingContextError from '../common/errors/missing-build-context';
+import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-builder';
 
 tmp.setGracefulCleanup();
 

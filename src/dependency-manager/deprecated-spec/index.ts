@@ -1,7 +1,7 @@
 
 import { ComponentConfig } from '../config/component-config';
 import { DependencyGraph } from '../graph';
-import type DependencyManager from '../manager';
+import type { DependencyManager } from '../manager';
 
 export abstract class DeprecatedSpec {
   protected manager: DependencyManager;

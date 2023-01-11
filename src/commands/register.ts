@@ -9,7 +9,7 @@ import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, TaskNode, validateInterpolation, VolumeSpec } from '../';
+import { ArchitectError, ComponentSlugUtils, Dictionary, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, TaskNode, validateInterpolation, VolumeSpec } from '../';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
@@ -22,6 +22,7 @@ import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
 import OrasPlugin from '../common/plugins/oras-plugin';
 import PluginManager from '../common/plugins/plugin-manager';
 import { transformVolumeSpec } from '../dependency-manager/spec/transform/common-transform';
+import { buildSpecFromPath, dumpToYml } from '../dependency-manager/spec/utils/component-builder';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
 tmp.setGracefulCleanup();
