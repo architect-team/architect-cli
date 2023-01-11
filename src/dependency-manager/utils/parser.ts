@@ -1,4 +1,3 @@
-// eslint-disable-next-line node/no-extraneous-import
 import { isIdentifierChar, isIdentifierStart } from 'acorn';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
