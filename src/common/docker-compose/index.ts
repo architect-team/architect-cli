@@ -772,4 +772,10 @@ export class DockerComposeUtils {
 
     return restarted;
   }
+
+  @RequiresDocker()
+  public static async pushImageToRegistry(image_name: string, image_ref: string): Promise<void> {
+    await docker(['tag', `${image_name}:latest`, `${image_ref}`]);
+    await docker(['push', image_ref]);
+  }
 }

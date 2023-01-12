@@ -198,6 +198,13 @@ export class ServiceSpec extends ResourceSpec {
 
   @IsOptional()
   @JSONSchema({
+    type: 'boolean',
+    description: 'Option to use buildpack to build an image.',
+  })
+  buildpack?: boolean;
+
+  @IsOptional()
+  @JSONSchema({
     type: 'object',
     patternProperties: {
       [Slugs.ArchitectSlugValidator.source]: ExpressionOr(AnyOf(ServiceInterfaceSpec, 'number')),

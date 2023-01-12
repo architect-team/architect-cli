@@ -16,15 +16,14 @@ import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environmen
 import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
-import DockerComposeTemplate, { DockerService } from '../common/docker-compose/template';
+import DockerComposeTemplate from '../common/docker-compose/template';
 import DockerBuildXUtils from '../common/docker/buildx.utils';
 import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
 import OrasPlugin from '../common/plugins/oras-plugin';
 import PluginManager from '../common/plugins/plugin-manager';
 import { transformVolumeSpec } from '../dependency-manager/spec/transform/common-transform';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
-import { inspect } from 'node:util';
-import execa, { Options } from 'execa';
+import BuildpackPlugin from '../common/plugins/buildpack-plugin';
 
 tmp.setGracefulCleanup();
 
@@ -148,20 +147,6 @@ export default class ComponentRegister extends BaseCommand {
     return updated_volume;
   }
 
-  private async pushImageToRegistry(service: DockerService, ref_with_account: string, getImage: (ref: string) => string) {
-    const image_ref = getImage(ref_with_account);
-
-    await execa('docker', ['tag', `${service.image}`, `${image_ref}`]);
-    const cmd = await execa('docker', ['push', `${image_ref}`]);
-    this.log(cmd.stdout);
-
-    const digest = await this.getDigest(image_ref);
-
-    const image_without_tag = stripTagFromImage(image_ref);
-    service.image = `${image_without_tag}@${digest}`;
-    return service;
-  }
-
   private async registerComponent(config_path: string, tag: string) {
     const { flags } = await this.parse(ComponentRegister);
     console.time('Time');
@@ -226,7 +211,7 @@ export default class ComponentRegister extends BaseCommand {
     // Set image name in compose
     for (const [service_name, service] of Object.entries(full_compose.services)) {
       const node = graph.getNodeByRef(service_name);
-      if ((node instanceof ServiceNode || node instanceof TaskNode) && !node.config.build) continue;
+      if ((node instanceof ServiceNode || node instanceof TaskNode) && !node.config.build && !node.config.buildpack) continue;
 
       if (service.labels) {
         const ref_label = service.labels.find(label => label.startsWith('architect.ref='));
@@ -277,15 +262,18 @@ export default class ComponentRegister extends BaseCommand {
           image: service.image,
         };
 
-        if ((node instanceof ServiceNode || node instanceof TaskNode) && node.config.build && node.config.image) {
+        if ((node instanceof ServiceNode || node instanceof TaskNode) && node.config.buildpack) {
           const image_ref = getImage(ref_with_account);
-          await execa('docker', ['tag', `${service.image}`, `${image_ref}`]);
-          const cmd = await execa('docker', ['push', `${image_ref}`]);
-          this.log(cmd.stdout);
+          const buildpack_plugin = await PluginManager.getPlugin<BuildpackPlugin>(this.app.config.getPluginDirectory(), BuildpackPlugin);
+          await buildpack_plugin.build(resource_name, node.config?.build);
+          await DockerComposeUtils.pushImageToRegistry(resource_name, image_ref);
 
           if (component_spec.services) {
             delete component_spec.services[resource_name].build;
+            delete component_spec.services[resource_name].buildpack;
           }
+
+          delete compose.services[service_name].build;
           compose.services[service_name].image = image_ref;
         }
         image_mapping[ref_with_account] = compose.services[service_name].image;

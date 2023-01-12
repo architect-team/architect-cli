@@ -89,5 +89,6 @@ export const transformResourceSpec = (resource_type: ResourceType, key: string, 
     depends_on: spec.depends_on || [],
     labels: spec.labels || new Map(),
     reserved_name: spec.reserved_name,
+    buildpack: spec.buildpack,
   };
 };
