@@ -324,7 +324,6 @@ export default class ComponentRegister extends BaseCommand {
     const image_mapping: Dictionary<string | undefined> = {};
     const seen_cache_dir = new Set<string>();
     const buildpack_images: DockerImage[] = [];
-    const buildpack_plugin = await PluginManager.getPlugin<BuildpackPlugin>(this.app.config.getPluginDirectory(), BuildpackPlugin);
 
     const { full_compose, component_spec } = composes;
     for (const [service_name, service] of Object.entries(full_compose.services)) {
@@ -381,6 +380,7 @@ export default class ComponentRegister extends BaseCommand {
         };
 
         if ((node instanceof ServiceNode || node instanceof TaskNode) && node.config.buildpack) {
+          const buildpack_plugin = await PluginManager.getPlugin<BuildpackPlugin>(this.app.config.getPluginDirectory(), BuildpackPlugin);
           await buildpack_plugin.build(resource_name, node.config?.build?.context);
           buildpack_images.push({ 'name': resource_name, 'ref': getImage(ref_with_account) });
 
