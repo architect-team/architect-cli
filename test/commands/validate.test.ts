@@ -37,7 +37,7 @@ interfaces:
     .command(['validate', 'test/mocks/superset'])
     .it('correctly validates an architect.yml file given a directory and prints name and source_file', ctx => {
       expect(ctx.stdout).to.contain('superset');
-      expect(ctx.stdout).to.contain('test/mocks/superset/architect.yml');
+      expect(ctx.stdout).to.contain(path.resolve('test/mocks/superset/architect.yml'));
     });
 
   mockArchitectAuth()
