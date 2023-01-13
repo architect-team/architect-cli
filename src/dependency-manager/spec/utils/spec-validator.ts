@@ -2,7 +2,7 @@ import type { V1Deployment } from '@kubernetes/client-node';
 import Ajv, { ErrorObject, ValidateFunction } from 'ajv';
 import ajv_errors from 'ajv-errors';
 import addFormats from 'ajv-formats';
-import { plainToClass } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import cron from 'cron-validate';
 import TSON from 'typescript-json';
 import { DeepPartial } from '../../../common/utils/types';
@@ -260,7 +260,7 @@ function deprecatedInterfaces(spec: ComponentSpec) {
 }
 
 export const buildSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMetadata): ComponentSpec => {
-  const component_spec = plainToClass(ComponentSpec, parsed_yml);
+  const component_spec = plainToInstance(ComponentSpec, parsed_yml);
 
   component_spec.metadata = metadata ? metadata : {
     ref: component_spec.name,
