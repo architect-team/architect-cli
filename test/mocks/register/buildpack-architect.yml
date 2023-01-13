@@ -2,11 +2,15 @@ name: hello-world-buildpack
 
 description: Test registering a component using buildpack
 
+secrets:
+  world_text:
+    default: World
+
 services:
   api:
     buildpack: true
     build:
-      context: ../../../examples/hello-world/architect.yml
+      context: ../../../examples/hello-world
     interfaces:
       main:
         port: 3000

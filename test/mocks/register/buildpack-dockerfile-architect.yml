@@ -1,0 +1,31 @@
+name: hello-world-all
+
+description: Test registering a component using buildpack and dockerfile services
+
+secrets:
+  world_text:
+    default: World
+
+services:
+  buildpack-api:
+    buildpack: true
+    build:
+      context: ../../../examples/hello-world
+    interfaces:
+      main:
+        port: 3000
+        ingress:
+          subdomain: buildpack-api
+    environment:
+      WORLD_TEXT: ${{ secrets.world_text }}
+  
+  dockerfile-api:
+    build:
+      context: ../../../examples/hello-world
+    interfaces:
+      main:
+        port: 4000
+        ingress:
+          subdomain: dockerfile-api
+    environment:
+      WORLD_TEXT: ${{ secrets.world_text }}
