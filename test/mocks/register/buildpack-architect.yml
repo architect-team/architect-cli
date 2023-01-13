@@ -1,0 +1,16 @@
+name: hello-world-buildpack
+
+description: Test registering a component using buildpack
+
+services:
+  api:
+    buildpack: true
+    build:
+      context: ../../../examples/hello-world/architect.yml
+    interfaces:
+      main:
+        port: 3000
+        ingress:
+          subdomain: hello
+    environment:
+      WORLD_TEXT: ${{ secrets.world_text }}

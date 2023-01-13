@@ -10,6 +10,7 @@ import ComponentRegister from '../../src/commands/register';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
+import PluginManager from '../../src/common/plugins/plugin-manager';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
 import { mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST } from '../utils/mocks';
 
@@ -716,4 +717,19 @@ describe('register', function () {
       expect(ctx.stdout).to.contain(`The account name 'invalid-account' was found as part of the component name in your architect.yml file. Either that account does not exist or you do not have permission to access it.`);
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
+  
+  mockArchitectAuth()
+    .stub(PluginManager.prototype, 'getPlugin', sinon.stub().returns({}))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_architect_account_response)
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'test/mocks/register/buildpack-architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    // .catch(e => {
+    //   fs.removeSync('./test/plugins/BuildpackPlugin/0.28.0/BuildpackPlugin.tar.gz');
+    //   expect(e.message).contains('buildpacks/pack/releases/download');
+    // })
+    .it('register with buildpack set to true will try to install the buildpack plugin');
 });
