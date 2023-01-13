@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import execa from 'execa';
 import path from 'path';
-import { BuildConfig } from '../../dependency-manager/config/resource-config';
 import { ArchitectPlugin, PluginArchitecture, PluginBinary, PluginBundleType, PluginOptions, PluginPlatform } from './plugin-types';
 
 export default class BuildpackPlugin implements ArchitectPlugin {
@@ -60,15 +59,15 @@ export default class BuildpackPlugin implements ArchitectPlugin {
     return cmd;
   }
 
-  async build(image_name: string, build: BuildConfig | undefined): Promise<void> {
+  async build(image_name: string, path: string | undefined): Promise<void> {
     if (process.env.TEST === '1') {
       return undefined;
     }
 
     console.log(chalk.blue(`Begin building image for service ${image_name}`));
     let args = ['build', image_name, '--builder', this.builder];
-    if (build && build.context) {
-      args = [...args, '--path', build.context];
+    if (path) {
+      args = [...args, '--path', path];
     }
 
     await this.exec(args, {
