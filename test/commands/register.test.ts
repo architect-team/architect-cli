@@ -719,17 +719,63 @@ describe('register', function () {
     });
   
   mockArchitectAuth()
-    .stub(PluginManager.prototype, 'getPlugin', sinon.stub().returns({}))
+    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_architect_account_response)
     )
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' })
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .post(/\/accounts\/.*\/components/)
+      .reply(200, {})
+    )
+    .stub(PluginManager, 'getPlugin', sinon.stub().returns({
+      build: () => { },
+    }))
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'test/mocks/register/buildpack-architect.yml', '-t', '1.0.0', '-a', 'examples'])
-    // .catch(e => {
-    //   fs.removeSync('./test/plugins/BuildpackPlugin/0.28.0/BuildpackPlugin.tar.gz');
-    //   expect(e.message).contains('buildpacks/pack/releases/download');
-    // })
-    .it('register with buildpack set to true will try to install the buildpack plugin');
+    .it('register with buildpack set to true will install the buildpack plugin', ctx => {
+      expect(ctx.stderr).to.contain('Registering component hello-world-buildpack:1.0.0 with Architect Cloud...... done\n');
+      expect(ctx.stdout).to.contain('Successfully registered component');
+
+      // Since the image of the service is built from the buildpack, docker buildx is not called.
+      const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
+      expect(compose.callCount).to.eq(0);
+      expect(compose.firstCall).null;
+    });
+  
+  mockArchitectAuth()
+    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_architect_account_response)
+    )
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' })
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .post(/\/accounts\/.*\/components/)
+      .reply(200, {})
+    )
+    .stub(PluginManager, 'getPlugin', sinon.stub().returns({
+      build: () => { },
+    }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'test/mocks/register/buildpack-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .it('register with buildpack and dockerfile services', ctx => {
+      expect(ctx.stderr).to.contain('Registering component hello-world-all:1.0.0 with Architect Cloud...... done\n');
+      expect(ctx.stdout).to.contain('Successfully registered component');
+      const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
+      expect(compose.callCount).to.eq(1);
+    });
 });
