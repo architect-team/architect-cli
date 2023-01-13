@@ -12,7 +12,7 @@ import { DockerComposeUtils } from '../../../src/common/docker-compose';
 import DockerComposeTemplate from '../../../src/common/docker-compose/template';
 import DeployUtils from '../../../src/common/utils/deploy.utils';
 import * as ComponentBuilder from '../../../src/dependency-manager/spec/utils/component-builder';
-import { MOCK_API_HOST } from '../../utils/mocks';
+import { MOCK_API_HOST, getArchitectExampleProjectPath, getArchitectExampleProjectContext } from '../../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
 const print = false;
@@ -451,7 +451,7 @@ describe('local dev environment', function () {
           `traefik.http.services.${seed_app_ref}-main-service.loadbalancer.server.port=3000`
         ],
         "build": {
-          "context": path.resolve('./examples/database-seeding'),
+          "context": getArchitectExampleProjectContext('database-seeding'),
           "dockerfile": "Dockerfile",
           "target": "production",
         },
@@ -635,7 +635,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '--ssl=false'])
     .it('Create a local dev with a component and an interface', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
@@ -656,7 +656,7 @@ describe('local dev environment', function () {
     .stub(process, 'exit', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-d', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '-d', '--ssl=false'])
     .it(`Run a component locally in detached mode and check that the compose file doesn't get deleted`, ctx => {
       expect(ctx.stdout).to.contain('Starting containers...');
 
@@ -674,7 +674,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '--ssl=false'])
     .catch(err => {
       expect(err.message).to.include('Environment name already in use.');
     })
@@ -693,7 +693,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns('fake-cert'))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world')])
     .it('Create a local dev with a component and an interface with ssl', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
@@ -712,7 +712,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '--ssl=false'])
     .it('Create a local dev with a component and an interface (deprecated parameters block)', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
@@ -732,7 +732,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '--ssl=false'])
     .it('Sticky label added for sticky interfaces', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -744,7 +744,7 @@ describe('local dev environment', function () {
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
       const spec = buildSpecFromYml(yaml.dump(local_database_seeding_component_config));
-      spec.metadata.file = { path: './examples/database-seeding/architect.yml', contents: '' }
+      spec.metadata.file = { path: getArchitectExampleProjectPath('database-seeding'), contents: '' };
       return spec;
     })
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
@@ -752,7 +752,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/database-seeding/architect.yml', '-s', 'AUTO_DDL=seed', '--secret', 'DB_NAME=test-db', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('database-seeding'), '-s', 'AUTO_DDL=seed', '--secret', 'DB_NAME=test-db', '--ssl=false'])
     .it('Create a local dev with a component, secrets, and an interface', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -763,7 +763,7 @@ describe('local dev environment', function () {
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
       const spec = buildSpecFromYml(yaml.dump(deprecated_local_database_seeding_component_config));
-      spec.metadata.file = { path: './examples/database-seeding/architect.yml', contents: '' }
+      spec.metadata.file = { path: getArchitectExampleProjectPath('database-seeding'), contents: '' };
       return spec;
     })
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
@@ -771,7 +771,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/database-seeding/architect.yml', '--parameter', 'AUTO_DDL=seed', '--parameter', 'DB_NAME=test-db', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('database-seeding'), '--parameter', 'AUTO_DDL=seed', '--parameter', 'DB_NAME=test-db', '--ssl=false'])
     .it('Create a local dev with a component, deprecated parameters, and an interface', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -791,7 +791,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--secret-file', './examples/hello-world/.env', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '--secret-file', './examples/hello-world/.env', '--ssl=false'])
     .it('Create a local dev with a basic component and a basic .env secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -815,7 +815,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
     .it('Create a local dev with a basic component and a basic secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -839,7 +839,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
     .it('Create a local dev with a basic component using deprecated parameters and a basic secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -864,7 +864,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-v', './examples/hello-world/secrets.yml', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '-v', './examples/hello-world/secrets.yml', '--ssl=false'])
     .it('Create a local dev with a basic component and a basic secrets file using deprecated values flag', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -888,7 +888,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
     .it('Create a local dev with a basic component and a wildcard secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -910,7 +910,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
     .it('Create a local dev with a basic component and a stacked secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -938,7 +938,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--secret-file', './examples/hello-world/secrets.yml', '-a', 'examples', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '-a', 'examples', '--ssl=false'])
     .it('Create a local dev with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -966,7 +966,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--secret-file', './examples/hello-world/secrets.yml', '-r', '-a', 'examples', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '-r', '-a', 'examples', '--ssl=false'])
     .it('Create a local recursive dev with a basic component, a dependency, and a secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -991,7 +991,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
     .it('Dollar signs are escaped for environment variables in local compose devments', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -1016,7 +1016,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secrets-env=env', '-a', 'examples', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '-i', 'test:hello', '--secrets-env=env', '-a', 'examples', '--ssl=false'])
     .it('Create a local dev with a basic component and an environment secret', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -1044,7 +1044,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secret-file', './examples/hello-world/secrets.yml', '--secrets-env=env', '-a', 'examples', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '-i', 'test:hello', '--secret-file', './examples/hello-world/secrets.yml', '--secrets-env=env', '-a', 'examples', '--ssl=false'])
     .it('Create a local dev with a basic component, a secret file, and an overwritten environment secret', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -1067,7 +1067,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secrets-env=non-existent-env', '-a', 'examples', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '-i', 'test:hello', '--secrets-env=non-existent-env', '-a', 'examples', '--ssl=false'])
     .catch(err => {
       expect(process.exitCode).eq(1);
       expect(`${err}`).to.contain(`Could not find entity of type "Environment"`);
@@ -1090,7 +1090,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '--secrets-env=env', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '-i', 'test:hello', '--secrets-env=env', '--ssl=false'])
     .it('Get an account if not provided to pull secrets from an environment', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -1107,7 +1107,7 @@ describe('local dev environment', function () {
       .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
       .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
       .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-      .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'hello-world': './examples/hello-world/architect.yml' }))
+      .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'hello-world': getArchitectExampleProjectPath('hello-world') }))
       .stdout({ print })
       .stderr({ print })
       .command(['dev', 'hello-world:latest', '--ssl=false'])
@@ -1129,7 +1129,7 @@ describe('local dev environment', function () {
         return buildSpecFromYml(getHelloComponentConfig(), metadata)
       })
       .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
-      .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'hello-world': './examples/hello-world/architect.yml' }))
+      .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'hello-world': getArchitectExampleProjectPath('hello-world') }))
       .stdout({ print })
       .stderr({ print })
 
@@ -1193,7 +1193,7 @@ describe('local dev environment', function () {
       // @ts-ignore
       .stub(ComponentBuilder, 'buildSpecFromPath', (path: string) => {
         let config: string;
-        if (path === './examples/react-app/architect.yml') {
+        if (path === getArchitectExampleProjectPath('react-app')) {
           config = `
           name: auth
           services:
@@ -1232,8 +1232,8 @@ describe('local dev environment', function () {
         return buildSpecFromYml(config)
       })
       .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({
-        'app': './examples/hello-world/architect.yml',
-        'auth': './examples/react-app/architect.yml'
+        'app': getArchitectExampleProjectPath('hello-world'),
+        'auth': getArchitectExampleProjectPath('react-app'),
       }))
       .stdout({ print })
       .stderr({ print })
@@ -1262,7 +1262,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '--ssl=false'])
     .it('Command with an operator is converted correctly to the docker compose file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const compose = runCompose.firstCall.args[0];
@@ -1289,7 +1289,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns('fake-cert'))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world')])
     .it('Path/port healthcheck converted to http path', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const compose = runCompose.firstCall.args[0];
@@ -1321,7 +1321,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--ssl=false'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world'), '--ssl=false'])
     .catch(err => {
       expect(err.message).to.include('non_existent_path');
       expect(err.message).to.include('used for the build context of service api does not exist.');
@@ -1342,7 +1342,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns('fake-cert'))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml'])
+    .command(['dev', getArchitectExampleProjectPath('hello-world')])
     .catch(err => {
       expect(err.message).to.include('For help getting started take a look at our documentation here: https://docs.architect.io/reference/architect-yml');
     })

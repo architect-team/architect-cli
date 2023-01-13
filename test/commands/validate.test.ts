@@ -4,7 +4,7 @@ import path from 'path';
 import sinon from 'sinon';
 import untildify from 'untildify';
 import { Slugs } from '../../src/dependency-manager/spec/utils/slugs';
-import { mockArchitectAuth } from '../utils/mocks';
+import { getArchitectExampleProjectContext, getArchitectExampleProjectPath, mockArchitectAuth } from '../utils/mocks';
 
 describe('architect validate component', function () {
   const subdomain_token_to_config_yaml_string = (subdomain_token: string): string =>
@@ -25,30 +25,30 @@ interfaces:
   mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
-    .command(['validate', 'examples/database-seeding/architect.yml'])
+    .command(['validate', getArchitectExampleProjectPath('database-seeding')])
     .it('correctly validates an architect.yml file and prints name and source_file', ctx => {
       expect(ctx.stdout).to.contain(`database-seeding`);
-      expect(ctx.stdout).to.contain(path.resolve(`examples/database-seeding/architect.yml`));
+      expect(ctx.stdout).to.contain(getArchitectExampleProjectPath('database-seeding'));
     });
 
   mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
-    .command(['validate', 'examples/database-seeding/'])
+    .command(['validate', 'test/mocks/superset'])
     .it('correctly validates an architect.yml file given a directory and prints name and source_file', ctx => {
-      expect(ctx.stdout).to.contain('database-seeding');
-      expect(ctx.stdout).to.contain(path.resolve('examples/database-seeding/architect.yml'));
+      expect(ctx.stdout).to.contain('superset');
+      expect(ctx.stdout).to.contain('test/mocks/superset/architect.yml');
     });
 
   mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
-    .command(['validate', 'examples/hello-world/architect.yml', 'examples/database-seeding/architect.yml'])
+    .command(['validate', getArchitectExampleProjectPath('hello-world'), getArchitectExampleProjectPath('database-seeding')])
     .it('correctly validates an multiple files and prints name and source_file for each', ctx => {
       expect(ctx.stdout).to.contain('database-seeding');
-      expect(ctx.stdout).to.contain(path.resolve('examples/database-seeding/architect.yml'));
+      expect(ctx.stdout).to.contain(getArchitectExampleProjectPath('database-seeding'));
       expect(ctx.stdout).to.contain('hello-world');
-      expect(ctx.stdout).to.contain(path.resolve('examples/hello-world/architect.yml'));
+      expect(ctx.stdout).to.contain(getArchitectExampleProjectContext('hello-world'));
     });
 
   mockArchitectAuth()
@@ -124,7 +124,7 @@ interfaces:
 
   describe('expect pass for valid subdomain', () => {
     const valid_subdomain_tokens = [
-      'qrstuv1'
+      'qrstuv1',
     ];
 
     const tmp_test_file = path.normalize(untildify('~/some_fake_file.yml'));
