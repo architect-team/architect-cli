@@ -25,7 +25,7 @@ export default class BuildpackPlugin implements ArchitectPlugin {
       bundle_type: PluginBundleType.TAR_GZ,
       executable_path: 'pack',
       url: 'https://github.com/buildpacks/pack/releases/download/v0.28.0/pack-v0.28.0-linux.tgz',
-      sha256: 'f4940962d1d65b3abcb1996e98cae6497f525999991e9d9dbc7d78a4029d5bb6',
+      sha256: '4f51b82dea355cffc62b7588a2dfa461e26621dda3821034830702e5cae6f587',
     },
     {
       platform: PluginPlatform.DARWIN,

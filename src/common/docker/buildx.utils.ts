@@ -128,9 +128,7 @@ export default class DockerBuildXUtils {
   }
 
   @RequiresDocker()
-  public static async build(images: DockerImage[], use_buildx: boolean, buildx_params: BuildxParams): Promise<void> {
-    this.pushImagesToRegistry(images);
-
+  public static async build(use_buildx: boolean, buildx_params: BuildxParams): Promise<void> {
     if (use_buildx) {
       await this.buildAndPush(buildx_params);
     }

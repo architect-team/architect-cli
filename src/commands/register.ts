@@ -19,11 +19,11 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DockerBuildXUtils, { DockerImage } from '../common/docker/buildx.utils';
 import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
+import BuildpackPlugin from '../common/plugins/buildpack-plugin';
 import OrasPlugin from '../common/plugins/oras-plugin';
 import PluginManager from '../common/plugins/plugin-manager';
 import { transformVolumeSpec } from '../dependency-manager/spec/transform/common-transform';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
-import BuildpackPlugin from '../common/plugins/buildpack-plugin';
 
 tmp.setGracefulCleanup();
 
@@ -235,7 +235,12 @@ export default class ComponentRegister extends BaseCommand {
     }, [] as string[]);
 
     const use_buildx = Object.values(compose.services).some(service => service.build);
-    await DockerBuildXUtils.build(buildpack_images, use_buildx, { app: this.app, compose_file: compose_file, build_args: build_args });
+    const build_promises: Promise<void>[] = [
+      DockerBuildXUtils.pushImagesToRegistry(buildpack_images),
+      DockerBuildXUtils.build(use_buildx, { app: this.app, compose_file: compose_file, build_args: build_args }),
+    ];
+
+    await Promise.all(build_promises);
 
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
       if (IF_EXPRESSION_REGEX.test(service_name)) {
