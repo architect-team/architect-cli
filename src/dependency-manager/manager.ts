@@ -1,4 +1,4 @@
-import { classToPlain, plainToClass, serialize } from 'class-transformer';
+import { instanceToPlain, plainToInstance, serialize } from 'class-transformer';
 import { isMatch } from 'matcher';
 import { buildNodeRef, ComponentConfig } from './config/component-config';
 import { ArchitectContext, ComponentContext, SecretValue } from './config/component-context';
@@ -488,7 +488,7 @@ export default abstract class DependencyManager {
       }
 
       if (options.validate) {
-        validateOrRejectSpec(classToPlain(plainToClass(ComponentSpec, component_spec)), component_spec.metadata);
+        validateOrRejectSpec(instanceToPlain(plainToInstance(ComponentSpec, component_spec)), component_spec.metadata);
       }
 
       const component_config = transformComponentSpec(component_spec);
