@@ -24,6 +24,8 @@ import { booleanString } from '../../common/utils/oclif';
 import PortUtil from '../../common/utils/port';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
 import LocalPaths from '../../paths';
+import PluginManager from '../../common/plugins/plugin-manager';
+import BuildpackPlugin from '../../common/plugins/buildpack-plugin';
 
 type TraefikHttpService = {
   name: string;
@@ -727,14 +729,27 @@ $ architect dev -e new_env_name_here .`));
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
     const graph = await dependency_manager.getGraph(component_specs, all_secrets); // TODO: 404: update
     const gateway_admin_port = await PortUtil.getAvailablePort(8080);
-    const compose = await DockerComposeUtils.generate(graph, {
+    let compose = await DockerComposeUtils.generate(graph, {
       external_addr: flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address,
       gateway_admin_port,
       ssl_cert: flags.ssl ? this.readSSLCert('fullchain.pem') : undefined,
       ssl_key: flags.ssl ? this.readSSLCert('privkey.pem') : undefined,
     });
 
+    compose = await this.buildBuildpackImages(compose);
     await this.runCompose(compose, environment, flags.port, gateway_admin_port);
+  }
+
+  async buildBuildpackImages(compose: DockerComposeTemplate): Promise<DockerComposeTemplate> {
+    for (const [service_name, service] of Object.entries(compose.services)) {
+      if (service.build?.buildpack) {
+        const buildpack_plugin = await PluginManager.getPlugin<BuildpackPlugin>(this.app.config.getPluginDirectory(), BuildpackPlugin);
+        await buildpack_plugin.build(service_name, service.build.context);
+        service.image = `${service_name}:latest`;
+        delete service.build;
+      }
+    }
+    return compose;
   }
 
   @RequiresDocker({ compose: true })
