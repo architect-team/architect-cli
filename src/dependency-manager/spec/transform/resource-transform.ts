@@ -61,6 +61,7 @@ export const transformBuildSpec = (build: BuildSpec | undefined, image?: string)
   }
   return {
     context: build.context,
+    buildpack: build.buildpack,
     args: transformBuildSpecArgs(build.args),
     dockerfile: build.dockerfile,
     target: build.target,
@@ -89,6 +90,5 @@ export const transformResourceSpec = (resource_type: ResourceType, key: string, 
     depends_on: spec.depends_on || [],
     labels: spec.labels || new Map(),
     reserved_name: spec.reserved_name,
-    buildpack: spec.buildpack,
   };
 };

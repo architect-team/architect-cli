@@ -64,7 +64,7 @@ export default class BuildpackPlugin implements ArchitectPlugin {
       return undefined;
     }
 
-    console.log(chalk.blue(`Begin building image for service ${image_name}`));
+    console.log(chalk.blue(`Begin building buildpack image ${image_name}`));
     let args = ['build', image_name, '--builder', this.builder];
     if (path) {
       args = [...args, '--path', path];

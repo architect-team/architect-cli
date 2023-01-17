@@ -7,6 +7,7 @@ interface XBakeConfig {
 
 export interface DockerServiceBuild {
   context?: string;
+  buildpack?: boolean;
   args?: string[] | { [s: string]: string };
   dockerfile?: string;
   target?: string;
@@ -47,7 +48,6 @@ export interface DockerService {
   environment?: { [key: string]: any };
   depends_on?: string[];
   build?: DockerServiceBuild;
-  buildpack?: boolean;
   volumes?: string[] | DockerComposeVolume[];
   command?: string[];
   restart?: string;

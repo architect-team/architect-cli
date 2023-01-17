@@ -276,6 +276,10 @@ export class DockerComposeUtils {
             service.build.context = path.resolve(component_path);
           }
 
+          if (build.buildpack) {
+            service.build.buildpack = build.buildpack;
+          }
+
           const args = [];
           for (const [arg_key, arg] of Object.entries(build.args || {})) {
             args.push(`${arg_key}=${arg}`);

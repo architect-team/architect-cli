@@ -20,6 +20,13 @@ export class BuildSpec {
 
   @IsOptional()
   @JSONSchema({
+    type: 'boolean',
+    description: 'Option to use buildpack to build an image.',
+  })
+  buildpack?: boolean;
+
+  @IsOptional()
+  @JSONSchema({
     type: 'object',
     patternProperties: {
       '^[a-zA-Z0-9_]+$': AnyOf('string', 'null'),
@@ -149,11 +156,4 @@ export abstract class ResourceSpec {
     description: 'A specific service name which will override the service name specified in the component.',
   })
   reserved_name?: string;
-
-  @IsOptional()
-  @JSONSchema({
-    type: 'boolean',
-    description: 'Option to use buildpack to build an image.',
-  })
-  buildpack?: boolean;
 }

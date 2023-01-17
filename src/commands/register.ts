@@ -333,7 +333,7 @@ export default class ComponentRegister extends BaseCommand {
     const { full_compose, component_spec } = composes;
     for (const [service_name, service] of Object.entries(full_compose.services)) {
       const node = graph.getNodeByRef(service_name);
-      if ((node instanceof ServiceNode || node instanceof TaskNode) && !node.config.build && !node.config.buildpack) continue;
+      if ((node instanceof ServiceNode || node instanceof TaskNode) && !node.config.build) continue;
 
       if (service.labels) {
         const ref_label = service.labels.find(label => label.startsWith('architect.ref='));
@@ -384,15 +384,14 @@ export default class ComponentRegister extends BaseCommand {
           image: service.image,
         };
 
-        if ((node instanceof ServiceNode || node instanceof TaskNode) && node.config.buildpack) {
+        if (service.build?.buildpack) {
           const buildpack_plugin = await PluginManager.getPlugin<BuildpackPlugin>(this.app.config.getPluginDirectory(), BuildpackPlugin);
-          await buildpack_plugin.build(resource_name, node.config?.build?.context);
-          buildpack_images.push({ 'name': resource_name, 'ref': getImage(ref_with_account) });
+          await buildpack_plugin.build(service_name, service.build.context);
+          buildpack_images.push({ 'name': service_name, 'ref': getImage(ref_with_account) });
 
           // Remove build and buildpack
           if (component_spec.services) {
             delete component_spec.services[resource_name].build;
-            delete component_spec.services[resource_name].buildpack;
           }
           delete compose.services[service_name].build;
         }
@@ -405,7 +404,7 @@ export default class ComponentRegister extends BaseCommand {
       await fs.move(`${cache_dir}-tmp`, cache_dir, { overwrite: true });
     }
 
-    const new_spec = classToClass(component_spec);
+    const new_spec = instanceToInstance(component_spec);
 
     return {
       compose,

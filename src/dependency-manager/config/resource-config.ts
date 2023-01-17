@@ -3,6 +3,7 @@ import { Dictionary } from '../utils/dictionary';
 
 export interface BuildConfig {
   context?: string;
+  buildpack?: boolean;
   args?: Dictionary<string>;
   dockerfile?: string;
   target?: string;
@@ -18,7 +19,6 @@ export interface ResourceConfig {
   language?: string;
   environment: Dictionary<string | null>; // TODO:290:Dictionary<string>
   build?: BuildConfig;
-  buildpack?: boolean;
   cpu?: number | string; // TODO:290:number
   memory?: string;
   depends_on: string[];

@@ -8,9 +8,9 @@ secrets:
 
 services:
   buildpack-api:
-    buildpack: true
     build:
       context: ../../../examples/hello-world
+      buildpack: true
     interfaces:
       main:
         port: 3000
