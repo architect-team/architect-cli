@@ -2,6 +2,7 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
+import { ArchitectError } from './errors';
 import { ParsedYaml } from './types';
 
 // https://stackoverflow.com/questions/4253367/how-to-escape-a-json-string-containing-newline-characters-using-javascript
@@ -38,6 +39,9 @@ export const insertFileDataFromRefs = (file_contents: string, config_path: strin
 };
 
 export const replaceFileReference = (parsed_yml: ParsedYaml, config_path: string): string => {
+  if ((parsed_yml || '').toString().trim().length === 0) {
+    throw new ArchitectError(`The file at ${config_path} is empty.  For help getting started take a look at our documentation here: https://docs.architect.io/reference/architect-yml`);
+  }
   const source_as_json = JSON.stringify(parsed_yml, null, 2);
   const replaced_source = insertFileDataFromRefs(source_as_json, config_path);
   const replaced_object = JSON.parse(replaced_source);

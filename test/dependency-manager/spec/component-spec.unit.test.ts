@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { classToPlain, plainToClass } from 'class-transformer';
+import { instanceToPlain, plainToInstance } from 'class-transformer';
 import yaml from 'js-yaml';
 import { buildConfigFromYml, buildSpecFromYml, ComponentSpec, dumpToYml } from '../../../src';
 import { overrideSpec } from '../../../src/dependency-manager/spec/utils/spec-merge';
@@ -73,9 +73,9 @@ describe('component spec unit test', () => {
     `
 
     const component_spec = buildSpecFromYml(yml);
-    const override_spec = plainToClass(ComponentSpec, yaml.load(override_yml));
+    const override_spec = plainToInstance(ComponentSpec, yaml.load(override_yml));
     const merged_spec = overrideSpec(component_spec, override_spec);
-    expect(classToPlain(merged_spec)).to.deep.equal(yaml.load(`
+    expect(instanceToPlain(merged_spec)).to.deep.equal(yaml.load(`
     name: component
     secrets:
       test1:
