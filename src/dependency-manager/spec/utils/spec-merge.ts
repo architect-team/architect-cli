@@ -1,4 +1,4 @@
-import { plainToClass } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import deepmerge, { Options } from 'deepmerge';
 import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
@@ -55,7 +55,7 @@ export function generateIngressesOverrideSpec(component_spec: ComponentSpec, ing
     throw new ValidationErrors(errors);
   }
 
-  return plainToClass(ComponentSpec, spec);
+  return plainToInstance(ComponentSpec, spec);
 }
 
 const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
@@ -73,5 +73,5 @@ function specMerge(key: string, options?: Options): ((x: any, y: any) => any) | 
 }
 
 export function overrideSpec(spec: ComponentSpec, override: RecursivePartial<ComponentSpec>): ComponentSpec {
-  return plainToClass(ComponentSpec, deepmerge(spec, override, { arrayMerge: overwriteMerge, customMerge: specMerge }));
+  return plainToInstance(ComponentSpec, deepmerge(spec, override, { arrayMerge: overwriteMerge, customMerge: specMerge }));
 }
