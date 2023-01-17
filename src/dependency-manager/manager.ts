@@ -56,9 +56,8 @@ export default abstract class DependencyManager {
   }
 
   getComponentRef(component_string: string): string {
-    const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(component_string);
-    const resolved_account = this.account && this.account === component_account_name ? undefined : component_account_name;
-    const component_ref = ComponentSlugUtils.build(resolved_account, component_name, instance_name);
+    const { component_name, instance_name } = ComponentVersionSlugUtils.parse(component_string);
+    const component_ref = ComponentSlugUtils.build(component_name, instance_name);
     return component_ref;
   }
 
@@ -134,9 +133,6 @@ export default abstract class DependencyManager {
     }
 
     const component_ref = component_spec.metadata.ref;
-    const { component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
-    const component_ref_with_account = ComponentSlugUtils.build(this.account, component_name, instance_name);
-
     const component_secrets = new Set(Object.keys({ ...component_spec.parameters, ...component_spec.secrets })); // TODO: 404: update
 
     const res: Dictionary<any> = {};
@@ -145,10 +141,10 @@ export default abstract class DependencyManager {
     for (let [pattern, secrets] of Object.entries(sorted_values_dict)) {
       // Backwards compat for tags
       if (ComponentVersionSlugUtils.Validator.test(pattern)) {
-        const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(pattern);
-        pattern = ComponentSlugUtils.build(component_account_name, component_name, instance_name);
+        const { component_name, instance_name } = ComponentVersionSlugUtils.parse(pattern);
+        pattern = ComponentSlugUtils.build(component_name, instance_name);
       }
-      if (isMatch(component_ref, [pattern]) || isMatch(component_ref_with_account, [pattern])) {
+      if (isMatch(component_ref, [pattern])) {
         for (const [secret_key, secret_value] of Object.entries(secrets)) {
           if (component_secrets.has(secret_key)) {
             res[secret_key] = secret_value;

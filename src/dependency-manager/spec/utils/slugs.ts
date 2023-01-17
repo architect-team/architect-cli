@@ -51,15 +51,15 @@ export class Slugs {
 }
 
 export interface ParsedSlug {
-  component_account_name?: string;
-}
-
-export type ComponentSlug = string; // "<component-name>"
-export interface ParsedComponentSlug extends ParsedSlug {
-  component_account_name?: string;
   component_name: string;
   instance_name?: string;
 }
+
+export type ComponentSlug = string; // "<component-name>"
+// export interface ParsedComponentSlug extends ParsedSlug {
+//   // component_name: string;
+//   // instance_name?: string;
+// }
 
 abstract class SlugUtils {
   public static Description: string;
@@ -94,26 +94,22 @@ export class ComponentSlugUtils extends SlugUtils {
 
   public static Validator = new RegExp(`^${ComponentSlugUtils.RegexBase}$`);
 
-  public static build = (account_name: string | undefined, component_name: string, instance_name = ''): ComponentSlug => {
+  public static build = (component_name: string, instance_name = ''): ComponentSlug => {
     let slug = component_name;
-    if (account_name) {
-      slug = `${account_name}${Slugs.NAMESPACE_DELIMITER}${slug}`;
-    }
     if (instance_name) {
       slug = `${slug}${Slugs.INSTANCE_DELIMITER}${instance_name}`;
     }
     return slug;
   };
 
-  public static parse = parseCurry<ComponentSlug, ParsedComponentSlug>();
+  public static parse = parseCurry<ComponentSlug, ParsedSlug>();
 }
 
 export type ComponentVersionSlug = string; // "<component-name>:<tag>"
 export interface ParsedComponentVersionSlug extends ParsedSlug {
-  component_account_name?: string;
-  component_name: string;
+  // component_name: string;
   tag: string;
-  instance_name?: string;
+  // instance_name?: string;
 }
 
 export class ComponentVersionSlugUtils extends SlugUtils {
@@ -125,11 +121,8 @@ export class ComponentVersionSlugUtils extends SlugUtils {
 
   public static Validator = new RegExp(`^${ComponentVersionSlugUtils.RegexBase}$`);
 
-  public static build = (component_account_name: string | undefined, component_name: string, tag: string = Slugs.DEFAULT_TAG, instance_name = ''): ComponentVersionSlug => {
+  public static build = (component_name: string, tag: string = Slugs.DEFAULT_TAG, instance_name = ''): ComponentVersionSlug => {
     let slug = `${component_name}${Slugs.TAG_DELIMITER}${tag}`;
-    if (component_account_name) {
-      slug = `${component_account_name}${Slugs.NAMESPACE_DELIMITER}${slug}`;
-    }
     if (instance_name) {
       slug = `${slug}${Slugs.INSTANCE_DELIMITER}${instance_name}`;
     }
@@ -143,11 +136,10 @@ export type ResourceType = 'services' | 'tasks';
 
 export type ResourceSlug = string;
 export interface ParsedResourceSlug extends ParsedSlug {
-  component_account_name?: string;
-  component_name: string;
+  // component_name: string;
   resource_type: ResourceType;
   resource_name: string;
-  instance_name?: string;
+  // instance_name?: string;
 }
 export class ResourceSlugUtils extends SlugUtils {
   public static Description = 'must be of the form <component-name>.services|tasks.<resource-name>';
@@ -157,12 +149,8 @@ export class ResourceSlugUtils extends SlugUtils {
   public static RegexBase = `${ResourceSlugUtils.RegexResource}${ComponentSlugUtils.RegexInstance}`;
   public static Validator = new RegExp(`^${ResourceSlugUtils.RegexBase}$`);
 
-  // eslint-disable-next-line max-params
-  public static build = (account_name: string | undefined, component_name: string, resource_type: ResourceType, resource_name: string, instance_name = ''): ResourceSlug => {
+  public static build = (component_name: string, resource_type: ResourceType, resource_name: string, instance_name = ''): ResourceSlug => {
     let slug = `${component_name}${Slugs.RESOURCE_DELIMITER}${resource_type}${Slugs.RESOURCE_DELIMITER}${resource_name}`;
-    if (account_name) {
-      slug = `${account_name}${Slugs.NAMESPACE_DELIMITER}${slug}`;
-    }
     if (instance_name) {
       slug = `${slug}${Slugs.INSTANCE_DELIMITER}${instance_name}`;
     }
