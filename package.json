@@ -114,6 +114,19 @@
     "ts-patch": "^2.0.2",
     "typescript": "^4.5.5"
   },
+  "@comment override": [
+    "This section is just a comment to explain the overrides section below.",
+    "madge is no longer updated and pins an old version of detective-typescript",
+    "updating the dependency manually resolves warnings about unsupported TS versions:",
+    "https://github.com/pahen/madge/issues/316",
+    "typescript-estree is manually overridden because eslint-config-oclif-typescript depends on",
+    "an old @typescript-eslint/parser which uses an old @typescript-eslint/typescript-estree and also",
+    "produces the same warning."
+  ],
+  "overrides": {
+    "detective-typescript": "^9.0.0",
+    "@typescript-eslint/typescript-estree": "^5.13.0"
+  },
   "engines": {
     "node": ">=12"
   },
