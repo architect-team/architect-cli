@@ -485,6 +485,7 @@ export default abstract class DependencyManager {
 
       if (options.interpolate) {
         component_spec = interpolateObject(component_spec, context, { keys: false, values: true, file: component_spec.metadata.file });
+        component_spec.metadata.interpolated = true;
       }
 
       if (options.validate) {

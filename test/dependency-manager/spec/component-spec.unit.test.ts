@@ -33,10 +33,11 @@ describe('component spec unit test', () => {
           main: 8080
           admin:
             port: 8081
-        volumes:
-          src: ./src
-          tmp:
-            mount_path: ./tmp
+        debug:
+          volumes:
+            src: ./src
+            tmp:
+              mount_path: ./tmp
     interfaces:
       app: \${{ services.app.interfaces.main.url }}
       admin:
@@ -58,11 +59,12 @@ describe('component spec unit test', () => {
             host: app.aws.com
           admin:
             host: admin.aws.com
-        volumes:
-          src:
-            host_path: ./src
-          tmp:
-            host_path: ./tmp
+        debug:
+          volumes:
+            src:
+              host_path: ./src
+            tmp:
+              host_path: ./tmp
     interfaces:
       app:
         ingress:
@@ -98,13 +100,14 @@ describe('component spec unit test', () => {
           admin:
             host: admin.aws.com
             port: 8081
-        volumes:
-          src:
-            host_path: ./src
-            mount_path: ./src
-          tmp:
-            host_path: ./tmp
-            mount_path: ./tmp
+        debug:
+          volumes:
+            src:
+              host_path: ./src
+              mount_path: ./src
+            tmp:
+              host_path: ./tmp
+              mount_path: ./tmp
     interfaces:
       app:
         url: \${{ services.app.interfaces.main.url }}
