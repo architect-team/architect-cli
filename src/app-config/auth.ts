@@ -25,6 +25,9 @@ export default class AuthClient {
   callback_server: CallbackServer;
   checkLogin: () => Promise<User>;
 
+  // Provide a window of time before the actual expiration to refresh the token
+  public static EXPIRATION_WINDOW_IN_SECONDS = 300;
+
   public static SCOPE = 'openid profile email offline_access';
 
   constructor(config: AppConfig, checkLogin: () => Promise<User>) {
@@ -130,6 +133,7 @@ export default class AuthClient {
         payload: { 'client_id': this.config.oauth_client_id },
         headers: { 'HOST': url.hostname },
         rejectUnauthorized: !url.hostname.endsWith('.localhost'),
+        timeout: 30000,
       },
     );
 
@@ -190,7 +194,7 @@ export default class AuthClient {
     const auth_client = this.getAuthClient();
     let access_token = auth_client.createToken(token_json);
 
-    if (access_token.expired()) {
+    if (token_json.expires_in && access_token.expired(AuthClient.EXPIRATION_WINDOW_IN_SECONDS)) {
       access_token = await access_token.refresh({
         scope: AuthClient.SCOPE,
       });
