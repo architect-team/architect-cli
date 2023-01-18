@@ -319,6 +319,15 @@ export default class ComponentRegister extends BaseCommand {
     console.timeEnd('Time');
   }
 
+  private async doesDockerfileExist(context: string): Promise<boolean> {
+    try {
+      await fs.promises.access(path.join(context, 'Dockerfile'));
+      return true;
+    } catch (ex) {
+      return false;
+    }
+  }
+
   private async setImageRef(composes: Composes, graph: Readonly<DependencyGraphMutable>, account_name: string, getImage: (ref: string) => string): Promise<ImageRefOutput> {
     const { flags } = await this.parse(ComponentRegister);
 
@@ -385,8 +394,10 @@ export default class ComponentRegister extends BaseCommand {
           image: service.image,
         };
 
-        if (service.build && !service.build.dockerfile) {
-          await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.build.context);
+        const specified_dockerfile = Boolean(service.build?.dockerfile);
+        const unspecified_dockerfile = service.build && service.build.context ? await this.doesDockerfileExist(service.build.context) : false;
+        if (service.build?.buildpack || (!specified_dockerfile && !unspecified_dockerfile)) {
+          await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.build?.context);
           buildpack_images.push({ 'name': service_name, 'ref': getImage(ref_with_account) });
 
           // Remove build and buildpack
