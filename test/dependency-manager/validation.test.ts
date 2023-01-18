@@ -1899,5 +1899,36 @@ services:
       `;
       buildSpecFromYml(yml);
     });
+
+    describe('volume validation', () => {
+      it('invalid volume without host_path', async () => {
+        const yml = `
+        name: component
+        services:
+          app:
+            volumes:
+              src:
+                mount_path: .
+        `;
+
+        expect(() => {
+          buildSpecFromYml(yml);
+        }).to.throw(ValidationErrors);
+      });
+
+      it('invalid volume shorthand without host_path', async () => {
+        const yml = `
+        name: component
+        services:
+          app:
+            volumes:
+              src: .
+        `;
+
+        expect(() => {
+          buildSpecFromYml(yml);
+        }).to.throw(ValidationErrors);
+      });
+    })
   });
 });

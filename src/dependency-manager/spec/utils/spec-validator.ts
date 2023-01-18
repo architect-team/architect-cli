@@ -172,7 +172,6 @@ export const validateVolumes = (component_spec: ComponentSpec): ValidationError[
   for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
     for (const [volume_name, volume_spec] of Object.entries(service_spec.volumes || {})) {
       const no_host_path = volume_spec instanceof Object ? !volume_spec.host_path : true;
-      // TODO:TJ handle volume key
       if (no_host_path) {
         const error = new ValidationError({
           component: component_spec.name,
