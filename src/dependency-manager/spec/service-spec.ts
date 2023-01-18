@@ -1,5 +1,5 @@
 import { V1Deployment } from '@kubernetes/client-node';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { Allow, IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { DeepPartial } from '../../common/utils/types';
@@ -194,6 +194,7 @@ export class ServiceInterfaceSpec {
 export class ServiceSpec extends ResourceSpec {
   @IsOptional()
   @ValidateNested()
+  @Type(() => ServiceSpec)
   debug?: Partial<ServiceSpec>;
 
   @IsOptional()
