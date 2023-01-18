@@ -46,8 +46,8 @@ services:
     description: stateless app service description
     language: javascript
     build:
-      context: ../examples
-      dockerfile: Dockerfile
+      context: ../examples/src
+      dockerfile: ../examples/docker/Dockerfile
     command: 'npm run start'
     interfaces:
       http:
@@ -148,8 +148,8 @@ services:
       # target: production # TODO: re-enable when we move the example app to the test directory
       ${{ if architect.environment == 'local' }}:
         target: dev
-      context: ../examples
-      dockerfile: ./Dockerfile
+      context: ../examples/src
+      dockerfile: ../examples/docker/Dockerfile
     interfaces:
       http: 8080
     environment:
@@ -180,7 +180,7 @@ services:
       labels:
         label-string: some_label
       build:
-        dockerfile: ./Dockerfile
+        dockerfile: ../examples/docker/Dockerfile
         args:
           build_arg_string: arg_value
           build_arg_unset:
@@ -188,7 +188,7 @@ services:
 
   stateful-frontend:
     build:
-      context: ../examples
+      context: ../examples/src
     interfaces:
       web:
         port: 8081
@@ -221,7 +221,7 @@ services:
   ${{ if architect.environment == 'local' }}:
     local-cli:
       build:
-        context: ../examples
+        context: ../examples/src
       interfaces:
         web: 8081
       environment:
@@ -243,7 +243,7 @@ tasks:
   curler-build:
     schedule: '*/5 * * * ?'
     build:
-      context: ../examples
+      context: ../examples/src
     command:
       - sh
       - -c
@@ -254,8 +254,8 @@ tasks:
   ${{ if architect.environment == 'local' }}:
     curler-build-local:
       build:
-        context: ../examples
-        dockerfile: ./Dockerfile
+        context: ../examples/src
+        dockerfile: ../examples/docker/Dockerfile
       command:
         - sh
         - -c
