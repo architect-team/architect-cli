@@ -26,6 +26,7 @@ export default class AuthClient {
   checkLogin: () => Promise<User>;
 
   // Provide a window of time before the actual expiration to refresh the token
+  // https://github.com/lelylan/simple-oauth2/tree/1d0b2788ab178ca244c26859c31a34a32d8de979#refresh-an-access-token
   public static EXPIRATION_WINDOW_IN_SECONDS = 300;
 
   public static SCOPE = 'openid profile email offline_access';
