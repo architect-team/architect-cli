@@ -9,7 +9,7 @@ import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, DependencyGraphMutable, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, TaskNode, validateInterpolation, VolumeSpec } from '../';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, DependencyGraphMutable, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, TaskNode, validateBuild, validateInterpolation, VolumeSpec } from '../';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
@@ -170,6 +170,7 @@ export default class ComponentRegister extends BaseCommand {
       throw new Error('Component Config must have a name');
     }
 
+    validateBuild(component_spec);
     validateInterpolation(component_spec);
 
     const { component_account_name, component_name } = ComponentSlugUtils.parse(component_spec.name);
@@ -344,7 +345,7 @@ export default class ComponentRegister extends BaseCommand {
 
         const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags.architecture);
 
-        if (service.build) {
+        if (service.build?.dockerfile) {
           service.build['x-bake'] = {
             platforms: buildx_platforms,
             pull: false,
@@ -384,7 +385,7 @@ export default class ComponentRegister extends BaseCommand {
           image: service.image,
         };
 
-        if (service.build?.buildpack) {
+        if (service.build && !service.build.dockerfile) {
           const buildpack_plugin = await PluginManager.getPlugin<BuildpackPlugin>(this.app.config.getPluginDirectory(), BuildpackPlugin);
           await buildpack_plugin.build(service_name, service.build.context);
           buildpack_images.push({ 'name': service_name, 'ref': getImage(ref_with_account) });

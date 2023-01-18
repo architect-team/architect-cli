@@ -9,7 +9,7 @@ import yaml from 'js-yaml';
 import net from 'net';
 import opener from 'opener';
 import path from 'path';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary, validateBuild } from '../../';
 import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
@@ -726,6 +726,10 @@ $ architect dev -e new_env_name_here .`));
       }
     }
 
+    for (const spec of component_specs) {
+      validateBuild(spec);
+    }
+
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
     const graph = await dependency_manager.getGraph(component_specs, all_secrets); // TODO: 404: update
     const gateway_admin_port = await PortUtil.getAvailablePort(8080);
@@ -742,7 +746,7 @@ $ architect dev -e new_env_name_here .`));
 
   async buildBuildpackImages(compose: DockerComposeTemplate): Promise<DockerComposeTemplate> {
     for (const [service_name, service] of Object.entries(compose.services)) {
-      if (service.build?.buildpack) {
+      if (service.build && !service.build.dockerfile) {
         const buildpack_plugin = await PluginManager.getPlugin<BuildpackPlugin>(this.app.config.getPluginDirectory(), BuildpackPlugin);
         await buildpack_plugin.build(service_name, service.build.context);
         service.image = `${service_name}:latest`;
