@@ -10,6 +10,7 @@ import SecretUtils from '../../../src/architect/secret/secret.utils';
 import Dev, { UpProcessManager } from '../../../src/commands/dev';
 import { DockerComposeUtils } from '../../../src/common/docker-compose';
 import DockerComposeTemplate from '../../../src/common/docker-compose/template';
+import PluginManager from '../../../src/common/plugins/plugin-manager';
 import DeployUtils from '../../../src/common/utils/deploy.utils';
 import * as ComponentBuilder from '../../../src/dependency-manager/spec/utils/component-builder';
 import { MOCK_API_HOST } from '../../utils/mocks';
@@ -620,6 +621,86 @@ describe('local dev environment', function () {
           TRAEFIK_CERT: 'fake-cert',
           TRAEFIK_KEY: 'fake-cert'
         }
+      }
+    },
+    "volumes": {}
+  }
+
+  const buildpack_component_config = `
+    name: hello-world
+
+    secrets:
+      world_text:
+        default: World
+
+    services:
+      api:
+        build:
+          context: ../../../examples/hello-world
+          buildpack: true
+        interfaces:
+          hello:
+            port: 3000
+            ingress:
+              subdomain: hello
+        liveness_probe:
+          command: curl --fail localhost:3000
+        environment:
+          WORLD_TEXT: \${{ secrets.world_text }}
+  `;
+
+  const buildpack_component_expected_compose: DockerComposeTemplate = {
+    "version": "3",
+    "services": {
+      [hello_api_ref]: {
+        "ports": [
+          "50000:3000",
+        ],
+        "environment": {
+          "WORLD_TEXT": "World"
+        },
+        "labels": [
+          `architect.ref=${resource_ref}`,
+          "traefik.enable=true",
+          "traefik.port=80",
+          `traefik.http.routers.${hello_api_ref}-hello.rule=Host(\`hello.arc.localhost\`)`,
+          `traefik.http.routers.${hello_api_ref}-hello.service=${hello_api_ref}-hello-service`,
+          `traefik.http.services.${hello_api_ref}-hello-service.loadbalancer.server.port=3000`,
+        ],
+        "external_links": [
+          "gateway:hello.arc.localhost"
+        ],
+        "image": "hello-world--api:latest",
+        "healthcheck": {
+          "test": [
+            "CMD", "curl", "--fail", "localhost:3000"
+          ],
+          "interval": "30s",
+          "timeout": "5s",
+          "retries": 3,
+          "start_period": "0s"
+        },
+      },
+      "gateway": {
+        "image": "traefik:v2.6.2",
+        "command": [
+          "--api.insecure=true",
+          "--pilot.dashboard=false",
+          "--accesslog=true",
+          "--accesslog.filters.minDuration=1s",
+          "--accesslog.filters.statusCodes=400-599",
+          "--entryPoints.web.address=:80",
+          "--providers.docker=true",
+          "--providers.docker.exposedByDefault=false",
+          "--providers.docker.constraints=Label(`traefik.port`,`80`)",
+        ],
+        "ports": [
+          "80:80",
+          "8080:8080"
+        ],
+        "volumes": [
+          "/var/run/docker.sock:/var/run/docker.sock:ro"
+        ]
       }
     },
     "volumes": {}
@@ -1347,4 +1428,24 @@ describe('local dev environment', function () {
       expect(err.message).to.include('For help getting started take a look at our documentation here: https://docs.architect.io/reference/architect-yml');
     })
     .it('Provide error if architect.yml is empty');
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return buildpack_component_config;
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stub(PluginManager, 'getPlugin', sinon.stub().returns({
+      build: () => { },
+    }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './test/mocks/buildpack/buildpack-architect.yml'])
+    .it('Dev component with buildpack', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(buildpack_component_expected_compose)
+    });
 });

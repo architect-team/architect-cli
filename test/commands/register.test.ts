@@ -739,7 +739,7 @@ describe('register', function () {
     }))
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'test/mocks/register/buildpack-architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', 'test/mocks/buildpack/buildpack-architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('register with buildpack set to true will install the buildpack plugin', ctx => {
       expect(ctx.stderr).to.contain('Registering component hello-world-buildpack:1.0.0 with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
@@ -771,7 +771,7 @@ describe('register', function () {
     }))
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'test/mocks/register/buildpack-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', 'test/mocks/buildpack/buildpack-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('register with buildpack and dockerfile services', ctx => {
       expect(ctx.stderr).to.contain('Registering component hello-world-all:1.0.0 with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');

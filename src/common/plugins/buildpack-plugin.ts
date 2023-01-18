@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import execa from 'execa';
 import path from 'path';
+import { ArchitectError } from '../../dependency-manager/utils/errors';
 import { ArchitectPlugin, PluginArchitecture, PluginBinary, PluginBundleType, PluginOptions, PluginPlatform } from './plugin-types';
 
 export default class BuildpackPlugin implements ArchitectPlugin {
@@ -70,9 +71,13 @@ export default class BuildpackPlugin implements ArchitectPlugin {
       args = [...args, '--path', path];
     }
 
-    await this.exec(args, {
-      stdout: true,
-      execa_options: {},
-    });
+    try {
+      await this.exec(args, {
+        stdout: true,
+        execa_options: {},
+      });
+    } catch (error) {
+      throw new ArchitectError(`Buildpack failed to build ${image_name}. Please use a Dockerfile instead https://docs.architect.io/components/services/#build`);
+    }
   }
 }
