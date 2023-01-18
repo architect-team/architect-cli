@@ -25,8 +25,8 @@ secrets:
 services:
   app:
     build:
-      context: ./
-      dockerfile: Dockerfile
+      context: ./src
+      dockerfile: ./docker/Dockerfile
     interfaces:
       main:
         port: 3000

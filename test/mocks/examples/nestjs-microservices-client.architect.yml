@@ -12,7 +12,7 @@ dependencies:
 services:
   client:
     build:
-      context: ./
+      context: ./src
     interfaces:
       main:
         port: 3000
