@@ -19,9 +19,9 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DockerBuildXUtils, { DockerImage } from '../common/docker/buildx.utils';
 import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
-import BuildpackPlugin from '../common/plugins/buildpack-plugin';
 import OrasPlugin from '../common/plugins/oras-plugin';
 import PluginManager from '../common/plugins/plugin-manager';
+import BuildPackUtils from '../common/utils/buildpack';
 import { transformVolumeSpec } from '../dependency-manager/spec/transform/common-transform';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
@@ -386,8 +386,7 @@ export default class ComponentRegister extends BaseCommand {
         };
 
         if (service.build && !service.build.dockerfile) {
-          const buildpack_plugin = await PluginManager.getPlugin<BuildpackPlugin>(this.app.config.getPluginDirectory(), BuildpackPlugin);
-          await buildpack_plugin.build(service_name, service.build.context);
+          await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.build.context);
           buildpack_images.push({ 'name': service_name, 'ref': getImage(ref_with_account) });
 
           // Remove build and buildpack

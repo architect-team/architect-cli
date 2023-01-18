@@ -19,13 +19,12 @@ import LocalDependencyManager, { ComponentConfigOpts } from '../../common/depend
 import { DockerComposeUtils } from '../../common/docker-compose';
 import DockerComposeTemplate from '../../common/docker-compose/template';
 import { RequiresDocker } from '../../common/docker/helper';
+import BuildPackUtils from '../../common/utils/buildpack';
 import DeployUtils from '../../common/utils/deploy.utils';
 import { booleanString } from '../../common/utils/oclif';
 import PortUtil from '../../common/utils/port';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
 import LocalPaths from '../../paths';
-import PluginManager from '../../common/plugins/plugin-manager';
-import BuildpackPlugin from '../../common/plugins/buildpack-plugin';
 
 type TraefikHttpService = {
   name: string;
@@ -740,15 +739,28 @@ $ architect dev -e new_env_name_here .`));
       ssl_key: flags.ssl ? this.readSSLCert('privkey.pem') : undefined,
     });
 
-    compose = await this.buildBuildpackImages(compose);
+    compose = await this.handleBuildpackServices(compose);
     await this.runCompose(compose, environment, flags.port, gateway_admin_port);
   }
 
-  async buildBuildpackImages(compose: DockerComposeTemplate): Promise<DockerComposeTemplate> {
+  async doesDockerfileExist(context: string): Promise<boolean> {
+    try {
+      await fs.promises.access(path.join(context, 'Dockerfile'));
+      return true;
+    } catch (ex) {
+      return false;
+    }
+  }
+
+  async handleBuildpackServices(compose: DockerComposeTemplate): Promise<DockerComposeTemplate> {
     for (const [service_name, service] of Object.entries(compose.services)) {
-      if (service.build && !service.build.dockerfile) {
-        const buildpack_plugin = await PluginManager.getPlugin<BuildpackPlugin>(this.app.config.getPluginDirectory(), BuildpackPlugin);
-        await buildpack_plugin.build(service_name, service.build.context);
+      if (!service.build) {
+        continue;
+      }
+      const specified_dockerfile = Boolean(service.build?.dockerfile);
+      const unspecified_dockerfile = service.build && service.build.context ? await this.doesDockerfileExist(service.build.context) : false;
+      if (!specified_dockerfile && !unspecified_dockerfile) {
+        await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.build?.context);
         service.image = `${service_name}:latest`;
         delete service.build;
       }
