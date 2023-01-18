@@ -1,4 +1,4 @@
-import { classToPlain } from 'class-transformer';
+import { instanceToPlain } from 'class-transformer';
 import yaml from 'js-yaml';
 import { LivenessProbeConfig } from '../../dependency-manager/config/common-config';
 import { ServiceInterfaceConfig } from '../../dependency-manager/config/service-config';
@@ -102,7 +102,7 @@ export class ComposeConverter {
       }
     }
 
-    const architect_yml = yaml.dump(yaml.load(JSON.stringify(classToPlain(architect_component))));
+    const architect_yml = yaml.dump(yaml.load(JSON.stringify(instanceToPlain(architect_component))));
     return { architect_yml, warnings };
   }
 
