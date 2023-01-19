@@ -5,7 +5,7 @@ import PluginManager from '../plugins/plugin-manager';
 
 export default class BuildPackUtils {
   public static async build(config_directory: string, image_name: string, path: string | undefined): Promise<void> {
-    console.log(chalk.blue(`Begin building buildpack image ${image_name}`));
+    console.log(chalk.blue(`(Experimental) Begin building buildpack image ${image_name}`));
     const buildpack_plugin = await PluginManager.getPlugin(config_directory, BuildpackPlugin);
     try {
       await buildpack_plugin.build(image_name, path);

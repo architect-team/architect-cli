@@ -355,7 +355,7 @@ export const validateInterpolation = (component_spec: ComponentSpec): void => {
 export const validateBuild = (component_spec: ComponentSpec): void => {
   for (const [service_name, service] of Object.entries(component_spec.services || {})) {
     if (service.build && service.build.dockerfile && service.build.buildpack) {
-      throw new ArchitectError(`Dockerfile and buildpack are found in service ${service_name} of component ${component_spec.name}. Please specify only one.`);
+      throw new ArchitectError(`Dockerfile and buildpack are specified in service ${service_name} of component ${component_spec.name}. Please specify only one.`);
     }
   }
 };

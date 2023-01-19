@@ -744,10 +744,10 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'test/mocks/buildpack/buildpack-architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('register with buildpack set to true override Dockerfile', ctx => {
-      expect(ctx.stderr).to.contain('Registering component hello-world-buildpack:1.0.0 with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component hello-world:1.0.0 with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
 
-      // Since the image of the service is built from the buildpack, docker buildx is not called.
+      // Since the image of the service is built from buildpack, docker buildx is not called.
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
       expect(compose.callCount).to.eq(0);
       expect(compose.firstCall).null;
@@ -776,7 +776,7 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'test/mocks/buildpack/buildpack-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('register with buildpack and dockerfile services', ctx => {
-      expect(ctx.stderr).to.contain('Registering component hello-world-all:1.0.0 with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component hello-world:1.0.0 with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
       expect(compose.callCount).to.eq(1);

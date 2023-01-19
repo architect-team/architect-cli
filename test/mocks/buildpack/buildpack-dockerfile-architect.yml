@@ -1,4 +1,4 @@
-name: hello-world-all
+name: hello-world
 
 description: Test registering a component using buildpack and dockerfile services
 
@@ -12,10 +12,12 @@ services:
       context: ../../../examples/hello-world
       buildpack: true
     interfaces:
-      main:
+      hello:
         port: 3000
         ingress:
           subdomain: buildpack-api
+    liveness_probe:
+      command: curl --fail localhost:3000
     environment:
       WORLD_TEXT: ${{ secrets.world_text }}
   
@@ -23,9 +25,11 @@ services:
     build:
       context: ../../../examples/hello-world
     interfaces:
-      main:
+      hello:
         port: 4000
         ingress:
           subdomain: dockerfile-api
+    liveness_probe:
+      command: curl --fail localhost:4000
     environment:
       WORLD_TEXT: ${{ secrets.world_text }}

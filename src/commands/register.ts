@@ -345,19 +345,25 @@ export default class ComponentRegister extends BaseCommand {
       const node = graph.getNodeByRef(service_name);
       if ((node instanceof ServiceNode || node instanceof TaskNode) && !node.config.build) continue;
 
-      if (service.labels) {
+      if (service.labels && service.build) {
         const ref_label = service.labels.find(label => label.startsWith('architect.ref='));
         if (!ref_label) continue;
         const ref = ref_label.replace('architect.ref=', '');
         const { component_name, resource_type, resource_name } = ResourceSlugUtils.parse(ref);
         const ref_with_account = ResourceSlugUtils.build(account_name, component_name, resource_type, resource_name);
 
-        const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags.architecture);
+        compose.services[service_name] = {};
 
-        const specified_dockerfile = Boolean(service.build?.dockerfile);
-        const unspecified_dockerfile = service.build && service.build.context ? await this.doesDockerfileExist(service.build.context) : false;
-        const use_dockerfile = specified_dockerfile || unspecified_dockerfile;
-        if (service.build && use_dockerfile) {
+        const specified_dockerfile = Boolean(service.build.dockerfile);
+        const unspecified_dockerfile = service.build.context ? await this.doesDockerfileExist(service.build.context) : false;
+        if (service.build.buildpack || (!specified_dockerfile && !unspecified_dockerfile)) {
+          await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.build.context);
+          buildpack_images.push({ 'name': service_name, 'ref': getImage(ref_with_account) });
+          if (component_spec.services) {
+            delete component_spec.services[resource_name].build;
+          }
+        } else {
+          const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags.architecture);
           service.build['x-bake'] = {
             platforms: buildx_platforms,
             pull: false,
@@ -390,24 +396,10 @@ export default class ComponentRegister extends BaseCommand {
               }
             }
           }
+          compose.services[service_name].build = service.build;
         }
 
-        compose.services[service_name] = {
-          build: service.build,
-          image: service.image,
-        };
-
-        if (service.build?.buildpack || !use_dockerfile) {
-          await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.build?.context);
-          buildpack_images.push({ 'name': service_name, 'ref': getImage(ref_with_account) });
-
-          // Remove build and buildpack
-          if (component_spec.services) {
-            delete component_spec.services[resource_name].build;
-          }
-          delete compose.services[service_name].build;
-        }
-
+        compose.services[service_name].image = service.image;
         image_mapping[ref_with_account] = compose.services[service_name].image;
       }
     }
