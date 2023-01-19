@@ -354,7 +354,10 @@ export default class ComponentRegister extends BaseCommand {
 
         const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags.architecture);
 
-        if (service.build?.dockerfile) {
+        const specified_dockerfile = Boolean(service.build?.dockerfile);
+        const unspecified_dockerfile = service.build && service.build.context ? await this.doesDockerfileExist(service.build.context) : false;
+        const use_dockerfile = specified_dockerfile || unspecified_dockerfile;
+        if (service.build && use_dockerfile) {
           service.build['x-bake'] = {
             platforms: buildx_platforms,
             pull: false,
@@ -394,9 +397,7 @@ export default class ComponentRegister extends BaseCommand {
           image: service.image,
         };
 
-        const specified_dockerfile = Boolean(service.build?.dockerfile);
-        const unspecified_dockerfile = service.build && service.build.context ? await this.doesDockerfileExist(service.build.context) : false;
-        if (service.build?.buildpack || (!specified_dockerfile && !unspecified_dockerfile)) {
+        if (service.build?.buildpack || !use_dockerfile) {
           await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.build?.context);
           buildpack_images.push({ 'name': service_name, 'ref': getImage(ref_with_account) });
 

@@ -708,6 +708,9 @@ describe('register', function () {
       .post(/\/accounts\/.*\/components/)
       .reply(200, {})
     )
+    .stub(PluginManager, 'getPlugin', sinon.stub().returns({
+      build: () => { },
+    }))
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'test/mocks/register/architect.yml', '-a', 'examples'])
@@ -740,7 +743,7 @@ describe('register', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'test/mocks/buildpack/buildpack-architect.yml', '-t', '1.0.0', '-a', 'examples'])
-    .it('register with buildpack set to true will install the buildpack plugin', ctx => {
+    .it('register with buildpack set to true override Dockerfile', ctx => {
       expect(ctx.stderr).to.contain('Registering component hello-world-buildpack:1.0.0 with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
 

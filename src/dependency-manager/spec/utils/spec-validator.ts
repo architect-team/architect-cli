@@ -357,8 +357,5 @@ export const validateBuild = (component_spec: ComponentSpec): void => {
     if (service.build && service.build.dockerfile && service.build.buildpack) {
       throw new ArchitectError(`Dockerfile and buildpack are found in service ${service_name} of component ${component_spec.name}. Please specify only one.`);
     }
-    if (service.build && !service.build.dockerfile && service.build.buildpack === false) {
-      throw new ArchitectError(`Buildpack is set to false in service ${service_name} of component ${component_spec.name}. Please specify a dockerfile or set buildpack to true.`);
-    }
   }
 };
