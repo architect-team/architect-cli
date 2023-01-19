@@ -1043,8 +1043,9 @@ describe('components spec v1', function () {
 
         services:
           app:
-            environment:
-              API_ADDR: \${{ services.api.interfaces.main.url }}
+            debug:
+              environment:
+                API_ADDR: \${{ services.api.interfaces.main.url }}
           api:
             enabled: false
             interfaces:
