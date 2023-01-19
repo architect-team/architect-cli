@@ -255,6 +255,21 @@ export default abstract class DependencyManager {
   }
 
   async getComponentSpecContext(graph: DependencyGraph, component_spec: ComponentSpec, all_secrets: SecretsDict, options: GraphOptions): Promise<{ component_spec: ComponentSpec, context: ComponentContext }> {
+    // Remove debug blocks
+    for (const service_name of Object.keys(component_spec.services || {})) {
+      delete component_spec.services![service_name].debug;
+    }
+    for (const task_name of Object.keys(component_spec.tasks || {})) {
+      delete component_spec.tasks![task_name].debug;
+    }
+
+    // Remove optional services that are disabled
+    for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
+      if (service_spec.enabled !== undefined && !service_spec.enabled) {
+        delete component_spec.services![service_name];
+      }
+    }
+
     const interpolateObject = options.validate ? interpolateObjectOrReject : interpolateObjectLoose;
 
     let context: ComponentContext = {
