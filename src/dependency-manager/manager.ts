@@ -386,17 +386,8 @@ export default abstract class DependencyManager {
         context_map[component_spec.metadata.ref] = context;
       }
 
-      const parsed = ComponentVersionSlugUtils.parse(component_spec.metadata.ref);
-      if (parsed.component_account_name && parsed.component_account_name === this.account) {
-        const ref_without_account = ComponentSlugUtils.build(undefined, parsed.component_name, parsed.instance_name);
-        // Hack to support optional account prefixes
-        context_map[ref_without_account] = context_map[component_spec.metadata.ref];
-      } else if (!parsed.component_account_name && this.account) {
-        const ref_with_account = ComponentSlugUtils.build(this.account, parsed.component_name, parsed.instance_name);
-        // Hack to support optional account prefixes
-        context_map[ref_with_account] = context_map[component_spec.metadata.ref];
-      }
-
+      // Hack to support optional account prefixes in dependency name
+      context_map[`${this.account}/${component_spec.metadata.ref}`] = context_map[component_spec.metadata.ref];
       evaluated_component_specs.push(component_spec);
     }
 

@@ -21,8 +21,6 @@ describe('slug validators with account', () => {
 
   it(`ComponentSlugUtils.parse accurately splits ${component_slug}`, async () => {
     const result = ComponentSlugUtils.parse(component_slug);
-
-    expect(result.component_account_name).to.equal(component_account_name);
     expect(result.component_name).to.equal(component_name);
   });
 
@@ -32,7 +30,6 @@ describe('slug validators with account', () => {
 
   it(`ComponentVersionSlugUtils.parse accurately splits ${component_version_slug}`, async () => {
     const result = ComponentVersionSlugUtils.parse(component_version_slug);
-    expect(result.component_account_name).to.equal(component_account_name);
     expect(result.component_name).to.equal(component_name);
     expect(result.tag).to.equal(tag);
   });
@@ -43,7 +40,6 @@ describe('slug validators with account', () => {
 
   it(`ResourceSlugUtils.parse accurately splits ${resource_slug}`, async () => {
     const result = ResourceSlugUtils.parse(resource_slug);
-    expect(result.component_account_name).to.equal(component_account_name);
     expect(result.component_name).to.equal(component_name);
   });
 
@@ -71,7 +67,6 @@ describe('slug validators without account', () => {
 
   it(`ComponentSlugUtils.parse accurately splits ${component_slug}`, async () => {
     const result = ComponentSlugUtils.parse(component_slug);
-    expect(result.component_account_name).to.be.undefined;
     expect(result.component_name).to.equal(component_name);
 
     const build = ComponentSlugUtils.build.apply(null, Object.values(result) as any)
@@ -84,7 +79,6 @@ describe('slug validators without account', () => {
 
   it(`ComponentVersionSlugUtils.parse accurately splits ${component_slug}`, async () => {
     const result = ComponentVersionSlugUtils.parse(component_slug);
-    expect(result.component_account_name).to.be.undefined;
     expect(result.component_name).to.equal(component_name);
     expect(result.tag).to.equal('latest');
 
@@ -94,7 +88,6 @@ describe('slug validators without account', () => {
 
   it(`ComponentVersionSlugUtils.parse accurately splits ${component_version_slug}`, async () => {
     const result = ComponentVersionSlugUtils.parse(component_version_slug);
-    expect(result.component_account_name).to.be.undefined;
     expect(result.component_name).to.equal(component_name);
     expect(result.tag).to.equal(tag);
 
@@ -108,7 +101,6 @@ describe('slug validators without account', () => {
 
   it(`ResourceSlugUtils.parse accurately splits ${resource_slug}`, async () => {
     const result = ResourceSlugUtils.parse(resource_slug);
-    expect(result.component_account_name).to.be.undefined;
     expect(result.component_name).to.equal(component_name);
     expect(result.resource_type).to.equal('services');
     expect(result.resource_name).to.equal(resource_name);

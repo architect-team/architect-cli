@@ -35,11 +35,11 @@ describe('task:exec', async function () {
 
   const instance_name = 'instance-2';
 
-  const namespaced_component_name = ComponentSlugUtils.build(mock_account.name, mock_component.name);
-  const task_name = ResourceSlugUtils.build(mock_account.name, mock_component.name, 'tasks', mock_task.name);
-  const tagged_component_name = ComponentVersionSlugUtils.build(mock_account.name, mock_component.name, tag);
-  const instanced_task_name = ResourceSlugUtils.build(mock_account.name, mock_component.name, 'tasks', mock_task.name, instance_name);
-  const instanced_component_name = ComponentVersionSlugUtils.build(mock_account.name, mock_component.name, tag, instance_name);
+  const namespaced_component_name = ComponentSlugUtils.build(mock_component.name);
+  const task_name = ResourceSlugUtils.build(mock_component.name, 'tasks', mock_task.name);
+  const tagged_component_name = ComponentVersionSlugUtils.build(mock_component.name, tag);
+  const instanced_task_name = ResourceSlugUtils.build(mock_component.name, 'tasks', mock_task.name, instance_name);
+  const instanced_component_name = ComponentVersionSlugUtils.build(mock_component.name, tag, instance_name);
 
   const mock_remote_task_id = 'remote-task-id';
   const mock_local_env_name = 'local';
@@ -122,7 +122,7 @@ describe('task:exec', async function () {
 
   const bad_env_name = 'nonexistent-env';
   const bad_component_name = 'nonexistent-component';
-  const namespaced_bad_component_name = ComponentSlugUtils.build(mock_account.name, bad_component_name);
+  const namespaced_bad_component_name = ComponentSlugUtils.build(bad_component_name);
 
   mockArchitectAuth()
     .nock(MOCK_API_HOST, api => api
@@ -168,9 +168,9 @@ describe('task:exec', async function () {
     .it('fails with a useful message if given a bad component name');
 
   const mock_docker_compose_service: { [key: string]: {} } = {};
-  const mock_slug = ResourceSlugUtils.build(mock_account.name, mock_component.name, 'tasks', mock_task.name);
+  const mock_slug = ResourceSlugUtils.build(mock_component.name, 'tasks', mock_task.name);
   const mock_ref = resourceRefToNodeRef(mock_slug);
-  const instanced_mock_slug = ResourceSlugUtils.build(mock_account.name, mock_component.name, 'tasks', mock_task.name, instance_name);
+  const instanced_mock_slug = ResourceSlugUtils.build(mock_component.name, 'tasks', mock_task.name, instance_name);
   const instanced_mock_ref = resourceRefToNodeRef(instanced_mock_slug);
   mock_docker_compose_service[mock_ref] = {};
   mock_docker_compose_service[instanced_mock_ref] = {};

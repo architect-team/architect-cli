@@ -56,10 +56,6 @@ export interface ParsedSlug {
 }
 
 export type ComponentSlug = string; // "<component-name>"
-// export interface ParsedComponentSlug extends ParsedSlug {
-//   // component_name: string;
-//   // instance_name?: string;
-// }
 
 abstract class SlugUtils {
   public static Description: string;
@@ -87,7 +83,7 @@ function parseCurry<S extends string, P extends ParsedSlug>() {
 export class ComponentSlugUtils extends SlugUtils {
   public static Description = Slugs.ArchitectSlugDescription;
 
-  static RegexName = `(?:(?<component_account_name>${Slugs.ArchitectSlugRegexBase})${Slugs.NAMESPACE_DELIMITER})?(?<component_name>${Slugs.ArchitectSlugRegexBase})`;
+  static RegexName = `(?:${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER})?(?<component_name>${Slugs.ArchitectSlugRegexBase})`;
   static RegexInstance = `(?:${Slugs.INSTANCE_DELIMITER}(?<instance_name>${Slugs.ComponentTagRegexBase}))?`;
 
   static RegexBase = `${ComponentSlugUtils.RegexName}${ComponentSlugUtils.RegexInstance}`;
@@ -107,9 +103,7 @@ export class ComponentSlugUtils extends SlugUtils {
 
 export type ComponentVersionSlug = string; // "<component-name>:<tag>"
 export interface ParsedComponentVersionSlug extends ParsedSlug {
-  // component_name: string;
   tag: string;
-  // instance_name?: string;
 }
 
 export class ComponentVersionSlugUtils extends SlugUtils {
@@ -136,10 +130,8 @@ export type ResourceType = 'services' | 'tasks';
 
 export type ResourceSlug = string;
 export interface ParsedResourceSlug extends ParsedSlug {
-  // component_name: string;
   resource_type: ResourceType;
   resource_name: string;
-  // instance_name?: string;
 }
 export class ResourceSlugUtils extends SlugUtils {
   public static Description = 'must be of the form <component-name>.services|tasks.<resource-name>';
@@ -161,11 +153,8 @@ export class ResourceSlugUtils extends SlugUtils {
 }
 
 export interface ParsedUnknownSlug extends ParsedSlug {
-  component_account_name?: string;
-  component_name: string;
   resource_type?: ResourceType;
   resource_name?: string;
-  instance_name?: string;
 }
 
 export const parseUnknownSlug = (unknown: string): ParsedUnknownSlug => {

@@ -16,8 +16,8 @@ export class SecretsConfig {
 
       // Backwards compat for tags
       if (ComponentVersionSlugUtils.Validator.test(key)) {
-        const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(key);
-        key = ComponentSlugUtils.build(component_account_name, component_name, instance_name);
+        const { component_name, instance_name } = ComponentVersionSlugUtils.parse(key);
+        key = ComponentSlugUtils.build(component_name, instance_name);
       }
 
       if (
