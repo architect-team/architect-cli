@@ -4,13 +4,10 @@
   "description": "A sample Node.js app using Express 4",
   "main": "src/index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node src/index.js"
   },
   "dependencies": {
     "express": "^4.0.0"
-  },
-  "engines": {
-    "node": "0.16.x"
   },
   "license": "MIT"
 }
