@@ -1,31 +1,13 @@
-const winston = require('winston');
 const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
+const app = express();
 
-const start = async () => {
-  const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.simple(),
-    defaultMeta: { service: 'architect' },
-    transports: [
-      new winston.transports.Console(),
-    ],
-  });
+app.set('port', (process.env.PORT || 3000));
+app.use(express.static(__dirname + '/public'));
 
-  const app = express();
-  app.use(cors());
-  app.use(bodyParser.urlencoded({ extended: true }));
-  app.use(bodyParser.json());
+app.get('/', (request, response) => {
+  response.send(`Hello ${process.env.WORLD_TEXT}!`);
+});
 
-  app.all('*', (req, res) => {
-    logger.info(`${req.method} ${req.url}`);
-    res.status(200).json([]);
-  });
-
-  return app.listen(8080, () => {
-    logger.info(`> Listening on port: 8080`);
-  });
-};
-
-start();
+app.listen(app.get('port'), () => {
+  console.log(`Node app is running at localhost: ${app.get('port')}`);
+});
