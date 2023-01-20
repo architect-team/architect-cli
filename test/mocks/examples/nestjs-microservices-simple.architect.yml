@@ -9,7 +9,7 @@ keywords:
 services:
   api:
     build:
-      context: ./context/src
+      context: ./context
       args:
         NODE_ENV: production
     interfaces:

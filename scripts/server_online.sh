@@ -10,7 +10,7 @@ do
       exit 1
     fi
 
-    printf "($(echo $running_count | sed 's/ *$//g')/6) Services Running..\n"
+    printf '.'
     attempt_counter=$(($attempt_counter+1))
     sleep 10
     running_count=$(./bin/dev dev:list | grep running | wc -l)

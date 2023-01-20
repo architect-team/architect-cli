@@ -25,8 +25,8 @@ services:
         port: 5672
   producer:
     build:
-      context: ./context/src
-      dockerfile: ./context/Dockerfile
+      context: ./context
+      dockerfile: ../examples/context/Dockerfile
     interfaces:
       app:
         port: 3000
@@ -43,8 +43,8 @@ services:
         npm start
   consumer:
     build:
-      context: ./context/src
-      dockerfile: ./context/Dockerfile
+      context: ./context
+      dockerfile: ../examples/context/Dockerfile
     environment:
       AMQP_HOST: ${{ services.message-broker.interfaces.amqp.host }}
       QUEUE_NAME: ${{ secrets.queue_name }}

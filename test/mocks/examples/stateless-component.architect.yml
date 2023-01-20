@@ -22,7 +22,7 @@ dependencies:
 services:
   stateless-app:
     build:
-      context: ./context/src
+      context: ./context
     interfaces:
       http:
         port: 8080

@@ -5,7 +5,7 @@ homepage: https://github.com/architect-team/architect-cli/tree/main/examples/sch
 tasks:
   curler:
     build:
-      context: .
+      context: ./context
     schedule: '0 0 * * *' # every day at 12:00am
     command:
       - sh
@@ -18,7 +18,7 @@ tasks:
 services:
   api:
     build:
-      context: ./context/src
+      context: ./context
     interfaces:
       main:
         port: 3000
