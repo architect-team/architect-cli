@@ -355,9 +355,8 @@ export default class ComponentRegister extends BaseCommand {
 
         compose.services[service_name] = {};
 
-        const specified_dockerfile = Boolean(service.build.dockerfile);
-        const unspecified_dockerfile = service.build.context ? await DockerUtils.doesDockerfileExist(service.build.context) : false;
-        if (service.build.buildpack || (!specified_dockerfile && !unspecified_dockerfile)) {
+        const dockerfile_exist = service.build.context ? await DockerUtils.doesDockerfileExist(service.build.context, service.build.dockerfile) : false;
+        if (service.build.buildpack || !dockerfile_exist) {
           await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.build.context);
           buildpack_images.push({ 'name': service_name, 'ref': getImage(ref_with_account) });
           if (component_spec.services) {

@@ -745,9 +745,9 @@ $ architect dev -e new_env_name_here .`));
       if (!service.build) {
         continue;
       }
-      const specified_dockerfile = Boolean(service.build?.dockerfile);
-      const unspecified_dockerfile = service.build && service.build.context ? await DockerUtils.doesDockerfileExist(service.build.context) : false;
-      if (service.build?.buildpack || (!specified_dockerfile && !unspecified_dockerfile)) {
+
+      const dockerfile_exist = service.build.context ? await DockerUtils.doesDockerfileExist(service.build.context, service.build.dockerfile) : false;
+      if (service.build?.buildpack || !dockerfile_exist) {
         await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.build?.context);
         service.image = `${service_name}:latest`;
         delete service.build;
