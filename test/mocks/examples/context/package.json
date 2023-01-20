@@ -1,5 +1,5 @@
 {
-  "name": "@architect-examples/stateful-component-backend",
+  "name": "@test/example-project",
   "version": "0.1.0",
   "description": "stateful component backend application",
   "main": "src/index.js",

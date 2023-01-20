@@ -10,7 +10,8 @@ keywords:
 services:
   api:
     build:
-      context: ../../../examples/hello-world
+      context: ../examples/context/src
+      dockerfile: Dockerfile
     interfaces:
       main: 3000
     environment:
