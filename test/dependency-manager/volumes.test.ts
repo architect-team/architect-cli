@@ -16,9 +16,10 @@ describe('volumes spec v1', () => {
       name: component
       services:
         api:
-          volumes:
-            data:
-              mount_path: /data
+          debug:
+            volumes:
+              data:
+                mount_path: /data
       `
     mock_fs({
       '/component/component.yml': component_config,
@@ -27,7 +28,7 @@ describe('volumes spec v1', () => {
       'component': '/component/component.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('component')
+      await manager.loadComponentSpec('component', {}, true)
     ])
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_safe_ref].volumes).has.members(['api-data:/data'])
@@ -62,10 +63,11 @@ describe('volumes spec v1', () => {
       name: component
       services:
         api:
-          volumes:
-            data:
-              mount_path: /data
-              key: /user/app/data
+          debug:
+            volumes:
+              data:
+                mount_path: /data
+                key: /user/app/data
       `
     mock_fs({
       '/component/component.yml': component_config,
@@ -74,7 +76,7 @@ describe('volumes spec v1', () => {
       'component': '/component/component.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('component')
+      await manager.loadComponentSpec('component', {}, true)
     ])
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_safe_ref].volumes).has.members([`/user/app/data:/data`])
@@ -85,24 +87,22 @@ describe('volumes spec v1', () => {
       name: component
       services:
         api:
-          volumes:
-            data:
-              mount_path: /data
-            data2:
-              mount_path: /data2
           debug:
             volumes:
+              data:
+                mount_path: /data
+              data2:
+                mount_path: /data2
               data3:
                 mount_path: /data3
                 host_path: ./data3
         app:
-          volumes:
-            data:
-              mount_path: /data
-            data2:
-              mount_path: /data2
           debug:
             volumes:
+              data:
+                mount_path: /data
+              data2:
+                mount_path: /data2
               data3:
                 mount_path: /data3
                 host_path: ./data3

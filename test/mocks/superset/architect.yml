@@ -108,9 +108,6 @@ services:
       POSTGRES_USER: ${{ secrets.db_user }}
       POSTGRES_PASSWORD: ${{ secrets.db_pass }}
       POSTGRES_DB: ${{ secrets.db_name }}
-    # volumes: # TODO: uncomment when volumes are updated - https://gitlab.com/architect-io/hub-api/-/issues/671
-    #   volume-object:
-    #     mount_path: /usr/data
     ${{ if architect.environment == 'local' }}:
       description: api-db service debug
       image: postgres:12
@@ -200,12 +197,6 @@ services:
       - npm
       - run
       - start
-    # volumes: # TODO: uncomment when volumes are updated - https://gitlab.com/architect-io/hub-api/-/issues/671
-    #   volume-string: /usr/src/app/some-volume
-    #   volume-object:
-    #     mount_path: /usr/src/app/mount-path
-    #     description: Volume description
-    #     readonly: false
     ${{ if architect.environment == 'local' }}:
       build:
         args:
