@@ -7,7 +7,7 @@ import cron from 'cron-validate';
 import TSON from 'typescript-json';
 import { DeepPartial } from '../../../common/utils/types';
 import { Dictionary } from '../../utils/dictionary';
-import { ArchitectError, ValidationError, ValidationErrors } from '../../utils/errors';
+import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { buildContextMap, interpolateObject, replaceBrackets } from '../../utils/interpolation';
 import { findPotentialMatch } from '../../utils/match';
 import { RequiredInterpolationRule } from '../../utils/rules';
@@ -349,13 +349,5 @@ export const validateInterpolation = (component_spec: ComponentSpec): void => {
 
   if (filtered_errors.length > 0) {
     throw new ValidationErrors(filtered_errors, component_spec.metadata.file);
-  }
-};
-
-export const validateBuild = (component_spec: ComponentSpec): void => {
-  for (const [service_name, service] of Object.entries(component_spec.services || {})) {
-    if (service.build && service.build.dockerfile && service.build.buildpack) {
-      throw new ArchitectError(`Dockerfile and buildpack are specified in service ${service_name} of component ${component_spec.name}. Please specify only one.`);
-    }
   }
 };

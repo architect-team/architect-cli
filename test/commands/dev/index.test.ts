@@ -1536,4 +1536,20 @@ describe('local dev environment', function () {
       expect(runCompose.calledOnce).to.be.true
       expect(runCompose.firstCall.args[0]).to.deep.equal(buildpack_dockerfile_component_expected_compose)
     });
+  
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return fs.readFileSync('test/mocks/register/nonexistence-dockerfile-architect.yml').toString();
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './test/mocks/register/nonexistence-dockerfile-architect.yml', '--ssl=false'])
+    .catch(e => {
+      expect(e.message).contains(`${path.resolve('./examples/hello-world/nonexistent-dockerfile')} does not exist. Please verify the correct context and/or dockerfile were given.`);
+    })
+    .it('Dev component fail with a dockerfile that does not exist');
 });

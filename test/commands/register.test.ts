@@ -781,4 +781,18 @@ describe('register', function () {
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
       expect(compose.callCount).to.eq(1);
     });
+  
+  mockArchitectAuth()
+    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_architect_account_response)
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'test/mocks/register/nonexistence-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .catch(e => {
+      expect(e.message).contains(`${path.resolve('./examples/hello-world/nonexistent-dockerfile')} does not exist. Please verify the correct context and/or dockerfile were given.`);
+    })
+    .it('fail to register with a dockerfile that does not exist');
 });

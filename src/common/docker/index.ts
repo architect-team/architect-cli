@@ -18,15 +18,14 @@ export class DockerUtils {
     }
   }
 
-  public static async doesDockerfileExist(context: string, dockerfile: string | undefined) {
+  public static async doesDockerfileExist(context: string, dockerfile: string | undefined): Promise<boolean> {
     if (!dockerfile) {
       return fs.existsSync(path.join(context, 'Dockerfile'));
     }
 
-    const exist = fs.existsSync(path.join(context, 'Dockerfile'));
-    if (!exist) {
+    if (!fs.existsSync(path.join(context, dockerfile))) {
       throw new ArchitectError(`${path.join(context, dockerfile)} does not exist. Please verify the correct context and/or dockerfile were given.`);
     }
-    return exist;
+    return true;
   }
 }
