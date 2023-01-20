@@ -4,7 +4,7 @@ export default class PlatformCreate extends ClusterCreate {
   static aliases = ['platforms:register', 'platform:create', 'platforms:create'];
   static state = 'deprecated';
   static deprecationOptions = {
-    to: 'cluster:register',
+    to: 'clusters:register',
   };
   static hidden = true;
 

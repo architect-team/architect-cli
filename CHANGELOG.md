@@ -1,3 +1,11 @@
+## [1.31.1](https://github.com/architect-team/architect-cli/compare/v1.31.0...v1.31.1) (2023-01-05)
+
+
+### Bug Fixes
+
+* **deploy:** display URLs after deploy even when label isnt specified  ([#791](https://github.com/architect-team/architect-cli/issues/791)) ([2c9f03b](https://github.com/architect-team/architect-cli/commit/2c9f03bda811958f6a226e759739ac26734f0974))
+* **monitoring:** add nullsafe chain, and filter out potential null ([#789](https://github.com/architect-team/architect-cli/issues/789)) ([c2fa44e](https://github.com/architect-team/architect-cli/commit/c2fa44e24cd7cb5791d2ae04497688c5ed291b77))
+
 # [1.31.0](https://github.com/architect-team/architect-cli/compare/v1.30.0...v1.31.0) (2022-12-22)
 
 

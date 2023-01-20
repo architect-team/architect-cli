@@ -46,6 +46,7 @@ export interface ServiceInterfaceConfig {
 }
 
 export interface ServiceConfig extends ResourceConfig {
+  enabled: boolean;
   debug?: ServiceConfig;
   interfaces: Dictionary<ServiceInterfaceConfig>;
   liveness_probe?: LivenessProbeConfig;

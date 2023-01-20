@@ -1,4 +1,4 @@
-import { plainToClass } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import deepmerge, { Options } from 'deepmerge';
 import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
@@ -55,7 +55,7 @@ export function generateIngressesOverrideSpec(component_spec: ComponentSpec, ing
     throw new ValidationErrors(errors);
   }
 
-  return plainToClass(ComponentSpec, spec);
+  return plainToInstance(ComponentSpec, spec);
 }
 
 const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
@@ -63,9 +63,9 @@ const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: de
 function specMerge(key: string, options?: Options): ((x: any, y: any) => any) | undefined {
   return (x, y) => {
     if (!(x instanceof Object) && y instanceof Object && y.constructor?.merge_key) {
-      return { [y.constructor.merge_key]: x, ...y };
+      return deepmerge({ [y.constructor.merge_key]: x }, y, { arrayMerge: overwriteMerge, customMerge: specMerge });
     } else if (x instanceof Object && !(y instanceof Object) && x.constructor?.merge_key) {
-      return { ...x, [x.constructor.merge_key]: y };
+      return deepmerge(x, { [x.constructor.merge_key]: y }, { arrayMerge: overwriteMerge, customMerge: specMerge });
     } else {
       return deepmerge(x, y, { arrayMerge: overwriteMerge, customMerge: specMerge });
     }
@@ -73,5 +73,5 @@ function specMerge(key: string, options?: Options): ((x: any, y: any) => any) | 
 }
 
 export function overrideSpec(spec: ComponentSpec, override: RecursivePartial<ComponentSpec>): ComponentSpec {
-  return plainToClass(ComponentSpec, deepmerge(spec, override, { arrayMerge: overwriteMerge, customMerge: specMerge }));
+  return plainToInstance(ComponentSpec, deepmerge(spec, override, { arrayMerge: overwriteMerge, customMerge: specMerge }));
 }

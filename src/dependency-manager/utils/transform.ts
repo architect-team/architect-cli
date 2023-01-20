@@ -1,4 +1,4 @@
-import { ClassConstructor, plainToClass } from 'class-transformer';
+import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { Dictionary } from './dictionary';
 
 /**
@@ -20,7 +20,7 @@ export const Dict = <T>(typeFunction: () => ClassConstructor<T>, options?: { key
         new_value[options.key] = value;
         value = new_value;
       }
-      res[key] = plainToClass(classConstructor, value);
+      res[key] = plainToInstance(classConstructor, value);
     }
     return res;
   };

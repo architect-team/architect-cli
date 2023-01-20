@@ -3,6 +3,7 @@ import '@sentry/tracing';
 import chalk from 'chalk';
 import { Memoize } from 'typescript-memoize';
 import { Dictionary, ValidationErrors } from '.';
+import AuthClient from './app-config/auth';
 import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
@@ -44,7 +45,7 @@ export default abstract class BaseCommand extends Command {
       if (token_json.expires_in) {
         const auth_client = this.app.auth.getAuthClient();
         const access_token = auth_client.createToken(token_json);
-        if (access_token.expired()) {
+        if (access_token.expired(AuthClient.EXPIRATION_WINDOW_IN_SECONDS)) {
           throw new LoginRequiredError();
         }
       }
