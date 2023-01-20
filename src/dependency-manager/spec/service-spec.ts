@@ -193,6 +193,14 @@ export class ServiceInterfaceSpec {
 })
 export class ServiceSpec extends ResourceSpec {
   @IsOptional()
+  @JSONSchema({
+    type: 'boolean',
+    description: 'Determines if the service should be running.',
+    default: true,
+  })
+  enabled?: boolean;
+
+  @IsOptional()
   @ValidateNested()
   @Type(() => ServiceSpec)
   debug?: Partial<ServiceSpec>;
