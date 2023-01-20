@@ -1929,6 +1929,21 @@ services:
           buildSpecFromYml(yml);
         }).to.throw(ValidationErrors);
       });
+
+      it('cannot use both dockerfile and buildpack in build block', () => {
+        const component_config = `
+        name: hello-world
+        services:
+          api:
+            build:
+              context: .
+              dockerfile: Dockerfile
+              buildpack: true
+        `
+        expect(() => {
+          buildSpecFromYml(component_config)
+        }).to.be.throws(ArchitectError);
+      });
     })
   });
 });

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { ArchitectError, buildSpecFromYml, validateBuild, validateInterpolation, ValidationErrors } from '../../src';
+import { buildSpecFromYml, validateInterpolation, ValidationErrors } from '../../src';
 
 describe('interpolation-validation', () => {
 
@@ -187,24 +187,6 @@ describe('interpolation-validation', () => {
 
       const component_spec = buildSpecFromYml(component_config)
       validateInterpolation(component_spec)
-    });
-
-    it('cannot use both dockerfile and buildpack in build block', () => {
-      const component_config = `
-        name: hello-world
-        services:
-          api:
-            build:
-              context: .
-              dockerfile: Dockerfile
-              buildpack: true
-        `
-
-      const component_spec = buildSpecFromYml(component_config)
-
-      expect(() => {
-        validateBuild(component_spec)
-      }).to.be.throws(ArchitectError);
     });
   });
 });

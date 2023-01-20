@@ -1,7 +1,7 @@
 import { IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
-import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString, OneOf, StringOrStringArray } from './utils/json-schema-annotations';
+import { AnyOf, ArrayOf, ExclusiveOrNeither, ExpressionOr, ExpressionOrString, OneOf, StringOrStringArray } from './utils/json-schema-annotations';
 import { Slugs } from './utils/slugs';
 
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -9,6 +9,10 @@ export type EnvironmentSpecValue = boolean | null | number | object | string;
 
 @JSONSchema({
   description: 'An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.',
+  errorMessage: {
+    not: 'Buildpack and Dockerfile cannot be used at the same time',
+  },
+  ...ExclusiveOrNeither('buildpack', 'dockerfile'),
 })
 export class BuildSpec {
   @IsOptional()

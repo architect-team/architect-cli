@@ -9,7 +9,7 @@ import yaml from 'js-yaml';
 import net from 'net';
 import opener from 'opener';
 import path from 'path';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary, validateBuild } from '../../';
+import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
 import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
@@ -723,10 +723,6 @@ $ architect dev -e new_env_name_here .`));
       } else {
         component_specs.push(component_config);
       }
-    }
-
-    for (const spec of component_specs) {
-      validateBuild(spec);
     }
 
     const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
