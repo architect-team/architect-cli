@@ -15,9 +15,10 @@ import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
+import { DockerImage, DockerUtils } from '../common/docker';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import DockerBuildXUtils, { DockerImage } from '../common/docker/buildx.utils';
+import DockerBuildXUtils from '../common/docker/buildx.utils';
 import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
 import OrasPlugin from '../common/plugins/oras-plugin';
 import PluginManager from '../common/plugins/plugin-manager';
@@ -34,6 +35,7 @@ interface ImageRefOutput {
   new_spec: ComponentSpec;
   image_mapping: Dictionary<string | undefined>;
   buildpack_images: DockerImage[];
+  seen_cache_dir: Set<string>;
 }
 
 interface Composes {
@@ -210,7 +212,7 @@ export default class ComponentRegister extends BaseCommand {
 
     // The external address and ssl have no bearing on registration
     const full_compose = await DockerComposeUtils.generate(graph, { getImage });
-    const { compose, new_spec, image_mapping, buildpack_images } = await this.setImageRef({ full_compose, component_spec }, graph, selected_account.name, getImage);
+    const { compose, new_spec, image_mapping, buildpack_images, seen_cache_dir } = await this.setImageRef({ full_compose, component_spec }, graph, selected_account.name, getImage);
 
     const project_name = `register.${resourceRefToNodeRef(component_spec.name)}.${tag}`;
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
@@ -236,11 +238,20 @@ export default class ComponentRegister extends BaseCommand {
 
     const use_buildx = Object.values(compose.services).some(service => service.build);
     const build_promises: Promise<void>[] = [
-      DockerBuildXUtils.pushImagesToRegistry(buildpack_images),
-      DockerBuildXUtils.build(use_buildx, { app: this.app, compose_file: compose_file, build_args: build_args }),
+      DockerUtils.pushImagesToRegistry(buildpack_images),
+      ...(use_buildx ? [DockerBuildXUtils.build(this.app, compose_file, build_args)] : []),
     ];
 
-    await Promise.all(build_promises);
+    try {
+      await Promise.all(build_promises);
+    } catch (err: any) {
+      fs.removeSync(compose_file);
+      throw new ArchitectError(err.message);
+    }
+
+    for (const cache_dir of seen_cache_dir) {
+      await fs.move(`${cache_dir}-tmp`, cache_dir, { overwrite: true });
+    }
 
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
       if (IF_EXPRESSION_REGEX.test(service_name)) {
@@ -318,15 +329,6 @@ export default class ComponentRegister extends BaseCommand {
     console.timeEnd('Time');
   }
 
-  private async doesDockerfileExist(context: string): Promise<boolean> {
-    try {
-      await fs.promises.access(path.join(context, 'Dockerfile'));
-      return true;
-    } catch (ex) {
-      return false;
-    }
-  }
-
   private async setImageRef(composes: Composes, graph: Readonly<DependencyGraphMutable>, account_name: string, getImage: (ref: string) => string): Promise<ImageRefOutput> {
     const { flags } = await this.parse(ComponentRegister);
 
@@ -354,7 +356,7 @@ export default class ComponentRegister extends BaseCommand {
         compose.services[service_name] = {};
 
         const specified_dockerfile = Boolean(service.build.dockerfile);
-        const unspecified_dockerfile = service.build.context ? await this.doesDockerfileExist(service.build.context) : false;
+        const unspecified_dockerfile = service.build.context ? await DockerUtils.doesDockerfileExist(service.build.context) : false;
         if (service.build.buildpack || (!specified_dockerfile && !unspecified_dockerfile)) {
           await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.build.context);
           buildpack_images.push({ 'name': service_name, 'ref': getImage(ref_with_account) });
@@ -403,10 +405,6 @@ export default class ComponentRegister extends BaseCommand {
       }
     }
 
-    for (const cache_dir of seen_cache_dir) {
-      await fs.move(`${cache_dir}-tmp`, cache_dir, { overwrite: true });
-    }
-
     const new_spec = instanceToInstance(component_spec);
 
     return {
@@ -414,6 +412,7 @@ export default class ComponentRegister extends BaseCommand {
       new_spec,
       image_mapping,
       buildpack_images,
+      seen_cache_dir,
     };
   }
 

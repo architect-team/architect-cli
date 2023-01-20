@@ -16,17 +16,6 @@ const PLATFORM_MAP = new Map<string, string>([
   ['windows-amd64', 'windows/amd64'],
 ]);
 
-interface BuildxParams {
-  app: AppService;
-  compose_file: string;
-  build_args: string[];
-}
-
-export interface DockerImage {
-  name: string;
-  ref: string;
-}
-
 export default class DockerBuildXUtils {
   public static isMacM1Machine(): boolean {
     return os.cpus()[0].model.includes('Apple M1');
@@ -105,32 +94,10 @@ export default class DockerBuildXUtils {
   }
 
   @RequiresDocker({ buildx: true })
-  public static async buildAndPush(buildx_params: BuildxParams): Promise<void> {
-    const { app, compose_file, build_args } = buildx_params;
-
+  public static async build(app: AppService, compose_file: string, build_args: string[]): Promise<void> {
     const builder = await this.getBuilder(app.config);
-    try {
-      await this.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], builder, {
-        stdio: 'inherit',
-      });
-    } catch (err: any) {
-      fs.removeSync(compose_file);
-      throw new ArchitectError(err.message);
-    }
-  }
-
-  @RequiresDocker()
-  public static async pushImagesToRegistry(images: DockerImage[]): Promise<void> {
-    for (const image of images) {
-      await docker(['tag', `${image.name}:latest`, image.ref]);
-      await docker(['push', image.ref]);
-    }
-  }
-
-  @RequiresDocker()
-  public static async build(use_buildx: boolean, buildx_params: BuildxParams): Promise<void> {
-    if (use_buildx) {
-      await this.buildAndPush(buildx_params);
-    }
+    await this.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], builder, {
+      stdio: 'inherit',
+    });
   }
 }

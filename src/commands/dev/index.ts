@@ -16,6 +16,7 @@ import { EnvironmentUtils } from '../../architect/environment/environment.utils'
 import SecretUtils from '../../architect/secret/secret.utils';
 import { default as BaseCommand } from '../../base-command';
 import LocalDependencyManager, { ComponentConfigOpts } from '../../common/dependency-manager/local-manager';
+import { DockerUtils } from '../../common/docker';
 import { DockerComposeUtils } from '../../common/docker-compose';
 import DockerComposeTemplate from '../../common/docker-compose/template';
 import { RequiresDocker } from '../../common/docker/helper';
@@ -739,22 +740,13 @@ $ architect dev -e new_env_name_here .`));
     await this.runCompose(compose, environment, flags.port, gateway_admin_port);
   }
 
-  async doesDockerfileExist(context: string): Promise<boolean> {
-    try {
-      await fs.promises.access(path.join(context, 'Dockerfile'));
-      return true;
-    } catch (ex) {
-      return false;
-    }
-  }
-
   async handleBuildpackServices(compose: DockerComposeTemplate): Promise<DockerComposeTemplate> {
     for (const [service_name, service] of Object.entries(compose.services)) {
       if (!service.build) {
         continue;
       }
       const specified_dockerfile = Boolean(service.build?.dockerfile);
-      const unspecified_dockerfile = service.build && service.build.context ? await this.doesDockerfileExist(service.build.context) : false;
+      const unspecified_dockerfile = service.build && service.build.context ? await DockerUtils.doesDockerfileExist(service.build.context) : false;
       if (service.build?.buildpack || (!specified_dockerfile && !unspecified_dockerfile)) {
         await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.build?.context);
         service.image = `${service_name}:latest`;
