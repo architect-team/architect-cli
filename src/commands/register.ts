@@ -410,7 +410,7 @@ export default class ComponentRegister extends BaseCommand {
       baseURL: `${protocol}://${this.app.config.registry_host}/v2`,
       headers: {
         Authorization: `${token_json?.token_type} ${token_json?.access_token}`,
-        Accept: 'application/vnd.docker.distribution.manifest.v2+json',
+        Accept: 'application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json',
       },
       timeout: 10000,
     });
