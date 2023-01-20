@@ -12,7 +12,7 @@ describe('architect validate component', function () {
 services:
   validatesubdomain:
     build:
-      context: .
+      context: ./context/src
 interfaces:
   validatesubdomain:
     url: \${{ services.validatesubdomain.interfaces.main.url }}
@@ -48,7 +48,7 @@ interfaces:
       expect(ctx.stdout).to.contain('database-seeding');
       expect(ctx.stdout).to.contain(getArchitectExampleProjectPath('database-seeding'));
       expect(ctx.stdout).to.contain('hello-world');
-      expect(ctx.stdout).to.contain(getArchitectExampleProjectContext('hello-world'));
+      expect(ctx.stdout).to.contain(getArchitectExampleProjectPath('hello-world'));
     });
 
   mockArchitectAuth()

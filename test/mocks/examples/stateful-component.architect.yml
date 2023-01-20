@@ -33,7 +33,7 @@ services:
       POSTGRES_DB: ${{ secrets.db_name }}
   stateful-api:
     build:
-      context: ./src
+      context: ./context/src
     interfaces:
       http: 8080
     environment:
@@ -42,7 +42,7 @@ services:
       DB_PASS: ${{ secrets.db_pass }}
   frontend:
     build:
-      context: ./src
+      context: ./context/src
     interfaces:
       web:
         port: 8081

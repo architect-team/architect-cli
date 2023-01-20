@@ -53,7 +53,7 @@ services:
     depends_on:
       - api-db
     build:
-      context: ./src
+      context: ./context/src
       args:
         NODE_ENV: production
     interfaces:
@@ -76,13 +76,13 @@ services:
       volumes:
         src:
           mount_path: /usr/src/app/src
-          host_path: ./backend/src
+          host_path: ./context/src
 
   app:
     depends_on:
       - api
     build:
-      context: ./src
+      context: ./context/src
       args:
         NODE_ENV: production
     interfaces:
@@ -101,11 +101,11 @@ services:
       WORLD_TEXT: ${{ secrets.world_text }}
     debug:
       build:
-        dockerfile: ./docker/Dockerfile
-        context: ./src
+        dockerfile: ./context/Dockerfile
+        context: ./context/src
         args:
           NODE_ENV: development
       volumes:
         src:
           mount_path: /usr/src/app/src
-          host_path: ./frontend/src
+          host_path: ./context/src

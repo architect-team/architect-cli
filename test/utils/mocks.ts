@@ -35,7 +35,7 @@ export const getArchitectExampleProjectContext = (project_name: string): string 
   if (!EXAMPLE_PROJECT_PATHS.has(`${project_name}.architect.yml`)) {
     throw new Error(`unable to find example mock architect.yml ${project_name}`);
   }
-  return path.join(__dirname, '../', 'mocks', 'examples');
+  return path.join(__dirname, '../', 'mocks', 'examples', 'context', 'src');
 };
 
 export const mockArchitectAuth = () =>

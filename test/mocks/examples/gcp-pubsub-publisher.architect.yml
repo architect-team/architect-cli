@@ -16,7 +16,7 @@ dependencies:
 services:
   api:
     build:
-      context: ./src
+      context: ./context/src
     environment:
       GCP_PROJECT_ID: ${{ dependencies['gcp-pubsub'].outputs.gcp_project_id }}
       PUBSUB_ENDPOINT: ${{ dependencies['gcp-pubsub'].services.pubsub.interfaces.main.url }}

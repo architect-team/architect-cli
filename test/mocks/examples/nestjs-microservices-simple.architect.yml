@@ -9,7 +9,7 @@ keywords:
 services:
   api:
     build:
-      context: ./src
+      context: ./context/src
       args:
         NODE_ENV: production
     interfaces:
@@ -24,5 +24,5 @@ services:
           NODE_ENV: development
       volumes:
         src:
-          host_path: ./src/
+          host_path: ./context/src
           mount_path: /usr/src/app/src/

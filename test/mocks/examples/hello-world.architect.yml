@@ -14,7 +14,7 @@ secrets:
 services:
   api:
     build:
-      context: ./src
+      context: ./context/src
     interfaces:
       main:
         port: 3000

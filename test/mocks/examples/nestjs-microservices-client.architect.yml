@@ -12,7 +12,7 @@ dependencies:
 services:
   client:
     build:
-      context: ./src
+      context: ./context/src
     interfaces:
       main:
         port: 3000
@@ -25,5 +25,5 @@ services:
       command: npm run start:dev
       volumes:
         src:
-          host_path: ./src/
+          host_path: ./context/src
           mount_path: /usr/src/app/src/

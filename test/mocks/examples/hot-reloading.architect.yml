@@ -10,7 +10,7 @@ keywords:
 services:
   api:
     build:
-      context: ./src
+      context: ./context/src
       args:
         NODE_ENV: production
     interfaces:
@@ -27,4 +27,4 @@ services:
         src:
           description: Mount the src dir when running locally so code changes can be detected
           mount_path: /usr/src/app/src
-          host_path: ./src/
+          host_path: ./context/src
