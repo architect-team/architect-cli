@@ -161,6 +161,7 @@ export default class ComponentRegister extends BaseCommand {
     return updated_volume;
   }
 
+  // eslint-disable-next-line complexity
   private async registerComponent(config_path: string, tag: string) {
     const { flags } = await this.parse(ComponentRegister);
     console.time('Time');
@@ -257,6 +258,10 @@ export default class ComponentRegister extends BaseCommand {
       if (IF_EXPRESSION_REGEX.test(service_name)) {
         continue;
       }
+      if (service.enabled !== undefined && !service.enabled) {
+        continue;
+      }
+
       for (const [volume_name, volume] of Object.entries(service.volumes || {})) {
         const volume_config = transformVolumeSpec(volume_name, volume);
         (service?.volumes as Dictionary<VolumeSpec>)[volume_name] = await this.uploadVolume(config_path, `${component_name}.services.${service_name}.volumes.${volume_name}`, tag, volume_config, selected_account);
@@ -265,6 +270,9 @@ export default class ComponentRegister extends BaseCommand {
 
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
       if (IF_EXPRESSION_REGEX.test(service_name)) {
+        continue;
+      }
+      if (service.enabled !== undefined && !service.enabled) {
         continue;
       }
 
@@ -446,7 +454,7 @@ export default class ComponentRegister extends BaseCommand {
       baseURL: `${protocol}://${this.app.config.registry_host}/v2`,
       headers: {
         Authorization: `${token_json?.token_type} ${token_json?.access_token}`,
-        Accept: 'application/vnd.docker.distribution.manifest.v2+json',
+        Accept: 'application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json',
       },
       timeout: 10000,
     });
