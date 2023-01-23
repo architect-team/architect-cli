@@ -1,3 +1,10 @@
+## [1.32.1](https://github.com/architect-team/architect-cli/compare/v1.32.0...v1.32.1) (2023-01-23)
+
+
+### Bug Fixes
+
+* **register:** Don't register optional services ([58efbd5](https://github.com/architect-team/architect-cli/commit/58efbd519290e2e5ff04dd2af79527adde073714))
+
 # [1.32.0](https://github.com/architect-team/architect-cli/compare/v1.31.1...v1.32.0) (2023-01-20)
 
 
