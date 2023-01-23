@@ -2,7 +2,7 @@ import { ComponentInstanceMetadata, ComponentSpec } from '../spec/component-spec
 import { ComponentSlugUtils, ParsedResourceSlug, ResourceSlugUtils, ResourceType } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
-import { ServiceConfig } from './service-config';
+import { DatabaseConfig, ServiceConfig } from './service-config';
 import { TaskConfig } from './task-config';
 
 export interface SecretDefinitionConfig {
@@ -34,6 +34,7 @@ export interface ComponentConfig {
 
   services: Dictionary<ServiceConfig>;
   tasks: Dictionary<TaskConfig>;
+  databases: Dictionary<DatabaseConfig>;
   dependencies: Dictionary<string>;
 
   artifact_image?: string;

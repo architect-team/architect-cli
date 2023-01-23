@@ -184,7 +184,6 @@ export class ServiceInterfaceSpec {
   sticky?: boolean | string;
 
   @IsOptional()
-  @IsOptional()
   @ValidateNested()
   ingress?: IngressSpec;
 }

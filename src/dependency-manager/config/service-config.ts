@@ -45,6 +45,11 @@ export interface ServiceInterfaceConfig {
   ingress?: IngressConfig;
 }
 
+export interface DatabaseConfig extends ResourceConfig {
+  type: string;
+  dsn?: string;
+}
+
 export interface ServiceConfig extends ResourceConfig {
   enabled: boolean;
   debug?: ServiceConfig;

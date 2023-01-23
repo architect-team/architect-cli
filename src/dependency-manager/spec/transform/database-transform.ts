@@ -1,3 +1,5 @@
+import { coerce } from 'semver';
+import { ArchitectError } from '../../..';
 import { ServiceConfig } from '../../config/service-config';
 import { ComponentInstanceMetadata } from '../component-spec';
 import { DatabaseSpec } from '../database-spec';
@@ -89,13 +91,18 @@ const SupportedDatabases: SupportedDatabaseType[] = [
   },
 ];
 
-export const transformDatabaseSpec = (key: string, db_spec: DatabaseSpec, metadata: ComponentInstanceMetadata): ServiceConfig => {
+export const transformDatabaseSpec = (key: string, db_spec: DatabaseSpec, metadata: ComponentInstanceMetadata): DatabaseConfig => {
   const [engine, version] = db_spec.type.split(':');
+
+  const semver_version = coerce(version);
+  if (!semver_version) {
+    throw new ArchitectError(`Unable to parse out database version for requested image: ${key}`);
+  }
 
   const match = SupportedDatabases.find(match =>
     match.engine === engine &&
-    Number(version) >= (match.versions.min || 0) &&
-    Number(version) <= (match.versions.max || 1000));
+    semver_version?.major >= (match.versions.min || 0) &&
+    semver_version?.major <= (match.versions.max || 1000));
 
   if (!match) {
     throw new Error(`Unsupported database engine: ${engine}`);

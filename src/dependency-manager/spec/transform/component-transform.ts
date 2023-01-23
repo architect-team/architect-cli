@@ -75,10 +75,8 @@ export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => 
     secrets,
     outputs,
 
-    services: {
-      ...services,
-      ...databases,
-    },
+    services,
+    databases,
     tasks,
 
     dependencies,

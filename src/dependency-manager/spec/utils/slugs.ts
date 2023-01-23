@@ -50,7 +50,7 @@ export class Slugs {
   public static ComponentSubdomainValidator = new RegExp(`^${Slugs.ComponentSubdomainRegexBase}$`);
 
   public static ComponentDatabaseDescription = 'must be of the format <engine>:<version> (e.g. postgres:13)';
-  public static ComponentDatabaseRegexBase = `([^:]+):([0-9]+)`;
+  public static ComponentDatabaseRegexBase = `\\w+:\\d+`;
   public static ComponentDatabaseValidator = new RegExp(`^${Slugs.ComponentDatabaseRegexBase}$`);
 }
 
@@ -143,7 +143,7 @@ export class ComponentVersionSlugUtils extends SlugUtils {
   public static parse = parseCurry<ComponentVersionSlug, ParsedComponentVersionSlug>();
 }
 
-export type ResourceType = 'services' | 'tasks';
+export type ResourceType = 'services' | 'tasks' | 'databases';
 
 export type ResourceSlug = string;
 export interface ParsedResourceSlug extends ParsedSlug {
