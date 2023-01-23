@@ -101,8 +101,8 @@ services:
       WORLD_TEXT: ${{ secrets.world_text }}
     debug:
       build:
-        dockerfile: ../examples/context/Dockerfile
         context: ./context
+        dockerfile: ./context/Dockerfile
         args:
           NODE_ENV: development
       volumes:

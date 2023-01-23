@@ -13,11 +13,11 @@ export const MOCK_REGISTRY_HOST = 'http://mock.registry.localhost';
 export const TMP_DIR = path.join(__dirname, '../tmp');
 export const EXAMPLE_PROJECT_PATHS =
   fs
-    .readdirSync('test/mocks/examples', { withFileTypes: true })
+    .readdirSync('test/integration', { withFileTypes: true })
     .filter(f => f.isFile)
     // eslint-disable-next-line unicorn/no-array-reduce
     .reduce((accumulator, current_file) => {
-      return accumulator.set(current_file.name, path.join(__dirname, '../', 'mocks', 'examples', current_file.name));
+      return accumulator.set(current_file.name, path.join(__dirname, '../', 'integration', current_file.name));
     }, new Map<string, string>());
 
 export const getArchitectExampleProjectPath = (project_name: string): string => {
@@ -35,7 +35,7 @@ export const getArchitectExampleProjectContext = (project_name: string): string 
   if (!EXAMPLE_PROJECT_PATHS.has(`${project_name}.architect.yml`)) {
     throw new Error(`unable to find example mock architect.yml ${project_name}`);
   }
-  return path.join(__dirname, '../', 'mocks', 'examples', 'context', 'src');
+  return path.join(__dirname, '../', 'integration', 'context', 'src');
 };
 
 export const mockArchitectAuth = () =>
