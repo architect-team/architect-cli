@@ -2,9 +2,9 @@
   "name": "node-js-sample",
   "version": "0.1.0",
   "description": "A sample Node.js app using Express 4",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "express": "^4.0.0"
