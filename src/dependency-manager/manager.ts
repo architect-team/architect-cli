@@ -138,7 +138,7 @@ export default abstract class DependencyManager {
     const { component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
     const component_ref_with_account = ComponentSlugUtils.build(this.account, component_name, instance_name);
 
-    const component_secrets = new Set(Object.keys({ ...component_spec.parameters, ...component_spec.secrets })); // TODO: 404: update
+    const component_secrets = new Set(Object.keys(component_spec.secrets || {})); // TODO: 404: update
 
     const res: Dictionary<any> = {};
     // add values from values file to all existing, matching components
@@ -283,9 +283,8 @@ export default abstract class DependencyManager {
       tasks: {},
     };
 
-    const parameters = transformDictionary(transformSecretDefinitionSpec, component_spec.parameters); // TODO: 404: remove
     const component_spec_secrets = transformDictionary(transformSecretDefinitionSpec, component_spec.secrets);
-    for (const [key, value] of [...Object.entries(parameters), ...Object.entries(component_spec_secrets)]) {
+    for (const [key, value] of Object.entries(component_spec_secrets)) {
       context.secrets[key] = value.default;
     }
 
@@ -294,7 +293,7 @@ export default abstract class DependencyManager {
       ...context.secrets,
       ...secrets,
     };
-    context.parameters = context.secrets; // TODO: 404: remove
+    context.parameters = context.secrets; // Deprecated
 
     if (options.interpolate) {
       // Interpolate secrets

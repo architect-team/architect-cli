@@ -294,6 +294,10 @@ export const buildSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMe
     deprecated_interfaces_map: {},
   };
 
+  if (!component_spec.secrets && component_spec.deprecated_parameters) {
+    component_spec.secrets = component_spec.deprecated_parameters;
+  }
+
   deprecatedInterfaces(component_spec);
 
   return component_spec;

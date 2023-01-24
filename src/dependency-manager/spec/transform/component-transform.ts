@@ -1,4 +1,3 @@
-import deepmerge from 'deepmerge';
 import { ComponentConfig, OutputDefinitionConfig, SecretDefinitionConfig } from '../../config/component-config';
 import { transformDictionary } from '../../utils/dictionary';
 import { ComponentSpec, OutputDefinitionSpec, SecretDefinitionSpec } from '../component-spec';
@@ -50,7 +49,7 @@ export const transformOutputDefinitionSpec = (key: string, output_spec: string |
 };
 
 export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => {
-  const secrets = transformDictionary(transformSecretDefinitionSpec, deepmerge(spec.parameters || {}, spec.secrets || {})); // TODO: update
+  const secrets = transformDictionary(transformSecretDefinitionSpec, spec.secrets);
   const outputs = transformDictionary(transformOutputDefinitionSpec, spec.outputs);
   const services = transformDictionary(transformServiceSpec, spec.services, spec.metadata);
   const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.metadata);
