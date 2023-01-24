@@ -630,9 +630,6 @@ describe('local dev environment', function () {
     "version": "3",
     "services": {
       [hello_api_ref]: {
-        "entrypoint": [
-          "architect",
-        ],
         "ports": [
           "50000:3000",
         ],
@@ -690,9 +687,6 @@ describe('local dev environment', function () {
     "version": "3",
     "services": {
       "hello-world--buildpack-api": {
-        "entrypoint": [
-          "architect"
-        ],
         "ports": [
           "50000:3000",
         ],

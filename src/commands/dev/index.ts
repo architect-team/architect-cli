@@ -750,9 +750,11 @@ $ architect dev -e new_env_name_here .`));
       if (service.build?.buildpack || !dockerfile_exist) {
         await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.command?.join(' '), service.build?.context);
         service.image = `${service_name}:latest`;
+        if (service.command) {
+          service.entrypoint = ['architect'];
+        }
         delete service.build;
         delete service.command;
-        service.entrypoint = ['architect'];
       }
     }
     return compose;
