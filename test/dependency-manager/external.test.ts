@@ -230,7 +230,8 @@ describe('external spec v1', () => {
           build: {
             context: path.resolve('/stack'),
             "labels": [
-              "architect.io"
+              "architect.io",
+              "component=cloud"
             ],
           },
           image: app_ref,

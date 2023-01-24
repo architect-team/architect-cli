@@ -455,7 +455,8 @@ describe('local dev environment', function () {
           "dockerfile": "Dockerfile",
           "target": "production",
           "labels": [
-            "architect.io"
+            "architect.io",
+            "component=database-seeding"
           ],
         },
         "image": seed_app_ref,

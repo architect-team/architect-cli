@@ -352,10 +352,14 @@ export class DockerComposeUtils {
       }
 
       if (service.build) {
+        // Add labels to enrich image filtering
         if (!service.build.labels) {
           service.build.labels = [];
         }
         service.build.labels.push(DOCKER_IMAGE_LABEL);
+
+        const { component_name } = ResourceSlugUtils.parse(node.config.metadata.ref);
+        service.build.labels.push(`component=${component_name}`);
       }
 
       compose.services[node.ref] = service;

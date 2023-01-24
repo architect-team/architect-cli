@@ -25,6 +25,7 @@ import DeployUtils from '../../common/utils/deploy.utils';
 import { booleanString } from '../../common/utils/oclif';
 import PortUtil from '../../common/utils/port';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
+import { ResourceSlugUtils } from '../../dependency-manager/spec/utils/slugs';
 import LocalPaths from '../../paths';
 
 type TraefikHttpService = {
@@ -411,6 +412,52 @@ export default class Dev extends BaseCommand {
     return parsed;
   }
 
+  /**
+   * Cleanup architect-created images and layers that are no longer in use to prevent
+   * old images from wasting space on disk.
+   */
+  async pruneImages(compose: DockerComposeTemplate): Promise<void> {
+    // Remove build cache layers with our label that are older than 7 days
+    await docker(['builder', 'prune', '--filter', `label=${DOCKER_IMAGE_LABEL}`, '--filter', `unused-for=${7 * 24}h`, '-af'], { stdout: false });
+    // Remove images that are untagged and created by previous `architect dev` runs
+    await docker(['image', 'prune', '--filter', `label=${DOCKER_IMAGE_LABEL}`, `--filter`, 'dangling=true', '-f'], { stdout: false });
+
+    // Find the set of services and name of all components being deployed. Any image that is labelled with the name
+    // of a component being run but uses a Repository name that no longer matches any service names can be
+    // removed. This can happen when changing the name of a service in the architect.yml.
+    const services = new Set();
+    const components = [];
+    for (const [service_name, service] of Object.entries(compose.services)) {
+      services.add(service_name);
+      for (const label of service.build?.labels || []) {
+        if (label.startsWith('component=')) {
+          components.push(label.split('=')[1]);
+        }
+      }
+    }
+
+    for (const component_name of components) {
+      const built_image_result = await docker(['image', 'list',
+        '--filter', `label=${DOCKER_IMAGE_LABEL}`,
+        '--filter', `label=component=${component_name}`,
+        '--format', '{{json .}}'],
+        { stdout: false });
+      const built_images = built_image_result.stdout.split('\n').map((res: string) => JSON.parse(res));
+
+      // Add images ids for this component with a name that no longer matches a deployed service name
+      const images_to_delete: string[] = [];
+      for (const image of built_images) {
+        if (!services.has(image.Repository)) {
+          images_to_delete.push(image.ID);
+        }
+      }
+
+      if (images_to_delete.length > 0) {
+        await docker(['image', 'rm', '-f', ...images_to_delete], { stdout: true });
+      }
+    }
+  }
+
   async healthyTraefikServices(admin_port: number, timeout: number): Promise<TraefikHttpService[]> {
     const { data: services } = await axios.get<TraefikHttpService[]>(`http://localhost:${admin_port}/api/http/services`, {
       timeout,
@@ -512,10 +559,11 @@ export default class Dev extends BaseCommand {
   async runCompose(compose: DockerComposeTemplate, default_project_name: string, gateway_port: number, gateway_admin_port: number): Promise<void> {
     const { flags } = await this.parse(Dev);
     const [project_name, compose_file] = await this.buildImage(compose, default_project_name);
-    const socket = socketPath(path.join(this.app.config.getConfigDir(), LocalPaths.LOCAL_DEPLOY_PATH, project_name));
 
     this.log('Building containers...', chalk.green('done'));
     this.log('');
+
+    await this.pruneImages(compose);
 
     const traefik_service_map = this.setupTraefikServiceMap(compose, gateway_port, flags.ssl);
 
@@ -527,13 +575,11 @@ export default class Dev extends BaseCommand {
       this.pollTraefik(gateway_admin_port, traefik_service_map);
     }
 
+    const socket = socketPath(path.join(this.app.config.getConfigDir(), LocalPaths.LOCAL_DEPLOY_PATH, project_name));
     await new UpProcessManager(compose_file, socket, project_name, flags.detached).run();
     if (!flags.detached) {
       fs.removeSync(compose_file);
     }
-
-    // remove build cache layers with our label that are older than 7 days
-    await docker(['builder', 'prune', '--filter', `label=${DOCKER_IMAGE_LABEL}`, '--filter', `unused-for=${7 * 24}h`, '-af'], { stdout: false });
 
     // eslint-disable-next-line no-process-exit
     process.exit();

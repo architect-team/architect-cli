@@ -3,6 +3,7 @@ import axios from 'axios';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import path from 'path';
+import { inspect } from 'util';
 import { resourceRefToNodeRef, ServiceNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
@@ -174,7 +175,8 @@ describe('interpolation spec v1', () => {
           'build': {
             'context': path.resolve('/stack'),
             "labels": [
-              "architect.io"
+              "architect.io",
+              "component=web"
             ],
           },
           image: web_ref,
@@ -189,7 +191,8 @@ describe('interpolation spec v1', () => {
           'build': {
             'context': path.resolve('/stack'),
             "labels": [
-              "architect.io"
+              "architect.io",
+              "component=worker"
             ],
           },
           image: worker_ref,
@@ -243,7 +246,8 @@ describe('interpolation spec v1', () => {
       'build': {
         'context': path.resolve('/stack'),
         "labels": [
-          "architect.io"
+          "architect.io",
+          "component=web"
         ],
       },
       image: web_ref
@@ -258,7 +262,8 @@ describe('interpolation spec v1', () => {
       'build': {
         'context': path.resolve('/stack'),
         'labels': [
-          'architect.io'
+          'architect.io',
+          "component=worker"
         ],
       },
       image: worker_ref,
