@@ -2221,6 +2221,11 @@
     },
     "ServiceSpec": {
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Determines if the service should be running.",
+          "default": true
+        },
         "debug": {
           "$ref": "#/definitions/_DebugServiceSpec"
         },
@@ -2628,6 +2633,11 @@
           "anyOf": [
             {
               "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Determines if the service should be running.",
+                  "default": true
+                },
                 "debug": {
                   "$ref": "#/definitions/_DebugServiceSpec"
                 },
@@ -6017,6 +6027,11 @@
     },
     "_DebugServiceSpec": {
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Determines if the service should be running.",
+          "default": true
+        },
         "interfaces": {
           "type": "object",
           "patternProperties": {
@@ -6421,6 +6436,11 @@
           "anyOf": [
             {
               "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Determines if the service should be running.",
+                  "default": true
+                },
                 "interfaces": {
                   "type": "object",
                   "patternProperties": {

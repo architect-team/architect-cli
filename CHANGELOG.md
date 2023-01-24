@@ -1,3 +1,27 @@
+## [1.32.1](https://github.com/architect-team/architect-cli/compare/v1.32.0...v1.32.1) (2023-01-23)
+
+
+### Bug Fixes
+
+* **register:** Don't register optional services ([58efbd5](https://github.com/architect-team/architect-cli/commit/58efbd519290e2e5ff04dd2af79527adde073714))
+
+# [1.32.0](https://github.com/architect-team/architect-cli/compare/v1.31.1...v1.32.0) (2023-01-20)
+
+
+### Bug Fixes
+
+* **auth:** Add timeout to getToken ([#799](https://github.com/architect-team/architect-cli/issues/799)) ([5e5963b](https://github.com/architect-team/architect-cli/commit/5e5963be3f18d9ba5732e099365ff6a1e30c5548))
+* **clusters:** Incorrect cluster command when warning about deprecated platform command ([#796](https://github.com/architect-team/architect-cli/issues/796)) ([3e5a74a](https://github.com/architect-team/architect-cli/commit/3e5a74a7711c35e22a78e5597a51ec28838deb2b))
+* **dev:** Improve error message when docker build fails and prevent sending error reports ([#794](https://github.com/architect-team/architect-cli/issues/794)) ([a769260](https://github.com/architect-team/architect-cli/commit/a76926088848e98bcd2238b8538ad91c66db05ca))
+* **register:** Add new accept header used by buildx 0.10.0 ([#803](https://github.com/architect-team/architect-cli/issues/803)) ([84706f4](https://github.com/architect-team/architect-cli/commit/84706f4f2a1b4a48f49f66525b853684599fd8da))
+* **validate:** Upgrade class-transformer and class-validator ([#797](https://github.com/architect-team/architect-cli/issues/797)) ([647f880](https://github.com/architect-team/architect-cli/commit/647f880dcb27f3dd5a976eec30f3b49e2ff2e0a3))
+* **volumes:** Disable volumes for remote deploys ([#800](https://github.com/architect-team/architect-cli/issues/800)) ([68cf984](https://github.com/architect-team/architect-cli/commit/68cf984c2a4b28fc69a3e80e48f11de4cf87c846))
+
+
+### Features
+
+* **dev:** Add support for optional services ([#801](https://github.com/architect-team/architect-cli/issues/801)) ([25d229b](https://github.com/architect-team/architect-cli/commit/25d229b43e17a16cd89c5d24eae4e700fcae4d08))
+
 ## [1.31.1](https://github.com/architect-team/architect-cli/compare/v1.31.0...v1.31.1) (2023-01-05)
 
 
