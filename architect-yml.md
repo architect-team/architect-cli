@@ -39,6 +39,7 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
+ | `enabled` | boolean | Determines if the service should be running. | default: `true` |
  | `debug` | Partial&lt;[ServiceSpec](#servicespec)&gt; | A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a "local override" block. |  |
  | `interfaces` | Dict&lt;string&gt; | A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `liveness_probe` | [LivenessProbeSpec](#livenessprobespec) |  |  |
