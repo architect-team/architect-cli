@@ -1,4 +1,4 @@
-import { classToPlain } from 'class-transformer';
+import { instanceToPlain } from 'class-transformer';
 import yaml from 'js-yaml';
 import { LivenessProbeConfig } from '../../dependency-manager/config/common-config';
 import { ServiceInterfaceConfig } from '../../dependency-manager/config/service-config';
@@ -102,7 +102,7 @@ export class ComposeConverter {
       }
     }
 
-    const architect_yml = yaml.dump(yaml.load(JSON.stringify(classToPlain(architect_component))));
+    const architect_yml = yaml.dump(yaml.load(JSON.stringify(instanceToPlain(architect_component))));
     return { architect_yml, warnings };
   }
 
@@ -194,7 +194,6 @@ export class ComposeConverter {
     const compose_volumes = Object.keys(docker_compose.volumes || {});
     let volume_index = 0;
     const local_volumes: Dictionary<any> = {};
-    const volumes: Dictionary<any> = {};
     for (const volume of (service_compose_volumes || [])) {
       const volume_key = volume_index === 0 ? 'volume' : `volume${volume_index + 1}`;
       if (typeof volume === 'string') {
@@ -202,7 +201,7 @@ export class ComposeConverter {
         if (volume_parts.length === 1) {
           const service_volume: Partial<VolumeSpec> = {};
           service_volume.mount_path = volume_parts[0];
-          volumes[volume_key] = service_volume;
+          local_volumes[volume_key] = service_volume;
         } else if (volume_parts.length === 2 || volume_parts.length === 3) {
           const service_volume: Partial<VolumeSpec> = {};
           if (!compose_volumes.includes(volume_parts[0])) {
@@ -226,7 +225,7 @@ export class ComposeConverter {
 
         if (volume.type === 'volume' || compose_volumes.includes(volume.source)) {
           service_volume.host_path = undefined;
-          volumes[volume_key] = service_volume;
+          local_volumes[volume_key] = service_volume;
         } else {
           local_volumes[volume_key] = service_volume;
         }
@@ -236,7 +235,7 @@ export class ComposeConverter {
         if (volume.read_only) {
           service_volume.readonly = volume.read_only;
         }
-        volumes[volume_key] = service_volume;
+        local_volumes[volume_key] = service_volume;
       }
       volume_index++;
     }
@@ -244,9 +243,6 @@ export class ComposeConverter {
     const compose_conversion: ComposeConversion = { warnings };
     if (Object.entries(local_volumes).length > 0) {
       compose_conversion.local = local_volumes;
-    }
-    if (Object.entries(volumes).length > 0) {
-      compose_conversion.base = volumes;
     }
     return compose_conversion;
   }

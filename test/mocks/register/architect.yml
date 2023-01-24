@@ -7,6 +7,8 @@ services:
       context: .
     interfaces:
       main: 3000
+  optional:
+    enabled: false
 
 interfaces:
   hello:

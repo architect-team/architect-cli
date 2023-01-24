@@ -552,7 +552,14 @@ export default class Dev extends BaseCommand {
       build_args.push('--build-arg', arg);
     }
 
-    await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build', ...build_args], { stdio: 'inherit' });
+    try {
+      await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build', ...build_args], { stdin: 'inherit', stdout: 'inherit', stderr: 'pipe' });
+    } catch (e: any) {
+      if (e.exitCode !== 0) {
+        this.logToStderr(chalk.red('Docker compose has encounted an error building the specified image:'));
+        throw new ArchitectError(e.stderr);
+      }
+    }
     return [project_name, compose_file];
   }
 

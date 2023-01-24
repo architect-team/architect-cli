@@ -2,7 +2,7 @@ import { CliUx, Flags, Interfaces } from '@oclif/core';
 import archiver from 'archiver';
 import axios from 'axios';
 import chalk from 'chalk';
-import { classToClass, classToPlain } from 'class-transformer';
+import { instanceToInstance, instanceToPlain } from 'class-transformer';
 import * as Diff from 'diff';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
@@ -119,7 +119,7 @@ export default class ComponentRegister extends BaseCommand {
     const oras_plugin = await PluginManager.getPlugin<OrasPlugin>(this.app.config.getPluginDirectory(), OrasPlugin);
 
     if (!volume.host_path) {
-      return classToClass(volume);
+      return instanceToInstance(volume);
     }
 
     const tmp_dir = tmp.dirSync();
@@ -127,7 +127,7 @@ export default class ComponentRegister extends BaseCommand {
     fs.mkdirpSync(base_folder);
     const registry_url = new URL(`/${account.name}/${file_name}:${tag}`, 'http://' + this.app.config.registry_host);
 
-    const updated_volume = classToClass(volume);
+    const updated_volume = instanceToInstance(volume);
     const component_folder = fs.lstatSync(component_path).isFile() ? path.dirname(component_path) : component_path;
     const host_path = path.resolve(component_folder, untildify(updated_volume.host_path!));
     updated_volume.host_path = registry_url.href.replace('http://', '');
@@ -146,6 +146,7 @@ export default class ComponentRegister extends BaseCommand {
     return updated_volume;
   }
 
+  // eslint-disable-next-line complexity
   private async registerComponent(config_path: string, tag: string) {
     const { flags } = await this.parse(ComponentRegister);
     console.time('Time');
@@ -180,7 +181,7 @@ export default class ComponentRegister extends BaseCommand {
     const dependency_manager = new LocalDependencyManager(this.app.api, selected_account.name);
     dependency_manager.environment = 'production';
 
-    const graph = await dependency_manager.getGraph([classToClass(component_spec)], undefined, { interpolate: false, validate: false });
+    const graph = await dependency_manager.getGraph([instanceToInstance(component_spec)], undefined, { interpolate: false, validate: false });
     // Tmp fix to register host overrides
     for (const node of graph.nodes.filter(n => n instanceof ServiceNode) as ServiceNode[]) {
       for (const interface_config of Object.values(node.interfaces)) {
@@ -305,12 +306,16 @@ export default class ComponentRegister extends BaseCommand {
       await fs.move(`${cache_dir}-tmp`, cache_dir, { overwrite: true });
     }
 
-    const new_spec = classToClass(component_spec);
+    const new_spec = instanceToInstance(component_spec);
 
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
       if (IF_EXPRESSION_REGEX.test(service_name)) {
         continue;
       }
+      if (service.enabled !== undefined && !service.enabled) {
+        continue;
+      }
+
       for (const [volume_name, volume] of Object.entries(service.volumes || {})) {
         const volume_config = transformVolumeSpec(volume_name, volume);
         (service?.volumes as Dictionary<VolumeSpec>)[volume_name] = await this.uploadVolume(config_path, `${component_name}.services.${service_name}.volumes.${volume_name}`, tag, volume_config, selected_account);
@@ -319,6 +324,9 @@ export default class ComponentRegister extends BaseCommand {
 
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
       if (IF_EXPRESSION_REGEX.test(service_name)) {
+        continue;
+      }
+      if (service.enabled !== undefined && !service.enabled) {
         continue;
       }
 
@@ -356,7 +364,7 @@ export default class ComponentRegister extends BaseCommand {
       }
     }
 
-    const config = classToPlain(new_spec);
+    const config = instanceToPlain(new_spec);
     delete config.metadata;
     const component_dto = {
       tag,
@@ -410,7 +418,7 @@ export default class ComponentRegister extends BaseCommand {
       baseURL: `${protocol}://${this.app.config.registry_host}/v2`,
       headers: {
         Authorization: `${token_json?.token_type} ${token_json?.access_token}`,
-        Accept: 'application/vnd.docker.distribution.manifest.v2+json',
+        Accept: 'application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json',
       },
       timeout: 10000,
     });

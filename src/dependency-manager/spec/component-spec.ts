@@ -23,6 +23,8 @@ export interface ComponentInstanceMetadata {
   }
 
   deprecated_interfaces_map: Dictionary<string | undefined>;
+
+  interpolated?: boolean;
 }
 
 @JSONSchema({
@@ -196,7 +198,7 @@ export class ComponentSpec {
     description: '[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you\'ll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec',
   })
   @Transform(transformObject(SecretDefinitionSpec))
-  parameters?: Dictionary<string | number | boolean | SecretDefinitionSpec | null>;
+  protected parameters?: Dictionary<string | number | boolean | SecretDefinitionSpec | null>;
 
   @IsOptional()
   @JSONSchema({
@@ -298,5 +300,9 @@ export class ComponentSpec {
 
   get deprecated_interfaces(): Dictionary<string | ComponentInterfaceSpec> {
     return this.interfaces || {};
+  }
+
+  get deprecated_parameters(): Dictionary<string | number | boolean | SecretDefinitionSpec | null> {
+    return this.parameters || {};
   }
 }

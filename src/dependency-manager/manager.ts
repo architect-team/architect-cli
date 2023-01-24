@@ -1,4 +1,4 @@
-import { classToPlain, plainToClass, serialize } from 'class-transformer';
+import { instanceToPlain, plainToInstance, serialize } from 'class-transformer';
 import { isMatch } from 'matcher';
 import { buildNodeRef, ComponentConfig } from './config/component-config';
 import { ArchitectContext, ComponentContext, SecretValue } from './config/component-context';
@@ -137,7 +137,7 @@ export default abstract class DependencyManager {
     const { component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
     const component_ref_with_account = ComponentSlugUtils.build(this.account, component_name, instance_name);
 
-    const component_secrets = new Set(Object.keys({ ...component_spec.parameters, ...component_spec.secrets })); // TODO: 404: update
+    const component_secrets = new Set(Object.keys(component_spec.secrets || {})); // TODO: 404: update
 
     const res: Dictionary<any> = {};
     // add values from values file to all existing, matching components
@@ -255,6 +255,21 @@ export default abstract class DependencyManager {
   }
 
   async getComponentSpecContext(graph: DependencyGraph, component_spec: ComponentSpec, all_secrets: SecretsDict, options: GraphOptions): Promise<{ component_spec: ComponentSpec, context: ComponentContext }> {
+    // Remove debug blocks
+    for (const service_name of Object.keys(component_spec.services || {})) {
+      delete component_spec.services![service_name].debug;
+    }
+    for (const task_name of Object.keys(component_spec.tasks || {})) {
+      delete component_spec.tasks![task_name].debug;
+    }
+
+    // Remove optional services that are disabled
+    for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
+      if (service_spec.enabled !== undefined && !service_spec.enabled) {
+        delete component_spec.services![service_name];
+      }
+    }
+
     const interpolateObject = options.validate ? interpolateObjectOrReject : interpolateObjectLoose;
 
     let context: ComponentContext = {
@@ -268,9 +283,8 @@ export default abstract class DependencyManager {
       tasks: {},
     };
 
-    const parameters = transformDictionary(transformSecretDefinitionSpec, component_spec.parameters); // TODO: 404: remove
     const component_spec_secrets = transformDictionary(transformSecretDefinitionSpec, component_spec.secrets);
-    for (const [key, value] of [...Object.entries(parameters), ...Object.entries(component_spec_secrets)]) {
+    for (const [key, value] of Object.entries(component_spec_secrets)) {
       context.secrets[key] = value.default;
     }
 
@@ -279,7 +293,7 @@ export default abstract class DependencyManager {
       ...context.secrets,
       ...secrets,
     };
-    context.parameters = context.secrets; // TODO: 404: remove
+    context.parameters = context.secrets; // Deprecated
 
     if (options.interpolate) {
       // Interpolate secrets
@@ -485,10 +499,11 @@ export default abstract class DependencyManager {
 
       if (options.interpolate) {
         component_spec = interpolateObject(component_spec, context, { keys: false, values: true, file: component_spec.metadata.file });
+        component_spec.metadata.interpolated = true;
       }
 
       if (options.validate) {
-        validateOrRejectSpec(classToPlain(plainToClass(ComponentSpec, component_spec)), component_spec.metadata);
+        validateOrRejectSpec(instanceToPlain(plainToInstance(ComponentSpec, component_spec)), component_spec.metadata);
       }
 
       const component_config = transformComponentSpec(component_spec);

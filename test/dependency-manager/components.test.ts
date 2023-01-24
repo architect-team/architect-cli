@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
 import path from 'path';
-import { ComponentSlugUtils, IngressEdge, resourceRefToNodeRef, ServiceNode, TaskNode } from '../../src';
+import { ComponentSlugUtils, IngressEdge, resourceRefToNodeRef, ServiceNode, TaskNode, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
@@ -973,4 +973,121 @@ describe('components spec v1', function () {
       });
     });
   });
+
+  describe('optional services', () => {
+    it('disabled service', async () => {
+      const yml = `
+        name: component
+        services:
+          app:
+            enabled: false
+        `;
+
+      mock_fs({
+        '/architect.yaml': yml,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'examples', {
+        'component': '/architect.yaml',
+      });
+      const graph = await manager.getGraph([
+        ...await manager.loadComponentSpecs('component'),
+      ]);
+
+      expect(graph.nodes).to.have.lengthOf(0);
+    });
+
+    it('cannot interpolate disabled service', async () => {
+      const yml = `
+        name: component
+        services:
+          app:
+            environment:
+              API_ADDR: \${{ services.api.interfaces.main.url }}
+          api:
+            enabled: false
+            interfaces:
+              main: 8080
+        `;
+
+      mock_fs({
+        '/architect.yaml': yml,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'examples', {
+        'component': '/architect.yaml',
+      });
+
+      let error;
+      try {
+        await manager.getGraph([
+          ...await manager.loadComponentSpecs('component'),
+        ])
+      } catch (err) {
+        error = err;
+      }
+
+      expect(error).to.be.instanceOf(ValidationErrors);
+    });
+
+    it('service still runs since interpolation is in debug block', async () => {
+      const yml = `
+        name: component
+        services:
+          app:
+            debug:
+              environment:
+                API_ADDR: \${{ services.api.interfaces.main.url }}
+          api:
+            enabled: false
+            interfaces:
+              main: 8080
+        `;
+
+      mock_fs({
+        '/architect.yaml': yml,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'examples', {
+        'component': '/architect.yaml',
+      });
+
+      await manager.getGraph([
+        ...await manager.loadComponentSpecs('component'),
+      ])
+    });
+
+    it('optional downstream service debug=true', async () => {
+      const yml = `
+        name: component
+
+        services:
+          app:
+            debug:
+              environment:
+                API_ADDR: \${{ services.api.interfaces.main.url }}
+          api:
+            enabled: false
+            interfaces:
+              main: 8080
+            debug:
+              enabled: true
+        `;
+
+      mock_fs({
+        '/architect.yaml': yml,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'examples', {
+        'component': '/architect.yaml',
+      });
+
+      const graph = await manager.getGraph([
+        ...await manager.loadComponentSpecs('component', true),
+      ]);
+
+      expect(graph.nodes).to.have.lengthOf(2);
+      expect(graph.edges).to.have.lengthOf(1);
+    });
+  })
 });
