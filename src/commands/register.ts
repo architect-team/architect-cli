@@ -365,7 +365,7 @@ export default class ComponentRegister extends BaseCommand {
 
         const dockerfile_exist = service.build.context ? await DockerUtils.doesDockerfileExist(service.build.context, service.build.dockerfile) : false;
         if (service.build.buildpack || !dockerfile_exist) {
-          await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.build.context);
+          await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.command?.join(' '), service.build.context);
           buildpack_images.push({ 'name': service_name, 'ref': getImage(ref_with_account) });
           if (component_spec.services) {
             delete component_spec.services[resource_name].build;
