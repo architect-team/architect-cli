@@ -1,5 +1,4 @@
 import { instanceToPlain, plainToInstance, serialize } from 'class-transformer';
-import { isMatch } from 'matcher';
 import { buildNodeRef, ComponentConfig } from './config/component-config';
 import { ArchitectContext, ComponentContext, SecretValue } from './config/component-context';
 import { DeprecatedInterfacesSpec } from './deprecated-spec/interfaces';
@@ -12,7 +11,7 @@ import { GatewayNode } from './graph/node/gateway';
 import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
 import { GraphOptions } from './graph/type';
-import { SecretsConfig } from './secrets/secrets';
+import { Secrets } from './secrets/secrets';
 import { SecretsDict } from './secrets/type';
 import { ComponentSpec, SecretDefinitionSpec } from './spec/component-spec';
 import { ResourceSpec } from './spec/resource-spec';
@@ -126,40 +125,6 @@ export default abstract class DependencyManager {
     }
   }
 
-  getSecretsForComponentSpec(component_spec: ComponentSpec, all_secrets: SecretsDict): Dictionary<SecretValue> {
-    // pre-sort values dictionary to properly stack/override any colliding keys
-    const sorted_values_keys = Object.keys(all_secrets).sort();
-    const sorted_values_dict: SecretsDict = {};
-    for (const key of sorted_values_keys) {
-      sorted_values_dict[key] = all_secrets[key];
-    }
-
-    const component_ref = component_spec.metadata.ref;
-    const { component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
-    const component_ref_with_account = ComponentSlugUtils.build(this.account, component_name, instance_name);
-
-    const component_secrets = new Set(Object.keys(component_spec.secrets || {})); // TODO: 404: update
-
-    const res: Dictionary<any> = {};
-    // add values from values file to all existing, matching components
-    // eslint-disable-next-line prefer-const
-    for (let [pattern, secrets] of Object.entries(sorted_values_dict)) {
-      // Backwards compat for tags
-      if (ComponentVersionSlugUtils.Validator.test(pattern)) {
-        const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(pattern);
-        pattern = ComponentSlugUtils.build(component_account_name, component_name, instance_name);
-      }
-      if (isMatch(component_ref, [pattern]) || isMatch(component_ref_with_account, [pattern])) {
-        for (const [secret_key, secret_value] of Object.entries(secrets)) {
-          if (component_secrets.has(secret_key)) {
-            res[secret_key] = secret_value;
-          }
-        }
-      }
-    }
-    return res;
-  }
-
   generateUrl(interface_ref: string): string {
     const url_auth = `(${interface_ref}.password ? (${interface_ref}.username + ':' + ${interface_ref}.password + '@') : '')`;
     const url_protocol = `(${interface_ref}.protocol == 'grpc' ? '' : (${interface_ref}.protocol + '://' + ${url_auth}))`;
@@ -254,7 +219,7 @@ export default abstract class DependencyManager {
     return [...consumers].sort();
   }
 
-  async getComponentSpecContext(graph: DependencyGraph, component_spec: ComponentSpec, all_secrets: SecretsDict, options: GraphOptions): Promise<{ component_spec: ComponentSpec, context: ComponentContext }> {
+  async getComponentSpecContext(graph: DependencyGraph, component_spec: ComponentSpec, secrets: Secrets, options: GraphOptions): Promise<{ component_spec: ComponentSpec, context: ComponentContext }> {
     // Remove debug blocks
     for (const service_name of Object.keys(component_spec.services || {})) {
       delete component_spec.services![service_name].debug;
@@ -288,10 +253,10 @@ export default abstract class DependencyManager {
       context.secrets[key] = value.default;
     }
 
-    const secrets = this.getSecretsForComponentSpec(component_spec, all_secrets);
+    const secrets_dict = secrets.getSecretsForComponentSpec(component_spec);
     context.secrets = {
       ...context.secrets,
-      ...secrets,
+      ...secrets_dict,
     };
     context.parameters = context.secrets; // Deprecated
 
@@ -457,8 +422,10 @@ export default abstract class DependencyManager {
       ...options,
     };
 
+    const secrets = new Secrets(all_secrets, this.account);
+
     if (options.validate) {
-      SecretsConfig.validate(all_secrets);
+      secrets.validate();
       this.validateEnvironments(original_component_specs, all_secrets);
     }
 
@@ -472,7 +439,7 @@ export default abstract class DependencyManager {
 
     const evaluated_component_specs: ComponentSpec[] = [];
     for (const raw_component_spec of component_specs) {
-      const { component_spec, context } = await this.getComponentSpecContext(graph, raw_component_spec, all_secrets, options);
+      const { component_spec, context } = await this.getComponentSpecContext(graph, raw_component_spec, secrets, options);
 
       if (options.interpolate) {
         // Interpolate interfaces/ingresses/services for dependencies
