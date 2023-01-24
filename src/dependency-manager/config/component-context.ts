@@ -27,7 +27,6 @@ export interface ArchitectContext {
 export interface ComponentContext {
   name: string;
   dependencies: Dictionary<DependencyContext>;
-  parameters: Dictionary<SecretValue>; // TODO: 404: remove
   secrets: Dictionary<SecretValue>;
   outputs: Dictionary<OutputValue>;
   services: Dictionary<ServiceContext>;

@@ -75,27 +75,6 @@ describe('local dev environment', function () {
     `
   }
 
-  function getDeprecatedHelloComponentConfig(): any { // TODO: 404: remove
-    return `
-    name: hello-world
-
-    parameters:
-      hello_ingress: hello
-
-    services:
-      api:
-        image: heroku/nodejs-hello-world
-        interfaces:
-          hello:
-            port: 3000
-            ingress:
-              subdomain: \${{ parameters.hello_ingress }}
-        environment: {}
-        liveness_probe:
-          command: curl --fail localhost:3000
-    `
-  }
-
   const local_component_config_with_secrets = `
     name: hello-world
 
@@ -143,36 +122,6 @@ describe('local dev environment', function () {
     interfaces:
       hello:
         url: \${{ services.api.interfaces.main.url }}
-    `;
-
-  // TODO: 404: remove
-  const deprecated_local_component_config_with_parameters = `
-    name: hello-world
-
-    parameters:
-      a_required_key:
-        required: true
-      another_required_key:
-        required: true
-      one_more_required_secret:
-        required: true
-      compose_escaped_variable:
-        required: false
-      api_port:
-
-    services:
-      api:
-        image: heroku/nodejs-hello-world
-        interfaces:
-          hello:
-            port: \${{ parameters.api_port }}
-            ingress:
-              subdomain: hello
-        environment:
-          a_required_key: \${{ parameters.a_required_key }}
-          another_required_key: \${{ parameters.another_required_key }}
-          one_more_required_secret: \${{ parameters.one_more_required_secret }}
-          compose_escaped_variable: \${{ parameters.compose_escaped_variable }}
     `;
 
   const basic_secrets = {
@@ -357,64 +306,6 @@ describe('local dev environment', function () {
           "POSTGRES_DB": "${{ secrets.DB_NAME }}",
           "POSTGRES_USER": "${{ secrets.DB_USER }}",
           "POSTGRES_PASSWORD": "${{ secrets.DB_PASS }}"
-        }
-      }
-    },
-  };
-
-  const deprecated_local_database_seeding_component_config = { // TODO: 404: remove
-    "name": "database-seeding",
-
-    "parameters": {
-      "AUTO_DDL": {
-        "default": "none"
-      },
-      "DB_USER": {
-        "default": "postgres"
-      },
-      "DB_PASS": {
-        "default": "architect"
-      },
-      "DB_NAME": {
-        "default": "seeding_demo"
-      }
-    },
-
-    "services": {
-      "app": {
-        "build": {
-          "context": "./",
-          "dockerfile": "Dockerfile",
-          "target": "production",
-        },
-        "interfaces": {
-          "main": {
-            "port": 3000,
-            "ingress": {
-              "subdomain": "app"
-            }
-          }
-        },
-        "depends_on": ["my-demo-db"],
-        "environment": {
-          "DATABASE_HOST": "${{ services.my-demo-db.interfaces.postgres.host }}",
-          "DATABASE_PORT": "${{ services.my-demo-db.interfaces.postgres.port }}",
-          "DATABASE_USER": "${{ services.my-demo-db.environment.POSTGRES_USER }}",
-          "DATABASE_PASSWORD": "${{ services.my-demo-db.environment.POSTGRES_PASSWORD }}",
-          "DATABASE_SCHEMA": "${{ services.my-demo-db.environment.POSTGRES_DB }}",
-          "AUTO_DDL": "${{ parameters.AUTO_DDL }}"
-        }
-      },
-
-      "my-demo-db": {
-        "image": "postgres:11",
-        "interfaces": {
-          "postgres": 5432,
-        },
-        "environment": {
-          "POSTGRES_DB": "${{ parameters.DB_NAME }}",
-          "POSTGRES_USER": "${{ parameters.DB_USER }}",
-          "POSTGRES_PASSWORD": "${{ parameters.DB_PASS }}"
         }
       }
     },
@@ -701,25 +592,6 @@ describe('local dev environment', function () {
       expect(runCompose.firstCall.args[0]).to.deep.equal(ssl_component_expected_compose)
     })
 
-  test // TODO: 404: remove
-    .timeout(20000)
-    .stub(ComponentBuilder, 'loadFile', () => {
-      return getDeprecatedHelloComponentConfig();
-    })
-    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
-    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
-    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns(undefined))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--ssl=false'])
-    .it('Create a local dev with a component and an interface (deprecated parameters block)', ctx => {
-      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true
-      delete runCompose.firstCall.args[0].services.gateway.entrypoint;
-      expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
-    })
-
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'loadFile', () => {
@@ -754,25 +626,6 @@ describe('local dev environment', function () {
     .stderr({ print })
     .command(['dev', './examples/database-seeding/architect.yml', '-s', 'AUTO_DDL=seed', '--secret', 'DB_NAME=test-db', '--ssl=false'])
     .it('Create a local dev with a component, secrets, and an interface', ctx => {
-      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true;
-      expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose);
-    })
-
-  test // TODO: 404: remove
-    .timeout(20000)
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = buildSpecFromYml(yaml.dump(deprecated_local_database_seeding_component_config));
-      spec.metadata.file = { path: './examples/database-seeding/architect.yml', contents: '' }
-      return spec;
-    })
-    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
-    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
-    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['dev', './examples/database-seeding/architect.yml', '--parameter', 'AUTO_DDL=seed', '--parameter', 'DB_NAME=test-db', '--ssl=false'])
-    .it('Create a local dev with a component, deprecated parameters, and an interface', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose);
@@ -817,30 +670,6 @@ describe('local dev environment', function () {
     .stderr({ print })
     .command(['dev', './examples/hello-world/architect.yml', '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
     .it('Create a local dev with a basic component and a basic secrets file', ctx => {
-      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true;
-      const hello_world_service = runCompose.firstCall.args[0].services[hello_api_ref] as any;
-      expect(hello_world_service.external_links).to.contain('gateway:hello.arc.localhost');
-      expect(hello_world_service.environment.a_required_key).to.equal('some_value');
-      expect(hello_world_service.environment.another_required_key).to.equal('required_value');
-      expect(hello_world_service.environment.one_more_required_secret).to.equal('one_more_value');
-    })
-
-  test // TODO: 404: remove
-    .timeout(20000)
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      return buildSpecFromYml(deprecated_local_component_config_with_parameters)
-    })
-    .stub(DeployUtils, 'readSecretsFile', () => {
-      return basic_secrets;
-    })
-    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
-    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
-    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
-    .it('Create a local dev with a basic component using deprecated parameters and a basic secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       const hello_world_service = runCompose.firstCall.args[0].services[hello_api_ref] as any;

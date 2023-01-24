@@ -137,7 +137,7 @@ export default abstract class DependencyManager {
     const { component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
     const component_ref_with_account = ComponentSlugUtils.build(this.account, component_name, instance_name);
 
-    const component_secrets = new Set(Object.keys(component_spec.secrets || {})); // TODO: 404: update
+    const component_secrets = new Set(Object.keys(component_spec.secrets || {}));
 
     const res: Dictionary<any> = {};
     // add values from values file to all existing, matching components
@@ -167,9 +167,9 @@ export default abstract class DependencyManager {
     return `\${{ ${url_protocol} + ${interface_ref}.host + ${url_port} + ${url_path} }}`;
   }
 
-  validateRequiredSecrets(component: ComponentConfig, secrets: Dictionary<SecretValue>): void { // TODO: 404: update
+  validateRequiredSecrets(component: ComponentConfig, secrets: Dictionary<SecretValue>): void {
     const validation_errors = [];
-    // Check required parameters and secrets for components
+    // Check required secrets for components
     for (const [key, value] of Object.entries(component.secrets)) {
       if (value.required !== false && secrets[key] === undefined) {
         const validation_error = new ValidationError({
@@ -277,7 +277,6 @@ export default abstract class DependencyManager {
       architect: this.getArchitectContext(),
       dependencies: {},
       outputs: {},
-      parameters: {},
       secrets: {},
       services: {},
       tasks: {},
@@ -293,7 +292,6 @@ export default abstract class DependencyManager {
       ...context.secrets,
       ...secrets,
     };
-    context.parameters = context.secrets; // Deprecated
 
     if (options.interpolate) {
       // Interpolate secrets

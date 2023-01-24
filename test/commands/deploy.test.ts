@@ -367,29 +367,6 @@ describe('deployment secrets', function () {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
 
-  mockArchitectAuth() // TODO: 404: remove
-    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
-    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`, (body) => {
-        expect(body.values['*'].test_secret).to.eq('test');
-        expect(body.values['*'].another_secret).to.eq('another_test');
-        return body;
-      })
-      .reply(200, mock_pipeline))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--parameter', 'test_secret=test', '--parameter', 'another_secret=another_test'])
-    .it('passing multiple deprecated parameters inline', ctx => {
-      expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
-    });
-
   mockArchitectAuth()
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
@@ -443,34 +420,6 @@ describe('deployment secrets', function () {
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--secret-file', './examples/echo/.env'])
     .it('passing a dotenv secrets file', ctx => {
-      expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
-    });
-
-  mockArchitectAuth() // TODO: 404: remove
-    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
-    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
-    .stub(DeployUtils, 'readSecretsFile', () => {
-      return wildcard_secrets;
-    })
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`, (body) => {
-        expect(body.values['*'].another_required_key).to.eq('required_value');
-        expect(body.values.echo.a_required_key).to.eq('some_value');
-        expect(body.values.echo.api_port).to.eq(3000);
-        expect(body.values.echo.one_more_required_secret).to.eq('one_more_value');
-        return body;
-      })
-      .reply(200, mock_pipeline))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--values', './examples/echo/secrets.yml'])
-    .it('passing a secrets file with the deprecated values flag', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
 });
