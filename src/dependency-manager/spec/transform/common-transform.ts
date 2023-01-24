@@ -1,7 +1,6 @@
 import { ClassConstructor, plainToInstance, TransformFnParams } from 'class-transformer';
 import stringArgv from 'string-argv';
 import { LivenessProbeConfig, VolumeConfig } from '../../config/common-config';
-import { Dictionary } from '../../utils/dictionary';
 import { LivenessProbeSpec, VolumeSpec } from '../common-spec';
 
 export const transformLivenessProbeSpecCommand = function (command: string[] | string | undefined): string[] | undefined {
@@ -15,7 +14,7 @@ export const transformLivenessProbeSpecCommand = function (command: string[] | s
   }
 };
 
-export const transformLivenessProbeSpec = function (liveness_probe: LivenessProbeSpec | undefined, environment: Dictionary<string | null>): LivenessProbeConfig | undefined {
+export const transformLivenessProbeSpec = function (liveness_probe: LivenessProbeSpec | undefined): LivenessProbeConfig | undefined {
   if (!liveness_probe || Object.keys(liveness_probe).length === 0) {
     return undefined;
   }

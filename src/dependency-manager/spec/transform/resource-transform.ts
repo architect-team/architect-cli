@@ -2,7 +2,8 @@ import stringArgv from 'string-argv';
 import { BuildConfig, ResourceConfig } from '../../config/resource-config';
 import { Dictionary } from '../../utils/dictionary';
 import { ComponentInstanceMetadata } from '../component-spec';
-import { BuildSpec, EnvironmentSpecValue, ResourceSpec } from '../resource-spec';
+import { BuildSpec, ResourceSpec } from '../resource-spec';
+import { SecretDefinitionSpec, SecretSpecValue } from '../secret-spec';
 import { ComponentSlugUtils, ResourceSlugUtils, ResourceType } from '../utils/slugs';
 
 export const transformResourceSpecCommand = (command: string | string[] | undefined): string[] => {
@@ -21,18 +22,24 @@ export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | 
   return stringArgv(entrypoint);
 };
 
-export const transformResourceSpecEnvironment = (environment: Dictionary<EnvironmentSpecValue> | undefined): Dictionary<string | null> => {
+export const transformResourceSpecEnvironment = (environment?: Dictionary<SecretSpecValue | SecretDefinitionSpec>): Dictionary<string> => {
   const output: Dictionary<string> = {};
   for (const [k, v] of Object.entries(environment || {})) {
-    if (v === undefined || v === null) {
+    const value = v instanceof SecretDefinitionSpec ? v.default : v;
+
+    if (value === undefined || value === null) {
       continue;
     }
 
-    if (v instanceof Object) {
-      output[k] = JSON.stringify(v);
+    /* TODO:TJ add back support for array type?
+    if (value instanceof Object) {
+      output[k] = JSON.stringify(value);
     } else {
-      output[k] = `${v}`;
+      output[k] = `${value}`;
     }
+    */
+
+    output[k] = `${value}`;
   }
   return output;
 };

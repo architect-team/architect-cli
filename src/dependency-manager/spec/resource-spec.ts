@@ -1,11 +1,11 @@
+import { Transform } from 'class-transformer';
 import { IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
+import { SecretDefinitionSpec, SecretSpecValue } from './secret-spec';
+import { transformObject } from './transform/common-transform';
 import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString, OneOf, StringOrStringArray } from './utils/json-schema-annotations';
 import { Slugs } from './utils/slugs';
-
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type EnvironmentSpecValue = boolean | null | number | object | string;
 
 @JSONSchema({
   description: 'An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.',
@@ -90,7 +90,7 @@ export abstract class ResourceSpec {
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      '^[a-zA-Z0-9_]+$': AnyOf('array', 'boolean', 'null', 'number', 'object', 'string'),
+      '^[a-zA-Z0-9_]+$': AnyOf('array', 'boolean', 'null', 'number', 'string', SecretDefinitionSpec),
     },
     errorMessage: {
       additionalProperties: Slugs.ArchitectSlugDescription,
@@ -98,7 +98,8 @@ export abstract class ResourceSpec {
     description: 'A set of key-value pairs or secret definitions that describes environment variables and their values.',
     externalDocs: { url: 'https://docs.architect.io/components/services/#local-configuration' },
   })
-  environment?: Dictionary<EnvironmentSpecValue>;
+  @Transform(transformObject(SecretDefinitionSpec))
+  environment?: Dictionary<SecretDefinitionSpec | SecretSpecValue>;
 
   @IsOptional()
   @ValidateNested()

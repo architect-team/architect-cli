@@ -1,6 +1,7 @@
 import { ComponentConfig, OutputDefinitionConfig, SecretDefinitionConfig } from '../../config/component-config';
 import { transformDictionary } from '../../utils/dictionary';
-import { ComponentSpec, OutputDefinitionSpec, SecretDefinitionSpec } from '../component-spec';
+import { ComponentSpec, OutputDefinitionSpec } from '../component-spec';
+import { SecretDefinitionSpec, SecretSpecValue } from '../secret-spec';
 import { Slugs } from '../utils/slugs';
 import { transformServiceSpec } from './service-transform';
 import { transformTaskSpec } from './task-transform';
@@ -21,7 +22,7 @@ export const transformBooleanString = (boolean_string: string | boolean): boolea
   }
 };
 
-export const transformSecretDefinitionSpec = (key: string, secret_spec: string | number | boolean | SecretDefinitionSpec | null): SecretDefinitionConfig => {
+export const transformSecretDefinitionSpec = (key: string, secret_spec: SecretSpecValue | SecretDefinitionSpec): SecretDefinitionConfig => {
   if (secret_spec && typeof secret_spec === 'object') {
     return {
       required: secret_spec.required ? transformBooleanString(secret_spec.required) : true,

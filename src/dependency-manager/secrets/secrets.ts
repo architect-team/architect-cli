@@ -1,8 +1,9 @@
 import { isMatch } from 'matcher';
-import { SecretValue } from '../config/component-context';
+import { SecretDefinitionSpec, SecretSpecValue, ServiceSpec, transformSecretDefinitionSpec } from '../..';
+import { ComponentConfig } from '../config/component-config';
 import { ComponentSpec } from '../spec/component-spec';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, Slugs } from '../spec/utils/slugs';
-import { Dictionary } from '../utils/dictionary';
+import { Dictionary, transformDictionary } from '../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../utils/errors';
 import { SecretsDict } from './type';
 
@@ -15,7 +16,7 @@ export class Secrets {
     this.account = account;
   }
 
-  getSecretsForComponentSpec(component_spec: ComponentSpec): Dictionary<SecretValue> {
+  getSecretsForComponent(component: ComponentSpec | ComponentConfig): Dictionary<SecretSpecValue> {
     // pre-sort values dictionary to properly stack/override any colliding keys
     const sorted_values_keys = Object.keys(this.secrets_dict).sort();
     const sorted_values_dict: SecretsDict = {};
@@ -23,11 +24,11 @@ export class Secrets {
       sorted_values_dict[key] = this.secrets_dict[key];
     }
 
-    const component_ref = component_spec.metadata.ref;
+    const component_ref = component.metadata.ref;
     const { component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
     const component_ref_with_account = ComponentSlugUtils.build(this.account, component_name, instance_name);
 
-    const component_secrets = new Set(Object.keys(component_spec.secrets || {}));
+    const component_secrets = new Set(Object.keys(component.secrets || {}));
 
     const res: Dictionary<any> = {};
     // add values from values file to all existing, matching components
@@ -109,6 +110,48 @@ export class Secrets {
 
     if (validation_errors.length > 0) {
       throw new ValidationErrors(validation_errors);
+    }
+  }
+
+  validateComponentSpec(component_spec: ComponentSpec): void {
+    const secrets_dict = this.getSecretsForComponent(component_spec);
+
+    const validation_errors = [];
+
+    const secrets = transformDictionary(transformSecretDefinitionSpec, component_spec.secrets);
+    // Check required secrets for components
+    for (const [key, value] of Object.entries(secrets)) {
+      if (value.required !== false && secrets_dict[key] === undefined && value.default === undefined) {
+        const validation_error = new ValidationError({
+          component: component_spec.name,
+          path: `secrets.${key}`,
+          message: `Required secret '${key}' was not provided`,
+          invalid_key: true,
+        });
+        validation_errors.push(validation_error);
+      }
+    }
+
+    // Check required secrets for environment variables
+    for (const [resource_name, resource_spec] of Object.entries({ ...component_spec.services, ...component_spec.tasks })) {
+      for (const [key, value] of Object.entries(resource_spec.environment || {})) {
+        const resource_type = resource_spec instanceof ServiceSpec ? 'services' : 'tasks';
+        const secret = value instanceof SecretDefinitionSpec ? value : { default: value };
+
+        if (secret.required !== false && secrets_dict[key] === undefined && (secret.default === undefined || secret.default === null)) {
+          const validation_error = new ValidationError({
+            component: component_spec.name,
+            path: `${resource_type}.${resource_name}.environment.${key}`,
+            message: `Required ${resource_type}-level secret '${key}' was not provided`,
+            invalid_key: true,
+          });
+          validation_errors.push(validation_error);
+        }
+      }
+    }
+
+    if (validation_errors.length > 0) {
+      throw new ValidationErrors(validation_errors, component_spec.metadata.file);
     }
   }
 }

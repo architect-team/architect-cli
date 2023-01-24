@@ -1,6 +1,6 @@
 import { instanceToPlain, plainToInstance, serialize } from 'class-transformer';
 import { buildNodeRef, ComponentConfig } from './config/component-config';
-import { ArchitectContext, ComponentContext, SecretValue } from './config/component-context';
+import { ArchitectContext, ComponentContext } from './config/component-context';
 import { DeprecatedInterfacesSpec } from './deprecated-spec/interfaces';
 import { DependencyGraph, DependencyGraphMutable } from './graph';
 import { IngressEdge } from './graph/edge/ingress';
@@ -13,13 +13,15 @@ import { TaskNode } from './graph/node/task';
 import { GraphOptions } from './graph/type';
 import { Secrets } from './secrets/secrets';
 import { SecretsDict } from './secrets/type';
-import { ComponentSpec, SecretDefinitionSpec } from './spec/component-spec';
+import { ComponentSpec } from './spec/component-spec';
 import { ResourceSpec } from './spec/resource-spec';
+import { SecretDefinitionSpec } from './spec/secret-spec';
 import { transformComponentSpec, transformSecretDefinitionSpec } from './spec/transform/component-transform';
+import { transformResourceSpecEnvironment } from './spec/transform/resource-transform';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, ResourceType, Slugs } from './spec/utils/slugs';
 import { validateOrRejectSpec } from './spec/utils/spec-validator';
 import { Dictionary, transformDictionary } from './utils/dictionary';
-import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
+import { ArchitectError } from './utils/errors';
 import { interpolateObjectLoose, interpolateObjectOrReject, replaceInterpolationBrackets } from './utils/interpolation';
 
 export default abstract class DependencyManager {
@@ -133,24 +135,6 @@ export default abstract class DependencyManager {
     return `\${{ ${url_protocol} + ${interface_ref}.host + ${url_port} + ${url_path} }}`;
   }
 
-  validateRequiredSecrets(component: ComponentConfig, secrets: Dictionary<SecretValue>): void { // TODO: 404: update
-    const validation_errors = [];
-    // Check required parameters and secrets for components
-    for (const [key, value] of Object.entries(component.secrets)) {
-      if (value.required !== false && secrets[key] === undefined && !value.default) {
-        const validation_error = new ValidationError({
-          component: component.name,
-          path: `secrets.${key}`,
-          message: `required secret '${key}' was not provided`,
-        });
-        validation_errors.push(validation_error);
-      }
-    }
-    if (validation_errors.length > 0) {
-      throw new ValidationErrors(validation_errors, component.metadata.file);
-    }
-  }
-
   validateGraph(graph: DependencyGraph): void {
     // Check for duplicate subdomains
     const seen_subdomains: Dictionary<string[]> = {};
@@ -253,7 +237,7 @@ export default abstract class DependencyManager {
       context.secrets[key] = value.default;
     }
 
-    const secrets_dict = secrets.getSecretsForComponentSpec(component_spec);
+    const secrets_dict = secrets.getSecretsForComponent(component_spec);
     context.secrets = {
       ...context.secrets,
       ...secrets_dict,
@@ -268,12 +252,11 @@ export default abstract class DependencyManager {
       component_spec = interpolateObject(component_spec, context, { keys: true, values: false, file: component_spec.metadata.file });
     }
 
-    const component_config = transformComponentSpec(component_spec);
-
     if (options.interpolate && options.validate) {
-      this.validateRequiredSecrets(component_config, context.secrets || {});
+      secrets.validateComponentSpec(component_spec);
     }
 
+    const component_config = transformComponentSpec(component_spec);
     const nodes = this.getComponentNodes(component_config);
     if (options.validate) {
       this.validateReservedNodeNames([...nodes, ...graph.nodes]);
@@ -340,43 +323,6 @@ export default abstract class DependencyManager {
     return { component_spec, context };
   }
 
-  validateComponentResourceSpecs(resource_specs: Dictionary<ResourceSpec> = {}, secrets: SecretsDict, component_name: string, path_prefix: string): ValidationError[] {
-    const validation_errors: ValidationError[] = [];
-    for (const [resource_name, resource_spec] of Object.entries(resource_specs)) {
-      for (const [env_var_key, env_var_value] of Object.entries(resource_spec.environment || {})) {
-        const all_components_secret_exists = secrets['*'] && secrets['*'][env_var_key] !== undefined;
-        const component_secret_exists = secrets[component_name] && secrets[component_name][env_var_key] !== undefined;
-
-        if (!all_components_secret_exists && !component_secret_exists) {
-          const required_no_default = env_var_value && typeof env_var_value === 'object' && (env_var_value as SecretDefinitionSpec).required && !(env_var_value as SecretDefinitionSpec).default;
-
-          if (required_no_default || env_var_value === null) {
-            const validation_error = new ValidationError({
-              component: component_name,
-              path: `${path_prefix}.${resource_name}.environment.${env_var_key}`,
-              message: `Required ${path_prefix}-level secret '${env_var_key}' was not provided`,
-              invalid_key: true,
-            });
-            validation_errors.push(validation_error);
-          }
-        }
-      }
-    }
-    return validation_errors;
-  }
-
-  validateEnvironments(component_specs: ComponentSpec[], secrets: SecretsDict): void {
-    for (const component_spec of component_specs) {
-      const validation_errors = [
-        ...this.validateComponentResourceSpecs(component_spec.services, secrets, component_spec.name, 'services'),
-        ...this.validateComponentResourceSpecs(component_spec.tasks, secrets, component_spec.name, 'tasks'),
-      ];
-      if (validation_errors.length > 0) {
-        throw new ValidationErrors(validation_errors, component_spec.metadata.file);
-      }
-    }
-  }
-
   updateResourceEnvironmentSecrets(resource_specs: Dictionary<ResourceSpec> = {}, all_secrets: SecretsDict, component_name: string): Dictionary<ResourceSpec> {
     for (const [resource_name, resource_spec] of Object.entries(resource_specs)) {
       const resource_environment = resource_specs[resource_name].environment;
@@ -404,6 +350,7 @@ export default abstract class DependencyManager {
     return resource_specs;
   }
 
+  // TODO:TJ move to secrets.ts
   updateResourceEnvironments(component_specs: ComponentSpec[], all_secrets: SecretsDict): ComponentSpec[] {
     const updated_component_specs = [];
     for (const component_spec of component_specs) {
@@ -426,7 +373,6 @@ export default abstract class DependencyManager {
 
     if (options.validate) {
       secrets.validate();
-      this.validateEnvironments(original_component_specs, all_secrets);
     }
 
     const interpolateObject = options.validate ? interpolateObjectOrReject : interpolateObjectLoose;
@@ -498,7 +444,7 @@ export default abstract class DependencyManager {
               environment: {},
             };
           }
-          context.services[service_name].environment = service.environment;
+          context.services[service_name].environment = transformResourceSpecEnvironment(service.environment);
 
           const to = buildNodeRef(component_spec, 'services', service_name);
           const current_node = graph.getNodeByRef(to) as ServiceNode;
@@ -516,7 +462,7 @@ export default abstract class DependencyManager {
           if (!context.tasks[task_name]) {
             context.tasks[task_name] = {};
           }
-          context.tasks[task_name].environment = task.environment;
+          context.tasks[task_name].environment = transformResourceSpecEnvironment(task.environment);
         }
 
         context.dependencies = {};

@@ -16,7 +16,7 @@ export interface ResourceConfig {
   command?: string[];
   entrypoint?: string[];
   language?: string;
-  environment: Dictionary<string | null>; // TODO:290:Dictionary<string>
+  environment: Dictionary<string>;
   build?: BuildConfig;
   cpu?: number | string; // TODO:290:number
   memory?: string;
