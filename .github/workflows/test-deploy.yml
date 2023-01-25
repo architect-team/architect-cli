@@ -26,7 +26,7 @@ jobs:
       - run: ./bin/dev config:set log_level debug
       - run: ./bin/dev login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
       - run: docker volume create volume-key
-      - run: ./bin/dev link test/integration/hello-world/architect.yml
+      - run: ./bin/dev link test/mocks/integration/hello-world/architect.yml
       - run: ./bin/dev link test/mocks/superset/deprecated.architect.yml
       - run: ./bin/dev dev -e superset test/mocks/superset/architect.yml --browser=false -s param_unset=test -s world_text=Architect > ./tmp.txt 2>&1 &
       - run: sh scripts/server_online.sh
@@ -59,7 +59,7 @@ jobs:
       - run: ./bin/dev config:set api_host https://api.dev.architect.io
       - run: ./bin/dev config:set log_level debug
       - run: ./bin/dev login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
-      - run: ./bin/dev register -a $ACCOUNT_NAME test/integration/hello-world/architect.yml test/mocks/superset/deprecated.architect.yml
+      - run: ./bin/dev register -a $ACCOUNT_NAME test/mocks/integration/hello-world/architect.yml test/mocks/superset/deprecated.architect.yml
       - run: ./bin/dev env:create $ENVIRONMENT_NAME -a $ACCOUNT_NAME --cluster $CLUSTER_NAME
       - run: ./bin/dev deploy -a $ACCOUNT_NAME --auto-approve -e $ENVIRONMENT_NAME test/mocks/superset/architect.yml -s param_unset=test -s world_text=Architect
       - run: sleep 180

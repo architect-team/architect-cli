@@ -10,7 +10,7 @@ keywords:
 services:
   api:
     build:
-      context: ../examples/context
+      context: ../integration/hello-world
       dockerfile: ./Dockerfile
     interfaces:
       main: 3000
