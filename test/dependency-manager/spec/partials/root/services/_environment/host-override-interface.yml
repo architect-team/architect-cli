@@ -1,3 +1,3 @@
-main:
-  host: "10.0.0.16"
-  port: 8080
+HOST: '10.0.0.16'
+PORT: 8080
+ARRAY: ['one', 'two']
