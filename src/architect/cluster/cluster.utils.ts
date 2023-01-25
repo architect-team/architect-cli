@@ -1,6 +1,7 @@
 import { Flags } from '@oclif/core';
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
+import execa from 'execa';
 import inquirer from 'inquirer';
 import Account from '../account/account.entity';
 import Cluster from './cluster.entity';
@@ -20,6 +21,8 @@ export interface KubernetesClusterCredentials {
   cluster_ca_cert: string;
   service_token: string;
 }
+
+export const MIN_CLUSTER_VERSION = { 'major': 1, 'minor': 22 };
 
 export default class ClusterUtils {
   static flags = {
@@ -80,5 +83,18 @@ export default class ClusterUtils {
       cluster = answers.cluster;
     }
     return cluster;
+  }
+
+  private static async getClientVersion() {
+    const { stdout } = await execa('kubectl', ['version', '--client', '--output', 'json']);
+    const { clientVersion } = JSON.parse(stdout);
+    return clientVersion;
+  }
+
+  public static async checkClientVersion(): Promise<void> {
+    const clientVersion = await this.getClientVersion();
+    if (Number(clientVersion.major) < MIN_CLUSTER_VERSION.major || (Number(clientVersion.major) === MIN_CLUSTER_VERSION.major && Number(clientVersion.minor) < 22)) {
+      throw new Error(`Currently, we only support Kubernetes clusters on version ${MIN_CLUSTER_VERSION.major}.${MIN_CLUSTER_VERSION.minor} or greater. Your cluster is currently on version ${clientVersion.gitVersion} which is below the minimum required version. Please upgrade your cluster before registering it with Architect.`);
+    }
   }
 }

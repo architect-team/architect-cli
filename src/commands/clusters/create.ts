@@ -9,7 +9,7 @@ import untildify from 'untildify';
 import { ArchitectError, Dictionary, Slugs } from '../..';
 import AccountUtils from '../../architect/account/account.utils';
 import Cluster from '../../architect/cluster/cluster.entity';
-import { CreateClusterInput } from '../../architect/cluster/cluster.utils';
+import ClusterUtils, { CreateClusterInput } from '../../architect/cluster/cluster.utils';
 import PipelineUtils from '../../architect/pipeline/pipeline.utils';
 import BaseCommand from '../../base-command';
 import { AgentClusterUtils } from '../../common/utils/agent-cluster.utils';
@@ -104,6 +104,8 @@ export default class ClusterCreate extends BaseCommand {
   }
 
   private async createCluster() {
+    await ClusterUtils.checkClientVersion();
+
     const { args, flags } = await this.parse(ClusterCreate);
 
     const answers = await inquirer.prompt([

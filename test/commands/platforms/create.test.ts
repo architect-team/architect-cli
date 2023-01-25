@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import sinon, { SinonSpy } from 'sinon';
 import AppService from '../../../src/app-config/service';
+import ClusterUtils, { MIN_CLUSTER_VERSION } from '../../../src/architect/cluster/cluster.utils';
 import PipelineUtils from '../../../src/architect/pipeline/pipeline.utils';
 import ClusterCreate from '../../../src/commands/clusters/create';
 import PlatformCreate from '../../../src/commands/platforms/create';
@@ -26,6 +27,7 @@ describe('platform:create', function () {
 
   const create_test = () => {
     return test
+      .stub(ClusterUtils, 'getClientVersion', sinon.stub().returns(MIN_CLUSTER_VERSION))
       .stub(PlatformCreate.prototype, 'log', sinon.stub())
       .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
       .stub(fs, 'readJSONSync', () => {
@@ -144,4 +146,12 @@ describe('platform:create', function () {
       expect(create_cluster_applications.calledOnce).true;
       expect(post_to_api.calledOnce).true;
     });
+
+  test
+    .stub(ClusterUtils, 'getClientVersion', sinon.stub().returns({ 'major': 1, 'minor': 0, 'gitVersion': 'v1.0.0' }))
+    .command(['cluster:create'])
+    .catch(e => {
+      expect(e.message).contains(`Currently, we only support Kubernetes clusters on version ${MIN_CLUSTER_VERSION.major}.${MIN_CLUSTER_VERSION.minor} or greater.`);
+    })
+    .it('create cluster with older cluster version fails');
 });
