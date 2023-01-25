@@ -16,7 +16,7 @@ services:
     build:
       context: .
     interfaces:
-      main: 3000
+      main: 8080
     environment:
       WORLD_TEXT: ${{ secrets.world_text }}
 

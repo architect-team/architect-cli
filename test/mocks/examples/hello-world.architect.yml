@@ -17,7 +17,7 @@ services:
       context: .
     interfaces:
       main:
-        port: 3000
+        port: 8080
         ingress:
           subdomain: hello
     environment:
