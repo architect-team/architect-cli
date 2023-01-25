@@ -3,8 +3,10 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import execa from 'execa';
 import inquirer from 'inquirer';
+import { ArchitectError } from '../../dependency-manager/utils/errors';
 import Account from '../account/account.entity';
 import Cluster from './cluster.entity';
+import semver, { SemVer } from 'semver';
 
 export interface CreateClusterInput {
   type: string;
@@ -22,7 +24,7 @@ export interface KubernetesClusterCredentials {
   service_token: string;
 }
 
-export const MIN_CLUSTER_VERSION = { 'major': 1, 'minor': 22 };
+export const MIN_CLUSTER_VERSION = { 'major': 1, 'minor': 22, 'gitVersion': '1.22.0' };
 
 export default class ClusterUtils {
   static flags = {
@@ -92,9 +94,15 @@ export default class ClusterUtils {
   }
 
   public static async checkClientVersion(): Promise<void> {
-    const clientVersion = await this.getClientVersion();
-    if (Number(clientVersion.major) < MIN_CLUSTER_VERSION.major || (Number(clientVersion.major) === MIN_CLUSTER_VERSION.major && Number(clientVersion.minor) < 22)) {
-      throw new Error(`Currently, we only support Kubernetes clusters on version ${MIN_CLUSTER_VERSION.major}.${MIN_CLUSTER_VERSION.minor} or greater. Your cluster is currently on version ${clientVersion.gitVersion} which is below the minimum required version. Please upgrade your cluster before registering it with Architect.`);
+    const client_version = await this.getClientVersion();
+    const client_semver = semver.coerce(client_version.gitVersion);
+    if (!client_semver) {
+      throw new ArchitectError(`Failed to translate Kubernetes cluster version ${client_version.gitVersion}.`);
+    }
+
+    const min_cluster_semver = semver.coerce(MIN_CLUSTER_VERSION.gitVersion) as SemVer;
+    if (semver.lt(client_semver.version, min_cluster_semver.version)) {
+      throw new ArchitectError(`Currently, we only support Kubernetes clusters on version ${MIN_CLUSTER_VERSION.major}.${MIN_CLUSTER_VERSION.minor} or greater. Your cluster is currently on version ${client_semver.version} which is below the minimum required version. Please upgrade your cluster before registering it with Architect.`);
     }
   }
 }
