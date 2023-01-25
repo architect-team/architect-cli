@@ -1,6 +1,7 @@
 import { isMatch } from 'matcher';
-import { SecretDefinitionSpec, SecretSpecValue, transformSecretDefinitionSpec } from '../..';
 import { ComponentSpec } from '../spec/component-spec';
+import { SecretDefinitionSpec, SecretSpecValue } from '../spec/secret-spec';
+import { transformSecretDefinitionSpec } from '../spec/transform/component-transform';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, Slugs } from '../spec/utils/slugs';
 import { Dictionary, transformDictionary } from '../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../utils/errors';
