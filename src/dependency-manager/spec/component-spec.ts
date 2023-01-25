@@ -3,6 +3,7 @@ import { Exclude, Transform } from 'class-transformer';
 import { Allow, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
+import { ResourceSpec } from './resource-spec';
 import { SecretDefinitionSpec, SecretSpecValue } from './secret-spec';
 import { IngressSpec, ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
@@ -276,5 +277,9 @@ export class ComponentSpec {
 
   get deprecated_parameters(): Dictionary<SecretSpecValue | SecretDefinitionSpec> {
     return this.parameters || {};
+  }
+
+  get resources(): Dictionary<ResourceSpec> {
+    return { ...this.services, ...this.tasks };
   }
 }

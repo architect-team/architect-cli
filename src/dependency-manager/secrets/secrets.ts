@@ -1,5 +1,5 @@
 import { isMatch } from 'matcher';
-import { SecretDefinitionSpec, SecretSpecValue, ServiceSpec, transformSecretDefinitionSpec } from '../..';
+import { SecretDefinitionSpec, SecretSpecValue, transformSecretDefinitionSpec } from '../..';
 import { ComponentConfig } from '../config/component-config';
 import { ComponentSpec } from '../spec/component-spec';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, Slugs } from '../spec/utils/slugs';
@@ -133,16 +133,15 @@ export class Secrets {
     }
 
     // Check required secrets for environment variables
-    for (const [resource_name, resource_spec] of Object.entries({ ...component_spec.services, ...component_spec.tasks })) {
+    for (const [resource_name, resource_spec] of Object.entries(component_spec.resources)) {
       for (const [key, value] of Object.entries(resource_spec.environment || {})) {
-        const resource_type = resource_spec instanceof ServiceSpec ? 'services' : 'tasks';
         const secret = value instanceof SecretDefinitionSpec ? value : { default: value };
 
         if (secret.required !== false && secrets_dict[key] === undefined && (secret.default === undefined || secret.default === null)) {
           const validation_error = new ValidationError({
             component: component_spec.name,
-            path: `${resource_type}.${resource_name}.environment.${key}`,
-            message: `Required ${resource_type}-level secret '${key}' was not provided`,
+            path: `${resource_spec.resource_type}.${resource_name}.environment.${key}`,
+            message: `Required ${resource_spec.resource_type}-level secret '${key}' was not provided`,
             invalid_key: true,
           });
           validation_errors.push(validation_error);

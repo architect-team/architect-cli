@@ -51,6 +51,8 @@ export class BuildSpec {
   ...OneOf('build', 'image'),
 })
 export abstract class ResourceSpec {
+  abstract get resource_type(): string;
+
   @IsOptional()
   @JSONSchema({
     type: 'string',
