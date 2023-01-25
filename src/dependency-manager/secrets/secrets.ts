@@ -1,6 +1,6 @@
 import { isMatch } from 'matcher';
 import { ComponentSpec } from '../spec/component-spec';
-import { SecretDefinitionSpec, SecretSpecValue } from '../spec/secret-spec';
+import { SecretSpecValue } from '../spec/secret-spec';
 import { transformSecretDefinitionSpec } from '../spec/transform/component-transform';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, Slugs } from '../spec/utils/slugs';
 import { Dictionary, transformDictionary } from '../utils/dictionary';
@@ -129,28 +129,6 @@ export class Secrets {
           invalid_key: true,
         });
         validation_errors.push(validation_error);
-      }
-    }
-
-    // Check required secrets for environment variables
-    for (const [resource_name, resource_spec] of Object.entries(component_spec.resources)) {
-      for (const [key, value] of Object.entries(resource_spec.environment || {})) {
-        const secret = value instanceof SecretDefinitionSpec ? value : { default: value };
-
-        const secret_value = secrets_dict[key];
-        if (secret_value !== undefined && (secret.default === null || secret.default === undefined)) {
-          secret.default = secret_value;
-          const environment = resource_spec.environment!;
-          environment[key] = secret;
-        } else if (secret.required !== false && secrets_dict[key] === undefined && (secret.default === undefined || secret.default === null)) {
-          const validation_error = new ValidationError({
-            component: component_spec.name,
-            path: `${resource_spec.resource_type}.${resource_name}.environment.${key}`,
-            message: `Required ${resource_spec.resource_type}-level secret '${key}' was not provided`,
-            invalid_key: true,
-          });
-          validation_errors.push(validation_error);
-        }
       }
     }
 

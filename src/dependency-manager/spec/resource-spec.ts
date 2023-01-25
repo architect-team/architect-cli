@@ -1,9 +1,7 @@
-import { Transform } from 'class-transformer';
 import { IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
-import { SecretDefinitionSpec, SecretSpecValue } from './secret-spec';
-import { transformObject } from './transform/common-transform';
+import { SecretSpecValue } from './secret-spec';
 import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString, OneOf, StringOrStringArray } from './utils/json-schema-annotations';
 import { Slugs } from './utils/slugs';
 
@@ -92,7 +90,7 @@ export abstract class ResourceSpec {
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      '^[a-zA-Z0-9_]+$': AnyOf('array', 'boolean', 'null', 'number', 'string', SecretDefinitionSpec),
+      '^[a-zA-Z0-9_]+$': AnyOf('array', 'boolean', 'null', 'number', 'string'),
     },
     errorMessage: {
       additionalProperties: Slugs.ArchitectSlugDescription,
@@ -100,8 +98,7 @@ export abstract class ResourceSpec {
     description: 'A set of key-value pairs or secret definitions that describes environment variables and their values.',
     externalDocs: { url: 'https://docs.architect.io/components/services/#local-configuration' },
   })
-  @Transform(transformObject(SecretDefinitionSpec))
-  environment?: Dictionary<SecretDefinitionSpec | SecretSpecValue>;
+  environment?: Dictionary<SecretSpecValue>;
 
   @IsOptional()
   @ValidateNested()
