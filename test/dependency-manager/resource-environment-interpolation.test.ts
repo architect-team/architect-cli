@@ -672,7 +672,6 @@ describe('Resource-level secrets', () => {
         expect(api_node_eact_app.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
       });
 
-      /*
       it('user-defined object passed in as an environment variable', async () => {
         const component_config = `
       name: hello-world
@@ -693,14 +692,18 @@ describe('Resource-level secrets', () => {
         const manager = new LocalDependencyManager(axios.create(), 'architect', {
           'hello-world': '/stack/architect.yml',
         });
-        const graph = await manager.getGraph([
-          await manager.loadComponentSpec('hello-world'),
-        ]);
-        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
-        const node = graph.getNodeByRef(api_ref) as ServiceNode;
-        expect(node.config.environment).to.deep.eq({ NOT_A_SECRET_DEFINITION: '{\"complete\":\"and\",\"total\":\"nonsense\"}' });
+
+        let err;
+        try {
+          await manager.getGraph([
+            await manager.loadComponentSpec('hello-world'),
+          ]);
+        } catch (e: any) {
+          err = e;
+        }
+
+        expect(err).instanceOf(ValidationErrors);
       });
-      */
 
       it(`a hardcoded environment variable isn't overwritten by a secret passed in from the command line`, async () => {
         const component_config = `

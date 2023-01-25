@@ -1,6 +1,7 @@
 // eslint-disable-next-line node/no-extraneous-import
 import { ReferenceObject, SchemaObject } from 'openapi3-ts';
-import { ComponentInterfaceSpec, ComponentSpec, SecretDefinitionSpec } from '../component-spec';
+import { ComponentInterfaceSpec, ComponentSpec } from '../component-spec';
+import { SecretDefinitionSpec } from '../secret-spec';
 import { ServiceSpec } from '../service-spec';
 import { TaskSpec } from '../task-spec';
 import { DEBUG_PREFIX, getDocsPath, stripDebugDefinitions } from './json-schema';
