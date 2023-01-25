@@ -161,7 +161,6 @@ export default class ComponentRegister extends BaseCommand {
     return updated_volume;
   }
 
-  // eslint-disable-next-line complexity
   private async registerComponent(config_path: string, tag: string) {
     const { flags } = await this.parse(ComponentRegister);
     console.time('Time');
