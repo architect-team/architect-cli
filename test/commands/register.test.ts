@@ -11,10 +11,9 @@ import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
-import { mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST, mock_components } from '../utils/mocks';
-import * as ComponentBuilder from '../../src/dependency-manager/spec/utils/component-builder';
+import { mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST, getArchitectExampleProjectPath, getArchitectExampleProjectContext } from '../utils/mocks';
 
-describe('register', async function () {
+describe('register', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
@@ -91,7 +90,7 @@ describe('register', async function () {
       .reply(200))
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.hello_world.CONFIG_FILE_PATH, '-t', '1.0.0', '--architecture', 'amd64', '--architecture', 'arm64v8', '--architecture', 'windows-amd64', '-a', 'examples'])
+    .command(['register', getArchitectExampleProjectPath('hello-world'), '-t', '1.0.0', '--architecture', 'amd64', '--architecture', 'arm64v8', '--architecture', 'windows-amd64', '-a', 'examples'])
     .it('register component with architecture flag', ctx => {
       const convert_to_buildx_platforms = DockerBuildXUtils.convertToBuildxPlatforms as SinonStub;
       expect(convert_to_buildx_platforms.calledOnce).true;
@@ -101,18 +100,13 @@ describe('register', async function () {
 
   mockArchitectAuth()
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().throws(new Error('Some internal docker build exception')))
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.database_seeding.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response),
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.database_seeding.CONFIG_FILE_PATH, '-t', '1.0.0', '--architecture', 'incorrect', '-a', 'examples'])
+    .command(['register', getArchitectExampleProjectPath('database-seeding'), '-t', '1.0.0', '--architecture', 'incorrect', '-a', 'examples'])
     .catch(err => {
       expect(process.exitCode).eq(1);
       expect(`${err}`).to.contain('Some internal docker build exception');
@@ -138,14 +132,14 @@ describe('register', async function () {
         expect(validateSpec(body.config)).to.have.lengthOf(0);
         for (const [service_name, service] of Object.entries(body.config.services) as [string, ServiceSpec][]) {
           if (IF_EXPRESSION_REGEX.test(service_name)) {
-            continue;
-          }
+ continue;
+}
           expect(service.image).not.undefined;
         }
         for (const [task_name, task] of Object.entries(body.config.tasks || []) as [string, TaskSpec][]) {
           if (IF_EXPRESSION_REGEX.test(task_name)) {
-            continue;
-          }
+ continue;
+}
           expect(task.image).not.undefined;
         }
         cb(null, body);
@@ -178,11 +172,6 @@ describe('register', async function () {
     });
 
   mockArchitectAuth()
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.database_seeding.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -202,7 +191,7 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.database_seeding.CONFIG_FILE_PATH, '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', getArchitectExampleProjectPath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('it reports to the user that the component was registered successfully', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
@@ -245,11 +234,6 @@ describe('register', async function () {
 
   mockArchitectAuth()
     .stub(fs, 'move', sinon.stub())
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.database_seeding.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -278,17 +262,12 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.database_seeding.CONFIG_FILE_PATH, '-a', 'examples', '-e', 'test-env'])
+    .command(['register', getArchitectExampleProjectPath('database-seeding'), '-a', 'examples', '-e', 'test-env'])
     .it('registers an ephemeral component with an environment specified', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
   mockArchitectAuth()
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.database_seeding.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -313,18 +292,13 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.database_seeding.CONFIG_FILE_PATH, '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', getArchitectExampleProjectPath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('it does not call any docker commands if the image is provided', ctx => {
       expect(ctx.stderr).to.contain('Registering component database-seeding:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
   mockArchitectAuth()
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.database_seeding.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -344,7 +318,7 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.database_seeding.CONFIG_FILE_PATH, '-a', 'examples'])
+    .command(['register', getArchitectExampleProjectPath('database-seeding'), '-a', 'examples'])
     .it('it defaults the tag to latest if not supplied', ctx => {
       expect(ctx.stderr).to.contain('Registering component database-seeding:latest with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
@@ -360,7 +334,7 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.hello_world.CONFIG_FILE_PATH, '-a', 'examples'])
+    .command(['register', getArchitectExampleProjectPath('hello-world'), '-a', 'examples'])
     .catch(err => {
       expect(process.exitCode).eq(1);
       expect(`${err}`).to.contain('Friendly error message from server');
@@ -369,11 +343,6 @@ describe('register', async function () {
 
   mockArchitectAuth()
     .stub(fs, 'move', sinon.stub())
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.database_seeding.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -398,7 +367,7 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.database_seeding.CONFIG_FILE_PATH, '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', getArchitectExampleProjectPath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('gives user feedback while running docker commands', ctx => {
       expect(ctx.stderr).to.contain('Registering component database-seeding:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
@@ -406,18 +375,13 @@ describe('register', async function () {
 
   mockArchitectAuth()
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub().throws(new Error('Some internal docker build exception')))
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.database_seeding.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response),
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.database_seeding.CONFIG_FILE_PATH, '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', getArchitectExampleProjectPath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .catch(err => {
       expect(process.exitCode).eq(1);
       expect(err.message).to.contain('Some internal docker build exception');
@@ -426,11 +390,6 @@ describe('register', async function () {
 
   mockArchitectAuth()
     .stub(fs, 'move', sinon.stub())
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.database_seeding.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -452,7 +411,7 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.database_seeding.CONFIG_FILE_PATH, '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', getArchitectExampleProjectPath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('gives user feedback for each component in the environment while running docker commands', ctx => {
       expect(ctx.stderr).to.contain('Registering component database-seeding:1.0.0 with Architect Cloud');
     });
@@ -461,11 +420,6 @@ describe('register', async function () {
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.react_app.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -485,7 +439,7 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.react_app.CONFIG_FILE_PATH, '--arg', 'NODE_ENV=dev', '-a', 'examples'])
+    .command(['register', getArchitectExampleProjectPath('react-app'), '--arg', 'NODE_ENV=dev', '-a', 'examples'])
     .it('override build arg specified in architect.yml', ctx => {
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
       expect(compose.callCount).to.eq(1);
@@ -503,11 +457,6 @@ describe('register', async function () {
   mockArchitectAuth()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.database_seeding.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -523,7 +472,7 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.database_seeding.CONFIG_FILE_PATH, '--arg', 'NODE_ENV=dev', '--arg', 'SSH_PUB_KEY="abc==\ntest.architect.io"', '-a', 'examples'])
+    .command(['register', getArchitectExampleProjectPath('database-seeding'), '--arg', 'NODE_ENV=dev', '--arg', 'SSH_PUB_KEY="abc==\ntest.architect.io"', '-a', 'examples'])
     .it('set build arg not specified in architect.yml', ctx => {
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
       expect(compose.callCount).to.eq(1);
@@ -532,13 +481,6 @@ describe('register', async function () {
     });
 
   mockArchitectAuth()
-    .stub(fs, 'move', sinon.stub())
-    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.hello_world.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -556,21 +498,14 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-a', 'examples', mock_components.hello_world.CONFIG_FILE_PATH, mock_components.database_seeding.CONFIG_FILE_PATH])
+    .command(['register', '-a', 'examples', getArchitectExampleProjectPath('react-app'), getArchitectExampleProjectPath('database-seeding')])
     .it('register multiple apps at the same time with no tagged versions', ctx => {
-      const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
-      expect(compose.callCount).to.eq(2);
-      expect(ctx.stderr).to.contain('Registering component hello-world:latest with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component react-app:latest with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component database-seeding:latest with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
   mockArchitectAuth()
-    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.hello_world.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -588,21 +523,14 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-t', '1.0.0', '-a', 'examples', mock_components.react_app.CONFIG_FILE_PATH, mock_components.database_seeding.CONFIG_FILE_PATH])
+    .command(['register', '-t', '1.0.0', '-a', 'examples', getArchitectExampleProjectPath('react-app'), getArchitectExampleProjectPath('database-seeding')])
     .it('register multiple apps at the same time with a shared tagged version', ctx => {
-      const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
-      expect(compose.callCount).to.eq(2);
-      expect(ctx.stderr).to.contain('Registering component hello-world:1.0.0 with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component react-app:1.0.0 with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component database-seeding:1.0.0 with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
   mockArchitectAuth()
-    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.hello_world.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -620,21 +548,14 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.react_app.CONFIG_FILE_PATH, mock_components.database_seeding.CONFIG_FILE_PATH, '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', getArchitectExampleProjectPath('react-app'), getArchitectExampleProjectPath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('register multiple apps at the same time with inverse arg sequence', ctx => {
-      const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
-      expect(compose.callCount).to.eq(2);
-      expect(ctx.stderr).to.contain('Registering component hello-world:1.0.0 with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component react-app:1.0.0 with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component database-seeding:1.0.0 with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
   mockArchitectAuth()
-    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.hello_world.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -652,11 +573,10 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.react_app.CONFIG_FILE_PATH, '-t', '1.0.0', mock_components.database_seeding.CONFIG_FILE_PATH, '-a', 'examples'])
+    .command(['register', getArchitectExampleProjectPath('react-app'), '-t', '1.0.0', getArchitectExampleProjectPath('database-seeding'), '-a', 'examples'])
     .it('register multiple apps at the same time with mixed arg sequence', ctx => {
-      const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
-      expect(compose.callCount).to.eq(2);
-      expect(ctx.stderr).to.contain('Registering component hello-world:1.0.0 with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component react-app:1.0.0 with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component database-seeding:1.0.0 with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
@@ -664,11 +584,6 @@ describe('register', async function () {
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.hello_world.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -686,9 +601,10 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', mock_components.react_app.CONFIG_FILE_PATH, '-t', '1.0.0', mock_components.database_seeding.CONFIG_FILE_PATH, '--arg', 'NODE_ENV=dev', '-a', 'examples'])
+    .command(['register', getArchitectExampleProjectPath('react-app'), '-t', '1.0.0', getArchitectExampleProjectPath('database-seeding'), '--arg', 'NODE_ENV=dev', '-a', 'examples'])
     .it('register multiple apps at the same time with a shared build arg', ctx => {
-      expect(ctx.stderr).to.contain('Registering component hello-world:1.0.0 with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component react-app:1.0.0 with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component database-seeding:1.0.0 with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
       expect(compose.callCount).to.eq(2);
@@ -700,11 +616,6 @@ describe('register', async function () {
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.hello_world.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -722,9 +633,10 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-a', 'examples', mock_components.react_app.CONFIG_FILE_PATH, mock_components.react_app.CONFIG_FILE_PATH, mock_components.database_seeding.CONFIG_FILE_PATH, '--arg', 'NODE_ENV=dev'])
+    .command(['register', '-a', 'examples', getArchitectExampleProjectPath('react-app'), getArchitectExampleProjectPath('react-app'), getArchitectExampleProjectPath('database-seeding'), '--arg', 'NODE_ENV=dev'])
     .it('register multiple apps at the same time will only register unique component paths', ctx => {
-      expect(ctx.stderr).to.contain('Registering component hello-world:latest with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component react-app:latest with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component database-seeding:latest with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
       expect(compose.callCount).to.eq(2);
@@ -737,11 +649,6 @@ describe('register', async function () {
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.hello_world.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -759,9 +666,10 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-a', 'examples', mock_components.react_app.CONFIG_FILE_PATH, `${mock_components.react_app.CONFIG_FILE_PATH}/../react-app.architect.yml`, mock_components.database_seeding.CONFIG_FILE_PATH, '--arg', 'NODE_ENV=dev'])
+    .command(['register', '-a', 'examples', getArchitectExampleProjectPath('react-app'), `${getArchitectExampleProjectContext('react-app')}/../../react-app.architect.yml`, getArchitectExampleProjectPath('database-seeding'), '--arg', 'NODE_ENV=dev'])
     .it('register multiple apps at the same time will only register only unique component paths if relative pathing is provided', ctx => {
-      expect(ctx.stderr).to.contain('Registering component hello-world:latest with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component react-app:latest with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component database-seeding:latest with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
       expect(compose.callCount).to.eq(2);
@@ -774,11 +682,6 @@ describe('register', async function () {
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      const spec = ComponentBuilder.buildSpecFromYml(mock_components.hello_world.CONFIG);
-      spec.metadata.file = { path: mock_components.hello_world.CONFIG_FILE_PATH, contents: '' };
-      return spec;
-    })
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -796,9 +699,10 @@ describe('register', async function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-a', 'examples', mock_components.react_app.CONFIG_FILE_PATH, mock_components.database_seeding.CONFIG_FILE_PATH, '--arg', 'NODE_ENV=dev'])
+    .command(['register', '-a', 'examples', getArchitectExampleProjectPath('react-app'), getArchitectExampleProjectPath('database-seeding'), '--arg', 'NODE_ENV=dev'])
     .it('register multiple apps at the same time will register and only use build args if applicable', ctx => {
-      expect(ctx.stderr).to.contain('Registering component hello-world:latest with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component react-app:latest with Architect Cloud...... done\n');
+      expect(ctx.stderr).to.contain('Registering component database-seeding:latest with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
       expect(compose.callCount).to.eq(2);

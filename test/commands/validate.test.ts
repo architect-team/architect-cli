@@ -4,8 +4,7 @@ import path from 'path';
 import sinon from 'sinon';
 import untildify from 'untildify';
 import { Slugs } from '../../src/dependency-manager/spec/utils/slugs';
-import { mock_components, mockArchitectAuth } from '../utils/mocks';
-import * as ComponentBuilder from '../../src/dependency-manager/spec/utils/component-builder';
+import { getArchitectExampleProjectContext, getArchitectExampleProjectPath, mockArchitectAuth } from '../utils/mocks';
 
 describe('architect validate component', function () {
   const subdomain_token_to_config_yaml_string = (subdomain_token: string): string =>
@@ -26,10 +25,10 @@ interfaces:
   mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
-    .command(['validate', mock_components.hello_world.CONFIG_FILE_PATH])
+    .command(['validate', getArchitectExampleProjectPath('database-seeding')])
     .it('correctly validates an architect.yml file and prints name and source_file', ctx => {
-      expect(ctx.stdout).to.contain(`hello-world`);
-      expect(ctx.stdout).to.contain(mock_components.hello_world.CONFIG_FILE_PATH);
+      expect(ctx.stdout).to.contain(`database-seeding`);
+      expect(ctx.stdout).to.contain(getArchitectExampleProjectPath('database-seeding'));
     });
 
   mockArchitectAuth()
@@ -42,15 +41,14 @@ interfaces:
     });
 
   mockArchitectAuth()
-    .stub(ComponentBuilder, 'buildSpecFromPath', sinon.stub().returns(ComponentBuilder.buildSpecFromPath(mock_components.hello_world.CONFIG_FILE_PATH)))
     .stdout({ print })
     .stderr({ print })
-    .command(['validate', mock_components.hello_world.CONFIG_FILE_PATH, mock_components.database_seeding.CONFIG_FILE_PATH])
+    .command(['validate', getArchitectExampleProjectPath('hello-world'), getArchitectExampleProjectPath('database-seeding')])
     .it('correctly validates an multiple files and prints name and source_file for each', ctx => {
-      const compose = ComponentBuilder.buildSpecFromPath as sinon.SinonStub;
-      expect(compose.callCount).to.eq(2);
+      expect(ctx.stdout).to.contain('database-seeding');
+      expect(ctx.stdout).to.contain(getArchitectExampleProjectPath('database-seeding'));
       expect(ctx.stdout).to.contain('hello-world');
-      expect(ctx.stdout).to.contain(mock_components.hello_world.CONFIG_FILE_PATH);
+      expect(ctx.stdout).to.contain(getArchitectExampleProjectPath('hello-world'));
     });
 
   mockArchitectAuth()
