@@ -1,6 +1,5 @@
 import { isMatch } from 'matcher';
 import { SecretDefinitionSpec, SecretSpecValue, transformSecretDefinitionSpec } from '../..';
-import { ComponentConfig } from '../config/component-config';
 import { ComponentSpec } from '../spec/component-spec';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, Slugs } from '../spec/utils/slugs';
 import { Dictionary, transformDictionary } from '../utils/dictionary';
@@ -16,7 +15,7 @@ export class Secrets {
     this.account = account;
   }
 
-  getSecretsForComponent(component: ComponentSpec | ComponentConfig): Dictionary<SecretSpecValue> {
+  getSecretsForComponentSpec(component_spec: ComponentSpec, include_all = false): Dictionary<SecretSpecValue> {
     // pre-sort values dictionary to properly stack/override any colliding keys
     const sorted_values_keys = Object.keys(this.secrets_dict).sort();
     const sorted_values_dict: SecretsDict = {};
@@ -24,13 +23,13 @@ export class Secrets {
       sorted_values_dict[key] = this.secrets_dict[key];
     }
 
-    const component_ref = component.metadata.ref;
+    const component_ref = component_spec.metadata.ref;
     const { component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
     const component_ref_with_account = ComponentSlugUtils.build(this.account, component_name, instance_name);
 
-    const component_secrets = new Set(Object.keys(component.secrets || {}));
+    const component_secrets = new Set(Object.keys(component_spec.secrets || {}));
 
-    const res: Dictionary<any> = {};
+    const res: Dictionary<SecretSpecValue> = {};
     // add values from values file to all existing, matching components
     // eslint-disable-next-line prefer-const
     for (let [pattern, secrets] of Object.entries(sorted_values_dict)) {
@@ -39,9 +38,9 @@ export class Secrets {
         const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(pattern);
         pattern = ComponentSlugUtils.build(component_account_name, component_name, instance_name);
       }
-      if (isMatch(component_ref, [pattern]) || isMatch(component_ref_with_account, [pattern])) {
+      if (isMatch([component_ref, component_ref_with_account], [pattern])) {
         for (const [secret_key, secret_value] of Object.entries(secrets)) {
-          if (component_secrets.has(secret_key)) {
+          if (include_all || component_secrets.has(secret_key)) {
             res[secret_key] = secret_value;
           }
         }
@@ -114,7 +113,7 @@ export class Secrets {
   }
 
   validateComponentSpec(component_spec: ComponentSpec): void {
-    const secrets_dict = this.getSecretsForComponent(component_spec);
+    const secrets_dict = this.getSecretsForComponentSpec(component_spec, true);
 
     const validation_errors = [];
 
@@ -137,7 +136,12 @@ export class Secrets {
       for (const [key, value] of Object.entries(resource_spec.environment || {})) {
         const secret = value instanceof SecretDefinitionSpec ? value : { default: value };
 
-        if (secret.required !== false && secrets_dict[key] === undefined && (secret.default === undefined || secret.default === null)) {
+        const secret_value = secrets_dict[key];
+        if (secret_value !== undefined && (secret.default === null || secret.default === undefined)) {
+          secret.default = secret_value;
+          const environment = resource_spec.environment!;
+          environment[key] = secret;
+        } else if (secret.required !== false && secrets_dict[key] === undefined && (secret.default === undefined || secret.default === null)) {
           const validation_error = new ValidationError({
             component: component_spec.name,
             path: `${resource_spec.resource_type}.${resource_name}.environment.${key}`,

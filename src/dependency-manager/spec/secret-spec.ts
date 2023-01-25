@@ -2,7 +2,7 @@ import { IsOptional } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { AnyOf, ExpressionOr } from './utils/json-schema-annotations';
 
-export type SecretSpecValue = boolean | number | string | null | undefined;
+export type SecretSpecValue = Array<boolean | number | string> | boolean | number | string | null | undefined;
 
 @JSONSchema({
   description: 'Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).',

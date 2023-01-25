@@ -31,15 +31,11 @@ export const transformResourceSpecEnvironment = (environment?: Dictionary<Secret
       continue;
     }
 
-    /* TODO:TJ add back support for array type?
     if (value instanceof Object) {
       output[k] = JSON.stringify(value);
     } else {
       output[k] = `${value}`;
     }
-    */
-
-    output[k] = `${value}`;
   }
   return output;
 };

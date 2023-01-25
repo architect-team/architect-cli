@@ -1,914 +1,108 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
-import { resourceRefToNodeRef, ServiceNode, TaskNode, ValidationErrors } from '../../src';
+import { resourceRefToNodeRef, ServiceNode, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 
 describe('Resource-level secrets', () => {
-  describe('Service-level secrets', () => {
-    it('implied secret/environment variable with asterisk-targeted secret', async () => {
-      const component_config = `
+  for (const resource_type of ['services', 'tasks']) {
+    describe(`${resource_type}-level secrets`, () => {
+      it('implied secret/environment variable with asterisk-targeted secret', async () => {
+        const component_config = `
       name: hello-world
 
-      services:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
           environment:
             IMPLIED_SECRET:
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { IMPLIED_SECRET: 'secret_value' } });
-      const api_ref = resourceRefToNodeRef('hello-world.services.api');
-      const node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(node.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-    });
-
-    it('implied secret/environment variable with component-targeted secret', async () => {
-      const component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            IMPLIED_SECRET:
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { 'hello-world': { IMPLIED_SECRET: 'secret_value' } });
-      const api_ref = resourceRefToNodeRef('hello-world.services.api');
-      const node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(node.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-    });
-
-    it('implied environment variable, but secret value not provided', async () => {
-      const component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            IMPLIED_SECRET:
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-
-      let err;
-      try {
-        await manager.getGraph([
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+        const graph = await manager.getGraph([
           await manager.loadComponentSpec('hello-world'),
-        ]);
-      } catch (e: any) {
-        err = e;
-      }
+        ], { '*': { IMPLIED_SECRET: 'secret_value' } });
+        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const node = graph.getNodeByRef(api_ref) as ServiceNode;
+        expect(node.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
+      });
 
-      expect(err).instanceOf(ValidationErrors);
-      const errors = JSON.parse(err.message);
-      expect(errors).lengthOf(1);
-      expect(errors[0].path).eq(`services.api.environment.IMPLIED_SECRET`);
-      expect(errors[0].message).includes(`Required services-level secret 'IMPLIED_SECRET' was not provided`);
-      expect(errors[0].start?.row).eq(10);
-      expect(errors[0].start?.column).eq(13);
-      expect(errors[0].end?.row).eq(10);
-      expect(errors[0].end?.column).eq(27);
-    });
-
-    it('required secret/environment variable with component-targeted secret, but incorrect component target', async () => {
-      const component_config = `
+      it('implied secret/environment variable with component-targeted secret', async () => {
+        const component_config = `
       name: hello-world
 
-      services:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
           environment:
-            REQUIRED_SECRET:
-              required: true
+            IMPLIED_SECRET:
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-
-      let err;
-      try {
-        await manager.getGraph([
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+        const graph = await manager.getGraph([
           await manager.loadComponentSpec('hello-world'),
-        ], { 'hello-world-incorrect': { REQUIRED_SECRET: 'secret_value' } });
-      } catch (e: any) {
-        err = e;
-      }
+        ], { 'hello-world': { IMPLIED_SECRET: 'secret_value' } });
+        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const node = graph.getNodeByRef(api_ref) as ServiceNode;
+        expect(node.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
+      });
 
-      expect(err).instanceOf(ValidationErrors);
-      const errors = JSON.parse(err.message);
-      expect(errors).lengthOf(1);
-      expect(errors[0].path).eq(`services.api.environment.REQUIRED_SECRET`);
-      expect(errors[0].message).includes(`Required services-level secret 'REQUIRED_SECRET' was not provided`);
-      expect(errors[0].start?.row).eq(10);
-      expect(errors[0].start?.column).eq(13);
-      expect(errors[0].end?.row).eq(10);
-      expect(errors[0].end?.column).eq(28);
-    });
-
-    it('optional environment variable with null passed in as the value', async () => {
-      const component_config = `
+      it('implied environment variable, but secret value not provided', async () => {
+        const component_config = `
       name: hello-world
 
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            NULL:
-              required: false
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { NULL: null } });
-      const api_ref = resourceRefToNodeRef('hello-world.services.api');
-      const node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(node.config.environment).to.deep.eq({});
-    });
-
-    it('optional environment variable with no value passed in', async () => {
-      const component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            NULL:
-              required: false
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ]);
-      const api_ref = resourceRefToNodeRef('hello-world.services.api');
-      const node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(node.config.environment).to.deep.eq({});
-    });
-
-    it('optional environment variable with value passed in', async () => {
-      const component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            VALUE:
-              required: false
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { VALUE: 'secret_value' } });
-      const api_ref = resourceRefToNodeRef('hello-world.services.api');
-      const node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(node.config.environment).to.deep.eq({ VALUE: 'secret_value' });
-    });
-
-    it('required environment variable not included', async () => {
-      const component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            NOT_NULL:
-              required: true
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-
-      let err;
-      try {
-        await manager.getGraph([
-          await manager.loadComponentSpec('hello-world'),
-        ]);
-      } catch (e: any) {
-        err = e;
-      }
-
-      expect(err).instanceOf(ValidationErrors);
-      const errors = JSON.parse(err.message);
-      expect(errors).lengthOf(1);
-      expect(errors[0].path).eq(`services.api.environment.NOT_NULL`);
-      expect(errors[0].message).includes(`Required services-level secret 'NOT_NULL' was not provided`);
-      expect(errors[0].start?.row).eq(10);
-      expect(errors[0].start?.column).eq(13);
-      expect(errors[0].end?.row).eq(10);
-      expect(errors[0].end?.column).eq(21);
-    });
-
-    it('multiple required environment variables not included', async () => {
-      const component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            NOT_NULL:
-              required: true
-            NOT_NULL_2:
-              required: true
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-
-      let err;
-      try {
-        await manager.getGraph([
-          await manager.loadComponentSpec('hello-world'),
-        ]);
-      } catch (e: any) {
-        err = e;
-      }
-
-      expect(err).instanceOf(ValidationErrors);
-      const errors = JSON.parse(err.message);
-      expect(errors).lengthOf(2);
-
-      expect(errors[0].path).eq(`services.api.environment.NOT_NULL`);
-      expect(errors[0].message).includes(`Required services-level secret 'NOT_NULL' was not provided`);
-      expect(errors[0].start?.row).eq(10);
-      expect(errors[0].start?.column).eq(13);
-      expect(errors[0].end?.row).eq(10);
-      expect(errors[0].end?.column).eq(21);
-
-      expect(errors[1].path).eq(`services.api.environment.NOT_NULL_2`);
-      expect(errors[1].message).includes(`Required services-level secret 'NOT_NULL_2' was not provided`);
-      expect(errors[1].start?.row).eq(12);
-      expect(errors[1].start?.column).eq(13);
-      expect(errors[1].end?.row).eq(12);
-      expect(errors[1].end?.column).eq(23);
-    });
-
-    it('required environment variable included', async () => {
-      const component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            NOT_NULL:
-              required: true
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { NOT_NULL: 'actual_value' } });
-      const api_ref = resourceRefToNodeRef('hello-world.services.api');
-      const node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(node.config.environment).to.deep.eq({ NOT_NULL: 'actual_value' });
-    });
-
-    it('default environment variable', async () => {
-      const component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            DEFAULT:
-              default: default_value
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ]);
-      const api_ref = resourceRefToNodeRef('hello-world.services.api');
-      const node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(node.config.environment).to.deep.eq({ DEFAULT: 'default_value' });
-    });
-
-    it('default environment variable as top-level secret interpolation', async () => {
-      const component_config = `
-      name: hello-world
-
-      secrets:
-        top_level_secret:
-          required: true
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            TOP_LEVEL_SECRET:
-              default: \${{ secrets.top_level_secret }}
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { top_level_secret: 'top_level_value' }});
-      const api_ref = resourceRefToNodeRef('hello-world.services.api');
-      const node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(node.config.environment).to.deep.eq({ TOP_LEVEL_SECRET: 'top_level_value' });
-    });
-
-    it('default environment variable and top-level secret with the same key resolve properly', async () => {
-      const component_config = `
-      name: hello-world
-
-      secrets:
-        DEFAULT_SECRET:
-          default: top_level_default
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            DEFAULT_SECRET:
-              default: environment_level_default
-            DEFAULT_SECRET_INTERPOLATED:
-              default: \${{ secrets.DEFAULT_SECRET }}
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ]);
-      const api_ref = resourceRefToNodeRef('hello-world.services.api');
-      const node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(node.config.environment).to.deep.eq({
-        DEFAULT_SECRET: 'environment_level_default' ,
-        DEFAULT_SECRET_INTERPOLATED: 'top_level_default',
-      });
-    });
-
-    it('different implied secret/environment variable per service with asterisk-targeted secrets', async () => {
-      const component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            IMPLIED_SECRET_1:
-        app:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            IMPLIED_SECRET_2:
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { IMPLIED_SECRET_1: 'secret_1', IMPLIED_SECRET_2: 'secret_2' } });
-      const api_ref = resourceRefToNodeRef('hello-world.services.api');
-      const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(api_node.config.environment).to.deep.eq({ IMPLIED_SECRET_1: 'secret_1' });
-      const app_ref = resourceRefToNodeRef('hello-world.services.app');
-      const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
-      expect(app_node.config.environment).to.deep.eq({ IMPLIED_SECRET_2: 'secret_2' });
-    });
-
-    it('same implied secret/environment variable for each service with asterisk-targeted secret', async () => {
-      const component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            IMPLIED_SECRET:
-        app:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            IMPLIED_SECRET:
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { IMPLIED_SECRET: 'secret_value' } });
-      const api_ref = resourceRefToNodeRef('hello-world.services.api');
-      const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(api_node.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-      const app_ref = resourceRefToNodeRef('hello-world.services.app');
-      const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
-      expect(app_node.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-    });
-
-    it('same implied secret/environment variable for each component with asterisk-targeted secret', async () => {
-      const hello_world_component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            IMPLIED_SECRET:
-      `;
-
-      const react_app_component_config = `
-      name: react-app
-
-      services:
-        api:
-          image: heroku/nodejs-react-app
-          interfaces:
-            main: 3000
-          environment:
-            IMPLIED_SECRET:
-      `;
-
-      mock_fs({
-        '/stack/hello-world/architect.yml': hello_world_component_config,
-        '/stack/react-app/architect.yml': react_app_component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/hello-world/architect.yml',
-        'react-app': '/stack/react-app/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-        await manager.loadComponentSpec('react-app'),
-      ], { '*': { IMPLIED_SECRET: 'secret_value' } });
-      const api_ref_hello_world = resourceRefToNodeRef('hello-world.services.api');
-      const api_node_hello_world = graph.getNodeByRef(api_ref_hello_world) as ServiceNode;
-      expect(api_node_hello_world.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-      const api_ref_react_app = resourceRefToNodeRef('react-app.services.api');
-      const api_node_eact_app = graph.getNodeByRef(api_ref_react_app) as ServiceNode;
-      expect(api_node_eact_app.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-    });
-
-    it('missing implied secret/environment variable for one component, asterisk-targeted implied secret for the other', async () => {
-      const hello_world_component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            IMPLIED_SECRET:
-              required: false
-      `;
-
-      const react_app_component_config = `
-      name: react-app
-
-      services:
-        api:
-          image: heroku/nodejs-react-app
-          interfaces:
-            main: 3000
-          environment:
-            IMPLIED_SECRET:
-      `;
-
-      mock_fs({
-        '/stack/hello-world/architect.yml': hello_world_component_config,
-        '/stack/react-app/architect.yml': react_app_component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/hello-world/architect.yml',
-        'react-app': '/stack/react-app/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-        await manager.loadComponentSpec('react-app'),
-      ], { 'react-app': { IMPLIED_SECRET: 'secret_value' } });
-      const api_ref_hello_world = resourceRefToNodeRef('hello-world.services.api');
-      const api_node_hello_world = graph.getNodeByRef(api_ref_hello_world) as ServiceNode;
-      expect(api_node_hello_world.config.environment).to.deep.eq({});
-      const api_ref_react_app = resourceRefToNodeRef('react-app.services.api');
-      const api_node_eact_app = graph.getNodeByRef(api_ref_react_app) as ServiceNode;
-      expect(api_node_eact_app.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-    });
-
-    it('implied secret/environment variable for one component, asterisk-targeted interpolation secret for the other', async () => {
-      const hello_world_component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            SAME_SECRET:
-      `;
-
-      const react_app_component_config = `
-      name: react-app
-
-      secrets:
-        SAME_SECRET:
-          required: true
-
-      services:
-        api:
-          image: heroku/nodejs-react-app
-          interfaces:
-            main: 3000
-          environment:
-            SAME_SECRET: \${{ secrets.SAME_SECRET }}
-      `;
-
-      mock_fs({
-        '/stack/hello-world/architect.yml': hello_world_component_config,
-        '/stack/react-app/architect.yml': react_app_component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/hello-world/architect.yml',
-        'react-app': '/stack/react-app/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-        await manager.loadComponentSpec('react-app'),
-      ], { '*': { SAME_SECRET: 'secret_value' } });
-      const api_ref_hello_world = resourceRefToNodeRef('hello-world.services.api');
-      const api_node_hello_world = graph.getNodeByRef(api_ref_hello_world) as ServiceNode;
-      expect(api_node_hello_world.config.environment).to.deep.eq({ SAME_SECRET: 'secret_value' });
-      const api_ref_react_app = resourceRefToNodeRef('react-app.services.api');
-      const api_node_eact_app = graph.getNodeByRef(api_ref_react_app) as ServiceNode;
-      expect(api_node_eact_app.config.environment).to.deep.eq({ SAME_SECRET: 'secret_value' });
-    });
-
-    it('same implied secret/environment variable for component and dependency with asterisk-targeted secret', async () => {
-      const hello_world_component_config = `
-      name: hello-world
-
-      dependencies:
-        react-app: latest
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            IMPLIED_SECRET:
-      `;
-
-      const react_app_component_config = `
-      name: react-app
-
-      services:
-        api:
-          image: heroku/nodejs-react-app
-          interfaces:
-            main: 3000
-          environment:
-            IMPLIED_SECRET:
-      `;
-
-      mock_fs({
-        '/stack/hello-world/architect.yml': hello_world_component_config,
-        '/stack/react-app/architect.yml': react_app_component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/hello-world/architect.yml',
-        'react-app': '/stack/react-app/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-        await manager.loadComponentSpec('react-app'),
-      ], { '*': { IMPLIED_SECRET: 'secret_value' } });
-      const api_ref_hello_world = resourceRefToNodeRef('hello-world.services.api');
-      const api_node_hello_world = graph.getNodeByRef(api_ref_hello_world) as ServiceNode;
-      expect(api_node_hello_world.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-      const api_ref_react_app = resourceRefToNodeRef('react-app.services.api');
-      const api_node_eact_app = graph.getNodeByRef(api_ref_react_app) as ServiceNode;
-      expect(api_node_eact_app.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-    });
-
-    it('user-defined object passed in as an environment variable', async () => {
-      const component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            NOT_A_SECRET_DEFINITION:
-              complete: and
-              total: nonsense
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ]);
-      const api_ref = resourceRefToNodeRef('hello-world.services.api');
-      const node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(node.config.environment).to.deep.eq({ NOT_A_SECRET_DEFINITION: '{\"complete\":\"and\",\"total\":\"nonsense\"}' });
-    });
-
-    it(`a hardcoded environment variable isn't overwritten by a secret passed in from the command line`, async () => {
-      const component_config = `
-      name: hello-world
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            HARDCODED_SECRET: VALUE
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { HARDCODED_SECRET: 'SOMETHING ELSE' } });
-      const api_ref = resourceRefToNodeRef('hello-world.services.api');
-      const node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(node.config.environment).to.deep.eq({ HARDCODED_SECRET: 'VALUE' });
-    });
-
-    it(`a top-level secret and interpolated environment variable is overwritten by a secret passed in from the command line`, async () => {
-      const component_config = `
-      name: hello-world
-
-      secrets:
-        HARDCODED_SECRET:
-          default: VALUE
-
-      services:
-        api:
-          image: heroku/nodejs-hello-world
-          interfaces:
-            main: 3000
-          environment:
-            HARDCODED_SECRET: \${{ secrets.HARDCODED_SECRET }}
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { HARDCODED_SECRET: 'SOMETHING ELSE' } });
-      const api_ref = resourceRefToNodeRef('hello-world.services.api');
-      const node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(node.config.environment).to.deep.eq({ HARDCODED_SECRET: 'SOMETHING ELSE' });
-    });
-  });
-
-  describe('Task-level secrets', () => {
-    it('implied secret/environment variable with asterisk-targeted secret', async () => {
-      const component_config = `
-      name: hello-world
-
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
             IMPLIED_SECRET:
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+
+        let err;
+        try {
+          await manager.getGraph([
+            await manager.loadComponentSpec('hello-world'),
+          ]);
+        } catch (e: any) {
+          err = e;
+        }
+
+        expect(err).instanceOf(ValidationErrors);
+        const errors = JSON.parse(err.message);
+        expect(errors).lengthOf(1);
+        expect(errors[0].path).eq(`${resource_type}.api.environment.IMPLIED_SECRET`);
+        expect(errors[0].message).includes(`Required ${resource_type}-level secret 'IMPLIED_SECRET' was not provided`);
+        expect(errors[0].start?.row).eq(8);
+        expect(errors[0].start?.column).eq(13);
+        expect(errors[0].end?.row).eq(8);
+        expect(errors[0].end?.column).eq(27);
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { IMPLIED_SECRET: 'secret_value' } });
-      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
-      const node = graph.getNodeByRef(api_ref) as TaskNode;
-      expect(node.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-    });
-
-    it('implied secret/environment variable with component-targeted secret', async () => {
-      const component_config = `
+      it('required secret/environment variable with component-targeted secret, but incorrect component target', async () => {
+        const component_config = `
       name: hello-world
 
-      tasks:
-        api:
-          image: heroku/nodejs-hello-world
-          environment:
-            IMPLIED_SECRET:
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { 'hello-world': { IMPLIED_SECRET: 'secret_value' } });
-      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
-      const node = graph.getNodeByRef(api_ref) as TaskNode;
-      expect(node.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-    });
-
-    it('implied environment variable, but secret value not provided', async () => {
-      const component_config = `
-      name: hello-world
-
-      tasks:
-        api:
-          image: heroku/nodejs-hello-world
-          environment:
-            IMPLIED_SECRET:
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-
-      let err;
-      try {
-        await manager.getGraph([
-          await manager.loadComponentSpec('hello-world'),
-        ]);
-      } catch (e: any) {
-        err = e;
-      }
-
-      expect(err).instanceOf(ValidationErrors);
-      const errors = JSON.parse(err.message);
-      expect(errors).lengthOf(1);
-      expect(errors[0].path).eq(`tasks.api.environment.IMPLIED_SECRET`);
-      expect(errors[0].message).includes(`Required tasks-level secret 'IMPLIED_SECRET' was not provided`);
-      expect(errors[0].start?.row).eq(8);
-      expect(errors[0].start?.column).eq(13);
-      expect(errors[0].end?.row).eq(8);
-      expect(errors[0].end?.column).eq(27);
-    });
-
-    it('required secret/environment variable with component-targeted secret, but incorrect component target', async () => {
-      const component_config = `
-      name: hello-world
-
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
@@ -916,93 +110,93 @@ describe('Resource-level secrets', () => {
               required: true
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+
+        let err;
+        try {
+          await manager.getGraph([
+            await manager.loadComponentSpec('hello-world'),
+          ], { 'hello-world-incorrect': { REQUIRED_SECRET: 'secret_value' } });
+        } catch (e: any) {
+          err = e;
+        }
+
+        expect(err).instanceOf(ValidationErrors);
+        const errors = JSON.parse(err.message);
+        expect(errors).lengthOf(1);
+        expect(errors[0].path).eq(`${resource_type}.api.environment.REQUIRED_SECRET`);
+        expect(errors[0].message).includes(`Required ${resource_type}-level secret 'REQUIRED_SECRET' was not provided`);
+        expect(errors[0].start?.row).eq(8);
+        expect(errors[0].start?.column).eq(13);
+        expect(errors[0].end?.row).eq(8);
+        expect(errors[0].end?.column).eq(28);
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
+      it('optional environment variable with null passed in as the value', async () => {
+        const component_config = `
+      name: hello-world
 
-      let err;
-      try {
-        await manager.getGraph([
+      ${resource_type}:
+        api:
+          image: heroku/nodejs-hello-world
+          environment:
+            'NULL':
+              required: false
+      `;
+
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+        const graph = await manager.getGraph([
           await manager.loadComponentSpec('hello-world'),
-        ], { 'hello-world-incorrect': { REQUIRED_SECRET: 'secret_value' } });
-      } catch (e: any) {
-        err = e;
-      }
+        ], { '*': { NULL: null } });
+        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const node = graph.getNodeByRef(api_ref) as ServiceNode;
+        expect(node.config.environment).to.deep.eq({});
+      });
 
-      expect(err).instanceOf(ValidationErrors);
-      const errors = JSON.parse(err.message);
-      expect(errors).lengthOf(1);
-      expect(errors[0].path).eq(`tasks.api.environment.REQUIRED_SECRET`);
-      expect(errors[0].message).includes(`Required tasks-level secret 'REQUIRED_SECRET' was not provided`);
-      expect(errors[0].start?.row).eq(8);
-      expect(errors[0].start?.column).eq(13);
-      expect(errors[0].end?.row).eq(8);
-      expect(errors[0].end?.column).eq(28);
-    });
-
-    it('optional environment variable with null passed in as the value', async () => {
-      const component_config = `
+      it('optional environment variable with no value passed in', async () => {
+        const component_config = `
       name: hello-world
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
-            NULL:
+            'NULL':
               required: false
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+        ]);
+        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const node = graph.getNodeByRef(api_ref) as ServiceNode;
+        expect(node.config.environment).to.deep.eq({});
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { NULL: null } });
-      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
-      const node = graph.getNodeByRef(api_ref) as TaskNode;
-      expect(node.config.environment).to.deep.eq({});
-    });
-
-    it('optional environment variable with no value passed in', async () => {
-      const component_config = `
+      it('optional environment variable with value passed in', async () => {
+        const component_config = `
       name: hello-world
 
-      tasks:
-        api:
-          image: heroku/nodejs-hello-world
-          environment:
-            NULL:
-              required: false
-      `;
-
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
-
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ]);
-      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
-      const node = graph.getNodeByRef(api_ref) as TaskNode;
-      expect(node.config.environment).to.deep.eq({});
-    });
-
-    it('optional environment variable with value passed in', async () => {
-      const component_config = `
-      name: hello-world
-
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
@@ -1010,26 +204,26 @@ describe('Resource-level secrets', () => {
               required: false
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+        ], { '*': { VALUE: 'secret_value' } });
+        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const node = graph.getNodeByRef(api_ref) as ServiceNode;
+        expect(node.config.environment).to.deep.eq({ VALUE: 'secret_value' });
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { VALUE: 'secret_value' } });
-      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
-      const node = graph.getNodeByRef(api_ref) as TaskNode;
-      expect(node.config.environment).to.deep.eq({ VALUE: 'secret_value' });
-    });
-
-    it('required environment variable not included', async () => {
-      const component_config = `
+      it('required environment variable not included', async () => {
+        const component_config = `
       name: hello-world
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
@@ -1037,39 +231,39 @@ describe('Resource-level secrets', () => {
               required: true
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+
+        let err;
+        try {
+          await manager.getGraph([
+            await manager.loadComponentSpec('hello-world'),
+          ]);
+        } catch (e: any) {
+          err = e;
+        }
+
+        expect(err).instanceOf(ValidationErrors);
+        const errors = JSON.parse(err.message);
+        expect(errors).lengthOf(1);
+        expect(errors[0].path).eq(`${resource_type}.api.environment.NOT_NULL`);
+        expect(errors[0].message).includes(`Required ${resource_type}-level secret 'NOT_NULL' was not provided`);
+        expect(errors[0].start?.row).eq(8);
+        expect(errors[0].start?.column).eq(13);
+        expect(errors[0].end?.row).eq(8);
+        expect(errors[0].end?.column).eq(21);
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-
-      let err;
-      try {
-        await manager.getGraph([
-          await manager.loadComponentSpec('hello-world'),
-        ]);
-      } catch (e: any) {
-        err = e;
-      }
-
-      expect(err).instanceOf(ValidationErrors);
-      const errors = JSON.parse(err.message);
-      expect(errors).lengthOf(1);
-      expect(errors[0].path).eq(`tasks.api.environment.NOT_NULL`);
-      expect(errors[0].message).includes(`Required tasks-level secret 'NOT_NULL' was not provided`);
-      expect(errors[0].start?.row).eq(8);
-      expect(errors[0].start?.column).eq(13);
-      expect(errors[0].end?.row).eq(8);
-      expect(errors[0].end?.column).eq(21);
-    });
-
-    it('multiple required environment variables not included', async () => {
-      const component_config = `
+      it('multiple required environment variables not included', async () => {
+        const component_config = `
       name: hello-world
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
@@ -1079,47 +273,47 @@ describe('Resource-level secrets', () => {
               required: true
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+
+        let err;
+        try {
+          await manager.getGraph([
+            await manager.loadComponentSpec('hello-world'),
+          ]);
+        } catch (e: any) {
+          err = e;
+        }
+
+        expect(err).instanceOf(ValidationErrors);
+        const errors = JSON.parse(err.message);
+        expect(errors).lengthOf(2);
+
+        expect(errors[0].path).eq(`${resource_type}.api.environment.NOT_NULL`);
+        expect(errors[0].message).includes(`Required ${resource_type}-level secret 'NOT_NULL' was not provided`);
+        expect(errors[0].start?.row).eq(8);
+        expect(errors[0].start?.column).eq(13);
+        expect(errors[0].end?.row).eq(8);
+        expect(errors[0].end?.column).eq(21);
+
+        expect(errors[1].path).eq(`${resource_type}.api.environment.NOT_NULL_2`);
+        expect(errors[1].message).includes(`Required ${resource_type}-level secret 'NOT_NULL_2' was not provided`);
+        expect(errors[1].start?.row).eq(10);
+        expect(errors[1].start?.column).eq(13);
+        expect(errors[1].end?.row).eq(10);
+        expect(errors[1].end?.column).eq(23);
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-
-      let err;
-      try {
-        await manager.getGraph([
-          await manager.loadComponentSpec('hello-world'),
-        ]);
-      } catch (e: any) {
-        err = e;
-      }
-
-      expect(err).instanceOf(ValidationErrors);
-      const errors = JSON.parse(err.message);
-      expect(errors).lengthOf(2);
-
-      expect(errors[0].path).eq(`tasks.api.environment.NOT_NULL`);
-      expect(errors[0].message).includes(`Required tasks-level secret 'NOT_NULL' was not provided`);
-      expect(errors[0].start?.row).eq(8);
-      expect(errors[0].start?.column).eq(13);
-      expect(errors[0].end?.row).eq(8);
-      expect(errors[0].end?.column).eq(21);
-
-      expect(errors[1].path).eq(`tasks.api.environment.NOT_NULL_2`);
-      expect(errors[1].message).includes(`Required tasks-level secret 'NOT_NULL_2' was not provided`);
-      expect(errors[1].start?.row).eq(10);
-      expect(errors[1].start?.column).eq(13);
-      expect(errors[1].end?.row).eq(10);
-      expect(errors[1].end?.column).eq(23);
-    });
-
-    it('required environment variable included', async () => {
-      const component_config = `
+      it('required environment variable included', async () => {
+        const component_config = `
       name: hello-world
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
@@ -1127,26 +321,26 @@ describe('Resource-level secrets', () => {
               required: true
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+        ], { '*': { NOT_NULL: 'actual_value' } });
+        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const node = graph.getNodeByRef(api_ref) as ServiceNode;
+        expect(node.config.environment).to.deep.eq({ NOT_NULL: 'actual_value' });
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { NOT_NULL: 'actual_value' } });
-      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
-      const node = graph.getNodeByRef(api_ref) as TaskNode;
-      expect(node.config.environment).to.deep.eq({ NOT_NULL: 'actual_value' });
-    });
-
-    it('default environment variable', async () => {
-      const component_config = `
+      it('default environment variable', async () => {
+        const component_config = `
       name: hello-world
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
@@ -1154,30 +348,30 @@ describe('Resource-level secrets', () => {
               default: default_value
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+        ]);
+        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const node = graph.getNodeByRef(api_ref) as ServiceNode;
+        expect(node.config.environment).to.deep.eq({ DEFAULT: 'default_value' });
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ]);
-      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
-      const node = graph.getNodeByRef(api_ref) as TaskNode;
-      expect(node.config.environment).to.deep.eq({ DEFAULT: 'default_value' });
-    });
-
-    it('default environment variable as top-level secret interpolation', async () => {
-      const component_config = `
+      it('default environment variable as top-level secret interpolation', async () => {
+        const component_config = `
       name: hello-world
 
       secrets:
         top_level_secret:
           required: true
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
@@ -1185,30 +379,30 @@ describe('Resource-level secrets', () => {
               default: \${{ secrets.top_level_secret }}
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+        ], { '*': { top_level_secret: 'top_level_value' } });
+        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const node = graph.getNodeByRef(api_ref) as ServiceNode;
+        expect(node.config.environment).to.deep.eq({ TOP_LEVEL_SECRET: 'top_level_value' });
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { top_level_secret: 'top_level_value' }});
-      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
-      const node = graph.getNodeByRef(api_ref) as TaskNode;
-      expect(node.config.environment).to.deep.eq({ TOP_LEVEL_SECRET: 'top_level_value' });
-    });
-
-    it('default environment variable and top-level secret with the same key resolve properly', async () => {
-      const component_config = `
+      it('default environment variable and top-level secret with the same key resolve properly', async () => {
+        const component_config = `
       name: hello-world
 
       secrets:
         DEFAULT_SECRET:
           default: top_level_default
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
@@ -1218,29 +412,29 @@ describe('Resource-level secrets', () => {
               default: \${{ secrets.DEFAULT_SECRET }}
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+        ]);
+        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const node = graph.getNodeByRef(api_ref) as ServiceNode;
+        expect(node.config.environment).to.deep.eq({
+          DEFAULT_SECRET: 'environment_level_default',
+          DEFAULT_SECRET_INTERPOLATED: 'top_level_default',
+        });
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ]);
-      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
-      const node = graph.getNodeByRef(api_ref) as TaskNode;
-      expect(node.config.environment).to.deep.eq({
-        DEFAULT_SECRET: 'environment_level_default' ,
-        DEFAULT_SECRET_INTERPOLATED: 'top_level_default',
-      });
-    });
-
-    it('different implied secret/environment variable per task with asterisk-targeted secrets', async () => {
-      const component_config = `
+      it('different implied secret/environment variable per resource with asterisk-targeted secrets', async () => {
+        const component_config = `
       name: hello-world
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
@@ -1251,29 +445,29 @@ describe('Resource-level secrets', () => {
             IMPLIED_SECRET_2:
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+        ], { '*': { IMPLIED_SECRET_1: 'secret_1', IMPLIED_SECRET_2: 'secret_2' } });
+        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
+        expect(api_node.config.environment).to.deep.eq({ IMPLIED_SECRET_1: 'secret_1' });
+        const app_ref = resourceRefToNodeRef(`hello-world.${resource_type}.app`);
+        const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
+        expect(app_node.config.environment).to.deep.eq({ IMPLIED_SECRET_2: 'secret_2' });
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { IMPLIED_SECRET_1: 'secret_1', IMPLIED_SECRET_2: 'secret_2' } });
-      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
-      const api_node = graph.getNodeByRef(api_ref) as TaskNode;
-      expect(api_node.config.environment).to.deep.eq({ IMPLIED_SECRET_1: 'secret_1' });
-      const app_ref = resourceRefToNodeRef('hello-world.tasks.app');
-      const app_node = graph.getNodeByRef(app_ref) as TaskNode;
-      expect(app_node.config.environment).to.deep.eq({ IMPLIED_SECRET_2: 'secret_2' });
-    });
-
-    it('same implied secret/environment variable for each task with asterisk-targeted secret', async () => {
-      const component_config = `
+      it('same implied secret/environment variable for each resource with asterisk-targeted secret', async () => {
+        const component_config = `
       name: hello-world
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
@@ -1284,71 +478,71 @@ describe('Resource-level secrets', () => {
             IMPLIED_SECRET:
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+        ], { '*': { IMPLIED_SECRET: 'secret_value' } });
+        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
+        expect(api_node.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
+        const app_ref = resourceRefToNodeRef(`hello-world.${resource_type}.app`);
+        const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
+        expect(app_node.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { IMPLIED_SECRET: 'secret_value' } });
-      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
-      const api_node = graph.getNodeByRef(api_ref) as TaskNode;
-      expect(api_node.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-      const app_ref = resourceRefToNodeRef('hello-world.tasks.app');
-      const app_node = graph.getNodeByRef(app_ref) as TaskNode;
-      expect(app_node.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-    });
-
-    it('same implied secret/environment variable for each component with asterisk-targeted secret', async () => {
-      const hello_world_component_config = `
+      it('same implied secret/environment variable for each component with asterisk-targeted secret', async () => {
+        const hello_world_component_config = `
       name: hello-world
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
             IMPLIED_SECRET:
       `;
 
-      const react_app_component_config = `
+        const react_app_component_config = `
       name: react-app
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-react-app
           environment:
             IMPLIED_SECRET:
       `;
 
-      mock_fs({
-        '/stack/hello-world/architect.yml': hello_world_component_config,
-        '/stack/react-app/architect.yml': react_app_component_config,
+        mock_fs({
+          '/stack/hello-world/architect.yml': hello_world_component_config,
+          '/stack/react-app/architect.yml': react_app_component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/hello-world/architect.yml',
+          'react-app': '/stack/react-app/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+          await manager.loadComponentSpec('react-app'),
+        ], { '*': { IMPLIED_SECRET: 'secret_value' } });
+        const api_ref_hello_world = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const api_node_hello_world = graph.getNodeByRef(api_ref_hello_world) as ServiceNode;
+        expect(api_node_hello_world.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
+        const api_ref_react_app = resourceRefToNodeRef(`react-app.${resource_type}.api`);
+        const api_node_eact_app = graph.getNodeByRef(api_ref_react_app) as ServiceNode;
+        expect(api_node_eact_app.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/hello-world/architect.yml',
-        'react-app': '/stack/react-app/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-        await manager.loadComponentSpec('react-app'),
-      ], { '*': { IMPLIED_SECRET: 'secret_value' } });
-      const api_ref_hello_world = resourceRefToNodeRef('hello-world.tasks.api');
-      const api_node_hello_world = graph.getNodeByRef(api_ref_hello_world) as TaskNode;
-      expect(api_node_hello_world.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-      const api_ref_react_app = resourceRefToNodeRef('react-app.tasks.api');
-      const api_node_eact_app = graph.getNodeByRef(api_ref_react_app) as TaskNode;
-      expect(api_node_eact_app.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-    });
-
-    it('missing implied secret/environment variable for one component, asterisk-targeted implied secret for the other', async () => {
-      const hello_world_component_config = `
+      it('missing implied secret/environment variable for one component, asterisk-targeted implied secret for the other', async () => {
+        const hello_world_component_config = `
       name: hello-world
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
@@ -1356,133 +550,134 @@ describe('Resource-level secrets', () => {
               required: false
       `;
 
-      const react_app_component_config = `
+        const react_app_component_config = `
       name: react-app
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-react-app
           environment:
             IMPLIED_SECRET:
       `;
 
-      mock_fs({
-        '/stack/hello-world/architect.yml': hello_world_component_config,
-        '/stack/react-app/architect.yml': react_app_component_config,
+        mock_fs({
+          '/stack/hello-world/architect.yml': hello_world_component_config,
+          '/stack/react-app/architect.yml': react_app_component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/hello-world/architect.yml',
+          'react-app': '/stack/react-app/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+          await manager.loadComponentSpec('react-app'),
+        ], { 'react-app': { IMPLIED_SECRET: 'secret_value' } });
+        const api_ref_hello_world = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const api_node_hello_world = graph.getNodeByRef(api_ref_hello_world) as ServiceNode;
+        expect(api_node_hello_world.config.environment).to.deep.eq({});
+        const api_ref_react_app = resourceRefToNodeRef(`react-app.${resource_type}.api`);
+        const api_node_eact_app = graph.getNodeByRef(api_ref_react_app) as ServiceNode;
+        expect(api_node_eact_app.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/hello-world/architect.yml',
-        'react-app': '/stack/react-app/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-        await manager.loadComponentSpec('react-app'),
-      ], { 'react-app': { IMPLIED_SECRET: 'secret_value' } });
-      const api_ref_hello_world = resourceRefToNodeRef('hello-world.tasks.api');
-      const api_node_hello_world = graph.getNodeByRef(api_ref_hello_world) as TaskNode;
-      expect(api_node_hello_world.config.environment).to.deep.eq({});
-      const api_ref_react_app = resourceRefToNodeRef('react-app.tasks.api');
-      const api_node_eact_app = graph.getNodeByRef(api_ref_react_app) as TaskNode;
-      expect(api_node_eact_app.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-    });
-
-    it('implied secret/environment variable for one component, asterisk-targeted interpolation secret for the other', async () => {
-      const hello_world_component_config = `
+      it('implied secret/environment variable for one component, asterisk-targeted interpolation secret for the other', async () => {
+        const hello_world_component_config = `
       name: hello-world
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
             SAME_SECRET:
       `;
 
-      const react_app_component_config = `
+        const react_app_component_config = `
       name: react-app
 
       secrets:
         SAME_SECRET:
           required: true
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-react-app
           environment:
             SAME_SECRET: \${{ secrets.SAME_SECRET }}
       `;
 
-      mock_fs({
-        '/stack/hello-world/architect.yml': hello_world_component_config,
-        '/stack/react-app/architect.yml': react_app_component_config,
+        mock_fs({
+          '/stack/hello-world/architect.yml': hello_world_component_config,
+          '/stack/react-app/architect.yml': react_app_component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/hello-world/architect.yml',
+          'react-app': '/stack/react-app/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+          await manager.loadComponentSpec('react-app'),
+        ], { '*': { SAME_SECRET: 'secret_value' } });
+        const api_ref_hello_world = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const api_node_hello_world = graph.getNodeByRef(api_ref_hello_world) as ServiceNode;
+        expect(api_node_hello_world.config.environment).to.deep.eq({ SAME_SECRET: 'secret_value' });
+        const api_ref_react_app = resourceRefToNodeRef(`react-app.${resource_type}.api`);
+        const api_node_eact_app = graph.getNodeByRef(api_ref_react_app) as ServiceNode;
+        expect(api_node_eact_app.config.environment).to.deep.eq({ SAME_SECRET: 'secret_value' });
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/hello-world/architect.yml',
-        'react-app': '/stack/react-app/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-        await manager.loadComponentSpec('react-app'),
-      ], { '*': { SAME_SECRET: 'secret_value' } });
-      const api_ref_hello_world = resourceRefToNodeRef('hello-world.tasks.api');
-      const api_node_hello_world = graph.getNodeByRef(api_ref_hello_world) as TaskNode;
-      expect(api_node_hello_world.config.environment).to.deep.eq({ SAME_SECRET: 'secret_value' });
-      const api_ref_react_app = resourceRefToNodeRef('react-app.tasks.api');
-      const api_node_eact_app = graph.getNodeByRef(api_ref_react_app) as TaskNode;
-      expect(api_node_eact_app.config.environment).to.deep.eq({ SAME_SECRET: 'secret_value' });
-    });
-
-    it('same implied secret/environment variable for component and dependency with asterisk-targeted secret', async () => {
-      const hello_world_component_config = `
+      it('same implied secret/environment variable for component and dependency with asterisk-targeted secret', async () => {
+        const hello_world_component_config = `
       name: hello-world
 
       dependencies:
         react-app: latest
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
             IMPLIED_SECRET:
       `;
 
-      const react_app_component_config = `
+        const react_app_component_config = `
       name: react-app
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-react-app
           environment:
             IMPLIED_SECRET:
       `;
 
-      mock_fs({
-        '/stack/hello-world/architect.yml': hello_world_component_config,
-        '/stack/react-app/architect.yml': react_app_component_config,
+        mock_fs({
+          '/stack/hello-world/architect.yml': hello_world_component_config,
+          '/stack/react-app/architect.yml': react_app_component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/hello-world/architect.yml',
+          'react-app': '/stack/react-app/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+          await manager.loadComponentSpec('react-app'),
+        ], { '*': { IMPLIED_SECRET: 'secret_value' } });
+        const api_ref_hello_world = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const api_node_hello_world = graph.getNodeByRef(api_ref_hello_world) as ServiceNode;
+        expect(api_node_hello_world.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
+        const api_ref_react_app = resourceRefToNodeRef(`react-app.${resource_type}.api`);
+        const api_node_eact_app = graph.getNodeByRef(api_ref_react_app) as ServiceNode;
+        expect(api_node_eact_app.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/hello-world/architect.yml',
-        'react-app': '/stack/react-app/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-        await manager.loadComponentSpec('react-app'),
-      ], { '*': { IMPLIED_SECRET: 'secret_value' } });
-      const api_ref_hello_world = resourceRefToNodeRef('hello-world.tasks.api');
-      const api_node_hello_world = graph.getNodeByRef(api_ref_hello_world) as TaskNode;
-      expect(api_node_hello_world.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-      const api_ref_react_app = resourceRefToNodeRef('react-app.tasks.api');
-      const api_node_eact_app = graph.getNodeByRef(api_ref_react_app) as TaskNode;
-      expect(api_node_eact_app.config.environment).to.deep.eq({ IMPLIED_SECRET: 'secret_value' });
-    });
-
-    it('user-defined object passed in as an environment variable', async () => {
-      const component_config = `
+      /*
+      it('user-defined object passed in as an environment variable', async () => {
+        const component_config = `
       name: hello-world
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
@@ -1491,75 +686,77 @@ describe('Resource-level secrets', () => {
               total: nonsense
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+        ]);
+        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const node = graph.getNodeByRef(api_ref) as ServiceNode;
+        expect(node.config.environment).to.deep.eq({ NOT_A_SECRET_DEFINITION: '{\"complete\":\"and\",\"total\":\"nonsense\"}' });
       });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ]);
-      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
-      const node = graph.getNodeByRef(api_ref) as TaskNode;
-      expect(node.config.environment).to.deep.eq({ NOT_A_SECRET_DEFINITION: '{\"complete\":\"and\",\"total\":\"nonsense\"}' });
-    });
+      */
 
-    it(`a hardcoded environment variable isn't overwritten by a secret passed in from the command line`, async () => {
-      const component_config = `
+      it(`a hardcoded environment variable isn't overwritten by a secret passed in from the command line`, async () => {
+        const component_config = `
       name: hello-world
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
             HARDCODED_SECRET: VALUE
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+        ], { '*': { HARDCODED_SECRET: 'SOMETHING ELSE' } });
+        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const node = graph.getNodeByRef(api_ref) as ServiceNode;
+        expect(node.config.environment).to.deep.eq({ HARDCODED_SECRET: 'VALUE' });
       });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
-      });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { HARDCODED_SECRET: 'SOMETHING ELSE' } });
-      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
-      const node = graph.getNodeByRef(api_ref) as TaskNode;
-      expect(node.config.environment).to.deep.eq({ HARDCODED_SECRET: 'VALUE' });
-    });
-
-    it(`a top-level secret and interpolated environment variable is overwritten by a secret passed in from the command line`, async () => {
-      const component_config = `
+      it(`a top-level secret and interpolated environment variable is overwritten by a secret passed in from the command line`, async () => {
+        const component_config = `
       name: hello-world
 
       secrets:
         HARDCODED_SECRET:
           default: VALUE
 
-      tasks:
+      ${resource_type}:
         api:
           image: heroku/nodejs-hello-world
           environment:
             HARDCODED_SECRET: \${{ secrets.HARDCODED_SECRET }}
       `;
 
-      mock_fs({
-        '/stack/architect.yml': component_config,
-      });
+        mock_fs({
+          '/stack/architect.yml': component_config,
+        });
 
-      const manager = new LocalDependencyManager(axios.create(), 'architect', {
-        'hello-world': '/stack/architect.yml',
+        const manager = new LocalDependencyManager(axios.create(), 'architect', {
+          'hello-world': '/stack/architect.yml',
+        });
+        const graph = await manager.getGraph([
+          await manager.loadComponentSpec('hello-world'),
+        ], { '*': { HARDCODED_SECRET: 'SOMETHING ELSE' } });
+        const api_ref = resourceRefToNodeRef(`hello-world.${resource_type}.api`);
+        const node = graph.getNodeByRef(api_ref) as ServiceNode;
+        expect(node.config.environment).to.deep.eq({ HARDCODED_SECRET: 'SOMETHING ELSE' });
       });
-      const graph = await manager.getGraph([
-        await manager.loadComponentSpec('hello-world'),
-      ], { '*': { HARDCODED_SECRET: 'SOMETHING ELSE' } });
-      const api_ref = resourceRefToNodeRef('hello-world.tasks.api');
-      const node = graph.getNodeByRef(api_ref) as TaskNode;
-      expect(node.config.environment).to.deep.eq({ HARDCODED_SECRET: 'SOMETHING ELSE' });
     });
-  });
+  }
 });

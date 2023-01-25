@@ -23,7 +23,7 @@ export const transformBooleanString = (boolean_string: string | boolean): boolea
 };
 
 export const transformSecretDefinitionSpec = (key: string, secret_spec: SecretSpecValue | SecretDefinitionSpec): SecretDefinitionConfig => {
-  if (secret_spec && typeof secret_spec === 'object') {
+  if (secret_spec instanceof SecretDefinitionSpec) {
     return {
       required: secret_spec.required ? transformBooleanString(secret_spec.required) : true,
       description: secret_spec.description,

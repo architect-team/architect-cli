@@ -14,8 +14,6 @@ import { GraphOptions } from './graph/type';
 import { Secrets } from './secrets/secrets';
 import { SecretsDict } from './secrets/type';
 import { ComponentSpec } from './spec/component-spec';
-import { ResourceSpec } from './spec/resource-spec';
-import { SecretDefinitionSpec } from './spec/secret-spec';
 import { transformComponentSpec, transformSecretDefinitionSpec } from './spec/transform/component-transform';
 import { transformResourceSpecEnvironment } from './spec/transform/resource-transform';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, ResourceType, Slugs } from './spec/utils/slugs';
@@ -237,12 +235,16 @@ export default abstract class DependencyManager {
       context.secrets[key] = value.default;
     }
 
-    const secrets_dict = secrets.getSecretsForComponent(component_spec);
+    const secrets_dict = secrets.getSecretsForComponentSpec(component_spec);
     context.secrets = {
       ...context.secrets,
       ...secrets_dict,
     };
     context.parameters = context.secrets; // Deprecated
+
+    if (options.interpolate && options.validate) {
+      secrets.validateComponentSpec(component_spec);
+    }
 
     if (options.interpolate) {
       // Interpolate secrets
@@ -250,10 +252,6 @@ export default abstract class DependencyManager {
 
       // Replace conditionals
       component_spec = interpolateObject(component_spec, context, { keys: true, values: false, file: component_spec.metadata.file });
-    }
-
-    if (options.interpolate && options.validate) {
-      secrets.validateComponentSpec(component_spec);
     }
 
     const component_config = transformComponentSpec(component_spec);
@@ -323,46 +321,7 @@ export default abstract class DependencyManager {
     return { component_spec, context };
   }
 
-  updateResourceEnvironmentSecrets(resource_specs: Dictionary<ResourceSpec> = {}, all_secrets: SecretsDict, component_name: string): Dictionary<ResourceSpec> {
-    for (const [resource_name, resource_spec] of Object.entries(resource_specs)) {
-      const resource_environment = resource_specs[resource_name].environment;
-
-      if (resource_environment) {
-        for (const [env_var_key, env_var_value] of Object.entries(resource_spec.environment || {})) {
-          if (typeof resource_environment[env_var_key] !== 'string') { // don't overwrite hardcoded environment variables or interpolation references
-            if (all_secrets[component_name] && all_secrets[component_name][env_var_key]) {
-              resource_environment[env_var_key] = all_secrets[component_name][env_var_key];
-            } else if (all_secrets['*'] && all_secrets['*'][env_var_key]) {
-              resource_environment[env_var_key] = all_secrets['*'][env_var_key];
-            } else if (env_var_value && typeof env_var_value === 'object') {
-              const secret_definition_spec = env_var_value as SecretDefinitionSpec;
-              if (secret_definition_spec.default) {
-                resource_environment[env_var_key] = secret_definition_spec.default || null;
-              } else if (secret_definition_spec.required === false) {
-                resource_environment[env_var_key] = null; // no matching secret passed in, environment variable optional
-              }
-            }
-          }
-        }
-      }
-    }
-
-    return resource_specs;
-  }
-
-  // TODO:TJ move to secrets.ts
-  updateResourceEnvironments(component_specs: ComponentSpec[], all_secrets: SecretsDict): ComponentSpec[] {
-    const updated_component_specs = [];
-    for (const component_spec of component_specs) {
-      const updated_component_spec = component_spec;
-      updated_component_spec.services = this.updateResourceEnvironmentSecrets(component_spec.services, all_secrets, component_spec.name);
-      updated_component_spec.tasks = this.updateResourceEnvironmentSecrets(component_spec.tasks, all_secrets, component_spec.name);
-      updated_component_specs.push(updated_component_spec);
-    }
-    return updated_component_specs;
-  }
-
-  async getGraph(original_component_specs: ComponentSpec[], all_secrets: SecretsDict = {}, options?: GraphOptions): Promise<DependencyGraph> {
+  async getGraph(component_specs: ComponentSpec[], all_secrets: SecretsDict = {}, options?: GraphOptions): Promise<DependencyGraph> {
     options = {
       interpolate: true,
       validate: true,
@@ -380,8 +339,6 @@ export default abstract class DependencyManager {
     const graph = new DependencyGraphMutable();
 
     const context_map: Dictionary<ComponentContext> = {};
-
-    const component_specs = this.updateResourceEnvironments(original_component_specs, all_secrets);
 
     const evaluated_component_specs: ComponentSpec[] = [];
     for (const raw_component_spec of component_specs) {

@@ -43,7 +43,7 @@ describe('interpolation spec v1', () => {
         interfaces:
           main: 3000
         environment:
-          NULL:
+          'NULL':
             required: false
           NULL2: \${{ secrets.null_required }}
           NULL3: \${{ secrets.null_not_required }}
