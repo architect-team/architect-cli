@@ -46,7 +46,7 @@ services:
     description: stateless app service description
     language: javascript
     build:
-      context: ../../../integration/hello-world
+      context: ../../integration/hello-world
       dockerfile: ./Dockerfile
     command: 'npm run start'
     interfaces:
@@ -145,7 +145,7 @@ services:
       # target: production # TODO: re-enable when we move the example app to the test directory
       # ${{ if architect.environment == 'local' }}:
       #   target: dev
-      context: ../../../integration/hello-world
+      context: ../../integration/hello-world
       dockerfile: ./Dockerfile
     interfaces:
       http: 8080
@@ -177,7 +177,7 @@ services:
       labels:
         label-string: some_label
       build:
-        context: ../../../integration/hello-world
+        context: ../../integration/hello-world
         dockerfile: ./Dockerfile
         args:
           build_arg_string: arg_value
@@ -186,7 +186,7 @@ services:
 
   stateful-frontend:
     build:
-      context: ../../../integration/hello-world
+      context: ../../integration/hello-world
     interfaces:
       web:
         port: 8081
@@ -213,7 +213,7 @@ services:
   ${{ if architect.environment == 'local' }}:
     local-cli:
       build:
-        context: ../../../integration/hello-world
+        context: ../../integration/hello-world
       interfaces:
         web: 8081
       environment:
@@ -235,7 +235,7 @@ tasks:
   curler-build:
     schedule: '*/5 * * * ?'
     build:
-      context: ../../../integration/hello-world
+      context: ../../integration/hello-world
     command:
       - sh
       - -c
@@ -246,7 +246,7 @@ tasks:
   ${{ if architect.environment == 'local' }}:
     curler-build-local:
       build:
-        context: ../../../integration/hello-world
+        context: ../../integration/hello-world
         dockerfile: ./Dockerfile
       command:
         - sh
