@@ -14,10 +14,10 @@ secrets:
 services:
   api:
     build:
-      context: ./context
+      context: .
     interfaces:
       main:
-        port: 8080
+        port: 3000
         ingress:
           subdomain: hello
     environment:

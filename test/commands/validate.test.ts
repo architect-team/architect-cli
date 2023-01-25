@@ -4,7 +4,7 @@ import path from 'path';
 import sinon from 'sinon';
 import untildify from 'untildify';
 import { Slugs } from '../../src/dependency-manager/spec/utils/slugs';
-import { getArchitectExampleProjectContext, getArchitectExampleProjectPath, mockArchitectAuth } from '../utils/mocks';
+import { getMockComponentContextPath, getMockComponentFilePath, mockArchitectAuth } from '../utils/mocks';
 
 describe('architect validate component', function () {
   const subdomain_token_to_config_yaml_string = (subdomain_token: string): string =>
@@ -25,10 +25,10 @@ interfaces:
   mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
-    .command(['validate', getArchitectExampleProjectPath('database-seeding')])
+    .command(['validate', getMockComponentFilePath('database-seeding')])
     .it('correctly validates an architect.yml file and prints name and source_file', ctx => {
       expect(ctx.stdout).to.contain(`database-seeding`);
-      expect(ctx.stdout).to.contain(getArchitectExampleProjectPath('database-seeding'));
+      expect(ctx.stdout).to.contain(getMockComponentFilePath('database-seeding'));
     });
 
   mockArchitectAuth()
@@ -43,12 +43,12 @@ interfaces:
   mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
-    .command(['validate', getArchitectExampleProjectPath('hello-world'), getArchitectExampleProjectPath('database-seeding')])
+    .command(['validate', getMockComponentFilePath('hello-world'), getMockComponentFilePath('database-seeding')])
     .it('correctly validates an multiple files and prints name and source_file for each', ctx => {
       expect(ctx.stdout).to.contain('database-seeding');
-      expect(ctx.stdout).to.contain(getArchitectExampleProjectPath('database-seeding'));
+      expect(ctx.stdout).to.contain(getMockComponentFilePath('database-seeding'));
       expect(ctx.stdout).to.contain('hello-world');
-      expect(ctx.stdout).to.contain(getArchitectExampleProjectPath('hello-world'));
+      expect(ctx.stdout).to.contain(getMockComponentFilePath('hello-world'));
     });
 
   mockArchitectAuth()
