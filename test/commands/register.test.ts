@@ -718,8 +718,9 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
   
+  const min_cluster_version = { 'major': 1, 'minor': 22, 'gitVersion': 'v1.22.0' };
   mockArchitectAuth()
-    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns({ 'major': 1, 'minor': 22, 'gitVersion': 'v1.22.0' }))
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
     .nock(MOCK_API_HOST, api => api
@@ -737,7 +738,7 @@ describe('register', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'examples/hello-world/architect.yml', '-t', '1.0.0', '-a', 'examples'])
-    .it('register with cluster version v1.22', ctx => {
+    .it(`register with minimum cluster version`, ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
@@ -747,7 +748,7 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'examples/hello-world/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .catch(e => {
-      expect(e.message).contains('Currently, we only support Kubernetes clusters on version 1.22 or greater.');
+      expect(e.message).contains(`Currently, we only support Kubernetes clusters on version ${min_cluster_version.major}.${min_cluster_version.minor} or greater.`);
     })
     .it('register with older cluster version fails');
 });
