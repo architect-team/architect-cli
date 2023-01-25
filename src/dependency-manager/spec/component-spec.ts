@@ -3,6 +3,8 @@ import { Exclude, Transform } from 'class-transformer';
 import { Allow, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
+import { ResourceSpec } from './resource-spec';
+import { SecretDefinitionSpec, SecretSpecValue } from './secret-spec';
 import { IngressSpec, ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
 import { transformObject } from './transform/common-transform';
@@ -95,35 +97,6 @@ export class ComponentInterfaceSpec {
 }
 
 @JSONSchema({
-  description: 'Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).',
-})
-export class SecretDefinitionSpec {
-  static readonly merge_key = 'default';
-
-  @IsOptional()
-  @JSONSchema({
-    type: 'boolean',
-    description: 'Denotes whether the secret is required.',
-  })
-  required?: boolean;
-
-  @IsOptional()
-  @JSONSchema({
-    type: 'string',
-    description: 'A human-friendly description of the secret.',
-  })
-  description?: string;
-
-  @IsOptional()
-  @JSONSchema({
-    ...ExpressionOr(AnyOf('array', 'boolean', 'number', 'object', 'string', 'null')),
-    description: 'Sets a default value for the secret if one is not provided',
-  })
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  default?: boolean | number | object | string | null;
-}
-
-@JSONSchema({
   description: 'Components can define output fields that can be used to share configuration with consuming components.',
 })
 export class OutputDefinitionSpec {
@@ -198,7 +171,7 @@ export class ComponentSpec {
     description: '[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you\'ll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec',
   })
   @Transform(transformObject(SecretDefinitionSpec))
-  protected parameters?: Dictionary<string | number | boolean | SecretDefinitionSpec | null>;
+  protected parameters?: Dictionary<SecretSpecValue | SecretDefinitionSpec>;
 
   @IsOptional()
   @JSONSchema({
@@ -212,7 +185,7 @@ export class ComponentSpec {
     description: 'A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you\'ll want to capture them as secrets. Specifying a primitive value here will set the default secret value. For more detailed configuration, specify a SecretDefinitionSpec',
   })
   @Transform(transformObject(SecretDefinitionSpec))
-  secrets?: Dictionary<string | number | boolean | SecretDefinitionSpec | null>;
+  secrets?: Dictionary<SecretSpecValue | SecretDefinitionSpec>;
 
   @IsOptional()
   @JSONSchema({
@@ -302,7 +275,11 @@ export class ComponentSpec {
     return this.interfaces || {};
   }
 
-  get deprecated_parameters(): Dictionary<string | number | boolean | SecretDefinitionSpec | null> {
+  get deprecated_parameters(): Dictionary<SecretSpecValue | SecretDefinitionSpec> {
     return this.parameters || {};
+  }
+
+  get resources(): Dictionary<ResourceSpec> {
+    return { ...this.services, ...this.tasks };
   }
 }
