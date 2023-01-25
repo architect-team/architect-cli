@@ -3,7 +3,6 @@ import axios from 'axios';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import path from 'path';
-import { inspect } from 'util';
 import { resourceRefToNodeRef, ServiceNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
