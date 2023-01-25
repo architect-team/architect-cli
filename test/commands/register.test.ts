@@ -38,7 +38,9 @@ describe('register', function () {
     name: 'architect',
   };
 
+  const min_cluster_version = { 'major': 1, 'minor': 22, 'gitVersion': 'v1.22.0' };
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(fs, 'move', sinon.stub())
     .stub(ComponentRegister, 'registerComponent', sinon.stub().returns({}))
     .stdout({ print })
@@ -50,6 +52,7 @@ describe('register', function () {
     .it('expect default project path to be ./architect.yml if not provided');
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_architect_account_response)
@@ -76,7 +79,8 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
-    .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
+  .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
+  .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
@@ -101,6 +105,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().throws(new Error('Some internal docker build exception')))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
@@ -116,6 +121,7 @@ describe('register', function () {
     .it('register component with architecture flag failed');
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -170,6 +176,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -195,6 +202,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -231,6 +239,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -256,6 +265,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -282,6 +292,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -303,6 +314,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
     .nock(MOCK_API_HOST, api => api
       .get('/accounts/examples')
@@ -320,6 +332,7 @@ describe('register', function () {
     .it('rejects with informative error message if account is unavailable');
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(fs, 'move', sinon.stub())
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
@@ -352,6 +365,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub().throws(new Error('Some internal docker build exception')))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
@@ -367,6 +381,7 @@ describe('register', function () {
     .it('rejects with the original error message if docker buildx inspect fails');
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(fs, 'move', sinon.stub())
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
@@ -395,6 +410,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -433,6 +449,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .nock(MOCK_REGISTRY_HOST, api => api
@@ -463,6 +480,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -488,6 +506,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -513,6 +532,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -538,6 +558,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -563,6 +584,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -595,6 +617,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -628,6 +651,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -661,6 +685,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -693,6 +718,7 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
@@ -718,7 +744,6 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
   
-  const min_cluster_version = { 'major': 1, 'minor': 22, 'gitVersion': 'v1.22.0' };
   mockArchitectAuth()
     .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns(min_cluster_version))
     .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
