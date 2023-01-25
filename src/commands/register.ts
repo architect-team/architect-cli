@@ -21,6 +21,7 @@ import DockerBuildXUtils from '../common/docker/buildx.utils';
 import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
 import OrasPlugin from '../common/plugins/oras-plugin';
 import PluginManager from '../common/plugins/plugin-manager';
+import { KubeClusterUtils } from '../common/utils/kube-cluster.utils';
 import { transformVolumeSpec } from '../dependency-manager/spec/transform/common-transform';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
@@ -148,6 +149,8 @@ export default class ComponentRegister extends BaseCommand {
 
   // eslint-disable-next-line complexity
   private async registerComponent(config_path: string, tag: string) {
+    await KubeClusterUtils.checkClientVersion();
+
     const { flags } = await this.parse(ComponentRegister);
     console.time('Time');
 

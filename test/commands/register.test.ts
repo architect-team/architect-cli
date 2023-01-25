@@ -10,6 +10,7 @@ import ComponentRegister from '../../src/commands/register';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
+import { KubeClusterUtils } from '../../src/common/utils/kube-cluster.utils';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
 import { mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST } from '../utils/mocks';
 
@@ -716,4 +717,37 @@ describe('register', function () {
       expect(ctx.stdout).to.contain(`The account name 'invalid-account' was found as part of the component name in your architect.yml file. Either that account does not exist or you do not have permission to access it.`);
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
+  
+  mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns({ 'major': 1, 'minor': 22, 'gitVersion': 'v1.22.0' }))
+    .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
+    .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_architect_account_response)
+    )
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' })
+    )
+    .nock(MOCK_API_HOST, api => api
+      .post(/\/accounts\/.*\/components/, (body) => body)
+      .reply(200))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'examples/hello-world/architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .it('register with cluster version v1.22', ctx => {
+      expect(ctx.stdout).to.contain('Successfully registered component');
+    });
+
+  mockArchitectAuth()
+    .stub(KubeClusterUtils, 'getClientVersion', sinon.stub().returns({ 'major': 1, 'minor': 0, 'gitVersion': 'v1.0.0' }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'examples/hello-world/architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .catch(e => {
+      expect(e.message).contains('Currently, we only support Kubernetes clusters on version 1.22 or greater.');
+    })
+    .it('register with older cluster version fails');
 });
