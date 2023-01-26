@@ -9,7 +9,7 @@ secrets:
 services:
   api:
     build:
-      context: ../../../examples/hello-world
+      context: ../../integration/hello-world
       dockerfile: nonexistent-dockerfile
     interfaces:
       hello:

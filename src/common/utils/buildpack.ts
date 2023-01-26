@@ -7,10 +7,14 @@ import PluginManager from '../plugins/plugin-manager';
 
 export default class BuildPackUtils {
   private static async createProcfile(context: string, command: string): Promise<void> {
+    const procfile_backup_location = path.join(context, '/Procfile.backup');
     const procfile_location = path.join(context, '/Procfile');
     const does_exist = await fs.pathExists(procfile_location);
-    if (does_exist) {
-      const procfile_backup_location = path.join(context, '/Procfile.backup');
+    const does_exist_backup = await fs.pathExists(procfile_backup_location);
+    // If a backup exists do not overwite it. The backup is most likely the original.
+    if (does_exist_backup) {
+      await fs.remove(procfile_location);
+    } else if (does_exist) {
       await fs.move(procfile_location, procfile_backup_location);
     }
     await fs.writeFile(procfile_location, `architect: ${command}`);
@@ -25,12 +29,18 @@ export default class BuildPackUtils {
       await fs.remove(procfile_location);
     }
     if (does_exist_backup) {
-      await fs.move(procfile_backup_location, procfile_location);
+      const contents = (await fs.readFile(procfile_backup_location)).toString();
+      console.log(contents);
+      if (contents.indexOf('architect:') === 0) {
+        await fs.remove(procfile_backup_location);
+      } else {
+        await fs.move(procfile_backup_location, procfile_location);
+      }
     }
   }
 
   public static async build(config_directory: string, image_name: string, command?: string, path?: string): Promise<void> {
-    console.log(chalk.blue(`(Experimental) Begin building buildpack image ${image_name}`));
+    console.log(chalk.blue(`(Experimental) Begin building buildpack image ${image_name}. To use a Dockerfile instead please check out documentation here https://docs.architect.io/components/services/#build`));
     const buildpack_plugin = await PluginManager.getPlugin(config_directory, BuildpackPlugin);
     try {
       if (command) {

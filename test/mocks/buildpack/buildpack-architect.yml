@@ -9,7 +9,7 @@ secrets:
 services:
   api:
     build:
-      context: ../../../examples/hello-world
+      context: ../../integration/hello-world/
       buildpack: true
     interfaces:
       hello:
