@@ -182,9 +182,9 @@ export class DockerComposeUtils {
       for (const [var_key, var_value] of Object.entries(node.config.environment)) {
         formatted_environment_variables[var_key] = var_value !== null ? var_value.replace(/\$/g, '$$$') : null; // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
       }
-      const service = {
+      const service: DockerService = {
         environment: formatted_environment_variables,
-      } as DockerService;
+      };
 
       if (ports.length > 0) {
         service.ports = ports;

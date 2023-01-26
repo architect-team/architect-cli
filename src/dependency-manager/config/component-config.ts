@@ -1,4 +1,5 @@
 import { ComponentInstanceMetadata, ComponentSpec } from '../spec/component-spec';
+import { SecretSpecValue } from '../spec/secret-spec';
 import { ComponentSlugUtils, ParsedResourceSlug, ResourceSlugUtils, ResourceType } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
@@ -10,8 +11,7 @@ export interface SecretDefinitionConfig {
 
   description?: string;
 
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  default?: boolean | number | object | string | null;
+  default?: SecretSpecValue;
 }
 
 export interface OutputDefinitionConfig {
