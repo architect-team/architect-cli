@@ -232,26 +232,26 @@ tasks:
       SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
       RUN_CURL: ${{ secrets.param_boolean }}
 
-  # curler-build:
-  #   schedule: '*/5 * * * ?'
-  #   build:
-  #     context: ../../integration/hello-world
-  #   command:
-  #     - sh
-  #     - -c
-  #     - $RUN_CURL && curl $SERVER_URL
-  #   environment:
-  #     SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
-  #     RUN_CURL: ${{ secrets.param_boolean }}
-  # ${{ if architect.environment == 'local' }}:
-  #   curler-build-local:
-  #     build:
-  #       context: ../../integration/hello-world
-  #       dockerfile: ./Dockerfile
-  #     command:
-  #       - sh
-  #       - -c
-  #       - $RUN_CURL && curl $SERVER_URL
-  #     environment:
-  #       SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
-  #       RUN_CURL: ${{ secrets.param_boolean }}
+  curler-build:
+    schedule: '*/5 * * * ?'
+    build:
+      context: ../../integration/hello-world
+    command:
+      - sh
+      - -c
+      - $RUN_CURL && curl $SERVER_URL
+    environment:
+      SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
+      RUN_CURL: ${{ secrets.param_boolean }}
+  ${{ if architect.environment == 'local' }}:
+    curler-build-local:
+      build:
+        context: ../../integration/hello-world
+        dockerfile: ./Dockerfile
+      command:
+        - sh
+        - -c
+        - $RUN_CURL && curl $SERVER_URL
+      environment:
+        SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
+        RUN_CURL: ${{ secrets.param_boolean }}
