@@ -18,6 +18,7 @@ export * from './dependency-manager/graph/node/task';
 export * from './dependency-manager/spec/common-spec';
 export * from './dependency-manager/spec/component-spec';
 export * from './dependency-manager/spec/resource-spec';
+export * from './dependency-manager/spec/secret-spec';
 export * from './dependency-manager/spec/service-spec';
 export * from './dependency-manager/spec/task-spec';
 export * from './dependency-manager/spec/transform/component-transform';

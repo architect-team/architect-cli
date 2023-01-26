@@ -616,6 +616,58 @@
     }
   },
   "definitions": {
+    "SecretDefinitionSpec": {
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Denotes whether the secret is required."
+        },
+        "description": {
+          "type": "string",
+          "description": "A human-friendly description of the secret."
+        },
+        "default": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Sets a default value for the secret if one is not provided"
+        }
+      },
+      "type": "object",
+      "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#secretdefinitionspec"
+      }
+    },
     "LivenessProbeSpec": {
       "properties": {
         "success_threshold": {
@@ -1165,6 +1217,10 @@
           ],
           "description": "The path to the directory containing the source code relative to the `architect.yml` file."
         },
+        "buildpack": {
+          "type": "boolean",
+          "description": "Option to use buildpack to build an image."
+        },
         "args": {
           "type": "object",
           "patternProperties": {
@@ -1243,6 +1299,16 @@
       },
       "type": "object",
       "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
+      "errorMessage": {
+        "not": "Buildpack and Dockerfile cannot be used at the same time"
+      },
+      "not": {
+        "type": "object",
+        "required": [
+          "buildpack",
+          "dockerfile"
+        ]
+      },
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://docs.architect.io/reference/architect-yml#buildspec"
@@ -1266,6 +1332,10 @@
                     }
                   ],
                   "description": "The path to the directory containing the source code relative to the `architect.yml` file."
+                },
+                "buildpack": {
+                  "type": "boolean",
+                  "description": "Option to use buildpack to build an image."
                 },
                 "args": {
                   "type": "object",
@@ -1345,6 +1415,16 @@
               },
               "type": "object",
               "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
+              "errorMessage": {
+                "not": "Buildpack and Dockerfile cannot be used at the same time"
+              },
+              "not": {
+                "type": "object",
+                "required": [
+                  "buildpack",
+                  "dockerfile"
+                ]
+              },
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://docs.architect.io/reference/architect-yml#buildspec"
@@ -2455,9 +2535,6 @@
                   "type": "number"
                 },
                 {
-                  "type": "object"
-                },
-                {
                   "type": "string"
                 }
               ]
@@ -2482,9 +2559,6 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
@@ -2493,7 +2567,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -2505,7 +2579,7 @@
           "errorMessage": {
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
           },
-          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
           "externalDocs": {
             "url": "https://docs.architect.io/components/services/#local-configuration"
           },
@@ -2867,9 +2941,6 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
@@ -2894,9 +2965,6 @@
                                   "type": "number"
                                 },
                                 {
-                                  "type": "object"
-                                },
-                                {
                                   "type": "string"
                                 }
                               ]
@@ -2905,7 +2973,7 @@
                           "errorMessage": {
                             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                           },
-                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                           "externalDocs": {
                             "url": "https://docs.architect.io/components/services/#local-configuration"
                           },
@@ -2917,7 +2985,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -3161,9 +3229,6 @@
                   "type": "number"
                 },
                 {
-                  "type": "object"
-                },
-                {
                   "type": "string"
                 }
               ]
@@ -3188,9 +3253,6 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
@@ -3199,7 +3261,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -3211,7 +3273,7 @@
           "errorMessage": {
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
           },
-          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
           "externalDocs": {
             "url": "https://docs.architect.io/components/services/#local-configuration"
           },
@@ -3452,9 +3514,6 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
@@ -3479,9 +3538,6 @@
                                   "type": "number"
                                 },
                                 {
-                                  "type": "object"
-                                },
-                                {
                                   "type": "string"
                                 }
                               ]
@@ -3490,7 +3546,7 @@
                           "errorMessage": {
                             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                           },
-                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                           "externalDocs": {
                             "url": "https://docs.architect.io/components/services/#local-configuration"
                           },
@@ -3502,7 +3558,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -3864,58 +3920,6 @@
             }
           ]
         }
-      }
-    },
-    "SecretDefinitionSpec": {
-      "properties": {
-        "required": {
-          "type": "boolean",
-          "description": "Denotes whether the secret is required."
-        },
-        "description": {
-          "type": "string",
-          "description": "A human-friendly description of the secret."
-        },
-        "default": {
-          "anyOf": [
-            {
-              "anyOf": [
-                {
-                  "type": "array"
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "object"
-                },
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-              }
-            }
-          ],
-          "description": "Sets a default value for the secret if one is not provided"
-        }
-      },
-      "type": "object",
-      "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://docs.architect.io/reference/architect-yml#secretdefinitionspec"
       }
     },
     "OutputDefinitionSpec": {
@@ -4580,6 +4584,117 @@
         }
       }
     },
+    "_DebugSecretDefinitionSpec": {
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Denotes whether the secret is required."
+        },
+        "description": {
+          "type": "string",
+          "description": "A human-friendly description of the secret."
+        },
+        "default": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Sets a default value for the secret if one is not provided"
+        }
+      },
+      "type": "object",
+      "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#secretdefinitionspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "required": {
+                  "type": "boolean",
+                  "description": "Denotes whether the secret is required."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "A human-friendly description of the secret."
+                },
+                "default": {
+                  "anyOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Sets a default value for the secret if one is not provided"
+                }
+              },
+              "type": "object",
+              "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#secretdefinitionspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
     "_DebugLivenessProbeSpec": {
       "properties": {
         "success_threshold": {
@@ -5055,6 +5170,10 @@
           ],
           "description": "The path to the directory containing the source code relative to the `architect.yml` file."
         },
+        "buildpack": {
+          "type": "boolean",
+          "description": "Option to use buildpack to build an image."
+        },
         "args": {
           "type": "object",
           "patternProperties": {
@@ -5133,6 +5252,16 @@
       },
       "type": "object",
       "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
+      "errorMessage": {
+        "not": "Buildpack and Dockerfile cannot be used at the same time"
+      },
+      "not": {
+        "type": "object",
+        "required": [
+          "buildpack",
+          "dockerfile"
+        ]
+      },
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://docs.architect.io/reference/architect-yml#buildspec"
@@ -5156,6 +5285,10 @@
                     }
                   ],
                   "description": "The path to the directory containing the source code relative to the `architect.yml` file."
+                },
+                "buildpack": {
+                  "type": "boolean",
+                  "description": "Option to use buildpack to build an image."
                 },
                 "args": {
                   "type": "object",
@@ -5235,6 +5368,16 @@
               },
               "type": "object",
               "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
+              "errorMessage": {
+                "not": "Buildpack and Dockerfile cannot be used at the same time"
+              },
+              "not": {
+                "type": "object",
+                "required": [
+                  "buildpack",
+                  "dockerfile"
+                ]
+              },
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://docs.architect.io/reference/architect-yml#buildspec"
@@ -6258,9 +6401,6 @@
                   "type": "number"
                 },
                 {
-                  "type": "object"
-                },
-                {
                   "type": "string"
                 }
               ]
@@ -6285,9 +6425,6 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
@@ -6296,7 +6433,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -6308,7 +6445,7 @@
           "errorMessage": {
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
           },
-          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
           "externalDocs": {
             "url": "https://docs.architect.io/components/services/#local-configuration"
           },
@@ -6667,9 +6804,6 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
@@ -6694,9 +6828,6 @@
                                   "type": "number"
                                 },
                                 {
-                                  "type": "object"
-                                },
-                                {
                                   "type": "string"
                                 }
                               ]
@@ -6705,7 +6836,7 @@
                           "errorMessage": {
                             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                           },
-                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                           "externalDocs": {
                             "url": "https://docs.architect.io/components/services/#local-configuration"
                           },
@@ -6717,7 +6848,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -6958,9 +7089,6 @@
                   "type": "number"
                 },
                 {
-                  "type": "object"
-                },
-                {
                   "type": "string"
                 }
               ]
@@ -6985,9 +7113,6 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
@@ -6996,7 +7121,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -7008,7 +7133,7 @@
           "errorMessage": {
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
           },
-          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
           "externalDocs": {
             "url": "https://docs.architect.io/components/services/#local-configuration"
           },
@@ -7246,9 +7371,6 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
@@ -7273,9 +7395,6 @@
                                   "type": "number"
                                 },
                                 {
-                                  "type": "object"
-                                },
-                                {
                                   "type": "string"
                                 }
                               ]
@@ -7284,7 +7403,7 @@
                           "errorMessage": {
                             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                           },
-                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                           "externalDocs": {
                             "url": "https://docs.architect.io/components/services/#local-configuration"
                           },
@@ -7296,7 +7415,7 @@
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -7647,117 +7766,6 @@
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://docs.architect.io/reference/architect-yml#componentinterfacespec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
-    "_DebugSecretDefinitionSpec": {
-      "properties": {
-        "required": {
-          "type": "boolean",
-          "description": "Denotes whether the secret is required."
-        },
-        "description": {
-          "type": "string",
-          "description": "A human-friendly description of the secret."
-        },
-        "default": {
-          "anyOf": [
-            {
-              "anyOf": [
-                {
-                  "type": "array"
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "object"
-                },
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-              }
-            }
-          ],
-          "description": "Sets a default value for the secret if one is not provided"
-        }
-      },
-      "type": "object",
-      "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://docs.architect.io/reference/architect-yml#secretdefinitionspec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "required": {
-                  "type": "boolean",
-                  "description": "Denotes whether the secret is required."
-                },
-                "description": {
-                  "type": "string",
-                  "description": "A human-friendly description of the secret."
-                },
-                "default": {
-                  "anyOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-                      }
-                    }
-                  ],
-                  "description": "Sets a default value for the secret if one is not provided"
-                }
-              },
-              "type": "object",
-              "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://docs.architect.io/reference/architect-yml#secretdefinitionspec"
               },
               "patternProperties": {}
             }

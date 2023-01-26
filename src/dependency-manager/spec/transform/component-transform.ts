@@ -1,6 +1,7 @@
 import { ComponentConfig, OutputDefinitionConfig, SecretDefinitionConfig } from '../../config/component-config';
 import { transformDictionary } from '../../utils/dictionary';
-import { ComponentSpec, OutputDefinitionSpec, SecretDefinitionSpec } from '../component-spec';
+import { ComponentSpec, OutputDefinitionSpec } from '../component-spec';
+import { SecretDefinitionSpec, SecretSpecValue } from '../secret-spec';
 import { Slugs } from '../utils/slugs';
 import { transformServiceSpec } from './service-transform';
 import { transformTaskSpec } from './task-transform';
@@ -21,8 +22,8 @@ export const transformBooleanString = (boolean_string: string | boolean): boolea
   }
 };
 
-export const transformSecretDefinitionSpec = (key: string, secret_spec: string | number | boolean | SecretDefinitionSpec | null): SecretDefinitionConfig => {
-  if (secret_spec && typeof secret_spec === 'object') {
+export const transformSecretDefinitionSpec = (key: string, secret_spec: SecretSpecValue | SecretDefinitionSpec): SecretDefinitionConfig => {
+  if (secret_spec instanceof SecretDefinitionSpec) {
     return {
       required: secret_spec.required ? transformBooleanString(secret_spec.required) : true,
       description: secret_spec.description,
@@ -45,14 +46,6 @@ export const transformOutputDefinitionSpec = (key: string, output_spec: string |
     return {
       value: output_spec,
     };
-  }
-};
-
-const getProtocol = (url: string): string | undefined => {
-  try {
-    return (new URL(url)).protocol.slice(0, -1);
-  } catch {
-    return undefined;
   }
 };
 

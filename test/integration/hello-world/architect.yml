@@ -1,4 +1,4 @@
-name: deprecated-hello-world
+name: hello-world
 description: A simple hello-world component that returns "Hello World!" on every request.
 homepage: https://github.com/architect-team/architect-cli/tree/main/examples/hello-world
 keywords:
@@ -7,22 +7,22 @@ keywords:
   - architect
   - examples
 
+secrets:
+  world_text:
+    default: World
+
 services:
   api:
     build:
-      context: ../../integration/hello-world
-      dockerfile: ./Dockerfile
+      context: .
     interfaces:
-      main: 3000
+      main: 8080
     environment:
-      URL: ${{ services.api.interfaces.main.url }}
-      URL2: ${{ interfaces.hello.url }}
-      EXT_URL: ${{ ingresses.hello.url }}
-      EXT_URL2: ${{ environment.ingresses['deprecated-hello-world'].hello.url }}
+      WORLD_TEXT: ${{ secrets.world_text }}
 
 interfaces:
   hello:
     description: Connects to the hello-world service to return "Hello World!" on-demand
     url: ${{ services.api.interfaces.main.url }}
     ingress:
-      subdomain: deprecated-hello
+      subdomain: hello
