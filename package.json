@@ -62,6 +62,7 @@
     "ws": "^8.4.0"
   },
   "devDependencies": {
+    "@architect-io/eslint-config": "^0.0.3",
     "@oclif/test": "2.0.3",
     "@saithodev/semantic-release-backmerge": "^2.1.2",
     "@semantic-release/changelog": "^6.0.1",
@@ -157,6 +158,7 @@
   },
   "repository": "architect-team/architect-cli",
   "scripts": {
+    "preinstall": "git config core.hooksPath git_hooks",
     "lint": "eslint . --ext .ts,.js --max-warnings=0 --config .eslintrc.js",
     "fix": "eslint . --ext .ts,.js --fix --config .eslintrc.js",
     "check-circular": "madge --ts-config ./tsconfig.json --circular --extensions ts ./src/",
