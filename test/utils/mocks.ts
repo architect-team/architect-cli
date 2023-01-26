@@ -1,10 +1,10 @@
 import { test } from '@oclif/test';
+import fs from 'fs-extra';
 import path from 'path';
 import AuthClient from '../../src/app-config/auth';
 import SecretUtils from '../../src/architect/secret/secret.utils';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
-import fs from 'fs-extra';
 
 export const MOCK_API_HOST = 'http://mock.api.localhost';
 export const MOCK_APP_HOST = 'http://mock.app.localhost';
@@ -35,7 +35,7 @@ export const getMockComponentContextPath = (project_name: string): string => {
   if (!EXAMPLE_PROJECT_PATHS.has(`${project_name}.architect.yml`)) {
     throw new Error(`unable to find example mock architect.yml ${project_name}`);
   }
-  return path.join(__dirname, '../', 'mocks', 'examples');
+  return path.join(__dirname, '../', 'integration/hello-world');
 };
 
 export const mockArchitectAuth = () =>
@@ -43,8 +43,8 @@ export const mockArchitectAuth = () =>
     .stub(AuthClient.prototype, 'init', () => { })
     .stub(AuthClient.prototype, 'loginFromCli', () => { })
     .stub(AuthClient.prototype, 'generateBrowserUrl', () => {
- return 'http://mockurl.com';
-})
+      return 'http://mockurl.com';
+    })
     .stub(AuthClient.prototype, 'loginFromBrowser', () => { })
     .stub(AuthClient.prototype, 'logout', () => { })
     .stub(AuthClient.prototype, 'dockerLogin', () => { })

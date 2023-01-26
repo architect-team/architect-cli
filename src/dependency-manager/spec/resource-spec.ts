@@ -2,11 +2,15 @@ import { IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
 import { SecretSpecValue } from './secret-spec';
-import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString, OneOf, StringOrStringArray } from './utils/json-schema-annotations';
+import { AnyOf, ArrayOf, ExclusiveOrNeither, ExpressionOr, ExpressionOrString, OneOf, StringOrStringArray } from './utils/json-schema-annotations';
 import { Slugs } from './utils/slugs';
 
 @JSONSchema({
   description: 'An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.',
+  errorMessage: {
+    not: 'Buildpack and Dockerfile cannot be used at the same time',
+  },
+  ...ExclusiveOrNeither('buildpack', 'dockerfile'),
 })
 export class BuildSpec {
   @IsOptional()
@@ -15,6 +19,13 @@ export class BuildSpec {
     description: 'The path to the directory containing the source code relative to the `architect.yml` file.',
   })
   context?: string;
+
+  @IsOptional()
+  @JSONSchema({
+    type: 'boolean',
+    description: 'Option to use buildpack to build an image.',
+  })
+  buildpack?: boolean;
 
   @IsOptional()
   @JSONSchema({
