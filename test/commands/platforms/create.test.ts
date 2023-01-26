@@ -148,10 +148,10 @@ describe('platform:create', function () {
     });
 
   test
-    .stub(ClusterUtils, 'getClientVersion', sinon.stub().returns({ 'major': 1, 'minor': 0, 'gitVersion': 'v1.0.0' }))
+    .stub(ClusterUtils, 'getClientVersion', sinon.stub().returns('v1.0.0'))
     .command(['cluster:create'])
     .catch(e => {
-      expect(e.message).contains(`Currently, we only support Kubernetes clusters on version ${MIN_CLUSTER_VERSION.major}.${MIN_CLUSTER_VERSION.minor} or greater.`);
+      expect(e.message).contains(`Currently, we only support Kubernetes clusters on version ${MIN_CLUSTER_VERSION} or greater.`);
     })
     .it('create cluster with older cluster version fails');
 });
