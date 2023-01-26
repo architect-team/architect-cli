@@ -52,7 +52,7 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
  | `command` | Array&lt;string&gt; \| string \| [Expression](https://docs.architect.io/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
  | `entrypoint` | Array&lt;string&gt; \| string \| [Expression](https://docs.architect.io/reference/contexts) | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
- | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](https://docs.architect.io/components/services/#local-configuration) |
+ | `environment` | Dict&lt;string&gt; | A set of key-value pairs or secret definitions that describes environment variables and their values. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](https://docs.architect.io/components/services/#local-configuration) |
  | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| [Expression](https://docs.architect.io/reference/contexts) | The cpu required to run a service or a task | [More](https://docs.architect.io/components/services/#cpu--memory) |
  | `memory` | string \| [Expression](https://docs.architect.io/reference/contexts) | The memory required to run a service or a task. | [More](https://docs.architect.io/components/services/#cpu--memory) |
@@ -102,7 +102,7 @@ A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, tr
  | `command` | Array&lt;string&gt; \| string \| [Expression](https://docs.architect.io/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
  | `entrypoint` | Array&lt;string&gt; \| string \| [Expression](https://docs.architect.io/reference/contexts) | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
- | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](https://docs.architect.io/components/services/#local-configuration) |
+ | `environment` | Dict&lt;string&gt; | A set of key-value pairs or secret definitions that describes environment variables and their values. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](https://docs.architect.io/components/services/#local-configuration) |
  | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| [Expression](https://docs.architect.io/reference/contexts) | The cpu required to run a service or a task | [More](https://docs.architect.io/components/services/#cpu--memory) |
  | `memory` | string \| [Expression](https://docs.architect.io/reference/contexts) | The memory required to run a service or a task. | [More](https://docs.architect.io/components/services/#cpu--memory) |
@@ -147,6 +147,7 @@ An object containing the details necessary for Architect to build the service vi
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
  | `context` | string \| [Expression](https://docs.architect.io/reference/contexts) | The path to the directory containing the source code relative to the `architect.yml` file. |  |
+ | `buildpack` | boolean | Option to use buildpack to build an image. |  |
  | `args` | Dict&lt;string&gt; | Build args to be passed into `docker build`. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `dockerfile` | string \| [Expression](https://docs.architect.io/reference/contexts) | The path to the Dockerfile relative to the `build.context` | default: `Dockerfile` |
  | `target` | string \| [Expression](https://docs.architect.io/reference/contexts) | The stage to build in the Dockerfile |  |
