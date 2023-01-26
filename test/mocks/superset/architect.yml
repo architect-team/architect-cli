@@ -236,6 +236,7 @@ tasks:
     schedule: '*/5 * * * ?'
     build:
       context: ../../integration/hello-world
+      dockerfile: ./Dockerfile
     command:
       - sh
       - -c
