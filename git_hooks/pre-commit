@@ -1,8 +1,13 @@
 #!/bin/sh
 
-set -eo pipefail
+echo "\nValidating Javascript:\n"
 
-echo "Running pre-commit hook..."
-npm run check
-echo "Check passed!"
+if ! npm run check; then
+  echo "\033[41mCOMMIT FAILED:\033[0m Your commit contains files that should pass ESLint but do not. Please fix the ESLint errors and try again.\n"
+  exit 1
+else
+  echo "\033[42mCOMMIT SUCCEEDED\033[0m\n"
+fi
+
+echo "\nJavascript validation completed!\n"
 
