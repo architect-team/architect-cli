@@ -1,8 +1,9 @@
 import { ComponentConfig, OutputDefinitionConfig, SecretDefinitionConfig } from '../../config/component-config';
 import { transformDictionary } from '../../utils/dictionary';
-import { ComponentSpec, OutputDefinitionSpec, SecretDefinitionSpec } from '../component-spec';
+import { ComponentSpec, OutputDefinitionSpec } from '../component-spec';
+import { SecretDefinitionSpec, SecretSpecValue } from '../secret-spec';
 import { Slugs } from '../utils/slugs';
-import { transformDatabaseSpec } from './database-transform';
+import { transformDatabaseSpec, transformDatabaseSpecToDatabase } from './database-transform';
 import { transformServiceSpec } from './service-transform';
 import { transformTaskSpec } from './task-transform';
 
@@ -22,8 +23,8 @@ export const transformBooleanString = (boolean_string: string | boolean): boolea
   }
 };
 
-export const transformSecretDefinitionSpec = (key: string, secret_spec: string | number | boolean | SecretDefinitionSpec | null): SecretDefinitionConfig => {
-  if (secret_spec && typeof secret_spec === 'object') {
+export const transformSecretDefinitionSpec = (key: string, secret_spec: SecretSpecValue | SecretDefinitionSpec): SecretDefinitionConfig => {
+  if (secret_spec instanceof SecretDefinitionSpec) {
     return {
       required: secret_spec.required ? transformBooleanString(secret_spec.required) : true,
       description: secret_spec.description,
@@ -56,6 +57,7 @@ export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => 
   const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.metadata);
   const dependencies = spec.dependencies || {};
   const databases = transformDictionary(transformDatabaseSpec, spec.databases, spec.metadata);
+  const databases_interpolation = transformDictionary(transformDatabaseSpecToDatabase, spec.databases, spec.metadata);
   for (const [key, value] of Object.entries(databases)) {
     databases[`${key}-db`] = value;
     delete databases[key];
@@ -74,8 +76,11 @@ export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => 
     secrets,
     outputs,
 
-    services,
-    databases,
+    services: {
+      ...services,
+      ...databases,
+    },
+    databases: databases_interpolation,
     tasks,
 
     dependencies,

@@ -45,7 +45,8 @@ export interface ServiceInterfaceConfig {
   ingress?: IngressConfig;
 }
 
-export interface DatabaseConfig extends ResourceConfig {
+export interface DatabaseConfig {
+  reserved_name?: string;
   type: string;
   dsn?: string;
 }

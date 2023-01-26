@@ -1,11 +1,9 @@
 import { IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
+import { SecretSpecValue } from './secret-spec';
 import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString, OneOf, StringOrStringArray } from './utils/json-schema-annotations';
 import { Slugs } from './utils/slugs';
-
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type EnvironmentSpecValue = boolean | null | number | object | string;
 
 @JSONSchema({
   description: 'An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.',
@@ -51,6 +49,8 @@ export class BuildSpec {
   ...OneOf('build', 'image'),
 })
 export abstract class ResourceSpec {
+  abstract get resource_type(): string;
+
   @IsOptional()
   @JSONSchema({
     type: 'string',
@@ -90,15 +90,15 @@ export abstract class ResourceSpec {
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      '^[a-zA-Z0-9_]+$': AnyOf('array', 'boolean', 'null', 'number', 'object', 'string'),
+      '^[a-zA-Z0-9_]+$': AnyOf('array', 'boolean', 'null', 'number', 'string'),
     },
     errorMessage: {
       additionalProperties: Slugs.ArchitectSlugDescription,
     },
-    description: 'A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.',
+    description: 'A set of key-value pairs or secret definitions that describes environment variables and their values.',
     externalDocs: { url: 'https://docs.architect.io/components/services/#local-configuration' },
   })
-  environment?: Dictionary<EnvironmentSpecValue>;
+  environment?: Dictionary<SecretSpecValue>;
 
   @IsOptional()
   @ValidateNested()

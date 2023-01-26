@@ -1,6 +1,6 @@
 import { coerce } from 'semver';
-import { ArchitectError } from '../../..';
-import { ServiceConfig } from '../../config/service-config';
+import { DatabaseConfig, ServiceConfig } from '../../config/service-config';
+import { ArchitectError } from '../../utils/errors';
 import { ComponentInstanceMetadata } from '../component-spec';
 import { DatabaseSpec } from '../database-spec';
 import { ServiceSpec } from '../service-spec';
@@ -25,6 +25,7 @@ const SupportedDatabases: SupportedDatabaseType[] = [
       min: 10,
     },
     spec: {
+      resource_type: 'database',
       image: 'postgres:15',
       environment: {
         POSTGRES_USER: DEFAULT_CREDENTIALS.username,
@@ -49,6 +50,7 @@ const SupportedDatabases: SupportedDatabaseType[] = [
       max: 5,
     },
     spec: {
+      resource_type: 'database',
       image: 'mysql:5',
       environment: {
         MYSQL_USER: DEFAULT_CREDENTIALS.username,
@@ -72,6 +74,7 @@ const SupportedDatabases: SupportedDatabaseType[] = [
       min: 10,
     },
     spec: {
+      resource_type: 'database',
       image: 'mariadb:10',
       environment: {
         MARIADB_USER: DEFAULT_CREDENTIALS.username,
@@ -91,7 +94,7 @@ const SupportedDatabases: SupportedDatabaseType[] = [
   },
 ];
 
-export const transformDatabaseSpec = (key: string, db_spec: DatabaseSpec, metadata: ComponentInstanceMetadata): DatabaseConfig => {
+export const transformDatabaseSpec = (key: string, db_spec: DatabaseSpec, metadata: ComponentInstanceMetadata): ServiceConfig => {
   const [engine, version] = db_spec.type.split(':');
 
   const semver_version = coerce(version);
@@ -111,4 +114,11 @@ export const transformDatabaseSpec = (key: string, db_spec: DatabaseSpec, metada
   const service_spec = match.spec;
   service_spec.image = db_spec.type;
   return transformServiceSpec(`${key}-db`, service_spec, metadata);
+};
+
+export const transformDatabaseSpecToDatabase = (key: string, spec: DatabaseSpec, metadata: ComponentInstanceMetadata): DatabaseConfig => {
+  return {
+    dsn: spec.dsn || undefined,
+    type: spec.type,
+  };
 };
