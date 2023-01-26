@@ -1,5 +1,5 @@
 import { coerce } from 'semver';
-import { DatabaseConfig, ServiceConfig } from '../../config/service-config';
+import { ServiceConfig } from '../../config/service-config';
 import { ArchitectError } from '../../utils/errors';
 import { ComponentInstanceMetadata } from '../component-spec';
 import { DatabaseSpec } from '../database-spec';
@@ -114,11 +114,4 @@ export const transformDatabaseSpec = (key: string, db_spec: DatabaseSpec, metada
   const service_spec = match.spec;
   service_spec.image = db_spec.type;
   return transformServiceSpec(`${key}-db`, service_spec, metadata);
-};
-
-export const transformDatabaseSpecToDatabase = (key: string, spec: DatabaseSpec, metadata: ComponentInstanceMetadata): DatabaseConfig => {
-  return {
-    dsn: spec.dsn || undefined,
-    type: spec.type,
-  };
 };

@@ -33,8 +33,8 @@ export interface ComponentConfig {
   outputs: Dictionary<OutputDefinitionConfig>;
 
   services: Dictionary<ServiceConfig>;
-  tasks: Dictionary<TaskConfig>;
   databases: Dictionary<DatabaseConfig>;
+  tasks: Dictionary<TaskConfig>;
   dependencies: Dictionary<string>;
 
   artifact_image?: string;
@@ -62,7 +62,7 @@ export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max
   const resource_type = (parsed as ParsedResourceSlug).resource_type;
   if (resource_type === 'tasks') {
     ref = `${ref}--task`;
-  } else if (resource_type && resource_type !== 'services') {
+  } else if (resource_type && !(['services', 'databases'].includes(resource_type))) {
     throw new Error(`Invalid resource type: ${resource_type}`);
   }
 

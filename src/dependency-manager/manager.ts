@@ -131,7 +131,7 @@ export default abstract class DependencyManager {
 
         const dependency = component_configs.find(c => c.name === dependency_name) || component;
 
-        const to = buildNodeRef(dependency, 'databases', `${database_name}`);
+        const to = buildNodeRef(dependency, 'databases', database_name);
 
         if (to === from) continue;
 

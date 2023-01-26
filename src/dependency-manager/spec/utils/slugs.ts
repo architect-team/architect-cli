@@ -154,9 +154,9 @@ export interface ParsedResourceSlug extends ParsedSlug {
   instance_name?: string;
 }
 export class ResourceSlugUtils extends SlugUtils {
-  public static Description = 'must be of the form <component-name>.services|tasks.<resource-name>';
+  public static Description = 'must be of the form <component-name>.services|tasks.<resource-name>|databases.<resource-name>';
 
-  public static RegexResource = `${ComponentSlugUtils.RegexName}\\${Slugs.RESOURCE_DELIMITER}(?<resource_type>services|tasks)\\${Slugs.RESOURCE_DELIMITER}(?<resource_name>${Slugs.ArchitectSlugRegexBase})`;
+  public static RegexResource = `${ComponentSlugUtils.RegexName}\\${Slugs.RESOURCE_DELIMITER}(?<resource_type>services|tasks|databases)\\${Slugs.RESOURCE_DELIMITER}(?<resource_name>${Slugs.ArchitectSlugRegexBase})`;
 
   public static RegexBase = `${ResourceSlugUtils.RegexResource}${ComponentSlugUtils.RegexInstance}`;
   public static Validator = new RegExp(`^${ResourceSlugUtils.RegexBase}$`);
