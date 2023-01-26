@@ -236,7 +236,6 @@ tasks:
     schedule: '*/5 * * * ?'
     build:
       context: ../../integration/hello-world
-      dockerfile: ./Dockerfile
     command:
       - sh
       - -c
@@ -257,4 +256,4 @@ tasks:
         SERVER_URL: ${{ services.stateless-app.interfaces.http.url }}
         RUN_CURL: ${{ secrets.param_boolean }}
 
-artifact_image: architect-artifact-image
+#artifact_image: architect-artifact-image <-- is this deprecated? https://docs.architect.io/reference/architect-yml/
