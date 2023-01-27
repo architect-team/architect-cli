@@ -235,7 +235,7 @@ tasks:
   curler-build:
     schedule: '*/5 * * * ?'
     build:
-      context: ../../integration/hello-world
+      context: ../../integration/schedule-tasks
     command:
       - sh
       - -c
@@ -246,7 +246,7 @@ tasks:
   ${{ if architect.environment == 'local' }}:
     curler-build-local:
       build:
-        context: ../../integration/hello-world
+        context: ../../integration/schedule-tasks
         dockerfile: ./Dockerfile
       command:
         - sh
