@@ -13,7 +13,7 @@ services:
       context: ../../integration/hello-world
       dockerfile: ./Dockerfile
     interfaces:
-      main: 3000
+      main: 8080
     environment:
       URL: ${{ services.api.interfaces.main.url }}
       URL2: ${{ interfaces.hello.url }}
