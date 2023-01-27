@@ -148,9 +148,27 @@ describe('cluster:create', function () {
   
   test
     .stub(ClusterUtils, 'getClientVersion', sinon.stub().returns('v1.0.0'))
-    .command(['cluster:create'])
+    .stub(ClusterCreate.prototype, 'log', sinon.stub())
+    .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
+    .stub(fs, 'readJSONSync', () => {
+      return {
+        log_level: 'debug',
+      };
+    })
+    .stub(AppService, 'create', () => new AppService('', '1.0.0'))
+    .stub(ClusterCreate.prototype, <any>'setupKubeContext', async () => {
+      return {
+        original_context: "original_context",
+        current_context: "current_context",
+      }
+    })
+    .stub(ClusterCreate.prototype, <any>'setContext', async () => { })
+    .nock('https://api.architect.io', api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account))
+    .command(['cluster:create', '-a', account.name, 'my-cluster'])
     .catch(e => {
-      expect(e.message).contains(`Currently, we only support Kubernetes clusters on version ${MIN_CLUSTER_VERSION} or greater.`);
+      expect(e.message).contains(`Currently, we only support Kubernetes clusters on version ${MIN_CLUSTER_VERSION} or greater. Your cluster is currently on version 1.0.0`);
     })
     .it('create cluster with older cluster version fails');
 });

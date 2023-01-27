@@ -104,8 +104,6 @@ export default class ClusterCreate extends BaseCommand {
   }
 
   private async createCluster() {
-    await ClusterUtils.checkClientVersion();
-
     const { args, flags } = await this.parse(ClusterCreate);
 
     const answers = await inquirer.prompt([
@@ -136,6 +134,7 @@ export default class ClusterCreate extends BaseCommand {
     const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the cluster with' });
 
     const kube_contexts = await this.setupKubeContext(flags);
+    await ClusterUtils.checkClientVersion();
 
     try {
       const cluster_dto = {
