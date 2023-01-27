@@ -41,6 +41,10 @@ dependencies:
   hello-world: latest
   deprecated-hello-world: latest
 
+databases:
+  api-db:
+    type: postgres:12
+
 services:
   stateless-app:
     description: stateless app service description
@@ -150,6 +154,7 @@ services:
     interfaces:
       http: 8080
     environment:
+      BACKUP_DB_ADDR: ${{ databases.api-db.dsn }}
       DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ secrets.db_name }}
       DB_USER: ${{ secrets.db_user }}
       DB_PASS: ${{ secrets.db_pass }}
