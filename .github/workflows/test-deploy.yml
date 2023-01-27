@@ -39,7 +39,7 @@ jobs:
 
   test_remote:
     name: Superset remote deployment
-    if: github.base_ref == 'main'
+    if: github.base_ref == 'rc'
     env:
       ACCOUNT_NAME: architect-ci
       ENVIRONMENT_NAME: example-environment
@@ -61,7 +61,7 @@ jobs:
       - run: ./bin/dev login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
       - run: ./bin/dev env:create $ENVIRONMENT_NAME -a $ACCOUNT_NAME --cluster $CLUSTER_NAME
       - run: ./bin/dev deploy -a $ACCOUNT_NAME --auto-approve -e $ENVIRONMENT_NAME test/mocks/superset/architect.yml test/integration/hello-world/architect.yml -s param_unset=test -s world_text=Architect
-      - run: sleep 65
+      - run: sleep 180
       - name: Check that the app returns the expected response
         run: curl --fail -S -k https://hello.example-environment.architect-ci.dev.arcitect.io | grep "Hello Architect!"
       - name: Check that cert exists for deployed service
