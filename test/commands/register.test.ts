@@ -222,10 +222,6 @@ describe('register', function () {
       .head(`/v2/examples/superset.services.stateful-frontend/manifests/1.0.0`)
       .reply(200),
     )
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .head(`/v2/examples/superset.tasks.curler-build/manifests/1.0.0`)
-      .reply(200),
-    )
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples'])
