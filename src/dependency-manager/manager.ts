@@ -314,7 +314,7 @@ export default abstract class DependencyManager {
           password: interface_config.password!,
           protocol: interface_config.protocol!,
           database: interface_config.path?.replace(/^\/+/, '') || '',
-          dsn: this.generateUrl(interface_ref),
+          connection_string: this.generateUrl(interface_ref),
         };
 
         context.services[service_name].interfaces[interface_name] = {

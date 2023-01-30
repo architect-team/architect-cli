@@ -11,7 +11,7 @@ export interface DatabaseContext {
   username: string;
   password: string;
   database: string;
-  dsn: string;
+  connection_string: string;
 }
 
 export interface ServiceContext {

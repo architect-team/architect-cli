@@ -33,5 +33,5 @@ export class DatabaseSpec {
     ...ExpressionOr(AnyOf('null', 'string')),
     description: 'The connection string of an existing database to use instead of provisioning a new one',
   })
-  dsn?: null | string;
+  connection_string?: null | string;
 }
