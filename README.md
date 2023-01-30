@@ -12,7 +12,7 @@
   <a href="https://oclif.io"><img src="https://img.shields.io/badge/cli-oclif-brightgreen.svg" alt="oclif" /></a>
   <a href="https://github.com/architect-team/architect-cli/actions?query=workflow%3A%22CLI+-+Cut+Release+Candidate%22"><img src="https://img.shields.io/github/workflow/status/architect-team/architect-cli/CLI%20-%20Cut%20Release%20Candidate" alt="Build" /></a>
   <a href="https://npmjs.org/package/@architect-io/cli"><img src="https://img.shields.io/npm/v/@architect-io/cli.svg" alt="Version" /></a>
-  <a href="https://github.com/architect-team/architect-cli/blob/master/package.json"><img src="https://img.shields.io/npm/l/@architect-io/cli.svg" alt="License" /></a>
+  <a href="https://github.com/architect-team/architect-cli/blob/main/package.json"><img src="https://img.shields.io/npm/l/@architect-io/cli.svg" alt="License" /></a>
 </p>
 
 <p align="center">
@@ -50,33 +50,36 @@ USAGE
 ## Commands
 
 <!-- commands -->
-* [`architect autocomplete [SHELL]`](#architect-autocomplete-shell)
-* [`architect components:versions [COMPONENT_NAME]`](#architect-componentsversions-component_name)
-* [`architect config:get OPTION`](#architect-configget-option)
-* [`architect config:set OPTION VALUE`](#architect-configset-option-value)
-* [`architect config:view`](#architect-configview)
-* [`architect deploy [CONFIGS_OR_COMPONENTS]`](#architect-deploy-configs_or_components)
-* [`architect destroy`](#architect-destroy)
-* [`architect dev [CONFIGS_OR_COMPONENTS]`](#architect-dev-configs_or_components)
-* [`architect dev:list`](#architect-devlist)
-* [`architect dev:stop [NAME]`](#architect-devstop-name)
-* [`architect doctor`](#architect-doctor)
-* [`architect environments:create [ENVIRONMENT]`](#architect-environmentscreate-environment)
-* [`architect environments:destroy [ENVIRONMENT]`](#architect-environmentsdestroy-environment)
-* [`architect exec [RESOURCE] [FLAGS] -- [COMMAND]`](#architect-exec-resource-flags----command)
-* [`architect help [COMMAND]`](#architect-help-command)
-* [`architect init [NAME]`](#architect-init-name)
-* [`architect link [COMPONENTPATH]`](#architect-link-componentpath)
-* [`architect link:list`](#architect-linklist)
-* [`architect login`](#architect-login)
-* [`architect logout`](#architect-logout)
-* [`architect logs [RESOURCE]`](#architect-logs-resource)
-* [`architect register [COMPONENT]`](#architect-register-component)
-* [`architect scale [SERVICE]`](#architect-scale-service)
-* [`architect secrets:download SECRETS_FILE`](#architect-secretsdownload-secrets_file)
-* [`architect secrets:upload SECRETS_FILE`](#architect-secretsupload-secrets_file)
-* [`architect task COMPONENT TASK`](#architect-task-component-task)
-* [`architect unlink [COMPONENTPATHORNAME]`](#architect-unlink-componentpathorname)
+- [Requirements](#requirements)
+- [Usage](#usage)
+- [Commands](#commands)
+- [`architect autocomplete [SHELL]`](#architect-autocomplete-shell)
+- [`architect components:versions [COMPONENT_NAME]`](#architect-componentsversions-component_name)
+- [`architect config:get OPTION`](#architect-configget-option)
+- [`architect config:set OPTION VALUE`](#architect-configset-option-value)
+- [`architect config:view`](#architect-configview)
+- [`architect deploy [CONFIGS_OR_COMPONENTS]`](#architect-deploy-configs_or_components)
+- [`architect destroy`](#architect-destroy)
+- [`architect dev [CONFIGS_OR_COMPONENTS]`](#architect-dev-configs_or_components)
+- [`architect dev:list`](#architect-devlist)
+- [`architect dev:stop [NAME]`](#architect-devstop-name)
+- [`architect doctor`](#architect-doctor)
+- [`architect environments:create [ENVIRONMENT]`](#architect-environmentscreate-environment)
+- [`architect environments:destroy [ENVIRONMENT]`](#architect-environmentsdestroy-environment)
+- [`architect exec [RESOURCE] [FLAGS] -- [COMMAND]`](#architect-exec-resource-flags----command)
+- [`architect help [COMMAND]`](#architect-help-command)
+- [`architect init [NAME]`](#architect-init-name)
+- [`architect link [COMPONENTPATH]`](#architect-link-componentpath)
+- [`architect link:list`](#architect-linklist)
+- [`architect login`](#architect-login)
+- [`architect logout`](#architect-logout)
+- [`architect logs [RESOURCE]`](#architect-logs-resource)
+- [`architect register [COMPONENT]`](#architect-register-component)
+- [`architect scale [SERVICE]`](#architect-scale-service)
+- [`architect secrets:download SECRETS_FILE`](#architect-secretsdownload-secrets_file)
+- [`architect secrets:upload SECRETS_FILE`](#architect-secretsupload-secrets_file)
+- [`architect task COMPONENT TASK`](#architect-task-component-task)
+- [`architect unlink [COMPONENTPATHORNAME]`](#architect-unlink-componentpathorname)
 
 ## `architect autocomplete [SHELL]`
 
