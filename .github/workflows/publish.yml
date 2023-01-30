@@ -25,6 +25,12 @@ jobs:
       - run: | # Check if stderr is not empty and hard error (captures node warnings)
           error=$(./bin/run --version 2>&1 >/dev/null)
           [ ! -z "$error" ] && echo "$error" && exit 1 || echo "No error"
+      # Start webpack test for mangling/compressing
+      - run: cd ./test/webpack
+      - run: npm ci
+      - run: npm run webpack
+      - run: node ./lib/main.js
+      # End webpack test
   lint:
     runs-on: ubuntu-latest
     steps:
