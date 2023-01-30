@@ -160,6 +160,7 @@
   "scripts": {
     "preinstall": "git config core.hooksPath git_hooks >/dev/null 2>&1 || { echo >&2 \"Unable to find git. Not setting up hooks.\"; exit 0;}",
     "lint": "eslint . --ext .ts,.js --max-warnings=0 --config .eslintrc.js",
+    "lint:git": "eslint --max-warnings=0 --config .eslintrc.js --no-error-on-unmatched-pattern $(git diff --name-only --cached -- '*.ts' '*.js')",
     "fix": "eslint . --ext .ts,.js --fix --config .eslintrc.js",
     "check-circular": "madge --ts-config ./tsconfig.json --circular --extensions ts ./src/",
     "build": "rm -rf ./lib && rm -f tsconfig.tsbuildinfo && tsc -b && npm run copy-static",
@@ -169,6 +170,7 @@
     "pack": "oclif pack:tarballs",
     "readme": "./bin/readme",
     "check": "npm run lint && npm run test && npm run check-circular",
+    "check:git": "npm run lint:git && npm run test && npm run check-circular",
     "generate:schema-docs": "ts-node --project ./tsconfig.json ./src/dependency-manager/generate.ts",
     "generate:yarn-lock": "(rm yarn.lock || true) && yarn import",
     "semantic-release": "./node_modules/semantic-release/bin/semantic-release.js",

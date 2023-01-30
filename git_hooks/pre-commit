@@ -2,7 +2,7 @@
 
 echo "\nValidating Javascript:\n"
 
-if ! npm run check; then
+if ! npm run check:git; then
   echo "\033[41mCOMMIT FAILED:\033[0m Your commit contains files that should pass ESLint but do not. Please fix the ESLint errors and try again.\n"
   exit 1
 else
