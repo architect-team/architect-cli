@@ -13,7 +13,7 @@ services:
       context: ../../integration/hello-world
       dockerfile: ./Dockerfile
     interfaces:
-      main: 3000
+      main: 8080
     environment:
       URL: ${{ services.api.interfaces.main.url }}
       URL2: ${{ interfaces.hello.url }}
@@ -25,4 +25,4 @@ interfaces:
     description: Connects to the hello-world service to return "Hello World!" on-demand
     url: ${{ services.api.interfaces.main.url }}
     ingress:
-      subdomain: deprecated-hello
+      subdomain: frontend
