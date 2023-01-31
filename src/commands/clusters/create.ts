@@ -134,7 +134,7 @@ export default class ClusterCreate extends BaseCommand {
     const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the cluster with' });
 
     const kube_contexts = await this.setupKubeContext(flags);
-    await ClusterUtils.checkClientVersion();
+    await ClusterUtils.checkClientVersion(flags.kubeconfig);
 
     try {
       const cluster_dto = {

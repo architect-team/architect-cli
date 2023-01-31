@@ -7,6 +7,7 @@ import { ArchitectError } from '../../dependency-manager/utils/errors';
 import Account from '../account/account.entity';
 import Cluster from './cluster.entity';
 import semver, { SemVer } from 'semver';
+import untildify from 'untildify';
 
 export interface CreateClusterInput {
   type: string;
@@ -87,14 +88,15 @@ export default class ClusterUtils {
     return cluster;
   }
 
-  private static async getClientVersion(): Promise<string> {
-    const { stdout } = await execa('kubectl', ['version', '--client', '--output', 'json']);
+  private static async getClientVersion(kubeconfig_path: string): Promise<string> {
+    const { stdout } = await execa('kubectl', ['version', '--kubeconfig', kubeconfig_path, '--client', '--output', 'json']);
     const { clientVersion } = JSON.parse(stdout);
     return clientVersion.gitVersion;
   }
 
-  public static async checkClientVersion(): Promise<void> {
-    const client_git_version = await this.getClientVersion();
+  public static async checkClientVersion(kubeconfig: string): Promise<void> {
+    const kubeconfig_path = untildify(kubeconfig);
+    const client_git_version = await this.getClientVersion(kubeconfig_path);
     const client_semver = semver.coerce(client_git_version);
     if (!client_semver) {
       throw new ArchitectError(`Failed to translate Kubernetes cluster version ${client_git_version}.`);
