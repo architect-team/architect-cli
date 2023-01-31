@@ -87,7 +87,7 @@ During this time we greatly appreciate any feedback as we continue to finalize t
     if (args.service) {
       service_name = args.service;
       if (!Object.keys(component_version.config.services || {}).includes(service_name)) {
-        const component_version_slug = ComponentVersionSlugUtils.build(account.name, component_version.component.name, tag);
+        const component_version_slug = ComponentVersionSlugUtils.build(component_version.component.name, tag);
         throw new Error(`Component version ${component_version_slug} does not have a service named ${args.service}.`);
       }
     } else {
@@ -127,7 +127,7 @@ During this time we greatly appreciate any feedback as we continue to finalize t
     const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
     const environment: Environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
 
-    const resource_slug = ResourceSlugUtils.build(undefined, component_version.component.name, 'services', service_name);
+    const resource_slug = ResourceSlugUtils.build(component_version.component.name, 'services', service_name);
     const scaling_dto = {
       resource_slug,
       replicas,

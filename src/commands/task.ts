@@ -111,7 +111,7 @@ export default class TaskExec extends BaseCommand {
       throw new Error(`Could not find docker compose file at ${compose_file}. Please run \`architect dev -e ${project_name} ${args.component}\` before executing any tasks in your local ${project_name} environment.`);
     }
 
-    const slug = ResourceSlugUtils.build(parsed_slug.component_account_name, parsed_slug.component_name, 'tasks', args.task, parsed_slug.instance_name);
+    const slug = ResourceSlugUtils.build(parsed_slug.component_name, 'tasks', args.task, parsed_slug.instance_name);
     const ref = resourceRefToNodeRef(slug);
     const service_name = Object.keys(compose.services).find(name => name === ref);
     if (!service_name) {
@@ -142,7 +142,7 @@ export default class TaskExec extends BaseCommand {
 
     CliUx.ux.action.start(chalk.blue(`Kicking off task ${args.component}/${args.task} in ${flags.environment}...`));
     const res = await this.app.api.post(`/environments/${environment.id}/exec`, {
-      component_account_name: parsed_slug.component_account_name,
+      component_account_name: selected_account.name,
       component_name: parsed_slug.component_name,
       instance_name: parsed_slug.instance_name,
       task_name: args.task,
