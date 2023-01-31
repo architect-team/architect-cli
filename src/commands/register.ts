@@ -175,7 +175,16 @@ export default class ComponentRegister extends BaseCommand {
     validateInterpolation(component_spec);
 
     const { component_name } = ComponentSlugUtils.parse(component_spec.name);
-    const account_name = flags.account;
+
+    let account_name;
+    if (component_spec.name.includes('/')) {
+      account_name = component_spec.name.split('/')[0];
+      console.log(chalk.yellow('Including account name as part of the component name is being deprecated. Use the `--account` flag instead to specify an account.'));
+      console.log(chalk.yellow(`Please change 'name: ${component_spec.name}' -> 'name: ${component_spec.name.split('/')[1]}' in your architect.yml.\n`));
+    } else {
+      account_name = flags.account;
+    }
+
     const selected_account = await AccountUtils.getAccount(this.app, account_name);
 
     if (flags.environment) { // will throw an error if a user specifies an environment that doesn't exist
