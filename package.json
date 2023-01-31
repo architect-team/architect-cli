@@ -160,6 +160,7 @@
   "repository": "architect-team/architect-cli",
   "scripts": {
     "lint": "eslint . --ext .ts,.js --max-warnings=0 --config .eslintrc.js",
+    "lint:files": "eslint --max-warnings=0 --config .eslintrc.js",
     "fix": "eslint . --ext .ts,.js --fix --config .eslintrc.js",
     "check-circular": "madge --ts-config ./tsconfig.json --circular --extensions ts ./src/",
     "build": "rm -rf ./lib && rm -f tsconfig.tsbuildinfo && tsc -b && npm run copy-static",
