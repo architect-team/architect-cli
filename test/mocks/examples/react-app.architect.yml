@@ -53,7 +53,7 @@ services:
     depends_on:
       - api-db
     build:
-      context: .
+      context: ../../integration/hello-world
       args:
         NODE_ENV: production
     interfaces:
@@ -82,7 +82,7 @@ services:
     depends_on:
       - api
     build:
-      context: .
+      context: ../../integration/hello-world
       args:
         NODE_ENV: production
     interfaces:
@@ -101,7 +101,7 @@ services:
       WORLD_TEXT: ${{ secrets.world_text }}
     debug:
       build:
-        context: .
+        context: ../../integration/hello-world
         dockerfile: ./Dockerfile
         args:
           NODE_ENV: development

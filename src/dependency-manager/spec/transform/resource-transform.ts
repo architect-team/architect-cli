@@ -64,6 +64,7 @@ export const transformBuildSpec = (build: BuildSpec | undefined, image?: string)
   }
   return {
     context: build.context,
+    buildpack: build.buildpack,
     args: transformBuildSpecArgs(build.args),
     dockerfile: build.dockerfile,
     target: build.target,

@@ -1,0 +1,52 @@
+name: stateful-component
+description: A simple sign in sheet webapp built with a Next.js frontend, Express JS backend, and postgres database.
+homepage: https://github.com/architect-team/architect-cli/tree/main/examples/stateful-component
+keywords:
+  - architect
+  - examples
+  - stateful
+  - postgres
+  - nodejs
+  - reactjs
+
+secrets:
+  db_user:
+    description: Root user to assign to the component's DB
+    default: architect
+  db_pass:
+    description: Root password to assign to the component's DB
+    default: secret
+  db_name:
+    description: Name of the DB the component will store content in
+    default: stateful
+
+services:
+  api-db:
+    image: postgres:12
+    interfaces:
+      postgres:
+        port: 5432
+        protocol: postgresql
+    environment:
+      POSTGRES_USER: ${{ secrets.db_user }}
+      POSTGRES_PASSWORD: ${{ secrets.db_pass }}
+      POSTGRES_DB: ${{ secrets.db_name }}
+  stateful-api:
+    build:
+      context: ./backend
+    interfaces:
+      http: 8080
+    environment:
+      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ secrets.db_name }}
+      DB_USER: ${{ secrets.db_user }}
+      DB_PASS: ${{ secrets.db_pass }}
+  frontend:
+    build:
+      context: ./frontend
+    interfaces:
+      web:
+        port: 8081
+        ingress:
+          subdomain: frontend
+    environment:
+      API_ADDR: ${{ services.stateful-api.interfaces.http.url }}

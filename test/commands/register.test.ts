@@ -2,16 +2,16 @@ import { expect } from 'chai';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
-import sinon, { SinonSpy, SinonStub } from 'sinon';
+import sinon, { SinonStub } from 'sinon';
 import untildify from 'untildify';
 import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
-import AccountUtils from '../../src/architect/account/account.utils';
 import ComponentRegister from '../../src/commands/register';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
+import PluginManager from '../../src/common/plugins/plugin-manager';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
-import { mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST, getMockComponentFilePath, getMockComponentContextPath } from '../utils/mocks';
+import { getMockComponentContextPath, getMockComponentFilePath, mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST } from '../utils/mocks';
 
 describe('register', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
@@ -74,7 +74,6 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
-    .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
@@ -132,14 +131,14 @@ describe('register', function () {
         expect(validateSpec(body.config)).to.have.lengthOf(0);
         for (const [service_name, service] of Object.entries(body.config.services) as [string, ServiceSpec][]) {
           if (IF_EXPRESSION_REGEX.test(service_name)) {
- continue;
-}
+            continue;
+          }
           expect(service.image).not.undefined;
         }
         for (const [task_name, task] of Object.entries(body.config.tasks || []) as [string, TaskSpec][]) {
           if (IF_EXPRESSION_REGEX.test(task_name)) {
- continue;
-}
+            continue;
+          }
           expect(task.image).not.undefined;
         }
         cb(null, body);
@@ -325,7 +324,6 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
-    .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
     .nock(MOCK_API_HOST, api => api
       .get('/accounts/examples')
       .reply(403, {
@@ -708,4 +706,79 @@ describe('register', function () {
       expect(compose.callCount).to.eq(2);
       expect(compose.firstCall.args[0][5]).to.deep.equal('*.args.NODE_ENV=dev');
     });
+
+  mockArchitectAuth()
+    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_architect_account_response)
+    )
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' })
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .post(/\/accounts\/.*\/components/)
+      .reply(200, {})
+    )
+    .stub(PluginManager, 'getPlugin', sinon.stub().returns({
+      build: () => { },
+    }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'test/mocks/buildpack/buildpack-architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .it('register with buildpack set to true override Dockerfile', ctx => {
+      expect(ctx.stderr).to.contain('Registering component hello-world:1.0.0 with Architect Cloud...... done\n');
+      expect(ctx.stdout).to.contain('Successfully registered component');
+
+      // Since the image of the service is built from buildpack, docker buildx is not called.
+      const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
+      expect(compose.callCount).to.eq(0);
+      expect(compose.firstCall).null;
+    });
+
+  mockArchitectAuth()
+    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_architect_account_response)
+    )
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' })
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .post(/\/accounts\/.*\/components/)
+      .reply(200, {})
+    )
+    .stub(PluginManager, 'getPlugin', sinon.stub().returns({
+      build: () => { },
+    }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'test/mocks/buildpack/buildpack-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .it('register with buildpack and dockerfile services', ctx => {
+      expect(ctx.stderr).to.contain('Registering component hello-world:1.0.0 with Architect Cloud...... done\n');
+      expect(ctx.stdout).to.contain('Successfully registered component');
+      const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
+      expect(compose.callCount).to.eq(1);
+    });
+
+  mockArchitectAuth()
+    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_architect_account_response)
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'test/mocks/register/nonexistence-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .catch(e => {
+      expect(e.message).contains(`${path.resolve('./test/integration/hello-world/nonexistent-dockerfile')} does not exist. Please verify the correct context and/or dockerfile were given.`);
+    })
+    .it('fail to register with a dockerfile that does not exist');
 });

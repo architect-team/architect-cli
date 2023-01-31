@@ -3,6 +3,7 @@ import { Dictionary } from '../utils/dictionary';
 
 export interface BuildConfig {
   context?: string;
+  buildpack?: boolean;
   args?: Dictionary<string>;
   dockerfile?: string;
   target?: string;
