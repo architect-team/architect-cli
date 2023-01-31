@@ -56,9 +56,8 @@ export default abstract class DependencyManager {
   }
 
   getComponentRef(component_string: string): string {
-    const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(component_string);
-    const resolved_account = this.account && this.account === component_account_name ? undefined : component_account_name;
-    const component_ref = ComponentSlugUtils.build(resolved_account, component_name, instance_name);
+    const { component_name, instance_name } = ComponentVersionSlugUtils.parse(component_string);
+    const component_ref = ComponentSlugUtils.build(component_name, instance_name);
     return component_ref;
   }
 
@@ -351,17 +350,8 @@ export default abstract class DependencyManager {
         context_map[component_spec.metadata.ref] = context;
       }
 
-      const parsed = ComponentVersionSlugUtils.parse(component_spec.metadata.ref);
-      if (parsed.component_account_name && parsed.component_account_name === this.account) {
-        const ref_without_account = ComponentSlugUtils.build(undefined, parsed.component_name, parsed.instance_name);
-        // Hack to support optional account prefixes
-        context_map[ref_without_account] = context_map[component_spec.metadata.ref];
-      } else if (!parsed.component_account_name && this.account) {
-        const ref_with_account = ComponentSlugUtils.build(this.account, parsed.component_name, parsed.instance_name);
-        // Hack to support optional account prefixes
-        context_map[ref_with_account] = context_map[component_spec.metadata.ref];
-      }
-
+      // Hack to support optional account prefixes in dependency name
+      context_map[`${this.account}/${component_spec.metadata.ref}`] = context_map[component_spec.metadata.ref];
       evaluated_component_specs.push(component_spec);
     }
 

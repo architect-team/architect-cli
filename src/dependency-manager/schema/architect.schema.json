@@ -1,5 +1,5 @@
 {
-  "$id": "https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json",
+  "$id": "https://raw.githubusercontent.com/architect-team/architect-cli/main/src/dependency-manager/schema/architect.schema.json",
   "title": "Schema for architect.yml. See: https://docs.architect.io/reference/architect-yml",
   "$schema": "http://json-schema.org/draft-07/schema",
   "properties": {
