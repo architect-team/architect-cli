@@ -205,7 +205,7 @@ export default class ComponentRegister extends BaseCommand {
 
     const getImage = (ref: string) => {
       const { component_name, resource_type, resource_name } = ResourceSlugUtils.parse(ref);
-      const ref_with_account = ResourceSlugUtils.build(selected_account.name, component_name, resource_type, resource_name);
+      const ref_with_account = ResourceSlugUtils.build(selected_account.name.toLowerCase(), component_name, resource_type, resource_name);
       const image = `${this.app.config.registry_host}/${ref_with_account}:${tag}`;
       return image;
     };
