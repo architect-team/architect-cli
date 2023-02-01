@@ -5,7 +5,7 @@
   "properties": {
     "name": {
       "type": "string",
-      "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+      "pattern": "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
       "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
       "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
     },
@@ -232,7 +232,7 @@
     "dependencies": {
       "type": "object",
       "patternProperties": {
-        "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+        "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
           "type": "string",
           "pattern": "^[\\w][\\w\\.-]{0,127}$"
         }
@@ -311,7 +311,7 @@
           "properties": {
             "name": {
               "type": "string",
-              "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+              "pattern": "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
               "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
               "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
             },
@@ -538,7 +538,7 @@
             "dependencies": {
               "type": "object",
               "patternProperties": {
-                "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+                "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
                   "type": "string",
                   "pattern": "^[\\w][\\w\\.-]{0,127}$"
                 }
@@ -3973,7 +3973,7 @@
       "properties": {
         "name": {
           "type": "string",
-          "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+          "pattern": "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
           "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
           "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
         },
@@ -4200,7 +4200,7 @@
         "dependencies": {
           "type": "object",
           "patternProperties": {
-            "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+            "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
               "type": "string",
               "pattern": "^[\\w][\\w\\.-]{0,127}$"
             }
@@ -4279,7 +4279,7 @@
               "properties": {
                 "name": {
                   "type": "string",
-                  "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+                  "pattern": "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
                   "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
                   "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                 },
@@ -4506,7 +4506,7 @@
                 "dependencies": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+                    "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
                       "type": "string",
                       "pattern": "^[\\w][\\w\\.-]{0,127}$"
                     }
@@ -7818,7 +7818,7 @@
       "properties": {
         "name": {
           "type": "string",
-          "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+          "pattern": "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
           "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
           "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
         },
@@ -8045,7 +8045,7 @@
         "dependencies": {
           "type": "object",
           "patternProperties": {
-            "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+            "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
               "type": "string",
               "pattern": "^[\\w][\\w\\.-]{0,127}$"
             }
@@ -8121,7 +8121,7 @@
               "properties": {
                 "name": {
                   "type": "string",
-                  "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+                  "pattern": "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
                   "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
                   "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
                 },
@@ -8348,7 +8348,7 @@
                 "dependencies": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+                    "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
                       "type": "string",
                       "pattern": "^[\\w][\\w\\.-]{0,127}$"
                     }
