@@ -2,10 +2,9 @@ import { expect } from 'chai';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
-import sinon, { SinonSpy, SinonStub } from 'sinon';
+import sinon, { SinonStub } from 'sinon';
 import untildify from 'untildify';
 import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
-import AccountUtils from '../../src/architect/account/account.utils';
 import ComponentRegister from '../../src/commands/register';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
@@ -75,7 +74,6 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
-    .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
@@ -326,7 +324,6 @@ describe('register', function () {
     });
 
   mockArchitectAuth()
-    .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
     .nock(MOCK_API_HOST, api => api
       .get('/accounts/examples')
       .reply(403, {
@@ -708,35 +705,6 @@ describe('register', function () {
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
       expect(compose.callCount).to.eq(2);
       expect(compose.firstCall.args[0][5]).to.deep.equal('*.args.NODE_ENV=dev');
-    });
-
-  mockArchitectAuth()
-    .stub(AccountUtils, 'isValidAccount', sinon.stub().returns(false))
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples`)
-      .reply(200, mock_architect_account_response),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .post(/\/accounts\/.*\/components/)
-      .reply(200, {}),
-    )
-    .stub(PluginManager, 'getPlugin', sinon.stub().returns({
-      build: () => { },
-    }))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['register', 'test/mocks/register/architect.yml', '-a', 'examples'])
-    .it('register with invalid account in architect.yml will use account from command instead', ctx => {
-      const is_valid_account = AccountUtils.isValidAccount as SinonSpy;
-      expect(is_valid_account.getCalls().length).to.equal(1);
-      expect(ctx.stdout).to.contain(`The account name 'invalid-account' was found as part of the component name in your architect.yml file. Either that account does not exist or you do not have permission to access it.`);
-      expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
   mockArchitectAuth()

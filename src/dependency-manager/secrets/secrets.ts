@@ -25,8 +25,6 @@ export class Secrets {
     }
 
     const component_ref = component_spec.metadata.ref;
-    const { component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
-    const component_ref_with_account = ComponentSlugUtils.build(this.account, component_name, instance_name);
 
     const component_secrets = new Set(Object.keys(component_spec.secrets || {}));
 
@@ -36,10 +34,10 @@ export class Secrets {
     for (let [pattern, secrets] of Object.entries(sorted_values_dict)) {
       // Backwards compat for tags
       if (ComponentVersionSlugUtils.Validator.test(pattern)) {
-        const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(pattern);
-        pattern = ComponentSlugUtils.build(component_account_name, component_name, instance_name);
+        const { component_name, instance_name } = ComponentVersionSlugUtils.parse(pattern);
+        pattern = ComponentSlugUtils.build(component_name, instance_name);
       }
-      if (isMatch([component_ref, component_ref_with_account], [pattern])) {
+      if (isMatch(component_ref, [pattern])) {
         for (const [secret_key, secret_value] of Object.entries(secrets)) {
           if (include_all || component_secrets.has(secret_key)) {
             res[secret_key] = secret_value;
@@ -63,8 +61,8 @@ export class Secrets {
 
       // Backwards compat for tags
       if (ComponentVersionSlugUtils.Validator.test(key)) {
-        const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(key);
-        key = ComponentSlugUtils.build(component_account_name, component_name, instance_name);
+        const { component_name, instance_name } = ComponentVersionSlugUtils.parse(key);
+        key = ComponentSlugUtils.build(component_name, instance_name);
       }
 
       if (

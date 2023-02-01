@@ -174,17 +174,17 @@ export default class ComponentRegister extends BaseCommand {
 
     validateInterpolation(component_spec);
 
-    const { component_account_name, component_name } = ComponentSlugUtils.parse(component_spec.name);
-    let is_valid_component_account;
-    if (component_account_name) {
-      is_valid_component_account = await AccountUtils.isValidAccount(this.app, component_account_name);
-      if (!is_valid_component_account) {
-        console.log(chalk.yellow(`The account name '${component_account_name}' was found as part of the component name in your architect.yml file. Either that account does not exist or you do not have permission to access it. You can select from a valid list of your accounts below.\n`));
-      }
-      console.log(chalk.yellow('Including account name as part of the component name is being deprecated. Use the `-a` flag instead to specify an account.'));
-      component_spec.name = component_name;
+    const { component_name } = ComponentSlugUtils.parse(component_spec.name);
+
+    let account_name;
+    if (component_spec.name.includes('/')) {
+      account_name = component_spec.name.split('/')[0];
+      console.log(chalk.yellow('Including account name as part of the component name is being deprecated. Use the `--account` flag instead to specify an account.'));
+      console.log(chalk.yellow(`Please change 'name: ${component_spec.name}' -> 'name: ${component_spec.name.split('/')[1]}' in your architect.yml.\n`));
+    } else {
+      account_name = flags.account;
     }
-    const account_name = is_valid_component_account ? component_account_name : flags.account;
+
     const selected_account = await AccountUtils.getAccount(this.app, account_name);
 
     if (flags.environment) { // will throw an error if a user specifies an environment that doesn't exist
@@ -204,9 +204,7 @@ export default class ComponentRegister extends BaseCommand {
     }
 
     const getImage = (ref: string) => {
-      const { component_name, resource_type, resource_name } = ResourceSlugUtils.parse(ref);
-      const ref_with_account = ResourceSlugUtils.build(selected_account.name, component_name, resource_type, resource_name);
-      const image = `${this.app.config.registry_host}/${ref_with_account}:${tag}`;
+      const image = `${this.app.config.registry_host}/${selected_account.name}/${ref}:${tag}`;
       return image;
     };
 
@@ -277,7 +275,7 @@ export default class ComponentRegister extends BaseCommand {
 
       delete service.debug; // we don't need to compare the debug block for remotely-deployed components
 
-      const ref = ResourceSlugUtils.build(selected_account.name, component_name, 'services', service_name);
+      const ref = ResourceSlugUtils.build(component_name, 'services', service_name);
       const image = image_mapping[ref];
       if (image) {
         const digest = await this.getDigest(image);
@@ -296,7 +294,7 @@ export default class ComponentRegister extends BaseCommand {
 
       delete task.debug; // we don't need to compare the debug block for remotely-deployed components
 
-      const ref = ResourceSlugUtils.build(selected_account.name, component_name, 'tasks', task_name);
+      const ref = ResourceSlugUtils.build(component_name, 'tasks', task_name);
       const image = image_mapping[ref];
       if (image) {
         const digest = await this.getDigest(image);
@@ -357,18 +355,13 @@ export default class ComponentRegister extends BaseCommand {
         const ref_label = service.labels.find(label => label.startsWith('architect.ref='));
         if (!ref_label) continue;
         const ref = ref_label.replace('architect.ref=', '');
-        const { component_name, resource_type, resource_name } = ResourceSlugUtils.parse(ref);
-        const ref_with_account = ResourceSlugUtils.build(account_name, component_name, resource_type, resource_name);
 
         compose.services[service_name] = {};
 
         const dockerfile_exist = service.build.context ? await DockerUtils.doesDockerfileExist(service.build.context, service.build.dockerfile) : false;
         if (service.build.buildpack || !dockerfile_exist) {
           await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.command?.join(' '), service.build.context);
-          buildpack_images.push({ 'name': service_name, 'ref': getImage(ref_with_account) });
-          if (component_spec.services) {
-            delete component_spec.services[resource_name].build;
-          }
+          buildpack_images.push({ 'name': service_name, 'ref': getImage(ref) });
         } else {
           const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags.architecture);
           service.build['x-bake'] = {
@@ -407,7 +400,7 @@ export default class ComponentRegister extends BaseCommand {
         }
 
         compose.services[service_name].image = service.image;
-        image_mapping[ref_with_account] = compose.services[service_name].image;
+        image_mapping[ref] = compose.services[service_name].image;
       }
     }
 
