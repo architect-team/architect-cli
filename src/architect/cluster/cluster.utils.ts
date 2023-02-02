@@ -3,11 +3,11 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import execa from 'execa';
 import inquirer from 'inquirer';
+import semver, { SemVer } from 'semver';
+import untildify from 'untildify';
 import { ArchitectError } from '../../dependency-manager/utils/errors';
 import Account from '../account/account.entity';
 import Cluster from './cluster.entity';
-import semver, { SemVer } from 'semver';
-import untildify from 'untildify';
 
 export interface CreateClusterInput {
   type: string;
@@ -25,7 +25,7 @@ export interface KubernetesClusterCredentials {
   service_token: string;
 }
 
-export const MIN_CLUSTER_VERSION = '1.22.0';
+export const MIN_CLUSTER_SEMVER: SemVer = new SemVer('1.22.0');
 
 export default class ClusterUtils {
   static flags = {
@@ -102,9 +102,8 @@ export default class ClusterUtils {
       throw new ArchitectError(`Failed to translate Kubernetes cluster version ${client_git_version}.`);
     }
 
-    const min_cluster_semver = semver.coerce(MIN_CLUSTER_VERSION) as SemVer;
-    if (semver.lt(client_semver.version, min_cluster_semver.version)) {
-      throw new ArchitectError(`Currently, we only support Kubernetes clusters on version ${MIN_CLUSTER_VERSION} or greater. Your cluster is currently on version ${client_semver.version} which is below the minimum required version. Please upgrade your cluster before registering it with Architect.`);
+    if (semver.lt(client_semver.version, MIN_CLUSTER_SEMVER.version)) {
+      throw new ArchitectError(`Currently, we only support Kubernetes clusters on version ${MIN_CLUSTER_SEMVER.version} or greater. Your cluster is currently on version ${client_semver.version} which is below the minimum required version. Please upgrade your cluster before registering it with Architect.`);
     }
   }
 }
