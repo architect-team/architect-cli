@@ -14,11 +14,11 @@ export interface CreateClusterInput {
 export type ClusterCredentials = KubernetesClusterCredentials;
 
 export interface KubernetesClusterCredentials {
-  kind: 'KUBERNETES';
+  kind: 'KUBERNETES' | 'AGENT';
 
   host: string;
-  cluster_ca_cert: string;
-  service_token: string;
+  cluster_ca_cert?: string;
+  service_token?: string;
 }
 
 export default class ClusterUtils {
