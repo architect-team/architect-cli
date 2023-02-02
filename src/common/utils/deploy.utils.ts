@@ -5,7 +5,8 @@ import * as dotenvExpand from 'dotenv-expand';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import { ArchitectError, Dictionary } from '../../';
-import { SecretsDict, SecretType } from '../../dependency-manager/secrets/type';
+import { SecretsDict } from '../../dependency-manager/secrets/type';
+import { SecretSpecValue } from '../../dependency-manager/spec/secret-spec';
 
 export default class DeployUtils {
   private static getExtraSecrets(secrets: string[] = []): Dictionary<string | number | undefined> {
@@ -88,7 +89,7 @@ export default class DeployUtils {
       component_secrets = deepmerge(component_secrets, secrets_from_file);
     }
 
-    const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets) as Dictionary<SecretType>;
+    const extra_secrets = DeployUtils.getExtraSecrets(individual_secrets) as Dictionary<SecretSpecValue>;
     if (extra_secrets && Object.keys(extra_secrets).length > 0) {
       if (!component_secrets['*']) {
         component_secrets['*'] = {};

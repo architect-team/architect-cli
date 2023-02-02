@@ -2,7 +2,7 @@ import { V1Deployment } from '@kubernetes/client-node';
 import { Transform, Type } from 'class-transformer';
 import { Allow, IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
-import { DeepPartial } from '../../common/utils/types';
+import { DeepPartial, WithRequired } from '../../common/utils/types';
 import { Dictionary } from '../utils/dictionary';
 import { LivenessProbeSpec, VolumeSpec } from './common-spec';
 import { ResourceSpec } from './resource-spec';
@@ -107,7 +107,7 @@ export class KubernetesDeploySpec {
 export class DeploySpec {
   @Allow()
   @ValidateNested()
-  @Transform(transformObject(KubernetesDeploySpec))
+  @Type(() => KubernetesDeploySpec)
   kubernetes!: KubernetesDeploySpec;
 }
 
@@ -192,6 +192,10 @@ export class ServiceInterfaceSpec {
   description: 'A runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.',
 })
 export class ServiceSpec extends ResourceSpec {
+  get resource_type(): string {
+    return 'services';
+  }
+
   @IsOptional()
   @JSONSchema({
     type: 'boolean',
@@ -203,7 +207,7 @@ export class ServiceSpec extends ResourceSpec {
   @IsOptional()
   @ValidateNested()
   @Type(() => ServiceSpec)
-  debug?: Partial<ServiceSpec>;
+  debug?: WithRequired<Partial<ServiceSpec>, 'resource_type'>;
 
   @IsOptional()
   @JSONSchema({
@@ -246,11 +250,11 @@ export class ServiceSpec extends ResourceSpec {
 
   @IsOptional()
   @ValidateNested()
-  @Transform(transformObject(ScalingSpec))
+  @Type(() => ScalingSpec)
   scaling?: ScalingSpec;
 
   @IsOptional()
   @ValidateNested()
-  @Transform(transformObject(DeploySpec))
+  @Type(() => DeploySpec)
   deploy?: DeploySpec;
 }

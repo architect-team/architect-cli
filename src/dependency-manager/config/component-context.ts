@@ -1,18 +1,16 @@
-import { EnvironmentSpecValue } from '../spec/resource-spec';
+import { SecretSpecValue } from '../spec/secret-spec';
 import { Dictionary } from '../utils/dictionary';
 import { ServiceInterfaceConfig } from './service-config';
 
 export type OutputValue = string | number | boolean | null;
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type SecretValue = string | number | boolean | null | object | undefined;
 
 export interface ServiceContext {
-  environment?: Dictionary<EnvironmentSpecValue>;
+  environment?: Dictionary<SecretSpecValue>;
   interfaces: Dictionary<ServiceInterfaceConfig>;
 }
 
 export interface TaskContext {
-  environment?: Dictionary<EnvironmentSpecValue>;
+  environment?: Dictionary<SecretSpecValue>;
 }
 
 export interface DependencyContext {
@@ -27,7 +25,7 @@ export interface ArchitectContext {
 export interface ComponentContext {
   name: string;
   dependencies: Dictionary<DependencyContext>;
-  secrets: Dictionary<SecretValue>;
+  secrets: Dictionary<SecretSpecValue>;
   outputs: Dictionary<OutputValue>;
   services: Dictionary<ServiceContext>;
   tasks: Dictionary<TaskContext>;

@@ -1,8 +1,0 @@
-#!/bin/sh
-
-set -eo pipefail
-
-echo "Running pre-commit hook..."
-npm run check
-echo "Check passed!"
-

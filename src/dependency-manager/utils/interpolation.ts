@@ -1,3 +1,4 @@
+import { instanceToInstance } from 'class-transformer';
 import deepmerge from 'deepmerge';
 import { EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { Dictionary } from './dictionary';
@@ -52,7 +53,7 @@ const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: de
 
 export const interpolateObject = <T>(obj: T, context: any, _options?: InterpolateObjectOptions): { errors: ValidationError[]; interpolated_obj: T } => {
   // Clone object
-  obj = deepmerge(obj, {}) as T;
+  obj = instanceToInstance(obj);
 
   const context_map = buildContextMap(context);
   context_map._path = '';
@@ -76,7 +77,6 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
       let has_conditional = false;
       const to_add = [];
       for (const [key, value] of Object.entries(el) as [string, any][]) {
-        // TODO:333
         if (key === 'metadata') {
           continue;
         }
