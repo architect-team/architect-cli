@@ -12,8 +12,8 @@ module.exports = {
     const filesToLint = await removeIgnoredFiles(files);
     return [
       `eslint --fix --max-warnings=0 ${filesToLint}`,
-      'npm run test',
-      'npm run check-circular'
     ];
   },
+  '*.{js,ts,__parallel1__}': ['npm run test'],
+  '*.{js,ts,__parallel2__}': ['npm run check-circular'],
 };
