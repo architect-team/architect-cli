@@ -36,6 +36,11 @@ describe('register', function () {
     name: 'architect',
   };
 
+  const mock_architect_uppercase_account_response = {
+    ...mock_account_response,
+    name: 'MY-ACCOUNT',
+  };
+
   mockArchitectAuth()
     .stub(fs, 'move', sinon.stub())
     .stub(ComponentRegister, 'registerComponent', sinon.stub().returns({}))
@@ -781,4 +786,27 @@ describe('register', function () {
       expect(e.message).contains(`${path.resolve('./test/integration/hello-world/nonexistent-dockerfile')} does not exist. Please verify the correct context and/or dockerfile were given.`);
     })
     .it('fail to register with a dockerfile that does not exist');
+
+  mockArchitectAuth()
+    .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
+    .nock(MOCK_API_HOST, api => api
+      .get('/accounts/my-account')
+      .reply(200, mock_architect_uppercase_account_response),
+    )
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .post(/\/accounts\/.*\/components/, (body) => body)
+      .reply(200))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', getMockComponentFilePath('hello-world'), '-t', '1.0.0', '-a', 'MY-ACCOUNT'])
+    .it('register component to account with name consists of uppercase letters', ctx => {
+      const convert_to_buildx_platforms = DockerBuildXUtils.convertToBuildxPlatforms as SinonStub;
+      expect(convert_to_buildx_platforms.calledOnce).true;
+      expect(ctx.stdout).to.contain('Successfully registered component');
+    });
 });
