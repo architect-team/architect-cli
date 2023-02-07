@@ -33,10 +33,11 @@ export default class AppService {
       if (fs.existsSync(config_file)) {
         const payload = fs.readJSONSync(config_file);
         this.config = new AppConfig(config_dir, payload);
-
-        // Locks in the default analytics UUID so we don't generate a new one
-        this.saveConfig();
       }
+    }
+    if (!this.config.analytics_id) {
+      // Locks in the default analytics UUID so we don't generate a new one
+      this.config.save();
     }
 
     this._api = axios.create({
@@ -123,12 +124,9 @@ export default class AppService {
     this.saveLinkedComponents();
   }
 
-  saveConfig(): void {
-    this.config.save();
-  }
-
   async checkLogin(): Promise<User> {
     const { data } = await this.api.get<User>('/users/me');
+    // https://posthog.com/docs/integrate/server/node#alias
     this.posthog.alias({
       distinctId: this.config.analytics_id,
       alias: data.id,

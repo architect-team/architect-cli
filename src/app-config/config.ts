@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 import { Dictionary } from '../';
 import LocalPaths from '../paths';
 
@@ -51,7 +52,7 @@ export default class AppConfig {
     this.posthog_api_key = 'phc_Wb11qMDWr6OX6Y7Y9jVsqDYSVagSLYOA8vluHkML9JV';
     this.posthog_api_host = 'https://ph.architect.io/';
     this.analytics_disabled = process.env.TEST === '1' || process.env.NODE_ENV === 'development';
-    this.analytics_id = uuid4();
+    this.analytics_id = uuidv4();
 
     // Override defaults with input values
     Object.assign(this, partial);
@@ -72,6 +73,10 @@ export default class AppConfig {
 
   getConfigDir(): string {
     return this.config_dir;
+  }
+
+  set<Key extends keyof this>(key: Key, value: this[Key]): void {
+    this[key] = value;
   }
 
   save(): void {
