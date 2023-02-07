@@ -521,6 +521,15 @@ export default class Dev extends BaseCommand {
     const [project_name, compose_file] = await this.buildImage(compose, default_project_name);
     const socket = socketPath(path.join(this.app.config.getConfigDir(), LocalPaths.LOCAL_DEPLOY_PATH, project_name));
 
+    this.app.posthog.capture({
+      distinctId: this.app.config.analytics_id,
+      event: 'cli.command-update',
+      properties: {
+        command_id: (this.constructor as any).id,
+        status: 'build complete',
+      },
+    });
+
     this.log('Building containers...', chalk.green('done'));
     this.log('');
 
@@ -767,6 +776,14 @@ $ architect dev -e new_env_name_here .`));
     if (args.configs_or_components && args.configs_or_components.length > 1 && flags.interface?.length) {
       throw new Error('Interface flag not supported if deploying multiple components in the same command.');
     }
+
+    this.app.posthog.capture({
+      distinctId: this.app.config.analytics_id,
+      event: 'cli.command.start',
+      properties: {
+        command_id: (this.constructor as any).id,
+      },
+    });
 
     await this.runLocal();
   }

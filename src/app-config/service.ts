@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import https from 'https';
 import os from 'os';
 import path from 'path';
+import { PostHog } from 'posthog-node';
 import { URL } from 'url';
 import { Dictionary } from '../';
 import User from '../architect/user/user.entity';
@@ -16,6 +17,7 @@ export default class AppService {
   auth: AuthClient;
   linkedComponents: Dictionary<string> = {};
   _api: AxiosInstance;
+  posthog: PostHog;
   version: string;
   errorContext?: Error;
 
@@ -31,6 +33,9 @@ export default class AppService {
       if (fs.existsSync(config_file)) {
         const payload = fs.readJSONSync(config_file);
         this.config = new AppConfig(config_dir, payload);
+
+        // Locks in the default analytics UUID so we don't generate a new one
+        this.saveConfig();
       }
     }
 
@@ -57,6 +62,14 @@ export default class AppService {
     this.auth = new AuthClient(this.config, this.checkLogin.bind(this));
 
     this.linkedComponents = this.loadLinkedComponents(config_dir);
+
+    this.posthog = new PostHog(this.config.posthog_api_key, {
+      host: this.config.posthog_api_host,
+      enable: !this.config.analytics_disabled,
+    });
+    this.posthog.identify({
+      distinctId: this.config.analytics_id,
+    });
   }
 
   private loadLinkedComponents(config_dir: string) {
@@ -115,7 +128,17 @@ export default class AppService {
   }
 
   async checkLogin(): Promise<User> {
-    const { data } = await this.api.get('/users/me');
+    const { data } = await this.api.get<User>('/users/me');
+    this.posthog.alias({
+      distinctId: this.config.analytics_id,
+      alias: data.id,
+    });
+    this.posthog.identify({
+      distinctId: this.config.analytics_id,
+      properties: {
+        email: data.email,
+      },
+    });
     return data;
   }
 
