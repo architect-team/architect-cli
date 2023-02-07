@@ -1,4 +1,3 @@
-import { uuid4 } from '@sentry/utils';
 import fs from 'fs-extra';
 import path from 'path';
 import { Dictionary } from '../';
@@ -51,7 +50,7 @@ export default class AppConfig {
     this.external_http_address = 'arc.localhost';
     this.posthog_api_key = 'phc_Wb11qMDWr6OX6Y7Y9jVsqDYSVagSLYOA8vluHkML9JV';
     this.posthog_api_host = 'https://ph.architect.io/';
-    this.analytics_disabled = false;
+    this.analytics_disabled = process.env.TEST === '1' || process.env.NODE_ENV === 'development';
     this.analytics_id = uuid4();
 
     // Override defaults with input values
