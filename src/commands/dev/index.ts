@@ -19,7 +19,7 @@ import LocalDependencyManager, { ComponentConfigOpts } from '../../common/depend
 import { DockerUtils } from '../../common/docker';
 import { DockerComposeUtils } from '../../common/docker-compose';
 import DockerComposeTemplate from '../../common/docker-compose/template';
-import { DOCKER_IMAGE_LABEL } from '../../common/docker/buildx.utils';
+import { DOCKER_COMPONENT_LABEL, DOCKER_IMAGE_LABEL } from '../../common/docker/buildx.utils';
 import { docker } from '../../common/docker/cmd';
 import { RequiresDocker } from '../../common/docker/helper';
 import BuildPackUtils from '../../common/utils/buildpack';
@@ -27,7 +27,6 @@ import DeployUtils from '../../common/utils/deploy.utils';
 import { booleanString } from '../../common/utils/oclif';
 import PortUtil from '../../common/utils/port';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
-import { ResourceSlugUtils } from '../../dependency-manager/spec/utils/slugs';
 import LocalPaths from '../../paths';
 
 type TraefikHttpService = {
@@ -432,7 +431,7 @@ export default class Dev extends BaseCommand {
     for (const [service_name, service] of Object.entries(compose.services)) {
       services.add(service_name);
       for (const label of service.build?.labels || []) {
-        if (label.startsWith('component=')) {
+        if (label.startsWith(`${DOCKER_COMPONENT_LABEL}=`)) {
           components.push(label.split('=')[1]);
         }
       }
@@ -441,7 +440,7 @@ export default class Dev extends BaseCommand {
     for (const component_name of components) {
       const built_image_result = await docker(['image', 'list',
         '--filter', `label=${DOCKER_IMAGE_LABEL}`,
-        '--filter', `label=component=${component_name}`,
+        '--filter', `label=${DOCKER_COMPONENT_LABEL}=${component_name}`,
         '--format', '{{json .}}'],
         { stdout: false });
       const built_images = built_image_result.stdout.split('\n').map((res: string) => JSON.parse(res));
@@ -455,7 +454,7 @@ export default class Dev extends BaseCommand {
       }
 
       if (images_to_delete.length > 0) {
-        await docker(['image', 'rm', '-f', ...images_to_delete], { stdout: true });
+        await docker(['image', 'rm', '-f', ...images_to_delete], { stdout: false });
       }
     }
   }

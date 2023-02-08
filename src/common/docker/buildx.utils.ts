@@ -17,6 +17,7 @@ const PLATFORM_MAP = new Map<string, string>([
 ]);
 
 export const DOCKER_IMAGE_LABEL = 'architect.io';
+export const DOCKER_COMPONENT_LABEL = 'architect.component';
 
 export default class DockerBuildXUtils {
   public static isMacM1Machine(): boolean {

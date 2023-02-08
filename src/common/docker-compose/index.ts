@@ -10,7 +10,7 @@ import path from 'path';
 import untildify from 'untildify';
 import { ArchitectError, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
-import { DOCKER_IMAGE_LABEL } from '../docker/buildx.utils';
+import { DOCKER_COMPONENT_LABEL, DOCKER_IMAGE_LABEL } from '../docker/buildx.utils';
 import { docker, restart } from '../docker/cmd';
 import { DockerHelper, RequiresDocker } from '../docker/helper';
 import PortUtil from '../utils/port';
@@ -363,7 +363,7 @@ export class DockerComposeUtils {
         service.build.labels.push(DOCKER_IMAGE_LABEL);
 
         const { component_name } = ResourceSlugUtils.parse(node.config.metadata.ref);
-        service.build.labels.push(`component=${component_name}`);
+        service.build.labels.push(`${DOCKER_COMPONENT_LABEL}=${component_name}`);
       }
 
       compose.services[node.ref] = service;
