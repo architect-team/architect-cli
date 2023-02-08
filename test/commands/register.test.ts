@@ -5,6 +5,8 @@ import path from 'path';
 import sinon, { SinonStub } from 'sinon';
 import untildify from 'untildify';
 import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
+import AccountSubscription from '../../src/architect/account-subscription';
+import Account from '../../src/architect/account/account.entity';
 import ComponentRegister from '../../src/commands/register';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
@@ -31,9 +33,19 @@ describe('register', function () {
     default_user_id: null,
   };
 
-  const mock_architect_account_response = {
+  const mock_architect_account_response: Account = {
     ...mock_account_response,
     name: 'architect',
+  };
+
+  const mock_free_account_subscription_response: AccountSubscription = {
+    account: mock_architect_account_response,
+    subscription_tier: 'Free',
+  };
+
+  const mock_team_account_subscription_response: AccountSubscription = {
+    account: mock_architect_account_response,
+    subscription_tier: 'Team',
   };
 
   mockArchitectAuth()
@@ -51,6 +63,10 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_architect_account_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
     )
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
@@ -79,6 +95,10 @@ describe('register', function () {
       .get(`/accounts/examples`)
       .reply(200, mock_architect_account_response),
     )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -103,6 +123,10 @@ describe('register', function () {
       .get(`/accounts/examples`)
       .reply(200, mock_account_response),
     )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
     .stdout({ print })
     .stderr({ print })
     .command(['register', getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '--architecture', 'incorrect', '-a', 'examples'])
@@ -124,6 +148,10 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
     )
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => body)
@@ -181,6 +209,10 @@ describe('register', function () {
       .reply(200, mock_account_response),
     )
     .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
+    .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200),
     )
@@ -199,6 +231,10 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
     )
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => body)
@@ -243,6 +279,10 @@ describe('register', function () {
       .reply(200, mock_account_response),
     )
     .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
+    .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('architect.environment.test-env');
         expect(body.config.name).to.eq('database-seeding');
@@ -277,6 +317,10 @@ describe('register', function () {
       .reply(200, mock_account_response),
     )
     .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
+    .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0');
         expect(body.config.name).to.eq('database-seeding');
@@ -306,6 +350,10 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
     )
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => body)
@@ -351,6 +399,10 @@ describe('register', function () {
       .reply(200, mock_account_response),
     )
     .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
+    .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0');
         expect(body.config.name).to.eq('database-seeding');
@@ -377,6 +429,10 @@ describe('register', function () {
       .get(`/accounts/examples`)
       .reply(200, mock_account_response),
     )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
     .stdout({ print })
     .stderr({ print })
     .command(['register', getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
@@ -397,6 +453,10 @@ describe('register', function () {
       .persist()
       .get(`/accounts/examples`)
       .reply(200, mock_account_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
     )
     .nock(MOCK_API_HOST, api => api
       .persist()
@@ -426,6 +486,10 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
     )
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/)
@@ -465,6 +529,10 @@ describe('register', function () {
       .reply(200, mock_account_response),
     )
     .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
+    .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/)
       .reply(200, {}),
     )
@@ -488,6 +556,11 @@ describe('register', function () {
       .persist()
       .get(/\/accounts\/examples/)
       .reply(200, mock_account_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
     )
     .nock(MOCK_API_HOST, api => api
       .persist()
@@ -516,6 +589,11 @@ describe('register', function () {
     )
     .nock(MOCK_API_HOST, api => api
       .persist()
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
       .post(/\/accounts\/.*\/components/)
       .reply(200, {}),
     )
@@ -538,6 +616,11 @@ describe('register', function () {
       .persist()
       .get(/\/accounts\/examples/)
       .reply(200, mock_account_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
     )
     .nock(MOCK_API_HOST, api => api
       .persist()
@@ -566,6 +649,11 @@ describe('register', function () {
     )
     .nock(MOCK_API_HOST, api => api
       .persist()
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
       .post(/\/accounts\/.*\/components/)
       .reply(200, {}),
     )
@@ -591,6 +679,11 @@ describe('register', function () {
       .persist()
       .get(/\/accounts\/examples/)
       .reply(200, mock_account_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
     )
     .nock(MOCK_API_HOST, api => api
       .persist()
@@ -623,6 +716,11 @@ describe('register', function () {
       .persist()
       .get(/\/accounts\/examples/)
       .reply(200, mock_account_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
     )
     .nock(MOCK_API_HOST, api => api
       .persist()
@@ -659,6 +757,11 @@ describe('register', function () {
     )
     .nock(MOCK_API_HOST, api => api
       .persist()
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
       .post(/\/accounts\/.*\/components/)
       .reply(200, {}),
     )
@@ -692,6 +795,11 @@ describe('register', function () {
     )
     .nock(MOCK_API_HOST, api => api
       .persist()
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
       .post(/\/accounts\/.*\/components/)
       .reply(200, {}),
     )
@@ -712,6 +820,10 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_architect_account_response)
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
     )
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
@@ -745,6 +857,10 @@ describe('register', function () {
       .get(`/accounts/examples`)
       .reply(200, mock_architect_account_response)
     )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
@@ -774,6 +890,10 @@ describe('register', function () {
       .get(`/accounts/examples`)
       .reply(200, mock_architect_account_response)
     )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'test/mocks/register/nonexistence-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
@@ -781,4 +901,54 @@ describe('register', function () {
       expect(e.message).contains(`${path.resolve('./test/integration/hello-world/nonexistent-dockerfile')} does not exist. Please verify the correct context and/or dockerfile were given.`);
     })
     .it('fail to register with a dockerfile that does not exist');
+
+  mockArchitectAuth()
+    .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_architect_account_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_team_account_subscription_response),
+    )
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .post(/\/accounts\/.*\/components/, (body) => body)
+      .reply(200))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .it(`successfully registering a component with a service with scaling settings doesn't print out a scaling warning for a paid account`, ctx => {
+      expect(ctx.stderr).not.to.contain('scaling is only available for the Team and Growth account tiers');
+    });
+
+  mockArchitectAuth()
+    .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_architect_account_response),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/account-subscription/${mock_account_response.id}`)
+      .reply(200, mock_free_account_subscription_response),
+    )
+    .nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(/.*/)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
+    )
+    .nock(MOCK_API_HOST, api => api
+      .post(/\/accounts\/.*\/components/, (body) => body)
+      .reply(200))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .it(`successfully registering a component with a service with scaling settings prints out a scaling warning for a free account`, ctx => {
+      expect(ctx.stderr).to.contain('scaling is only available for the Team and Growth account tiers');
+    });
 });

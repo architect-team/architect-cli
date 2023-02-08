@@ -10,6 +10,7 @@ import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, DependencyGraphMutable, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, TaskNode, validateInterpolation, VolumeSpec } from '../';
+import AccountSubscription from '../architect/account-subscription';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
@@ -186,6 +187,7 @@ export default class ComponentRegister extends BaseCommand {
     }
 
     const selected_account = await AccountUtils.getAccount(this.app, account_name);
+    const account_subscription: AccountSubscription = (await this.app.api.get(`/account-subscription/${selected_account.id}`)).data;
 
     if (flags.environment) { // will throw an error if a user specifies an environment that doesn't exist
       const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
@@ -329,6 +331,12 @@ export default class ComponentRegister extends BaseCommand {
 
     if (new_spec.dependencies) {
       this.generateDependenciesWarnings(new_spec.dependencies, selected_account.name);
+    }
+
+    for (const [service_name, service_config] of Object.entries(component_spec.services || {})) {
+      if (service_config.scaling && account_subscription.subscription_tier === 'Free') {
+        this.warn(chalk.yellow(`The service "${service_name}" contains scaling settings, but scaling is only available for the Team and Growth account tiers. The service will run normally, but scaling will not occur.`));
+      }
     }
 
     console.timeEnd('Time');
