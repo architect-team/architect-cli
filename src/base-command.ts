@@ -107,7 +107,6 @@ export default abstract class BaseCommand extends Command {
     await this.sentry.endSentryTransaction(err);
 
     this.app.posthog.capture({
-      distinctId: this.app.config.analytics_id,
       event: 'cli.command.complete',
       properties: {
         command_id: (this.constructor as any).id,
