@@ -168,14 +168,14 @@ export const StringOrStringArray = (): DecoratorSchema => {
 };
 
 /**
- * Wraps the given schema object in a `oneOf` expression next to an ExpressionRegex
+ * Wraps the given schema objects in a `oneOf` expression next to an ExpressionRegex
  *
  * Effectively allows the field to match either the given schema OR an interpolation expression
  */
-export const ExpressionOr = (schema: SchemaObject): DecoratorSchema => {
+export const ExpressionOr = (...schema: SchemaObject[]): DecoratorSchema => {
   return {
     anyOf: [
-      schema,
+      ...schema,
       {
         type: 'string',
         pattern: EXPRESSION_REGEX.source,

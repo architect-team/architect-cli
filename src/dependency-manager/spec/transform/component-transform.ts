@@ -3,7 +3,7 @@ import { transformDictionary } from '../../utils/dictionary';
 import { ComponentSpec, OutputDefinitionSpec } from '../component-spec';
 import { SecretDefinitionSpec, SecretSpecValue } from '../secret-spec';
 import { Slugs } from '../utils/slugs';
-import { transformDatabaseSpec } from './database-transform';
+import { transformDatabaseSpec, transformDatabaseSpecToServiceSpec } from './database-transform';
 import { transformServiceSpec } from './service-transform';
 import { transformTaskSpec } from './task-transform';
 
@@ -56,10 +56,11 @@ export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => 
   const services = transformDictionary(transformServiceSpec, spec.services, spec.metadata);
   const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.metadata);
   const dependencies = spec.dependencies || {};
+  const service_databases = transformDictionary(transformDatabaseSpecToServiceSpec, spec.databases, spec.metadata);
   const databases = transformDictionary(transformDatabaseSpec, spec.databases, spec.metadata);
-  for (const [key, value] of Object.entries(databases)) {
-    databases[`${key}-db`] = value;
-    delete databases[key];
+  for (const [key, value] of Object.entries(service_databases)) {
+    service_databases[`${key}-db`] = value;
+    delete service_databases[key];
   }
 
   return {
@@ -77,9 +78,9 @@ export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => 
 
     services: {
       ...services,
-      ...databases,
+      ...service_databases,
     },
-    databases: {},
+    databases,
     tasks,
 
     dependencies,

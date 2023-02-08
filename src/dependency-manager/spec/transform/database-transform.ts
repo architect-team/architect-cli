@@ -1,5 +1,5 @@
 import { coerce } from 'semver';
-import { ServiceConfig } from '../../config/service-config';
+import { DatabaseConfig, ServiceConfig } from '../../config/service-config';
 import { ArchitectError } from '../../utils/errors';
 import { ComponentInstanceMetadata } from '../component-spec';
 import { DatabaseSpec } from '../database-spec';
@@ -94,7 +94,7 @@ const SupportedDatabases: SupportedDatabaseType[] = [
   },
 ];
 
-export const transformDatabaseSpec = (key: string, db_spec: DatabaseSpec, metadata: ComponentInstanceMetadata): ServiceConfig => {
+export const transformDatabaseSpecToServiceSpec = (key: string, db_spec: DatabaseSpec, metadata: ComponentInstanceMetadata): ServiceConfig => {
   const [engine, version] = db_spec.type.split(':');
 
   const semver_version = coerce(version);
@@ -114,4 +114,10 @@ export const transformDatabaseSpec = (key: string, db_spec: DatabaseSpec, metada
   const service_spec = match.spec;
   service_spec.image = db_spec.type;
   return transformServiceSpec(`${key}-db`, service_spec, metadata);
+};
+
+export const transformDatabaseSpec = (key: string, db_spec: DatabaseSpec, metadata: ComponentInstanceMetadata): DatabaseConfig => {
+  return {
+    ...db_spec,
+  };
 };

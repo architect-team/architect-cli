@@ -35,6 +35,8 @@ secrets:
   param_default_boolean:
     required: false
     default: true
+  connection_string:
+    required: false
   param_unset:
 
 dependencies:
@@ -44,6 +46,9 @@ dependencies:
 databases:
   api-db:
     type: postgres:12
+  api-db2:
+    type: postgres:12
+    connection_string: ${{ secrets.connection_string }}
 
 services:
   stateless-app:

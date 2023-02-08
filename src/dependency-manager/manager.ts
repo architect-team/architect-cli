@@ -1,6 +1,6 @@
 import { instanceToPlain, plainToInstance, serialize } from 'class-transformer';
 import { buildNodeRef, ComponentConfig } from './config/component-config';
-import { ArchitectContext, ComponentContext } from './config/component-context';
+import { ArchitectContext, ComponentContext, DatabaseContext } from './config/component-context';
 import { DeprecatedInterfacesSpec } from './deprecated-spec/interfaces';
 import { DependencyGraph, DependencyGraphMutable } from './graph';
 import { IngressEdge } from './graph/edge/ingress';
@@ -219,6 +219,34 @@ export default abstract class DependencyManager {
     return [...consumers].sort();
   }
 
+  private getDatabaseContextFromConnectionString(connection_string: string, default_context: DatabaseContext): DatabaseContext {
+    try {
+      const url = new URL(connection_string);
+      return {
+        host: url.host,
+        port: url.port,
+        username: url.username,
+        password: url.password,
+        protocol: url.protocol,
+        database: url.pathname,
+        connection_string: connection_string,
+      };
+    } catch {
+      const regex = /^(\${{)|(}})+/gm;
+      const raw_connection_string = connection_string.replace(regex, '');
+      const raw_default_connection_string = default_context.connection_string.replace(regex, '');
+      return {
+        host: `\${{ parseUrl(${raw_connection_string}, 'host') ? parseUrl(${raw_connection_string}, 'host') : '${default_context.host}' }}`,
+        port: `\${{ parseUrl(${raw_connection_string}, 'port') ? parseUrl(${raw_connection_string}, 'port') : '${default_context.port}' }}`,
+        username: `\${{ parseUrl(${raw_connection_string}, 'username') ? parseUrl(${raw_connection_string}, 'username') : '${default_context.username}' }}`,
+        password: `\${{ parseUrl(${raw_connection_string}, 'password') ? parseUrl(${raw_connection_string}, 'password') : '${default_context.password}' }}`,
+        protocol: `\${{ parseUrl(${raw_connection_string}, 'protocol') ? parseUrl(${raw_connection_string}, 'protocol') : '${default_context.protocol}' }}`,
+        database: `\${{ parseUrl(${raw_connection_string}, 'pathname') ? parseUrl(${raw_connection_string}, 'pathname') : '${default_context.database}' }}`,
+        connection_string: `\${{ (${raw_connection_string}) ? (${raw_connection_string}) : (${raw_default_connection_string}) }}`,
+      };
+    }
+  }
+
   async getComponentSpecContext(graph: DependencyGraph, component_spec: ComponentSpec, secrets: Secrets, options: GraphOptions): Promise<{ component_spec: ComponentSpec, context: ComponentContext }> {
     // Remove debug blocks
     for (const service_name of Object.keys(component_spec.services || {})) {
@@ -291,6 +319,7 @@ export default abstract class DependencyManager {
     const [external_host, external_port_string] = this.external_addr.split(':');
     const external_port = Number.parseInt(external_port_string);
     const external_protocol = this.use_ssl ? 'https' : 'http';
+
     for (const [service_name, service] of Object.entries(component_config.services)) {
       if (!context.services[service_name]) {
         context.services[service_name] = {
@@ -307,7 +336,7 @@ export default abstract class DependencyManager {
         const architect_port = `${interface_ref}.external_port`;
 
         // TODO: Remove once databases get their own node type
-        context.databases[service_name.replace(/-db$/, '')] = {
+        const default_database_config = {
           host: interface_config.host || architect_host,
           port: interface_config.port as number,
           username: interface_config.username!,
@@ -316,6 +345,12 @@ export default abstract class DependencyManager {
           database: interface_config.path?.replace(/^\/+/, '') || '',
           connection_string: this.generateUrl(interface_ref),
         };
+        const database_name = service_name.replace(/-db$/, '');
+        if (component_config.databases[database_name]) {
+          context.databases[database_name] = component_config.databases[database_name].connection_string ?
+            this.getDatabaseContextFromConnectionString(component_config.databases[database_name].connection_string || '', default_database_config) :
+            default_database_config;
+        }
 
         context.services[service_name].interfaces[interface_name] = {
           protocol: 'http',

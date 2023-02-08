@@ -1,6 +1,6 @@
 import { IsOptional, IsString } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
-import { AnyOf, ExpressionOr } from './utils/json-schema-annotations';
+import { ExpressionOr } from './utils/json-schema-annotations';
 import { Slugs } from './utils/slugs';
 
 export class DatabaseSpec {
@@ -30,8 +30,8 @@ export class DatabaseSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...ExpressionOr(AnyOf('null', 'string')),
-    description: 'The connection string of an existing database to use instead of provisioning a new one',
+    ...ExpressionOr({ format: 'uri', type: 'string' }, { type: 'null' }),
+    description: 'The connection uri of an existing database to use instead of provisioning a new one',
   })
-  connection_string?: null | string;
+  connection_string?: string;
 }

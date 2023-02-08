@@ -7,7 +7,7 @@ export type OutputValue = string | number | boolean | null;
 export interface DatabaseContext {
   protocol: string;
   host: string;
-  port: number;
+  port: number | string;
   username: string;
   password: string;
   database: string;
