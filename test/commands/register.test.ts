@@ -949,6 +949,6 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it(`successfully registering a component with a service with scaling settings prints out a scaling warning for a free account`, ctx => {
-      expect(ctx.stderr).to.contain('scaling is only available for the Team and Growth account tiers');
+      expect(ctx.stdout).to.contain('scaling is only available for the Team and Growth account tiers');
     });
 });

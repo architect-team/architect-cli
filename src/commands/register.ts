@@ -335,7 +335,7 @@ export default class ComponentRegister extends BaseCommand {
 
     for (const [service_name, service_config] of Object.entries(component_spec.services || {})) {
       if (service_config.scaling && account_subscription.subscription_tier === 'Free') {
-        this.warn(chalk.yellow(`The service "${service_name}" contains scaling settings, but scaling is only available for the Team and Growth account tiers. The service will run normally, but scaling will not occur.`));
+        this.log(chalk.yellow(`The service "${service_name}" contains scaling settings, but scaling is only available for the Team and Growth account tiers. The service will run normally, but scaling will not occur.`));
       }
     }
 
