@@ -39,8 +39,8 @@ describe('debug spec v1', () => {
       '/stack/architect.yml': component_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create(), 'examnples', {
-      'examples/hello-world': '/stack/architect.yml',
+    const manager = new LocalDependencyManager(axios.create(), 'examples', {
+      'hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('examples/hello-world', {}, true),

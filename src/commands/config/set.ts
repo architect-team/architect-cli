@@ -1,4 +1,3 @@
-import AppConfig from '../../app-config/config';
 import BaseCommand from '../../base-command';
 import InvalidConfigOption from '../../common/errors/invalid-config-option';
 
@@ -32,8 +31,9 @@ export default class ConfigSet extends BaseCommand {
       throw new InvalidConfigOption(args.option);
     }
 
-    this.app.config[args.option as keyof AppConfig] = args.value;
-    this.app.saveConfig();
+    this.app.config.set(args.option, args.value);
+    this.app.config.save();
+
     this.log(`Successfully updated ${args.option} to ${args.value}`);
   }
 }

@@ -7,6 +7,7 @@ interface XBakeConfig {
 
 export interface DockerServiceBuild {
   context?: string;
+  buildpack?: boolean;
   args?: string[] | { [s: string]: string };
   dockerfile?: string;
   target?: string;

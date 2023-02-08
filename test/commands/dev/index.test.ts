@@ -10,9 +10,10 @@ import SecretUtils from '../../../src/architect/secret/secret.utils';
 import Dev, { UpProcessManager } from '../../../src/commands/dev';
 import { DockerComposeUtils } from '../../../src/common/docker-compose';
 import DockerComposeTemplate from '../../../src/common/docker-compose/template';
+import PluginManager from '../../../src/common/plugins/plugin-manager';
 import DeployUtils from '../../../src/common/utils/deploy.utils';
 import * as ComponentBuilder from '../../../src/dependency-manager/spec/utils/component-builder';
-import { MOCK_API_HOST, getMockComponentFilePath, getMockComponentContextPath } from '../../utils/mocks';
+import { getMockComponentContextPath, getMockComponentFilePath, MOCK_API_HOST } from '../../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
 const print = false;
@@ -627,6 +628,154 @@ describe('local dev environment', function () {
     },
     'volumes': {},
   };
+
+  const buildpack_component_expected_compose: DockerComposeTemplate = {
+    "version": "3",
+    "services": {
+      [hello_api_ref]: {
+        "ports": [
+          "50000:3000",
+        ],
+        "environment": {
+          "WORLD_TEXT": "World"
+        },
+        "labels": [
+          `architect.ref=${resource_ref}`,
+          "traefik.enable=true",
+          "traefik.port=80",
+          `traefik.http.routers.${hello_api_ref}-hello.rule=Host(\`hello.arc.localhost\`)`,
+          `traefik.http.routers.${hello_api_ref}-hello.service=${hello_api_ref}-hello-service`,
+          `traefik.http.services.${hello_api_ref}-hello-service.loadbalancer.server.port=3000`,
+        ],
+        "external_links": [
+          "gateway:hello.arc.localhost"
+        ],
+        "image": "hello-world--api:latest",
+        "healthcheck": {
+          "test": [
+            "CMD", "curl", "--fail", "localhost:3000"
+          ],
+          "interval": "30s",
+          "timeout": "5s",
+          "retries": 3,
+          "start_period": "0s"
+        },
+      },
+      "gateway": {
+        "image": "traefik:v2.6.2",
+        "command": [
+          "--api.insecure=true",
+          "--pilot.dashboard=false",
+          "--accesslog=true",
+          "--accesslog.filters.minDuration=1s",
+          "--accesslog.filters.statusCodes=400-599",
+          "--entryPoints.web.address=:80",
+          "--providers.docker=true",
+          "--providers.docker.exposedByDefault=false",
+          "--providers.docker.constraints=Label(`traefik.port`,`80`)",
+        ],
+        "ports": [
+          "80:80",
+          "8080:8080"
+        ],
+        "volumes": [
+          "/var/run/docker.sock:/var/run/docker.sock:ro"
+        ]
+      }
+    },
+    "volumes": {}
+  }
+
+  const buildpack_dockerfile_component_expected_compose: DockerComposeTemplate = {
+    "version": "3",
+    "services": {
+      "hello-world--buildpack-api": {
+        "ports": [
+          "50000:3000",
+        ],
+        "environment": {
+          "WORLD_TEXT": "World"
+        },
+        "labels": [
+          "architect.ref=hello-world.services.buildpack-api",
+          "traefik.enable=true",
+          "traefik.port=80",
+          "traefik.http.routers.hello-world--buildpack-api-hello.rule=Host(`buildpack-api.arc.localhost`)",
+          "traefik.http.routers.hello-world--buildpack-api-hello.service=hello-world--buildpack-api-hello-service",
+          "traefik.http.services.hello-world--buildpack-api-hello-service.loadbalancer.server.port=3000",
+        ],
+        "external_links": [
+          "gateway:buildpack-api.arc.localhost",
+          "gateway:dockerfile-api.arc.localhost"
+        ],
+        "image": "hello-world--buildpack-api:latest",
+        "healthcheck": {
+          "test": [
+            "CMD", "curl", "--fail", "localhost:3000"
+          ],
+          "interval": "30s",
+          "timeout": "5s",
+          "retries": 3,
+          "start_period": "0s"
+        },
+      },
+      "hello-world--dockerfile-api": {
+        "build": {
+          "context": path.resolve("./test/integration/hello-world")
+        },
+        "ports": [
+          "50001:4000",
+        ],
+        "environment": {
+          "WORLD_TEXT": "World"
+        },
+        "labels": [
+          "architect.ref=hello-world.services.dockerfile-api",
+          "traefik.enable=true",
+          "traefik.port=80",
+          "traefik.http.routers.hello-world--dockerfile-api-hello.rule=Host(`dockerfile-api.arc.localhost`)",
+          "traefik.http.routers.hello-world--dockerfile-api-hello.service=hello-world--dockerfile-api-hello-service",
+          "traefik.http.services.hello-world--dockerfile-api-hello-service.loadbalancer.server.port=4000",
+        ],
+        "external_links": [
+          "gateway:buildpack-api.arc.localhost",
+          "gateway:dockerfile-api.arc.localhost"
+        ],
+        "image": "hello-world--dockerfile-api",
+        "healthcheck": {
+          "test": [
+            "CMD", "curl", "--fail", "localhost:4000"
+          ],
+          "interval": "30s",
+          "timeout": "5s",
+          "retries": 3,
+          "start_period": "0s"
+        },
+      },
+      "gateway": {
+        "image": "traefik:v2.6.2",
+        "command": [
+          "--api.insecure=true",
+          "--pilot.dashboard=false",
+          "--accesslog=true",
+          "--accesslog.filters.minDuration=1s",
+          "--accesslog.filters.statusCodes=400-599",
+          "--entryPoints.web.address=:80",
+          "--providers.docker=true",
+          "--providers.docker.exposedByDefault=false",
+          "--providers.docker.constraints=Label(`traefik.port`,`80`)",
+        ],
+        "ports": [
+          "80:80",
+          "8080:8080"
+        ],
+        "volumes": [
+          "/var/run/docker.sock:/var/run/docker.sock:ro"
+        ]
+      }
+    },
+    "volumes": {}
+  }
 
   test
     .timeout(20000)
@@ -1350,4 +1499,77 @@ describe('local dev environment', function () {
       expect(err.message).to.include('For help getting started take a look at our documentation here: https://docs.architect.io/reference/architect-yml');
     })
     .it('Provide error if architect.yml is empty');
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return fs.readFileSync('./test/mocks/buildpack/buildpack-architect.yml').toString();
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stub(PluginManager, 'getPlugin', sinon.stub().returns({
+      build: () => { },
+    }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './test/mocks/buildpack/buildpack-architect.yml', '--ssl=false'])
+    .it('Dev component with buildpack', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(buildpack_component_expected_compose)
+    });
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return fs.readFileSync('./test/mocks/buildpack/buildpack-dockerfile-architect.yml').toString();
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stub(PluginManager, 'getPlugin', sinon.stub().returns({
+      build: () => { },
+    }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './test/mocks/buildpack/buildpack-dockerfile-architect.yml', '--ssl=false'])
+    .it('Dev component with buildpack and dockerfile services', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(buildpack_dockerfile_component_expected_compose)
+    });
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return fs.readFileSync('test/mocks/register/nonexistence-dockerfile-architect.yml').toString();
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', './test/mocks/register/nonexistence-dockerfile-architect.yml', '--ssl=false'])
+    .catch(e => {
+      expect(e.message).contains(`${path.resolve('./test/integration/hello-world/nonexistent-dockerfile')} does not exist. Please verify the correct context and/or dockerfile were given.`);
+    })
+    .it('Dev component fail with a dockerfile that does not exist');
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return getHelloComponentConfig();
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .nock('https://storage.googleapis.com', api => api.get('/architect-ci-ssl/fullchain.pem').reply(500))
+    .nock('https://storage.googleapis.com', api => api.get('/architect-ci-ssl/privkey.pem').reply(500))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', getMockComponentFilePath('hello-world')])
+    .catch(e => {
+      expect(e.message).contains(`--ssl=false`);
+    })
+    .it('Show helpful error msg if dev fails without internet connection.');
 });

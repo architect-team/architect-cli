@@ -14,7 +14,7 @@ describe('component transform unit test', function () {
 
   it(`transformComponentSpec successfully transforms spec with metadata`, async () => {
     const { source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset/architect.yml`);
-    const ref = 'tests/superset@instance-1';
+    const ref = 'superset@instance-1';
 
     const metadata: ComponentInstanceMetadata = {
       ref,
@@ -27,6 +27,6 @@ describe('component transform unit test', function () {
     const spec = buildSpecFromYml(source_yml, metadata);
     const config = transformComponentSpec(spec);
 
-    expect(config.services['api-db'].metadata.ref).to.equal('tests/superset.services.api-db@instance-1');
+    expect(config.services['api-db'].metadata.ref).to.equal('superset.services.api-db@instance-1');
   });
 });

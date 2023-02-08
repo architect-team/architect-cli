@@ -9,7 +9,7 @@ import untildify from 'untildify';
 import { ArchitectError, Dictionary, Slugs } from '../..';
 import AccountUtils from '../../architect/account/account.utils';
 import Cluster from '../../architect/cluster/cluster.entity';
-import { CreateClusterInput } from '../../architect/cluster/cluster.utils';
+import ClusterUtils, { CreateClusterInput } from '../../architect/cluster/cluster.utils';
 import PipelineUtils from '../../architect/pipeline/pipeline.utils';
 import BaseCommand from '../../base-command';
 import { AgentClusterUtils } from '../../common/utils/agent-cluster.utils';
@@ -134,6 +134,7 @@ export default class ClusterCreate extends BaseCommand {
     const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the cluster with' });
 
     const kube_contexts = await this.setupKubeContext(flags);
+    await ClusterUtils.checkClientVersion(flags.kubeconfig);
 
     try {
       const cluster_dto = {
