@@ -1,9 +1,6 @@
-import { PostHog } from 'posthog-node';
-// eslint-disable-next-line node/no-missing-import
-import type { PosthogCoreOptions } from 'posthog-node/lib/posthog-core/src/types';
-import { EventMessageV1 } from 'posthog-node/src/types';
+import { PostHog, PostHogOptions } from 'posthog-node';
 
-type PostHogCliOptions = PosthogCoreOptions & {
+type PostHogCliOptions = PostHogOptions & {
   analyticsId: string;
 };
 
@@ -14,7 +11,7 @@ export class PostHogCli extends PostHog {
     super(apiKey, options);
   }
 
-  capture(message: Omit<EventMessageV1, 'distinctId'>): void {
+  capture(message: { event: string; properties?: Record<string | number, any>; }): void {
     // We override reInit so the distinctId isn't used
     return super.capture({ distinctId: '<unused>', ...message });
   }
