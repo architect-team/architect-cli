@@ -3,6 +3,9 @@ import { JSONSchema } from 'class-validator-jsonschema';
 import { ExpressionOr } from './utils/json-schema-annotations';
 import { Slugs } from './utils/slugs';
 
+@JSONSchema({
+  description: 'Component databases let you quickly spin up a database for your service',
+})
 export class DatabaseSpec {
   @IsOptional()
   @JSONSchema({
