@@ -153,6 +153,44 @@
       "description": "A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names.",
       "additionalProperties": false
     },
+    "databases": {
+      "type": "object",
+      "patternProperties": {
+        "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/DatabaseSpec"
+            }
+          ]
+        },
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "type": "object",
+              "patternProperties": {
+                "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/DatabaseSpec"
+                    }
+                  ]
+                }
+              },
+              "errorMessage": {
+                "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+              },
+              "description": "A database represents a stateful service powered by one of several supported database engines.",
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "errorMessage": {
+        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+      },
+      "description": "A database represents a stateful service powered by one of several supported database engines.",
+      "additionalProperties": false
+    },
     "services": {
       "type": "object",
       "patternProperties": {
@@ -459,6 +497,44 @@
               "description": "A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names.",
               "additionalProperties": false
             },
+            "databases": {
+              "type": "object",
+              "patternProperties": {
+                "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/DatabaseSpec"
+                    }
+                  ]
+                },
+                "^\\${{\\s*if(.*?)\\s*}}$": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "patternProperties": {
+                        "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/DatabaseSpec"
+                            }
+                          ]
+                        }
+                      },
+                      "errorMessage": {
+                        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                      },
+                      "description": "A database represents a stateful service powered by one of several supported database engines.",
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "errorMessage": {
+                "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+              },
+              "description": "A database represents a stateful service powered by one of several supported database engines.",
+              "additionalProperties": false
+            },
             "services": {
               "type": "object",
               "patternProperties": {
@@ -616,6 +692,133 @@
     }
   },
   "definitions": {
+    "DatabaseSpec": {
+      "properties": {
+        "reserved_name": {
+          "type": "string",
+          "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
+          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+          "description": "A specific service name which will override the database name specified in the component."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human readable description"
+        },
+        "type": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\w+:\\d+$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "The type engine and version of database software needed for data storage.",
+          "errorMessage": "must be of the format <engine>:<version> (e.g. postgres:13)"
+        },
+        "connection_string": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "The connection uri of an existing database to use instead of provisioning a new one"
+        }
+      },
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "description": "Component databases let you quickly spin up a database for your service",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#databasespec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "reserved_name": {
+                  "type": "string",
+                  "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+                  "description": "A specific service name which will override the database name specified in the component."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Human readable description"
+                },
+                "type": {
+                  "type": "string",
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^\\w+:\\d+$"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The type engine and version of database software needed for data storage.",
+                  "errorMessage": "must be of the format <engine>:<version> (e.g. postgres:13)"
+                },
+                "connection_string": {
+                  "anyOf": [
+                    {
+                      "format": "uri",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The connection uri of an existing database to use instead of provisioning a new one"
+                }
+              },
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "description": "Component databases let you quickly spin up a database for your service",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#databasespec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
     "SecretDefinitionSpec": {
       "properties": {
         "required": {
@@ -4121,6 +4324,44 @@
           "description": "A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names.",
           "additionalProperties": false
         },
+        "databases": {
+          "type": "object",
+          "patternProperties": {
+            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/DatabaseSpec"
+                }
+              ]
+            },
+            "^\\${{\\s*if(.*?)\\s*}}$": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/DatabaseSpec"
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                  },
+                  "description": "A database represents a stateful service powered by one of several supported database engines.",
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+          },
+          "description": "A database represents a stateful service powered by one of several supported database engines.",
+          "additionalProperties": false
+        },
         "services": {
           "type": "object",
           "patternProperties": {
@@ -4427,6 +4668,44 @@
                   "description": "A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names.",
                   "additionalProperties": false
                 },
+                "databases": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/DatabaseSpec"
+                        }
+                      ]
+                    },
+                    "^\\${{\\s*if(.*?)\\s*}}$": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "patternProperties": {
+                            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/DatabaseSpec"
+                                }
+                              ]
+                            }
+                          },
+                          "errorMessage": {
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                          },
+                          "description": "A database represents a stateful service powered by one of several supported database engines.",
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                  },
+                  "description": "A database represents a stateful service powered by one of several supported database engines.",
+                  "additionalProperties": false
+                },
                 "services": {
                   "type": "object",
                   "patternProperties": {
@@ -4577,6 +4856,127 @@
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://docs.architect.io/reference/architect-yml#componentspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
+    "_DebugDatabaseSpec": {
+      "properties": {
+        "reserved_name": {
+          "type": "string",
+          "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
+          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+          "description": "A specific service name which will override the database name specified in the component."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human readable description"
+        },
+        "type": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\w+:\\d+$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "The type engine and version of database software needed for data storage.",
+          "errorMessage": "must be of the format <engine>:<version> (e.g. postgres:13)"
+        },
+        "connection_string": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "The connection uri of an existing database to use instead of provisioning a new one"
+        }
+      },
+      "type": "object",
+      "description": "Component databases let you quickly spin up a database for your service",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#databasespec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "reserved_name": {
+                  "type": "string",
+                  "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+                  "description": "A specific service name which will override the database name specified in the component."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Human readable description"
+                },
+                "type": {
+                  "type": "string",
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^\\w+:\\d+$"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The type engine and version of database software needed for data storage.",
+                  "errorMessage": "must be of the format <engine>:<version> (e.g. postgres:13)"
+                },
+                "connection_string": {
+                  "anyOf": [
+                    {
+                      "format": "uri",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The connection uri of an existing database to use instead of provisioning a new one"
+                }
+              },
+              "type": "object",
+              "description": "Component databases let you quickly spin up a database for your service",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#databasespec"
               },
               "patternProperties": {}
             }
@@ -7966,6 +8366,44 @@
           "description": "A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names.",
           "additionalProperties": false
         },
+        "databases": {
+          "type": "object",
+          "patternProperties": {
+            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugDatabaseSpec"
+                }
+              ]
+            },
+            "^\\${{\\s*if(.*?)\\s*}}$": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/_DebugDatabaseSpec"
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                  },
+                  "description": "A database represents a stateful service powered by one of several supported database engines.",
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+          },
+          "description": "A database represents a stateful service powered by one of several supported database engines.",
+          "additionalProperties": false
+        },
         "services": {
           "type": "object",
           "patternProperties": {
@@ -8267,6 +8705,44 @@
                     "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
                   },
                   "description": "A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names.",
+                  "additionalProperties": false
+                },
+                "databases": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/_DebugDatabaseSpec"
+                        }
+                      ]
+                    },
+                    "^\\${{\\s*if(.*?)\\s*}}$": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "patternProperties": {
+                            "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/_DebugDatabaseSpec"
+                                }
+                              ]
+                            }
+                          },
+                          "errorMessage": {
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                          },
+                          "description": "A database represents a stateful service powered by one of several supported database engines.",
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                  },
+                  "description": "A database represents a stateful service powered by one of several supported database engines.",
                   "additionalProperties": false
                 },
                 "services": {
