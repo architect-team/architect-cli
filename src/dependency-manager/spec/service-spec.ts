@@ -107,7 +107,7 @@ export class KubernetesDeploySpec {
 export class DeploySpec {
   @Allow()
   @ValidateNested()
-  @Transform(transformObject(KubernetesDeploySpec))
+  @Type(() => KubernetesDeploySpec)
   kubernetes!: KubernetesDeploySpec;
 }
 
@@ -250,11 +250,11 @@ export class ServiceSpec extends ResourceSpec {
 
   @IsOptional()
   @ValidateNested()
-  @Transform(transformObject(ScalingSpec))
+  @Type(() => ScalingSpec)
   scaling?: ScalingSpec;
 
   @IsOptional()
   @ValidateNested()
-  @Transform(transformObject(DeploySpec))
+  @Type(() => DeploySpec)
   deploy?: DeploySpec;
 }

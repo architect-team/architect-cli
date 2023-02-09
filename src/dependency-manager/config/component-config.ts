@@ -50,10 +50,6 @@ export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max
 
   let ref = `${parsed.component_name}`;
 
-  if (parsed.component_account_name) {
-    ref = `${parsed.component_account_name}---${ref}`;
-  }
-
   const resource_name = (parsed as ParsedResourceSlug).resource_name;
   if (resource_name) {
     ref = `${ref}--${resource_name}`;
@@ -88,6 +84,6 @@ export const buildNodeRef = (component_config: ComponentSpec | ComponentConfig, 
 
   const component_ref = component_config.metadata.ref;
   const parsed = ComponentSlugUtils.parse(component_ref);
-  const service_ref = ResourceSlugUtils.build(parsed.component_account_name, parsed.component_name, resource_type, resource_name, component_config.metadata?.instance_name);
+  const service_ref = ResourceSlugUtils.build(parsed.component_name, resource_type, resource_name, component_config.metadata?.instance_name);
   return resourceRefToNodeRef(service_ref, component_config.metadata?.instance_id, max_length);
 };

@@ -3,7 +3,6 @@
 require('reflect-metadata')
 
 const oclif = require('@oclif/core')
-
 const path = require('path')
 const project = path.join(__dirname, '..', 'tsconfig.json')
 

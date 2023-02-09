@@ -4,5 +4,6 @@
   "api_host": "http://mock.api.localhost",
   "app_host": "http://mock.app.localhost",
   "oauth_host": "http://mock.auth0.localhost",
-  "oauth_client_id": "mock_client_id"
+  "oauth_client_id": "mock_client_id",
+  "analytics_id": "a444431a-c473-4a50-a8e4-6c08552fe20e"
 }

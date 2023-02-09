@@ -1,8 +1,10 @@
+import { loadYaml } from '@kubernetes/client-node';
 import { CliUx } from '@oclif/core';
 import execa from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
 import untildify from 'untildify';
+import { ArchitectError } from '../..';
 import AppConfig from '../../app-config/config';
 import { CreateClusterInput } from '../../architect/cluster/cluster.utils';
 
@@ -10,6 +12,16 @@ const SERVICE_ACCOUNT_NAME = 'architect-agent';
 const AGENT_NAMESPACE = 'architect-agent';
 
 export class AgentClusterUtils {
+  public static async getHostForCluster(context: string, kubeconfig: string): Promise<string> {
+    try {
+      const parsed_yaml = loadYaml((await fs.readFile(untildify(kubeconfig))).toString()) as any;
+      const found_context = parsed_yaml.clusters.find((ctx: any) => ctx.name === context);
+      return found_context.cluster.server;
+    } catch {
+      throw new ArchitectError(`Unable to read cluster server for context ${context} at ${untildify(kubeconfig)}`);
+    }
+  }
+
   private static getLocalServerAgentIP(): string {
     return 'host.docker.internal';
   }
@@ -110,7 +122,7 @@ type: kubernetes.io/service-account-token
 
   public static async configureAgentCluster(
     flags: any,
-    description: string,
+    context: string,
   ): Promise<CreateClusterInput> {
     const kubeconfig_path = untildify(flags.kubeconfig);
     await this.createNamespace(kubeconfig_path);
@@ -124,8 +136,12 @@ type: kubernetes.io/service-account-token
     CliUx.ux.action.stop();
 
     return {
-      description,
+      description: context,
       type: 'AGENT',
+      credentials: {
+        kind: 'AGENT',
+        host: await this.getHostForCluster(context, flags.kubeconfig),
+      },
     };
   }
 

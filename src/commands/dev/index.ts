@@ -521,6 +521,14 @@ export default class Dev extends BaseCommand {
     const [project_name, compose_file] = await this.buildImage(compose, default_project_name);
     const socket = socketPath(path.join(this.app.config.getConfigDir(), LocalPaths.LOCAL_DEPLOY_PATH, project_name));
 
+    this.app.posthog.capture({
+      event: 'cli.command-update',
+      properties: {
+        command_id: (this.constructor as any).id,
+        status: 'build complete',
+      },
+    });
+
     this.log('Building containers...', chalk.green('done'));
     this.log('');
 
@@ -613,8 +621,7 @@ export default class Dev extends BaseCommand {
       this.downloadFileAndCache('https://storage.googleapis.com/architect-ci-ssl/fullchain.pem', path.join(this.app.config.getConfigDir(), 'fullchain.pem')),
       this.downloadFileAndCache('https://storage.googleapis.com/architect-ci-ssl/privkey.pem', path.join(this.app.config.getConfigDir(), 'privkey.pem')),
     ]).catch((err) => {
-      this.warn(chalk.yellow('We are unable to download the neccessary ssl certificates. Please try again or use --ssl=false to temporarily disable ssl'));
-      this.error(new ArchitectError(err.message));
+      this.error(new ArchitectError('We are unable to download the neccessary ssl certificates. Please try again or use --ssl=false to temporarily disable ssl.\n' + err.message));
     });
   }
 
@@ -768,6 +775,14 @@ $ architect dev -e new_env_name_here .`));
     if (args.configs_or_components && args.configs_or_components.length > 1 && flags.interface?.length) {
       throw new Error('Interface flag not supported if deploying multiple components in the same command.');
     }
+
+    this.app.posthog.capture({
+      event: 'cli.command-update',
+      properties: {
+        command_id: (this.constructor as any).id,
+        status: 'build complete',
+      },
+    });
 
     await this.runLocal();
   }

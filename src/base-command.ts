@@ -103,8 +103,17 @@ export default abstract class BaseCommand extends Command {
     return super.parse(options, [...args, ...flags]);
   }
 
-  async finally(err: Error | undefined): Promise<any> {
+  async finally(err?: Error): Promise<any> {
     await this.sentry.endSentryTransaction(err);
+
+    this.app.posthog.capture({
+      event: 'cli.command.complete',
+      properties: {
+        command_id: (this.constructor as any).id,
+        error: err?.message,
+      },
+    });
+    await this.app.posthog.shutdownAsync();
 
     // Oclif supers go as the return
     return super.finally(err);
