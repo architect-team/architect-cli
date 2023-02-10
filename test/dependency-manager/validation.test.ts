@@ -428,7 +428,7 @@ services:
       expect(errors.map(e => e.path)).members([
         'name',
       ]);
-      expect(errors[0].message).includes('must contain only lower alphanumeric and single hyphens or underscores in the middle;');
+      expect(errors[0].message).includes('must contain only lower alphanumeric and single hyphens in the middle;');
       expect(errors[0].component).eq('test_component');
       expect(errors[0].start?.row).eq(2);
       expect(errors[0].start?.column).eq(12);
