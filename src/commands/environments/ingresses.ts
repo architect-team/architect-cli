@@ -32,7 +32,7 @@ export default class GetEnvironmentIngressesCmd extends BaseCommand {
     },
   ];
 
-  async run() {
+  async run(): Promise<void> {
     const { args, flags } = await this.parse(GetEnvironmentIngressesCmd);
 
     if (!flags.account) {
