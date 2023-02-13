@@ -51,14 +51,14 @@ describe('environment:destroy', () => {
   failing_mock_test_strict
     .command(['environment:destroy', '--auto-approve', '--strict=true', '-a', mock_account.name, failing_mock_env.name])
     .catch(e => {
-      expect(e.message).to.contain('Request failed with status code 404');
+      expect(e.message).to.contain(`Environment '${failing_mock_env.name}' not found`);
     })
     .it('should exit with error status when --strict is set explicitly to true');
 
   failing_mock_test_strict
     .command(['environment:destroy', '--auto-approve', '--strict', '-a', mock_account.name, failing_mock_env.name])
     .catch(e => {
-      expect(e.message).to.contain('Request failed with status code 404');
+      expect(e.message).to.contain(`Environment '${failing_mock_env.name}' not found`);
     })
     .it('should exit with error status when --strict is passed without explicit mapping');
 
