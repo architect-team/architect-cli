@@ -14,6 +14,7 @@ const git = [
       'architect-yml.md',
       'src/dependency-manager/schema/architect.schema.json',
     ],
+    'message': 'chore(release): ${nextRelease.version}\n\n${nextRelease.notes}',
   },
 ];
 const exec = [
