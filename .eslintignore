@@ -3,3 +3,4 @@ test/
 examples/
 lib/
 bin/
+lint-staged.config.js

@@ -21,7 +21,7 @@ export const transformServiceSpec = (key: string, spec: ServiceSpec, metadata: C
     enabled: spec.enabled || true,
     debug: spec.debug ? transformServiceSpec(key, spec.debug, metadata) : undefined,
     interfaces: transformDictionary(transformInterfaceSpec, spec.interfaces),
-    liveness_probe: transformLivenessProbeSpec(spec.liveness_probe, resource_config.environment),
+    liveness_probe: transformLivenessProbeSpec(spec.liveness_probe),
     volumes: transformDictionary(transformVolumeSpec, spec.volumes),
     replicas: spec.replicas || 1,
     scaling: spec.scaling,

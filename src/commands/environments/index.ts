@@ -5,7 +5,7 @@ import Table from '../../base-table';
 import localizedTimestamp from '../../common/utils/localized-timestamp';
 
 export default class Environments extends BaseCommand {
-  static aliases = ['environments', 'envs', 'env', 'environments:search', 'envs:search', 'env:search'];
+  static aliases = ['environments', 'envs', 'env', 'environments:search', 'envs:search', 'env:search', 'environments:list', 'envs:list', 'env:list'];
   static description = 'Search environments you have access to';
   static examples = [
     'architect environments',

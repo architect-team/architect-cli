@@ -6,7 +6,7 @@ import Table from '../../base-table';
 import localizedTimestamp from '../../common/utils/localized-timestamp';
 
 export default class Components extends BaseCommand {
-  static aliases = ['components', 'components:search', 'component:search', 'component:search'];
+  static aliases = ['components', 'components:search', 'components:list', 'component:search', 'component:search', 'component:list'];
   static description = 'Search components you have access to';
   static examples = [
     'architect components',

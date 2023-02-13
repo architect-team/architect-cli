@@ -10,12 +10,14 @@ import LoginRequiredError from '../common/errors/login-required';
 import LocalPaths from '../paths';
 import AuthClient from './auth';
 import AppConfig from './config';
+import { PostHogCli } from './posthog';
 
 export default class AppService {
   config: AppConfig;
   auth: AuthClient;
   linkedComponents: Dictionary<string> = {};
   _api: AxiosInstance;
+  posthog: PostHogCli;
   version: string;
   errorContext?: Error;
 
@@ -32,6 +34,10 @@ export default class AppService {
         const payload = fs.readJSONSync(config_file);
         this.config = new AppConfig(config_dir, payload);
       }
+    }
+    if (!this.config.analytics_id) {
+      // Locks in the default analytics UUID so we don't generate a new one
+      this.config.save();
     }
 
     this._api = axios.create({
@@ -57,6 +63,12 @@ export default class AppService {
     this.auth = new AuthClient(this.config, this.checkLogin.bind(this));
 
     this.linkedComponents = this.loadLinkedComponents(config_dir);
+
+    this.posthog = new PostHogCli(this.config.posthog_api_key, {
+      host: this.config.posthog_api_host,
+      enable: !this.config.analytics_disabled,
+      analyticsId: this.config.analytics_id,
+    });
   }
 
   private loadLinkedComponents(config_dir: string) {
@@ -110,12 +122,22 @@ export default class AppService {
     this.saveLinkedComponents();
   }
 
-  saveConfig(): void {
-    this.config.save();
-  }
-
   async checkLogin(): Promise<User> {
-    const { data } = await this.api.get('/users/me');
+    const { data } = await this.api.get<User>('/users/me');
+
+    this.posthog.identify({
+      distinctId: data.id,
+      properties: {
+        email: data.email,
+      },
+    });
+
+    // https://posthog.com/docs/integrate/server/node#alias
+    this.posthog.alias({
+      distinctId: data.id,
+      alias: this.config.analytics_id,
+    });
+
     return data;
   }
 

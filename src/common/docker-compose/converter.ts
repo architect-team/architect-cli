@@ -17,7 +17,7 @@ interface ComposeConversion {
 }
 
 export class ComposeConverter {
-  private static compose_property_converters: { compose_property: string, architect_property: string, func: (compose_property: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceSpec>) => ComposeConversion }[] = [
+  private static compose_property_converters: { compose_property: string, architect_property: string, func: (compose_property: any, docker_compose: DockerComposeTemplate, architect_service: ServiceSpec) => ComposeConversion }[] = [
     { compose_property: 'environment', architect_property: 'environment', func: this.convertEnvironment },
     {
       compose_property: 'command', architect_property: 'command', func: (command: any) => {
@@ -56,7 +56,7 @@ export class ComposeConverter {
     architect_component.services = {};
 
     for (const [service_name, service_data] of Object.entries(docker_compose.services || {})) {
-      const architect_service: Partial<ServiceSpec> = {};
+      const architect_service = new ServiceSpec();
       for (const [property_name, property_data] of Object.entries(service_data || {})) {
         const converters = this.compose_property_converters.filter(c => c.compose_property === property_name);
         if (converters.length === 0) {
@@ -247,7 +247,7 @@ export class ComposeConverter {
     return compose_conversion;
   }
 
-  private static convertDependsOn(depends_on_or_links: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceSpec>): ComposeConversion {
+  private static convertDependsOn(depends_on_or_links: any, docker_compose: DockerComposeTemplate, architect_service: ServiceSpec): ComposeConversion {
     if (depends_on_or_links.length === 0) {
       return {};
     }

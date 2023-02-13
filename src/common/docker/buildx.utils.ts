@@ -2,6 +2,7 @@ import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import os from 'os';
 import config from '../../app-config/config';
+import AppService from '../../app-config/service';
 import { docker } from './cmd';
 import { RequiresDocker } from './helper';
 
@@ -89,5 +90,13 @@ export default class DockerBuildXUtils {
       });
     }
     return cmd;
+  }
+
+  @RequiresDocker({ buildx: true })
+  public static async build(app: AppService, compose_file: string, build_args: string[]): Promise<void> {
+    const builder = await this.getBuilder(app.config);
+    await this.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], builder, {
+      stdio: 'inherit',
+    });
   }
 }

@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
 import path from 'path';
-import { ComponentSlugUtils, IngressEdge, resourceRefToNodeRef, ServiceNode, TaskNode, ValidationErrors } from '../../src';
+import { IngressEdge, resourceRefToNodeRef, ServiceNode, TaskNode, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
@@ -785,9 +785,9 @@ describe('components spec v1', function () {
       await manager.getGraph([config], { '*': { app_replicas: '<redacted>' } }, { interpolate: true, validate: false });
     });
 
-    it('test account scoping', async () => {
+    it('test backward compatibilty when still including account name with dependencies', async () => {
       // This test still uses account name in components/dependencies to verify backwards compatibility
-      // and ensure the various combos do not throw any validation errors
+      // in parsing and confirming account name is ignored when building slug refs
       const combinations = [
         {
           cloud: 'architect/cloud',
@@ -812,32 +812,6 @@ describe('components spec v1', function () {
           api: 'cloud-api',
           dependency: 'cloud-api',
           account: 'architect',
-        },
-
-        // Other
-        {
-          cloud: 'architect/cloud',
-          api: 'architect/cloud-api',
-          dependency: 'architect/cloud-api',
-          account: 'other',
-        },
-        {
-          cloud: 'architect/cloud',
-          api: 'cloud-api',
-          dependency: 'architect/cloud-api',
-          account: 'other',
-        },
-        {
-          cloud: 'architect/cloud',
-          api: 'architect/cloud-api',
-          dependency: 'cloud-api',
-          account: 'other',
-        },
-        {
-          cloud: 'architect/cloud',
-          api: 'cloud-api',
-          dependency: 'cloud-api',
-          account: 'other',
         },
       ];
 
@@ -876,21 +850,17 @@ describe('components spec v1', function () {
         });
 
         const manager = new LocalDependencyManager(axios.create(), 'architect', {
-          [combination.cloud]: '/stack/cloud',
-          [combination.api]: '/stack/api',
-          [combination.dependency]: '/stack/api',
+          'cloud': '/stack/cloud',
+          'cloud-api': '/stack/api',
         });
         manager.account = combination.account;
         const configs = await manager.loadComponentSpecs(`${combination.cloud}:latest`);
 
-        const { component_account_name: cloud_account_name } = ComponentSlugUtils.parse(combination.cloud);
-        const { component_account_name: api_account_name } = ComponentSlugUtils.parse(combination.dependency);
-
         const graph = await manager.getGraph(configs, { [combination.dependency]: { api_replicas: 2 } });
-        const api_node_ref = resourceRefToNodeRef(`${(combination.account && api_account_name === combination.account) || !api_account_name ? '' : `${api_account_name}/`}cloud-api.services.api`);
+        const api_node_ref = resourceRefToNodeRef('cloud-api.services.api');
         expect(graph.nodes.map((node) => node.ref)).to.have.members([
           'gateway',
-          resourceRefToNodeRef(`${combination.account && cloud_account_name === combination.account ? '' : `${cloud_account_name}/`}cloud.services.app`),
+          resourceRefToNodeRef('cloud.services.app'),
           api_node_ref,
         ]);
 

@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 import { Dictionary } from '../';
 import LocalPaths from '../paths';
 
@@ -24,6 +25,10 @@ export default class AppConfig {
   environment: string;
   external_https_address: string;
   external_http_address: string;
+  posthog_api_key: string;
+  posthog_api_host: string;
+  analytics_disabled: boolean;
+  analytics_id: string;
 
   constructor(config_dir: string, partial?: Partial<AppConfig>) {
     this.config_dir = config_dir;
@@ -44,6 +49,10 @@ export default class AppConfig {
     this.environment = process.env.TEST === '1' ? ENVIRONMENT.TEST : ENVIRONMENT.PRODUCTION;
     this.external_https_address = 'localhost.architect.sh';
     this.external_http_address = 'arc.localhost';
+    this.posthog_api_key = 'phc_Wb11qMDWr6OX6Y7Y9jVsqDYSVagSLYOA8vluHkML9JV';
+    this.posthog_api_host = 'https://ph.architect.io/';
+    this.analytics_disabled = process.env.TEST === '1' || process.env.NODE_ENV === 'development';
+    this.analytics_id = uuidv4();
 
     // Override defaults with input values
     Object.assign(this, partial);
@@ -66,12 +75,16 @@ export default class AppConfig {
     return this.config_dir;
   }
 
+  set<Key extends keyof this>(key: Key, value: this[Key]): void {
+    this[key] = value;
+  }
+
   save(): void {
     const config_file = path.join(this.config_dir, LocalPaths.CLI_CONFIG_FILENAME);
     fs.writeJSONSync(config_file, this, { spaces: 2 });
   }
 
-  toJSON(): Dictionary<string> {
+  toJSON(): Dictionary<string | boolean> {
     return {
       log_level: this.log_level,
       registry_host: this.registry_host,
@@ -84,6 +97,8 @@ export default class AppConfig {
       environment: this.environment,
       external_https_address: this.external_https_address,
       external_http_address: this.external_http_address,
+      analytics_id: this.analytics_id,
+      analytics_disabled: this.analytics_disabled,
     };
   }
 }

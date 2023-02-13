@@ -1,0 +1,22 @@
+name: hello-world
+
+description: Test registering a component using a dockerfile that does not exist
+
+secrets:
+  world_text:
+    default: World
+
+services:
+  api:
+    build:
+      context: ../../integration/hello-world
+      dockerfile: nonexistent-dockerfile
+    interfaces:
+      hello:
+        port: 3000
+        ingress:
+          subdomain: hello
+    liveness_probe:
+      command: curl --fail localhost:3000
+    environment:
+      WORLD_TEXT: ${{ secrets.world_text }}

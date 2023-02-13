@@ -33,7 +33,7 @@ const component_version = {
 
 const service_to_scale = 'app';
 const replicas = 5;
-const resource_slug = ResourceSlugUtils.build(undefined, component_version.component.name, 'services', service_to_scale);
+const resource_slug = ResourceSlugUtils.build(component_version.component.name, 'services', service_to_scale);
 const dto = { replicas, resource_slug, };
 const clear_dto = { resource_slug, clear_scaling: true };
 
@@ -90,7 +90,7 @@ describe('Scale', function () {
         .reply(200, component_version))
       .command(['scale', 'unknown', '-e', environment.name, '-a', account.name, '--component', `${component_version.component.name}`, '--replicas', replicas.toString()])
       .catch(err => {
-        const component_version_slug = ComponentVersionSlugUtils.build(account.name, component_version.component.name, 'latest');
+        const component_version_slug = ComponentVersionSlugUtils.build(component_version.component.name, 'latest');
         expect(err.message).to.equal(`Component version ${component_version_slug} does not have a service named unknown.`);
       })
       .it(`Fails to set scaling for a service that isn't part of the component`);
