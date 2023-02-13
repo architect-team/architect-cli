@@ -11,6 +11,10 @@ secrets:
   world_text:
     default: World
 
+databases:
+  postgres:
+    type: postgres:14
+
 services:
   api:
     build:
@@ -19,6 +23,7 @@ services:
       main: 8080
     environment:
       WORLD_TEXT: ${{ secrets.world_text }}
+      DATABASE: ${{ databases.postgres.connection_string }}
 
 interfaces:
   hello:
