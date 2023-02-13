@@ -1,5 +1,5 @@
 import AccountUtils from '../../architect/account/account.utils';
-import Environment from '../../architect/environment/environment.entity';
+import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import BaseCommand from '../../base-command';
 
 type CertificateResponse = {
@@ -25,7 +25,7 @@ export default class GetEnvironmentIngressesCmd extends BaseCommand {
   static args = [
     {
       sensitive: false,
-      required: true,
+      required: false,
       name: 'environment',
       description: 'Name to give the environment',
       parse: async (value: string): Promise<string> => value.toLowerCase(),
@@ -35,30 +35,24 @@ export default class GetEnvironmentIngressesCmd extends BaseCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(GetEnvironmentIngressesCmd);
 
-    if (!flags.account) {
-      this.error(`Missing 1 required flag: --account`);
-    }
+    const account = await AccountUtils.getAccount(this.app, flags.account);
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, { environment_name: args.environment });
 
-    try {
-      const { data: environment } = await this.app.api.get<Environment>(`/accounts/${flags.account}/environments/${args.environment}`);
-      const { data: certificates } = await this.app.api.get<CertificateResponse[]>(`/environments/${environment.id}/certificates`);
+    const { data: certificates } = await this.app.api.get<CertificateResponse[]>(`/environments/${environment.id}/certificates`);
 
-      if (certificates.length > 0) {
-        const dns_records: string[] = [];
-        for (const cert of certificates) {
-          for (const dns_name of cert.spec.dnsNames
-            .filter(dns_name => !dns_name.startsWith('env--'))) {
-              dns_records.push(dns_name);
-            }
-        }
-        this.log(
-          dns_records
-            .map(record => `https://${record}`)
-            .join('\r\n'),
-        );
+    if (certificates.length > 0) {
+      const dns_records: string[] = [];
+      for (const cert of certificates) {
+        for (const dns_name of cert.spec.dnsNames
+          .filter(dns_name => !dns_name.startsWith('env--'))) {
+            dns_records.push(dns_name);
+          }
       }
-    } catch (err: any) {
-      this.error(`Environment not found`);
+      this.log(
+        dns_records
+          .map(record => `https://${record}`)
+          .join('\r\n'),
+      );
     }
   }
 }
