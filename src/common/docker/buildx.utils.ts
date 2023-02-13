@@ -3,7 +3,6 @@ import fs from 'fs-extra';
 import os from 'os';
 import config from '../../app-config/config';
 import AppService from '../../app-config/service';
-import { ArchitectError } from '../../dependency-manager/utils/errors';
 import { docker } from './cmd';
 import { RequiresDocker } from './helper';
 

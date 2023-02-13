@@ -20,11 +20,11 @@ export class Slugs {
   public static INSTANCE_DELIMITER = '@';
   public static SLUG_CHAR_LIMIT = 32;
 
-  public static ArchitectSlugDescription = `must contain only lower alphanumeric and single hyphens or underscores in the middle; max length ${Slugs.SLUG_CHAR_LIMIT}`;
+  public static ArchitectSlugDescription = `must contain only lower alphanumeric and single hyphens in the middle; max length ${Slugs.SLUG_CHAR_LIMIT}`;
   public static ArchitectSlugRegexBase = REGEX_LOOKBEHIND ? `(?!-)(?!.{0,${Slugs.SLUG_CHAR_LIMIT}}--)[a-z0-9-]{1,${Slugs.SLUG_CHAR_LIMIT}}(?<!-)` : `[a-z0-9]+(-[a-z0-9]+)*`;
   public static ArchitectSlugValidator = new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`);
 
-  public static ArchitectSlugDescriptionCaseInsensitive = `must contain only alphanumeric and single hyphens or underscores in the middle; max length ${Slugs.SLUG_CHAR_LIMIT}`;
+  public static ArchitectSlugDescriptionCaseInsensitive = `must contain only alphanumeric and single hyphens in the middle; max length ${Slugs.SLUG_CHAR_LIMIT}`;
   public static ArchitectSlugRegexBaseCaseInsensitive = REGEX_LOOKBEHIND ? `(?!-)(?!.{0,${Slugs.SLUG_CHAR_LIMIT}}--)[A-Za-z0-9-]{1,${Slugs.SLUG_CHAR_LIMIT}}(?<!-)` : `[A-Za-z0-9]+(-[A-Za-z0-9]+)*`;
   public static ArchitectSlugValidatorCaseInsensitive = new RegExp(`^${Slugs.ArchitectSlugRegexBaseCaseInsensitive}$`);
 

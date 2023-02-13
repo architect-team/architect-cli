@@ -204,7 +204,7 @@ export default class ComponentRegister extends BaseCommand {
     }
 
     const getImage = (ref: string) => {
-      const image = `${this.app.config.registry_host}/${selected_account.name}/${ref}:${tag}`;
+      const image = `${this.app.config.registry_host}/${selected_account.name.toLowerCase()}/${ref}:${tag}`;
       return image;
     };
 
