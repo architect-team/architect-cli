@@ -1,0 +1,38 @@
+name: Test local superset deployment
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+
+jobs:
+  test_local:
+    name: Superset local deployment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+      - run: sudo apt-get update && sudo apt-get install curl
+      - run: npm ci
+      - run: ./bin/dev --version
+      - run: ./bin/dev config:set registry_host registry.dev.architect.io
+      - run: ./bin/dev config:set api_host https://api.dev.architect.io
+      - run: ./bin/dev config:set log_level debug
+      - run: ./bin/dev login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
+      - run: docker volume create volume-key
+      - run: ./bin/dev link test/integration/hello-world/architect.yml
+      - run: ./bin/dev link test/mocks/superset/deprecated.architect.yml
+      - run: ./bin/dev dev -e superset test/mocks/superset/architect.yml --browser=false -s param_unset=test -s world_text=Architect > ./tmp.txt 2>&1 &
+      - run: sh scripts/server_online.sh
+      - name: Check that the app is accessible locally
+        run: curl --fail -S -I https://hello.localhost.architect.sh
+      - name: Check that the app returns the expected response
+        run: curl --fail -S https://hello.localhost.architect.sh | grep "Hello Architect!"
+      - name: Run a local task
+        run: ./bin/dev task superset curler-build --local -e superset
