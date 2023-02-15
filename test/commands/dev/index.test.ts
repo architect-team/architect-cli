@@ -1380,4 +1380,21 @@ describe('local dev environment', function () {
       expect(e.message).contains(`${path.resolve('./test/integration/hello-world/nonexistent-dockerfile')} does not exist. Please verify the correct context and/or dockerfile were given.`);
     })
     .it('Dev component fail with a dockerfile that does not exist');
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return getHelloComponentConfig();
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .nock('https://storage.googleapis.com', api => api.get('/architect-ci-ssl/fullchain.pem').reply(500))
+    .nock('https://storage.googleapis.com', api => api.get('/architect-ci-ssl/privkey.pem').reply(500))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', getMockComponentFilePath('hello-world')])
+    .catch(e => {
+      expect(e.message).contains(`--ssl=false`);
+    })
+    .it('Show helpful error msg if dev fails without internet connection.');
 });

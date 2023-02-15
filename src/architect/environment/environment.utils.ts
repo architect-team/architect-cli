@@ -1,8 +1,8 @@
 import { Flags } from '@oclif/core';
-import { AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { Dictionary, ResourceSlugUtils, sortOnKeys } from '../../';
+import { ArchitectError, Dictionary, ResourceSlugUtils, sortOnKeys } from '../../';
 import Account from '../account/account.entity';
 import Environment from './environment.entity';
 
@@ -38,13 +38,20 @@ export class EnvironmentUtils {
 
     let environment: Environment;
     if (environment_name) {
-      const response = await api.get(`/accounts/${account.id}/environments/${environment_name}`, {
-        validateStatus: function (status): boolean {
-          const _environment_not_found = status === 404;
-          return status === 200 || (_environment_not_found && get_environment_options?.strict === false);
-        },
-      });
-      environment = await response?.data;
+      try {
+        const response = await api.get(`/accounts/${account.id}/environments/${environment_name}`, {
+          validateStatus: function (status): boolean {
+            const _environment_not_found = status === 404;
+            return status === 200 || (_environment_not_found && get_environment_options?.strict === false);
+          },
+        });
+        environment = await response?.data;
+      } catch (err: any) {
+        if (axios.isAxiosError(err) && err.response?.status === 404) {
+            throw new ArchitectError(`Environment '${environment_name}' not found`);
+          }
+        throw err;
+      }
     } else {
       // eslint-disable-next-line unicorn/prefer-module
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));

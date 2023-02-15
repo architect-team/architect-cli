@@ -18,7 +18,7 @@ The top level object of the `architect.yml`; defines a deployable Architect Comp
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `name`* | string | Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32 | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3A(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%5C%2F)%3F(%3F%3Ccomponent_name%3E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-))(%3F%3A%40(%3F%3Cinstance_name%3E%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D))%3F%24">Regex</a> |
+ | `name`* | string | Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens in the middle; max length 32 | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3A(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%5C%2F)%3F(%3F%3Ccomponent_name%3E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-))(%3F%3A%40(%3F%3Cinstance_name%3E%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D))%3F%24">Regex</a> |
  | `description` | string | A human-readable description of the component. This will be rendered when potential consumers view the component so that they know what it should be used for. |  |
  | `keywords` | Array&lt;string&gt; | Additional search terms to be used when the component is indexed so that others can find it more easily. |  |
  | `author` | string | The name or handle of the author of the component as a developer contact. |  |
