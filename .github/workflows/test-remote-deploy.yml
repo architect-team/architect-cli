@@ -2,6 +2,7 @@ name: Test remote superset deployment
 
 on:
   workflow_dispatch:
+
   pull_request:
     types:
       - opened
