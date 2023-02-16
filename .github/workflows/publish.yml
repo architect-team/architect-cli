@@ -85,24 +85,22 @@ jobs:
           GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) npm run semantic-release
   publish_docs:
     name: Publish Docs
-    # TODO:TJ uncomment before release
-    # if: github.ref_name == 'main'
-    # needs: [publish_cli]
+    if: github.ref_name == 'main'
+    needs: [publish_cli]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           clean: true
           path: architect-cli
-          ref: copy-to-docs # TODO:TJ change to main before release
+          ref: main
       - uses: actions/checkout@v3
         with:
           repository: architect-team/documentation
           token: ${{ secrets.DOCS_GITHUB_TOKEN }}
           clean: true
           path: documentation
-          ref: test-cli-update # TODO:TJ change to main before release
-      - run: ls
+          ref: main
       - run: cp ./architect-cli/README.md ./documentation/reference/cli.mdx
       - run: cp ./architect-cli/architect-yml.md ./documentation/reference/architect-yml.mdx
       - run: cp ./architect-cli/CHANGELOG.md ./documentation/reference/changelog.mdx
