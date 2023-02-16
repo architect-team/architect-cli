@@ -92,7 +92,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           clean: true
-          path: cli
+          path: architect-cli
           ref: main
       - uses: actions/checkout@v3
         with:
@@ -100,7 +100,14 @@ jobs:
           token: ${{ secrets.DOCS_GITHUB_TOKEN }}
           clean: true
           path: documentation
-          ref: main
+          ref: test-cli-update
       - run: ls
-
+      - run: cp ./architect-cli/README.md ./documentation/reference/cli.mdx
+      - name: Commit
+        working-directory: ./documentation
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git commit -am "Update auto-generated files from CLI"
+          git push
 
