@@ -21,20 +21,20 @@
 
 ---
 
-Architect is the world's first [DevOps-as-a-Service](//architect.io/product) toolset designed to help democratize environment provisioning for engineers. With Architect, anyone can deploy any service, anywhere, for any reason with the push of a button.
+Architect is the world's first [DevOps-as-a-Service](https://architect.io/product) toolset designed to help democratize environment provisioning for engineers. With Architect, anyone can deploy any service, anywhere, for any reason with the push of a button.
 
 Our unique approach to continuous delivery is powered by an embedded dependency resolver. By simply asserting your microservice dependenies, Architect is able to build a graph of your application and deploy the entire stack to your favorite cloud provider.
 
-Architect's CLI, which provides the full developer experience needed to create [components](//docs.architect.io) and operate local [environments](//docs.architect.io/deployments/local-environments), is fully open-source. The CLI can deploy components locally using docker-compose, enrich the deployments with components found in Architect's Cloud registry, and allows developers to publish their own components to the registry both publicly and privately for free.
+Architect's CLI, which provides the full developer experience needed to create [components](https://docs.architect.io) and operate local [environments](https://docs.architect.io/deployments/local-environments), is fully open-source. The CLI can deploy components locally using docker-compose, enrich the deployments with components found in Architect's Cloud registry, and allows developers to publish their own components to the registry both publicly and privately for free.
 
 ## Requirements
-* [**Docker**](//docs.docker.com/get-docker/) must be installed
-* [**Node.js** `v12`](//nodejs.org/en/download/) or higher must be installed
+* [**Docker**](https://docs.docker.com/get-docker/) must be installed
+* [**Node.js** `v14`](https://nodejs.org/en/download/) or higher must be installed
 
 ## Usage
 
 <!-- usage -->
-```sh-session
+```bash
 $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
@@ -50,34 +50,37 @@ USAGE
 ## Commands
 
 <!-- commands -->
-* [`architect autocomplete [SHELL]`](#architect-autocomplete-shell)
-* [`architect components:versions [COMPONENT_NAME]`](#architect-componentsversions-component_name)
-* [`architect config:get OPTION`](#architect-configget-option)
-* [`architect config:set OPTION VALUE`](#architect-configset-option-value)
-* [`architect config:view`](#architect-configview)
-* [`architect deploy [CONFIGS_OR_COMPONENTS]`](#architect-deploy-configs_or_components)
-* [`architect destroy`](#architect-destroy)
-* [`architect dev [CONFIGS_OR_COMPONENTS]`](#architect-dev-configs_or_components)
-* [`architect dev:list`](#architect-devlist)
-* [`architect dev:stop [NAME]`](#architect-devstop-name)
-* [`architect doctor`](#architect-doctor)
-* [`architect environments:create [ENVIRONMENT]`](#architect-environmentscreate-environment)
-* [`architect environments:destroy [ENVIRONMENT]`](#architect-environmentsdestroy-environment)
-* [`architect environments:ingresses [ENVIRONMENT]`](#architect-environmentsingresses-environment)
-* [`architect exec [RESOURCE] [FLAGS] -- [COMMAND]`](#architect-exec-resource-flags----command)
-* [`architect help [COMMAND]`](#architect-help-command)
-* [`architect init [NAME]`](#architect-init-name)
-* [`architect link [COMPONENTPATH]`](#architect-link-componentpath)
-* [`architect link:list`](#architect-linklist)
-* [`architect login`](#architect-login)
-* [`architect logout`](#architect-logout)
-* [`architect logs [RESOURCE]`](#architect-logs-resource)
-* [`architect register [COMPONENT]`](#architect-register-component)
-* [`architect scale [SERVICE]`](#architect-scale-service)
-* [`architect secrets:download SECRETS_FILE`](#architect-secretsdownload-secrets_file)
-* [`architect secrets:upload SECRETS_FILE`](#architect-secretsupload-secrets_file)
-* [`architect task COMPONENT TASK`](#architect-task-component-task)
-* [`architect unlink [COMPONENTPATHORNAME]`](#architect-unlink-componentpathorname)
+- [Requirements](#requirements)
+- [Usage](#usage)
+- [Commands](#commands)
+- [`architect autocomplete [SHELL]`](#architect-autocomplete-shell)
+- [`architect components:versions [COMPONENT_NAME]`](#architect-componentsversions-component_name)
+- [`architect config:get OPTION`](#architect-configget-option)
+- [`architect config:set OPTION VALUE`](#architect-configset-option-value)
+- [`architect config:view`](#architect-configview)
+- [`architect deploy [CONFIGS_OR_COMPONENTS]`](#architect-deploy-configs_or_components)
+- [`architect destroy`](#architect-destroy)
+- [`architect dev [CONFIGS_OR_COMPONENTS]`](#architect-dev-configs_or_components)
+- [`architect dev:list`](#architect-devlist)
+- [`architect dev:stop [NAME]`](#architect-devstop-name)
+- [`architect doctor`](#architect-doctor)
+- [`architect environments:create [ENVIRONMENT]`](#architect-environmentscreate-environment)
+- [`architect environments:destroy [ENVIRONMENT]`](#architect-environmentsdestroy-environment)
+- [`architect environments:ingresses [ENVIRONMENT]`](#architect-environmentsingresses-environment)
+- [`architect exec [RESOURCE] [FLAGS] -- [COMMAND]`](#architect-exec-resource-flags----command)
+- [`architect help [COMMAND]`](#architect-help-command)
+- [`architect init [NAME]`](#architect-init-name)
+- [`architect link [COMPONENTPATH]`](#architect-link-componentpath)
+- [`architect link:list`](#architect-linklist)
+- [`architect login`](#architect-login)
+- [`architect logout`](#architect-logout)
+- [`architect logs [RESOURCE]`](#architect-logs-resource)
+- [`architect register [COMPONENT]`](#architect-register-component)
+- [`architect scale [SERVICE]`](#architect-scale-service)
+- [`architect secrets:download SECRETS_FILE`](#architect-secretsdownload-secrets_file)
+- [`architect secrets:upload SECRETS_FILE`](#architect-secretsupload-secrets_file)
+- [`architect task COMPONENT TASK`](#architect-task-component-task)
+- [`architect unlink [COMPONENTPATHORNAME]`](#architect-unlink-componentpathorname)
 
 ## `architect autocomplete [SHELL]`
 
