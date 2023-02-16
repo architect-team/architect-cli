@@ -111,6 +111,7 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git commit -am "Update auto-generated files from CLI"
+          git add -A
+          git commit -m "Update auto-generated files from CLI"
           git push
 
