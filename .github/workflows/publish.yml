@@ -94,7 +94,7 @@ jobs:
         with:
           clean: true
           path: architect-cli
-          ref: main
+          ref: copy-to-docs # TODO:TJ change to main before release
       - uses: actions/checkout@v3
         with:
           repository: architect-team/documentation
