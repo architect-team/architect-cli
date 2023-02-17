@@ -8,8 +8,10 @@ import AppService from '../../../src/app-config/service';
 import AccountUtils from '../../../src/architect/account/account.utils';
 import SecretUtils from '../../../src/architect/secret/secret.utils';
 import Dev, { UpProcessManager } from '../../../src/commands/dev';
+import { DockerUtils } from '../../../src/common/docker';
 import { DockerComposeUtils } from '../../../src/common/docker-compose';
 import DockerComposeTemplate from '../../../src/common/docker-compose/template';
+import { DockerHelper } from '../../../src/common/docker/helper';
 import PluginManager from '../../../src/common/plugins/plugin-manager';
 import DeployUtils from '../../../src/common/utils/deploy.utils';
 import * as ComponentBuilder from '../../../src/dependency-manager/spec/utils/component-builder';
@@ -646,7 +648,7 @@ describe('local dev environment', function () {
         "external_links": [
           "gateway:hello.arc.localhost"
         ],
-        "image": "hello-world--api:latest",
+        "image": "hello-world--api",
         "healthcheck": {
           "test": [
             "CMD", "curl", "--fail", "localhost:3000"
@@ -704,7 +706,7 @@ describe('local dev environment', function () {
           "gateway:buildpack-api.arc.localhost",
           "gateway:dockerfile-api.arc.localhost"
         ],
-        "image": "hello-world--buildpack-api:latest",
+        "image": "hello-world--buildpack-api",
         "healthcheck": {
           "test": [
             "CMD", "curl", "--fail", "localhost:3000"
@@ -717,7 +719,11 @@ describe('local dev environment', function () {
       },
       "hello-world--dockerfile-api": {
         "build": {
-          "context": path.resolve("./test/integration/hello-world")
+          "context": path.resolve("./test/integration/hello-world"),
+          "tags": [
+            "hello-world--dockerfile-api",
+            "hello-world--dockerfile-api2"
+          ]
         },
         "ports": [
           "50001:4000",
@@ -747,6 +753,28 @@ describe('local dev environment', function () {
           "retries": 3,
           "start_period": "0s"
         },
+      },
+      "hello-world--dockerfile-api2": {
+        "environment": {},
+        "external_links": [
+          "gateway:buildpack-api.arc.localhost",
+          "gateway:dockerfile-api.arc.localhost"
+        ],
+        "image": "hello-world--dockerfile-api2",
+        "labels": [
+          "architect.ref=hello-world.services.dockerfile-api2"
+        ]
+      },
+      "hello-world--redis": {
+        "environment": {},
+        "external_links": [
+          "gateway:buildpack-api.arc.localhost",
+          "gateway:dockerfile-api.arc.localhost"
+        ],
+        "image": "redis",
+        "labels": [
+          "architect.ref=hello-world.services.redis"
+        ]
       },
       "gateway": {
         "image": "traefik:v2.6.2",
@@ -892,7 +920,12 @@ describe('local dev environment', function () {
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
       const spec = buildSpecFromYml(yaml.dump(local_database_seeding_component_config));
-      spec.metadata.file = { path: getMockComponentFilePath('database-seeding'), contents: '' };
+      const component_path = getMockComponentFilePath('database-seeding');
+      spec.metadata.file = {
+        path: component_path,
+        folder: fs.lstatSync(component_path).isFile() ? path.dirname(component_path) : component_path,
+        contents: ''
+      };
       return spec;
     })
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
@@ -911,7 +944,12 @@ describe('local dev environment', function () {
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
       const spec = buildSpecFromYml(yaml.dump(deprecated_local_database_seeding_component_config));
-      spec.metadata.file = { path: getMockComponentFilePath('database-seeding'), contents: '' };
+      const component_path = getMockComponentFilePath('database-seeding');
+      spec.metadata.file = {
+        path: component_path,
+        folder: fs.lstatSync(component_path).isFile() ? path.dirname(component_path) : component_path,
+        contents: ''
+      };
       return spec;
     })
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
@@ -1527,6 +1565,8 @@ describe('local dev environment', function () {
     .stub(PluginManager, 'getPlugin', sinon.stub().returns({
       build: () => { },
     }))
+    .stub(DockerHelper, 'composeVersion', sinon.stub().returns(true))
+    .stub(DockerHelper, 'buildXVersion', sinon.stub().returns(true))
     .stdout({ print })
     .stderr({ print })
     .command(['dev', './test/mocks/buildpack/buildpack-dockerfile-architect.yml', '--ssl=false'])
@@ -1541,6 +1581,7 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'loadFile', () => {
       return fs.readFileSync('test/mocks/register/nonexistence-dockerfile-architect.yml').toString();
     })
+    .stub(DockerUtils, 'doesDockerfileExist', sinon.stub().callsFake(DockerUtils.doesDockerfileExist)) // override global stub
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))

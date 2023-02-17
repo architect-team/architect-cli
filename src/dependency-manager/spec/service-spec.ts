@@ -8,7 +8,7 @@ import { LivenessProbeSpec, VolumeSpec } from './common-spec';
 import { ResourceSpec } from './resource-spec';
 import { transformObject } from './transform/common-transform';
 import { AnyOf, ExclusiveOr, ExpressionOr, ExpressionOrString, RequiredOr } from './utils/json-schema-annotations';
-import { Slugs } from './utils/slugs';
+import { ResourceType, Slugs } from './utils/slugs';
 
 @JSONSchema({
   description: 'An ingress exposes an interface to external network traffic through an architect-deployed gateway.',
@@ -192,7 +192,7 @@ export class ServiceInterfaceSpec {
   description: 'A runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.',
 })
 export class ServiceSpec extends ResourceSpec {
-  get resource_type(): string {
+  get resource_type(): ResourceType {
     return 'services';
   }
 
