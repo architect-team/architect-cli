@@ -28,17 +28,14 @@ export default class AppService {
   constructor(config_dir: string, version: string) {
     this.config = new AppConfig(config_dir);
     this.version = version;
-    if (config_dir) {
-      const config_file = path.join(config_dir, LocalPaths.CLI_CONFIG_FILENAME);
-      if (fs.existsSync(config_file)) {
-        const payload = fs.readJSONSync(config_file);
-        this.config = new AppConfig(config_dir, payload);
-      }
+    const config_file = path.join(config_dir, LocalPaths.CLI_CONFIG_FILENAME);
+    if (fs.existsSync(config_file)) {
+      const payload = fs.readJSONSync(config_file);
+      this.config = new AppConfig(config_dir, payload);
     }
-    if (!this.config.analytics_id) {
-      // Locks in the default analytics UUID so we don't generate a new one
-      this.config.save();
-    }
+
+    // Locks in the default analytics UUID so we don't generate a new one
+    this.config.save();
 
     this._api = axios.create({
       baseURL: this.config.api_host,
@@ -60,7 +57,26 @@ export default class AppService {
       });
     }
 
-    this.auth = new AuthClient(this.config, this.checkLogin.bind(this));
+    this.auth = new AuthClient(this.config, {
+      checkLogin: this.checkLogin.bind(this),
+      on: {
+        login: (user) => {
+          this.posthog.identify({
+            distinctId: user.id,
+            properties: {
+              name: user.name,
+              email: user.email,
+            },
+          });
+
+          // https://posthog.com/docs/integrate/server/node#alias
+          this.posthog.alias({
+            distinctId: user.id,
+            alias: this.config.analytics_id,
+          });
+        },
+      },
+    });
 
     this.linkedComponents = this.loadLinkedComponents(config_dir);
 
@@ -124,20 +140,6 @@ export default class AppService {
 
   async checkLogin(): Promise<User> {
     const { data } = await this.api.get<User>('/users/me');
-
-    this.posthog.identify({
-      distinctId: data.id,
-      properties: {
-        email: data.email,
-      },
-    });
-
-    // https://posthog.com/docs/integrate/server/node#alias
-    this.posthog.alias({
-      distinctId: data.id,
-      alias: this.config.analytics_id,
-    });
-
     return data;
   }
 

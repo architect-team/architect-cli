@@ -18,12 +18,22 @@ interface AuthResult {
   id_token?: string;
 }
 
+export type AuthClientOptions = {
+  checkLogin: () => Promise<User>;
+  on?: {
+    login?: (user: User) => void;
+  };
+};
+
 export default class AuthClient {
   config: AppConfig;
   credentials: CredentialManager;
   _auth_result?: AuthResult;
   callback_server: CallbackServer;
   checkLogin: () => Promise<User>;
+  on?: {
+    login?: (user: User) => void;
+  };
 
   // Provide a window of time before the actual expiration to refresh the token
   // https://github.com/lelylan/simple-oauth2/tree/1d0b2788ab178ca244c26859c31a34a32d8de979#refresh-an-access-token
@@ -31,11 +41,12 @@ export default class AuthClient {
 
   public static SCOPE = 'openid profile email offline_access';
 
-  constructor(config: AppConfig, checkLogin: () => Promise<User>) {
+  constructor(config: AppConfig, options: AuthClientOptions) {
     this.config = config;
     this.credentials = new CredentialManager(config);
     this.callback_server = new CallbackServer();
-    this.checkLogin = checkLogin;
+    this.checkLogin = options.checkLogin;
+    this.on = options.on;
   }
 
   async init(): Promise<void> {
@@ -151,6 +162,10 @@ export default class AuthClient {
     const email = decoded_token.email;
     await this.setToken(email, access_token.token as AuthResult);
     await this.dockerLogin(email);
+    if (this.on?.login) {
+      const user = await this.checkLogin();
+      await this.on.login(user);
+    }
   }
 
   async logout(): Promise<void> {

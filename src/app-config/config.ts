@@ -90,13 +90,8 @@ export default class AppConfig {
       registry_host: this.registry_host,
       api_host: this.api_host,
       app_host: this.app_host,
-      oauth_host: this.oauth_host,
-      oauth_client_id: this.oauth_client_id,
       account: this.account,
       agent_server_host: this.agent_server_host,
-      environment: this.environment,
-      external_https_address: this.external_https_address,
-      external_http_address: this.external_http_address,
       analytics_id: this.analytics_id,
       analytics_disabled: this.analytics_disabled,
     };
