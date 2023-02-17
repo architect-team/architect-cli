@@ -175,7 +175,7 @@ describe('interpolation spec v1', () => {
             'context': path.resolve('/stack'),
             "labels": [
               "architect.io",
-              "component=web"
+              "architect.component=web"
             ],
           },
           image: web_ref,
@@ -191,7 +191,7 @@ describe('interpolation spec v1', () => {
             'context': path.resolve('/stack'),
             "labels": [
               "architect.io",
-              "component=worker"
+              "architect.component=worker"
             ],
           },
           image: worker_ref,
@@ -246,7 +246,7 @@ describe('interpolation spec v1', () => {
         'context': path.resolve('/stack'),
         "labels": [
           "architect.io",
-          "component=web"
+          "architect.component=web"
         ],
       },
       image: web_ref
@@ -262,7 +262,7 @@ describe('interpolation spec v1', () => {
         'context': path.resolve('/stack'),
         'labels': [
           'architect.io',
-          "component=worker"
+          "architect.component=worker"
         ],
       },
       image: worker_ref,

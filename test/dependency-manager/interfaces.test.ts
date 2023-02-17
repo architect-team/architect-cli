@@ -399,7 +399,7 @@ describe('interfaces spec v1', () => {
         "context": path.resolve("/stack"),
         "labels": [
           "architect.io",
-          "component=cloud"
+          "architect.component=cloud"
         ],
       },
       image: api_ref,

@@ -55,7 +55,7 @@ describe('components spec v1', function () {
               'context': path.resolve('/stack'),
               "labels": [
                 "architect.io",
-                "component=cloud"
+                "architect.component=cloud"
               ],
             },
             'image': app_ref,
@@ -70,7 +70,7 @@ describe('components spec v1', function () {
               'context': path.resolve('/stack'),
               "labels": [
                 "architect.io",
-                "component=cloud"
+                "architect.component=cloud"
               ],
             },
             image: api_ref,
@@ -228,7 +228,7 @@ describe('components spec v1', function () {
               'context': path.resolve('/stack'),
               "labels": [
                 "architect.io",
-                "component=cloud"
+                "architect.component=cloud"
               ],
             },
             image: api_ref,
@@ -248,7 +248,7 @@ describe('components spec v1', function () {
               'context': path.resolve('/stack'),
               "labels": [
                 "architect.io",
-                "component=cloud"
+                "architect.component=cloud"
               ],
             },
             image: app_ref,
@@ -263,7 +263,7 @@ describe('components spec v1', function () {
               'context': path.resolve('/stack'),
               "labels": [
                 "architect.io",
-                "component=cloud"
+                "architect.component=cloud"
               ],
             },
             image: db_ref,

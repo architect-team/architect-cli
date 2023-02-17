@@ -60,7 +60,7 @@ describe('components with reserved_name field set', function () {
               "context": path.resolve("/stack"),
               "labels": [
                 "architect.io",
-                "component=cloud"
+                "architect.component=cloud"
               ],
             },
             image: app_ref,
@@ -75,7 +75,7 @@ describe('components with reserved_name field set', function () {
               "context": path.resolve("/stack"),
               "labels": [
                 "architect.io",
-                "component=cloud"
+                "architect.component=cloud"
               ],
             },
             image: reserved_name,
@@ -300,7 +300,7 @@ describe('components with reserved_name field set', function () {
               ],
               "labels": [
                 "architect.io",
-                "component=cloud"
+                "architect.component=cloud"
               ],
             },
             image: app_ref,

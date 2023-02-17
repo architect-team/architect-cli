@@ -454,9 +454,9 @@ describe('local dev environment', function () {
           'context': getMockComponentContextPath('database-seeding'),
           'dockerfile': './Dockerfile',
           'target': 'production',
-          "labels": [
-            "architect.io",
-            "component=database-seeding"
+          'labels': [
+            'architect.io',
+            'architect.component=database-seeding',
           ],
         },
         'image': seed_app_ref,
@@ -721,7 +721,11 @@ describe('local dev environment', function () {
       },
       "hello-world--dockerfile-api": {
         "build": {
-          "context": path.resolve("./test/integration/hello-world")
+          "context": path.resolve("./test/integration/hello-world"),
+          'labels': [
+            'architect.io',
+            'architect.component=hello-world',
+          ],
         },
         "ports": [
           "50001:4000",
@@ -1536,8 +1540,8 @@ describe('local dev environment', function () {
     .command(['dev', './test/mocks/buildpack/buildpack-dockerfile-architect.yml', '--ssl=false'])
     .it('Dev component with buildpack and dockerfile services', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true
-      expect(runCompose.firstCall.args[0]).to.deep.equal(buildpack_dockerfile_component_expected_compose)
+      expect(runCompose.calledOnce).to.be.true;
+      expect(runCompose.firstCall.args[0]).to.deep.equal(buildpack_dockerfile_component_expected_compose);
     });
 
   test
