@@ -773,14 +773,14 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', 'test/mocks/buildpack/buildpack-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('register with buildpack and dockerfile services', ctx => {
+      const buildpack = BuildPackUtils.build as sinon.SinonStub;
+      expect(buildpack.args.toString()).to.equal(`test/plugins,hello-world--buildpack-api,,${path.join(path.resolve('test/integration'), './hello-world/')}`);
+      expect(buildpack.callCount).to.eq(1);
+
       expect(ctx.stderr).to.contain('Registering component hello-world:1.0.0 with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
       expect(compose.callCount).to.eq(1);
-
-      const buildpack = BuildPackUtils.build as sinon.SinonStub;
-      expect(buildpack.args.toString()).to.equal(`test/plugins,hello-world--buildpack-api,,${path.resolve('test/integration/hello-world/')}/`);
-      expect(buildpack.callCount).to.eq(1);
     });
 
   mockArchitectAuth()
