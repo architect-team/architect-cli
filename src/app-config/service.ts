@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import fs from 'fs-extra';
 import https from 'https';
+import isCi from 'is-ci';
 import os from 'os';
 import path from 'path';
 import { URL } from 'url';
@@ -79,7 +80,7 @@ export default class AppService {
 
     this.posthog = new PostHogCli(this.config.posthog_api_key, {
       host: this.config.posthog_api_host,
-      enable: !this.config.analytics_disabled,
+      enable: !isCi && !this.config.analytics_disabled,
       persistence: 'file',
       propertiesFile: path.join(config_dir, LocalPaths.POSTHOG_PROPERTIES),
     });
