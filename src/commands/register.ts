@@ -9,16 +9,16 @@ import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, DependencyGraphMutable, Dictionary, dumpToYml, resourceRefToNodeRef, ResourceSlugUtils, ServiceNode, Slugs, TaskNode, validateInterpolation, VolumeSpec } from '../';
+import { ArchitectError, buildNodeRef, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, DependencyGraphMutable, Dictionary, dumpToYml, resourceRefToNodeRef, ServiceNode, ServiceSpec, Slugs, TaskNode, validateInterpolation, VolumeSpec } from '../';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
-import { DockerImage, DockerUtils } from '../common/docker';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DockerBuildXUtils from '../common/docker/buildx.utils';
+import { docker } from '../common/docker/cmd';
 import { RequiresDocker, stripTagFromImage } from '../common/docker/helper';
 import OrasPlugin from '../common/plugins/oras-plugin';
 import PluginManager from '../common/plugins/plugin-manager';
@@ -33,8 +33,6 @@ export const ENV_TAG_PREFIX = 'architect.environment.';
 interface ImageRefOutput {
   compose: DockerComposeTemplate;
   new_spec: ComponentSpec;
-  image_mapping: Dictionary<string | undefined>;
-  buildpack_images: DockerImage[];
   seen_cache_dir: Set<string>;
 }
 
@@ -210,7 +208,7 @@ export default class ComponentRegister extends BaseCommand {
 
     // The external address and ssl have no bearing on registration
     const full_compose = await DockerComposeUtils.generate(graph, { getImage });
-    const { compose, new_spec, image_mapping, buildpack_images, seen_cache_dir } = await this.setImageRef({ full_compose, component_spec }, graph, selected_account.name, getImage);
+    const { compose, new_spec, seen_cache_dir } = await this.setImageRef({ full_compose, component_spec }, graph);
 
     const project_name = `register.${resourceRefToNodeRef(component_spec.name)}.${tag}`;
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
@@ -234,14 +232,19 @@ export default class ComponentRegister extends BaseCommand {
       return arr;
     }, [] as string[]);
 
-    const use_buildx = Object.values(compose.services).some(service => service.build);
-    const build_promises: Promise<void>[] = [
-      DockerUtils.pushImagesToRegistry(buildpack_images),
-      ...(use_buildx ? [DockerBuildXUtils.build(this.app, compose_file, build_args)] : []),
-    ];
-
     try {
-      await Promise.all(build_promises);
+      const node_refs = await BuildPackUtils.buildGraph(this.app.config.getPluginDirectory(), graph);
+      for (const node_ref of node_refs) {
+        const node = graph.getNodeByRef(node_ref) as ServiceNode | TaskNode;
+        const image_ref = getImage(node.config.metadata.ref);
+        await docker(['tag', `${node_ref}:latest`, image_ref]);
+        await docker(['push', image_ref]);
+      }
+
+      const use_buildx = Object.values(compose.services).some(service => service.build);
+      if (use_buildx) {
+        await DockerBuildXUtils.build(this.app, compose_file, build_args);
+      }
     } catch (err: any) {
       fs.removeSync(compose_file);
       throw new ArchitectError(err.message);
@@ -265,45 +268,22 @@ export default class ComponentRegister extends BaseCommand {
       }
     }
 
-    for (const [service_name, service] of Object.entries(new_spec.services || {})) {
+    for (const [service_name, service] of Object.entries({ ...new_spec.services, ...new_spec.tasks })) {
       if (IF_EXPRESSION_REGEX.test(service_name)) {
         continue;
       }
-      if (service.enabled !== undefined && !service.enabled) {
+      delete service.debug; // we don't need to compare the debug block for remotely-deployed components
+      if (service instanceof ServiceSpec && service.enabled !== undefined && !service.enabled) {
         continue;
       }
 
-      delete service.debug; // we don't need to compare the debug block for remotely-deployed components
-
-      const ref = ResourceSlugUtils.build(component_name, 'services', service_name);
-      const image = image_mapping[ref];
-      if (image) {
+      const node_ref = buildNodeRef(new_spec, service.resource_type, service_name);
+      const image = compose.services[node_ref]?.image;
+      if (image && image.startsWith(`${this.app.config.registry_host}/`)) {
         const digest = await this.getDigest(image);
         // we don't need the tag on our image because we use the digest as the key
         const image_without_tag = stripTagFromImage(image);
         service.image = `${image_without_tag}@${digest}`;
-      }
-      if (!service.image) {
-        this.error(`Failed to register service ${service_name}. No image found.`);
-      }
-    }
-    for (const [task_name, task] of Object.entries(new_spec.tasks || {})) {
-      if (IF_EXPRESSION_REGEX.test(task_name)) {
-        continue;
-      }
-
-      delete task.debug; // we don't need to compare the debug block for remotely-deployed components
-
-      const ref = ResourceSlugUtils.build(component_name, 'tasks', task_name);
-      const image = image_mapping[ref];
-      if (image) {
-        const digest = await this.getDigest(image);
-        // we don't need the tag on our image because we use the digest as the key
-        const image_without_tag = stripTagFromImage(image);
-        task.image = `${image_without_tag}@${digest}`;
-      }
-      if (!task.image) {
-        this.error(`Failed to register task ${task_name}. No image found.`);
       }
     }
 
@@ -334,7 +314,7 @@ export default class ComponentRegister extends BaseCommand {
     console.timeEnd('Time');
   }
 
-  private async setImageRef(composes: Composes, graph: Readonly<DependencyGraphMutable>, account_name: string, getImage: (ref: string) => string): Promise<ImageRefOutput> {
+  private async setImageRef(composes: Composes, graph: Readonly<DependencyGraphMutable>): Promise<ImageRefOutput> {
     const { flags } = await this.parse(ComponentRegister);
 
     const compose: DockerComposeTemplate = {
@@ -342,66 +322,62 @@ export default class ComponentRegister extends BaseCommand {
       services: {},
       volumes: {},
     };
-    const image_mapping: Dictionary<string | undefined> = {};
     const seen_cache_dir = new Set<string>();
-    const buildpack_images: DockerImage[] = [];
 
     const { full_compose, component_spec } = composes;
     for (const [service_name, service] of Object.entries(full_compose.services)) {
       const node = graph.getNodeByRef(service_name);
-      if ((node instanceof ServiceNode || node instanceof TaskNode) && !node.config.build) continue;
+      if (!(node instanceof ServiceNode || node instanceof TaskNode)) continue;
+      // Don't build external images
+      if (service.image && !service.image.startsWith(`${this.app.config.registry_host}/`)) continue;
 
-      if (service.labels && service.build) {
-        const ref_label = service.labels.find(label => label.startsWith('architect.ref='));
-        if (!ref_label) continue;
-        const ref = ref_label.replace('architect.ref=', '');
+      const ref_label = service.labels?.find(label => label.startsWith('architect.ref='));
+      if (!ref_label) continue;
+      const ref = ref_label.replace('architect.ref=', '');
 
-        compose.services[service_name] = {};
+      const skip_build = service.labels?.find(label => label === 'architect.build=false');
+      if (skip_build) continue;
 
-        const dockerfile_exist = service.build.context ? await DockerUtils.doesDockerfileExist(service.build.context, service.build.dockerfile) : false;
-        if (service.build.buildpack || !dockerfile_exist) {
-          await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.command?.join(' '), service.build.context);
-          buildpack_images.push({ 'name': service_name, 'ref': getImage(ref) });
-        } else {
-          const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags.architecture);
-          service.build['x-bake'] = {
-            platforms: buildx_platforms,
-            pull: false,
-          };
+      compose.services[service_name] = {};
 
-          if (!process.env.ARC_NO_CACHE) {
-            if (flags['cache-directory']) {
-              if (process.env.GITHUB_ACTIONS) {
-                this.warn(`--cache-directory is not advised in Github Actions. See how to configure caching for Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs`);
-              }
-              // Cache directory needs to be unique per dockerfile: https://github.com/docker/build-push-action/issues/252#issuecomment-744412763
-              const cache_dir = path.join(flags['cache-directory'], service_name);
+      if (service.build) {
+        const buildx_platforms: string[] = DockerBuildXUtils.convertToBuildxPlatforms(flags.architecture);
+        service.build['x-bake'] = {
+          platforms: buildx_platforms,
+          pull: false,
+        };
 
-              // To test you need to prune the buildx cache
-              // docker buildx prune --builder architect --force
-              service.build['x-bake']['cache-from'] = `type=local,src=${cache_dir}`;
-              // https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to
-              service.build['x-bake']['cache-to'] = `type=local,dest=${cache_dir}-tmp,mode=max`;
+        if (!process.env.ARC_NO_CACHE) {
+          if (flags['cache-directory']) {
+            if (process.env.GITHUB_ACTIONS) {
+              this.warn(`--cache-directory is not advised in Github Actions. See how to configure caching for Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs`);
+            }
+            // Cache directory needs to be unique per dockerfile: https://github.com/docker/build-push-action/issues/252#issuecomment-744412763
+            const cache_dir = path.join(flags['cache-directory'], service_name);
 
-              seen_cache_dir.add(cache_dir);
-            } else if (process.env.GITHUB_ACTIONS) {
-              // Need the following action to export internal envs: https://github.com/crazy-max/ghaction-github-runtime
-              if (process.env.ACTIONS_CACHE_URL && process.env.ACTIONS_RUNTIME_TOKEN) {
-                const scope = service_name;
-                this.log(`Setting up github action caching for scope: ${scope}. To disable set env ARC_NO_CACHE=1.`);
-                service.build['x-bake']['cache-from'] = `type=gha,scope=${scope}`;
-                service.build['x-bake']['cache-to'] = `type=gha,scope=${scope},mode=max`;
-              } else {
-                this.warn(`Caching not configured. See how to configure caching for Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs`);
-              }
+            // To test you need to prune the buildx cache
+            // docker buildx prune --builder architect --force
+            service.build['x-bake']['cache-from'] = `type=local,src=${cache_dir}`;
+            // https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to
+            service.build['x-bake']['cache-to'] = `type=local,dest=${cache_dir}-tmp,mode=max`;
+
+            seen_cache_dir.add(cache_dir);
+          } else if (process.env.GITHUB_ACTIONS) {
+            // Need the following action to export internal envs: https://github.com/crazy-max/ghaction-github-runtime
+            if (process.env.ACTIONS_CACHE_URL && process.env.ACTIONS_RUNTIME_TOKEN) {
+              const scope = service_name;
+              this.log(`Setting up github action caching for scope: ${scope}. To disable set env ARC_NO_CACHE=1.`);
+              service.build['x-bake']['cache-from'] = `type=gha,scope=${scope}`;
+              service.build['x-bake']['cache-to'] = `type=gha,scope=${scope},mode=max`;
+            } else {
+              this.warn(`Caching not configured. See how to configure caching for Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs`);
             }
           }
-          compose.services[service_name].build = service.build;
         }
-
-        compose.services[service_name].image = service.image;
-        image_mapping[ref] = compose.services[service_name].image;
+        compose.services[service_name].build = service.build;
       }
+
+      compose.services[service_name].image = service.image;
     }
 
     const new_spec = instanceToInstance(component_spec);
@@ -409,8 +385,6 @@ export default class ComponentRegister extends BaseCommand {
     return {
       compose,
       new_spec,
-      image_mapping,
-      buildpack_images,
       seen_cache_dir,
     };
   }

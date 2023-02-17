@@ -1,5 +1,6 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
+import path from 'path';
 import { buildSpecFromPath, parseSourceYml, resourceRefToNodeRef, ServiceNode } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { getMockComponentFilePath } from '../utils/mocks';
@@ -11,7 +12,7 @@ describe('superset spec validation', function () {
       const dependency_component_spec = buildSpecFromPath(getMockComponentFilePath('hello-world'));
       const deprecated_component_spec = buildSpecFromPath(`test/mocks/superset/deprecated.architect.yml`);
 
-      expect(component_spec.metadata.file?.path).to.equal(`test/mocks/superset/architect.yml`);
+      expect(component_spec.metadata.file?.path).to.equal(path.resolve(`test/mocks/superset/architect.yml`));
       expect(component_spec).to.not.be.undefined;
 
       const manager = new LocalDependencyManager(axios.create());

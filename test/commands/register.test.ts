@@ -6,10 +6,13 @@ import sinon, { SinonStub } from 'sinon';
 import untildify from 'untildify';
 import { ServiceSpec, TaskSpec, validateSpec } from '../../src';
 import ComponentRegister from '../../src/commands/register';
+import { DockerUtils } from '../../src/common/docker';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
+import { DockerHelper } from '../../src/common/docker/helper';
 import PluginManager from '../../src/common/plugins/plugin-manager';
+import BuildPackUtils from '../../src/common/utils/buildpack';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
 import { getMockComponentContextPath, getMockComponentFilePath, mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST } from '../utils/mocks';
 
@@ -746,6 +749,7 @@ describe('register', function () {
 
   mockArchitectAuth()
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
+    .stub(BuildPackUtils, 'build', sinon.stub())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_architect_account_response)
@@ -763,10 +767,16 @@ describe('register', function () {
     .stub(PluginManager, 'getPlugin', sinon.stub().returns({
       build: () => { },
     }))
+    .stub(DockerHelper, 'composeVersion', sinon.stub().returns(true))
+    .stub(DockerHelper, 'buildXVersion', sinon.stub().returns(true))
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'test/mocks/buildpack/buildpack-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('register with buildpack and dockerfile services', ctx => {
+      const buildpack = BuildPackUtils.build as sinon.SinonStub;
+      expect(buildpack.args.toString()).to.equal(`${path.normalize('test/plugins')},hello-world--buildpack-api,,${path.join(path.resolve('test/integration'), './hello-world/')}`);
+      expect(buildpack.callCount).to.eq(1);
+
       expect(ctx.stderr).to.contain('Registering component hello-world:1.0.0 with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
@@ -781,6 +791,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
+    .stub(DockerUtils, 'doesDockerfileExist', sinon.stub().callsFake(DockerUtils.doesDockerfileExist)) // override global stub
     .command(['register', 'test/mocks/register/nonexistence-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .catch(e => {
       expect(e.message).contains(`${path.resolve('./test/integration/hello-world/nonexistent-dockerfile')} does not exist. Please verify the correct context and/or dockerfile were given.`);
