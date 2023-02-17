@@ -11,6 +11,7 @@ import Dev, { UpProcessManager } from '../../../src/commands/dev';
 import { DockerUtils } from '../../../src/common/docker';
 import { DockerComposeUtils } from '../../../src/common/docker-compose';
 import DockerComposeTemplate from '../../../src/common/docker-compose/template';
+import { DockerHelper } from '../../../src/common/docker/helper';
 import PluginManager from '../../../src/common/plugins/plugin-manager';
 import DeployUtils from '../../../src/common/utils/deploy.utils';
 import * as ComponentBuilder from '../../../src/dependency-manager/spec/utils/component-builder';
@@ -718,7 +719,11 @@ describe('local dev environment', function () {
       },
       "hello-world--dockerfile-api": {
         "build": {
-          "context": path.resolve("./test/integration/hello-world")
+          "context": path.resolve("./test/integration/hello-world"),
+          "tags": [
+            "hello-world--dockerfile-api",
+            "hello-world--dockerfile-api2"
+          ]
         },
         "ports": [
           "50001:4000",
@@ -750,9 +755,6 @@ describe('local dev environment', function () {
         },
       },
       "hello-world--dockerfile-api2": {
-        "build": {
-          "context": path.resolve("./test/integration/hello-world")
-        },
         "environment": {},
         "external_links": [
           "gateway:buildpack-api.arc.localhost",
@@ -1553,6 +1555,8 @@ describe('local dev environment', function () {
     .stub(PluginManager, 'getPlugin', sinon.stub().returns({
       build: () => { },
     }))
+    .stub(DockerHelper, 'composeVersion', sinon.stub().returns(true))
+    .stub(DockerHelper, 'buildXVersion', sinon.stub().returns(true))
     .stdout({ print })
     .stderr({ print })
     .command(['dev', './test/mocks/buildpack/buildpack-dockerfile-architect.yml', '--ssl=false'])
