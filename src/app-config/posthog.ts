@@ -21,7 +21,9 @@ export class PostHogCli extends PostHog {
     this._properties = {};
     if (this._options.persistence === 'file' && fs.existsSync(this._options.propertiesFile)) {
       this._properties = fs.readJSONSync(this._options.propertiesFile);
-    } else {
+    }
+
+    if (!this._properties.anonymous_id) {
       this.setPersistedProperty('anonymous_id', uuidv4());
     }
   }
