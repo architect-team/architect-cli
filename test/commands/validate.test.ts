@@ -89,7 +89,7 @@ interfaces:
     })
     .it('correctly displays prettyValidationErrors error message to screen in place of a stacktrace', ctx => {
       expect(ctx.stderr).to.contain('›  1 | name: validation_errors');
-      expect(ctx.stderr).to.contain('must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32');
+      expect(ctx.stderr).to.contain('must contain only lower alphanumeric and single hyphens in the middle; max length 32');
       expect(ctx.stdout).to.equal('');
     });
 

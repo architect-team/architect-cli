@@ -569,7 +569,6 @@ export default class Dev extends BaseCommand {
     const [project_name, compose_file] = await this.buildImage(compose, default_project_name);
 
     this.app.posthog.capture({
-      distinctId: this.app.config.analytics_id,
       event: 'cli.command-update',
       properties: {
         command_id: (this.constructor as any).id,
@@ -829,10 +828,10 @@ $ architect dev -e new_env_name_here .`));
     }
 
     this.app.posthog.capture({
-      distinctId: this.app.config.analytics_id,
-      event: 'cli.command.start',
+      event: 'cli.command-update',
       properties: {
         command_id: (this.constructor as any).id,
+        status: 'build complete',
       },
     });
 

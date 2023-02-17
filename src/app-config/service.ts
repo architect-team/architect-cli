@@ -3,7 +3,6 @@ import fs from 'fs-extra';
 import https from 'https';
 import os from 'os';
 import path from 'path';
-import { PostHog } from 'posthog-node';
 import { URL } from 'url';
 import { Dictionary } from '../';
 import User from '../architect/user/user.entity';
@@ -11,13 +10,14 @@ import LoginRequiredError from '../common/errors/login-required';
 import LocalPaths from '../paths';
 import AuthClient from './auth';
 import AppConfig from './config';
+import { PostHogCli } from './posthog';
 
 export default class AppService {
   config: AppConfig;
   auth: AuthClient;
   linkedComponents: Dictionary<string> = {};
   _api: AxiosInstance;
-  posthog: PostHog;
+  posthog: PostHogCli;
   version: string;
   errorContext?: Error;
 
@@ -64,12 +64,10 @@ export default class AppService {
 
     this.linkedComponents = this.loadLinkedComponents(config_dir);
 
-    this.posthog = new PostHog(this.config.posthog_api_key, {
+    this.posthog = new PostHogCli(this.config.posthog_api_key, {
       host: this.config.posthog_api_host,
       enable: !this.config.analytics_disabled,
-    });
-    this.posthog.identify({
-      distinctId: this.config.analytics_id,
+      analyticsId: this.config.analytics_id,
     });
   }
 
@@ -126,17 +124,20 @@ export default class AppService {
 
   async checkLogin(): Promise<User> {
     const { data } = await this.api.get<User>('/users/me');
-    // https://posthog.com/docs/integrate/server/node#alias
-    this.posthog.alias({
-      distinctId: this.config.analytics_id,
-      alias: data.id,
-    });
+
     this.posthog.identify({
-      distinctId: this.config.analytics_id,
+      distinctId: data.id,
       properties: {
         email: data.email,
       },
     });
+
+    // https://posthog.com/docs/integrate/server/node#alias
+    this.posthog.alias({
+      distinctId: data.id,
+      alias: this.config.analytics_id,
+    });
+
     return data;
   }
 

@@ -137,7 +137,7 @@ describe('task:exec', async function () {
     .stderr({ print })
     .command(['task:exec', '-a', mock_account.name, '-e', bad_env_name, tagged_component_name, mock_task.name])
     .catch(err => {
-      expect(err.message).to.contain('No environment found')
+      expect(err.message).to.contain(`Environment '${bad_env_name}' not found`)
     })
     .it('fails with a useful message if given a bad environment name');
 

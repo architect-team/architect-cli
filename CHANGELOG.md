@@ -1,3 +1,23 @@
+# [1.33.0](https://github.com/architect-team/architect-cli/compare/v1.32.1...v1.33.0) (2023-02-13)
+
+
+### Bug Fixes
+
+* **account:** Allow uppercase account name ([#822](https://github.com/architect-team/architect-cli/issues/822)) ([2b145bc](https://github.com/architect-team/architect-cli/commit/2b145bc89fe130584c7bfef0cb79d821b9e717de))
+* **cluster:** Add minimum supported version for clusters. Currently set to 1.2.2 ([a25ee6c](https://github.com/architect-team/architect-cli/commit/a25ee6cfa6620e8ae1f73e85b578a65b01ee7725))
+* **lint:** Only run linter for git on changed files ([#819](https://github.com/architect-team/architect-cli/issues/819)) ([77aa221](https://github.com/architect-team/architect-cli/commit/77aa221a5642b21da3edf1fcfb1145ca62344737))
+* **posthog:** Don't identify with an anon id ([#825](https://github.com/architect-team/architect-cli/issues/825)) ([50e207b](https://github.com/architect-team/architect-cli/commit/50e207b97185bbdb6da9309cf98b88f702462f3e))
+* **release:** Manually trigger release ([5c0696b](https://github.com/architect-team/architect-cli/commit/5c0696bb4765111b551e86320d25b4c0ccd69e03))
+* **schema:** Fix branch name for json schema ([#817](https://github.com/architect-team/architect-cli/issues/817)) ([5a10acc](https://github.com/architect-team/architect-cli/commit/5a10acc2ac39d48546d7f0b2035f97e552a34a3b))
+* **ux:** Add list alias for cmds ([#814](https://github.com/architect-team/architect-cli/issues/814)) ([224f6be](https://github.com/architect-team/architect-cli/commit/224f6be2625c53c050bc88f6b02e16a85cec22b2))
+
+
+### Features
+
+* **analytics:** added posthog ([#823](https://github.com/architect-team/architect-cli/issues/823)) ([7cd9e3f](https://github.com/architect-team/architect-cli/commit/7cd9e3f834160c29d70b9f181e91b57e8c274ef7))
+* **build:** Add buildpack as an experimental feature ([fa7995f](https://github.com/architect-team/architect-cli/commit/fa7995fb17e4edc66ffea9eddf43f5015bed0890))
+* **cli:** Added command to log ingress URLs associated with an environment ([#827](https://github.com/architect-team/architect-cli/issues/827)) ([24cd029](https://github.com/architect-team/architect-cli/commit/24cd029cc3ab526898716b886ec72214e81411d0))
+
 ## [1.32.1](https://github.com/architect-team/architect-cli/compare/v1.32.0...v1.32.1) (2023-01-23)
 
 
