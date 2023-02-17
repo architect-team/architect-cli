@@ -52,6 +52,12 @@ export default abstract class BaseCommand extends Command {
     }
     this.warnIfCommandDeprecated();
     await this.sentry.startSentryTransaction();
+    this.app.posthog.capture({
+      event: 'cli.command.start',
+      properties: {
+        command_id: (this.constructor as any).id,
+      },
+    });
   }
 
   @Memoize()
