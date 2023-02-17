@@ -8,6 +8,7 @@ import AppService from '../../../src/app-config/service';
 import AccountUtils from '../../../src/architect/account/account.utils';
 import SecretUtils from '../../../src/architect/secret/secret.utils';
 import Dev, { UpProcessManager } from '../../../src/commands/dev';
+import { DockerUtils } from '../../../src/common/docker';
 import { DockerComposeUtils } from '../../../src/common/docker-compose';
 import DockerComposeTemplate from '../../../src/common/docker-compose/template';
 import PluginManager from '../../../src/common/plugins/plugin-manager';
@@ -646,7 +647,7 @@ describe('local dev environment', function () {
         "external_links": [
           "gateway:hello.arc.localhost"
         ],
-        "image": "hello-world--api:latest",
+        "image": "hello-world--api",
         "healthcheck": {
           "test": [
             "CMD", "curl", "--fail", "localhost:3000"
@@ -704,7 +705,7 @@ describe('local dev environment', function () {
           "gateway:buildpack-api.arc.localhost",
           "gateway:dockerfile-api.arc.localhost"
         ],
-        "image": "hello-world--buildpack-api:latest",
+        "image": "hello-world--buildpack-api",
         "healthcheck": {
           "test": [
             "CMD", "curl", "--fail", "localhost:3000"
@@ -747,6 +748,31 @@ describe('local dev environment', function () {
           "retries": 3,
           "start_period": "0s"
         },
+      },
+      "hello-world--dockerfile-api2": {
+        "build": {
+          "context": path.resolve("./test/integration/hello-world")
+        },
+        "environment": {},
+        "external_links": [
+          "gateway:buildpack-api.arc.localhost",
+          "gateway:dockerfile-api.arc.localhost"
+        ],
+        "image": "hello-world--dockerfile-api2",
+        "labels": [
+          "architect.ref=hello-world.services.dockerfile-api2"
+        ]
+      },
+      "hello-world--redis": {
+        "environment": {},
+        "external_links": [
+          "gateway:buildpack-api.arc.localhost",
+          "gateway:dockerfile-api.arc.localhost"
+        ],
+        "image": "redis",
+        "labels": [
+          "architect.ref=hello-world.services.redis"
+        ]
       },
       "gateway": {
         "image": "traefik:v2.6.2",
@@ -1541,6 +1567,7 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'loadFile', () => {
       return fs.readFileSync('test/mocks/register/nonexistence-dockerfile-architect.yml').toString();
     })
+    .stub(DockerUtils, 'doesDockerfileExist', sinon.stub().callsFake(DockerUtils.doesDockerfileExist)) // override global stub
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
