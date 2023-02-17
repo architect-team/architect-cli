@@ -1,6 +1,5 @@
 import fs from 'fs-extra';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import { Dictionary } from '../';
 import LocalPaths from '../paths';
 
@@ -28,7 +27,6 @@ export default class AppConfig {
   posthog_api_key: string;
   posthog_api_host: string;
   analytics_disabled: boolean;
-  analytics_id: string;
 
   constructor(config_dir: string, partial?: Partial<AppConfig>) {
     this.config_dir = config_dir;
@@ -52,7 +50,6 @@ export default class AppConfig {
     this.posthog_api_key = 'phc_Wb11qMDWr6OX6Y7Y9jVsqDYSVagSLYOA8vluHkML9JV';
     this.posthog_api_host = 'https://ph.architect.io/';
     this.analytics_disabled = process.env.TEST === '1' || process.env.NODE_ENV === 'development';
-    this.analytics_id = uuidv4();
 
     // Override defaults with input values
     Object.assign(this, partial);
@@ -92,7 +89,6 @@ export default class AppConfig {
       app_host: this.app_host,
       account: this.account,
       agent_server_host: this.agent_server_host,
-      analytics_id: this.analytics_id,
       analytics_disabled: this.analytics_disabled,
     };
   }
