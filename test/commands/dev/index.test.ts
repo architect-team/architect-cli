@@ -920,7 +920,12 @@ describe('local dev environment', function () {
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
       const spec = buildSpecFromYml(yaml.dump(local_database_seeding_component_config));
-      spec.metadata.file = { path: getMockComponentFilePath('database-seeding'), contents: '' };
+      const component_path = getMockComponentFilePath('database-seeding');
+      spec.metadata.file = {
+        path: component_path,
+        folder: fs.lstatSync(component_path).isFile() ? path.dirname(component_path) : component_path,
+        contents: ''
+      };
       return spec;
     })
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
@@ -939,7 +944,12 @@ describe('local dev environment', function () {
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
       const spec = buildSpecFromYml(yaml.dump(deprecated_local_database_seeding_component_config));
-      spec.metadata.file = { path: getMockComponentFilePath('database-seeding'), contents: '' };
+      const component_path = getMockComponentFilePath('database-seeding');
+      spec.metadata.file = {
+        path: component_path,
+        folder: fs.lstatSync(component_path).isFile() ? path.dirname(component_path) : component_path,
+        contents: ''
+      };
       return spec;
     })
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))

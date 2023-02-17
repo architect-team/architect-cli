@@ -260,8 +260,7 @@ export class DockerComposeUtils {
         service.depends_on = depends_on;
       }
 
-      if (node.is_local) {
-        const component_path = fs.lstatSync(node.local_path).isFile() ? path.dirname(node.local_path) : node.local_path;
+      if (node.local_path) {
         if (!node.config.image && !use_build_pack) {
           const build = node.config.build || {};
 
@@ -270,13 +269,13 @@ export class DockerComposeUtils {
           }
 
           if (build.context) {
-            service.build.context = path.resolve(component_path, untildify(build.context));
+            service.build.context = path.resolve(node.local_path, untildify(build.context));
             if (!fs.existsSync(service.build.context)) {
               throw new Error(`The path ${service.build.context} used for the build context of service ${node.config.name} does not exist.`);
             }
           } else {
             // Fix bug with buildx using tmp dir
-            service.build.context = path.resolve(component_path);
+            service.build.context = path.resolve(node.local_path);
           }
 
           const args = [];
@@ -309,7 +308,7 @@ export class DockerComposeUtils {
 
             let volume;
             if (spec.host_path) {
-              volume = `${path.resolve(component_path, untildify(spec.host_path))}:${service_volume}${spec.readonly ? ':ro' : ''}`;
+              volume = `${path.resolve(node.local_path, untildify(spec.host_path))}:${service_volume}${spec.readonly ? ':ro' : ''}`;
             } else if (spec.key) {
               compose.volumes[spec.key] = { external: true };
               volume = `${spec.key}:${service_volume}${spec.readonly ? ':ro' : ''}`;

@@ -7,14 +7,14 @@ describe('component builder unit test', function () {
   it(`loadSourceYmlFromPathOrReject loads valid file`, async () => {
     const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset/architect.yml`);
 
-    expect(source_path).to.equal(`test/mocks/superset/architect.yml`);
+    expect(source_path).to.equal(path.resolve(`test/mocks/superset/architect.yml`));
     expect(source_yml).to.contain('name: superset');
   });
 
   it(`loadSourceYmlFromPathOrReject loads valid directory`, async () => {
     const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset`);
 
-    expect(source_path).to.equal(`test${path.sep}mocks${path.sep}superset${path.sep}architect.yml`);
+    expect(source_path).to.equal(path.resolve(`test${path.sep}mocks${path.sep}superset${path.sep}architect.yml`));
     expect(source_yml).to.contain('name: superset');
   });
 

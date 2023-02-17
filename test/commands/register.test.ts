@@ -779,6 +779,7 @@ describe('register', function () {
       expect(compose.callCount).to.eq(1);
 
       const buildpack = BuildPackUtils.build as sinon.SinonStub;
+      expect(buildpack.args.toString()).to.equal(`test/plugins,hello-world--buildpack-api,,${path.resolve('test/integration/hello-world/')}/`);
       expect(buildpack.callCount).to.eq(1);
     });
 

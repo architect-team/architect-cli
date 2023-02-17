@@ -14,8 +14,7 @@ export default class BuildPackUtils {
     if (!local_path || !build) {
       return false;
     }
-    const component_path = path.resolve(fs.lstatSync(local_path).isFile() ? path.dirname(local_path) : local_path);
-    const dockerfile_exist = DockerUtils.doesDockerfileExist(path.join(component_path, build.context || '.'), build.dockerfile);
+    const dockerfile_exist = DockerUtils.doesDockerfileExist(path.join(local_path, build.context || '.'), build.dockerfile);
     return build.buildpack || !dockerfile_exist;
   }
 
@@ -75,8 +74,9 @@ export default class BuildPackUtils {
       if (!(node instanceof ServiceNode || node instanceof TaskNode)) {
         continue;
       }
-      if (BuildPackUtils.useBuildPack(node.local_path, node.config.build)) {
-        await BuildPackUtils.build(config_directory, node.ref, node.config.command?.join(' '), node.config.build?.context);
+      if (node.local_path && BuildPackUtils.useBuildPack(node.local_path, node.config.build)) {
+        const node_path = path.join(node.local_path, node.config.build?.context || '.');
+        await BuildPackUtils.build(config_directory, node.ref, node.config.command?.join(' '), node_path);
         node_refs.push(node.ref);
       }
     }
