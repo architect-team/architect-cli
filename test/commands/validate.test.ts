@@ -4,7 +4,7 @@ import path from 'path';
 import sinon from 'sinon';
 import untildify from 'untildify';
 import { Slugs } from '../../src/dependency-manager/spec/utils/slugs';
-import { mockArchitectAuth } from '../utils/mocks';
+import { getMockComponentFilePath, mockArchitectAuth } from '../utils/mocks';
 
 describe('architect validate component', function () {
   const subdomain_token_to_config_yaml_string = (subdomain_token: string): string =>
@@ -12,7 +12,7 @@ describe('architect validate component', function () {
 services:
   validatesubdomain:
     build:
-      context: .
+      context: ./context/src
 interfaces:
   validatesubdomain:
     url: \${{ services.validatesubdomain.interfaces.main.url }}
@@ -25,30 +25,30 @@ interfaces:
   mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
-    .command(['validate', 'examples/database-seeding/architect.yml'])
+    .command(['validate', getMockComponentFilePath('database-seeding')])
     .it('correctly validates an architect.yml file and prints name and source_file', ctx => {
       expect(ctx.stdout).to.contain(`database-seeding`);
-      expect(ctx.stdout).to.contain(path.resolve(`examples/database-seeding/architect.yml`));
+      expect(ctx.stdout).to.contain(getMockComponentFilePath('database-seeding'));
     });
 
   mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
-    .command(['validate', 'examples/database-seeding/'])
+    .command(['validate', 'test/mocks/superset'])
     .it('correctly validates an architect.yml file given a directory and prints name and source_file', ctx => {
-      expect(ctx.stdout).to.contain('database-seeding');
-      expect(ctx.stdout).to.contain(path.resolve('examples/database-seeding/architect.yml'));
+      expect(ctx.stdout).to.contain('superset');
+      expect(ctx.stdout).to.contain(path.resolve('test/mocks/superset/architect.yml'));
     });
 
   mockArchitectAuth()
     .stdout({ print })
     .stderr({ print })
-    .command(['validate', 'examples/hello-world/architect.yml', 'examples/database-seeding/architect.yml'])
+    .command(['validate', getMockComponentFilePath('hello-world'), getMockComponentFilePath('database-seeding')])
     .it('correctly validates an multiple files and prints name and source_file for each', ctx => {
       expect(ctx.stdout).to.contain('database-seeding');
-      expect(ctx.stdout).to.contain(path.resolve('examples/database-seeding/architect.yml'));
+      expect(ctx.stdout).to.contain(getMockComponentFilePath('database-seeding'));
       expect(ctx.stdout).to.contain('hello-world');
-      expect(ctx.stdout).to.contain(path.resolve('examples/hello-world/architect.yml'));
+      expect(ctx.stdout).to.contain(getMockComponentFilePath('hello-world'));
     });
 
   mockArchitectAuth()
@@ -89,7 +89,7 @@ interfaces:
     })
     .it('correctly displays prettyValidationErrors error message to screen in place of a stacktrace', ctx => {
       expect(ctx.stderr).to.contain('›  1 | name: validation_errors');
-      expect(ctx.stderr).to.contain('must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32');
+      expect(ctx.stderr).to.contain('must contain only lower alphanumeric and single hyphens in the middle; max length 32');
       expect(ctx.stdout).to.equal('');
     });
 
@@ -103,6 +103,7 @@ interfaces:
       mockArchitectAuth()
         .stub(fs, 'readFileSync', sinon.fake.returns(subdomain_token_to_config_yaml_string(invalid_subdomain_token)))
         .stub(fs, 'lstatSync', sinon.fake.returns({
+          isFile: () => true,
           isDirectory: () => false,
         }))
         .stdout({ print })
@@ -124,7 +125,7 @@ interfaces:
 
   describe('expect pass for valid subdomain', () => {
     const valid_subdomain_tokens = [
-      'qrstuv1'
+      'qrstuv1',
     ];
 
     const tmp_test_file = path.normalize(untildify('~/some_fake_file.yml'));
@@ -132,6 +133,7 @@ interfaces:
       mockArchitectAuth()
         .stub(fs, 'readFileSync', sinon.fake.returns(subdomain_token_to_config_yaml_string(valid_subdomain_token)))
         .stub(fs, 'lstatSync', sinon.fake.returns({
+          isFile: () => true,
           isDirectory: () => false,
         }))
         .stdout({ print })

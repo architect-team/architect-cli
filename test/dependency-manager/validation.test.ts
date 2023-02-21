@@ -8,7 +8,7 @@ import TSON from "typescript-json";
 import { ArchitectError, buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, Slugs, ValidationError, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DeepPartial } from '../../src/common/utils/types';
-import { SecretsConfig } from '../../src/dependency-manager/secrets/secrets';
+import { Secrets } from '../../src/dependency-manager/secrets/secrets';
 
 describe('validate spec', () => {
   describe('component config validation', () => {
@@ -428,7 +428,7 @@ services:
       expect(errors.map(e => e.path)).members([
         'name',
       ]);
-      expect(errors[0].message).includes('must contain only lower alphanumeric and single hyphens or underscores in the middle;');
+      expect(errors[0].message).includes('must contain only lower alphanumeric and single hyphens in the middle;');
       expect(errors[0].component).eq('test_component');
       expect(errors[0].start?.row).eq(2);
       expect(errors[0].start?.column).eq(12);
@@ -997,7 +997,7 @@ services:
   });
 
   it('valid component keys in values files pass validation', () => {
-    const values_dict = {
+    const secrets_dict = {
       '*': {
         'POSTGRES_HOST': '172.17.0.1',
       },
@@ -1009,14 +1009,14 @@ services:
 
     let passed_validation = false;
     try {
-      SecretsConfig.validate(values_dict);
+      new Secrets(secrets_dict).validate();
       passed_validation = true;
     } catch (e: any) { }
     expect(passed_validation).true;
   });
 
   it('invalid component keys in values files fail validation', () => {
-    const values_dict = {
+    const secrets_dict = {
       'architect_cloud:latest': {
         'TEST': 'string',
       },
@@ -1024,7 +1024,7 @@ services:
 
     let err;
     try {
-      SecretsConfig.validate(values_dict);
+      new Secrets(secrets_dict).validate();
     } catch (e: any) {
       err = e;
     }
@@ -1036,7 +1036,7 @@ services:
   });
 
   it('invalid value keys in values files fail validation', () => {
-    const values_dict = {
+    const secrets_dict = {
       'architect/cloud': {
         'TE@ST': 'string',
       },
@@ -1044,7 +1044,7 @@ services:
 
     let err;
     try {
-      SecretsConfig.validate(values_dict);
+      new Secrets(secrets_dict).validate();
     } catch (e: any) {
       err = e;
     }
@@ -1056,14 +1056,14 @@ services:
   });
 
   it('component values are defined in an object', () => {
-    const values_dict = {
+    const secrets_dict = {
       'architect/cloud': [],
       'architect/cloud@v2': 'string',
     };
 
     let err;
     try {
-      SecretsConfig.validate(values_dict as any);
+      new Secrets(secrets_dict as any).validate();
     } catch (e: any) {
       err = e;
     }
@@ -1076,7 +1076,7 @@ services:
   });
 
   it('component values are strings only', () => {
-    const values_dict = {
+    const secrets_dict = {
       'architect/cloud': {
         'test': 'test value',
       },
@@ -1090,7 +1090,7 @@ services:
 
     let err;
     try {
-      SecretsConfig.validate(values_dict);
+      new Secrets(secrets_dict).validate();
     } catch (e: any) {
       err = e;
     }
@@ -1899,5 +1899,51 @@ services:
       `;
       buildSpecFromYml(yml);
     });
+
+    describe('volume validation', () => {
+      it('invalid volume without host_path', async () => {
+        const yml = `
+        name: component
+        services:
+          app:
+            volumes:
+              src:
+                mount_path: .
+        `;
+
+        expect(() => {
+          buildSpecFromYml(yml);
+        }).to.throw(ValidationErrors);
+      });
+
+      it('invalid volume shorthand without host_path', async () => {
+        const yml = `
+        name: component
+        services:
+          app:
+            volumes:
+              src: .
+        `;
+
+        expect(() => {
+          buildSpecFromYml(yml);
+        }).to.throw(ValidationErrors);
+      });
+
+      it('cannot use both dockerfile and buildpack in build block', () => {
+        const component_config = `
+        name: hello-world
+        services:
+          api:
+            build:
+              context: .
+              dockerfile: Dockerfile
+              buildpack: true
+        `
+        expect(() => {
+          buildSpecFromYml(component_config)
+        }).to.be.throws(ArchitectError);
+      });
+    })
   });
 });

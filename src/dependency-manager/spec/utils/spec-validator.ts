@@ -162,6 +162,31 @@ export const isPartOfCircularReference = (search_name: string, depends_on_map: {
   return false;
 };
 
+export const validateVolumes = (component_spec: ComponentSpec): ValidationError[] => {
+  if (component_spec.metadata.interpolated) {
+    return [];
+  }
+
+  const errors = [];
+
+  for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
+    for (const [volume_name, volume_spec] of Object.entries(service_spec.volumes || {})) {
+      const no_host_path = volume_spec instanceof Object ? !volume_spec.host_path : true;
+      if (no_host_path) {
+        const error = new ValidationError({
+          component: component_spec.name,
+          path: `services.${service_name}.volumes.${volume_name}`,
+          message: `services.${service_name}.volumes.${volume_name} must have a host_path or nested in the debug block`,
+          value: volume_spec,
+        });
+        errors.push(error);
+      }
+    }
+  }
+
+  return errors;
+};
+
 export const validateDependsOn = (component: ComponentSpec): ValidationError[] => {
   const errors = [];
   const depends_on_map: { [name: string]: string[] } = {};
@@ -269,6 +294,10 @@ export const buildSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMe
     deprecated_interfaces_map: {},
   };
 
+  if (!component_spec.secrets && component_spec.deprecated_parameters) {
+    component_spec.secrets = component_spec.deprecated_parameters;
+  }
+
   deprecatedInterfaces(component_spec);
 
   return component_spec;
@@ -301,7 +330,10 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
     }
   }
 
-  errors.push(...validateDependsOn(component_spec));
+  errors.push(
+    ...validateVolumes(component_spec),
+    ...validateDependsOn(component_spec),
+  );
 
   if (errors && errors.length > 0) {
     throw new ValidationErrors(errors);

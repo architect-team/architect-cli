@@ -1,6 +1,7 @@
 // eslint-disable-next-line node/no-extraneous-import
 import { ReferenceObject, SchemaObject } from 'openapi3-ts';
-import { ComponentInterfaceSpec, ComponentSpec, SecretDefinitionSpec } from '../component-spec';
+import { ComponentInterfaceSpec, ComponentSpec } from '../component-spec';
+import { SecretDefinitionSpec } from '../secret-spec';
 import { ServiceSpec } from '../service-spec';
 import { TaskSpec } from '../task-spec';
 import { DEBUG_PREFIX, getDocsPath, stripDebugDefinitions } from './json-schema';
@@ -252,7 +253,7 @@ const schemaToMarkdown = (schema: SchemaObject): string => {
 const docs_description = () => {
   return `This document describes the full specification of the [architect.yml](https://docs.architect.io/components/architect-yml) configuration file. The top level of your \`architect.yml\` should be a [ComponentSpec](#componentspec).
 
-We've published a formal definition of this specification here: [Architect JSONSchema](https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json).
+We've published a formal definition of this specification here: [Architect JSONSchema](https://raw.githubusercontent.com/architect-team/architect-cli/main/src/dependency-manager/schema/architect.schema.json).
 
 If you're using VS Code (or any other IDE with intellisense backed by [SchemaStore](https://www.schemastore.org/json/)), then you should already see syntax highlighting when editing any file named \`architect.yml\`.
 

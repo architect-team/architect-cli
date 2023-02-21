@@ -154,20 +154,17 @@ export default class Logs extends BaseCommand {
     const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
 
-    let component_account_name: string | undefined;
     let component_name: string | undefined;
     let resource_name: string | undefined;
     let instance_name: string | undefined;
     if (args.resource) {
       const parsed = parseUnknownSlug(args.resource);
-      component_account_name = parsed.component_account_name;
       component_name = parsed.component_name;
       resource_name = parsed.resource_name;
       instance_name = parsed.instance_name;
     }
 
     const replica_query = {
-      component_account_name,
       component_name,
       component_resource_name: resource_name,
       component_instance_name: instance_name,

@@ -1,7 +1,6 @@
 import { instanceToPlain, plainToInstance, serialize } from 'class-transformer';
-import { isMatch } from 'matcher';
 import { buildNodeRef, ComponentConfig } from './config/component-config';
-import { ArchitectContext, ComponentContext, SecretValue } from './config/component-context';
+import { ArchitectContext, ComponentContext } from './config/component-context';
 import { DeprecatedInterfacesSpec } from './deprecated-spec/interfaces';
 import { DependencyGraph, DependencyGraphMutable } from './graph';
 import { IngressEdge } from './graph/edge/ingress';
@@ -12,14 +11,15 @@ import { GatewayNode } from './graph/node/gateway';
 import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
 import { GraphOptions } from './graph/type';
-import { SecretsConfig } from './secrets/secrets';
+import { Secrets } from './secrets/secrets';
 import { SecretsDict } from './secrets/type';
 import { ComponentSpec } from './spec/component-spec';
 import { transformComponentSpec, transformSecretDefinitionSpec } from './spec/transform/component-transform';
+import { transformResourceSpecEnvironment } from './spec/transform/resource-transform';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, ResourceType, Slugs } from './spec/utils/slugs';
 import { validateOrRejectSpec } from './spec/utils/spec-validator';
 import { Dictionary, transformDictionary } from './utils/dictionary';
-import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
+import { ArchitectError } from './utils/errors';
 import { interpolateObjectLoose, interpolateObjectOrReject, replaceInterpolationBrackets } from './utils/interpolation';
 
 export default abstract class DependencyManager {
@@ -37,7 +37,7 @@ export default abstract class DependencyManager {
         component_ref: component.metadata.ref,
         service_name,
         config: service_config,
-        local_path: component.metadata.file?.path,
+        local_path: component.metadata.file?.folder,
         artifact_image: component.artifact_image,
       });
       nodes.push(node);
@@ -48,7 +48,7 @@ export default abstract class DependencyManager {
       const node = new TaskNode({
         ref: buildNodeRef(component, 'tasks', task_name),
         config: task_config,
-        local_path: component.metadata.file?.path,
+        local_path: component.metadata.file?.folder,
       });
       nodes.push(node);
     }
@@ -56,9 +56,8 @@ export default abstract class DependencyManager {
   }
 
   getComponentRef(component_string: string): string {
-    const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(component_string);
-    const resolved_account = this.account && this.account === component_account_name ? undefined : component_account_name;
-    const component_ref = ComponentSlugUtils.build(resolved_account, component_name, instance_name);
+    const { component_name, instance_name } = ComponentVersionSlugUtils.parse(component_string);
+    const component_ref = ComponentSlugUtils.build(component_name, instance_name);
     return component_ref;
   }
 
@@ -125,65 +124,12 @@ export default abstract class DependencyManager {
     }
   }
 
-  getSecretsForComponentSpec(component_spec: ComponentSpec, all_secrets: SecretsDict): Dictionary<SecretValue> {
-    // pre-sort values dictionary to properly stack/override any colliding keys
-    const sorted_values_keys = Object.keys(all_secrets).sort();
-    const sorted_values_dict: SecretsDict = {};
-    for (const key of sorted_values_keys) {
-      sorted_values_dict[key] = all_secrets[key];
-    }
-
-    const component_ref = component_spec.metadata.ref;
-    const { component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
-    const component_ref_with_account = ComponentSlugUtils.build(this.account, component_name, instance_name);
-
-    const component_secrets = new Set(Object.keys({ ...component_spec.parameters, ...component_spec.secrets })); // TODO: 404: update
-
-    const res: Dictionary<any> = {};
-    // add values from values file to all existing, matching components
-    // eslint-disable-next-line prefer-const
-    for (let [pattern, secrets] of Object.entries(sorted_values_dict)) {
-      // Backwards compat for tags
-      if (ComponentVersionSlugUtils.Validator.test(pattern)) {
-        const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(pattern);
-        pattern = ComponentSlugUtils.build(component_account_name, component_name, instance_name);
-      }
-      if (isMatch(component_ref, [pattern]) || isMatch(component_ref_with_account, [pattern])) {
-        for (const [secret_key, secret_value] of Object.entries(secrets)) {
-          if (component_secrets.has(secret_key)) {
-            res[secret_key] = secret_value;
-          }
-        }
-      }
-    }
-    return res;
-  }
-
   generateUrl(interface_ref: string): string {
     const url_auth = `(${interface_ref}.password ? (${interface_ref}.username + ':' + ${interface_ref}.password + '@') : '')`;
     const url_protocol = `(${interface_ref}.protocol == 'grpc' ? '' : (${interface_ref}.protocol + '://' + ${url_auth}))`;
     const url_port = `((${interface_ref}.port == 80 || ${interface_ref}.port == 443) ? '' : ':' + ${interface_ref}.port)`;
     const url_path = `(${interface_ref}.path ? ${interface_ref}.path : '')`;
     return `\${{ ${url_protocol} + ${interface_ref}.host + ${url_port} + ${url_path} }}`;
-  }
-
-  validateRequiredSecrets(component: ComponentConfig, secrets: Dictionary<SecretValue>): void { // TODO: 404: update
-    const validation_errors = [];
-    // Check required parameters and secrets for components
-    for (const [key, value] of Object.entries(component.secrets)) {
-      if (value.required !== false && secrets[key] === undefined) {
-        const validation_error = new ValidationError({
-          component: component.name,
-          path: `secrets.${key}`,
-          message: `required secret '${key}' was not provided`,
-          value: value.default,
-        });
-        validation_errors.push(validation_error);
-      }
-    }
-    if (validation_errors.length > 0) {
-      throw new ValidationErrors(validation_errors, component.metadata.file);
-    }
   }
 
   validateGraph(graph: DependencyGraph): void {
@@ -254,7 +200,22 @@ export default abstract class DependencyManager {
     return [...consumers].sort();
   }
 
-  async getComponentSpecContext(graph: DependencyGraph, component_spec: ComponentSpec, all_secrets: SecretsDict, options: GraphOptions): Promise<{ component_spec: ComponentSpec, context: ComponentContext }> {
+  async getComponentSpecContext(graph: DependencyGraph, component_spec: ComponentSpec, secrets: Secrets, options: GraphOptions): Promise<{ component_spec: ComponentSpec, context: ComponentContext }> {
+    // Remove debug blocks
+    for (const service_name of Object.keys(component_spec.services || {})) {
+      delete component_spec.services![service_name].debug;
+    }
+    for (const task_name of Object.keys(component_spec.tasks || {})) {
+      delete component_spec.tasks![task_name].debug;
+    }
+
+    // Remove optional services that are disabled
+    for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
+      if (service_spec.enabled !== undefined && !service_spec.enabled) {
+        delete component_spec.services![service_name];
+      }
+    }
+
     const interpolateObject = options.validate ? interpolateObjectOrReject : interpolateObjectLoose;
 
     let context: ComponentContext = {
@@ -268,18 +229,21 @@ export default abstract class DependencyManager {
       tasks: {},
     };
 
-    const parameters = transformDictionary(transformSecretDefinitionSpec, component_spec.parameters); // TODO: 404: remove
     const component_spec_secrets = transformDictionary(transformSecretDefinitionSpec, component_spec.secrets);
-    for (const [key, value] of [...Object.entries(parameters), ...Object.entries(component_spec_secrets)]) {
+    for (const [key, value] of Object.entries(component_spec_secrets)) {
       context.secrets[key] = value.default;
     }
 
-    const secrets = this.getSecretsForComponentSpec(component_spec, all_secrets);
+    const secrets_dict = secrets.getSecretsForComponentSpec(component_spec);
     context.secrets = {
       ...context.secrets,
-      ...secrets,
+      ...secrets_dict,
     };
-    context.parameters = context.secrets; // TODO: 404: remove
+    context.parameters = context.secrets; // Deprecated
+
+    if (options.interpolate && options.validate) {
+      secrets.validateComponentSpec(component_spec);
+    }
 
     if (options.interpolate) {
       // Interpolate secrets
@@ -290,11 +254,6 @@ export default abstract class DependencyManager {
     }
 
     const component_config = transformComponentSpec(component_spec);
-
-    if (options.interpolate && options.validate) {
-      this.validateRequiredSecrets(component_config, context.secrets || {});
-    }
-
     const nodes = this.getComponentNodes(component_config);
     if (options.validate) {
       this.validateReservedNodeNames([...nodes, ...graph.nodes]);
@@ -363,14 +322,15 @@ export default abstract class DependencyManager {
 
   async getGraph(component_specs: ComponentSpec[], all_secrets: SecretsDict = {}, options?: GraphOptions): Promise<DependencyGraph> {
     options = {
-
       interpolate: true,
       validate: true,
       ...options,
     };
 
+    const secrets = new Secrets(all_secrets, this.account);
+
     if (options.validate) {
-      SecretsConfig.validate(all_secrets);
+      secrets.validate();
     }
 
     const interpolateObject = options.validate ? interpolateObjectOrReject : interpolateObjectLoose;
@@ -381,7 +341,7 @@ export default abstract class DependencyManager {
 
     const evaluated_component_specs: ComponentSpec[] = [];
     for (const raw_component_spec of component_specs) {
-      const { component_spec, context } = await this.getComponentSpecContext(graph, raw_component_spec, all_secrets, options);
+      const { component_spec, context } = await this.getComponentSpecContext(graph, raw_component_spec, secrets, options);
 
       if (options.interpolate) {
         // Interpolate interfaces/ingresses/services for dependencies
@@ -390,17 +350,8 @@ export default abstract class DependencyManager {
         context_map[component_spec.metadata.ref] = context;
       }
 
-      const parsed = ComponentVersionSlugUtils.parse(component_spec.metadata.ref);
-      if (parsed.component_account_name && parsed.component_account_name === this.account) {
-        const ref_without_account = ComponentSlugUtils.build(undefined, parsed.component_name, parsed.instance_name);
-        // Hack to support optional account prefixes
-        context_map[ref_without_account] = context_map[component_spec.metadata.ref];
-      } else if (!parsed.component_account_name && this.account) {
-        const ref_with_account = ComponentSlugUtils.build(this.account, parsed.component_name, parsed.instance_name);
-        // Hack to support optional account prefixes
-        context_map[ref_with_account] = context_map[component_spec.metadata.ref];
-      }
-
+      // Hack to support optional account prefixes in dependency name
+      context_map[`${this.account}/${component_spec.metadata.ref}`] = context_map[component_spec.metadata.ref];
       evaluated_component_specs.push(component_spec);
     }
 
@@ -440,7 +391,7 @@ export default abstract class DependencyManager {
               environment: {},
             };
           }
-          context.services[service_name].environment = service.environment;
+          context.services[service_name].environment = transformResourceSpecEnvironment(service.environment);
 
           const to = buildNodeRef(component_spec, 'services', service_name);
           const current_node = graph.getNodeByRef(to) as ServiceNode;
@@ -458,7 +409,7 @@ export default abstract class DependencyManager {
           if (!context.tasks[task_name]) {
             context.tasks[task_name] = {};
           }
-          context.tasks[task_name].environment = task.environment;
+          context.tasks[task_name].environment = transformResourceSpecEnvironment(task.environment);
         }
 
         context.dependencies = {};
@@ -485,6 +436,7 @@ export default abstract class DependencyManager {
 
       if (options.interpolate) {
         component_spec = interpolateObject(component_spec, context, { keys: false, values: true, file: component_spec.metadata.file });
+        component_spec.metadata.interpolated = true;
       }
 
       if (options.validate) {

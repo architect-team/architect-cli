@@ -1,14 +1,14 @@
 import { V1Deployment } from '@kubernetes/client-node';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { Allow, IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
-import { DeepPartial } from '../../common/utils/types';
+import { DeepPartial, WithRequired } from '../../common/utils/types';
 import { Dictionary } from '../utils/dictionary';
 import { LivenessProbeSpec, VolumeSpec } from './common-spec';
 import { ResourceSpec } from './resource-spec';
 import { transformObject } from './transform/common-transform';
 import { AnyOf, ExclusiveOr, ExpressionOr, ExpressionOrString, RequiredOr } from './utils/json-schema-annotations';
-import { Slugs } from './utils/slugs';
+import { ResourceType, Slugs } from './utils/slugs';
 
 @JSONSchema({
   description: 'An ingress exposes an interface to external network traffic through an architect-deployed gateway.',
@@ -107,7 +107,7 @@ export class KubernetesDeploySpec {
 export class DeploySpec {
   @Allow()
   @ValidateNested()
-  @Transform(transformObject(KubernetesDeploySpec))
+  @Type(() => KubernetesDeploySpec)
   kubernetes!: KubernetesDeploySpec;
 }
 
@@ -192,9 +192,22 @@ export class ServiceInterfaceSpec {
   description: 'A runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.',
 })
 export class ServiceSpec extends ResourceSpec {
+  get resource_type(): ResourceType {
+    return 'services';
+  }
+
+  @IsOptional()
+  @JSONSchema({
+    type: 'boolean',
+    description: 'Determines if the service should be running.',
+    default: true,
+  })
+  enabled?: boolean;
+
   @IsOptional()
   @ValidateNested()
-  debug?: Partial<ServiceSpec>;
+  @Type(() => ServiceSpec)
+  debug?: WithRequired<Partial<ServiceSpec>, 'resource_type'>;
 
   @IsOptional()
   @JSONSchema({
@@ -237,11 +250,11 @@ export class ServiceSpec extends ResourceSpec {
 
   @IsOptional()
   @ValidateNested()
-  @Transform(transformObject(ScalingSpec))
+  @Type(() => ScalingSpec)
   scaling?: ScalingSpec;
 
   @IsOptional()
   @ValidateNested()
-  @Transform(transformObject(DeploySpec))
+  @Type(() => DeploySpec)
   deploy?: DeploySpec;
 }

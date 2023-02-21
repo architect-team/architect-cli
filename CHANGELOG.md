@@ -1,3 +1,54 @@
+## [1.33.1](https://github.com/architect-team/architect-cli/compare/v1.33.0...v1.33.1) (2023-02-17)
+
+
+### Bug Fixes
+
+* **build:** Fixed issue with an optimization bug that saves time when two services use the same Dockerfile ([1cc9315](https://github.com/architect-team/architect-cli/commit/1cc9315f370769c3303603cda5706fbce562ccff))
+
+# [1.33.0](https://github.com/architect-team/architect-cli/compare/v1.32.1...v1.33.0) (2023-02-13)
+
+
+### Bug Fixes
+
+* **account:** Allow uppercase account name ([#822](https://github.com/architect-team/architect-cli/issues/822)) ([2b145bc](https://github.com/architect-team/architect-cli/commit/2b145bc89fe130584c7bfef0cb79d821b9e717de))
+* **cluster:** Add minimum supported version for clusters. Currently set to 1.2.2 ([a25ee6c](https://github.com/architect-team/architect-cli/commit/a25ee6cfa6620e8ae1f73e85b578a65b01ee7725))
+* **lint:** Only run linter for git on changed files ([#819](https://github.com/architect-team/architect-cli/issues/819)) ([77aa221](https://github.com/architect-team/architect-cli/commit/77aa221a5642b21da3edf1fcfb1145ca62344737))
+* **posthog:** Don't identify with an anon id ([#825](https://github.com/architect-team/architect-cli/issues/825)) ([50e207b](https://github.com/architect-team/architect-cli/commit/50e207b97185bbdb6da9309cf98b88f702462f3e))
+* **release:** Manually trigger release ([5c0696b](https://github.com/architect-team/architect-cli/commit/5c0696bb4765111b551e86320d25b4c0ccd69e03))
+* **schema:** Fix branch name for json schema ([#817](https://github.com/architect-team/architect-cli/issues/817)) ([5a10acc](https://github.com/architect-team/architect-cli/commit/5a10acc2ac39d48546d7f0b2035f97e552a34a3b))
+* **ux:** Add list alias for cmds ([#814](https://github.com/architect-team/architect-cli/issues/814)) ([224f6be](https://github.com/architect-team/architect-cli/commit/224f6be2625c53c050bc88f6b02e16a85cec22b2))
+
+
+### Features
+
+* **analytics:** added posthog ([#823](https://github.com/architect-team/architect-cli/issues/823)) ([7cd9e3f](https://github.com/architect-team/architect-cli/commit/7cd9e3f834160c29d70b9f181e91b57e8c274ef7))
+* **build:** Add buildpack as an experimental feature ([fa7995f](https://github.com/architect-team/architect-cli/commit/fa7995fb17e4edc66ffea9eddf43f5015bed0890))
+* **cli:** Added command to log ingress URLs associated with an environment ([#827](https://github.com/architect-team/architect-cli/issues/827)) ([24cd029](https://github.com/architect-team/architect-cli/commit/24cd029cc3ab526898716b886ec72214e81411d0))
+
+## [1.32.1](https://github.com/architect-team/architect-cli/compare/v1.32.0...v1.32.1) (2023-01-23)
+
+
+### Bug Fixes
+
+* **register:** Don't register optional services ([58efbd5](https://github.com/architect-team/architect-cli/commit/58efbd519290e2e5ff04dd2af79527adde073714))
+
+# [1.32.0](https://github.com/architect-team/architect-cli/compare/v1.31.1...v1.32.0) (2023-01-20)
+
+
+### Bug Fixes
+
+* **auth:** Add timeout to getToken ([#799](https://github.com/architect-team/architect-cli/issues/799)) ([5e5963b](https://github.com/architect-team/architect-cli/commit/5e5963be3f18d9ba5732e099365ff6a1e30c5548))
+* **clusters:** Incorrect cluster command when warning about deprecated platform command ([#796](https://github.com/architect-team/architect-cli/issues/796)) ([3e5a74a](https://github.com/architect-team/architect-cli/commit/3e5a74a7711c35e22a78e5597a51ec28838deb2b))
+* **dev:** Improve error message when docker build fails and prevent sending error reports ([#794](https://github.com/architect-team/architect-cli/issues/794)) ([a769260](https://github.com/architect-team/architect-cli/commit/a76926088848e98bcd2238b8538ad91c66db05ca))
+* **register:** Add new accept header used by buildx 0.10.0 ([#803](https://github.com/architect-team/architect-cli/issues/803)) ([84706f4](https://github.com/architect-team/architect-cli/commit/84706f4f2a1b4a48f49f66525b853684599fd8da))
+* **validate:** Upgrade class-transformer and class-validator ([#797](https://github.com/architect-team/architect-cli/issues/797)) ([647f880](https://github.com/architect-team/architect-cli/commit/647f880dcb27f3dd5a976eec30f3b49e2ff2e0a3))
+* **volumes:** Disable volumes for remote deploys ([#800](https://github.com/architect-team/architect-cli/issues/800)) ([68cf984](https://github.com/architect-team/architect-cli/commit/68cf984c2a4b28fc69a3e80e48f11de4cf87c846))
+
+
+### Features
+
+* **dev:** Add support for optional services ([#801](https://github.com/architect-team/architect-cli/issues/801)) ([25d229b](https://github.com/architect-team/architect-cli/commit/25d229b43e17a16cd89c5d24eae4e700fcae4d08))
+
 ## [1.31.1](https://github.com/architect-team/architect-cli/compare/v1.31.0...v1.31.1) (2023-01-05)
 
 

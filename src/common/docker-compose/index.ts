@@ -10,9 +10,10 @@ import path from 'path';
 import untildify from 'untildify';
 import { ArchitectError, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
-import { DOCKER_IMAGE_LABEL } from '../docker/buildx.utils';
+import { DOCKER_COMPONENT_LABEL, DOCKER_IMAGE_LABEL } from '../docker/buildx.utils';
 import { docker, restart } from '../docker/cmd';
 import { DockerHelper, RequiresDocker } from '../docker/helper';
+import BuildPackUtils from '../utils/buildpack';
 import PortUtil from '../utils/port';
 import { DockerComposeProject, DockerComposeProjectWithConfig } from './project';
 import DockerComposeTemplate, { DockerInspect, DockerService, DockerServiceBuild } from './template';
@@ -172,6 +173,8 @@ export class DockerComposeUtils {
     for (const node of service_task_nodes) {
       if (node.is_external) continue;
 
+      const use_build_pack = BuildPackUtils.useBuildPack(node.local_path, node.config.build);
+
       const ports = [];
       for (const port of node.ports) {
         ports.push(`${available_ports.shift()}:${port}`);
@@ -183,9 +186,9 @@ export class DockerComposeUtils {
       for (const [var_key, var_value] of Object.entries(node.config.environment)) {
         formatted_environment_variables[var_key] = var_value !== null ? var_value.replace(/\$/g, '$$$') : null; // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
       }
-      const service = {
+      const service: DockerService = {
         environment: formatted_environment_variables,
-      } as DockerService;
+      };
 
       if (ports.length > 0) {
         service.ports = ports;
@@ -197,7 +200,7 @@ export class DockerComposeUtils {
 
       if (node.config.image) service.image = node.config.image;
 
-      if (node.config.command?.length) { // docker-compose expects environment variables used in commands/entrypoints to be prefixed with $$, not $ in order to use variables local to the container
+      if (node.config.command?.length && !use_build_pack) { // docker-compose expects environment variables used in commands/entrypoints to be prefixed with $$, not $ in order to use variables local to the container
         service.command = node.config.command.map(command_part => command_part.replace(/\$/g, '$$$$'));
       }
       if (node.config.entrypoint?.length) {
@@ -257,9 +260,8 @@ export class DockerComposeUtils {
         service.depends_on = depends_on;
       }
 
-      if (node.is_local) {
-        const component_path = fs.lstatSync(node.local_path).isFile() ? path.dirname(node.local_path) : node.local_path;
-        if (!node.config.image) {
+      if (node.local_path) {
+        if (!node.config.image && !use_build_pack) {
           const build = node.config.build || {};
 
           if (!service.build) {
@@ -267,13 +269,13 @@ export class DockerComposeUtils {
           }
 
           if (build.context) {
-            service.build.context = path.resolve(component_path, untildify(build.context));
+            service.build.context = path.resolve(node.local_path, untildify(build.context));
             if (!fs.existsSync(service.build.context)) {
               throw new Error(`The path ${service.build.context} used for the build context of service ${node.config.name} does not exist.`);
             }
           } else {
             // Fix bug with buildx using tmp dir
-            service.build.context = path.resolve(component_path);
+            service.build.context = path.resolve(node.local_path);
           }
 
           const args = [];
@@ -306,7 +308,7 @@ export class DockerComposeUtils {
 
             let volume;
             if (spec.host_path) {
-              volume = `${path.resolve(component_path, untildify(spec.host_path))}:${service_volume}${spec.readonly ? ':ro' : ''}`;
+              volume = `${path.resolve(node.local_path, untildify(spec.host_path))}:${service_volume}${spec.readonly ? ':ro' : ''}`;
             } else if (spec.key) {
               compose.volumes[spec.key] = { external: true };
               volume = `${spec.key}:${service_volume}${spec.readonly ? ':ro' : ''}`;
@@ -328,34 +330,36 @@ export class DockerComposeUtils {
         service.deploy.replicas = 0; // set all tasks scale to 0 so they don't start but can be optionally invoked later
       }
 
-      if (service.build) {
-        if (!service.image) {
-          // eslint-disable-next-line unicorn/consistent-destructuring
-          service.image = options.getImage ? options.getImage(node.config.metadata.ref) : node.ref;
-        }
+      if (!service.image) {
+        // eslint-disable-next-line unicorn/consistent-destructuring
+        service.image = options.getImage ? options.getImage(node.config.metadata.ref) : node.ref;
+      }
 
-        // Optimization to check if multiple services share the same dockerfile/build config and avoid building unnecessarily
-        if (DockerHelper.composeVersion('>=2.6.0') && DockerHelper.buildXVersion('>=0.9.1')) { // docker-compose build.tags is only supported above these versions
-          const build_hash = hash(service.build);
-          const existing_service = seen_build_map[build_hash];
-          if (!existing_service) {
-            seen_build_map[build_hash] = node.ref;
-            service.build.tags = [service.image];
-          } else {
-            const existing_build = compose.services[existing_service].build as DockerServiceBuild;
-            if (!existing_build.tags) existing_build.tags = [];
-            existing_build.tags.push(service.image);
+      // Optimization to check if multiple services share the same dockerfile/build config and avoid building unnecessarily
+      if (service.build && DockerHelper.composeVersion('>=2.6.0') && DockerHelper.buildXVersion('>=0.9.1')) { // docker-compose build.tags is only supported above these versions
+        const build_hash = hash(service.build);
+        const existing_service = seen_build_map[build_hash];
+        if (!existing_service) {
+          seen_build_map[build_hash] = node.ref;
+          service.build.tags = [service.image];
+        } else {
+          const existing_build = compose.services[existing_service].build as DockerServiceBuild;
+          if (!existing_build.tags) existing_build.tags = [];
+          existing_build.tags.push(service.image);
 
-            delete service.build;
-          }
+          delete service.build;
         }
       }
 
       if (service.build) {
+        // Add labels to enrich image filtering
         if (!service.build.labels) {
           service.build.labels = [];
         }
         service.build.labels.push(DOCKER_IMAGE_LABEL);
+
+        const { component_name } = ResourceSlugUtils.parse(node.config.metadata.ref);
+        service.build.labels.push(`${DOCKER_COMPONENT_LABEL}=${component_name}`);
       }
 
       compose.services[node.ref] = service;

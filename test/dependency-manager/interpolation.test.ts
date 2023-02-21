@@ -43,7 +43,7 @@ describe('interpolation spec v1', () => {
         interfaces:
           main: 3000
         environment:
-          NULL: null
+          'NULL':
           NULL2: \${{ secrets.null_required }}
           NULL3: \${{ secrets.null_not_required }}
           NULL4: \${{ secrets.null_not_required_default }}
@@ -174,7 +174,8 @@ describe('interpolation spec v1', () => {
           'build': {
             'context': path.resolve('/stack'),
             "labels": [
-              "architect.io"
+              "architect.io",
+              "architect.component=web"
             ],
           },
           image: web_ref,
@@ -189,7 +190,8 @@ describe('interpolation spec v1', () => {
           'build': {
             'context': path.resolve('/stack'),
             "labels": [
-              "architect.io"
+              "architect.io",
+              "architect.component=worker"
             ],
           },
           image: worker_ref,
@@ -243,7 +245,8 @@ describe('interpolation spec v1', () => {
       'build': {
         'context': path.resolve('/stack'),
         "labels": [
-          "architect.io"
+          "architect.io",
+          "architect.component=web"
         ],
       },
       image: web_ref
@@ -258,7 +261,8 @@ describe('interpolation spec v1', () => {
       'build': {
         'context': path.resolve('/stack'),
         'labels': [
-          'architect.io'
+          'architect.io',
+          "architect.component=worker"
         ],
       },
       image: worker_ref,

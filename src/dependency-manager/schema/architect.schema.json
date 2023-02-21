@@ -1,13 +1,13 @@
 {
-  "$id": "https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json",
+  "$id": "https://raw.githubusercontent.com/architect-team/architect-cli/main/src/dependency-manager/schema/architect.schema.json",
   "title": "Schema for architect.yml. See: https://docs.architect.io/reference/architect-yml",
   "$schema": "http://json-schema.org/draft-07/schema",
   "properties": {
     "name": {
       "type": "string",
-      "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
-      "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
-      "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+      "pattern": "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+      "errorMessage": "must contain only lower alphanumeric and single hyphens in the middle; max length 32",
+      "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens in the middle; max length 32"
     },
     "description": {
       "type": "string",
@@ -177,7 +177,7 @@
                 }
               },
               "errorMessage": {
-                "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
               },
               "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
               "additionalProperties": false
@@ -186,7 +186,7 @@
         }
       },
       "errorMessage": {
-        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+        "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
       },
       "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
       "additionalProperties": false
@@ -215,7 +215,7 @@
                 }
               },
               "errorMessage": {
-                "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
               },
               "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
               "additionalProperties": false
@@ -224,7 +224,7 @@
         }
       },
       "errorMessage": {
-        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+        "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
       },
       "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
       "additionalProperties": false
@@ -232,13 +232,13 @@
     "dependencies": {
       "type": "object",
       "patternProperties": {
-        "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+        "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
           "type": "string",
           "pattern": "^[\\w][\\w\\.-]{0,127}$"
         }
       },
       "errorMessage": {
-        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+        "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
       },
       "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
       "additionalProperties": false
@@ -273,7 +273,7 @@
                 }
               },
               "errorMessage": {
-                "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
               },
               "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
               "deprecated": true,
@@ -283,7 +283,7 @@
         }
       },
       "errorMessage": {
-        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+        "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
       },
       "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
       "deprecated": true,
@@ -311,9 +311,9 @@
           "properties": {
             "name": {
               "type": "string",
-              "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
-              "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
-              "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+              "pattern": "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+              "errorMessage": "must contain only lower alphanumeric and single hyphens in the middle; max length 32",
+              "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens in the middle; max length 32"
             },
             "description": {
               "type": "string",
@@ -483,7 +483,7 @@
                         }
                       },
                       "errorMessage": {
-                        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                        "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                       },
                       "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
                       "additionalProperties": false
@@ -492,7 +492,7 @@
                 }
               },
               "errorMessage": {
-                "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
               },
               "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
               "additionalProperties": false
@@ -521,7 +521,7 @@
                         }
                       },
                       "errorMessage": {
-                        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                        "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                       },
                       "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
                       "additionalProperties": false
@@ -530,7 +530,7 @@
                 }
               },
               "errorMessage": {
-                "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
               },
               "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
               "additionalProperties": false
@@ -538,13 +538,13 @@
             "dependencies": {
               "type": "object",
               "patternProperties": {
-                "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+                "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
                   "type": "string",
                   "pattern": "^[\\w][\\w\\.-]{0,127}$"
                 }
               },
               "errorMessage": {
-                "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
               },
               "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
               "additionalProperties": false
@@ -579,7 +579,7 @@
                         }
                       },
                       "errorMessage": {
-                        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                        "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                       },
                       "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
                       "deprecated": true,
@@ -589,7 +589,7 @@
                 }
               },
               "errorMessage": {
-                "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
               },
               "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
               "deprecated": true,
@@ -616,6 +616,58 @@
     }
   },
   "definitions": {
+    "SecretDefinitionSpec": {
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Denotes whether the secret is required."
+        },
+        "description": {
+          "type": "string",
+          "description": "A human-friendly description of the secret."
+        },
+        "default": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Sets a default value for the secret if one is not provided"
+        }
+      },
+      "type": "object",
+      "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#secretdefinitionspec"
+      }
+    },
     "LivenessProbeSpec": {
       "properties": {
         "success_threshold": {
@@ -1165,6 +1217,10 @@
           ],
           "description": "The path to the directory containing the source code relative to the `architect.yml` file."
         },
+        "buildpack": {
+          "type": "boolean",
+          "description": "Option to use buildpack to build an image."
+        },
         "args": {
           "type": "object",
           "patternProperties": {
@@ -1195,7 +1251,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "Build args to be passed into `docker build`.",
                   "additionalProperties": false
@@ -1204,7 +1260,7 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "Build args to be passed into `docker build`.",
           "additionalProperties": false
@@ -1243,6 +1299,16 @@
       },
       "type": "object",
       "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
+      "errorMessage": {
+        "not": "Buildpack and Dockerfile cannot be used at the same time"
+      },
+      "not": {
+        "type": "object",
+        "required": [
+          "buildpack",
+          "dockerfile"
+        ]
+      },
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://docs.architect.io/reference/architect-yml#buildspec"
@@ -1266,6 +1332,10 @@
                     }
                   ],
                   "description": "The path to the directory containing the source code relative to the `architect.yml` file."
+                },
+                "buildpack": {
+                  "type": "boolean",
+                  "description": "Option to use buildpack to build an image."
                 },
                 "args": {
                   "type": "object",
@@ -1297,7 +1367,7 @@
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
                           "description": "Build args to be passed into `docker build`.",
                           "additionalProperties": false
@@ -1306,7 +1376,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "Build args to be passed into `docker build`.",
                   "additionalProperties": false
@@ -1345,6 +1415,16 @@
               },
               "type": "object",
               "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
+              "errorMessage": {
+                "not": "Buildpack and Dockerfile cannot be used at the same time"
+              },
+              "not": {
+                "type": "object",
+                "required": [
+                  "buildpack",
+                  "dockerfile"
+                ]
+              },
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://docs.architect.io/reference/architect-yml#buildspec"
@@ -2221,6 +2301,11 @@
     },
     "ServiceSpec": {
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Determines if the service should be running.",
+          "default": true
+        },
         "debug": {
           "$ref": "#/definitions/_DebugServiceSpec"
         },
@@ -2276,7 +2361,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.",
                   "additionalProperties": false
@@ -2285,7 +2370,7 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.",
           "additionalProperties": false
@@ -2323,7 +2408,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
                   "additionalProperties": false
@@ -2332,7 +2417,7 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
           "additionalProperties": false
@@ -2450,9 +2535,6 @@
                   "type": "number"
                 },
                 {
-                  "type": "object"
-                },
-                {
                   "type": "string"
                 }
               ]
@@ -2477,18 +2559,15 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -2498,9 +2577,9 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
-          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
           "externalDocs": {
             "url": "https://docs.architect.io/components/services/#local-configuration"
           },
@@ -2613,7 +2692,7 @@
         "reserved_name": {
           "type": "string",
           "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
-          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+          "errorMessage": "must contain only lower alphanumeric and single hyphens in the middle; max length 32",
           "description": "A specific service name which will override the service name specified in the component."
         }
       },
@@ -2628,6 +2707,11 @@
           "anyOf": [
             {
               "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Determines if the service should be running.",
+                  "default": true
+                },
                 "debug": {
                   "$ref": "#/definitions/_DebugServiceSpec"
                 },
@@ -2683,7 +2767,7 @@
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
                           "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.",
                           "additionalProperties": false
@@ -2692,7 +2776,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.",
                   "additionalProperties": false
@@ -2730,7 +2814,7 @@
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
                           "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
                           "additionalProperties": false
@@ -2739,7 +2823,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
                   "additionalProperties": false
@@ -2857,9 +2941,6 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
@@ -2884,18 +2965,15 @@
                                   "type": "number"
                                 },
                                 {
-                                  "type": "object"
-                                },
-                                {
                                   "type": "string"
                                 }
                               ]
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
-                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                           "externalDocs": {
                             "url": "https://docs.architect.io/components/services/#local-configuration"
                           },
@@ -2905,9 +2983,9 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -3020,7 +3098,7 @@
                 "reserved_name": {
                   "type": "string",
                   "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
-                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens in the middle; max length 32",
                   "description": "A specific service name which will override the service name specified in the component."
                 }
               },
@@ -3151,9 +3229,6 @@
                   "type": "number"
                 },
                 {
-                  "type": "object"
-                },
-                {
                   "type": "string"
                 }
               ]
@@ -3178,18 +3253,15 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -3199,9 +3271,9 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
-          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
           "externalDocs": {
             "url": "https://docs.architect.io/components/services/#local-configuration"
           },
@@ -3314,7 +3386,7 @@
         "reserved_name": {
           "type": "string",
           "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
-          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+          "errorMessage": "must contain only lower alphanumeric and single hyphens in the middle; max length 32",
           "description": "A specific service name which will override the service name specified in the component."
         }
       },
@@ -3442,9 +3514,6 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
@@ -3469,18 +3538,15 @@
                                   "type": "number"
                                 },
                                 {
-                                  "type": "object"
-                                },
-                                {
                                   "type": "string"
                                 }
                               ]
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
-                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                           "externalDocs": {
                             "url": "https://docs.architect.io/components/services/#local-configuration"
                           },
@@ -3490,9 +3556,9 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -3605,7 +3671,7 @@
                 "reserved_name": {
                   "type": "string",
                   "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
-                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens in the middle; max length 32",
                   "description": "A specific service name which will override the service name specified in the component."
                 }
               },
@@ -3856,58 +3922,6 @@
         }
       }
     },
-    "SecretDefinitionSpec": {
-      "properties": {
-        "required": {
-          "type": "boolean",
-          "description": "Denotes whether the secret is required."
-        },
-        "description": {
-          "type": "string",
-          "description": "A human-friendly description of the secret."
-        },
-        "default": {
-          "anyOf": [
-            {
-              "anyOf": [
-                {
-                  "type": "array"
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "object"
-                },
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-              }
-            }
-          ],
-          "description": "Sets a default value for the secret if one is not provided"
-        }
-      },
-      "type": "object",
-      "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://docs.architect.io/reference/architect-yml#secretdefinitionspec"
-      }
-    },
     "OutputDefinitionSpec": {
       "properties": {
         "description": {
@@ -3959,9 +3973,9 @@
       "properties": {
         "name": {
           "type": "string",
-          "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
-          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
-          "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+          "pattern": "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+          "errorMessage": "must contain only lower alphanumeric and single hyphens in the middle; max length 32",
+          "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens in the middle; max length 32"
         },
         "description": {
           "type": "string",
@@ -4131,7 +4145,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
                   "additionalProperties": false
@@ -4140,7 +4154,7 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
           "additionalProperties": false
@@ -4169,7 +4183,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
                   "additionalProperties": false
@@ -4178,7 +4192,7 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
           "additionalProperties": false
@@ -4186,13 +4200,13 @@
         "dependencies": {
           "type": "object",
           "patternProperties": {
-            "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+            "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
               "type": "string",
               "pattern": "^[\\w][\\w\\.-]{0,127}$"
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
           "additionalProperties": false
@@ -4227,7 +4241,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
                   "deprecated": true,
@@ -4237,7 +4251,7 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
           "deprecated": true,
@@ -4265,9 +4279,9 @@
               "properties": {
                 "name": {
                   "type": "string",
-                  "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
-                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
-                  "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                  "pattern": "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens in the middle; max length 32",
+                  "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                 },
                 "description": {
                   "type": "string",
@@ -4437,7 +4451,7 @@
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
                           "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
                           "additionalProperties": false
@@ -4446,7 +4460,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
                   "additionalProperties": false
@@ -4475,7 +4489,7 @@
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
                           "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
                           "additionalProperties": false
@@ -4484,7 +4498,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
                   "additionalProperties": false
@@ -4492,13 +4506,13 @@
                 "dependencies": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+                    "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
                       "type": "string",
                       "pattern": "^[\\w][\\w\\.-]{0,127}$"
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
                   "additionalProperties": false
@@ -4533,7 +4547,7 @@
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
                           "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
                           "deprecated": true,
@@ -4543,7 +4557,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
                   "deprecated": true,
@@ -4563,6 +4577,117 @@
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://docs.architect.io/reference/architect-yml#componentspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
+    "_DebugSecretDefinitionSpec": {
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Denotes whether the secret is required."
+        },
+        "description": {
+          "type": "string",
+          "description": "A human-friendly description of the secret."
+        },
+        "default": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Sets a default value for the secret if one is not provided"
+        }
+      },
+      "type": "object",
+      "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#secretdefinitionspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "required": {
+                  "type": "boolean",
+                  "description": "Denotes whether the secret is required."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "A human-friendly description of the secret."
+                },
+                "default": {
+                  "anyOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Sets a default value for the secret if one is not provided"
+                }
+              },
+              "type": "object",
+              "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#secretdefinitionspec"
               },
               "patternProperties": {}
             }
@@ -5045,6 +5170,10 @@
           ],
           "description": "The path to the directory containing the source code relative to the `architect.yml` file."
         },
+        "buildpack": {
+          "type": "boolean",
+          "description": "Option to use buildpack to build an image."
+        },
         "args": {
           "type": "object",
           "patternProperties": {
@@ -5075,7 +5204,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "Build args to be passed into `docker build`.",
                   "additionalProperties": false
@@ -5084,7 +5213,7 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "Build args to be passed into `docker build`.",
           "additionalProperties": false
@@ -5123,6 +5252,16 @@
       },
       "type": "object",
       "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
+      "errorMessage": {
+        "not": "Buildpack and Dockerfile cannot be used at the same time"
+      },
+      "not": {
+        "type": "object",
+        "required": [
+          "buildpack",
+          "dockerfile"
+        ]
+      },
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://docs.architect.io/reference/architect-yml#buildspec"
@@ -5146,6 +5285,10 @@
                     }
                   ],
                   "description": "The path to the directory containing the source code relative to the `architect.yml` file."
+                },
+                "buildpack": {
+                  "type": "boolean",
+                  "description": "Option to use buildpack to build an image."
                 },
                 "args": {
                   "type": "object",
@@ -5177,7 +5320,7 @@
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
                           "description": "Build args to be passed into `docker build`.",
                           "additionalProperties": false
@@ -5186,7 +5329,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "Build args to be passed into `docker build`.",
                   "additionalProperties": false
@@ -5225,6 +5368,16 @@
               },
               "type": "object",
               "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
+              "errorMessage": {
+                "not": "Buildpack and Dockerfile cannot be used at the same time"
+              },
+              "not": {
+                "type": "object",
+                "required": [
+                  "buildpack",
+                  "dockerfile"
+                ]
+              },
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://docs.architect.io/reference/architect-yml#buildspec"
@@ -6017,6 +6170,11 @@
     },
     "_DebugServiceSpec": {
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Determines if the service should be running.",
+          "default": true
+        },
         "interfaces": {
           "type": "object",
           "patternProperties": {
@@ -6069,7 +6227,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.",
                   "additionalProperties": false
@@ -6078,7 +6236,7 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.",
           "additionalProperties": false
@@ -6116,7 +6274,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
                   "additionalProperties": false
@@ -6125,7 +6283,7 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
           "additionalProperties": false
@@ -6243,9 +6401,6 @@
                   "type": "number"
                 },
                 {
-                  "type": "object"
-                },
-                {
                   "type": "string"
                 }
               ]
@@ -6270,18 +6425,15 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -6291,9 +6443,9 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
-          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
           "externalDocs": {
             "url": "https://docs.architect.io/components/services/#local-configuration"
           },
@@ -6406,7 +6558,7 @@
         "reserved_name": {
           "type": "string",
           "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
-          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+          "errorMessage": "must contain only lower alphanumeric and single hyphens in the middle; max length 32",
           "description": "A specific service name which will override the service name specified in the component."
         }
       },
@@ -6421,6 +6573,11 @@
           "anyOf": [
             {
               "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Determines if the service should be running.",
+                  "default": true
+                },
                 "interfaces": {
                   "type": "object",
                   "patternProperties": {
@@ -6473,7 +6630,7 @@
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
                           "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.",
                           "additionalProperties": false
@@ -6482,7 +6639,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.",
                   "additionalProperties": false
@@ -6520,7 +6677,7 @@
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
                           "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
                           "additionalProperties": false
@@ -6529,7 +6686,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
                   "additionalProperties": false
@@ -6647,9 +6804,6 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
@@ -6674,18 +6828,15 @@
                                   "type": "number"
                                 },
                                 {
-                                  "type": "object"
-                                },
-                                {
                                   "type": "string"
                                 }
                               ]
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
-                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                           "externalDocs": {
                             "url": "https://docs.architect.io/components/services/#local-configuration"
                           },
@@ -6695,9 +6846,9 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -6810,7 +6961,7 @@
                 "reserved_name": {
                   "type": "string",
                   "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
-                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens in the middle; max length 32",
                   "description": "A specific service name which will override the service name specified in the component."
                 }
               },
@@ -6938,9 +7089,6 @@
                   "type": "number"
                 },
                 {
-                  "type": "object"
-                },
-                {
                   "type": "string"
                 }
               ]
@@ -6965,18 +7113,15 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -6986,9 +7131,9 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
-          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
           "externalDocs": {
             "url": "https://docs.architect.io/components/services/#local-configuration"
           },
@@ -7101,7 +7246,7 @@
         "reserved_name": {
           "type": "string",
           "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
-          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+          "errorMessage": "must contain only lower alphanumeric and single hyphens in the middle; max length 32",
           "description": "A specific service name which will override the service name specified in the component."
         }
       },
@@ -7226,9 +7371,6 @@
                           "type": "number"
                         },
                         {
-                          "type": "object"
-                        },
-                        {
                           "type": "string"
                         }
                       ]
@@ -7253,18 +7395,15 @@
                                   "type": "number"
                                 },
                                 {
-                                  "type": "object"
-                                },
-                                {
                                   "type": "string"
                                 }
                               ]
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
-                          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                          "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                           "externalDocs": {
                             "url": "https://docs.architect.io/components/services/#local-configuration"
                           },
@@ -7274,9 +7413,9 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
-                  "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ secrets.* }} or an architect-injected reference so they vary across environments.",
+                  "description": "A set of key-value pairs or secret definitions that describes environment variables and their values.",
                   "externalDocs": {
                     "url": "https://docs.architect.io/components/services/#local-configuration"
                   },
@@ -7389,7 +7528,7 @@
                 "reserved_name": {
                   "type": "string",
                   "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
-                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens in the middle; max length 32",
                   "description": "A specific service name which will override the service name specified in the component."
                 }
               },
@@ -7634,117 +7773,6 @@
         }
       }
     },
-    "_DebugSecretDefinitionSpec": {
-      "properties": {
-        "required": {
-          "type": "boolean",
-          "description": "Denotes whether the secret is required."
-        },
-        "description": {
-          "type": "string",
-          "description": "A human-friendly description of the secret."
-        },
-        "default": {
-          "anyOf": [
-            {
-              "anyOf": [
-                {
-                  "type": "array"
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "object"
-                },
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-              }
-            }
-          ],
-          "description": "Sets a default value for the secret if one is not provided"
-        }
-      },
-      "type": "object",
-      "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://docs.architect.io/reference/architect-yml#secretdefinitionspec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "required": {
-                  "type": "boolean",
-                  "description": "Denotes whether the secret is required."
-                },
-                "description": {
-                  "type": "string",
-                  "description": "A human-friendly description of the secret."
-                },
-                "default": {
-                  "anyOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
-                      }
-                    }
-                  ],
-                  "description": "Sets a default value for the secret if one is not provided"
-                }
-              },
-              "type": "object",
-              "description": "Components can define configurable secrets that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://docs.architect.io/reference/architect-yml#secretdefinitionspec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
     "_DebugOutputDefinitionSpec": {
       "properties": {
         "description": {
@@ -7790,9 +7818,9 @@
       "properties": {
         "name": {
           "type": "string",
-          "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
-          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
-          "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+          "pattern": "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+          "errorMessage": "must contain only lower alphanumeric and single hyphens in the middle; max length 32",
+          "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens in the middle; max length 32"
         },
         "description": {
           "type": "string",
@@ -7962,7 +7990,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
                   "additionalProperties": false
@@ -7971,7 +7999,7 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
           "additionalProperties": false
@@ -8000,7 +8028,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
                   "additionalProperties": false
@@ -8009,7 +8037,7 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
           "additionalProperties": false
@@ -8017,13 +8045,13 @@
         "dependencies": {
           "type": "object",
           "patternProperties": {
-            "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+            "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
               "type": "string",
               "pattern": "^[\\w][\\w\\.-]{0,127}$"
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
           "additionalProperties": false
@@ -8058,7 +8086,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
                   "deprecated": true,
@@ -8068,7 +8096,7 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
           "deprecated": true,
@@ -8093,9 +8121,9 @@
               "properties": {
                 "name": {
                   "type": "string",
-                  "pattern": "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
-                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
-                  "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                  "pattern": "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$",
+                  "errorMessage": "must contain only lower alphanumeric and single hyphens in the middle; max length 32",
+                  "description": "Globally unique friendly reference to the component. must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                 },
                 "description": {
                   "type": "string",
@@ -8265,7 +8293,7 @@
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
                           "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
                           "additionalProperties": false
@@ -8274,7 +8302,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
                   "additionalProperties": false
@@ -8303,7 +8331,7 @@
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
                           "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
                           "additionalProperties": false
@@ -8312,7 +8340,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
                   "additionalProperties": false
@@ -8320,13 +8348,13 @@
                 "dependencies": {
                   "type": "object",
                   "patternProperties": {
-                    "^(?:(?<component_account_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
+                    "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
                       "type": "string",
                       "pattern": "^[\\w][\\w\\.-]{0,127}$"
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
                   "additionalProperties": false
@@ -8361,7 +8389,7 @@
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
                           "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
                           "deprecated": true,
@@ -8371,7 +8399,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
                   "deprecated": true,

@@ -63,9 +63,9 @@ const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: de
 function specMerge(key: string, options?: Options): ((x: any, y: any) => any) | undefined {
   return (x, y) => {
     if (!(x instanceof Object) && y instanceof Object && y.constructor?.merge_key) {
-      return { [y.constructor.merge_key]: x, ...y };
+      return deepmerge({ [y.constructor.merge_key]: x }, y, { arrayMerge: overwriteMerge, customMerge: specMerge });
     } else if (x instanceof Object && !(y instanceof Object) && x.constructor?.merge_key) {
-      return { ...x, [x.constructor.merge_key]: y };
+      return deepmerge(x, { [x.constructor.merge_key]: y }, { arrayMerge: overwriteMerge, customMerge: specMerge });
     } else {
       return deepmerge(x, y, { arrayMerge: overwriteMerge, customMerge: specMerge });
     }
