@@ -4,7 +4,7 @@ import path from 'path';
 import sinon from 'sinon';
 import untildify from 'untildify';
 import { Slugs } from '../../src/dependency-manager/spec/utils/slugs';
-import { getMockComponentContextPath, getMockComponentFilePath, mockArchitectAuth } from '../utils/mocks';
+import { getMockComponentFilePath, mockArchitectAuth } from '../utils/mocks';
 
 describe('architect validate component', function () {
   const subdomain_token_to_config_yaml_string = (subdomain_token: string): string =>
@@ -103,6 +103,7 @@ interfaces:
       mockArchitectAuth()
         .stub(fs, 'readFileSync', sinon.fake.returns(subdomain_token_to_config_yaml_string(invalid_subdomain_token)))
         .stub(fs, 'lstatSync', sinon.fake.returns({
+          isFile: () => true,
           isDirectory: () => false,
         }))
         .stdout({ print })
@@ -132,6 +133,7 @@ interfaces:
       mockArchitectAuth()
         .stub(fs, 'readFileSync', sinon.fake.returns(subdomain_token_to_config_yaml_string(valid_subdomain_token)))
         .stub(fs, 'lstatSync', sinon.fake.returns({
+          isFile: () => true,
           isDirectory: () => false,
         }))
         .stdout({ print })

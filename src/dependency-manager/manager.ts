@@ -37,7 +37,7 @@ export default abstract class DependencyManager {
         component_ref: component.metadata.ref,
         service_name,
         config: service_config,
-        local_path: component.metadata.file?.path,
+        local_path: component.metadata.file?.folder,
         artifact_image: component.artifact_image,
       });
       nodes.push(node);
@@ -48,7 +48,7 @@ export default abstract class DependencyManager {
       const node = new TaskNode({
         ref: buildNodeRef(component, 'tasks', task_name),
         config: task_config,
-        local_path: component.metadata.file?.path,
+        local_path: component.metadata.file?.folder,
       });
       nodes.push(node);
     }

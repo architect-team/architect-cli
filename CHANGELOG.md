@@ -1,3 +1,10 @@
+## [1.33.1](https://github.com/architect-team/architect-cli/compare/v1.33.0...v1.33.1) (2023-02-17)
+
+
+### Bug Fixes
+
+* **build:** Fixed issue with an optimization bug that saves time when two services use the same Dockerfile ([1cc9315](https://github.com/architect-team/architect-cli/commit/1cc9315f370769c3303603cda5706fbce562ccff))
+
 # [1.33.0](https://github.com/architect-team/architect-cli/compare/v1.32.1...v1.33.0) (2023-02-13)
 
 
