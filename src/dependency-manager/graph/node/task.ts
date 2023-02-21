@@ -13,14 +13,14 @@ export class TaskNode extends DependencyNode implements TaskNodeOptions {
   config!: TaskConfig;
 
   ref!: string;
-  local_path!: string;
+  local_path?: string;
 
   constructor(options: TaskNodeOptions & DependencyNodeOptions) {
     super();
     if (options) {
       this.ref = options.ref;
       this.config = options.config;
-      this.local_path = options.local_path || '';
+      this.local_path = options.local_path;
     }
   }
 
@@ -34,9 +34,5 @@ export class TaskNode extends DependencyNode implements TaskNodeOptions {
 
   get is_external(): boolean {
     return false;
-  }
-
-  get is_local(): boolean {
-    return this.local_path !== '';
   }
 }

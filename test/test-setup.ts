@@ -4,6 +4,8 @@ import nock from 'nock';
 import 'reflect-metadata';
 import sinon from 'sinon';
 import CredentialManager from '../src/app-config/credentials';
+import { DockerUtils } from '../src/common/docker';
+import PluginManager from '../src/common/plugins/plugin-manager';
 import PortUtil from '../src/common/utils/port';
 import PromptUtils from '../src/common/utils/prompt-utils';
 
@@ -27,6 +29,12 @@ exports.mochaHooks = {
   beforeEach(done: any) {
     nock.disableNetConnect();
     nock('localhost').get('/v1/auth/approle/login').reply(200, { auth: {} });
+
+    sinon.replace(DockerUtils, 'doesDockerfileExist', () => true);
+
+    sinon.replace(PluginManager, 'getPlugin', async () => ({
+      build: () => { },
+    } as any))
 
     sinon.replace(CredentialManager.prototype, 'get', async (service: string) => {
       return {

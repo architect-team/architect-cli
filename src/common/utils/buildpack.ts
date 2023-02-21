@@ -1,11 +1,23 @@
 import chalk from 'chalk';
 import * as fs from 'fs-extra';
 import path from 'path';
+import { ServiceNode, TaskNode } from '../..';
+import { BuildConfig } from '../../dependency-manager/config/resource-config';
+import { DependencyGraphMutable } from '../../dependency-manager/graph';
 import { ArchitectError } from '../../dependency-manager/utils/errors';
+import { DockerUtils } from '../docker';
 import BuildpackPlugin from '../plugins/buildpack-plugin';
 import PluginManager from '../plugins/plugin-manager';
 
 export default class BuildPackUtils {
+  public static useBuildPack(local_path?: string, build?: BuildConfig): boolean {
+    if (!local_path || !build) {
+      return false;
+    }
+    const dockerfile_exist = DockerUtils.doesDockerfileExist(path.join(local_path, build.context || '.'), build.dockerfile);
+    return build.buildpack || !dockerfile_exist;
+  }
+
   private static async createProcfile(context: string, command: string): Promise<void> {
     const procfile_backup_location = path.join(context, '/Procfile.backup');
     const procfile_location = path.join(context, '/Procfile');
@@ -54,5 +66,20 @@ export default class BuildPackUtils {
       console.log(error);
       throw new ArchitectError(`Buildpack failed to build ${image_name}. If you are unsure what the buildpack error is, we recommend trying to use a Dockerfile instead https://docs.architect.io/components/services/#build`);
     }
+  }
+
+  public static async buildGraph(config_directory: string, graph: Readonly<DependencyGraphMutable>): Promise<string[]> {
+    const node_refs: string[] = [];
+    for (const node of graph.nodes.filter(node => !node.is_external)) {
+      if (!(node instanceof ServiceNode || node instanceof TaskNode)) {
+        continue;
+      }
+      if (node.local_path && BuildPackUtils.useBuildPack(node.local_path, node.config.build)) {
+        const node_path = path.join(node.local_path, node.config.build?.context || '.');
+        await BuildPackUtils.build(config_directory, node.ref, node.config.command?.join(' '), node_path);
+        node_refs.push(node.ref);
+      }
+    }
+    return node_refs;
   }
 }

@@ -23,8 +23,4 @@ export abstract class DependencyNode implements DependencyNodeOptions {
   get is_external(): boolean {
     return false;
   }
-
-  get is_local(): boolean {
-    return false;
-  }
 }

@@ -18,7 +18,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   ref!: string;
   component_ref!: string;
   service_name!: string;
-  local_path!: string;
+  local_path?: string;
   artifact_image?: string;
 
   constructor(options: ServiceNodeOptions & DependencyNodeOptions) {
@@ -28,8 +28,8 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
       this.component_ref = options.component_ref;
       this.service_name = options.service_name;
       this.config = options.config;
-      this.local_path = options.local_path || '';
       this.artifact_image = options.artifact_image;
+      this.local_path = options.local_path;
     }
   }
 
@@ -44,9 +44,5 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
 
   get is_external(): boolean {
     return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => i.host);
-  }
-
-  get is_local(): boolean {
-    return this.local_path !== '';
   }
 }
