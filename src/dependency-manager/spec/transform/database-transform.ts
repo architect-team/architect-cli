@@ -25,7 +25,7 @@ const SupportedDatabases: SupportedDatabaseType[] = [
       min: 10,
     },
     spec: {
-      resource_type: 'database',
+      resource_type: 'databases',
       image: 'postgres:15',
       environment: {
         POSTGRES_USER: DEFAULT_CREDENTIALS.username,
@@ -50,7 +50,7 @@ const SupportedDatabases: SupportedDatabaseType[] = [
       max: 5,
     },
     spec: {
-      resource_type: 'database',
+      resource_type: 'databases',
       image: 'mysql:5',
       environment: {
         MYSQL_USER: DEFAULT_CREDENTIALS.username,
@@ -74,7 +74,7 @@ const SupportedDatabases: SupportedDatabaseType[] = [
       min: 10,
     },
     spec: {
-      resource_type: 'database',
+      resource_type: 'databases',
       image: 'mariadb:10',
       environment: {
         MARIADB_USER: DEFAULT_CREDENTIALS.username,
