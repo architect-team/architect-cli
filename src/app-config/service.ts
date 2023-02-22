@@ -56,9 +56,10 @@ export default class AppService {
     }
 
     this.auth = new AuthClient(this.config, {
-      checkLogin: this.checkLogin.bind(this),
       on: {
-        login: (user) => {
+        login: async () => {
+          const user = await this.checkLogin();
+
           this.posthog.identify({
             distinctId: user.id,
             properties: {

@@ -1,6 +1,5 @@
 import { AccessToken, AuthorizationCode } from 'simple-oauth2';
 import { URL } from 'url';
-import User from '../architect/user/user.entity';
 import { docker } from '../common/docker/cmd';
 import LoginRequiredError from '../common/errors/login-required';
 import CallbackServer from './callback-server';
@@ -19,9 +18,8 @@ interface AuthResult {
 }
 
 export type AuthClientOptions = {
-  checkLogin: () => Promise<User>;
   on?: {
-    login?: (user: User) => void;
+    login?: () => Promise<void>;
   };
 };
 
@@ -30,9 +28,8 @@ export default class AuthClient {
   credentials: CredentialManager;
   _auth_result?: AuthResult;
   callback_server: CallbackServer;
-  checkLogin: () => Promise<User>;
   on?: {
-    login?: (user: User) => void;
+    login?: () => Promise<void>;
   };
 
   // Provide a window of time before the actual expiration to refresh the token
@@ -45,7 +42,6 @@ export default class AuthClient {
     this.config = config;
     this.credentials = new CredentialManager(config);
     this.callback_server = new CallbackServer();
-    this.checkLogin = options.checkLogin;
     this.on = options.on;
   }
 
@@ -79,7 +75,9 @@ export default class AuthClient {
       access_token: Buffer.from(`${email}:${token}`).toString('base64'),
     } as any);
 
-    await this.checkLogin();
+    if (this.on?.login) {
+      await this.on.login();
+    }
 
     await this.dockerLogin(email);
   }
@@ -163,8 +161,7 @@ export default class AuthClient {
     await this.setToken(email, access_token.token as AuthResult);
     await this.dockerLogin(email);
     if (this.on?.login) {
-      const user = await this.checkLogin();
-      await this.on.login(user);
+      await this.on.login();
     }
   }
 

@@ -68,7 +68,7 @@ export default class SentryService {
 
   private async getUser(): Promise<User | undefined> {
     try {
-      const user = await this.command.app.auth.checkLogin();
+      const user = await this.command.app.checkLogin();
       if (user) {
         return user;
       }
