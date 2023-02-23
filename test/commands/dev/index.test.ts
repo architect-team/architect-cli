@@ -478,7 +478,7 @@ describe('local dev environment', function () {
         labels: ['architect.ref=database-seeding.services.my-demo-db'],
       },
       'gateway': {
-        'image': 'traefik:v2.6.2',
+        'image': 'traefik:v2.9.8',
         'command': [
           '--api.insecure=true',
           '--pilot.dashboard=false',
@@ -487,6 +487,7 @@ describe('local dev environment', function () {
           '--accesslog.filters.statusCodes=400-599',
           '--entryPoints.web.address=:80',
           '--providers.docker=true',
+          '--providers.docker.allowEmptyServices=true',
           '--providers.docker.exposedByDefault=false',
           '--providers.docker.constraints=Label(`traefik.port`,`80`)',
         ],
@@ -535,7 +536,7 @@ describe('local dev environment', function () {
         },
       },
       'gateway': {
-        'image': 'traefik:v2.6.2',
+        'image': 'traefik:v2.9.8',
         'command': [
           '--api.insecure=true',
           '--pilot.dashboard=false',
@@ -544,6 +545,7 @@ describe('local dev environment', function () {
           '--accesslog.filters.statusCodes=400-599',
           '--entryPoints.web.address=:80',
           '--providers.docker=true',
+          '--providers.docker.allowEmptyServices=true',
           '--providers.docker.exposedByDefault=false',
           '--providers.docker.constraints=Label(`traefik.port`,`80`)',
         ],
@@ -592,7 +594,7 @@ describe('local dev environment', function () {
         },
       },
       'gateway': {
-        'image': 'traefik:v2.6.2',
+        'image': 'traefik:v2.9.8',
         'command': [
           '--api.insecure=true',
           '--pilot.dashboard=false',
@@ -601,6 +603,7 @@ describe('local dev environment', function () {
           '--accesslog.filters.statusCodes=400-599',
           '--entryPoints.web.address=:443',
           '--providers.docker=true',
+          '--providers.docker.allowEmptyServices=true',
           '--providers.docker.exposedByDefault=false',
           '--providers.docker.constraints=Label(`traefik.port`,`443`)',
           '--serversTransport.insecureSkipVerify=true',
@@ -660,7 +663,7 @@ describe('local dev environment', function () {
         },
       },
       "gateway": {
-        "image": "traefik:v2.6.2",
+        "image": "traefik:v2.9.8",
         "command": [
           "--api.insecure=true",
           "--pilot.dashboard=false",
@@ -669,6 +672,7 @@ describe('local dev environment', function () {
           "--accesslog.filters.statusCodes=400-599",
           "--entryPoints.web.address=:80",
           "--providers.docker=true",
+          "--providers.docker.allowEmptyServices=true",
           "--providers.docker.exposedByDefault=false",
           "--providers.docker.constraints=Label(`traefik.port`,`80`)",
         ],
@@ -777,7 +781,7 @@ describe('local dev environment', function () {
         ]
       },
       "gateway": {
-        "image": "traefik:v2.6.2",
+        "image": "traefik:v2.9.8",
         "command": [
           "--api.insecure=true",
           "--pilot.dashboard=false",
@@ -786,6 +790,7 @@ describe('local dev environment', function () {
           "--accesslog.filters.statusCodes=400-599",
           "--entryPoints.web.address=:80",
           "--providers.docker=true",
+          "--providers.docker.allowEmptyServices=true",
           "--providers.docker.exposedByDefault=false",
           "--providers.docker.constraints=Label(`traefik.port`,`80`)",
         ],
