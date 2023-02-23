@@ -20,6 +20,7 @@ describe('environment:destroy', () => {
 
   const mock_pipeline = {
     id: 'test-pipeline-id',
+    environment: mock_env
   };
 
   const failing_mock_env = {
