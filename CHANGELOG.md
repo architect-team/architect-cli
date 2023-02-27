@@ -1,3 +1,11 @@
+## [1.33.2](https://github.com/architect-team/architect-cli/compare/v1.33.1...v1.33.2) (2023-02-23)
+
+
+### Bug Fixes
+
+* **analytics:** Fix issue with incorrect distinct id ([#834](https://github.com/architect-team/architect-cli/issues/834)) ([926902e](https://github.com/architect-team/architect-cli/commit/926902e294f30b2763a7ed9cc33bdb0cf2098c83))
+* **deploy:** Support deploying multiple components in one pipeline ([#837](https://github.com/architect-team/architect-cli/issues/837)) ([0457eed](https://github.com/architect-team/architect-cli/commit/0457eedd40e9923f7462eb7f73b8bc27ea733f48))
+
 ## [1.33.1](https://github.com/architect-team/architect-cli/compare/v1.33.0...v1.33.1) (2023-02-17)
 
 

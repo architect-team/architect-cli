@@ -15,6 +15,14 @@ describe('platform:create', function () {
     name: 'test-account-name',
   };
 
+  const clusters = {
+    rows: [
+      {
+        name: 'already-exists-cluster'
+      }
+    ]
+  };
+
   const mock_pipeline = {
     id: 'test-pipeline-id',
   };
@@ -46,6 +54,9 @@ describe('platform:create', function () {
       .nock('https://api.architect.io', api => api
         .get(`/accounts/${account.name}`)
         .reply(200, account))
+      .nock('https://api.architect.io', api => api
+        .get(`/accounts/${account.id}/clusters`)
+        .reply(200, clusters))
       .stub(ClusterCreate.prototype, 'postClusterToApi', sinon.stub().returns(Promise.resolve({
         id: test_cluster_id,
         account: account,
@@ -56,7 +67,7 @@ describe('platform:create', function () {
       .stub(ClusterCreate.prototype, 'createClusterApplications', sinon.stub().returns(Promise.resolve()));
   };
 
-  const k8s_test = (install_applications = false) => {
+  const agent_test = (install_applications = false) => {
     return create_test()
       .stub(AgentClusterUtils, 'installAgent', sinon.stub().returns(Promise.resolve()))
       .stub(AgentClusterUtils, 'waitForAgent', sinon.stub().returns(Promise.resolve()))
@@ -72,7 +83,7 @@ describe('platform:create', function () {
       });
   }
 
-  k8s_test()
+  agent_test()
     .it('Does not auto approve creation when auto-approve flag value is false', async () => {
       const create_cluster_applications = ClusterCreate.prototype.createClusterApplications as SinonSpy;
       const configure_agent = AgentClusterUtils.configureAgentCluster as SinonSpy;
@@ -84,7 +95,7 @@ describe('platform:create', function () {
       expect(post_to_api.calledOnce).true;
     });
 
-  k8s_test()
+  agent_test()
     .it('Auto approve creation when auto-approve flag value is true', async () => {
       const create_cluster_applications = ClusterCreate.prototype.createClusterApplications as SinonSpy;
       const configure_agent = AgentClusterUtils.configureAgentCluster as SinonSpy;
@@ -96,7 +107,7 @@ describe('platform:create', function () {
       expect(post_to_api.calledOnce).true;
     });
 
-  k8s_test(true)
+  agent_test(true)
     .it('Auto approve creation when auto-approve flag value is not specified', async () => {
       const create_cluster_applications = ClusterCreate.prototype.createClusterApplications as SinonSpy;
       const configure_agent = AgentClusterUtils.configureAgentCluster as SinonSpy;
@@ -108,7 +119,7 @@ describe('platform:create', function () {
       expect(post_to_api.calledOnce).true;
     });
 
-  k8s_test()
+  agent_test()
     .it('Do not auto approve creation with auto-approve flag default value', async () => {
       const create_cluster_applications = ClusterCreate.prototype.createClusterApplications as SinonSpy;
       const configure_agent = AgentClusterUtils.configureAgentCluster as SinonSpy;
@@ -120,32 +131,18 @@ describe('platform:create', function () {
       expect(post_to_api.calledOnce).true;
     });
 
-  create_test()
-    .stub(inquirer, 'prompt', () => {
-      return {
-        context: 'minikube',
-        service_account_name: 'architect',
-        use_existing_sa: true,
-        cluster: 'test-cluster',
-        cluster_type: 'agent (BETA)',
-        application_install: true,
-      }
-    })
-    .stub(AgentClusterUtils, 'installAgent', sinon.stub().returns(Promise.resolve()))
-    .stub(AgentClusterUtils, 'configureAgentCluster', sinon.stub().returns(Promise.resolve()))
-    .stub(AgentClusterUtils, 'waitForAgent', sinon.stub().returns(Promise.resolve()))
-    .it('configures agent cluster when specified', async () => {
+  agent_test()
+    .it('Do not allow a user to create a cluster with a duplicate name', async () => {
       const create_cluster_applications = ClusterCreate.prototype.createClusterApplications as SinonSpy;
-      const install_agent = AgentClusterUtils.installAgent as SinonSpy;
       const configure_agent = AgentClusterUtils.configureAgentCluster as SinonSpy;
       const post_to_api = ClusterCreate.prototype.postClusterToApi as SinonSpy;
 
-      await PlatformCreate.run(['cluster-name', '-a', 'test-account-name']);
+      await ClusterCreate.run(['already-exists-cluster', '-a', 'test-account-name']);
       expect(configure_agent.calledOnce).true;
-      expect(install_agent.calledOnce).true;
-      expect(create_cluster_applications.calledOnce).true;
+      expect(create_cluster_applications.calledOnce).false;
       expect(post_to_api.calledOnce).true;
-    });
+      expect(post_to_api.getCall(0).args[0].name === 'new_k8s_cluster');
+    })
 
   test
     .stub(ClusterUtils, 'getClientVersion', sinon.stub().returns('v1.0.0'))
@@ -167,6 +164,9 @@ describe('platform:create', function () {
     .nock('https://api.architect.io', api => api
       .get(`/accounts/${account.name}`)
       .reply(200, account))
+    .nock('https://api.architect.io', api => api
+      .get(`/accounts/${account.id}/clusters`)
+      .reply(200, clusters))
     .command(['platform:create', '-a', account.name, 'my-cluster'])
     .catch(e => {
       expect(e.message).contains(`Currently, we only support Kubernetes clusters on version ${MIN_CLUSTER_SEMVER.version} or greater. Your cluster is currently on version 1.0.0`);

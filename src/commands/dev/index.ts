@@ -521,7 +521,7 @@ export default class Dev extends BaseCommand {
     const socket = socketPath(path.join(this.app.config.getConfigDir(), LocalPaths.LOCAL_DEPLOY_PATH, project_name));
 
     this.app.posthog.capture({
-      event: 'cli.command-update',
+      event: 'cli.command.update',
       properties: {
         command_id: (this.constructor as any).id,
         status: 'build complete',
@@ -758,7 +758,7 @@ $ architect dev -e new_env_name_here .`));
     }
 
     this.app.posthog.capture({
-      event: 'cli.command-update',
+      event: 'cli.command.update',
       properties: {
         command_id: (this.constructor as any).id,
         status: 'build complete',

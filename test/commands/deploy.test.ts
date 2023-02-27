@@ -25,6 +25,7 @@ const environment = {
 
 const mock_pipeline = {
   id: 'test-pipeline-id',
+  environment: environment
 };
 
 const mock_certificates = [
@@ -75,7 +76,7 @@ describe('remote deploy environment', function () {
   remoteDeploy
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .it('Creates a remote deployment when env exists with env and account flags', ctx => {
-      expect(ctx.stdout).to.contain('Deployed');
+      expect(ctx.stdout).to.contain('deployed');
     });
 
   remoteDeploy
@@ -87,16 +88,10 @@ describe('remote deploy environment', function () {
       const build_spec = ComponentBuilder.buildSpecFromPath as SinonSpy;
       expect(build_spec.getCalls().length).to.equal(1);
       expect(build_spec.firstCall.args[0]).eq('test/mocks/superset/architect.yml');
-      expect(ctx.stdout).to.contain('Deployed');
+      expect(ctx.stdout).to.contain('deployed');
     });
 
   remoteDeploy
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`)
-      .reply(200, mock_pipeline))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/pipelines/${mock_pipeline.id}/approve`)
-      .reply(200, {}))
     .stub(ComponentRegister.prototype, 'run', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentBuilder, 'buildSpecFromPath', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentVersionSlugUtils.Validator, 'test', sinon.stub().returns(Promise.resolve()))
@@ -111,7 +106,7 @@ describe('remote deploy environment', function () {
       expect(slug_validator.getCalls().length).to.equal(1);
       expect(slug_validator.firstCall.args[0]).eq(`${account.name}/superset:latest`);
 
-      expect(ctx.stdout).to.contain('Deployed');
+      expect(ctx.stdout).to.contain('deployed');
     });
 
   remoteDeploy
@@ -132,7 +127,7 @@ describe('remote deploy environment', function () {
     remoteDeploy
       .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest@tenant-1'])
       .it('Creates a remote deployment when env exists with env and account flags', ctx => {
-        expect(ctx.stdout).to.contain('Deployed');
+        expect(ctx.stdout).to.contain('deployed');
       });
   });
 });
@@ -162,14 +157,14 @@ describe('auto-approve flag with underscore style still works', function () {
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'echo:latest'])
     .it('works but also emits a deprecation warning', ctx => {
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated.');
-      expect(ctx.stdout).to.contain('Deployed');
+      expect(ctx.stdout).to.contain('deployed');
     });
 
   remoteDeploy
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve=true', 'echo:latest'])
     .it('works but also emits a deprecation warning 2', ctx => {
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated.');
-      expect(ctx.stdout).to.contain('Deployed');
+      expect(ctx.stdout).to.contain('deployed');
     });
 });
 

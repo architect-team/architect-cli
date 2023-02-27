@@ -7712,10 +7712,10 @@ postcss@^8.1.7, postcss@^8.2.13:
     picocolors "^1.0.0"
     source-map-js "^0.6.2"
 
-posthog-node@^2.4.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/posthog-node/-/posthog-node-2.4.0.tgz#681d65dc34894427766b35e6d50bf091857a110c"
-  integrity sha512-ijenljLS49AzMskyrDsmEbuPUI641I/qUEUfsVTFZYzNcmmiwWCyJu4v51DjzcH/vAda4p44CIhzL2LkROCl2Q==
+posthog-node@^2.5.1:
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/posthog-node/-/posthog-node-2.5.1.tgz#89c303677967bd5116b8270211cd618305cfab71"
+  integrity sha512-6DMvHD6DyrqkpJ0WJdKqr+nPPUDAAHlZwcGWBhTxnCn1dvoc3Lpe1Dfy30MRfCE7KwzArxkURbqj4hWx8Gxw+g==
   dependencies:
     axios "^0.27.0"
 

@@ -1,6 +1,5 @@
 import { AccessToken, AuthorizationCode } from 'simple-oauth2';
 import { URL } from 'url';
-import User from '../architect/user/user.entity';
 import { docker } from '../common/docker/cmd';
 import LoginRequiredError from '../common/errors/login-required';
 import CallbackServer from './callback-server';
@@ -18,12 +17,20 @@ interface AuthResult {
   id_token?: string;
 }
 
+export type AuthClientOptions = {
+  on?: {
+    login?: () => Promise<void>;
+  };
+};
+
 export default class AuthClient {
   config: AppConfig;
   credentials: CredentialManager;
   _auth_result?: AuthResult;
   callback_server: CallbackServer;
-  checkLogin: () => Promise<User>;
+  on?: {
+    login?: () => Promise<void>;
+  };
 
   // Provide a window of time before the actual expiration to refresh the token
   // https://github.com/lelylan/simple-oauth2/tree/1d0b2788ab178ca244c26859c31a34a32d8de979#refresh-an-access-token
@@ -31,11 +38,11 @@ export default class AuthClient {
 
   public static SCOPE = 'openid profile email offline_access';
 
-  constructor(config: AppConfig, checkLogin: () => Promise<User>) {
+  constructor(config: AppConfig, options: AuthClientOptions) {
     this.config = config;
     this.credentials = new CredentialManager(config);
     this.callback_server = new CallbackServer();
-    this.checkLogin = checkLogin;
+    this.on = options.on;
   }
 
   async init(): Promise<void> {
@@ -68,7 +75,9 @@ export default class AuthClient {
       access_token: Buffer.from(`${email}:${token}`).toString('base64'),
     } as any);
 
-    await this.checkLogin();
+    if (this.on?.login) {
+      await this.on.login();
+    }
 
     await this.dockerLogin(email);
   }
@@ -151,6 +160,9 @@ export default class AuthClient {
     const email = decoded_token.email;
     await this.setToken(email, access_token.token as AuthResult);
     await this.dockerLogin(email);
+    if (this.on?.login) {
+      await this.on.login();
+    }
   }
 
   async logout(): Promise<void> {
