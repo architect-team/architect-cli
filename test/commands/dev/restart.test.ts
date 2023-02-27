@@ -3,6 +3,7 @@ import sinon, { SinonSpy } from 'sinon';
 import DevRestart from '../../../src/commands/dev/restart';
 import { DockerComposeUtils } from '../../../src/common/docker-compose';
 import { mockArchitectAuth } from '../../utils/mocks';
+import path from 'path';
 
 describe('dev:restart', () => {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
@@ -33,10 +34,10 @@ describe('dev:restart', () => {
       expect(compose_local_svc.firstCall.args.length).to.eq(1);
 
       const compose = DockerComposeUtils.dockerCompose as sinon.SinonStub;
+      const compose_path = path.join('test', 'docker-compose', `${test_env_name}.yml`);
       expect(compose.firstCall.args.length).to.eq(2);
       expect(compose.firstCall.args[0]).to.deep.equal([
-        '-f', `test/docker-compose/${test_env_name}.yml`,
-        '-p', test_env_name, 'restart', test_service_name,
+        '-f', compose_path, '-p', test_env_name, 'restart', test_service_name,
       ]);
     });
 
@@ -56,10 +57,10 @@ describe('dev:restart', () => {
       expect(compose_local_svc.firstCall.args[1]).to.eq('test.service.name');
 
       const compose = DockerComposeUtils.dockerCompose as sinon.SinonStub;
+      const compose_path = path.join('test', 'docker-compose', `${test_env_name}.yml`);
       expect(compose.firstCall.args.length).to.eq(2);
       expect(compose.firstCall.args[0]).to.deep.equal([
-        '-f', `test/docker-compose/${test_env_name}.yml`,
-        '-p', test_env_name, 'restart', test_service_name,
+        '-f', compose_path, '-p', test_env_name, 'restart', test_service_name,
       ]);
     });
 
@@ -80,10 +81,10 @@ describe('dev:restart', () => {
       expect(compose_local_svc.lastCall.args[1]).to.eq('test2.service.name');
 
       const compose = DockerComposeUtils.dockerCompose as sinon.SinonStub;
+      const compose_path = path.join('test', 'docker-compose', `${test_env_name}.yml`);
       expect(compose.firstCall.args.length).to.eq(2);
       expect(compose.firstCall.args[0]).to.deep.equal([
-        '-f', `test/docker-compose/${test_env_name}.yml`, '-p',
-        test_env_name, 'restart', test_service_name, test_service_name_2,
+        '-f', compose_path, '-p', test_env_name, 'restart', test_service_name, test_service_name_2,
       ]);
     });
 
@@ -103,9 +104,11 @@ describe('dev:restart', () => {
       expect(compose_local_svc.firstCall.args.length).to.eq(1);
 
       const compose = DockerComposeUtils.dockerCompose as sinon.SinonStub;
+      const compose_path = path.join('test', 'docker-compose', `${test_env_name}.yml`);
       expect(compose.firstCall.args.length).to.eq(2);
-      expect(compose.firstCall.args[0]).to.deep.equal(['-f', `test/docker-compose/${test_env_name}.yml`,
-        '-p', test_env_name, 'up', '--build', '--force-recreate', '--detach', test_service_name]);
+      expect(compose.firstCall.args[0]).to.deep.equal([
+        '-f', compose_path, '-p', test_env_name, 'up', '--build', '--force-recreate', '--detach', test_service_name,
+      ]);
     });
 
   mockArchitectAuth()
@@ -124,9 +127,11 @@ describe('dev:restart', () => {
       expect(compose_local_svc.firstCall.args[1]).to.eq('test.service.name');
 
       const compose = DockerComposeUtils.dockerCompose as sinon.SinonStub;
+      const compose_path = path.join('test', 'docker-compose', `${test_env_name}.yml`);
       expect(compose.firstCall.args.length).to.eq(2);
-      expect(compose.firstCall.args[0]).to.deep.equal(['-f', `test/docker-compose/${test_env_name}.yml`,
-        '-p', test_env_name, 'up', '--build', '--force-recreate', '--detach', test_service_name]);
+      expect(compose.firstCall.args[0]).to.deep.equal([
+        '-f', compose_path, '-p', test_env_name, 'up', '--build', '--force-recreate', '--detach', test_service_name,
+      ]);
     });
 
   mockArchitectAuth()
@@ -146,10 +151,10 @@ describe('dev:restart', () => {
       expect(compose_local_svc.lastCall.args[1]).to.eq('test2.service.name');
 
       const compose = DockerComposeUtils.dockerCompose as sinon.SinonStub;
+      const compose_path = path.join('test', 'docker-compose', `${test_env_name}.yml`);
       expect(compose.firstCall.args.length).to.eq(2);
       expect(compose.firstCall.args[0]).to.deep.equal([
-        '-f', `test/docker-compose/${test_env_name}.yml`,
-        '-p', test_env_name, 'up', '--build', '--force-recreate',
+        '-f', compose_path, '-p', test_env_name, 'up', '--build', '--force-recreate',
         '--detach', test_service_name, test_service_name_2,
       ]);
     });
