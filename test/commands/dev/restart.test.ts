@@ -6,7 +6,7 @@ import { mockArchitectAuth } from '../../utils/mocks';
 
 describe('dev:restart', () => {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-  const print = true;
+  const print = false;
 
   const test_env_name = 'test_env';
   const test_service_name = 'test--service';
