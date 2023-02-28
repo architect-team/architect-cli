@@ -46,9 +46,10 @@ export interface ServiceInterfaceConfig {
 }
 
 export interface DatabaseConfig {
-  reserved_name?: string;
   type: string;
   connection_string?: string;
+  url?: string;
+
 }
 
 export interface ServiceConfig extends ResourceConfig {

@@ -59,7 +59,7 @@ export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => 
   const service_databases = transformDictionary(transformDatabaseSpecToServiceSpec, spec.databases, spec.metadata);
   const databases = transformDictionary(transformDatabaseSpec, spec.databases, spec.metadata);
   for (const [key, value] of Object.entries(service_databases)) {
-    service_databases[`${key}-db`] = value;
+    service_databases[`${key}${Slugs.DB_SUFFIX}`] = value;
     delete service_databases[key];
   }
 

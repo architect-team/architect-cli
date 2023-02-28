@@ -12,6 +12,7 @@ export interface DatabaseContext {
   password: string;
   database: string;
   connection_string: string;
+  url: string;
 }
 
 export interface ServiceContext {

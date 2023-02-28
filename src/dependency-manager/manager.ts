@@ -52,6 +52,7 @@ export default abstract class DependencyManager {
       });
       nodes.push(node);
     }
+
     return nodes;
   }
 
@@ -130,7 +131,7 @@ export default abstract class DependencyManager {
 
         const dependency = component_configs.find(c => c.name === dependency_name) || component;
 
-        const to = buildNodeRef(dependency, 'databases', database_name) + '-db';
+        const to = buildNodeRef(dependency, 'databases', database_name);
 
         if (to === from) continue;
 
@@ -229,6 +230,7 @@ export default abstract class DependencyManager {
         protocol: url.protocol,
         database: url.pathname,
         connection_string: connection_string,
+        url: connection_string,
       };
     } catch {
       const regex = /^(\${{)|(}})+/gm;
@@ -242,6 +244,7 @@ export default abstract class DependencyManager {
         protocol: `\${{ parseUrl(${raw_connection_string}, 'protocol') ? parseUrl(${raw_connection_string}, 'protocol') : '${default_context.protocol}' }}`,
         database: `\${{ parseUrl(${raw_connection_string}, 'pathname') ? parseUrl(${raw_connection_string}, 'pathname') : '${default_context.database}' }}`,
         connection_string: `\${{ (${raw_connection_string}) ? (${raw_connection_string}) : (${raw_default_connection_string}) }}`,
+        url: `\${{ (${raw_connection_string}) ? (${raw_connection_string}) : (${raw_default_connection_string}) }}`,
       };
     }
   }
@@ -334,7 +337,6 @@ export default abstract class DependencyManager {
         const architect_host = service_ref;
         const architect_port = `${interface_ref}.external_port`;
 
-        // TODO: Remove once databases get their own node type
         const default_database_config = {
           host: interface_config.host || architect_host,
           port: interface_config.port as number,
@@ -343,8 +345,9 @@ export default abstract class DependencyManager {
           protocol: interface_config.protocol!,
           database: interface_config.path?.replace(/^\/+/, '') || '',
           connection_string: this.generateUrl(interface_ref),
+          url: this.generateUrl(interface_ref),
         };
-        const database_name = service_name.replace(/-db$/, '');
+        const database_name = service_name.split(Slugs.DB_SUFFIX)[0];
         if (component_config.databases[database_name]) {
           context.databases[database_name] = component_config.databases[database_name].connection_string ?
             this.getDatabaseContextFromConnectionString(component_config.databases[database_name].connection_string || '', default_database_config) :

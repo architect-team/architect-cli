@@ -1039,5 +1039,36 @@ describe('components spec v1', function () {
       expect(graph.nodes).to.have.lengthOf(2);
       expect(graph.edges).to.have.lengthOf(1);
     });
+
+    it('connect databases to services', async () => {
+      const yml = `
+        name: component
+
+        databases:
+          primary:
+            type: mariadb:10
+
+        services:
+          api:
+            image: test:v1
+            environment:
+              DATABASE: \${{ databases.primary.connection_string }}
+        `;
+
+      mock_fs({
+        '/architect.yaml': yml,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'examples', {
+        'component': '/architect.yaml',
+      });
+
+      const graph = await manager.getGraph([
+        ...await manager.loadComponentSpecs('component', true),
+      ]);
+
+      expect(graph.nodes).to.have.lengthOf(2);
+      expect(graph.edges).to.have.lengthOf(1);
+    });
   })
 });
