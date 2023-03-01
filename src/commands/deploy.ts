@@ -132,15 +132,6 @@ export default class Deploy extends DeployCommand {
       sensitive: false,
       default: undefined,
     }),
-    parameter: Flags.string({
-      char: 'p',
-      description: `Please use --secret.`,
-      multiple: true,
-      hidden: true,
-      deprecated: {
-        to: 'secret',
-      },
-    }),
     interface: Flags.string({
       char: 'i',
       description: 'Deprecated: Please use ingress.subdomain https://docs.architect.io/components/ingress-rules/',
@@ -236,11 +227,8 @@ export default class Deploy extends DeployCommand {
     const components = args.configs_or_components;
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface || []);
-    const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
-    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values); // TODO: 404: update
-    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter || [], all_secret_file_values); // TODO: 404: remove
-    const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
-
+    const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])];
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values);
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
@@ -264,7 +252,7 @@ export default class Deploy extends DeployCommand {
       component: [...component_names].join(','),
       interfaces: interfaces_map,
       recursive: flags.recursive,
-      values: all_secrets, // TODO: 404: update
+      values: component_secrets,
       prevent_destroy: flags['deletion-protection'],
     };
 

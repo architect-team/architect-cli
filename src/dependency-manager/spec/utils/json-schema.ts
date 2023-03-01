@@ -215,13 +215,13 @@ const addDocsLinks = (definitions: Record<string, SchemaObject>): Record<string,
  */
 const addExpressions = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
   for (const [definition_name, definition] of Object.entries(definitions)) {
-    // Don't allow if statements in parameters/secrets
+    // Don't allow if statements in secrets
     if (definition_name === 'SecretDefinitionSpec') {
       continue;
     }
     for (const [property_name, property] of Object.entries(definition.properties || {}) as [string, SchemaObject][]) {
-      // Don't allow if statements in parameters or dependencies block
-      if (property_name === 'parameters' || property_name === 'secrets' || property_name === 'dependencies') {
+      // Don't allow if statements in secrets or dependencies block
+      if (property_name === 'secrets' || property_name === 'dependencies') {
         continue;
       }
 

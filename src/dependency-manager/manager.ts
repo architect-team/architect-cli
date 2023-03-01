@@ -223,7 +223,6 @@ export default abstract class DependencyManager {
       architect: this.getArchitectContext(),
       dependencies: {},
       outputs: {},
-      parameters: {},
       secrets: {},
       services: {},
       tasks: {},
@@ -239,7 +238,6 @@ export default abstract class DependencyManager {
       ...context.secrets,
       ...secrets_dict,
     };
-    context.parameters = context.secrets; // Deprecated
 
     if (options.interpolate && options.validate) {
       secrets.validateComponentSpec(component_spec);
