@@ -7,7 +7,6 @@ import { DockerComposeUtils } from '../../../src/common/docker-compose';
 import { mockArchitectAuth } from '../../utils/mocks';
 
 describe('dev:stop', () => {
-
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
@@ -21,16 +20,12 @@ describe('dev:stop', () => {
       State: 'exited',
       Health: '',
       ExitCode: 0,
-    }
-  ]
+    },
+  ];
 
   const mocked_connection = {
-    write: () => {
-      return;
-    },
-    on: () => {
-      return;
-    }
+    write: () => { },  // eslint-disable-line @typescript-eslint/no-empty-function
+    on: () => { },  // eslint-disable-line @typescript-eslint/no-empty-function
   };
 
   mockArchitectAuth()
@@ -42,7 +37,7 @@ describe('dev:stop', () => {
     .command(['dev:stop', 'test_env'])
     .it('stop a local deployment', ctx => {
       const log_spy = DevStop.prototype.log as SinonSpy;
-      expect(log_spy.firstCall.args[0]).to.contain("Successfully stopped local deployment");
+      expect(log_spy.firstCall.args[0]).to.contain('Successfully stopped local deployment');
 
       const connect = net.createConnection as sinon.SinonStub;
       expect(connect.callCount).to.eq(1);
@@ -59,7 +54,7 @@ describe('dev:stop', () => {
     .command(['dev:stop', 'test_env'])
     .it('stop a detached local deployment and remove left over compose file from when it started', ctx => {
       const log_spy = DevStop.prototype.log as SinonSpy;
-      expect(log_spy.firstCall.args[0]).to.contain("Successfully stopped local deployment");
+      expect(log_spy.firstCall.args[0]).to.contain('Successfully stopped local deployment');
 
       const remove_sync = fs.removeSync as sinon.SinonStub;
       expect(remove_sync.calledOnce).true;
