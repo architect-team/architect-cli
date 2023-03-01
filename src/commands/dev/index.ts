@@ -16,7 +16,6 @@ import { EnvironmentUtils } from '../../architect/environment/environment.utils'
 import SecretUtils from '../../architect/secret/secret.utils';
 import { default as BaseCommand } from '../../base-command';
 import LocalDependencyManager, { ComponentConfigOpts } from '../../common/dependency-manager/local-manager';
-import { DockerUtils } from '../../common/docker';
 import { DockerComposeUtils } from '../../common/docker-compose';
 import DockerComposeTemplate from '../../common/docker-compose/template';
 import { RequiresDocker } from '../../common/docker/helper';
@@ -513,7 +512,7 @@ export default class Dev extends BaseCommand {
     const socket = socketPath(path.join(this.app.config.getConfigDir(), LocalPaths.LOCAL_DEPLOY_PATH, project_name));
 
     this.app.posthog.capture({
-      event: 'cli.command-update',
+      event: 'cli.command.update',
       properties: {
         command_id: (this.constructor as any).id,
         status: 'build complete',
@@ -725,32 +724,14 @@ $ architect dev -e new_env_name_here .`));
 
     const graph = await dependency_manager.getGraph(component_specs, component_secrets);
     const gateway_admin_port = await PortUtil.getAvailablePort(8080);
-    let compose = await DockerComposeUtils.generate(graph, {
+    const compose = await DockerComposeUtils.generate(graph, {
       external_addr: flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address,
       gateway_admin_port,
       ssl_cert: flags.ssl ? this.readSSLCert('fullchain.pem') : undefined,
       ssl_key: flags.ssl ? this.readSSLCert('privkey.pem') : undefined,
     });
-
-    compose = await this.handleBuildpackServices(compose);
+    await BuildPackUtils.buildGraph(this.app.config.getPluginDirectory(), graph);
     await this.runCompose(compose, environment, flags.port, gateway_admin_port);
-  }
-
-  async handleBuildpackServices(compose: DockerComposeTemplate): Promise<DockerComposeTemplate> {
-    for (const [service_name, service] of Object.entries(compose.services)) {
-      if (!service.build) {
-        continue;
-      }
-
-      const dockerfile_exist = service.build.context ? await DockerUtils.doesDockerfileExist(service.build.context, service.build.dockerfile) : false;
-      if (service.build?.buildpack || !dockerfile_exist) {
-        await BuildPackUtils.build(this.app.config.getPluginDirectory(), service_name, service.command?.join(' '), service.build?.context);
-        service.image = `${service_name}:latest`;
-        delete service.build;
-        delete service.command;
-      }
-    }
-    return compose;
   }
 
   @RequiresDocker({ compose: true })
@@ -766,7 +747,7 @@ $ architect dev -e new_env_name_here .`));
     }
 
     this.app.posthog.capture({
-      event: 'cli.command-update',
+      event: 'cli.command.update',
       properties: {
         command_id: (this.constructor as any).id,
         status: 'build complete',

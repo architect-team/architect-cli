@@ -21,6 +21,7 @@ export interface ComponentInstanceMetadata {
 
   file?: {
     path: string;
+    folder: string;
     contents: string;
   }
 

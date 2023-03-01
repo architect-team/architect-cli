@@ -4,6 +4,7 @@ import fs from 'fs';
 import inquirer from 'inquirer';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
+import Pipeline from '../architect/pipeline/pipeline.entity';
 import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import BaseCommand from '../base-command';
 import DeployUtils from '../common/utils/deploy.utils';
@@ -48,8 +49,12 @@ export abstract class DeployCommand extends BaseCommand {
     return parsed;
   }
 
-  async approvePipeline(pipeline: any): Promise<boolean> {
+  async approvePipeline(pipeline: Pipeline): Promise<boolean> {
     const { flags } = await this.parse(this.constructor as typeof DeployCommand);
+
+    if (!pipeline.environment) {
+      this.error('Invalid pipeline');
+    }
 
     if (!flags['auto-approve']) {
       this.log(`Pipeline ready for review: ${this.app.config.app_host}/${pipeline.environment.account.name}/environments/${pipeline.environment.name}/pipelines/${pipeline.id}`);
@@ -243,49 +248,29 @@ export default class Deploy extends DeployCommand {
       }
     }
 
-    const deployment_dtos = [];
-    for (const component of component_names) {
-      const deploy_dto = {
-        component,
-        interfaces: interfaces_map,
-        recursive: flags.recursive,
-        values: component_secrets,
-        prevent_destroy: flags['deletion-protection'],
-      };
-      deployment_dtos.push(deploy_dto);
-    }
+    const deploy_dto = {
+      component: [...component_names].join(','),
+      interfaces: interfaces_map,
+      recursive: flags.recursive,
+      values: component_secrets,
+      prevent_destroy: flags['deletion-protection'],
+    };
 
-    CliUx.ux.action.start(chalk.blue(`Creating pipeline${deployment_dtos.length > 0 ? 's' : ''}`));
-    const pipelines = await Promise.all(
-      deployment_dtos.map(async (deployment_dto) => {
-        const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, deployment_dto);
-        return { component_name: deployment_dto.component, pipeline };
-      }),
-    );
+    CliUx.ux.action.start(chalk.blue(`Creating pipeline`));
+    const { data: pipeline } = await this.app.api.post<Pipeline>(`/environments/${environment.id}/deploy`, deploy_dto);
     CliUx.ux.action.stop();
 
-    const approved_pipelines = [];
-    for (const pipeline of pipelines) {
-      const approved = await this.approvePipeline(pipeline.pipeline);
-      if (approved) {
-        approved_pipelines.push(pipeline);
-      }
-    }
-
-    if (!approved_pipelines?.length) {
+    const approved = await this.approvePipeline(pipeline);
+    if (!approved) {
       this.log(chalk.blue('Cancelled all pipelines'));
       return;
     }
 
     CliUx.ux.action.start(chalk.blue('Deploying'));
-    await Promise.all(
-      approved_pipelines.map((pipeline) => {
-        return PipelineUtils.pollPipeline(this.app, pipeline.pipeline.id)
-          .then(() => {
-            this.log(chalk.green(`${pipeline.component_name} Deployed`));
-          });
-      }),
-    );
+    await PipelineUtils.pollPipeline(this.app, pipeline.id);
+    for (const component_name of component_names) {
+      this.log(chalk.green(`${component_name} deployed successfully`));
+    }
     CliUx.ux.action.stop();
 
     // Get available URLs from CertManager data

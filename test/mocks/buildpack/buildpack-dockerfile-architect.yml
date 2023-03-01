@@ -33,3 +33,12 @@ services:
       command: curl --fail localhost:4000
     environment:
       WORLD_TEXT: ${{ secrets.world_text }}
+
+  # Test docker image caching by using the same Dockerfile
+  dockerfile-api2:
+    build:
+      context: ../../integration/hello-world/
+
+  # Test a third party image
+  redis:
+    image: redis

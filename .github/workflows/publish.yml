@@ -81,7 +81,38 @@ jobs:
       - run: npm run generate:yarn-lock
       - name: npm publish
         run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > ~/.npmrc
           GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) npm run semantic-release
-      - name: docs website re-build
-        run: curl -X POST ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+  publish_docs:
+    name: Publish Docs
+    if: github.ref_name == 'main'
+    needs: [publish_cli]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: true
+          path: architect-cli
+          ref: main
+      - uses: actions/checkout@v3
+        with:
+          repository: architect-team/documentation
+          token: ${{ secrets.DOCS_GITHUB_TOKEN }}
+          clean: true
+          path: documentation
+          ref: main
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      - run: node ./architect-cli/bin/readme-mdx.mjs ./documentation/reference/cli.mdx
+      - run: cp ./architect-cli/architect-yml.md ./documentation/reference/architect-yml.mdx
+      - run: cp ./architect-cli/CHANGELOG.md ./documentation/reference/changelog.mdx
+      - name: Commit
+        working-directory: ./documentation
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add -A
+          git diff-index --quiet HEAD || git commit -m "Update auto-generated files from CLI"
+          git push
+

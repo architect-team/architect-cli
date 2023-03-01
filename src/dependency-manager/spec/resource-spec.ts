@@ -3,7 +3,7 @@ import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
 import { SecretSpecValue } from './secret-spec';
 import { AnyOf, ArrayOf, ExclusiveOrNeither, ExpressionOr, ExpressionOrString, OneOf, StringOrStringArray } from './utils/json-schema-annotations';
-import { Slugs } from './utils/slugs';
+import { ResourceType, Slugs } from './utils/slugs';
 
 @JSONSchema({
   description: 'An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.',
@@ -60,7 +60,7 @@ export class BuildSpec {
   ...OneOf('build', 'image'),
 })
 export abstract class ResourceSpec {
-  abstract get resource_type(): string;
+  abstract get resource_type(): ResourceType;
 
   @IsOptional()
   @JSONSchema({

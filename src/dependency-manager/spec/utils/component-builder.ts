@@ -14,6 +14,7 @@ export const parseSourceYml = (source_yml: string): ParsedYaml => {
 };
 
 const getComponentFilePath = (spec_path: string): string => {
+  spec_path = path.resolve(spec_path);
   let data;
   try {
     data = fs.lstatSync(spec_path);
@@ -58,7 +59,7 @@ export const buildSpecFromYml = (source_yml: string, metadata?: ComponentInstanc
   const parsed_yml = parseSourceYml(source_yml);
   const spec = validateOrRejectSpec(parsed_yml, metadata);
   if (!metadata?.file) {
-    spec.metadata.file = { contents: source_yml, path: '' };
+    spec.metadata.file = { contents: source_yml, path: '', folder: '' };
   }
   return spec;
 };
@@ -73,6 +74,7 @@ export const buildSpecFromPath = (spec_path: string, metadata?: ComponentInstanc
 
   const file = {
     path: source_path,
+    folder: fs.lstatSync(source_path).isFile() ? path.dirname(source_path) : source_path,
     contents: file_contents,
   };
 
