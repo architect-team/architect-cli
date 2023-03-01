@@ -1,0 +1,17 @@
+{
+  "printWidth": 150,
+  "tabWidth": 2,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "importOrderParserPlugins": [
+    "typescript",
+    "decorators-legacy"
+  ],
+  "importOrder": [
+    "^[./]"
+  ],
+  "jsxBracketSameLine": false,
+  "arrowParens": "avoid",
+  "requirePragma": true,
+  "semi": true
+}
