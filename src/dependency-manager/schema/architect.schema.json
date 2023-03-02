@@ -32,36 +32,6 @@
       "type": "string",
       "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
     },
-    "parameters": {
-      "type": "object",
-      "deprecated": true,
-      "patternProperties": {
-        "^[a-zA-Z0-9_-]+$": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/definitions/SecretDefinitionSpec"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      },
-      "errorMessage": {
-        "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
-      },
-      "description": "[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec",
-      "additionalProperties": false
-    },
     "secrets": {
       "type": "object",
       "patternProperties": {
@@ -375,36 +345,6 @@
             "homepage": {
               "type": "string",
               "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
-            },
-            "parameters": {
-              "type": "object",
-              "deprecated": true,
-              "patternProperties": {
-                "^[a-zA-Z0-9_-]+$": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "type": "boolean"
-                    },
-                    {
-                      "$ref": "#/definitions/SecretDefinitionSpec"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                }
-              },
-              "errorMessage": {
-                "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
-              },
-              "description": "[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec",
-              "additionalProperties": false
             },
             "secrets": {
               "type": "object",
@@ -4203,36 +4143,6 @@
           "type": "string",
           "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
         },
-        "parameters": {
-          "type": "object",
-          "deprecated": true,
-          "patternProperties": {
-            "^[a-zA-Z0-9_-]+$": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "$ref": "#/definitions/SecretDefinitionSpec"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
-          },
-          "description": "[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec",
-          "additionalProperties": false
-        },
         "secrets": {
           "type": "object",
           "patternProperties": {
@@ -4546,36 +4456,6 @@
                 "homepage": {
                   "type": "string",
                   "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
-                },
-                "parameters": {
-                  "type": "object",
-                  "deprecated": true,
-                  "patternProperties": {
-                    "^[a-zA-Z0-9_-]+$": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "$ref": "#/definitions/SecretDefinitionSpec"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
-                  },
-                  "description": "[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec",
-                  "additionalProperties": false
                 },
                 "secrets": {
                   "type": "object",
@@ -8245,36 +8125,6 @@
           "type": "string",
           "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
         },
-        "parameters": {
-          "type": "object",
-          "deprecated": true,
-          "patternProperties": {
-            "^[a-zA-Z0-9_-]+$": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "$ref": "#/definitions/_DebugSecretDefinitionSpec"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
-          },
-          "description": "[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec",
-          "additionalProperties": false
-        },
         "secrets": {
           "type": "object",
           "patternProperties": {
@@ -8585,36 +8435,6 @@
                 "homepage": {
                   "type": "string",
                   "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
-                },
-                "parameters": {
-                  "type": "object",
-                  "deprecated": true,
-                  "patternProperties": {
-                    "^[a-zA-Z0-9_-]+$": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "$ref": "#/definitions/_DebugSecretDefinitionSpec"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
-                  },
-                  "description": "[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec",
-                  "additionalProperties": false
                 },
                 "secrets": {
                   "type": "object",

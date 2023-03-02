@@ -1,5 +1,0 @@
-api_db_name: test_db
-app_replicas: 1
-root_db_pass: root
-root_db_user: root
-verbose: true

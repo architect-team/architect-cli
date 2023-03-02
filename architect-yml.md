@@ -8,7 +8,12 @@ This document describes the full specification of the [architect.yml](https://do
 
 We've published a formal definition of this specification here: [Architect JSONSchema](https://raw.githubusercontent.com/architect-team/architect-cli/main/src/dependency-manager/schema/architect.schema.json).
 
-If you're using VS Code (or any other IDE with intellisense backed by [SchemaStore](https://www.schemastore.org/json/)), then you should already see syntax highlighting when editing any file named `architect.yml`.
+<Card
+  title="For users of Visual Studio Code, check out the Architect extension!"
+  href="https://marketplace.visualstudio.com/items?itemName=Architectio.architect-vscode"
+/>
+
+If you're using an IDE with intellisense backed by [SchemaStore](https://www.schemastore.org/json/), then you may already see syntax highlighting when editing any file named `architect.yml`.
 
 **Note**: all references to the `Dict<T>` type below refer to a key-value map where the keys are strings and the values are of type T.
 
@@ -23,7 +28,6 @@ The top level object of the `architect.yml`; defines a deployable Architect Comp
  | `keywords` | Array&lt;string&gt; | Additional search terms to be used when the component is indexed so that others can find it more easily. |  |
  | `author` | string | The name or handle of the author of the component as a developer contact. |  |
  | `homepage` | string | The url that serves as the informational homepage of the component (i.e. a github repo). |  |
- | ~~`parameters`~~ | Dict&lt;string&gt; | [Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_-%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, Deprecated |
  | `secrets` | Dict&lt;string&gt; | A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as secrets. Specifying a primitive value here will set the default secret value. For more detailed configuration, specify a SecretDefinitionSpec | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_-%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `outputs` | Dict&lt;string&gt; | A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_-%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `databases` | Dict&lt;string&gt; | A database represents a stateful service powered by one of several supported database engines. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
