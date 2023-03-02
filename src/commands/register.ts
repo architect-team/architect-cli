@@ -251,7 +251,8 @@ export default class ComponentRegister extends BaseCommand {
     }
 
     for (const cache_dir of seen_cache_dir) {
-      await fs.move(`${cache_dir}-tmp`, cache_dir, { overwrite: true });
+      await fs.remove(cache_dir);
+      await fs.move(`${cache_dir}-tmp`, cache_dir);
     }
 
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {
