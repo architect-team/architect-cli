@@ -14,7 +14,7 @@ export default class DevRestart extends BaseCommand {
   static description = 'Restart or rebuild a running service';
   static examples = [
     'architect dev:restart',
-    'architect dev:restart --build hello-world.services.api',
+    'architect dev:restart --build=false hello-world.services.api',
     'architect dev:restart hello-world.services.api hello-world.services.app',
   ];
 
@@ -22,8 +22,8 @@ export default class DevRestart extends BaseCommand {
     ...EnvironmentUtils.flags,
     build: Flags.boolean({
       char: 'b',
-      description: 'Rebuild the services image before restarting',
-      default: false,
+      description: 'Rebuild the services image before restarting (defaults to true)',
+      default: true,
     }),
   };
 
