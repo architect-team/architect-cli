@@ -23,7 +23,7 @@ describe('dev:restart', () => {
     .stub(DevRestart.prototype, 'log', sinon.fake.returns(null))
     .stub(DockerComposeUtils, 'getLocalServiceForEnvironment', local_service_result())
     .stub(DockerComposeUtils, 'dockerCompose', sinon.stub().returns(null))
-    .command(['dev:restart'])
+    .command(['dev:restart', '--build=false'])
     .it('restart a service with no args', ctx => {
       const log_spy = DevRestart.prototype.log as SinonSpy;
       expect(log_spy.firstCall.args[0]).to.contain('Finished restarting');
@@ -46,7 +46,7 @@ describe('dev:restart', () => {
     .stub(DevRestart.prototype, 'log', sinon.fake.returns(null))
     .stub(DockerComposeUtils, 'getLocalServiceForEnvironment', local_service_result())
     .stub(DockerComposeUtils, 'dockerCompose', sinon.stub().returns(null))
-    .command(['dev:restart', 'test.service.name'])
+    .command(['dev:restart', '--build=false', 'test.service.name'])
     .it('restart a service with single arg', ctx => {
       const log_spy = DevRestart.prototype.log as SinonSpy;
       expect(log_spy.firstCall.args[0]).to.contain('Finished restarting');
@@ -69,7 +69,7 @@ describe('dev:restart', () => {
     .stub(DevRestart.prototype, 'log', sinon.fake.returns(null))
     .stub(DockerComposeUtils, 'getLocalServiceForEnvironment', multiarg_local_service_result())
     .stub(DockerComposeUtils, 'dockerCompose', sinon.stub().returns(null))
-    .command(['dev:restart', 'test.service.name', 'test2.service.name'])
+    .command(['dev:restart', '--build=false', 'test.service.name', 'test2.service.name'])
     .it('restart a service with multiple args', ctx => {
       const log_spy = DevRestart.prototype.log as SinonSpy;
       expect(log_spy.firstCall.args[0]).to.contain('Finished restarting');
@@ -93,7 +93,7 @@ describe('dev:restart', () => {
     .stub(DevRestart.prototype, 'log', sinon.fake.returns(null))
     .stub(DockerComposeUtils, 'getLocalServiceForEnvironment', local_service_result())
     .stub(DockerComposeUtils, 'dockerCompose', sinon.stub().returns(null))
-    .command(['dev:restart', '--build'])
+    .command(['dev:restart'])
     .it('rebuild a service with no args', ctx => {
       const log_spy = DevRestart.prototype.log as SinonSpy;
       expect(log_spy.firstCall.args[0]).to.contain('Finished rebuilding');
@@ -116,7 +116,7 @@ describe('dev:restart', () => {
     .stub(DevRestart.prototype, 'log', sinon.fake.returns(null))
     .stub(DockerComposeUtils, 'getLocalServiceForEnvironment', local_service_result())
     .stub(DockerComposeUtils, 'dockerCompose', sinon.stub().returns(null))
-    .command(['dev:restart', '--build', 'test.service.name'])
+    .command(['dev:restart', 'test.service.name'])
     .it('rebuild a service with single arg', ctx => {
       const log_spy = DevRestart.prototype.log as SinonSpy;
       expect(log_spy.firstCall.args[0]).to.contain('Finished rebuilding');
@@ -139,7 +139,7 @@ describe('dev:restart', () => {
     .stub(DevRestart.prototype, 'log', sinon.fake.returns(null))
     .stub(DockerComposeUtils, 'getLocalServiceForEnvironment', multiarg_local_service_result())
     .stub(DockerComposeUtils, 'dockerCompose', sinon.stub().returns(null))
-    .command(['dev:restart', '--build', 'test.service.name', 'test2.service.name'])
+    .command(['dev:restart', 'test.service.name', 'test2.service.name'])
     .it('rebuild a service with multiple args', ctx => {
       const log_spy = DevRestart.prototype.log as SinonSpy;
       expect(log_spy.firstCall.args[0]).to.contain('Finished rebuilding');

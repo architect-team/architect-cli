@@ -1,10 +1,11 @@
-import { Flags, Interfaces } from '@oclif/core';
+import { Interfaces } from '@oclif/core';
 import BaseCommand from '../../base-command';
 import { DockerComposeUtils } from '../../common/docker-compose';
 import { RequiresDocker } from '../../common/docker/helper';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
+import { booleanString } from '../../common/utils/oclif';
 
 export default class DevRestart extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -20,18 +21,19 @@ export default class DevRestart extends BaseCommand {
 
   static flags = {
     ...EnvironmentUtils.flags,
-    build: Flags.boolean({
+    build: booleanString({
       char: 'b',
       description: 'Rebuild the services image before restarting (defaults to true)',
       default: true,
+      sensitive: false,
     }),
   };
 
   static args = [{
-    sensitive: false,
     name: 'services',
     description: 'Name of the service(s) to restart',
     required: false,
+    sensitive: false,
   }];
 
   // overrides the oclif default parse to allow for args.services to be a list of services
