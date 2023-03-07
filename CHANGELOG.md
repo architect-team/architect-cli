@@ -1,3 +1,21 @@
+# [1.34.0](https://github.com/architect-team/architect-cli/compare/v1.33.2...v1.34.0) (2023-03-07)
+
+
+### Bug Fixes
+
+* **cluster:create:** Make sure a cluster name is unique before creation ([#840](https://github.com/architect-team/architect-cli/issues/840)) ([27d14f7](https://github.com/architect-team/architect-cli/commit/27d14f7a4b93dc22f21e3e16f1762f80f7d2f261))
+* **deploy:** Add missing flags from register to deploy ([#849](https://github.com/architect-team/architect-cli/issues/849)) ([61c3349](https://github.com/architect-team/architect-cli/commit/61c33496f3502a2a9918aeec5229a72b2a5e23cc))
+* **dev:restart:** Default --build to true ([#847](https://github.com/architect-team/architect-cli/issues/847)) ([dbf8cc0](https://github.com/architect-team/architect-cli/commit/dbf8cc000aabfe00145208924fee8ad220acce4c))
+* **dev:** Update description of environment flag to emphasize it is for local use only ([e9a66c4](https://github.com/architect-team/architect-cli/commit/e9a66c4ae7b1c4c2f023c7ac0f7a93180d84a5c6))
+* **init:** Depends on now supports dictionaries ([#848](https://github.com/architect-team/architect-cli/issues/848)) ([30fedca](https://github.com/architect-team/architect-cli/commit/30fedca35dbcdc5b4bf42847c8792d4196873264))
+* **register:** Hard remove old cache directory before renaming ([#846](https://github.com/architect-team/architect-cli/issues/846)) ([a9e2720](https://github.com/architect-team/architect-cli/commit/a9e2720b581c015a15d1afcba1c810e47c23d17d))
+* **spec:** Remove parameters ([#808](https://github.com/architect-team/architect-cli/issues/808)) ([72cb793](https://github.com/architect-team/architect-cli/commit/72cb7937ad82239add6807eee65c27fbde4cbd31))
+
+
+### Features
+
+* **dev:restart:** Add dev:restart command ([#842](https://github.com/architect-team/architect-cli/issues/842)) ([93d10cf](https://github.com/architect-team/architect-cli/commit/93d10cf01ffb5a75f00aa3a46f54c616d8a00750))
+
 ## [1.33.2](https://github.com/architect-team/architect-cli/compare/v1.33.1...v1.33.2) (2023-02-23)
 
 
