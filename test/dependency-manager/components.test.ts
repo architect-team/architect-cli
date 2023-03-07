@@ -1045,8 +1045,85 @@ describe('components spec v1', function () {
         name: component
 
         databases:
+          primary-db:
+            type: mariadb:10
+
+        services:
+          api:
+            image: test:v1
+            environment:
+              DATABASE: \${{ databases['primary-db'].connection_string }}
+        `;
+
+      mock_fs({
+        '/architect.yaml': yml,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'examples', {
+        'component': '/architect.yaml',
+      });
+
+      const graph = await manager.getGraph([
+        ...await manager.loadComponentSpecs('component', true),
+      ]);
+
+      expect((graph.nodes[0] as any).config.environment.DATABASE).to.be.equal('mariadb://architect:password@component--primary-db-db:3306/architect');
+      expect(graph.nodes).to.have.lengthOf(2);
+      expect(graph.edges).to.have.lengthOf(1);
+    });
+
+    it('override database with secret', async () => {
+      const yml = `
+        name: component
+
+        secrets:
+          dbOverride:
+            default: mysql://default.com
+
+        databases:
           primary:
             type: mariadb:10
+            connection_string: \${{ secrets.dbOverride }}
+
+        services:
+          api:
+            image: test:v1
+            environment:
+              DATABASE: \${{ databases.primary.connection_string }}
+        `;
+
+      mock_fs({
+        '/architect.yaml': yml,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'examples', {
+        'component': '/architect.yaml',
+      });
+
+      const override_url = 'https://override.com';
+      const graph = await manager.getGraph([
+        ...await manager.loadComponentSpecs('component', true),
+      ], {
+        '*': { 'dbOverride': override_url }
+      });
+
+      expect((graph.nodes[0] as any).config.environment.DATABASE).to.be.equal(override_url);
+      expect(graph.edges).to.have.length(1);
+    });
+
+    it('override database with default value', async () => {
+      const default_value = 'mysql://default.com';
+      const yml = `
+        name: component
+
+        secrets:
+          dbOverride:
+            default: ${default_value}
+
+        databases:
+          primary:
+            type: mariadb:10
+            connection_string: \${{ secrets.dbOverride }}
 
         services:
           api:
@@ -1067,8 +1144,46 @@ describe('components spec v1', function () {
         ...await manager.loadComponentSpecs('component', true),
       ]);
 
-      expect(graph.nodes).to.have.lengthOf(2);
-      expect(graph.edges).to.have.lengthOf(1);
+      expect((graph.nodes[0] as any).config.environment.DATABASE).to.be.equal(default_value);
+      expect(graph.edges).to.have.length(1);
+    });
+
+    it('throw error if database and service names collide', async () => {
+      const yml = `
+        name: component
+
+        databases:
+          primary:
+            type: mariadb:10
+            connection_string: \${{ secrets.dbOverride }}
+
+        services:
+          primary-db:
+            image: test:v1
+          api:
+            image: test:v1
+            environment:
+              DATABASE: \${{ databases.primary.connection_string }}
+        `;
+
+      mock_fs({
+        '/architect.yaml': yml,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'examples', {
+        'component': '/architect.yaml',
+      });
+
+      let error;
+      try {
+        await manager.getGraph([
+          ...await manager.loadComponentSpecs('component'),
+        ])
+      } catch (err) {
+        error = err;
+      }
+
+      expect(error).to.be.instanceOf(ValidationErrors);
     });
   })
 });

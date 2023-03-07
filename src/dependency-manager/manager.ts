@@ -237,12 +237,12 @@ export default abstract class DependencyManager {
       const raw_connection_string = connection_string.replace(regex, '');
       const raw_default_connection_string = default_context.connection_string.replace(regex, '');
       return {
-        host: `\${{ parseUrl(${raw_connection_string}, 'host') ? parseUrl(${raw_connection_string}, 'host') : '${default_context.host}' }}`,
-        port: `\${{ parseUrl(${raw_connection_string}, 'port') ? parseUrl(${raw_connection_string}, 'port') : '${default_context.port}' }}`,
-        username: `\${{ parseUrl(${raw_connection_string}, 'username') ? parseUrl(${raw_connection_string}, 'username') : '${default_context.username}' }}`,
-        password: `\${{ parseUrl(${raw_connection_string}, 'password') ? parseUrl(${raw_connection_string}, 'password') : '${default_context.password}' }}`,
-        protocol: `\${{ parseUrl(${raw_connection_string}, 'protocol') ? parseUrl(${raw_connection_string}, 'protocol') : '${default_context.protocol}' }}`,
-        database: `\${{ parseUrl(${raw_connection_string}, 'pathname') ? parseUrl(${raw_connection_string}, 'pathname') : '${default_context.database}' }}`,
+        host: `\${{ ${raw_connection_string} ? parseUrl(${raw_connection_string}, 'host') : '${default_context.host}' }}`,
+        port: `\${{ ${raw_connection_string} ? parseUrl(${raw_connection_string}, 'port') : '${default_context.port}' }}`,
+        username: `\${{ ${raw_connection_string} ? parseUrl(${raw_connection_string}, 'username') : '${default_context.username}' }}`,
+        password: `\${{ ${raw_connection_string} ? parseUrl(${raw_connection_string}, 'password') : '${default_context.password}' }}`,
+        protocol: `\${{ ${raw_connection_string} ? parseUrl(${raw_connection_string}, 'protocol') : '${default_context.protocol}' }}`,
+        database: `\${{ ${raw_connection_string} ? parseUrl(${raw_connection_string}, 'pathname') : '${default_context.database}' }}`,
         connection_string: `\${{ (${raw_connection_string}) ? (${raw_connection_string}) : (${raw_default_connection_string}) }}`,
         url: `\${{ (${raw_connection_string}) ? (${raw_connection_string}) : (${raw_default_connection_string}) }}`,
       };
@@ -345,11 +345,13 @@ export default abstract class DependencyManager {
           connection_string: this.generateUrl(interface_ref),
           url: this.generateUrl(interface_ref),
         };
-        const database_name = service_name.split(Slugs.DB_SUFFIX)[0];
-        if (component_config.databases[database_name]) {
-          context.databases[database_name] = component_config.databases[database_name].connection_string ?
-            this.getDatabaseContextFromConnectionString(component_config.databases[database_name].connection_string || '', default_database_config) :
-            default_database_config;
+        if (service_name.endsWith(Slugs.DB_SUFFIX)) {
+          const database_name = service_name.substring(0, service_name.length - Slugs.DB_SUFFIX.length);
+          if (component_config.databases[database_name]) {
+            context.databases[database_name] = component_config.databases[database_name].connection_string ?
+              this.getDatabaseContextFromConnectionString(component_config.databases[database_name].connection_string || '', default_database_config) :
+              default_database_config;
+          }
         }
 
         context.services[service_name].interfaces[interface_name] = {
