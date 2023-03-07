@@ -1,0 +1,12 @@
+.husky
+.bin
+lib
+patches
+node_modules
+package*
+.eslintrc.js
+.eslintignore
+.git*
+.prettierignore
+*Dockerfile
+src/dependency-manager/schema/architect.schema.json

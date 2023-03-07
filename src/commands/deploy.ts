@@ -12,7 +12,7 @@ import { booleanString } from '../common/utils/oclif';
 import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-builder';
 import { ComponentVersionSlugUtils } from '../dependency-manager/spec/utils/slugs';
 import Dev from './dev';
-import ComponentRegister from './register';
+import ComponentRegister, { SHARED_REGISTER_FLAGS } from './register';
 
 export abstract class DeployCommand extends BaseCommand {
   static flags = {
@@ -132,15 +132,6 @@ export default class Deploy extends DeployCommand {
       sensitive: false,
       default: undefined,
     }),
-    parameter: Flags.string({
-      char: 'p',
-      description: `Please use --secret.`,
-      multiple: true,
-      hidden: true,
-      deprecated: {
-        to: 'secret',
-      },
-    }),
     interface: Flags.string({
       char: 'i',
       description: 'Deprecated: Please use ingress.subdomain https://docs.architect.io/components/ingress-rules/',
@@ -201,6 +192,7 @@ export default class Deploy extends DeployCommand {
       description: '[default: true] Automatically open urls in the browser for local deployments',
       sensitive: false,
     }),
+    ...SHARED_REGISTER_FLAGS,
   };
 
   static args = [{
@@ -236,11 +228,8 @@ export default class Deploy extends DeployCommand {
     const components = args.configs_or_components;
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface || []);
-    const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
-    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values); // TODO: 404: update
-    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter || [], all_secret_file_values); // TODO: 404: remove
-    const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
-
+    const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])];
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values);
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
@@ -248,7 +237,20 @@ export default class Deploy extends DeployCommand {
     const component_names: Set<string> = new Set<string>();
     for (const component of components) {
       if (fs.existsSync(component)) {
-        const register = new ComponentRegister([component, '-a', account.name, '-e', environment.name], this.config);
+        const register_argv = [component, '-a', account.name, '-e', environment.name];
+        for (const flag of Object.keys(SHARED_REGISTER_FLAGS)) {
+          let flag_values = flags[flag];
+          if (!flag_values) {
+            continue;
+          }
+          if (flag_values && !Array.isArray(flag_values)) {
+            flag_values = [flag_values];
+          }
+          for (const flag_value of flag_values) {
+            register_argv.push(`--${flag}`, flag_value);
+          }
+        }
+        const register = new ComponentRegister(register_argv, this.config);
         register.app = this.app;
         await register.run();
         const component_spec = buildSpecFromPath(component);
@@ -264,7 +266,7 @@ export default class Deploy extends DeployCommand {
       component: [...component_names].join(','),
       interfaces: interfaces_map,
       recursive: flags.recursive,
-      values: all_secrets, // TODO: 404: update
+      values: component_secrets,
       prevent_destroy: flags['deletion-protection'],
     };
 

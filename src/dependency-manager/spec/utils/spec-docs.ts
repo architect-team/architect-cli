@@ -255,7 +255,12 @@ const docs_description = () => {
 
 We've published a formal definition of this specification here: [Architect JSONSchema](https://raw.githubusercontent.com/architect-team/architect-cli/main/src/dependency-manager/schema/architect.schema.json).
 
-If you're using VS Code (or any other IDE with intellisense backed by [SchemaStore](https://www.schemastore.org/json/)), then you should already see syntax highlighting when editing any file named \`architect.yml\`.
+<Card
+  title="For users of Visual Studio Code, check out the Architect extension!"
+  href="https://marketplace.visualstudio.com/items?itemName=Architectio.architect-vscode"
+/>
+
+If you're using an IDE with intellisense backed by [SchemaStore](https://www.schemastore.org/json/), then you may already see syntax highlighting when editing any file named \`architect.yml\`.
 
 **Note**: all references to the \`Dict<T>\` type below refer to a key-value map where the keys are strings and the values are of type T.`;
 };
@@ -279,4 +284,3 @@ export const simpleDocs = (schema: SchemaObject): string => {
   markdown += schemaToMarkdown(schema);
   return markdown;
 };
-

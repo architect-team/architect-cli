@@ -248,8 +248,12 @@ export class ComposeConverter {
   }
 
   private static convertDependsOn(depends_on_or_links: any, docker_compose: DockerComposeTemplate, architect_service: ServiceSpec): ComposeConversion {
-    if (depends_on_or_links.length === 0) {
+    if (!depends_on_or_links) {
       return {};
+    }
+
+    if (!Array.isArray(depends_on_or_links)) {
+      depends_on_or_links = Object.keys(depends_on_or_links);
     }
 
     const depends_on: string[] = [];

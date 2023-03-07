@@ -12,7 +12,6 @@ import path from 'path';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
 import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
-import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import SecretUtils from '../../architect/secret/secret.utils';
 import { default as BaseCommand } from '../../base-command';
 import LocalDependencyManager, { ComponentConfigOpts } from '../../common/dependency-manager/local-manager';
@@ -257,23 +256,20 @@ export default class Dev extends BaseCommand {
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    ...EnvironmentUtils.flags,
 
+    environment: Flags.string({
+      description: 'Name of environment created locally during dev. This is only local and will not reflect in your architect account',
+      char: 'e',
+      env: 'ARCHITECT_ENVIRONMENT',
+      parse: async (value) => value.toLowerCase(),
+      sensitive: false,
+    }),
     'compose-file': Flags.string({
       char: 'o',
       description: 'Path where the compose file should be written to',
       default: '',
       exclusive: ['environment'],
       sensitive: false,
-    }),
-    parameter: Flags.string({
-      char: 'p',
-      description: `Please use --secret.`,
-      multiple: true,
-      hidden: true,
-      deprecated: {
-        to: 'secret',
-      },
     }),
     interface: Flags.string({
       char: 'i',
@@ -675,9 +671,8 @@ $ architect dev -e new_env_name_here .`));
       env_secrets = await this.getEnvironmentSecrets(account, flags['secrets-env']);
     }
 
-    const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
+    const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])];
     const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values, env_secrets);
-    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter || [], all_secret_file_values);
 
     const linked_components = this.app.linkedComponents;
     const component_versions: string[] = [];
@@ -732,8 +727,7 @@ $ architect dev -e new_env_name_here .`));
       }
     }
 
-    const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
-    const graph = await dependency_manager.getGraph(component_specs, all_secrets); // TODO: 404: update
+    const graph = await dependency_manager.getGraph(component_specs, component_secrets);
     const gateway_admin_port = await PortUtil.getAvailablePort(8080);
     const compose = await DockerComposeUtils.generate(graph, {
       external_addr: flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address,
