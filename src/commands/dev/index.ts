@@ -12,7 +12,6 @@ import path from 'path';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
 import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
-import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import SecretUtils from '../../architect/secret/secret.utils';
 import { default as BaseCommand } from '../../base-command';
 import LocalDependencyManager, { ComponentConfigOpts } from '../../common/dependency-manager/local-manager';
@@ -257,8 +256,14 @@ export default class Dev extends BaseCommand {
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    ...EnvironmentUtils.flags,
 
+    environment: Flags.string({
+      description: 'Name of environment created locally during dev. This is only local and will not reflect in your architect account',
+      char: 'e',
+      env: 'ARCHITECT_ENVIRONMENT',
+      parse: async (value) => value.toLowerCase(),
+      sensitive: false,
+    }),
     'compose-file': Flags.string({
       char: 'o',
       description: 'Path where the compose file should be written to',

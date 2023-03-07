@@ -30,6 +30,24 @@ tmp.setGracefulCleanup();
 
 export const ENV_TAG_PREFIX = 'architect.environment.';
 
+export const SHARED_REGISTER_FLAGS = {
+  arg: Flags.string({
+    description: 'Build arg(s) to pass to docker build',
+    multiple: true,
+    sensitive: false,
+  }),
+  architecture: Flags.string({
+    description: 'Architecture(s) to target for Docker image builds',
+    default: ['amd64'],
+    multiple: true,
+    sensitive: false,
+  }),
+  'cache-directory': Flags.string({
+    description: 'Directory to write build cache to. Do not use in Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs',
+    sensitive: false,
+  }),
+};
+
 interface ImageRefOutput {
   compose: DockerComposeTemplate;
   new_spec: ComponentSpec;
@@ -55,26 +73,12 @@ export default class ComponentRegister extends BaseCommand {
   static flags = {
     ...BaseCommand.flags,
     ...AccountUtils.flags,
-    arg: Flags.string({
-      description: 'Build arg(s) to pass to docker build',
-      multiple: true,
-      sensitive: false,
-    }),
+    ...SHARED_REGISTER_FLAGS,
     tag: Flags.string({
       char: 't',
       description: 'Tag to give to the new component',
       default: 'latest',
       exclusive: ['environment'],
-      sensitive: false,
-    }),
-    architecture: Flags.string({
-      description: 'Architecture(s) to target for Docker image builds',
-      default: ['amd64'],
-      multiple: true,
-      sensitive: false,
-    }),
-    'cache-directory': Flags.string({
-      description: 'Directory to write build cache to. Do not use in Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs',
       sensitive: false,
     }),
     environment: Flags.string({
@@ -251,7 +255,8 @@ export default class ComponentRegister extends BaseCommand {
     }
 
     for (const cache_dir of seen_cache_dir) {
-      await fs.move(`${cache_dir}-tmp`, cache_dir, { overwrite: true });
+      await fs.remove(cache_dir);
+      await fs.move(`${cache_dir}-tmp`, cache_dir);
     }
 
     for (const [service_name, service] of Object.entries(new_spec.services || {})) {

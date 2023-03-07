@@ -12,7 +12,7 @@ import { booleanString } from '../common/utils/oclif';
 import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-builder';
 import { ComponentVersionSlugUtils } from '../dependency-manager/spec/utils/slugs';
 import Dev from './dev';
-import ComponentRegister from './register';
+import ComponentRegister, { SHARED_REGISTER_FLAGS } from './register';
 
 export abstract class DeployCommand extends BaseCommand {
   static flags = {
@@ -192,6 +192,7 @@ export default class Deploy extends DeployCommand {
       description: '[default: true] Automatically open urls in the browser for local deployments',
       sensitive: false,
     }),
+    ...SHARED_REGISTER_FLAGS,
   };
 
   static args = [{
@@ -236,7 +237,20 @@ export default class Deploy extends DeployCommand {
     const component_names: Set<string> = new Set<string>();
     for (const component of components) {
       if (fs.existsSync(component)) {
-        const register = new ComponentRegister([component, '-a', account.name, '-e', environment.name], this.config);
+        const register_argv = [component, '-a', account.name, '-e', environment.name];
+        for (const flag of Object.keys(SHARED_REGISTER_FLAGS)) {
+          let flag_values = flags[flag];
+          if (!flag_values) {
+            continue;
+          }
+          if (flag_values && !Array.isArray(flag_values)) {
+            flag_values = [flag_values];
+          }
+          for (const flag_value of flag_values) {
+            register_argv.push(`--${flag}`, flag_value);
+          }
+        }
+        const register = new ComponentRegister(register_argv, this.config);
         register.app = this.app;
         await register.run();
         const component_spec = buildSpecFromPath(component);

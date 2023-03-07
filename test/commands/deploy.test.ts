@@ -82,9 +82,10 @@ describe('remote deploy environment', function () {
   remoteDeploy
     .stub(ComponentRegister.prototype, 'run', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentBuilder, 'buildSpecFromPath', sinon.stub().returns(Promise.resolve()))
-    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'test/mocks/superset/architect.yml'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--arg', 'NODE_ENV=production', '--auto-approve', 'test/mocks/superset/architect.yml'])
     .it('Creates a remote deployment with env and account flags and a path to a component', ctx => {
-      expect((ComponentRegister.prototype.run as SinonSpy).getCalls().length).to.equal(1);
+      const register_run = ComponentRegister.prototype.run as SinonSpy;
+      expect(register_run.getCalls().length).to.equal(1);
       const build_spec = ComponentBuilder.buildSpecFromPath as SinonSpy;
       expect(build_spec.getCalls().length).to.equal(1);
       expect(build_spec.firstCall.args[0]).eq('test/mocks/superset/architect.yml');
