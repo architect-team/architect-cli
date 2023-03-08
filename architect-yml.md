@@ -122,7 +122,6 @@ Component databases let you quickly spin up a database for your service
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `reserved_name` | string | A specific service name which will override the database name specified in the component. | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">Regex</a> |
  | `description` | string | Human readable description |  |
  | `type`* | string \| [Expression](https://docs.architect.io/reference/contexts) | The type engine and version of database software needed for data storage. |  |
  | `connection_string` | string \| null \| [Expression](https://docs.architect.io/reference/contexts) | The connection uri of an existing database to use instead of provisioning a new one |  |

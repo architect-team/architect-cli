@@ -147,7 +147,7 @@
                 }
               },
               "errorMessage": {
-                "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
               },
               "description": "A database represents a stateful service powered by one of several supported database engines.",
               "additionalProperties": false
@@ -156,7 +156,7 @@
         }
       },
       "errorMessage": {
-        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+        "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
       },
       "description": "A database represents a stateful service powered by one of several supported database engines.",
       "additionalProperties": false
@@ -461,7 +461,7 @@
                         }
                       },
                       "errorMessage": {
-                        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                        "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                       },
                       "description": "A database represents a stateful service powered by one of several supported database engines.",
                       "additionalProperties": false
@@ -470,7 +470,7 @@
                 }
               },
               "errorMessage": {
-                "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
               },
               "description": "A database represents a stateful service powered by one of several supported database engines.",
               "additionalProperties": false
@@ -634,12 +634,6 @@
   "definitions": {
     "DatabaseSpec": {
       "properties": {
-        "reserved_name": {
-          "type": "string",
-          "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
-          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
-          "description": "A specific service name which will override the database name specified in the component."
-        },
         "description": {
           "type": "string",
           "description": "Human readable description"
@@ -649,7 +643,19 @@
           "anyOf": [
             {
               "type": "string",
-              "pattern": "^\\w+:\\d+$"
+              "enum": [
+                "postgres:10",
+                "postgres:11",
+                "postgres:12",
+                "postgres:13",
+                "postgres:14",
+                "postgres:15",
+                "mysql:5",
+                "mysql:6",
+                "mysql:7",
+                "mysql:8",
+                "mariadb:10"
+              ]
             },
             {
               "type": "string",
@@ -696,12 +702,6 @@
           "anyOf": [
             {
               "properties": {
-                "reserved_name": {
-                  "type": "string",
-                  "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
-                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
-                  "description": "A specific service name which will override the database name specified in the component."
-                },
                 "description": {
                   "type": "string",
                   "description": "Human readable description"
@@ -711,7 +711,19 @@
                   "anyOf": [
                     {
                       "type": "string",
-                      "pattern": "^\\w+:\\d+$"
+                      "enum": [
+                        "postgres:10",
+                        "postgres:11",
+                        "postgres:12",
+                        "postgres:13",
+                        "postgres:14",
+                        "postgres:15",
+                        "mysql:5",
+                        "mysql:6",
+                        "mysql:7",
+                        "mysql:8",
+                        "mariadb:10"
+                      ]
                     },
                     {
                       "type": "string",
@@ -4258,7 +4270,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A database represents a stateful service powered by one of several supported database engines.",
                   "additionalProperties": false
@@ -4267,7 +4279,7 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "A database represents a stateful service powered by one of several supported database engines.",
           "additionalProperties": false
@@ -4572,7 +4584,7 @@
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
                           "description": "A database represents a stateful service powered by one of several supported database engines.",
                           "additionalProperties": false
@@ -4581,7 +4593,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A database represents a stateful service powered by one of several supported database engines.",
                   "additionalProperties": false
@@ -4745,12 +4757,6 @@
     },
     "_DebugDatabaseSpec": {
       "properties": {
-        "reserved_name": {
-          "type": "string",
-          "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
-          "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
-          "description": "A specific service name which will override the database name specified in the component."
-        },
         "description": {
           "type": "string",
           "description": "Human readable description"
@@ -4760,7 +4766,19 @@
           "anyOf": [
             {
               "type": "string",
-              "pattern": "^\\w+:\\d+$"
+              "enum": [
+                "postgres:10",
+                "postgres:11",
+                "postgres:12",
+                "postgres:13",
+                "postgres:14",
+                "postgres:15",
+                "mysql:5",
+                "mysql:6",
+                "mysql:7",
+                "mysql:8",
+                "mariadb:10"
+              ]
             },
             {
               "type": "string",
@@ -4804,12 +4822,6 @@
           "anyOf": [
             {
               "properties": {
-                "reserved_name": {
-                  "type": "string",
-                  "pattern": "^(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)$",
-                  "errorMessage": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32",
-                  "description": "A specific service name which will override the database name specified in the component."
-                },
                 "description": {
                   "type": "string",
                   "description": "Human readable description"
@@ -4819,7 +4831,19 @@
                   "anyOf": [
                     {
                       "type": "string",
-                      "pattern": "^\\w+:\\d+$"
+                      "enum": [
+                        "postgres:10",
+                        "postgres:11",
+                        "postgres:12",
+                        "postgres:13",
+                        "postgres:14",
+                        "postgres:15",
+                        "mysql:5",
+                        "mysql:6",
+                        "mysql:7",
+                        "mysql:8",
+                        "mariadb:10"
+                      ]
                     },
                     {
                       "type": "string",
@@ -8240,7 +8264,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A database represents a stateful service powered by one of several supported database engines.",
                   "additionalProperties": false
@@ -8249,7 +8273,7 @@
             }
           },
           "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
           "description": "A database represents a stateful service powered by one of several supported database engines.",
           "additionalProperties": false
@@ -8551,7 +8575,7 @@
                             }
                           },
                           "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                           },
                           "description": "A database represents a stateful service powered by one of several supported database engines.",
                           "additionalProperties": false
@@ -8560,7 +8584,7 @@
                     }
                   },
                   "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle; max length 32"
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
                   "description": "A database represents a stateful service powered by one of several supported database engines.",
                   "additionalProperties": false
