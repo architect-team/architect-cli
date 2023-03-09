@@ -18,6 +18,7 @@ describe('destroy', function () {
 
   const mock_pipeline = {
     id: 'test-pipeline-id',
+    environment: mock_env
   };
 
   const destroy = mockArchitectAuth()

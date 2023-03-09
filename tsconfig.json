@@ -21,12 +21,6 @@
     ],
     "skipLibCheck": true
   },
-  "include": [
-    "./src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "test",
-    "lib"
-  ]
+  "include": ["./src/**/*"],
+  "exclude": ["node_modules", "test", "lib"]
 }

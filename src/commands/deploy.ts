@@ -4,6 +4,7 @@ import fs from 'fs';
 import inquirer from 'inquirer';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
+import Pipeline from '../architect/pipeline/pipeline.entity';
 import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import BaseCommand from '../base-command';
 import DeployUtils from '../common/utils/deploy.utils';
@@ -11,7 +12,7 @@ import { booleanString } from '../common/utils/oclif';
 import { buildSpecFromPath } from '../dependency-manager/spec/utils/component-builder';
 import { ComponentVersionSlugUtils } from '../dependency-manager/spec/utils/slugs';
 import Dev from './dev';
-import ComponentRegister from './register';
+import ComponentRegister, { SHARED_REGISTER_FLAGS } from './register';
 
 export abstract class DeployCommand extends BaseCommand {
   static flags = {
@@ -48,8 +49,12 @@ export abstract class DeployCommand extends BaseCommand {
     return parsed;
   }
 
-  async approvePipeline(pipeline: any): Promise<boolean> {
+  async approvePipeline(pipeline: Pipeline): Promise<boolean> {
     const { flags } = await this.parse(this.constructor as typeof DeployCommand);
+
+    if (!pipeline.environment) {
+      this.error('Invalid pipeline');
+    }
 
     if (!flags['auto-approve']) {
       this.log(`Pipeline ready for review: ${this.app.config.app_host}/${pipeline.environment.account.name}/environments/${pipeline.environment.name}/pipelines/${pipeline.id}`);
@@ -127,15 +132,6 @@ export default class Deploy extends DeployCommand {
       sensitive: false,
       default: undefined,
     }),
-    parameter: Flags.string({
-      char: 'p',
-      description: `Please use --secret.`,
-      multiple: true,
-      hidden: true,
-      deprecated: {
-        to: 'secret',
-      },
-    }),
     interface: Flags.string({
       char: 'i',
       description: 'Deprecated: Please use ingress.subdomain https://docs.architect.io/components/ingress-rules/',
@@ -196,6 +192,7 @@ export default class Deploy extends DeployCommand {
       description: '[default: true] Automatically open urls in the browser for local deployments',
       sensitive: false,
     }),
+    ...SHARED_REGISTER_FLAGS,
   };
 
   static args = [{
@@ -231,11 +228,8 @@ export default class Deploy extends DeployCommand {
     const components = args.configs_or_components;
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface || []);
-    const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])]; // TODO: 404: remove
-    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values); // TODO: 404: update
-    const component_parameters = DeployUtils.getComponentSecrets(flags.parameter || [], all_secret_file_values); // TODO: 404: remove
-    const all_secrets = { ...component_parameters, ...component_secrets }; // TODO: 404: remove
-
+    const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])];
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values);
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
@@ -243,7 +237,20 @@ export default class Deploy extends DeployCommand {
     const component_names: Set<string> = new Set<string>();
     for (const component of components) {
       if (fs.existsSync(component)) {
-        const register = new ComponentRegister([component, '-a', account.name, '-e', environment.name], this.config);
+        const register_argv = [component, '-a', account.name, '-e', environment.name];
+        for (const flag of Object.keys(SHARED_REGISTER_FLAGS)) {
+          let flag_values = flags[flag];
+          if (!flag_values) {
+            continue;
+          }
+          if (flag_values && !Array.isArray(flag_values)) {
+            flag_values = [flag_values];
+          }
+          for (const flag_value of flag_values) {
+            register_argv.push(`--${flag}`, flag_value);
+          }
+        }
+        const register = new ComponentRegister(register_argv, this.config);
         register.app = this.app;
         await register.run();
         const component_spec = buildSpecFromPath(component);
@@ -255,49 +262,29 @@ export default class Deploy extends DeployCommand {
       }
     }
 
-    const deployment_dtos = [];
-    for (const component of component_names) {
-      const deploy_dto = {
-        component,
-        interfaces: interfaces_map,
-        recursive: flags.recursive,
-        values: all_secrets, // TODO: 404: update
-        prevent_destroy: flags['deletion-protection'],
-      };
-      deployment_dtos.push(deploy_dto);
-    }
+    const deploy_dto = {
+      component: [...component_names].join(','),
+      interfaces: interfaces_map,
+      recursive: flags.recursive,
+      values: component_secrets,
+      prevent_destroy: flags['deletion-protection'],
+    };
 
-    CliUx.ux.action.start(chalk.blue(`Creating pipeline${deployment_dtos.length > 0 ? 's' : ''}`));
-    const pipelines = await Promise.all(
-      deployment_dtos.map(async (deployment_dto) => {
-        const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, deployment_dto);
-        return { component_name: deployment_dto.component, pipeline };
-      }),
-    );
+    CliUx.ux.action.start(chalk.blue(`Creating pipeline`));
+    const { data: pipeline } = await this.app.api.post<Pipeline>(`/environments/${environment.id}/deploy`, deploy_dto);
     CliUx.ux.action.stop();
 
-    const approved_pipelines = [];
-    for (const pipeline of pipelines) {
-      const approved = await this.approvePipeline(pipeline.pipeline);
-      if (approved) {
-        approved_pipelines.push(pipeline);
-      }
-    }
-
-    if (!approved_pipelines?.length) {
+    const approved = await this.approvePipeline(pipeline);
+    if (!approved) {
       this.log(chalk.blue('Cancelled all pipelines'));
       return;
     }
 
     CliUx.ux.action.start(chalk.blue('Deploying'));
-    await Promise.all(
-      approved_pipelines.map((pipeline) => {
-        return PipelineUtils.pollPipeline(this.app, pipeline.pipeline.id)
-          .then(() => {
-            this.log(chalk.green(`${pipeline.component_name} Deployed`));
-          });
-      }),
-    );
+    await PipelineUtils.pollPipeline(this.app, pipeline.id);
+    for (const component_name of component_names) {
+      this.log(chalk.green(`${component_name} deployed successfully`));
+    }
     CliUx.ux.action.stop();
 
     // Get available URLs from CertManager data

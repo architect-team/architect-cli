@@ -105,7 +105,6 @@ export class ArchitectParser {
           }
           const context_key = parseIdentifier(node);
           const value = context_map[context_key];
-
           const maybe_error = checkRules(context_map, context_key);
           if (maybe_error) {
             this.errors.push(maybe_error);
@@ -197,6 +196,18 @@ export class ArchitectParser {
             value = node.arguments[0].value.trim();
           } else if (node.callee.value === 'startsWith') {
             value = node.arguments[0].value.startsWith(node.arguments[1].value);
+          } else if (node.callee.value === 'parseUrl') {
+            // Handle the edge case where connection_string is set to a secret but no value
+            // is set on the secret.
+            if (!node.arguments[0].value) {
+              value = '';
+            } else {
+              try {
+                value = (new URL(node.arguments[0].value) as any)[node.arguments[1].value as string];
+              } catch {
+                throw new Error(`Unable to parse url ${value}.`);
+              }
+            }
           } else {
             throw new Error(`Unsupported node.callee.value: ${node.callee.value} node.type: ${node.type}`);
           }

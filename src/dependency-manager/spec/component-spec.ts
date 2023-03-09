@@ -3,6 +3,7 @@ import { Exclude, Transform } from 'class-transformer';
 import { Allow, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
+import { DatabaseSpec } from './database-spec';
 import { ResourceSpec } from './resource-spec';
 import { SecretDefinitionSpec, SecretSpecValue } from './secret-spec';
 import { IngressSpec, ServiceSpec } from './service-spec';
@@ -159,21 +160,6 @@ export class ComponentSpec {
   })
   homepage?: string;
 
-  @IsOptional() // TODO: 404: remove
-  @JSONSchema({
-    type: 'object',
-    deprecated: true,
-    patternProperties: {
-      [Slugs.ComponentSecretValidator.source]: AnyOf('string', 'number', 'boolean', SecretDefinitionSpec, 'null'),
-    },
-    errorMessage: {
-      additionalProperties: Slugs.ComponentSecretDescription,
-    },
-    description: '[Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you\'ll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec',
-  })
-  @Transform(transformObject(SecretDefinitionSpec))
-  protected parameters?: Dictionary<SecretSpecValue | SecretDefinitionSpec>;
-
   @IsOptional()
   @JSONSchema({
     type: 'object',
@@ -201,6 +187,19 @@ export class ComponentSpec {
   })
   @Transform(transformObject(OutputDefinitionSpec))
   outputs?: Dictionary<string | number | boolean | OutputDefinitionSpec | null>;
+
+  @IsOptional()
+  @JSONSchema({
+    type: 'object',
+    patternProperties: {
+      [Slugs.ArchitectSlugValidator.source]: AnyOf(DatabaseSpec),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescription,
+    },
+    description: 'A database represents a stateful service powered by one of several supported database engines.',
+  })
+  databases?: Dictionary<DatabaseSpec>;
 
   @IsOptional()
   @JSONSchema({
@@ -274,10 +273,6 @@ export class ComponentSpec {
 
   get deprecated_interfaces(): Dictionary<string | ComponentInterfaceSpec> {
     return this.interfaces || {};
-  }
-
-  get deprecated_parameters(): Dictionary<SecretSpecValue | SecretDefinitionSpec> {
-    return this.parameters || {};
   }
 
   get resources(): Dictionary<ResourceSpec> {

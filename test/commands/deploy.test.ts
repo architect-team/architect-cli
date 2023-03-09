@@ -25,6 +25,7 @@ const environment = {
 
 const mock_pipeline = {
   id: 'test-pipeline-id',
+  environment: environment
 };
 
 const mock_certificates = [
@@ -75,28 +76,23 @@ describe('remote deploy environment', function () {
   remoteDeploy
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .it('Creates a remote deployment when env exists with env and account flags', ctx => {
-      expect(ctx.stdout).to.contain('Deployed');
+      expect(ctx.stdout).to.contain('deployed');
     });
 
   remoteDeploy
     .stub(ComponentRegister.prototype, 'run', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentBuilder, 'buildSpecFromPath', sinon.stub().returns(Promise.resolve()))
-    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'test/mocks/superset/architect.yml'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--arg', 'NODE_ENV=production', '--auto-approve', 'test/mocks/superset/architect.yml'])
     .it('Creates a remote deployment with env and account flags and a path to a component', ctx => {
-      expect((ComponentRegister.prototype.run as SinonSpy).getCalls().length).to.equal(1);
+      const register_run = ComponentRegister.prototype.run as SinonSpy;
+      expect(register_run.getCalls().length).to.equal(1);
       const build_spec = ComponentBuilder.buildSpecFromPath as SinonSpy;
       expect(build_spec.getCalls().length).to.equal(1);
       expect(build_spec.firstCall.args[0]).eq('test/mocks/superset/architect.yml');
-      expect(ctx.stdout).to.contain('Deployed');
+      expect(ctx.stdout).to.contain('deployed');
     });
 
   remoteDeploy
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`)
-      .reply(200, mock_pipeline))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/pipelines/${mock_pipeline.id}/approve`)
-      .reply(200, {}))
     .stub(ComponentRegister.prototype, 'run', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentBuilder, 'buildSpecFromPath', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentVersionSlugUtils.Validator, 'test', sinon.stub().returns(Promise.resolve()))
@@ -111,7 +107,7 @@ describe('remote deploy environment', function () {
       expect(slug_validator.getCalls().length).to.equal(1);
       expect(slug_validator.firstCall.args[0]).eq(`${account.name}/superset:latest`);
 
-      expect(ctx.stdout).to.contain('Deployed');
+      expect(ctx.stdout).to.contain('deployed');
     });
 
   remoteDeploy
@@ -132,7 +128,7 @@ describe('remote deploy environment', function () {
     remoteDeploy
       .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest@tenant-1'])
       .it('Creates a remote deployment when env exists with env and account flags', ctx => {
-        expect(ctx.stdout).to.contain('Deployed');
+        expect(ctx.stdout).to.contain('deployed');
       });
   });
 });
@@ -162,14 +158,14 @@ describe('auto-approve flag with underscore style still works', function () {
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'echo:latest'])
     .it('works but also emits a deprecation warning', ctx => {
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated.');
-      expect(ctx.stdout).to.contain('Deployed');
+      expect(ctx.stdout).to.contain('deployed');
     });
 
   remoteDeploy
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve=true', 'echo:latest'])
     .it('works but also emits a deprecation warning 2', ctx => {
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated.');
-      expect(ctx.stdout).to.contain('Deployed');
+      expect(ctx.stdout).to.contain('deployed');
     });
 });
 
@@ -367,29 +363,6 @@ describe('deployment secrets', function () {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
 
-  mockArchitectAuth() // TODO: 404: remove
-    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
-    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`, (body) => {
-        expect(body.values['*'].test_secret).to.eq('test');
-        expect(body.values['*'].another_secret).to.eq('another_test');
-        return body;
-      })
-      .reply(200, mock_pipeline))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--parameter', 'test_secret=test', '--parameter', 'another_secret=another_test'])
-    .it('passing multiple deprecated parameters inline', ctx => {
-      expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
-    });
-
   mockArchitectAuth()
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
@@ -443,34 +416,6 @@ describe('deployment secrets', function () {
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--secret-file', './examples/echo/.env'])
     .it('passing a dotenv secrets file', ctx => {
-      expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
-    });
-
-  mockArchitectAuth() // TODO: 404: remove
-    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
-    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
-    .stub(DeployUtils, 'readSecretsFile', () => {
-      return wildcard_secrets;
-    })
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`, (body) => {
-        expect(body.values['*'].another_required_key).to.eq('required_value');
-        expect(body.values.echo.a_required_key).to.eq('some_value');
-        expect(body.values.echo.api_port).to.eq(3000);
-        expect(body.values.echo.one_more_required_secret).to.eq('one_more_value');
-        return body;
-      })
-      .reply(200, mock_pipeline))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--values', './examples/echo/secrets.yml'])
-    .it('passing a secrets file with the deprecated values flag', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
 });

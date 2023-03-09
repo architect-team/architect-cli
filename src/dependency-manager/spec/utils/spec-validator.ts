@@ -15,6 +15,7 @@ import { ParsedYaml } from '../../utils/types';
 import { ComponentInstanceMetadata, ComponentSpec } from '../component-spec';
 import { ServiceInterfaceSpec } from '../service-spec';
 import { findDefinition, getArchitectJSONSchema } from './json-schema';
+import { Slugs } from './slugs';
 
 export type AjvError = ErrorObject[] | null | undefined;
 
@@ -294,10 +295,6 @@ export const buildSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMe
     deprecated_interfaces_map: {},
   };
 
-  if (!component_spec.secrets && component_spec.deprecated_parameters) {
-    component_spec.secrets = component_spec.deprecated_parameters;
-  }
-
   deprecatedInterfaces(component_spec);
 
   return component_spec;
@@ -311,6 +308,21 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
   }
 
   const component_spec = buildSpec(parsed_yml, metadata);
+
+  if (component_spec.databases && component_spec.services) {
+    const service_names = Object.keys(component_spec.services);
+    for (const database of Object.keys(component_spec.databases)) {
+      if (service_names.includes(`${database}${Slugs.DB_SUFFIX}`)) {
+        const validation_error = new ValidationError({
+          component: component_spec.name,
+          path: `databases.${database}`,
+          message: `There is a naming collision with the database ${database} and service ${database}${Slugs.DB_SUFFIX}. Database names use both ${database} and ${database}${Slugs.DB_SUFFIX}.`,
+          invalid_key: true,
+        });
+        errors.push(validation_error);
+      }
+    }
+  }
 
   for (const [service_name, service_spec] of Object.entries(component_spec.services || {})) {
     if (service_spec.deploy && service_spec.deploy.kubernetes.deployment) {

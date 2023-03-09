@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import fs from 'fs-extra';
 import https from 'https';
+import isCi from 'is-ci';
 import os from 'os';
 import path from 'path';
 import { URL } from 'url';
@@ -28,16 +29,10 @@ export default class AppService {
   constructor(config_dir: string, version: string) {
     this.config = new AppConfig(config_dir);
     this.version = version;
-    if (config_dir) {
-      const config_file = path.join(config_dir, LocalPaths.CLI_CONFIG_FILENAME);
-      if (fs.existsSync(config_file)) {
-        const payload = fs.readJSONSync(config_file);
-        this.config = new AppConfig(config_dir, payload);
-      }
-    }
-    if (!this.config.analytics_id) {
-      // Locks in the default analytics UUID so we don't generate a new one
-      this.config.save();
+    const config_file = path.join(config_dir, LocalPaths.CLI_CONFIG_FILENAME);
+    if (fs.existsSync(config_file)) {
+      const payload = fs.readJSONSync(config_file);
+      this.config = new AppConfig(config_dir, payload);
     }
 
     this._api = axios.create({
@@ -60,14 +55,35 @@ export default class AppService {
       });
     }
 
-    this.auth = new AuthClient(this.config, this.checkLogin.bind(this));
+    this.auth = new AuthClient(this.config, {
+      on: {
+        login: async () => {
+          const user = await this.checkLogin();
+
+          this.posthog.identify({
+            distinctId: user.id,
+            properties: {
+              name: user.name,
+              email: user.email,
+            },
+          });
+
+          // https://posthog.com/docs/integrate/server/node#alias
+          this.posthog.alias({
+            distinctId: user.id,
+            alias: this.posthog.getPersistedProperty('anonymous_id'),
+          });
+        },
+      },
+    });
 
     this.linkedComponents = this.loadLinkedComponents(config_dir);
 
     this.posthog = new PostHogCli(this.config.posthog_api_key, {
       host: this.config.posthog_api_host,
-      enable: !this.config.analytics_disabled,
-      analyticsId: this.config.analytics_id,
+      enable: !isCi && !this.config.analytics_disabled,
+      persistence: 'file',
+      propertiesFile: path.join(config_dir, LocalPaths.POSTHOG_PROPERTIES),
     });
   }
 
@@ -124,20 +140,6 @@ export default class AppService {
 
   async checkLogin(): Promise<User> {
     const { data } = await this.api.get<User>('/users/me');
-
-    this.posthog.identify({
-      distinctId: data.id,
-      properties: {
-        email: data.email,
-      },
-    });
-
-    // https://posthog.com/docs/integrate/server/node#alias
-    this.posthog.alias({
-      distinctId: data.id,
-      alias: this.config.analytics_id,
-    });
-
     return data;
   }
 

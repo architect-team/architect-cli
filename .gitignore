@@ -16,3 +16,4 @@ creds.json
 test/sentry-history.json
 .npmrc
 /test/webpack/lib
+posthog.json

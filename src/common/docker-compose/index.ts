@@ -109,7 +109,7 @@ export class DockerComposeUtils {
       }
 
       compose.services[gateway_node.ref] = {
-        image: 'traefik:v2.6.2',
+        image: 'traefik:v2.9.8',
         command: [
           '--api.insecure=true',
           '--pilot.dashboard=false',
@@ -119,6 +119,7 @@ export class DockerComposeUtils {
           '--accesslog.filters.statusCodes=400-599',
           `--entryPoints.web.address=:${gateway_port}`,
           '--providers.docker=true',
+          '--providers.docker.allowEmptyServices=true',
           '--providers.docker.exposedByDefault=false',
           `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
           ...(ssl_cert && ssl_key ? [

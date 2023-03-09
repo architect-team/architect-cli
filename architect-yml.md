@@ -8,7 +8,12 @@ This document describes the full specification of the [architect.yml](https://do
 
 We've published a formal definition of this specification here: [Architect JSONSchema](https://raw.githubusercontent.com/architect-team/architect-cli/main/src/dependency-manager/schema/architect.schema.json).
 
-If you're using VS Code (or any other IDE with intellisense backed by [SchemaStore](https://www.schemastore.org/json/)), then you should already see syntax highlighting when editing any file named `architect.yml`.
+<Card
+  title="For users of Visual Studio Code, check out the Architect extension!"
+  href="https://marketplace.visualstudio.com/items?itemName=Architectio.architect-vscode"
+/>
+
+If you're using an IDE with intellisense backed by [SchemaStore](https://www.schemastore.org/json/), then you may already see syntax highlighting when editing any file named `architect.yml`.
 
 **Note**: all references to the `Dict<T>` type below refer to a key-value map where the keys are strings and the values are of type T.
 
@@ -23,9 +28,9 @@ The top level object of the `architect.yml`; defines a deployable Architect Comp
  | `keywords` | Array&lt;string&gt; | Additional search terms to be used when the component is indexed so that others can find it more easily. |  |
  | `author` | string | The name or handle of the author of the component as a developer contact. |  |
  | `homepage` | string | The url that serves as the informational homepage of the component (i.e. a github repo). |  |
- | ~~`parameters`~~ | Dict&lt;string&gt; | [Deprecated: use `secrets` instead.] A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a SecretDefinitionSpec | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_-%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, Deprecated |
  | `secrets` | Dict&lt;string&gt; | A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as secrets. Specifying a primitive value here will set the default secret value. For more detailed configuration, specify a SecretDefinitionSpec | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_-%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `outputs` | Dict&lt;string&gt; | A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_-%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
+ | `databases` | Dict&lt;string&gt; | A database represents a stateful service powered by one of several supported database engines. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `services` | Dict&lt;string&gt; | A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `tasks` | Dict&lt;string&gt; | A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `dependencies` | Dict&lt;string&gt; | A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`) | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3A(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%5C%2F)%3F(%3F%3Ccomponent_name%3E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-))(%3F%3A%40(%3F%3Cinstance_name%3E%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D))%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=%5E%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D%24">ValueRegex</a>,  |
@@ -109,6 +114,17 @@ A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, tr
  | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
  | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](https://docs.architect.io/components/services/#labels) |
  | `reserved_name` | string | A specific service name which will override the service name specified in the component. | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E(%3F!-)(%3F!.%7B0%2C32%7D--)%5Ba-z0-9-%5D%7B1%2C32%7D(%3F%3C!-)%24">Regex</a> |
+
+
+## DatabaseSpec
+
+Component databases let you quickly spin up a database for your service
+
+| Field  (*=required)  | Type       | Description    | Misc           |
+| -------------------- | ---------- | -------------- | -------------- |
+ | `description` | string | Human readable description |  |
+ | `type`* | string \| [Expression](https://docs.architect.io/reference/contexts) | The type engine and version of database software needed for data storage. |  |
+ | `connection_string` | string \| null \| [Expression](https://docs.architect.io/reference/contexts) | The connection uri of an existing database to use instead of provisioning a new one |  |
 
 
 ## LivenessProbeSpec

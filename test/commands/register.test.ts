@@ -30,7 +30,6 @@ describe('register', function () {
     description: '',
     location: null,
     website: null,
-    is_public: false,
     default_user_id: null,
   };
 
@@ -719,17 +718,17 @@ describe('register', function () {
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
-      .reply(200, mock_architect_account_response)
+      .reply(200, mock_architect_account_response),
     )
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' })
+      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
     )
     .nock(MOCK_API_HOST, api => api
       .persist()
       .post(/\/accounts\/.*\/components/)
-      .reply(200, {})
+      .reply(200, {}),
     )
     .stub(PluginManager, 'getPlugin', sinon.stub().returns({
       build: () => { },
@@ -752,17 +751,17 @@ describe('register', function () {
     .stub(BuildPackUtils, 'build', sinon.stub())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
-      .reply(200, mock_architect_account_response)
+      .reply(200, mock_architect_account_response),
     )
     .nock(MOCK_REGISTRY_HOST, api => api
       .persist()
       .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' })
+      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
     )
     .nock(MOCK_API_HOST, api => api
       .persist()
       .post(/\/accounts\/.*\/components/)
-      .reply(200, {})
+      .reply(200, {}),
     )
     .stub(PluginManager, 'getPlugin', sinon.stub().returns({
       build: () => { },
@@ -787,7 +786,7 @@ describe('register', function () {
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
-      .reply(200, mock_architect_account_response)
+      .reply(200, mock_architect_account_response),
     )
     .stdout({ print })
     .stderr({ print })

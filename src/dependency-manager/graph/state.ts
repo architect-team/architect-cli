@@ -6,10 +6,13 @@ export interface DependencyStateChange {
   action: ('create' | 'delete' | 'update' | 'no-op');
 }
 
-export class DependencyState {
-  action: ('create' | 'delete' | 'update' | 'no-op') = 'no-op';
+export interface DependencyState {
+  action: ('create' | 'delete' | 'update' | 'no-op');
   applied_at?: Date;
   failed_at?: Date;
   started_at?: Date;
-  changes: DependencyStateChange[] = [];
+  changes: DependencyStateChange[];
+  healthy_replicas: number;
+  replicas: number;
+  warnings: string[];
 }

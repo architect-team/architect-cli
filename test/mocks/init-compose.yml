@@ -106,7 +106,8 @@ services:
     networks:
       - elk
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_started
     environment:
       - DB_TYPE=postgres
       - DB_HOST # warning, invalid

@@ -106,6 +106,22 @@ export default class ClusterCreate extends BaseCommand {
   private async createCluster() {
     const { args, flags } = await this.parse(ClusterCreate);
 
+    const flags_map: Dictionary<boolean> = {};
+    for (const flag of flags.flag) {
+      flags_map[flag] = true;
+    }
+
+    const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the cluster with' });
+
+    const { data } = await this.app.api.get(`/accounts/${account.id}/clusters`);
+    const clusters = data.rows as Cluster[];
+    const cluster_names = new Set(clusters.map(cluster => cluster.name.toLowerCase()));
+
+    if (args.cluster && cluster_names.has(args.cluster)) {
+      console.log(chalk.red('A cluster already exists with the desired name please enter a new one.'));
+      args.cluster = '';
+    }
+
     const answers = await inquirer.prompt([
       {
         type: 'input',
@@ -114,6 +130,9 @@ export default class ClusterCreate extends BaseCommand {
         when: !args.cluster,
         filter: value => value.toLowerCase(),
         validate: value => {
+          if (cluster_names.has(value.toLowerCase())) {
+            return `a cluster with the name ${value} already exists for this account`;
+          }
           if (Slugs.ArchitectSlugValidator.test(value)) return true;
           return `cluster ${Slugs.ArchitectSlugDescription}`;
         },
@@ -125,13 +144,6 @@ export default class ClusterCreate extends BaseCommand {
     if (!Slugs.ArchitectSlugValidator.test(cluster_name)) {
       throw new Error(`cluster ${Slugs.ArchitectSlugDescription}`);
     }
-
-    const flags_map: Dictionary<boolean> = {};
-    for (const flag of flags.flag) {
-      flags_map[flag] = true;
-    }
-
-    const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the cluster with' });
 
     const kube_contexts = await this.setupKubeContext(flags);
     await ClusterUtils.checkClientVersion(flags.kubeconfig);

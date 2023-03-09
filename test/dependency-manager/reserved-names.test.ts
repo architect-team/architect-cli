@@ -255,7 +255,7 @@ describe('components with reserved_name field set', function () {
         `service: ${app_ref} -> ${api_ref}[main]`,
         `service: ${api_ref} -> ${db_ref}[main]`
       ])
-      // Test parameter values
+      // Test environment values
       const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
       expect(app_node.config.environment.API_ADDR).eq(`http://${api_ref}:8080`)
 
@@ -390,7 +390,7 @@ describe('components with reserved_name field set', function () {
         `service: ${api_ref} -> ${web_ref}[web]`
       ])
 
-      // Test parameter values
+      // Test environment values
       const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(api_node.config.environment.CONCOURSE_ADDR).eq(`http://${web_ref}:8080`)
       expect(api_node.config.name).to.eq('api');
