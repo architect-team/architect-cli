@@ -1590,6 +1590,135 @@
         }
       }
     },
+    "IngressTlsSpec": {
+      "properties": {
+        "crt": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Custom certificate."
+        },
+        "key": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Custom certificate key."
+        },
+        "ca": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Custom certificate ca."
+        }
+      },
+      "type": "object",
+      "required": [
+        "crt",
+        "key"
+      ],
+      "description": "Configuration for custom certificate.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#ingresstlsspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "crt": {
+                  "type": "string",
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Custom certificate."
+                },
+                "key": {
+                  "type": "string",
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Custom certificate key."
+                },
+                "ca": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Custom certificate ca."
+                }
+              },
+              "type": "object",
+              "required": [
+                "crt",
+                "key"
+              ],
+              "description": "Configuration for custom certificate.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#ingresstlsspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
     "IngressSpec": {
       "properties": {
         "enabled": {
@@ -1612,6 +1741,9 @@
           ],
           "description": "The subdomain that will be used if the interface is exposed externally. Use `subdomain: @` to target the base domain.",
           "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
+        },
+        "tls": {
+          "$ref": "#/definitions/IngressTlsSpec"
         },
         "path": {
           "anyOf": [
@@ -1688,6 +1820,9 @@
                   ],
                   "description": "The subdomain that will be used if the interface is exposed externally. Use `subdomain: @` to target the base domain.",
                   "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
+                },
+                "tls": {
+                  "$ref": "#/definitions/IngressTlsSpec"
                 },
                 "path": {
                   "anyOf": [
@@ -5692,6 +5827,127 @@
         }
       }
     },
+    "_DebugIngressTlsSpec": {
+      "properties": {
+        "crt": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Custom certificate."
+        },
+        "key": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Custom certificate key."
+        },
+        "ca": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Custom certificate ca."
+        }
+      },
+      "type": "object",
+      "description": "Configuration for custom certificate.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#ingresstlsspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "crt": {
+                  "type": "string",
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Custom certificate."
+                },
+                "key": {
+                  "type": "string",
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Custom certificate key."
+                },
+                "ca": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Custom certificate ca."
+                }
+              },
+              "type": "object",
+              "description": "Configuration for custom certificate.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#ingresstlsspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
     "_DebugIngressSpec": {
       "properties": {
         "enabled": {
@@ -5714,6 +5970,9 @@
           ],
           "description": "The subdomain that will be used if the interface is exposed externally. Use `subdomain: @` to target the base domain.",
           "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
+        },
+        "tls": {
+          "$ref": "#/definitions/_DebugIngressTlsSpec"
         },
         "path": {
           "anyOf": [
@@ -5790,6 +6049,9 @@
                   ],
                   "description": "The subdomain that will be used if the interface is exposed externally. Use `subdomain: @` to target the base domain.",
                   "errorMessage": "must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between."
+                },
+                "tls": {
+                  "$ref": "#/definitions/_DebugIngressTlsSpec"
                 },
                 "path": {
                   "anyOf": [

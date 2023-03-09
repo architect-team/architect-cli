@@ -169,6 +169,17 @@ An object containing the details necessary for Architect to build the service vi
  | `target` | string \| [Expression](https://docs.architect.io/reference/contexts) | The stage to build in the Dockerfile |  |
 
 
+## IngressTlsSpec
+
+Configuration for custom certificate.
+
+| Field  (*=required)  | Type       | Description    | Misc           |
+| -------------------- | ---------- | -------------- | -------------- |
+ | `crt`* | string \| [Expression](https://docs.architect.io/reference/contexts) | Custom certificate. |  |
+ | `key`* | string \| [Expression](https://docs.architect.io/reference/contexts) | Custom certificate key. |  |
+ | `ca` | string \| [Expression](https://docs.architect.io/reference/contexts) | Custom certificate ca. |  |
+
+
 ## IngressSpec
 
 An ingress exposes an interface to external network traffic through an architect-deployed gateway.
@@ -177,6 +188,7 @@ An ingress exposes an interface to external network traffic through an architect
 | -------------------- | ---------- | -------------- | -------------- |
  | `enabled` | boolean | Marks the interface as an ingress. |  |
  | `subdomain` | string \| [Expression](https://docs.architect.io/reference/contexts) | The subdomain that will be used if the interface is exposed externally. Use `subdomain: @` to target the base domain. |  |
+ | `tls` | [IngressTlsSpec](#ingresstlsspec) |  |  |
  | `path` | string \| [Expression](https://docs.architect.io/reference/contexts) | The path of the interface used for path based routing |  |
  | `ip_whitelist` | Array&lt;string \| string&gt; \| [Expression](https://docs.architect.io/reference/contexts) | IP addresses that are allowed to access the interface |  |
 
