@@ -1,6 +1,6 @@
 import { V1Deployment } from '@kubernetes/client-node';
 import { Transform, Type } from 'class-transformer';
-import { Allow, IsOptional, ValidateNested } from 'class-validator';
+import { Allow, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { DeepPartial, WithRequired } from '../../common/utils/types';
 import { Dictionary } from '../utils/dictionary';
@@ -9,6 +9,32 @@ import { ResourceSpec } from './resource-spec';
 import { transformObject } from './transform/common-transform';
 import { AnyOf, ExclusiveOr, ExpressionOr, ExpressionOrString, RequiredOr } from './utils/json-schema-annotations';
 import { ResourceType, Slugs } from './utils/slugs';
+
+@JSONSchema({
+  description: 'Configuration for custom certificate.',
+})
+export class IngressTlsSpec {
+  @IsString()
+  @JSONSchema({
+    ...ExpressionOrString(),
+    description: 'Custom certificate.',
+  })
+  crt!: string;
+
+  @IsString()
+  @JSONSchema({
+    ...ExpressionOrString(),
+    description: 'Custom certificate key.',
+  })
+  key!: string;
+
+  @IsOptional()
+  @JSONSchema({
+    ...ExpressionOrString(),
+    description: 'Custom certificate ca.',
+  })
+  ca?: string;
+}
 
 @JSONSchema({
   description: 'An ingress exposes an interface to external network traffic through an architect-deployed gateway.',
@@ -28,6 +54,11 @@ export class IngressSpec {
     errorMessage: Slugs.ComponentSubdomainDescription,
   })
   subdomain?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => IngressTlsSpec)
+  tls?: IngressTlsSpec;
 
   @IsOptional()
   @JSONSchema({

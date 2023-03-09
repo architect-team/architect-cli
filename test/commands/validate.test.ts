@@ -19,6 +19,20 @@ interfaces:
     ingress:
       subdomain: '${subdomain_token}'`;
 
+  const ingress_tls_to_config_yaml_string = (tls: string): string =>
+    `name: ingress-tls
+services:
+  validatesubdomain:
+    build:
+      context: ./context/src
+interfaces:
+  validatesubdomain:
+    url: \${{ services.validatesubdomain.interfaces.main.url }}
+    ingress:
+      subdomain: app
+      tls:
+        ${tls}`;
+
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
@@ -145,4 +159,58 @@ interfaces:
         });
     }
   }).timeout(20000);
+
+  const ingress_tls = `
+        crt: "some value"
+        key: "some value"
+        ca: "some value"`;
+  const tmp_test_file = path.normalize(untildify('~/some_fake_file.yml'));
+  mockArchitectAuth()
+    .stub(fs, 'readFileSync', sinon.fake.returns(ingress_tls_to_config_yaml_string(ingress_tls)))
+    .stub(fs, 'lstatSync', sinon.fake.returns({
+      isFile: () => true,
+      isDirectory: () => false,
+    }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['validate', tmp_test_file])
+    .it('valid custom tls', ctx => {
+      expect(ctx.stdout).to.contain('ingress-tls');
+      expect(ctx.stdout).to.contain(tmp_test_file);
+    });
+
+  const ingress_tls_no_ca = `
+        crt: "some value"
+        key: "some value"`;
+  mockArchitectAuth()
+    .stub(fs, 'readFileSync', sinon.fake.returns(ingress_tls_to_config_yaml_string(ingress_tls_no_ca)))
+    .stub(fs, 'lstatSync', sinon.fake.returns({
+      isFile: () => true,
+      isDirectory: () => false,
+    }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['validate', tmp_test_file])
+    .it(`valid custom tls without 'ca'`, ctx => {
+      expect(ctx.stdout).to.contain('ingress-tls');
+      expect(ctx.stdout).to.contain(tmp_test_file);
+    });
+
+  const invalid_ingress_tls = `
+        key: "some value"`;
+  mockArchitectAuth()
+    .stub(fs, 'readFileSync', sinon.fake.returns(ingress_tls_to_config_yaml_string(invalid_ingress_tls)))
+    .stub(fs, 'lstatSync', sinon.fake.returns({
+      isFile: () => true,
+      isDirectory: () => false,
+    }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['validate', tmp_test_file])
+    .catch(err => {
+      expect(err.name).to.contain('ValidationErrors');
+      expect(err.name).to.contain(tmp_test_file);
+      expect(process.exitCode).eq(1);
+    })
+    .it(`correctly fail when the required 'crt' is not provided in custom tls`);
 });
