@@ -1,4 +1,3 @@
-import { Type } from 'class-transformer';
 import { ServiceInterfaceConfig } from '../../config/service-config';
 import { Dictionary } from '../../utils/dictionary';
 import { DependencyState } from '../state';
@@ -9,7 +8,6 @@ export interface DependencyNodeOptions { }
 export abstract class DependencyNode implements DependencyNodeOptions {
   abstract __type: string;
 
-  @Type(() => DependencyState)
   state?: DependencyState;
 
   abstract ref: string;

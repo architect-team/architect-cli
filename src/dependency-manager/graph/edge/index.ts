@@ -1,4 +1,3 @@
-import { Type } from 'class-transformer';
 import { DependencyState } from '../state';
 
 export abstract class DependencyEdge {
@@ -8,7 +7,6 @@ export abstract class DependencyEdge {
   to: string;
   interface_to: string;
 
-  @Type(() => DependencyState)
   state?: DependencyState;
 
   constructor(from: string, to: string, interface_to: string) {
