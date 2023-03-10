@@ -20,6 +20,8 @@ export class Slugs {
   public static INSTANCE_DELIMITER = '@';
   public static SLUG_CHAR_LIMIT = 32;
 
+  public static DB_SUFFIX = '-db';
+
   public static ArchitectSlugDescription = `must contain only lower alphanumeric and single hyphens in the middle; max length ${Slugs.SLUG_CHAR_LIMIT}`;
   public static ArchitectSlugRegexBase = REGEX_LOOKBEHIND ? `(?!-)(?!.{0,${Slugs.SLUG_CHAR_LIMIT}}--)[a-z0-9-]{1,${Slugs.SLUG_CHAR_LIMIT}}(?<!-)` : `[a-z0-9]+(-[a-z0-9]+)*`;
   public static ArchitectSlugValidator = new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`);
@@ -48,6 +50,10 @@ export class Slugs {
   public static ComponentSubdomainRegexBase = '([A-Za-z0-9](?:[A-Za-z0-9\\-]{0,61}[A-Za-z0-9])|[^\\W\\D\\s\\t\\n\\r\\/]+|[\\@\\*]?)';
   public static ComponentSubdomainDescription = 'must contain alphanumeric characters ([a-z0-9A-Z]), could contain dashes (-) and alphanumerics between.';
   public static ComponentSubdomainValidator = new RegExp(`^${Slugs.ComponentSubdomainRegexBase}$`);
+
+  public static ComponentDatabaseDescription = 'must be of the format <engine>:<version> (e.g. postgres:13)';
+  public static ComponentDatabaseRegexBase = `\\w+:\\d+`;
+  public static ComponentDatabaseValidator = new RegExp(`^${Slugs.ComponentDatabaseRegexBase}$`);
 }
 
 export interface ParsedSlug {
@@ -126,7 +132,7 @@ export class ComponentVersionSlugUtils extends SlugUtils {
   public static parse = parseCurry<ComponentVersionSlug, ParsedComponentVersionSlug>();
 }
 
-export type ResourceType = 'services' | 'tasks';
+export type ResourceType = 'services' | 'tasks' | 'databases';
 
 export type ResourceSlug = string;
 export interface ParsedResourceSlug extends ParsedSlug {
@@ -134,9 +140,9 @@ export interface ParsedResourceSlug extends ParsedSlug {
   resource_name: string;
 }
 export class ResourceSlugUtils extends SlugUtils {
-  public static Description = 'must be of the form <component-name>.services|tasks.<resource-name>';
+  public static Description = 'must be of the form <component-name>.services|tasks.<resource-name>|databases.<resource-name>';
 
-  public static RegexResource = `${ComponentSlugUtils.RegexName}\\${Slugs.RESOURCE_DELIMITER}(?<resource_type>services|tasks)\\${Slugs.RESOURCE_DELIMITER}(?<resource_name>${Slugs.ArchitectSlugRegexBase})`;
+  public static RegexResource = `${ComponentSlugUtils.RegexName}\\${Slugs.RESOURCE_DELIMITER}(?<resource_type>services|tasks|databases)\\${Slugs.RESOURCE_DELIMITER}(?<resource_name>${Slugs.ArchitectSlugRegexBase})`;
 
   public static RegexBase = `${ResourceSlugUtils.RegexResource}${ComponentSlugUtils.RegexInstance}`;
   public static Validator = new RegExp(`^${ResourceSlugUtils.RegexBase}$`);

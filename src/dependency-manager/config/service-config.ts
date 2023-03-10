@@ -41,8 +41,15 @@ export interface ServiceInterfaceConfig {
   password?: null | string; // TODO:290:string
   url?: string;
   sticky?: boolean | string;
-
+  path?: string;
   ingress?: IngressConfig;
+}
+
+export interface DatabaseConfig {
+  type: string;
+  connection_string?: string;
+  url?: string;
+
 }
 
 export interface ServiceConfig extends ResourceConfig {
