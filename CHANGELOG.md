@@ -1,3 +1,16 @@
+# [1.35.0](https://github.com/architect-team/architect-cli/compare/v1.34.0...v1.35.0) (2023-03-10)
+
+
+### Bug Fixes
+
+* **dev:** Add additional check that service IP exists so services with liveness probes arent presumed healthy too early ([#852](https://github.com/architect-team/architect-cli/issues/852)) ([070a8c2](https://github.com/architect-team/architect-cli/commit/070a8c2a48c7b81a3ff73fef01f2b69a54fc0a0a))
+* **type:** Add missing fields to DependencyState ([a4b7a4d](https://github.com/architect-team/architect-cli/commit/a4b7a4d4664faa7d8d236aa0178d22a5534336f7))
+
+
+### Features
+
+* **spec:** Added support for declared databases that become services ([#790](https://github.com/architect-team/architect-cli/issues/790)) ([a0b3275](https://github.com/architect-team/architect-cli/commit/a0b327583510634adcba3ba7607184a5881ca6b0)), closes [#846](https://github.com/architect-team/architect-cli/issues/846) [#846](https://github.com/architect-team/architect-cli/issues/846) [#847](https://github.com/architect-team/architect-cli/issues/847) [#847](https://github.com/architect-team/architect-cli/issues/847) [#848](https://github.com/architect-team/architect-cli/issues/848) [#848](https://github.com/architect-team/architect-cli/issues/848) [#849](https://github.com/architect-team/architect-cli/issues/849) [#849](https://github.com/architect-team/architect-cli/issues/849)
+
 # [1.34.0](https://github.com/architect-team/architect-cli/compare/v1.33.2...v1.34.0) (2023-03-07)
 
 
