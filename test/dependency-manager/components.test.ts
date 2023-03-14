@@ -1111,6 +1111,7 @@ describe('components spec v1', function () {
       expect(graph.edges).to.have.length(1);
     });
 
+
     it('override database with default value', async () => {
       const default_value = 'mysql://default.com';
       const yml = `
