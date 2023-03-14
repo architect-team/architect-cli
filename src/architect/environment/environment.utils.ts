@@ -12,6 +12,7 @@ export interface Replica {
   resource_ref: string;
   created_at: string;
   display_name?: string;
+  ports: number[];
 }
 
 export class GetEnvironmentOptions {
@@ -81,7 +82,7 @@ export class EnvironmentUtils {
     return environment;
   }
 
-  static async getReplica(replicas: Replica[]): Promise<Replica> {
+  static async getReplica(replicas: Replica[], replica_index?: number): Promise<Replica> {
     if (replicas.length === 1) {
       return replicas[0];
     } else {
@@ -109,6 +110,7 @@ export class EnvironmentUtils {
                 value: sub_replicas,
               }));
             },
+            ciMessage: 'The resource arg is required in CI pipelines. Ex. my-component.services.my-api',
           },
         ]);
         filtered_replicas = answers.service;
@@ -121,6 +123,14 @@ export class EnvironmentUtils {
       filtered_replicas = filtered_replicas.sort((a, b) => {
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       });
+
+      if (replica_index !== undefined) {
+        if (!filtered_replicas[replica_index]) {
+          throw new ArchitectError(`Replica not found at index ${replica_index}`);
+        }
+
+        return filtered_replicas[replica_index];
+      }
 
       console.log(`Found ${filtered_replicas.length} replicas of service:`);
       const answers = await inquirer.prompt([

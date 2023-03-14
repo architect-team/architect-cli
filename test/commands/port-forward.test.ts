@@ -1,9 +1,10 @@
 import { expect, test } from '@oclif/test';
+import * as net from 'net';
 import { Replica } from '../../src/architect/environment/environment.utils';
-import Exec from '../../src/commands/exec';
+import PortForward from '../../src/commands/port-forward';
 import { MOCK_API_HOST } from '../utils/mocks';
 
-describe('exec command', () => {
+describe('port-forward command', () => {
   const account = {
     name: 'examples',
     id: '1',
@@ -33,32 +34,25 @@ describe('exec command', () => {
       .optionally(true)
       .reply(200, replicas))
     .nock(MOCK_API_HOST, api => api
-      .get(new RegExp(`/environments/${environment.id}/ws/exec.*`))
+      .get(new RegExp(`/environments/${environment.id}/ws/port-forward.*`))
       .optionally(true)
-      .reply(200));
+      .reply(200))
+    .stub(net.Server.prototype, 'listen', () => {})
 
   defaults
-    .stub(Exec.prototype, 'exec', () => { console.log('worked'); })
+    .stub(PortForward.prototype, 'portForward', () => { console.log('worked'); })
     .stdout()
-    .command(['exec', '-a', account.name, '-e', environment.name, '--', 'ls', '-la'])
-    .it('exec command with spaces', ctx => {
-      expect(ctx.stdout).to.equal('worked\n');
+    .command(['port-forward', '-a', account.name, '-e', environment.name])
+    .it('port-forward command', ctx => {
+      expect(ctx.stdout).to.include('Forwarding');
     });
 
   defaults
-    .stub(Exec.prototype, 'exec', () => { console.log('worked'); })
+    .stub(PortForward.prototype, 'portForward', () => { console.log('worked'); })
     .stdout()
-    .command(['exec', '-a', account.name, '-e', environment.name, 'examples/react-app', '--', 'ls', '-la'])
-    .it('exec component and command with spaces', ctx => {
-      expect(ctx.stdout).to.equal('worked\n');
-    });
-
-  defaults
-    .stub(Exec.prototype, 'exec', () => { console.log('worked'); })
-    .stdout()
-    .command(['exec', '-a', account.name, '-e', environment.name, '-r', '0', '--', 'ls', '-la'])
-    .it('exec component and replica of the form <replica-index> when there is only one service', ctx => {
-      expect(ctx.stdout).to.equal('worked\n');
+    .command(['port-forward', '-a', account.name, '-e', environment.name, '-r', '0'])
+    .it('port-forward component and replica of the form <replica-index> when there is only one service', ctx => {
+      expect(ctx.stdout).to.include('Forwarding');
     });
 
   test
@@ -72,14 +66,9 @@ describe('exec command', () => {
       .get(new RegExp(`/environments/${environment.id}/replicas.*`))
       .reply(200, multiple_replicas))
     .stdout()
-    .command(['exec', '-a', account.name, '-e', environment.name, 'app', '-r', '2', '--', 'ls', '-la'])
+    .command(['port-forward', '-a', account.name, '-e', environment.name, 'app', '-r', '2'])
     .catch(err => {
       expect(`${err}`).to.contain('Replica not found at index 2');
     })
-    .it('exec component and replica failed indexing out-of-bound replica index');
-
-  test
-    .command(['exec', '-a', account.name, '-e', environment.name, 'examples/react-app', 'ls'])
-    .exit(2)
-    .it('exec without -- fails');
+    .it('port-forward component and replica failed indexing out-of-bound replica index');
 });
