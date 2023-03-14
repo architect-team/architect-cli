@@ -198,14 +198,15 @@ export class ArchitectParser {
             value = node.arguments[0].value.startsWith(node.arguments[1].value);
           } else if (node.callee.value === 'parseUrl') {
             // Handle the edge case where connection_string is set to a secret but no value
-            // is set on the secret.
-            if (!node.arguments[0].value) {
+            // is set on the secret or the secret is redacted we can just move forward
+            const redacted_regex = /\**/g;
+            if (!node.arguments[0].value || redacted_regex.test(node.arguments[0].value)) {
               value = '';
             } else {
               try {
                 value = (new URL(node.arguments[0].value) as any)[node.arguments[1].value as string];
               } catch {
-                throw new Error(`Unable to parse url ${value}.`);
+                throw new Error(`Unable to parse url ${node.arguments[0].value}.`);
               }
             }
           } else {
