@@ -206,7 +206,7 @@ export class ArchitectParser {
               try {
                 value = (new URL(node.arguments[0].value) as any)[node.arguments[1].value as string];
               } catch {
-                throw new Error(`Unable to parse url ${node.arguments[0].valu}.`);
+                throw new Error(`Unable to parse url ${node.arguments[0].value}.`);
               }
             }
           } else {
