@@ -65,6 +65,12 @@ export default class Logs extends BaseCommand {
       default: false,
       sensitive: false,
     }),
+    replica: Flags.integer({
+      description: `Replica index for service. Only works on remote deploys.`,
+      char: 'r',
+      sensitive: false,
+      min: 0,
+    }),
   };
 
   static args = [{
@@ -183,7 +189,7 @@ export default class Logs extends BaseCommand {
     if (replicas.length === 0)
       throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
-    const replica = await EnvironmentUtils.getReplica(replicas);
+    const replica = await EnvironmentUtils.getReplica(replicas, flags.replica);
 
     const logs_query: any = {};
     logs_query.ext_ref = replica.ext_ref;

@@ -462,7 +462,17 @@ export default class Dev extends BaseCommand {
       if (service.status !== 'enabled') return false;
       if (!service.serverStatus) return false;
       if (service.provider !== 'docker') return false;
-      return Object.values(service.serverStatus).includes('UP');
+
+      let healthy = false;
+      for (const key in service.serverStatus) {
+        // When a liveness probe is running, service.serverStatus[key] will be 'UP'
+        // but the key will be an empty string. The service isn't available via the traefik URL
+        // until the key is no longer ''.
+        if (key !== '' && service.serverStatus[key] === 'UP') {
+          healthy = true;
+        }
+      }
+      return healthy;
     });
     return healthy_services;
   }

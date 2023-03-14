@@ -1,10 +1,9 @@
 import { Flags, Interfaces } from '@oclif/core';
-import { OutputArgs, OutputFlags } from '@oclif/core/lib/interfaces';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import stream from 'stream';
 import WebSocket, { createWebSocketStream } from 'ws';
-import { ArchitectError, Dictionary, parseUnknownSlug, ResourceSlugUtils } from '../';
+import { ArchitectError, Dictionary, parseUnknownSlug } from '../';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, GetEnvironmentOptions, Replica } from '../architect/environment/environment.utils';
@@ -40,8 +39,7 @@ export default class Exec extends BaseCommand {
     'architect exec -- ls',
     'architect exec -- /bin/sh',
     'architect exec --account myaccount --environment myenvironment mycomponent.services.app -- /bin/sh',
-    'architect exec --account myaccount --environment myenvironment --replica servicename:0 -- /bin/sh',
-    'architect exec --account myaccount --environment myenvironment --replica 0 -- /bin/sh',
+    'architect exec --account myaccount --environment myenvironment mycomponent.services.app --replica 0 -- /bin/sh',
   ];
 
   static flags = {
@@ -59,10 +57,11 @@ export default class Exec extends BaseCommand {
       default: undefined,
       sensitive: false,
     }),
-    replica: Flags.string({
-      description: `Pass replica by <service-name>:<replica-index> or <replica-index> if only 1 service is deployed. Only works on remote deploys.`,
+    replica: Flags.integer({
+      description: `Replica index for service. Only works on remote deploys.`,
       char: 'r',
       sensitive: false,
+      min: 0,
     }),
   };
 
@@ -111,7 +110,9 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     return parsed;
   }
 
-  async exec(uri: string, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
+  async exec(uri: string): Promise<void> {
+    const { flags } = await this.parse(Exec);
+
     const ws = await this.getWebSocket(uri);
 
     await new Promise((resolve, reject) => {
@@ -269,58 +270,15 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     ws_stream.write(buffer);
   }
 
-  getServiceReplica(replica_flag: string, replicas: Replica[]): Replica {
-    const resources: Dictionary<any> = {};
-    for (const rep of replicas) {
-      const { resource_name } = ResourceSlugUtils.parse(rep.resource_ref);
-      if (resource_name in resources) {
-        resources[resource_name].push(rep);
-      } else {
-        resources[resource_name] = [rep];
-      }
-    }
-    const resource_names = Object.keys(resources);
+  async runRemote(account: Account): Promise<void> {
+    const { args, flags } = await this.parse(Exec);
 
-    let service_replicas = [];
-    let replica_idx;
-    const replica_parts = replica_flag.split(':');
-    if (replica_parts.length === 1 && !Number.isNaN(Number.parseInt(replica_parts[0]))) {
-      if (resource_names.length > 1) {
-        throw new ArchitectError(`More than one service is found [${resource_names.join(', ')}]. Please specify replica in the form of <service-name>:<replica-index>.`);
-      }
-
-      service_replicas = replicas;
-      replica_idx = Number.parseInt(replica_flag);
-    } else if (replica_parts.length === 2 && !Number.isNaN(Number.parseInt(replica_parts[1]))) {
-      const [service_name, service_replica_idx] = replica_parts;
-      if (!(service_name in resources)) {
-        throw new ArchitectError(`No service name found for '${service_name}'. Try ${resource_names.join(', ')}.`);
-      }
-
-      service_replicas = resources[service_name];
-      replica_idx = Number.parseInt(service_replica_idx);
-    } else {
-      throw new ArchitectError('Replica must be of the form <service-name>:<replica-index> or <replica-index>.');
-    }
-
-    if (replica_idx > service_replicas.length - 1 || replica_idx < 0) {
-      const msg = service_replicas.length > 1 ? `between 0 and ${service_replicas.length - 1}` : '0';
-      throw new ArchitectError(`No replica found at index ${replica_idx}. Try index ${msg}.`);
-    }
-
-    return service_replicas[replica_idx];
-  }
-
-  async runRemote(account: Account, args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
     const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
 
     let component_name: string | undefined;
     let resource_name: string | undefined;
     let instance_name: string | undefined;
-    if (args.resource && flags.replica) {
-      throw new ArchitectError(`Both replica and resource are found. Please provide only one.`);
-    }
 
     if (args.resource) {
       const parsed = parseUnknownSlug(args.resource);
@@ -342,7 +300,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     if (replicas.length === 0)
       throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
-    const replica = flags.replica ? this.getServiceReplica(flags.replica, replicas) : await EnvironmentUtils.getReplica(replicas);
+    const replica = await EnvironmentUtils.getReplica(replicas, flags.replica);
 
     const query = new URLSearchParams({
       ext_ref: replica.ext_ref,
@@ -363,11 +321,13 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     }
 
     const uri = `${this.app.config.api_host}/environments/${environment.id}/ws/exec?${query}`;
-    await this.exec(uri, flags);
+    await this.exec(uri);
   }
 
   @RequiresDocker({ compose: true })
-  async runLocal(args: OutputArgs, flags: OutputFlags<typeof Exec['flags']>): Promise<void> {
+  async runLocal(): Promise<void> {
+    const { args, flags } = await this.parse(Exec);
+
     const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
     const service = await DockerComposeUtils.getLocalServiceForEnvironment(compose_file, args.resource);
@@ -391,7 +351,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     // eslint-disable-next-line unicorn/prefer-module
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
-    const { args, flags } = await this.parse(Exec);
+    const { flags } = await this.parse(Exec);
 
     // Automatically set tty if the user doesn't supply it based on whether stdin is TTY.
     if (flags.tty === undefined) {
@@ -406,7 +366,7 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
       // If the env exists locally then just assume local
       const is_local_env = await DockerComposeUtils.isLocalEnvironment(flags.environment);
       if (is_local_env) {
-        return this.runLocal(args, flags);
+        return this.runLocal();
       }
     }
 
@@ -414,9 +374,9 @@ Alternatively, running "architect --% exec -- ls" will prevent the PowerShell pa
     const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: !flags.environment });
 
     if (AccountUtils.isLocalAccount(account)) {
-      return this.runLocal(args, flags);
+      return this.runLocal();
     }
 
-    await this.runRemote(account, args, flags);
+    await this.runRemote(account);
   }
 }
