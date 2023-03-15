@@ -15,9 +15,6 @@ const PLATFORM_MAP = new Map<string, string>([
   ['windows-amd64', 'windows/amd64'],
 ]);
 
-export const DOCKER_IMAGE_LABEL = 'architect.io';
-export const DOCKER_COMPONENT_LABEL = 'architect.component';
-
 export default class DockerBuildXUtils {
   public static isMacM1Machine(): boolean {
     return os.cpus()[0].model.includes('Apple M1');
