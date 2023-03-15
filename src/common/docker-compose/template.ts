@@ -12,7 +12,6 @@ export interface DockerServiceBuild {
   target?: string;
   tags?: string[];
   'x-bake'?: XBakeConfig;
-  labels?: string[];
 }
 
 export interface DockerComposeVolume {
