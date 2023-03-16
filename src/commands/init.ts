@@ -1,4 +1,5 @@
 import { Flags, Interfaces } from '@oclif/core';
+import { OutputFlags } from '@oclif/core/lib/interfaces';
 import chalk from 'chalk';
 import fs from 'fs';
 import inquirer from 'inquirer';
@@ -80,7 +81,7 @@ export abstract class InitCommand extends BaseCommand {
 
   @RequiresGit()
   @RequiresDocker({ compose: true })
-  async runProjectCreation(project_name: string, flags: any): Promise<void> {
+  async runProjectCreation(project_name: string, flags: OutputFlags<typeof InitCommand.flags>): Promise<void> {
     if (fs.existsSync(`./${project_name}`)) {
       console.log(chalk.red(`The folder ./${project_name} already exists. Please choose a different project name or remove the folder`));
       return;
