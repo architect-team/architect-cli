@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AppService from '../../app-config/service';
 import { DockerHelper } from '../../common/docker/helper';
+import { Paginate } from '../types';
 import Account from './account.entity';
 
 export default class AccountUtils {
@@ -89,8 +90,8 @@ export default class AccountUtils {
           message: options?.account_message || 'Select an account',
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
-            const { data } = await app.api.get('/accounts', { params: { q: input, limit: 10 } });
-            const accounts = data.rows as Account[];
+            const { data } = await app.api.get<Paginate<Account>>('/accounts', { params: { q: input, limit: 10 } });
+            const accounts = data.rows;
             if (options?.ask_local_account && can_run_local) {
               accounts.unshift(this.getLocalAccount());
             }
