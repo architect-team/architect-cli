@@ -59,6 +59,11 @@ export abstract class InitCommand extends BaseCommand {
     'from-compose': Flags.string({
       sensitive: false,
     }),
+    'starter': Flags.string({
+      description: 'Specify a starter project template to use as the base of your new Architect component.',
+      char: 's',
+      sensitive: false,
+    }),
   };
 
   static args = [{
@@ -75,12 +80,12 @@ export abstract class InitCommand extends BaseCommand {
 
   @RequiresGit()
   @RequiresDocker({ compose: true })
-  async runProjectCreation(project_name: string): Promise<void> {
+  async runProjectCreation(project_name: string, flags: any): Promise<void> {
     if (fs.existsSync(`./${project_name}`)) {
       console.log(chalk.red(`The folder ./${project_name} already exists. Please choose a different project name or remove the folder`));
       return;
     }
-    const selections = await ProjectUtils.getSelections();
+    const selections = await ProjectUtils.getSelections(flags.starter);
 
     this.log('\n######################################');
     this.log('##### Let\'s set up your project! #####');
@@ -199,7 +204,7 @@ export abstract class InitCommand extends BaseCommand {
       return;
     }
 
-    await this.runProjectCreation(args.name);
+    await this.runProjectCreation(args.name, flags);
   }
 
   async getComposeFromPath(flags: any): Promise<string | undefined> {
