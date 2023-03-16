@@ -1168,6 +1168,44 @@ describe('components spec v1', function () {
       expect(graph.edges).to.have.length(1);
     });
 
+    it('throw error if database override not a valid url', async () => {
+      const yml = `
+        name: component
+
+        databases:
+          primary:
+            type: mariadb:10
+            connection_string: \${{ secrets.dbOverride }}
+
+        services:
+          api:
+            image: test:v1
+            environment:
+              DATABASE: \${{ databases.primary.connection_string }}
+        `;
+
+      mock_fs({
+        '/architect.yaml': yml,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'examples', {
+        'component': '/architect.yaml',
+      });
+
+      let error;
+      try {
+        await manager.getGraph([
+          ...await manager.loadComponentSpecs('component'),
+        ], {
+          '*': { 'dbOverride': 'garbage' }
+        })
+      } catch (err) {
+        error = err;
+      }
+
+      expect(error).to.be.instanceOf(ValidationErrors);
+    });
+
     it('throw error if database and service names collide', async () => {
       const yml = `
         name: component

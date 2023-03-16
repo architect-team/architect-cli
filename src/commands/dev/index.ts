@@ -584,7 +584,12 @@ export default class Dev extends BaseCommand {
     this.log('Building containers...', chalk.green('done'));
     this.log('');
 
-    await this.pruneImages(compose);
+    try {
+      this.pruneImages(compose);
+    } catch {
+      // If we exit out of the application too soon the pruning process may fail
+      // this error can be ignored.
+    }
 
     const traefik_service_map = this.setupTraefikServiceMap(compose, gateway_port, flags.ssl);
 
