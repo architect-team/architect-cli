@@ -439,7 +439,11 @@ export class DockerComposeUtils {
       }
     }
 
-    if (!file_contents || !file_path) {
+    if (!file_contents) {
+      throw new Error(`The file ${input} appears to be empty. Nothing to convert.`);
+    }
+
+    if (!file_path) {
       throw new Error(`No docker-compose file found at ${input}`);
     }
 
