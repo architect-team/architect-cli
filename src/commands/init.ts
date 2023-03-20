@@ -171,7 +171,7 @@ export abstract class InitCommand extends BaseCommand {
         },
       },
     ]);
-    args.name = args.name || answers.name;
+    args.name = answers.name || args.name;
 
     if (flags['from-compose']) {
       await this.runArchitectYamlConversion(path.resolve(untildify(flags['from-compose'])), args.name, flags['component-file']);
