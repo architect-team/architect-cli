@@ -1,3 +1,5 @@
+import { Dictionary } from '../../dependency-manager/utils/dictionary';
+
 interface XBakeConfig {
   platforms: string[];
   'cache-from'?: string | string[];
@@ -45,7 +47,7 @@ export interface DockerService {
   ports?: string[] | DockerComposeInterface[];
   image?: string;
   environment?: { [key: string]: any };
-  depends_on?: string[];
+  depends_on?: Dictionary<{ condition: string }> | string[];
   build?: DockerServiceBuild;
   volumes?: string[] | DockerComposeVolume[];
   command?: string[];
