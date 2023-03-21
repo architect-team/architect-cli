@@ -1,4 +1,5 @@
 import { Flags, Interfaces } from '@oclif/core';
+import { OutputFlags } from '@oclif/core/lib/interfaces';
 import chalk from 'chalk';
 import fs from 'fs';
 import inquirer from 'inquirer';
@@ -44,10 +45,6 @@ export abstract class InitCommand extends BaseCommand {
       default: 'architect.yml',
       sensitive: false,
     }),
-    name: Flags.string({
-      char: 'n',
-      sensitive: false,
-    }),
     from_compose: Flags.string({
       description: `Please use --from-compose.`,
       hidden: true,
@@ -59,6 +56,11 @@ export abstract class InitCommand extends BaseCommand {
     'from-compose': Flags.string({
       sensitive: false,
     }),
+    'starter': Flags.string({
+      description: 'Specify a starter project template to use as the base of your new Architect component.',
+      char: 's',
+      sensitive: false,
+    }),
   };
 
   static args = [{
@@ -67,20 +69,29 @@ export abstract class InitCommand extends BaseCommand {
     required: false,
   }];
 
-  doesDockerComposeYmlExist(): boolean {
+  getDefaultDockerComposeFile(): string | undefined {
+    const priority_files = [
+      'docker-compose.yml',
+      'docker-compose.yaml',
+    ];
     const files_in_current_dir = fs.readdirSync('.');
-    const default_compose = files_in_current_dir.some(f => f.includes('compose') && (f.endsWith('.yml') || f.endsWith('.yaml')));
+    for (const priority_file of priority_files) {
+      if (files_in_current_dir.includes(priority_file)) {
+        return priority_file;
+      }
+    }
+    const default_compose = files_in_current_dir.find(f => f.includes('compose') && (f.endsWith('.yml') || f.endsWith('.yaml')));
     return default_compose;
   }
 
   @RequiresGit()
   @RequiresDocker({ compose: true })
-  async runProjectCreation(project_name: string): Promise<void> {
+  async runProjectCreation(project_name: string, flags: OutputFlags<typeof InitCommand.flags>): Promise<void> {
     if (fs.existsSync(`./${project_name}`)) {
       console.log(chalk.red(`The folder ./${project_name} already exists. Please choose a different project name or remove the folder`));
       return;
     }
-    const selections = await ProjectUtils.getSelections();
+    const selections = await ProjectUtils.getSelections(flags.starter);
 
     this.log('\n######################################');
     this.log('##### Let\'s set up your project! #####');
@@ -128,95 +139,57 @@ export abstract class InitCommand extends BaseCommand {
     return parsed;
   }
 
+  private isNameValid(name: string) {
+    if (!name) {
+      return false;
+    }
+    return ComponentSlugUtils.Validator.test(name);
+  }
+
   async run(): Promise<void> {
     const { flags, args } = await this.parse(InitCommand);
 
-    const compose_exist = this.doesDockerComposeYmlExist();
-    if (!args.name) {
-      const answers = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'name',
-          message: 'What is the name of your project?',
-          when: !flags.name,
-          filter: value => value.toLowerCase(),
-          validate: (value) => {
-            if ((new RegExp('^[a-z][a-z-]+[a-z]$').test(value))) {
-              return true;
-            }
-            return `Component name can only contain lowercase letters and dashes, and must start and end with a letter.`;
-          },
-        },
-      ]);
-      args.name = answers.name;
+    const default_compose_file = this.getDefaultDockerComposeFile();
+    const invalid_name_message = 'Component name can only contain lowercase letters and dashes, and must start and end with a letter.';
+
+    if (args.name && !this.isNameValid(args.name)) {
+      this.log(chalk.yellow(`Your project name is invalid. ${invalid_name_message} Please enter a new name.`));
     }
 
-    while (!ComponentSlugUtils.Validator.test(args.name)) {
-      const init_type = (compose_exist || flags['from-compose']) ? 'Component' : 'Project';
-      const err_msg = `${init_type} name can only contain lowercase letters and dashes, and must start and end with a letter.`;
-      this.log(chalk.yellow(err_msg));
-
-      const answers: any = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'name',
-          message: `Please provide a new name for your ${init_type.toLowerCase()}:`,
+    const answers = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'name',
+        message: 'What is the name of your project?',
+        when: !this.isNameValid(args.name),
+        filter: value => value.toLowerCase(),
+        validate: (value) => {
+          if (this.isNameValid(value)) {
+            return true;
+          }
+          return invalid_name_message;
         },
-      ]);
-      args.name = answers.name;
-    }
+      },
+    ]);
+    args.name = answers.name || args.name;
 
-    let from_path = await this.getComposeFromPath(flags);
     if (flags['from-compose']) {
-      if (!from_path) {
-        throw new Error(`The Docker Compose file ${from_path} couldn't be found.`);
-      }
-      await this.runArchitectYamlConversion(from_path, args.name, flags['component-file']);
+      await this.runArchitectYamlConversion(path.resolve(untildify(flags['from-compose'])), args.name, flags['component-file']);
       return;
     }
 
-    if (compose_exist) {
-      const init_comp = await ProjectUtils.conversionPrompt(`Would you like to convert from ${from_path}?`);
-      if (init_comp) {
-        if (!from_path) {
-          throw new Error(`The Docker Compose file ${from_path} couldn't be found.`);
-        }
-        await this.runArchitectYamlConversion(from_path, args.name, flags['component-file']);
-      } else {
-        const answers = await inquirer.prompt([
-          {
-            type: 'input',
-            name: 'from_compose',
-            message: 'What is the filename of the Docker Compose file you would like to convert?',
-            validate: (value) => {
-              return fs.existsSync(value) && fs.statSync(value).isFile() ? true : `The Docker Compose file ${value} couldn't be found.`;
-            },
-          },
-        ]);
-        from_path = path.resolve(untildify(answers.from_compose));
-        await this.runArchitectYamlConversion(from_path, args.name, flags['component-file']);
-      }
-      return;
-    }
-
-    await this.runProjectCreation(args.name);
-  }
-
-  async getComposeFromPath(flags: any): Promise<string | undefined> {
-    let from_path;
-    if (flags['from-compose']) {
-      from_path = path.resolve(untildify(flags['from-compose']));
-    } else {
-      const files_in_current_dir = fs.readdirSync('.');
-      const default_compose = files_in_current_dir.find(f => f.includes('compose') && (f.endsWith('.yml') || f.endsWith('.yaml')));
-
-      if (default_compose) {
-        from_path = default_compose;
-        if (!fs.existsSync(from_path) || !fs.statSync(from_path).isFile()) {
-          throw new Error(`The Docker Compose file ${from_path} couldn't be found.`);
-        }
+    if (default_compose_file) {
+      const confirmation_answers = await inquirer.prompt([{
+        type: 'confirm',
+        name: 'use_compose',
+        message: `We detected a ${default_compose_file} file. Would you like to use it for your project?`,
+      }]);
+      if (confirmation_answers.use_compose) {
+        await this.runArchitectYamlConversion(default_compose_file, args.name, flags['component-file']);
+        return;
       }
     }
-    return from_path;
+
+    await this.runProjectCreation(args.name, flags);
   }
 }

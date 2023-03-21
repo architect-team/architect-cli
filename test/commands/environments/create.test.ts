@@ -28,9 +28,11 @@ describe('environment:create', () => {
       .reply(200, mock_account))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${mock_account.id}/clusters/${mock_cluster.name}`)
+      .optionally(true)
       .reply(200, mock_cluster))
     .nock(MOCK_API_HOST, api => api
       .post(`/accounts/${mock_account.id}/environments`)
+      .optionally(true)
       .reply(201))
     .stdout({ print })
     .stderr({ print });
@@ -54,6 +56,26 @@ describe('environment:create', () => {
       expect(ctx.stdout).to.contain(`Environment created: ${mock_url}`);
       expect(ctx.stderr).to.contain('done');
     });
+
+  create_environment
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account.id}/clusters?limit=1`)
+      .reply(200, { total: 1, rows: [mock_cluster] }))
+    .command(['environment:create', mock_env.name, '-a', mock_account.name])
+    .it('should create an environment without the cluster flag if there is only one cluster', ctx => {
+      expect(ctx.stdout).to.contain(`Environment created: ${mock_url}`);
+      expect(ctx.stderr).to.contain('done');
+    });
+
+  create_environment
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account.id}/clusters?limit=1`)
+      .reply(200, { total: 2, rows: [mock_cluster] }))
+    .command(['environment:create', mock_env.name, '-a', mock_account.name])
+    .catch(ctx => {
+      expect(ctx.message).to.include('--cluster flag is required')
+    })
+    .it('should create an environment without the cluster flag should fail in CI if there are multiple clusters');
 
   create_environment
     .env({ ARCHITECT_CLUSTER: mock_cluster.name })

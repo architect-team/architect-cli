@@ -169,6 +169,9 @@ describe('components spec v1', function () {
             interfaces: {
               main: 5432,
             },
+            liveness_probe: {
+              command: 'pg_isready -d test'
+            }
           },
         },
         interfaces: {},
@@ -207,9 +210,11 @@ describe('components spec v1', function () {
       const expected_compose: DockerComposeTemplate = {
         'services': {
           [api_ref]: {
-            'depends_on': [
-              `${db_ref}`,
-            ],
+            depends_on: {
+              [db_ref]: {
+                condition: 'service_healthy'
+              }
+            },
             'environment': {
               'DB_ADDR': `http://${db_ref}:5432`,
             },
@@ -223,9 +228,11 @@ describe('components spec v1', function () {
             labels: ['architect.ref=cloud.services.api'],
           },
           [app_ref]: {
-            'depends_on': [
-              `${api_ref}`,
-            ],
+            depends_on: {
+              [api_ref]: {
+                condition: 'service_started'
+              }
+            },
             'environment': {
               'API_ADDR': `http://${api_ref}:8080`,
             },
@@ -248,6 +255,13 @@ describe('components spec v1', function () {
             },
             image: db_ref,
             labels: ['architect.ref=cloud.services.db'],
+            healthcheck: {
+              interval: '30s',
+              retries: 3,
+              start_period: '0s',
+              test: ['CMD', 'pg_isready', '-d', 'test'],
+              timeout: '5s'
+            }
           },
         },
         'version': '3',
@@ -1146,6 +1160,44 @@ describe('components spec v1', function () {
 
       expect((graph.nodes[0] as any).config.environment.DATABASE).to.be.equal(default_value);
       expect(graph.edges).to.have.length(1);
+    });
+
+    it('throw error if database override not a valid url', async () => {
+      const yml = `
+        name: component
+
+        databases:
+          primary:
+            type: mariadb:10
+            connection_string: \${{ secrets.dbOverride }}
+
+        services:
+          api:
+            image: test:v1
+            environment:
+              DATABASE: \${{ databases.primary.connection_string }}
+        `;
+
+      mock_fs({
+        '/architect.yaml': yml,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), 'examples', {
+        'component': '/architect.yaml',
+      });
+
+      let error;
+      try {
+        await manager.getGraph([
+          ...await manager.loadComponentSpecs('component'),
+        ], {
+          '*': { 'dbOverride': 'garbage' }
+        })
+      } catch (err) {
+        error = err;
+      }
+
+      expect(error).to.be.instanceOf(ValidationErrors);
     });
 
     it('throw error if database and service names collide', async () => {

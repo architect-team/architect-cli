@@ -271,37 +271,35 @@ services:
       expect(ctx.stdout).to.contain(`Could not convert kibana property "networks"`);
     });
 
-  it('finds a compose file in the current directory if one was unspecified', async () => {
+  it('finds a compose file in the current directory', async () => {
     mock_fs({
       './docker-compose.yml': mock_compose_contents,
     });
 
-    const getComposeFromPath = InitCommand.prototype.getComposeFromPath;
-    const compose_path = await getComposeFromPath({});
+    const getDefaultDockerComposeFile = InitCommand.prototype.getDefaultDockerComposeFile;
+    const compose_path = await getDefaultDockerComposeFile();
     expect(compose_path).eq('docker-compose.yml');
   });
 
-  it('finds and returns a valid compose file path if it was specified', async () => {
+  it('finds an oddly named compose file in the current directory', async () => {
     mock_fs({
-      '/stack/docker-compose.yml': mock_compose_contents,
+      './compose.yml': mock_compose_contents,
     });
 
-    const getComposeFromPath = InitCommand.prototype.getComposeFromPath;
-    const compose_path = await getComposeFromPath({ 'from-compose': '/stack/docker-compose.yml' });
-    expect(compose_path).eq(path.join(path.parse(process.cwd()).root, 'stack', 'docker-compose.yml'));
+    const getDefaultDockerComposeFile = InitCommand.prototype.getDefaultDockerComposeFile;
+    const compose_path = await getDefaultDockerComposeFile();
+    expect(compose_path).eq('compose.yml');
   });
 
-  it(`returns an error if the compose file was specified, but it doesn't exist`, async () => {
+  it('finds the preferred docker compose file names first', async () => {
     mock_fs({
-      '/stack/docker-compose.yml': mock_compose_contents,
+      './compose.yml': mock_compose_contents,
+      './docker-compose.yaml': mock_compose_contents,
     });
 
-    const getComposeFromPath = InitCommand.prototype.getComposeFromPath;
-    try {
-      await getComposeFromPath({ 'from-compose': '/stack/bad-path/docker-compose.yml' });
-    } catch (err: any) {
-      expect(err.message).eq(`The Docker Compose file /stack/bad-path/docker-compose.yml couldn't be found.`);
-    }
+    const getDefaultDockerComposeFile = InitCommand.prototype.getDefaultDockerComposeFile;
+    const compose_path = await getDefaultDockerComposeFile();
+    expect(compose_path).eq('docker-compose.yaml');
   });
 
   mockInit()
@@ -439,5 +437,20 @@ services:
       expect(ctx.stdout).to.contain('Successfully created project');
       const download_repos = ProjectUtils.downloadGitHubRepos as sinon.SinonStub;
       expect(download_repos.callCount).to.eq(1);
+    });
+
+  mockInit()
+    .stub(ProjectUtils, 'getSelections', sinon.stub().returns({}))
+    .stub(ProjectUtils, 'downloadGitHubRepos', sinon.stub())
+    .stdout({ print })
+    .stderr({ print })
+    .command(['init', 'my-react-project2', '--starter', 'Go'])
+    .it('Create project successfully with project flag and starter flag', async ctx => {
+      expect(ctx.stdout).to.contain('Successfully created project');
+      const download_repos = ProjectUtils.downloadGitHubRepos as sinon.SinonStub;
+      const get_selections = ProjectUtils.getSelections as sinon.SinonStub;
+      expect(download_repos.callCount).to.eq(1);
+      expect(get_selections.callCount).to.eq(1);
+      expect(get_selections.getCall(0).args[0]).to.eq('Go');
     });
 });
