@@ -269,9 +269,9 @@ describe('components with reserved_name field set', function () {
       const expected_compose: DockerComposeTemplate = {
         "services": {
           [api_ref]: {
-            "depends_on": [
-              `${db_ref}`
-            ],
+            "depends_on": {
+              [`${db_ref}`]: { condition: 'service_started' }
+            },
             "environment": {
               "DB_ADDR": `http://${db_ref}:5432`
             },
@@ -282,9 +282,9 @@ describe('components with reserved_name field set', function () {
             labels: [`architect.ref=cloud.services.api`]
           },
           [app_ref]: {
-            "depends_on": [
-              `${reserved_name}`
-            ],
+            "depends_on": {
+              [`${reserved_name}`]: { condition: 'service_started' }
+            },
             "environment": {
               "API_ADDR": `http://${api_ref}:8080`
             },

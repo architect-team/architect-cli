@@ -195,9 +195,11 @@ describe('interpolation spec v1', () => {
             ],
           },
           image: worker_ref,
-          'depends_on': [
-            web_ref
-          ],
+          depends_on: {
+            [web_ref]: {
+              condition: 'service_started'
+            }
+          },
           labels: ['architect.ref=worker.services.worker']
         },
       },
@@ -266,7 +268,11 @@ describe('interpolation spec v1', () => {
         ],
       },
       image: worker_ref,
-      depends_on: [web_ref],
+      depends_on: {
+        [web_ref]: {
+          condition: 'service_started'
+        }
+      },
       external_links: [
         'gateway:public.arc.localhost'
       ],

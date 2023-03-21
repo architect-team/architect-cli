@@ -177,6 +177,9 @@ describe('components spec v1', function () {
             interfaces: {
               main: 5432,
             },
+            liveness_probe: {
+              command: 'pg_isready -d test'
+            }
           },
         },
         interfaces: {},
@@ -215,9 +218,11 @@ describe('components spec v1', function () {
       const expected_compose: DockerComposeTemplate = {
         'services': {
           [api_ref]: {
-            'depends_on': [
-              `${db_ref}`,
-            ],
+            depends_on: {
+              [db_ref]: {
+                condition: 'service_healthy'
+              }
+            },
             'environment': {
               'DB_ADDR': `http://${db_ref}:5432`,
             },
@@ -235,9 +240,11 @@ describe('components spec v1', function () {
             labels: ['architect.ref=cloud.services.api'],
           },
           [app_ref]: {
-            'depends_on': [
-              `${api_ref}`,
-            ],
+            depends_on: {
+              [api_ref]: {
+                condition: 'service_started'
+              }
+            },
             'environment': {
               'API_ADDR': `http://${api_ref}:8080`,
             },
@@ -268,6 +275,13 @@ describe('components spec v1', function () {
             },
             image: db_ref,
             labels: ['architect.ref=cloud.services.db'],
+            healthcheck: {
+              interval: '30s',
+              retries: 3,
+              start_period: '0s',
+              test: ['CMD', 'pg_isready', '-d', 'test'],
+              timeout: '5s'
+            }
           },
         },
         'version': '3',

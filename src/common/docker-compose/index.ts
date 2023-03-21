@@ -255,9 +255,14 @@ export class DockerComposeUtils {
         service.extra_hosts = ['host.docker.internal:host-gateway'];
       }
 
-      const depends_on = graph.getDependsOn(node).map(n => n.ref);
-
-      if (depends_on?.length) {
+      const depends_on_nodes = graph.getDependsOn(node);
+      if (depends_on_nodes?.length) {
+        const depends_on: Dictionary<{ condition: string }> = {};
+        for (const node of depends_on_nodes) {
+          depends_on[node.ref] = {
+            condition: node instanceof ServiceNode && node.config.liveness_probe ? 'service_healthy' : 'service_started',
+          };
+        }
         service.depends_on = depends_on;
       }
 
@@ -450,7 +455,11 @@ export class DockerComposeUtils {
       }
     }
 
-    if (!file_contents || !file_path) {
+    if (!file_contents) {
+      throw new Error(`The file ${input} appears to be empty. Nothing to convert.`);
+    }
+
+    if (!file_path) {
       throw new Error(`No docker-compose file found at ${input}`);
     }
 

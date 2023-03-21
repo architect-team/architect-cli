@@ -239,7 +239,11 @@ describe('interfaces spec v1', () => {
       ]);
 
       const expected_leaf_compose: DockerService = {
-        depends_on: [leaf_api_ref],
+        depends_on: {
+          [leaf_api_ref]: {
+            condition: 'service_started'
+          }
+        },
         environment: {
           LEAF_HOST: leaf_api_ref,
           LEAF_PORT: '8080',
@@ -270,7 +274,11 @@ describe('interfaces spec v1', () => {
       expect(template.services[leaf_db_ref]).to.be.deep.equal(expected_leaf_db_compose);
 
       const expected_leaf_api_compose: DockerService = {
-        depends_on: [leaf_db_ref],
+        depends_on: {
+          [leaf_db_ref]: {
+            condition: 'service_started'
+          }
+        },
         environment: {
           DB_HOST: leaf_db_ref,
           DB_PORT: '5432',
@@ -307,7 +315,11 @@ describe('interfaces spec v1', () => {
       expect(template.services[other_leaf_db_ref]).to.be.deep.equal(expected_other_leaf_db_compose);
 
       const expected_other_leaf_api_compose: DockerService = {
-        depends_on: [other_leaf_db_ref],
+        depends_on: {
+          [other_leaf_db_ref]: {
+            condition: 'service_started'
+          }
+        },
         environment: {
           DB_HOST: other_leaf_db_ref,
           DB_PORT: '5432',

@@ -324,9 +324,11 @@ describe('local dev environment', function () {
         'ports': [
           '50000:3000',
         ],
-        'depends_on': [
-          seed_db_ref,
-        ],
+        depends_on: {
+          [seed_db_ref]: {
+            condition: 'service_started'
+          }
+        },
         'environment': {
           'DATABASE_HOST': seed_db_ref,
           'DATABASE_PORT': '5432',
