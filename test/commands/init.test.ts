@@ -440,4 +440,19 @@ services:
       const download_repos = ProjectUtils.downloadGitHubRepos as sinon.SinonStub;
       expect(download_repos.callCount).to.eq(1);
     });
+
+  mockInit()
+    .stub(ProjectUtils, 'getSelections', sinon.stub().returns({}))
+    .stub(ProjectUtils, 'downloadGitHubRepos', sinon.stub())
+    .stdout({ print })
+    .stderr({ print })
+    .command(['init', 'my-react-project2', '--starter', 'Go'])
+    .it('Create project successfully with project flag and starter flag', async ctx => {
+      expect(ctx.stdout).to.contain('Successfully created project');
+      const download_repos = ProjectUtils.downloadGitHubRepos as sinon.SinonStub;
+      const get_selections = ProjectUtils.getSelections as sinon.SinonStub;
+      expect(download_repos.callCount).to.eq(1);
+      expect(get_selections.callCount).to.eq(1);
+      expect(get_selections.getCall(0).args[0]).to.eq('Go');
+    });
 });
