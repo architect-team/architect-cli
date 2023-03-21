@@ -4,7 +4,7 @@ import os from 'os';
 import config from '../../app-config/config';
 import AppService from '../../app-config/service';
 import { docker } from './cmd';
-import { RequiresDocker } from './helper';
+import { DockerHelper, RequiresDocker } from './helper';
 
 // Adapted from https://github.com/docker-library/official-images#architectures-other-than-amd64
 const PLATFORM_MAP = new Map<string, string>([
@@ -95,6 +95,12 @@ export default class DockerBuildXUtils {
   @RequiresDocker({ buildx: true })
   public static async build(app: AppService, compose_file: string, build_args: string[]): Promise<void> {
     const builder = await this.getBuilder(app.config);
+
+    // https://github.com/docker/buildx/issues/1533
+    if (DockerHelper.buildXVersion('>=0.10.0')) {
+      build_args.push('--provenance', 'false');
+    }
+
     await this.dockerBuildX(['bake', '-f', compose_file, '--push', ...build_args], builder, {
       stdio: 'inherit',
     });
