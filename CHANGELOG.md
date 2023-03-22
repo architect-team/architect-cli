@@ -1,3 +1,26 @@
+# [1.36.0](https://github.com/architect-team/architect-cli/compare/v1.35.0...v1.36.0) (2023-03-21)
+
+
+### Bug Fixes
+
+* **databases:** Databases redacted secrets ([#855](https://github.com/architect-team/architect-cli/issues/855)) ([541e07e](https://github.com/architect-team/architect-cli/commit/541e07eed00abe9427342bf515eeefcdcf20f870))
+* **depends_on:** Use expanded depends_on syntax for service health ([#862](https://github.com/architect-team/architect-cli/issues/862)) ([9bc61ca](https://github.com/architect-team/architect-cli/commit/9bc61ca44e452f76d2cdca7ac1fe830b6f3b0434))
+* **init:** Add starter flag to init command ([#858](https://github.com/architect-team/architect-cli/issues/858)) ([8b9a564](https://github.com/architect-team/architect-cli/commit/8b9a564b248ff1b6ecd18c5b5f0ed2f15298f64e))
+* **init:** Fix init flow ([#861](https://github.com/architect-team/architect-cli/issues/861)) ([670738e](https://github.com/architect-team/architect-cli/commit/670738e442f9ed1431d30da4ccca327f03c282e0))
+* **prompt:** Shortcut prompt for cluster/environment if only one instance exists ([#859](https://github.com/architect-team/architect-cli/issues/859)) ([d664280](https://github.com/architect-team/architect-cli/commit/d66428064ba260bd47c4a55b288f234102ba9e7c))
+* **register:** Disable provenance to fix issues with image pulling in k8s clusters ([#860](https://github.com/architect-team/architect-cli/issues/860)) ([7b3580b](https://github.com/architect-team/architect-cli/commit/7b3580b6b4744eac120f8ae6db9c9ca08e360e4c))
+
+
+### Features
+
+* **dev:** Automatically clean up local docker cache for unused images ([291eeec](https://github.com/architect-team/architect-cli/commit/291eeec5d99ffa2155c94aad88447bc1422ac15a))
+* **port-forward:** Add port-forward command ([#854](https://github.com/architect-team/architect-cli/issues/854)) ([8bab709](https://github.com/architect-team/architect-cli/commit/8bab7090b0b971b79159af03e39d05dfede0a68f))
+
+
+### Reverts
+
+* Revert "feat(dev): Automatically clean up local docker cache for unused images" (#856) ([686ccfb](https://github.com/architect-team/architect-cli/commit/686ccfb5d628aeb53deb7e4e6997bed94ade2117)), closes [#856](https://github.com/architect-team/architect-cli/issues/856)
+
 # [1.35.0](https://github.com/architect-team/architect-cli/compare/v1.34.0...v1.35.0) (2023-03-10)
 
 

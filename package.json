@@ -1,7 +1,7 @@
 {
   "name": "@architect-io/cli",
   "description": "Command-line interface for Architect.io",
-  "version": "1.36.0-rc.8",
+  "version": "1.36.0",
   "author": "Architect.io",
   "bin": {
     "architect": "./bin/run"
@@ -123,7 +123,7 @@
     "typescript": "^4.5.5"
   },
   "engines": {
-    "node": ">=12"
+    "node": ">=14"
   },
   "engineStrict": true,
   "files": [
