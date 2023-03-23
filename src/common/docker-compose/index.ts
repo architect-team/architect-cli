@@ -147,9 +147,9 @@ export class DockerComposeUtils {
             '/bin/sh',
             '-c',
             `
-            echo "$$TRAEFIK_CONFIG" >> /etc/traefik.yaml;
-            echo "$$TRAEFIK_CERT" >> /etc/fullchain.pem;
-            echo "$$TRAEFIK_KEY" >> /etc/privkey.pem;
+            echo "$$TRAEFIK_CONFIG" > /etc/traefik.yaml;
+            echo "$$TRAEFIK_CERT" > /etc/fullchain.pem;
+            echo "$$TRAEFIK_KEY" > /etc/privkey.pem;
 
             set -- "$$@" "$$0"
 
