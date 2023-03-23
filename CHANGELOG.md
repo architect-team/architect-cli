@@ -1,3 +1,13 @@
+## [1.36.1](https://github.com/architect-team/architect-cli/compare/v1.36.0...v1.36.1) (2023-03-23)
+
+
+### Bug Fixes
+
+* **engine:** Update the minimum nodejs version to 14 ([76779e4](https://github.com/architect-team/architect-cli/commit/76779e4a961f15ffc38db4a937b652b3392bfec1))
+* **init:** Remove docker as required for init ([#866](https://github.com/architect-team/architect-cli/issues/866)) ([1325678](https://github.com/architect-team/architect-cli/commit/1325678ccd630e49d48457203ea3de1f17dab141))
+* **logs:** Update ./bin/run to hide ExperimentalWarning ([#867](https://github.com/architect-team/architect-cli/issues/867)) ([67eadcb](https://github.com/architect-team/architect-cli/commit/67eadcb98056e45e42e34966ab81024cfa94975a))
+* **traefik:** Fix issue where SSL certs were not updating properly ([02fb3c4](https://github.com/architect-team/architect-cli/commit/02fb3c490ce384a8bebf204a49d367365e941826))
+
 # [1.36.0](https://github.com/architect-team/architect-cli/compare/v1.35.0...v1.36.0) (2023-03-21)
 
 
