@@ -40,6 +40,8 @@ services:
       context: logstash/
       args:
         ELK_VERSION: $ELK_VERSION
+        INT_ARG: 1
+        BOOL_ARG: true
       target: build
     volumes:
       - type: bind

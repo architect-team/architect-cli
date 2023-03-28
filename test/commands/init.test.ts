@@ -69,6 +69,18 @@ services:
     });
 
   mockInit()
+    .command(['init', '--from-compose', compose_file_path, 'test-component', '-o', 'test-directory/architect.yml'])
+    .it('converts different types of build arg value of the docker compose file', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+      expect(writeFileSync.args[0][0]).eq('test-directory/architect.yml');
+      const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
+      expect(component_config.services.logstash.build!.args!.ELK_VERSION).eq('$ELK_VERSION');
+      expect(component_config.services.logstash.build!.args!.INT_ARG).eq('1');
+      expect(component_config.services.logstash.build!.args!.BOOL_ARG).eq('true');
+    });
+
+  mockInit()
     .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds environment variables to each service', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;

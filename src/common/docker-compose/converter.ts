@@ -112,8 +112,8 @@ export class ComposeConverter {
     if (typeof compose_build === 'string') {
       build.context = compose_build;
     } else {
+      build.args = {};
       if (Array.isArray(compose_build.args)) {
-        build.args = {};
         for (const arg of compose_build.args) {
           const [key, value] = arg.split('=');
           if (key && value) {
@@ -123,7 +123,9 @@ export class ComposeConverter {
           }
         }
       } else {
-        build.args = compose_build.args;
+        for (const [key, value] of Object.entries(compose_build.args as Dictionary<string>)) {
+          build.args[key] = value.toString();
+        }
       }
       build.context = compose_build.context;
       if (compose_build.dockerfile) {
