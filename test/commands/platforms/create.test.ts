@@ -35,7 +35,7 @@ describe('platform:create', function () {
 
   const create_test = () => {
     return test
-      .stub(ClusterUtils, 'getClientVersion', sinon.stub().returns(MIN_CLUSTER_SEMVER.version))
+      .stub(ClusterUtils, 'getServerVersion', sinon.stub().returns(MIN_CLUSTER_SEMVER.version))
       .stub(PlatformCreate.prototype, 'log', sinon.stub())
       .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
       .stub(fs, 'readJSONSync', () => {
@@ -145,7 +145,7 @@ describe('platform:create', function () {
     })
 
   test
-    .stub(ClusterUtils, 'getClientVersion', sinon.stub().returns('v1.0.0'))
+    .stub(ClusterUtils, 'getServerVersion', sinon.stub().returns('v1.0.0'))
     .stub(ClusterCreate.prototype, 'log', sinon.stub())
     .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
     .stub(fs, 'readJSONSync', () => {

@@ -93,18 +93,23 @@ export default class ClusterUtils {
     return cluster;
   }
 
-  private static async getClientVersion(kubeconfig_path: string): Promise<string> {
-    const { stdout } = await execa('kubectl', ['version', '--kubeconfig', kubeconfig_path, '--client', '--output', 'json']);
-    const { clientVersion } = JSON.parse(stdout);
-    return clientVersion.gitVersion;
+  private static async getServerVersion(kubeconfig_path: string): Promise<string | undefined> {
+    try {
+      const { stdout } = await execa('kubectl', ['version', '--kubeconfig', kubeconfig_path, '--output', 'json']);
+      const { serverVersion } = JSON.parse(stdout);
+      return serverVersion.gitVersion;
+    } catch {
+      //
+      return undefined;
+    }
   }
 
-  public static async checkClientVersion(kubeconfig: string): Promise<void> {
+  public static async checkServerVersion(kubeconfig: string): Promise<void> {
     const kubeconfig_path = untildify(kubeconfig);
-    const client_git_version = await this.getClientVersion(kubeconfig_path);
+    const client_git_version = await this.getServerVersion(kubeconfig_path);
     const client_semver = semver.coerce(client_git_version);
     if (!client_semver) {
-      throw new ArchitectError(`Failed to translate Kubernetes cluster version ${client_git_version}.`);
+      throw new ArchitectError('We are unable to read the version of your cluster.\nPlease make sure your cluster is reachable using kubectl before attempting to register it.\nIf you continue to experience issues please contact Architect support. https://support.architect.io/');
     }
 
     if (semver.lt(client_semver.version, MIN_CLUSTER_SEMVER.version)) {
