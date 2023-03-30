@@ -257,4 +257,11 @@ export class ServiceSpec extends ResourceSpec {
   @ValidateNested()
   @Type(() => DeploySpec)
   deploy?: DeploySpec;
+
+  @IsOptional()
+  @JSONSchema({
+    ...ExpressionOrString(),
+    description: `A period of time between a service being passed a SIGINT and a SIGKILL when it's scheduled to be replaced or terminated. Only used for remote deployments.`, // TODO: wording
+  })
+  termination_grace_period?: string;
 }
