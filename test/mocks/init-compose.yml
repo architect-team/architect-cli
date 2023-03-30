@@ -6,6 +6,10 @@ services:
       context: elasticsearch/
       args:
         - ELK_VERSION=$ELK_VERSION
+        - INT_ARG=1
+        - BOOL_ARG=true
+        - EMPTY_ARG
+        - EMPTY_ARG2=
       dockerfile: Dockerfile.elasticsearch
       target: production
     volumes:
@@ -42,6 +46,7 @@ services:
         ELK_VERSION: $ELK_VERSION
         INT_ARG: 1
         BOOL_ARG: true
+        EMPTY_ARG:
       target: build
     volumes:
       - type: bind
