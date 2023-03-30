@@ -175,32 +175,34 @@ export class UpProcessManager {
     }
 
     const service_colors = new Map<string, chalk.Chalk>();
-    const handleStream = (data: any) => {
-      if (this.is_exiting) {
-        return;
-      }
-
-      for (const line of data.toString().split('\n')) {
-        const lineParts = line.split('|');
-        if (lineParts.length > 1) {
-          // At this point we can stop the process without leaving containers running.
-          this.can_safely_kill = true;
-          const service = (lineParts[0] as string).replace(`${this.project_name}-`, '');
-
-          lineParts.shift();
-          const newLine = lineParts.join('|');
-
-          if (!service_colors.get(service)) {
-            service_colors.set(service, chalk.rgb(rand(), rand(), rand()));
-          }
-
-          const color = service_colors.get(service) as chalk.Chalk;
-          console.log(color(service + '| ') + newLine);
+    const createHandleStream = (output_func: (message: string) => void) => {
+      return (data: any) => {
+        if (this.is_exiting) {
+          return;
         }
-      }
+
+        for (const line of data.toString().split('\n')) {
+          const lineParts = line.split('|');
+          if (lineParts.length > 1) {
+            // At this point we can stop the process without leaving containers running.
+            this.can_safely_kill = true;
+            const service = (lineParts[0] as string).replace(`${this.project_name}-`, '');
+
+            lineParts.shift();
+            const newLine = lineParts.join('|');
+
+            if (!service_colors.get(service)) {
+              service_colors.set(service, chalk.rgb(rand(), rand(), rand()));
+            }
+
+            const color = service_colors.get(service) as chalk.Chalk;
+            output_func(color(service + '| ') + newLine);
+          }
+        }
+      };
     };
-    this.compose_process.stdout?.on('data', handleStream);
-    this.compose_process.stderr?.on('data', handleStream);
+    this.compose_process.stdout?.on('data', createHandleStream(console.log));
+    this.compose_process.stderr?.on('data', createHandleStream(console.warn));
   }
 
   async run(): Promise<void> {
