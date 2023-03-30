@@ -52,6 +52,7 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
  | `replicas` | integer \| [Expression](https://docs.architect.io/reference/contexts) | A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field. |  |
  | `scaling` | [ScalingSpec](#scalingspec) |  |  |
  | `deploy` | [DeploySpec](#deployspec) |  |  |
+ | `termination_grace_period` | string \| [Expression](https://docs.architect.io/reference/contexts) | A period of time between a service being passed a SIGINT and a SIGKILL when it's scheduled to be replaced or terminated. Only used for remote deployments. |  |
  | `description` | string | Human readable description |  |
  | `image` | string \| [Expression](https://docs.architect.io/reference/contexts) | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
  | `command` | Array&lt;string&gt; \| string \| [Expression](https://docs.architect.io/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
