@@ -175,7 +175,7 @@ export class UpProcessManager {
     }
 
     const service_colors = new Map<string, chalk.Chalk>();
-    this.compose_process.stdout?.on('data', (data) => {
+    const handleStream = (data: any) => {
       if (this.is_exiting) {
         return;
       }
@@ -198,7 +198,9 @@ export class UpProcessManager {
           console.log(color(service + '| ') + newLine);
         }
       }
-    });
+    };
+    this.compose_process.stdout?.on('data', handleStream);
+    this.compose_process.stderr?.on('data', handleStream);
   }
 
   async run(): Promise<void> {
