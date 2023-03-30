@@ -93,7 +93,7 @@ export class UpProcessManager {
     // "SIGINT" we get on Windows isn't a real signal and isn't automatically passed to child processes,
     // so we don't have to worry about it.
     const compose_process = DockerComposeUtils.dockerCompose(compose_args,
-      { stdout: 'pipe', stdin: 'ignore', detached: !this.is_windows });
+      { stdout: 'pipe', stderr: 'pipe', stdin: 'ignore', detached: !this.is_windows });
 
     this.server = net.createServer();
     this.server.on('connection', (socket) => {
