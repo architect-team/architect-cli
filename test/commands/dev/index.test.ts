@@ -1181,6 +1181,32 @@ describe('local dev environment', function () {
       })
       .stub(DeployUtils, 'readSecretsFile', () => {
         return {
+          'hello-world:latest@tenant-1': {
+            'hello_ingress': 'hello-app',
+          },
+        };
+      })
+      .command(['dev', '--secret-file', './examples/hello-world/secrets.yml', 'hello-world:latest@tenant-1', '--ssl=false'])
+      .it('Create a local dev with instance name, tag, and secret file', ctx => {
+        const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+        expect(runCompose.calledOnce).to.be.true;
+        const tenant_1_ref = resourceRefToNodeRef('hello-world.services.api@tenant-1');
+        const compose = runCompose.firstCall.args[0];
+        expect(Object.keys(compose.services)).includes(tenant_1_ref);
+        expect(compose.services[tenant_1_ref].labels || []).includes(`traefik.http.routers.${tenant_1_ref}-hello.rule=Host(\`hello-app.arc.localhost\`)`);
+      });
+
+    local_dev
+      .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+      .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+      // @ts-ignore
+      .stub(ComponentBuilder, 'buildSpecFromPath', (_, metadata) => {
+        const hello_json = yaml.load(getHelloComponentConfig()) as any;
+        hello_json.services.api.environment.SELF_URL = `\${{ services.api.interfaces.hello.ingress.url }}`;
+        return buildSpecFromYml(yaml.dump(hello_json), metadata);
+      })
+      .stub(DeployUtils, 'readSecretsFile', () => {
+        return {
           'hello-world@tenant-1': {
             'hello_ingress': 'hello-1',
           },
