@@ -2,9 +2,13 @@ import { test } from '@oclif/test';
 import fs from 'fs-extra';
 import path from 'path';
 import AuthClient from '../../src/app-config/auth';
+import Account from '../../src/architect/account/account.entity';
+import ComponentVersion from '../../src/architect/component/component-version.entity';
+import Environment from '../../src/architect/environment/environment.entity';
 import SecretUtils from '../../src/architect/secret/secret.utils';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
+import { DeepPartial } from '../../src/common/utils/types';
 
 export const MOCK_API_HOST = 'http://mock.api.localhost';
 export const MOCK_APP_HOST = 'http://mock.app.localhost';
@@ -63,3 +67,74 @@ export const mockArchitectAuth = () =>
     .stub(SecretUtils, 'getSecrets', () => [])
     .stub(SecretUtils, 'batchUpdateSecrets', () => [])
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', () => { });
+
+export class MockArchitectApi {
+  test;
+  environment?: Partial<Environment>;
+  account?: Partial<Account>;
+  component_version?: DeepPartial<ComponentVersion>;
+
+  constructor(options: {
+      account?: Partial<Account>,
+      environment?: Partial<Environment>,
+      component_version?: DeepPartial<ComponentVersion>,
+      print?: boolean
+  }) {
+    this.test = mockArchitectAuth()
+      .stdout({ print: !!options.print })
+      .stderr({ print: !!options.print });
+
+    if (options.environment) {
+      this.environment = options.environment;
+    }
+    if (options.account) {
+      this.account = options.account;
+    }
+    if (options.component_version) {
+      this.component_version = options.component_version;
+    }
+  }
+
+  getConstructedApiTests() {
+    return this.test;
+  }
+
+  // /accounts
+  getAccountByName() {
+    this.test = this.test.nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${this.account?.name}`)
+      .reply(200, this.account));
+    return this;
+  }
+
+  // /accounts/<account>/environments
+  getEnvironmentByName() {
+    this.test = this.test.nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${this.account?.id}/environments/${this.environment?.name}`)
+      .reply(200, this.environment))
+    return this;
+  }
+
+  // /environments
+  updateEnvironment(dto: { replicas: number, resource_slug: string }) {
+    this.test = this.test.nock(MOCK_API_HOST, api => api
+      .put(`/environments/${this.environment?.id}`, dto)
+      .reply(200));
+    return this;
+  }
+
+  updateEnvironmentScaling(dto: { replicas: number, resource_slug: string }) {
+    this.test = this.test.nock(MOCK_API_HOST, api => api
+      .put(`/environments/${this.environment?.id}/scale`, dto)
+      .reply(200))
+    return this;
+  }
+
+  // /accounts/<account>/components
+  getComponentVersionByName() {
+    this.test = this.test.nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${this.account?.id}/components/${this.component_version?.component?.name}`)
+      .reply(200, this.component_version))
+    return this;
+  }
+}
