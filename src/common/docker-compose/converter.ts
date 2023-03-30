@@ -115,6 +115,9 @@ export class ComposeConverter {
       build.args = {};
       if (Array.isArray(compose_build.args)) {
         for (const arg of compose_build.args) {
+          if (!arg) {
+ continue;
+}
           const [key, value] = arg.split('=');
           build.args[key] = value ? value.toString() : null;
         }
