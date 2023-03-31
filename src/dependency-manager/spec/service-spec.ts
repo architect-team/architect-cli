@@ -261,6 +261,7 @@ export class ServiceSpec extends ResourceSpec {
   @IsOptional()
   @JSONSchema({
     ...ExpressionOrString(),
+    default: '30s',
     description: `A period of time between a service being passed a SIGINT and a SIGTERM when it's scheduled to be replaced or terminated. Only used for remote deployments.`,
   })
   termination_grace_period?: string;
