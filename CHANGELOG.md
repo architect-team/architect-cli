@@ -1,3 +1,11 @@
+## [1.36.2](https://github.com/architect-team/architect-cli/compare/v1.36.1...v1.36.2) (2023-03-31)
+
+
+### Bug Fixes
+
+* **cluster:create:** Add checks for kubectl and server connection ([#870](https://github.com/architect-team/architect-cli/issues/870)) ([03cecc2](https://github.com/architect-team/architect-cli/commit/03cecc2ea5f76787e72be9fcfe24d139ba0acd5b))
+* **dev:** Add in stderr to logs ([#873](https://github.com/architect-team/architect-cli/issues/873)) ([faf7729](https://github.com/architect-team/architect-cli/commit/faf7729147ecf97d1fddf83ec43b78fd178548b4))
+
 ## [1.36.1](https://github.com/architect-team/architect-cli/compare/v1.36.0...v1.36.1) (2023-03-23)
 
 
