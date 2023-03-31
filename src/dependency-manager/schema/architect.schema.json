@@ -2599,6 +2599,22 @@
         "deploy": {
           "$ref": "#/definitions/DeploySpec"
         },
+        "termination_grace_period": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "default": "30s",
+          "description": "A period of time between a service being passed a SIGINT and a SIGTERM when it's scheduled to be replaced or terminated. Only used for remote deployments."
+        },
         "description": {
           "type": "string",
           "description": "Human readable description"
@@ -3004,6 +3020,22 @@
                 },
                 "deploy": {
                   "$ref": "#/definitions/DeploySpec"
+                },
+                "termination_grace_period": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "default": "30s",
+                  "description": "A period of time between a service being passed a SIGINT and a SIGTERM when it's scheduled to be replaced or terminated. Only used for remote deployments."
                 },
                 "description": {
                   "type": "string",
@@ -6614,6 +6646,22 @@
         "deploy": {
           "$ref": "#/definitions/_DebugDeploySpec"
         },
+        "termination_grace_period": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "default": "30s",
+          "description": "A period of time between a service being passed a SIGINT and a SIGTERM when it's scheduled to be replaced or terminated. Only used for remote deployments."
+        },
         "description": {
           "type": "string",
           "description": "Human readable description"
@@ -7016,6 +7064,22 @@
                 },
                 "deploy": {
                   "$ref": "#/definitions/_DebugDeploySpec"
+                },
+                "termination_grace_period": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "default": "30s",
+                  "description": "A period of time between a service being passed a SIGINT and a SIGTERM when it's scheduled to be replaced or terminated. Only used for remote deployments."
                 },
                 "description": {
                   "type": "string",
