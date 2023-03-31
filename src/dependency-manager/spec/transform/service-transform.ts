@@ -26,6 +26,6 @@ export const transformServiceSpec = (key: string, spec: ServiceSpec, metadata: C
     replicas: spec.replicas || 1,
     scaling: spec.scaling,
     deploy: spec.deploy,
-    termination_grace_period: spec.termination_grace_period,
+    termination_grace_period: spec.termination_grace_period || '30s',
   };
 };
