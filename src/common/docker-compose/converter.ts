@@ -112,18 +112,19 @@ export class ComposeConverter {
     if (typeof compose_build === 'string') {
       build.context = compose_build;
     } else {
+      build.args = {};
       if (Array.isArray(compose_build.args)) {
-        build.args = {};
         for (const arg of compose_build.args) {
+          if (!arg) {
+ continue;
+}
           const [key, value] = arg.split('=');
-          if (key && value) {
-            build.args[key] = value;
-          } else {
-            warnings.push(`Could not convert environment variable ${arg}`);
-          }
+          build.args[key] = value ? value.toString() : null;
         }
-      } else {
-        build.args = compose_build.args;
+      } else if (compose_build.args instanceof Object && Object.keys(compose_build.args).length > 0) {
+        for (const [key, value] of Object.entries(compose_build.args as Dictionary<any>)) {
+          build.args[key] = value ? value.toString() : null;
+        }
       }
       build.context = compose_build.context;
       if (compose_build.dockerfile) {
