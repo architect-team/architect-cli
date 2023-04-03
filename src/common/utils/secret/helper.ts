@@ -1,6 +1,6 @@
 import { isNumberString } from 'class-validator';
 
-export const parseValue = (secret_value: string | undefined): (string | number | null) => {
+export const parseEnvironmentVariable = (secret_value: string | undefined): (string | number | null) => {
   if (!secret_value) {
     return null;
   }
