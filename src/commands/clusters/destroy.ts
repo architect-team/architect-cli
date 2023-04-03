@@ -7,7 +7,7 @@ import BaseCommand from '../../base-command';
 import { booleanString } from '../../common/utils/oclif';
 
 export default class ClusterDestroy extends BaseCommand {
-  static aliases = ['clusters:deregister', 'cluster:destroy', 'clusters:destroy'];
+  static aliases = ['clusters:deregister', 'cluster:destroy'];
   static description = 'Deregister a cluster from Architect';
   static examples = [
     'architect cluster:destroy --account=myaccount architect',
