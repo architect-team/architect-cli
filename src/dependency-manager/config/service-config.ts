@@ -49,7 +49,6 @@ export interface DatabaseConfig {
   type: string;
   connection_string?: string;
   url?: string;
-
 }
 
 export interface ServiceConfig extends ResourceConfig {
@@ -61,4 +60,5 @@ export interface ServiceConfig extends ResourceConfig {
   replicas: number | string; // TODO:290:number
   scaling?: ScalingConfig;
   deploy?: DeploySpec;
+  termination_grace_period?: string;
 }
