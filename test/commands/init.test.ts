@@ -69,6 +69,19 @@ services:
     });
 
   mockInit()
+    .command(['init', '--from-compose', compose_file_path, 'test-component', '-o', 'test-directory/architect.yml'])
+    .it('converts different types of build arg value of the docker compose file', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+      expect(writeFileSync.args[0][0]).eq('test-directory/architect.yml');
+      const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
+      expect(component_config.services.logstash.build!.args!.ELK_VERSION).eq('$ELK_VERSION');
+      expect(component_config.services.logstash.build!.args!.INT_ARG).eq('1');
+      expect(component_config.services.logstash.build!.args!.BOOL_ARG).eq('true');
+      expect(component_config.services.logstash.build!.args!.EMPTY_ARG).eq('null');
+    });
+
+  mockInit()
     .command(['init', '--from-compose', compose_file_path, 'test-component'])
     .it('adds environment variables to each service', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
@@ -145,6 +158,10 @@ services:
 
       const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
       expect(component_config.services.elasticsearch.build!.args!.ELK_VERSION).eq('$ELK_VERSION');
+      expect(component_config.services.elasticsearch.build!.args!.INT_ARG).eq('1');
+      expect(component_config.services.elasticsearch.build!.args!.BOOL_ARG).eq('true');
+      expect(component_config.services.elasticsearch.build!.args!.EMPTY_ARG).eq('null');
+      expect(component_config.services.elasticsearch.build!.args!.EMPTY_ARG2).eq('null');
       expect(component_config.services.elasticsearch.build!.context).eq('elasticsearch/');
       expect(component_config.services.elasticsearch.build!.dockerfile).eq('Dockerfile.elasticsearch');
     });

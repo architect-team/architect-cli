@@ -172,6 +172,7 @@ services:
       initial_delay: '5s'
       path: /
       port: 8080
+    termination_grace_period: 1m
     ${{ if architect.environment == 'local' }}:
       entrypoint:
         - npm
