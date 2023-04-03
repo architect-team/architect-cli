@@ -7,18 +7,16 @@ import yaml from 'js-yaml';
 import { ArchitectError, Dictionary } from '../../';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
 import { SecretSpecValue } from '../../dependency-manager/spec/secret-spec';
+import { parseValue } from './secret/helper';
 
 export default class DeployUtils {
-  private static getExtraSecrets(secrets: string[] = []): Dictionary<string | number | undefined> {
-    const extra_secrets: { [s: string]: string | number | undefined } = {};
+  private static getExtraSecrets(secrets: string[] = []): Dictionary<string | number | null> {
+    const extra_secrets: { [s: string]: string | number | null } = {};
 
     for (const [secret_name, secret_value] of Object.entries(process.env || {})) {
       if (secret_name.startsWith('ARC_')) {
         const key = secret_name.substring(4);
-        let value: string | number | undefined = secret_value;
-        if (value && isNumberString(value)) {
-          value = Number.parseFloat(value);
-        }
+        const value = parseValue(secret_value);
         extra_secrets[key] = value;
       }
     }
