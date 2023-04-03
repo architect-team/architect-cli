@@ -5,7 +5,7 @@ import Table from '../../base-table';
 import localizedTimestamp from '../../common/utils/localized-timestamp';
 
 export default class Clusters extends BaseCommand {
-  static aliases = ['cluster', 'cluster:search', 'cluster:list', 'clusters', 'clusters:search', 'clusters:list'];
+  static aliases = ['cluster', 'cluster:search', 'cluster:list', 'clusters:search', 'clusters:list'];
   static description = 'Search for clusters on Architect Cloud';
   static examples = [
     'architect clusters',
