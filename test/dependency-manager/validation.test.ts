@@ -56,7 +56,7 @@ services:
       expect(errors[0].start?.column).eq(7);
       expect(errors[0].end?.row).eq(10);
       expect(errors[0].end?.column).eq(12);
-      // expect(process.exitCode).eq(1); // TODO: why is this not set?
+      expect(process.exitCode).eq(1);
     });
 
     it('invalid replicas value', async () => {
@@ -436,6 +436,7 @@ services:
       expect(errors[0].path).eq('services.app');
       expect(Object.keys(errors[0].value)).to.include('image');
       expect(Object.keys(errors[0].value)).to.include('build');
+      expect(process.exitCode).eq(1);
     });
 
     it(`buildpack and dockerfile can't be specified together`, async () => {
@@ -472,6 +473,7 @@ services:
       expect(errors[0].path).eq('services.app.build');
       expect(Object.keys(errors[0].value)).to.include('buildpack');
       expect(Object.keys(errors[0].value)).to.include('dockerfile');
+      expect(process.exitCode).eq(1);
     });
   });
 
@@ -508,6 +510,7 @@ services:
       expect(errors[0].path).eq('tasks.task.build');
       expect(Object.keys(errors[0].value)).to.include('dockerfile');
       expect(Object.keys(errors[0].value)).to.include('buildpack');
+      expect(process.exitCode).eq(1);
     });
   });
 
