@@ -1,6 +1,7 @@
 import { test } from '@oclif/test';
 import fs from 'fs-extra';
 import path from 'path';
+import { RecursivePartial } from '../../src';
 import AuthClient from '../../src/app-config/auth';
 import Account from '../../src/architect/account/account.entity';
 import ComponentVersion from '../../src/architect/component/component-version.entity';
@@ -8,7 +9,6 @@ import Environment from '../../src/architect/environment/environment.entity';
 import SecretUtils from '../../src/architect/secret/secret.utils';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
-import { DeepPartial } from '../../src/common/utils/types';
 
 export const MOCK_API_HOST = 'http://mock.api.localhost';
 export const MOCK_APP_HOST = 'http://mock.app.localhost';
@@ -70,29 +70,13 @@ export const mockArchitectAuth = () =>
 
 export class MockArchitectApi {
   test;
-  environment?: Partial<Environment>;
-  account?: Partial<Account>;
-  component_version?: DeepPartial<ComponentVersion>;
 
-  constructor(options: {
-      account?: Partial<Account>,
-      environment?: Partial<Environment>,
-      component_version?: DeepPartial<ComponentVersion>,
+  constructor(options?: {
       print?: boolean
   }) {
     this.test = mockArchitectAuth()
-      .stdout({ print: !!options.print })
-      .stderr({ print: !!options.print });
-
-    if (options.environment) {
-      this.environment = options.environment;
-    }
-    if (options.account) {
-      this.account = options.account;
-    }
-    if (options.component_version) {
-      this.component_version = options.component_version;
-    }
+      .stdout({ print: !!options?.print })
+      .stderr({ print: !!options?.print });
   }
 
   getConstructedApiTests() {
@@ -100,41 +84,48 @@ export class MockArchitectApi {
   }
 
   // /accounts
-  getAccountByName() {
+  getAccountByName(account: Partial<Account>) {
     this.test = this.test.nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${this.account?.name}`)
-      .reply(200, this.account));
+      .get(`/accounts/${account.name}`)
+      .reply(200, account));
     return this;
   }
 
   // /accounts/<account>/environments
-  getEnvironmentByName() {
+  getEnvironmentByName(account: Partial<Account>, environment: Partial<Environment>) {
     this.test = this.test.nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${this.account?.id}/environments/${this.environment?.name}`)
-      .reply(200, this.environment))
+      .get(`/accounts/${account.id}/environments/${environment.name}`)
+      .reply(200, environment))
     return this;
   }
 
   // /environments
-  updateEnvironment(dto: { replicas: number, resource_slug: string }) {
+  updateEnvironment(environment: Partial<Environment>, dto: { replicas: number, resource_slug: string }) {
     this.test = this.test.nock(MOCK_API_HOST, api => api
-      .put(`/environments/${this.environment?.id}`, dto)
+      .put(`/environments/${environment.id}`, dto)
       .reply(200));
     return this;
   }
 
-  updateEnvironmentScaling(dto: { replicas: number, resource_slug: string }) {
+  updateEnvironmentScaling(environment: Partial<Environment>, dto: { replicas: number, resource_slug: string }, options: { response_code?: number } = { response_code: 200 }) {
     this.test = this.test.nock(MOCK_API_HOST, api => api
-      .put(`/environments/${this.environment?.id}/scale`, dto)
-      .reply(200))
+      .put(`/environments/${environment.id}/scale`, dto)
+      .reply(options.response_code))
     return this;
   }
 
   // /accounts/<account>/components
-  getComponentVersionByName() {
+  getLatestComponentDigest(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) { // TODO: attempt to not use Partial/RecursivePartial
     this.test = this.test.nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${this.account?.id}/components/${this.component_version?.component?.name}`)
-      .reply(200, this.component_version))
+      .get(`/accounts/${account.id}/components/${component_version.component?.name}`)
+      .reply(200, component_version))
+    return this;
+  }
+
+  getComponentVersionByTag(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) {
+    this.test = this.test.nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.id}/components/${component_version.component?.name}/versions/${component_version.tag}`)
+      .reply(200, component_version))
     return this;
   }
 }
