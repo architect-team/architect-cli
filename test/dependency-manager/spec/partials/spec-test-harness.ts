@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { parseSourceYml } from '../../../../src';
 
-const xor_spec_arrays: string[][] = [ // can't let conflicting properties be joined in one spec
+const xor_spec_properties: string[][] = [ // can't let conflicting properties be joined in one spec
   ['build', 'image'],
 ];
 
@@ -50,7 +50,7 @@ const recursiveMergeTree = (tree: RecursivePartialsTree): object[] => {
 
             const spec_child_key = child_key.replace('_', '');
             let xor_mapping_values;
-            for (const xor_array of xor_spec_arrays) {
+            for (const xor_array of xor_spec_properties) {
               if (xor_array.includes(spec_child_key)) {
                 xor_mapping_values = xor_array.filter(v => v !== spec_child_key);
                 break;
