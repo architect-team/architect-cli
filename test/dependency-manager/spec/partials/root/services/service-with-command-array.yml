@@ -1,5 +1,4 @@
 hello:
-  image: heroku/nodejs-hello-world
   command:
     - echo "starting up..."
     - bin/web
