@@ -1480,7 +1480,7 @@ describe('local dev environment', function () {
       return [
         {
           key: 'a_required_key',
-          value: '12345.123456789',
+          value: '123456789.123456789',
           scope: '*',
         },
       ];
@@ -1495,7 +1495,7 @@ describe('local dev environment', function () {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
-      expect(hello_world_environment.a_required_key).to.equal('12345.123456789');
+      expect(hello_world_environment.a_required_key).to.equal('123456789.123456789');
     });
 
   test
@@ -1515,11 +1515,37 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', getMockComponentFilePath('hello-world'), '-s', 'a_required_key=12345.123456789', '-a', 'examples', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '-s', 'a_required_key=123456789.123456789', '-a', 'examples', '--ssl=false'])
     .it('Create a local dev with a number secret with many digits after decimal point', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
-      expect(hello_world_environment.a_required_key).to.equal('12345.123456789');
+      expect(hello_world_environment.a_required_key).to.equal('123456789.123456789');
+    });
+
+  test
+    .timeout(20000)
+    .env({ 'ARC_a_required_key': '123456789.123456789' })
+    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+      return buildSpecFromYml(local_component_config_with_environment_secret);
+    })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account)
+      .persist())
+    .stub(SecretUtils, 'getSecrets', () => {
+      return [];
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', getMockComponentFilePath('hello-world'), '-a', 'examples', '--ssl=false'])
+    .it('Create a local dev with an environment number secret', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
+      expect(hello_world_environment.a_required_key).to.equal('123456789.123456789');
     });
 });
