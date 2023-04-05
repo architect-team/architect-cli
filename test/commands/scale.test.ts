@@ -1,9 +1,6 @@
 import { expect } from '@oclif/test';
 import { ComponentVersionSlugUtils, ResourceSlugUtils } from '../../src';
-import { MockArchitectApi, mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
-
-// set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = false;
+import { MockArchitectApi } from '../utils/mocks';
 
 const account = {
   id: 'test-account-id',
@@ -39,7 +36,6 @@ const clear_dto = { resource_slug, clear_scaling: true };
 
 describe('Scale', function () {
   describe('Scale services without deploying', function () {
-
     new MockArchitectApi()
       .getAccountByName(account)
       .getLatestComponentDigest(account, component_version)
@@ -90,21 +86,12 @@ describe('Scale', function () {
         expect(ctx.stdout).to.contain(`Updated scaling settings for service app of component ${component_version.component.name} for environment ${environment.name}`);
       });
 
-    mockArchitectAuth()
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.name}`)
-        .reply(200, account))
-      .stdout({ print })
-      .stderr({ print })
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.id}/components/${component_version.component.name}`)
-        .reply(200, component_version))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.id}/environments/${environment.name}`)
-        .reply(200, environment))
-      .nock(MOCK_API_HOST, api => api
-        .put(`/environments/${environment.id}`, clear_dto)
-        .reply(200))
+    new MockArchitectApi()
+      .getAccountByName(account)
+      .getLatestComponentDigest(account, component_version)
+      .getEnvironmentByName(account, environment)
+      .updateEnvironment(environment, clear_dto)
+      .getConstructedApiTests()
       .command(['scale', service_to_scale, '-e', environment.name, '-a', account.name, '--component', `${component_version.component.name}`, '--clear'])
       .it('Unsets scaling settings for service', ctx => {
         expect(ctx.stdout).not.to.contain(`Scaled service ${service_to_scale} of component ${account.name}/${component_version.component.name} deployed to environment ${environment.name} to ${replicas} replicas`);

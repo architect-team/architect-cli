@@ -1,11 +1,15 @@
 import { test } from '@oclif/test';
 import fs from 'fs-extra';
+import { RequestBodyMatcher } from 'nock/types';
 import path from 'path';
-import { RecursivePartial } from '../../src';
+import { Dictionary, RecursivePartial } from '../../src';
 import AuthClient from '../../src/app-config/auth';
 import Account from '../../src/architect/account/account.entity';
 import ComponentVersion from '../../src/architect/component/component-version.entity';
+import Deployment from '../../src/architect/deployment/deployment.entity';
 import Environment from '../../src/architect/environment/environment.entity';
+import Pipeline from '../../src/architect/pipeline/pipeline.entity';
+import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
 import SecretUtils from '../../src/architect/secret/secret.utils';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
@@ -68,6 +72,7 @@ export const mockArchitectAuth = () =>
     .stub(SecretUtils, 'batchUpdateSecrets', () => [])
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', () => { });
 
+// TODO: instead of "mocks not yet satisfied" when a mocked api call is missing, can we include a better error by modifying the test object?
 export class MockArchitectApi {
   test;
 
@@ -100,7 +105,7 @@ export class MockArchitectApi {
   }
 
   // /environments
-  updateEnvironment(environment: Partial<Environment>, dto: { replicas: number, resource_slug: string }) {
+  updateEnvironment(environment: Partial<Environment>, dto: { replicas?: number, clear_scaling?: boolean, resource_slug: string }) {
     this.test = this.test.nock(MOCK_API_HOST, api => api
       .put(`/environments/${environment.id}`, dto)
       .reply(200));
@@ -114,6 +119,35 @@ export class MockArchitectApi {
     return this;
   }
 
+  // TODO: type? (any)
+  deployComponent(environment: Partial<Environment>, pipeline: RecursivePartial<Pipeline>, options: { callback?: RequestBodyMatcher } = { callback: (body: any) => body }) {
+    this.test = this.test.nock(MOCK_API_HOST, api => api
+      .post(`/environments/${environment.id}/deploy`, options.callback)
+      .reply(200, pipeline))
+    return this;
+  }
+
+  getEnvironmentCertificates(environment: Partial<Environment>, certificates: { // TODO: type
+      metadata: {
+        labels: Dictionary<string>;
+      },
+      spec: {
+        dnsNames: string[];
+      },
+    }[]) {
+    this.test = this.test.nock(MOCK_API_HOST, api => api
+      .get(`/environments/${environment.id}/certificates`)
+      .reply(200, certificates))
+    return this;
+  }
+
+  deleteEnvironmentInstances(environment: Partial<Environment>, pipeline: RecursivePartial<Pipeline>) {
+    this.test = this.test.nock(MOCK_API_HOST, api => api
+      .delete(`/environments/${environment.id}/instances`)
+      .reply(200, pipeline));
+    return this;
+  }
+
   // /accounts/<account>/components
   getLatestComponentDigest(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) { // TODO: attempt to not use Partial/RecursivePartial
     this.test = this.test.nock(MOCK_API_HOST, api => api
@@ -122,10 +156,61 @@ export class MockArchitectApi {
     return this;
   }
 
-  getComponentVersionByTag(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) {
+  getComponentVersionByTag(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) { // TODO: add AndAccountId
     this.test = this.test.nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.id}/components/${component_version.component?.name}/versions/${component_version.tag}`)
       .reply(200, component_version))
     return this;
   }
+
+  getComponentVersionByTagAndAccountName(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) {
+    this.test = this.test.nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}/components/${component_version.component?.name}/versions/${component_version.tag}`)
+      .reply(200, component_version))
+    return this;
+  }
+
+  // TODO: better name for first callback and similar ones
+  // TODO: find type for reply callback
+  // TODO: generalize function arg types based on endpoint requirements
+  registerComponentDigest(options: { callback?: RequestBodyMatcher, reply_callback?: any } = { callback: (body: any) => body, reply_callback: (reply: any) => {} }) {
+    this.test = this.test.nock(MOCK_API_HOST, api => api
+      .post(/\/accounts\/.*\/components/, options.callback)
+      .reply(200, options.reply_callback)
+    )
+    return this;
+  }
+
+  // /pipelines
+  approvePipeline(pipeline: RecursivePartial<Pipeline>) {
+    this.test = this.test.nock(MOCK_API_HOST, api => api
+      .post(`/pipelines/${pipeline.id}/approve`)
+      .reply(200, {}));
+    return this;
+  }
+
+  getPipelineDeployments(pipeline: RecursivePartial<Pipeline>, deployments: RecursivePartial<Deployment>[]) {
+    this.test = this.test.nock(MOCK_API_HOST, api => api
+      .get(`/pipelines/${pipeline.id}/deployments`)
+      .reply(200, deployments));
+    return this;
+  }
+
+  // poll pipeline
+  pollPipeline(pipeline: RecursivePartial<Pipeline>) {
+    this.test = this.test.stub(PipelineUtils, 'pollPipeline', async () => pipeline);
+    return this;
+  }
+
+  // Architect registry
+  architectRegistryHeadRequest(endpoint: string | RegExp = /.*/) {
+    this.test = this.test.nock(MOCK_REGISTRY_HOST, api => api
+      .persist()
+      .head(endpoint)
+      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
+    );
+    return this;
+  }
+
+
 }
