@@ -3,7 +3,7 @@ import sinon, { SinonSpy } from 'sinon';
 import BaseTable from '../../../src/base-table';
 import Components from '../../../src/commands/components/index';
 import * as LocalizedTimestamp from '../../../src/common/utils/localized-timestamp';
-import { mockArchitectAuth, MOCK_API_HOST } from '../../utils/mocks';
+import { MockArchitectApi } from '../../utils/mocks';
 
 describe('list components', () => {
   const date = '5/2/22, 12:38:32 AM UTC';
@@ -42,24 +42,22 @@ describe('list components', () => {
   const query_table = new BaseTable(header);
   query_table.push([components[2].name, components[2].account.name, components[2].created_at, components[2].updated_at]);
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getComponents(components)
+    .getApiMocks()
     .stub(Components.prototype, 'log', sinon.fake.returns(null))
     .stub(LocalizedTimestamp, 'default', sinon.stub().returns(date))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/components?q=`)
-      .reply(200, { rows: components, count: components.length }))
     .command(['components'])
     .it('list all components', () => {
       const log_spy_list = Components.prototype.log as SinonSpy;
       expect(log_spy_list.firstCall.args[0]).to.equal(full_table.toString());
     });
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getComponents([components[2]], { query: 'another' })
+    .getApiMocks()
     .stub(Components.prototype, 'log', sinon.fake.returns(null))
     .stub(LocalizedTimestamp, 'default', sinon.stub().returns(date))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/components?q=another`)
-      .reply(200, { rows: [components[2]], count: 1 }))
     .command(['components', 'another'])
     .it('list queried components', () => {
       const log_spy_list = Components.prototype.log as SinonSpy;

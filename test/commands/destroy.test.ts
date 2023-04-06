@@ -20,7 +20,7 @@ describe('destroy', function () {
 
   new MockArchitectApi()
     .getAccountByName(mock_account)
-    .getEnvironmentByName(mock_account, mock_env)
+    .getEnvironment(mock_account, mock_env)
     .deleteEnvironmentInstances(mock_env, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
@@ -33,7 +33,7 @@ describe('destroy', function () {
 
   new MockArchitectApi()
     .getAccountByName(mock_account)
-    .getEnvironmentByName(mock_account, mock_env)
+    .getEnvironment(mock_account, mock_env)
     .deleteEnvironmentInstances(mock_env, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)

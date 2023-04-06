@@ -161,7 +161,7 @@ describe('register', function () {
   new MockArchitectApi()
     .getAccountByName(mock_account_response)
     .architectRegistryHeadRequest()
-    .getEnvironmentByName(mock_account_response, { name: 'test-env'})
+    .getEnvironment(mock_account_response, { name: 'test-env'})
     .registerComponentDigest({ callback:
       (body) => {
         expect(body.tag).to.eq('architect.environment.test-env');

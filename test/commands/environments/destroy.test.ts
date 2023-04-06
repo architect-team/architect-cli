@@ -25,7 +25,7 @@ describe('environment:destroy', () => {
   };
 
   new MockArchitectApi()
-    .getEnvironmentByName(mock_account, failing_mock_env, { response_code: 404 })
+    .getEnvironment(mock_account, failing_mock_env, { response_code: 404 })
     .getApiMocks()
     .stub(AccountUtils, 'getAccount', () => mock_account)
     .command(['environment:destroy', '--auto-approve', '--strict=true', '-a', mock_account.name, failing_mock_env.name])
@@ -35,7 +35,7 @@ describe('environment:destroy', () => {
     .it('should exit with error status when --strict is set explicitly to true');
 
   new MockArchitectApi()
-    .getEnvironmentByName(mock_account, failing_mock_env, { response_code: 404 })
+    .getEnvironment(mock_account, failing_mock_env, { response_code: 404 })
     .getApiMocks()
     .stub(AccountUtils, 'getAccount', () => mock_account)
     .command(['environment:destroy', '--auto-approve', '--strict', '-a', mock_account.name, failing_mock_env.name])
@@ -63,7 +63,7 @@ describe('environment:destroy', () => {
     });
 
   new MockArchitectApi()
-    .getEnvironmentByName(mock_account, mock_env)
+    .getEnvironment(mock_account, mock_env)
     .deleteEnvironment(mock_env, mock_pipeline, { force: 0 })
     .getApiMocks()
     .stub(AccountUtils, 'getAccount', () => mock_account)
@@ -75,7 +75,7 @@ describe('environment:destroy', () => {
     });
 
   new MockArchitectApi()
-    .getEnvironmentByName(mock_account, mock_env)
+    .getEnvironment(mock_account, mock_env)
     .deleteEnvironment(mock_env, mock_pipeline, { force: 1 })
     .getApiMocks()
     .stub(AccountUtils, 'getAccount', () => mock_account)

@@ -52,7 +52,7 @@ const mock_certificates = [
 describe('remote deploy environment', function () {
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline)
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
@@ -65,7 +65,7 @@ describe('remote deploy environment', function () {
 
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline)
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
@@ -85,7 +85,7 @@ describe('remote deploy environment', function () {
 
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline)
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
@@ -110,7 +110,7 @@ describe('remote deploy environment', function () {
 
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline)
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
@@ -124,7 +124,7 @@ describe('remote deploy environment', function () {
 
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline)
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
@@ -139,7 +139,7 @@ describe('remote deploy environment', function () {
   describe('instance deploys', function () {
     new MockArchitectApi()
       .getAccountByName(account)
-      .getEnvironmentByName(account, environment)
+      .getEnvironment(account, environment)
       .deployComponent(environment, mock_pipeline)
       .getEnvironmentCertificates(environment, mock_certificates)
       .approvePipeline(mock_pipeline)
@@ -155,7 +155,7 @@ describe('remote deploy environment', function () {
 describe('auto-approve flag with underscore style still works', function () {
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline)
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
@@ -169,7 +169,7 @@ describe('auto-approve flag with underscore style still works', function () {
 
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline)
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
@@ -224,7 +224,7 @@ describe('pollPipeline handles failed deployments', () => {
 
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .getPipelineDeployments(mock_pipeline, [aborted_deployment])
@@ -241,7 +241,7 @@ describe('pollPipeline handles failed deployments', () => {
 
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .getPipelineDeployments(mock_pipeline, [failed_environment_deployment])
@@ -258,7 +258,7 @@ describe('pollPipeline handles failed deployments', () => {
 
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .getPipelineDeployments(mock_pipeline, [failed_cluster_deployment])
@@ -275,7 +275,7 @@ describe('pollPipeline handles failed deployments', () => {
 
     new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .getPipelineDeployments(mock_pipeline, [failed_environment_deployment, failed_environment_deployment_2])
@@ -293,7 +293,7 @@ describe('pollPipeline handles failed deployments', () => {
 
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .getApiMocks()
@@ -330,7 +330,7 @@ describe('deployment secrets', function () {
 
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline, { callback:
       (body) => {
         expect(body.values['*'].app_replicas).to.eq(4);
@@ -347,7 +347,7 @@ describe('deployment secrets', function () {
 
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline, { callback:
       (body) => {
         expect(body.values['*'].test_secret).to.eq('test');
@@ -365,7 +365,7 @@ describe('deployment secrets', function () {
 
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline, { callback:
       (body) => {
         expect(body.values['*'].another_required_key).to.eq('required_value');
@@ -389,7 +389,7 @@ describe('deployment secrets', function () {
 
   new MockArchitectApi()
     .getAccountByName(account)
-    .getEnvironmentByName(account, environment)
+    .getEnvironment(account, environment)
     .deployComponent(environment, mock_pipeline, { callback:
       (body) => {
         expect(body.values['*'].another_required_key).to.eq('required_value');

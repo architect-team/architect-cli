@@ -7,11 +7,12 @@ import AuthClient from '../../src/app-config/auth';
 import Account from '../../src/architect/account/account.entity';
 import Cluster from '../../src/architect/cluster/cluster.entity';
 import ComponentVersion from '../../src/architect/component/component-version.entity';
+import { Component } from '../../src/architect/component/component.entity';
 import Deployment from '../../src/architect/deployment/deployment.entity';
 import Environment from '../../src/architect/environment/environment.entity';
 import Pipeline from '../../src/architect/pipeline/pipeline.entity';
 import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
-import SecretUtils from '../../src/architect/secret/secret.utils';
+import { AccountSecret, ClusterSecret, EnvironmentSecret } from '../../src/architect/secret/secret.utils';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerBuildXUtils from '../../src/common/docker/buildx.utils';
 
@@ -69,11 +70,10 @@ export const mockArchitectAuth = () =>
     .stub(DockerBuildXUtils, 'writeBuildkitdConfigFile', () => { })
     .stub(DockerBuildXUtils, 'dockerBuildX', () => { })
     .stub(DockerBuildXUtils, 'getBuilder', () => { })
-    .stub(SecretUtils, 'getSecrets', () => [])
-    .stub(SecretUtils, 'batchUpdateSecrets', () => [])
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', () => { });
 
 // TODO: instead of "mocks not yet satisfied" when a mocked api call is missing, can we include a better error by modifying the test object?
+// TODO: add in the .times(2) to an options object to be able to remove duplicate api call mocks in single tests
 export class MockArchitectApi {
   private api_mocks;
   private readonly mock_api_host;
@@ -101,7 +101,7 @@ export class MockArchitectApi {
   }
 
   // /accounts/<account>/environments
-  getEnvironmentByName(account: Partial<Account>, environment: Partial<Environment>, options?: { response_code: number }) {
+  getEnvironment(account: Partial<Account>, environment: Partial<Environment>, options?: { response_code: number }) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.id}/environments/${environment.name}`)
       .reply(options?.response_code || 200, environment))
@@ -112,6 +112,14 @@ export class MockArchitectApi {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .post(`/accounts/${account.id}/environments`)
       .reply(options?.response_code || 201))
+    return this;
+  }
+
+  // /accounts/<account>/secrets/values
+  getAccountSecrets(account: Partial<Account>, secrets: AccountSecret[]) {
+    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.id}/secrets/values`)
+      .reply(200, secrets));
     return this;
   }
 
@@ -193,6 +201,45 @@ export class MockArchitectApi {
     return this;
   }
 
+  // /clusters
+  deleteCluster(cluster: Partial<Cluster>, pipeline: Partial<Pipeline>, options?: { force?: 0 | 1 }) {
+    let url = `/clusters/${cluster.id}`;
+    if (options?.force) {
+      url = `${url}?force=${options.force}`; // TODO: make more generic? use with other similar cases?
+    }
+
+    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+      .delete(url)
+      .reply(200, pipeline))
+    return this;
+  }
+
+  // /clusters/<cluster>/secrets/values
+  getClusterSecrets(cluster: Partial<Cluster>, secrets: (Partial<ClusterSecret> | Partial<AccountSecret>)[], options?: { inherited?: boolean }) {
+    let url = `/clusters/${cluster.id}/secrets/values`;
+    if (options?.inherited) {
+      url = `${url}?inherited=${options.inherited}`; // TODO: make more generic? use with other similar cases?
+    }
+
+    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+      .get(url)
+      .reply(200, secrets));
+    return this;
+  }
+
+  // /environments/<environment>/secrets/values
+  getEnvironmentSecrets(environment: Partial<Environment>, secrets: (Partial<EnvironmentSecret> | Partial<ClusterSecret> | Partial<AccountSecret>)[], options?: { inherited?: boolean }) {
+    let url = `/environments/${environment.id}/secrets/values`;
+    if (options?.inherited) {
+      url = `${url}?inherited=${options.inherited}`; // TODO: make more generic? use with other similar cases?
+    }
+
+    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+      .get(url)
+      .reply(200, secrets));
+    return this;
+  }
+
   // /accounts/<account>/components
   getLatestComponentDigest(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) { // TODO: attempt to not use Partial/RecursivePartial
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
@@ -226,6 +273,29 @@ export class MockArchitectApi {
     return this;
   }
 
+  getComponent(account: Partial<Account>, component: RecursivePartial<Component>) {
+    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}/components/${component.name}`)
+      .reply(200, component));
+    return this;
+  }
+
+  // /components
+  getComponents(components: RecursivePartial<Component>[], options?: { query?: string }) {
+    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+      .get(`/components?q=${options?.query || ''}`)
+      .reply(200, { rows: components, count: components.length }));
+    return this;
+  }
+
+  // /components/<component>/
+  getComponentVersions(component: RecursivePartial<Component>, component_versions: Partial<ComponentVersion>[]) {
+    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+      .get(`/components/${component.component_id}/versions`)
+      .reply(200, { rows: component_versions, count: component_versions.length }));
+    return this;
+  }
+
   // /pipelines
   approvePipeline(pipeline: RecursivePartial<Pipeline>) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
@@ -256,6 +326,4 @@ export class MockArchitectApi {
     );
     return this;
   }
-
-
 }

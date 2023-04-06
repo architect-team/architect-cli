@@ -4,7 +4,7 @@ import AccountUtils from '../../../src/architect/account/account.utils';
 import BaseTable from '../../../src/base-table';
 import ComponentVersions from '../../../src/commands/components/versions';
 import * as LocalizedTimestamp from '../../../src/common/utils/localized-timestamp';
-import { mockArchitectAuth, MOCK_API_HOST } from '../../utils/mocks';
+import { MockArchitectApi } from '../../utils/mocks';
 
 describe('list component versions', () => {
   const component = {
@@ -37,16 +37,13 @@ describe('list component versions', () => {
     full_table.push([entry.tag, entry.created_at]);
   }
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getComponent(component.account, component)
+    .getComponentVersions(component, component_versions)
+    .getApiMocks()
     .stub(AccountUtils, 'getAccount', sinon.stub().returns(component.account))
     .stub(LocalizedTimestamp, 'default', sinon.stub().returns(date))
     .stub(ComponentVersions.prototype, 'log', sinon.fake.returns(null))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${component.account.name}/components/${component.name}`)
-      .reply(200, component))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/components/${component.component_id}/versions`)
-      .reply(200, { rows: component_versions, count: component_versions.length }))
     .command(['component:versions', 'test-component'])
     .it('list all component versions', () => {
       const get_account = AccountUtils.getAccount as SinonSpy;
