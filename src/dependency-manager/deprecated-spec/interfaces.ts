@@ -2,7 +2,7 @@ import { serialize } from 'class-transformer';
 import { DeprecatedSpec } from '.';
 import { buildNodeRef, ComponentConfig } from '../config/component-config';
 import { ComponentContext } from '../config/component-context';
-import { IngressConfig } from '../config/service-config';
+import { IngressConfig, ServiceInterfaceConfig } from '../config/service-config';
 import { DependencyGraph } from '../graph';
 import { IngressEdge } from '../graph/edge/ingress';
 import { IngressConsumerEdge } from '../graph/edge/ingress-consumer';
@@ -12,13 +12,13 @@ import { Dictionary } from '../utils/dictionary';
 import { replaceInterpolationBrackets } from '../utils/interpolation';
 
 type DeprecatedComponentContext = {
-  interfaces?: Dictionary<IngressConfig>;
+  interfaces?: Dictionary<ServiceInterfaceConfig>;
   ingresses?: Dictionary<IngressConfig>;
   environment?: {
     ingresses?: Dictionary<Dictionary<IngressConfig>>;
   };
   dependencies?: Dictionary<{
-    interfaces?: Dictionary<IngressConfig>;
+    interfaces?: Dictionary<ServiceInterfaceConfig>;
     ingresses?: Dictionary<IngressConfig>;
   }>;
 };

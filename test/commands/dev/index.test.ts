@@ -383,6 +383,8 @@ describe('local dev environment', function () {
           '--providers.docker.allowEmptyServices=true',
           '--providers.docker.exposedByDefault=false',
           '--providers.docker.constraints=Label(`traefik.port`,`80`)',
+          '--entryPoints.web.forwardedHeaders.insecure=true',
+          '--entryPoints.web.proxyProtocol.insecure=true'
         ],
         'ports': [
           '80:80',
@@ -441,6 +443,8 @@ describe('local dev environment', function () {
           '--providers.docker.allowEmptyServices=true',
           '--providers.docker.exposedByDefault=false',
           '--providers.docker.constraints=Label(`traefik.port`,`80`)',
+          '--entryPoints.web.forwardedHeaders.insecure=true',
+          '--entryPoints.web.proxyProtocol.insecure=true'
         ],
         'ports': [
           '80:80',
@@ -499,6 +503,8 @@ describe('local dev environment', function () {
           '--providers.docker.allowEmptyServices=true',
           '--providers.docker.exposedByDefault=false',
           '--providers.docker.constraints=Label(`traefik.port`,`443`)',
+          '--entryPoints.web.forwardedHeaders.insecure=true',
+          '--entryPoints.web.proxyProtocol.insecure=true',
           '--serversTransport.insecureSkipVerify=true',
           '--entryPoints.web.http.redirections.entryPoint.scheme=https',
           '--entryPoints.web.http.redirections.entryPoint.permanent=true',
@@ -568,6 +574,8 @@ describe('local dev environment', function () {
           "--providers.docker.allowEmptyServices=true",
           "--providers.docker.exposedByDefault=false",
           "--providers.docker.constraints=Label(`traefik.port`,`80`)",
+          '--entryPoints.web.forwardedHeaders.insecure=true',
+          '--entryPoints.web.proxyProtocol.insecure=true'
         ],
         "ports": [
           "80:80",
@@ -686,6 +694,8 @@ describe('local dev environment', function () {
           "--providers.docker.allowEmptyServices=true",
           "--providers.docker.exposedByDefault=false",
           "--providers.docker.constraints=Label(`traefik.port`,`80`)",
+          '--entryPoints.web.forwardedHeaders.insecure=true',
+          '--entryPoints.web.proxyProtocol.insecure=true'
         ],
         "ports": [
           "80:80",

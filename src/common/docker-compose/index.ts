@@ -121,6 +121,8 @@ export class DockerComposeUtils {
           '--providers.docker.allowEmptyServices=true',
           '--providers.docker.exposedByDefault=false',
           `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
+          `--entryPoints.web.forwardedHeaders.insecure=true`,
+          `--entryPoints.web.proxyProtocol.insecure=true`,
           ...(ssl_cert && ssl_key ? [
             // Ignore local certs being invalid on proxy
             `--serversTransport.insecureSkipVerify=true`,
