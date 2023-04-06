@@ -76,13 +76,16 @@ export const mockArchitectAuth = () =>
 // TODO: instead of "mocks not yet satisfied" when a mocked api call is missing, can we include a better error by modifying the test object?
 export class MockArchitectApi {
   private api_mocks;
+  private readonly mock_api_host;
 
   constructor(options?: {
-      print?: boolean
+    print?: boolean,
+    mock_api_host?: string,
   }) {
     this.api_mocks = mockArchitectAuth()
       .stdout({ print: !!options?.print })
       .stderr({ print: !!options?.print });
+    this.mock_api_host = options?.mock_api_host || MOCK_API_HOST;
   }
 
   getApiMocks() {
@@ -91,7 +94,7 @@ export class MockArchitectApi {
 
   // /accounts
   getAccountByName(account: Partial<Account>, options?: { response_code?: number, response?: any }) { // TODO: don't set defaults in functions, use || ?
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.name}`)
       .reply(options?.response_code || 200, options?.response || account)); // TODO: allow setting reply in other places as a callback or object
     return this;
@@ -99,14 +102,14 @@ export class MockArchitectApi {
 
   // /accounts/<account>/environments
   getEnvironmentByName(account: Partial<Account>, environment: Partial<Environment>, options?: { response_code: number }) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.id}/environments/${environment.name}`)
       .reply(options?.response_code || 200, environment))
     return this;
   }
 
   createEnvironment(account: Account, options?: { response_code: number }) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .post(`/accounts/${account.id}/environments`)
       .reply(options?.response_code || 201))
     return this;
@@ -114,21 +117,21 @@ export class MockArchitectApi {
 
   // /environments
   getEnvironments(environments?: Partial<Environment>[], options?: { query?: string }) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/environments?q=${options?.query || ''}`)
       .reply(200, { rows: environments || [], total: environments?.length || 0 }));
     return this;
   }
 
   updateEnvironment(environment: Partial<Environment>, dto: { replicas?: number, clear_scaling?: boolean, resource_slug: string }) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .put(`/environments/${environment.id}`, dto)
       .reply(200));
     return this;
   }
 
   updateEnvironmentScaling(environment: Partial<Environment>, dto: { replicas: number, resource_slug: string }, options: { response_code?: number } = { response_code: 200 }) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .put(`/environments/${environment.id}/scale`, dto)
       .reply(options.response_code))
     return this;
@@ -136,7 +139,7 @@ export class MockArchitectApi {
 
   // TODO: type? (any)
   deployComponent(environment: Partial<Environment>, pipeline: RecursivePartial<Pipeline>, options?: { callback?: RequestBodyMatcher }) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .post(`/environments/${environment.id}/deploy`, options?.callback || ((body) => body))
       .reply(200, pipeline))
     return this;
@@ -150,21 +153,21 @@ export class MockArchitectApi {
         dnsNames: string[];
       },
     }[]) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/environments/${environment.id}/certificates`)
       .reply(200, certificates))
     return this;
   }
 
   deleteEnvironmentInstances(environment: Partial<Environment>, pipeline: RecursivePartial<Pipeline>) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .delete(`/environments/${environment.id}/instances`)
       .reply(200, pipeline));
     return this;
   }
 
   deleteEnvironment(environment: Partial<Environment>, pipeline: RecursivePartial<Pipeline>, options?: { force?: 0 | 1 }) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .delete(`/environments/${environment.id}?force=${options?.force || 0}`)
       .reply(200, pipeline));
     return this;
@@ -172,36 +175,41 @@ export class MockArchitectApi {
 
   // /accounts/<account>/clusters
   getCluster(account: Partial<Account>, cluster: Partial<Cluster>) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.id}/clusters/${cluster.name}`)
       .reply(200, cluster))
     return this;
   }
 
-  getClusters(account: Partial<Account>, clusters: Partial<Cluster>[]) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/clusters?limit=1`)
+  getClusters(account: Partial<Account>, clusters: Partial<Cluster>[], options?: { limit?: number }) {
+    let url = `/accounts/${account.id}/clusters`;
+    if (options?.limit) {
+      url = `${url}?limit=${options.limit}`; // TODO: make more generic? use with other similar cases?
+    }
+
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
+      .get(url)
       .reply(200, { total: clusters.length, rows: clusters }));
     return this;
   }
 
   // /accounts/<account>/components
   getLatestComponentDigest(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) { // TODO: attempt to not use Partial/RecursivePartial
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.id}/components/${component_version.component?.name}`)
       .reply(200, component_version))
     return this;
   }
 
   getComponentVersionByTag(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) { // TODO: add AndAccountId
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.id}/components/${component_version.component?.name}/versions/${component_version.tag}`)
       .reply(200, component_version))
     return this;
   }
 
   getComponentVersionByTagAndAccountName(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.name}/components/${component_version.component?.name}/versions/${component_version.tag}`)
       .reply(200, component_version))
     return this;
@@ -211,7 +219,7 @@ export class MockArchitectApi {
   // TODO: find type for reply callback
   // TODO: generalize function arg types based on endpoint requirements
   registerComponentDigest(options?: { callback?: RequestBodyMatcher, reply?: any }) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .post(/\/accounts\/.*\/components/, options?.callback || ((body) => body))
       .reply(200, options?.reply || {})
     )
@@ -220,14 +228,14 @@ export class MockArchitectApi {
 
   // /pipelines
   approvePipeline(pipeline: RecursivePartial<Pipeline>) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .post(`/pipelines/${pipeline.id}/approve`)
       .reply(200, {}));
     return this;
   }
 
   getPipelineDeployments(pipeline: RecursivePartial<Pipeline>, deployments: RecursivePartial<Deployment>[]) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/pipelines/${pipeline.id}/deployments`)
       .reply(200, deployments));
     return this;

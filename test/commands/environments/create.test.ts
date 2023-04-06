@@ -32,7 +32,7 @@ describe('environment:create', () => {
 
   new MockArchitectApi()
     .getAccountByName(mock_account)
-    .getClusters(mock_account, [mock_cluster])
+    .getClusters(mock_account, [mock_cluster], { limit: 1 })
     .createEnvironment(mock_account)
     .getApiMocks()
     .command(['environment:create', mock_env.name, '-a', mock_account.name])
@@ -43,7 +43,7 @@ describe('environment:create', () => {
 
   new MockArchitectApi()
     .getAccountByName(mock_account)
-    .getClusters(mock_account, [mock_cluster, mock_cluster])
+    .getClusters(mock_account, [mock_cluster, mock_cluster], { limit: 1 })
     .getApiMocks()
     .command(['environment:create', mock_env.name, '-a', mock_account.name])
     .catch(ctx => {

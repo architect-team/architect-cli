@@ -1,4 +1,4 @@
-import { expect, test } from '@oclif/test';
+import { expect } from '@oclif/test';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import sinon, { SinonSpy } from 'sinon';
@@ -8,6 +8,7 @@ import PipelineUtils from '../../../src/architect/pipeline/pipeline.utils';
 import ClusterCreate from '../../../src/commands/clusters/create';
 import PlatformCreate from '../../../src/commands/platforms/create';
 import { AgentClusterUtils } from '../../../src/common/utils/agent-cluster.utils';
+import { MockArchitectApi } from '../../utils/mocks';
 
 describe('platform:create', function () {
   const account = {
@@ -15,13 +16,9 @@ describe('platform:create', function () {
     name: 'test-account-name',
   };
 
-  const clusters = {
-    rows: [
-      {
-        name: 'already-exists-cluster'
-      }
-    ]
-  };
+  const clusters = [{
+    name: 'already-exists-cluster'
+  }];
 
   const mock_pipeline = {
     id: 'test-pipeline-id',
@@ -34,7 +31,10 @@ describe('platform:create', function () {
   })
 
   const create_test = () => {
-    return test
+    return new MockArchitectApi({ mock_api_host: 'https://api.architect.io' }) // TODO: see about updating the host here
+      .getAccountByName(account)
+      .getClusters(account, clusters)
+      .getApiMocks()
       .stub(ClusterUtils, 'getServerVersion', sinon.stub().returns(MIN_CLUSTER_SEMVER.version))
       .stub(PlatformCreate.prototype, 'log', sinon.stub())
       .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
@@ -51,12 +51,6 @@ describe('platform:create', function () {
         }
       })
       .stub(ClusterCreate.prototype, <any>'setContext', async () => { })
-      .nock('https://api.architect.io', api => api
-        .get(`/accounts/${account.name}`)
-        .reply(200, account))
-      .nock('https://api.architect.io', api => api
-        .get(`/accounts/${account.id}/clusters`)
-        .reply(200, clusters))
       .stub(ClusterCreate.prototype, 'postClusterToApi', sinon.stub().returns(Promise.resolve({
         id: test_cluster_id,
         account: account,
@@ -144,8 +138,10 @@ describe('platform:create', function () {
       expect(post_to_api.getCall(0).args[0].name === 'new_k8s_cluster');
     })
 
-  test
-    .stub(ClusterUtils, 'getServerVersion', sinon.stub().returns('v1.0.0'))
+  new MockArchitectApi({ mock_api_host: 'https://api.architect.io' }) // TODO: see about updating the host here
+    .getAccountByName(account)
+    .getClusters(account, clusters)
+    .getApiMocks()    .stub(ClusterUtils, 'getServerVersion', sinon.stub().returns('v1.0.0'))
     .stub(ClusterCreate.prototype, 'log', sinon.stub())
     .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
     .stub(fs, 'readJSONSync', () => {
@@ -161,12 +157,6 @@ describe('platform:create', function () {
       }
     })
     .stub(ClusterCreate.prototype, <any>'setContext', async () => { })
-    .nock('https://api.architect.io', api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock('https://api.architect.io', api => api
-      .get(`/accounts/${account.id}/clusters`)
-      .reply(200, clusters))
     .command(['platform:create', '-a', account.name, 'my-cluster'])
     .catch(e => {
       expect(e.message).contains(`Currently, we only support Kubernetes clusters on version ${MIN_CLUSTER_SEMVER.version} or greater. Your cluster is currently on version 1.0.0`);
