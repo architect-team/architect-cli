@@ -119,7 +119,7 @@ services:
       POSTGRES_USER: ${{ secrets.db_user }}
       POSTGRES_PASSWORD: ${{ secrets.db_pass }}
       POSTGRES_DB: ${{ secrets.db_name }}
-    debug:
+    ${{ if architect.environment == 'local' }}:
       description: api-db service debug
       image: postgres:12
       language: postgresql
