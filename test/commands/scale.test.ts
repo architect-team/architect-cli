@@ -42,7 +42,7 @@ describe('Scale', function () {
       .getEnvironmentByName(account, environment)
       .updateEnvironmentScaling(environment, dto)
       .updateEnvironment(environment, dto)
-      .getConstructedApiTests()
+      .getApiMocks()
       .command(['scale', service_to_scale, '-e', environment.name, '-a', account.name, '--component', `${component_version.component.name}`, '--replicas', replicas.toString()])
       .it('Sets scaling for service and updates immediately', ctx => {
         expect(ctx.stdout).to.contain(`Scaled service ${service_to_scale} of component ${account.name}/${component_version.component.name} deployed to environment ${environment.name} to ${replicas} replicas`);
@@ -55,7 +55,7 @@ describe('Scale', function () {
       .getEnvironmentByName(account, environment)
       .updateEnvironmentScaling(environment, dto, { response_code: 404 })
       .updateEnvironment(environment, dto)
-      .getConstructedApiTests()
+      .getApiMocks()
       .command(['scale', service_to_scale, '-e', environment.name, '-a', account.name, '--component', `${component_version.component.name}`, '--replicas', replicas.toString()])
       .it('Sets scaling for service even if the update cannot take place immediately', ctx => {
         expect(ctx.stdout).to.contain(`Did not immediately scale service ${service_to_scale} of component ${account.name}/${component_version.component.name}.`);
@@ -65,7 +65,7 @@ describe('Scale', function () {
     new MockArchitectApi()
       .getAccountByName(account)
       .getLatestComponentDigest(account, component_version)
-      .getConstructedApiTests()
+      .getApiMocks()
       .command(['scale', 'unknown', '-e', environment.name, '-a', account.name, '--component', `${component_version.component.name}`, '--replicas', replicas.toString()])
       .catch(err => {
         const component_version_slug = ComponentVersionSlugUtils.build(component_version.component.name, 'latest');
@@ -79,7 +79,7 @@ describe('Scale', function () {
       .getEnvironmentByName(account, environment)
       .updateEnvironmentScaling(environment, dto)
       .updateEnvironment(environment, dto)
-      .getConstructedApiTests()
+      .getApiMocks()
       .command(['scale', service_to_scale, '-e', environment.name, '-a', account.name, '--component', `${component_version.component.name}`, '--replicas', replicas.toString(), '--tag', component_version.tag])
       .it('Sets scaling for a service by pulling a component with a specific tag', ctx => {
         expect(ctx.stdout).to.contain(`Scaled service ${service_to_scale} of component ${account.name}/${component_version.component.name} deployed to environment ${environment.name} to ${replicas} replicas`);
@@ -91,7 +91,7 @@ describe('Scale', function () {
       .getLatestComponentDigest(account, component_version)
       .getEnvironmentByName(account, environment)
       .updateEnvironment(environment, clear_dto)
-      .getConstructedApiTests()
+      .getApiMocks()
       .command(['scale', service_to_scale, '-e', environment.name, '-a', account.name, '--component', `${component_version.component.name}`, '--clear'])
       .it('Unsets scaling settings for service', ctx => {
         expect(ctx.stdout).not.to.contain(`Scaled service ${service_to_scale} of component ${account.name}/${component_version.component.name} deployed to environment ${environment.name} to ${replicas} replicas`);

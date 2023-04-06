@@ -57,7 +57,7 @@ describe('remote deploy environment', function () {
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
-    .getConstructedApiTests()
+    .getApiMocks()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .it('Creates a remote deployment when env exists with env and account flags', ctx => {
       expect(ctx.stdout).to.contain('deployed');
@@ -70,7 +70,7 @@ describe('remote deploy environment', function () {
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(ComponentRegister.prototype, 'run', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentBuilder, 'buildSpecFromPath', sinon.stub().returns(Promise.resolve()))
     .command(['deploy', '-e', environment.name, '-a', account.name, '--arg', 'NODE_ENV=production', '--auto-approve', 'test/mocks/superset/architect.yml'])
@@ -90,7 +90,7 @@ describe('remote deploy environment', function () {
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(ComponentRegister.prototype, 'run', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentBuilder, 'buildSpecFromPath', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentVersionSlugUtils.Validator, 'test', sinon.stub().returns(Promise.resolve()))
@@ -115,7 +115,7 @@ describe('remote deploy environment', function () {
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
-    .getConstructedApiTests()
+    .getApiMocks()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .it('Remote deployment outputs URLs from for the deployed component and not other components in the same environment', ctx => {
       expect(ctx.stdout).to.contain('app.test-env.examples.arc.test');
@@ -129,7 +129,7 @@ describe('remote deploy environment', function () {
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
-    .getConstructedApiTests()
+    .getApiMocks()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo'])
     .it('Remote deployment outputs URLs from for the deployed component with no tag and not other components in the same environment', ctx => {
       expect(ctx.stdout).to.contain('app.test-env.examples.arc.test');
@@ -144,7 +144,7 @@ describe('remote deploy environment', function () {
       .getEnvironmentCertificates(environment, mock_certificates)
       .approvePipeline(mock_pipeline)
       .pollPipeline(mock_pipeline)
-      .getConstructedApiTests()
+      .getApiMocks()
       .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest@tenant-1'])
       .it('Creates a remote deployment when env exists with env and account flags', ctx => {
         expect(ctx.stdout).to.contain('deployed');
@@ -160,7 +160,7 @@ describe('auto-approve flag with underscore style still works', function () {
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
-    .getConstructedApiTests()
+    .getApiMocks()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'echo:latest'])
     .it('works but also emits a deprecation warning', ctx => {
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated.');
@@ -174,7 +174,7 @@ describe('auto-approve flag with underscore style still works', function () {
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
-    .getConstructedApiTests()
+    .getApiMocks()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve=true', 'echo:latest'])
     .it('works but also emits a deprecation warning 2', ctx => {
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated.');
@@ -228,7 +228,7 @@ describe('pollPipeline handles failed deployments', () => {
     .deployComponent(environment, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .getPipelineDeployments(mock_pipeline, [aborted_deployment])
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ pipeline: failed_pipeline }))
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .catch(err => {
@@ -245,7 +245,7 @@ describe('pollPipeline handles failed deployments', () => {
     .deployComponent(environment, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .getPipelineDeployments(mock_pipeline, [failed_environment_deployment])
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ pipeline: failed_pipeline }))
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .catch(err => {
@@ -262,7 +262,7 @@ describe('pollPipeline handles failed deployments', () => {
     .deployComponent(environment, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .getPipelineDeployments(mock_pipeline, [failed_cluster_deployment])
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ pipeline: failed_pipeline }))
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .catch(err => {
@@ -279,7 +279,7 @@ describe('pollPipeline handles failed deployments', () => {
     .deployComponent(environment, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .getPipelineDeployments(mock_pipeline, [failed_environment_deployment, failed_environment_deployment_2])
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ pipeline: failed_pipeline }))
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .catch(err => {
@@ -296,7 +296,7 @@ describe('pollPipeline handles failed deployments', () => {
     .getEnvironmentByName(account, environment)
     .deployComponent(environment, mock_pipeline)
     .approvePipeline(mock_pipeline)
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ pipeline: failed_pipeline }))
     .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ poll_timeout: true }))
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
@@ -337,7 +337,7 @@ describe('deployment secrets', function () {
         return body;
       }
     })
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
     .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--secret', 'app_replicas=4'])
@@ -355,7 +355,7 @@ describe('deployment secrets', function () {
         return body;
       }
     })
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
     .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--secret', 'test_secret=test', '--secret', 'another_secret=another_test'])
@@ -375,7 +375,7 @@ describe('deployment secrets', function () {
         return body;
       }
     })
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readSecretsFile', () => {
@@ -399,7 +399,7 @@ describe('deployment secrets', function () {
         return body;
       }
     })
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
     .stub(DeployUtils, 'readDotEnvSecretsFile', () => {

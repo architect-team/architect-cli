@@ -24,7 +24,7 @@ describe('destroy', function () {
     .deleteEnvironmentInstances(mock_env, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
     .command(['destroy', '-a', mock_account.name, '-e', mock_env.name, '--auto-approve'])
     .it('destroy completes', ctx => {
@@ -37,7 +37,7 @@ describe('destroy', function () {
     .deleteEnvironmentInstances(mock_env, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
-    .getConstructedApiTests()
+    .getApiMocks()
     .command(['destroy', '-a', mock_account.name, '-e', mock_env.name, '--auto_approve'])
     .it('destroy completes with a warning when using a deprecated flag', ctx => {
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated.');

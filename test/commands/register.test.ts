@@ -14,12 +14,9 @@ import { DockerHelper } from '../../src/common/docker/helper';
 import PluginManager from '../../src/common/plugins/plugin-manager';
 import BuildPackUtils from '../../src/common/utils/buildpack';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
-import { getMockComponentContextPath, getMockComponentFilePath, MockArchitectApi, mockArchitectAuth, MOCK_API_HOST, MOCK_REGISTRY_HOST } from '../utils/mocks';
+import { getMockComponentContextPath, getMockComponentFilePath, MockArchitectApi } from '../utils/mocks';
 
 describe('register', function () {
-  // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-  const print = false;
-
   const mock_account_response = {
     created_at: '2020-06-02T15:33:27.870Z',
     updated_at: '2020-06-02T15:33:27.870Z',
@@ -33,21 +30,15 @@ describe('register', function () {
     default_user_id: null,
   };
 
-  const mock_architect_account_response = {
-    ...mock_account_response,
-    name: 'architect',
-  };
-
   const mock_architect_uppercase_account_response = {
     ...mock_account_response,
     name: 'MY-ACCOUNT',
   };
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getApiMocks()
     .stub(fs, 'move', sinon.stub())
     .stub(ComponentRegister, 'registerComponent', sinon.stub().returns({}))
-    .stdout({ print })
-    .stderr({ print })
     .command(['register', '-a', 'examples'])
     .catch(e => {
       expect(e.message).contains(path.resolve(untildify('./architect.yml')));
@@ -64,10 +55,8 @@ describe('register', function () {
         return body;
       }
     })
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(ComponentRegister.prototype, 'uploadVolume', sinon.stub().returns({}))
-    .stdout({ print })
-    .stderr({ print })
     .command(['register', 'test/mocks/superset/architect.yml', '-a', 'examples'])
     .it('test file: replacement', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
@@ -77,7 +66,7 @@ describe('register', function () {
     .getAccountByName(mock_account_response)
     .architectRegistryHeadRequest()
     .registerComponentDigest()
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
     .command(['register', getMockComponentFilePath('hello-world'), '-t', '1.0.0', '--architecture', 'amd64', '--architecture', 'arm64v8', '--architecture', 'windows-amd64', '-a', 'examples'])
     .it('register component with architecture flag', ctx => {
@@ -89,7 +78,7 @@ describe('register', function () {
 
   new MockArchitectApi()
     .getAccountByName(mock_account_response)
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().throws(new Error('Some internal docker build exception')))
     .command(['register', getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '--architecture', 'incorrect', '-a', 'examples'])
     .catch(err => {
@@ -101,7 +90,7 @@ describe('register', function () {
   new MockArchitectApi()
     .getAccountByName(mock_account_response)
     .architectRegistryHeadRequest()
-    .registerComponentDigest({ reply_callback:
+    .registerComponentDigest({ reply:
       (uri: any, body: any, cb: any) => { // TODO: types
         expect(validateSpec(body.config)).to.have.lengthOf(0);
         for (const [service_name, service] of Object.entries(body.config.services) as [string, ServiceSpec][]) {
@@ -120,9 +109,7 @@ describe('register', function () {
       }
     })
     .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'superset' }, tag: '1.0.0' }) // TODO: make mock for component version?
-    .getConstructedApiTests()
-    .stdout({ print })
-    .stderr({ print })
+    .getApiMocks()
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
     .stub(fs, 'move', sinon.stub())
     .stub(ComponentRegister.prototype, 'uploadVolume', sinon.stub().returns({}))
@@ -151,7 +138,7 @@ describe('register', function () {
     .architectRegistryHeadRequest()
     .registerComponentDigest()
     .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'database-seeding' }, tag: '1.0.0' }) // TODO: make mock for component version?
-    .getConstructedApiTests()
+    .getApiMocks()
     .command(['register', getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('it reports to the user that the component was registered successfully', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
@@ -165,7 +152,7 @@ describe('register', function () {
     .architectRegistryHeadRequest('/v2/examples/superset.services.stateful-api/manifests/1.0.0')
     .architectRegistryHeadRequest('/v2/examples/superset.services.stateful-frontend/manifests/1.0.0')
     .architectRegistryHeadRequest('/v2/examples/superset.tasks.curler-build/manifests/1.0.0')
-    .getConstructedApiTests()
+    .getApiMocks()
     .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('it reports to the user that the superset was registered successfully', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
@@ -184,7 +171,7 @@ describe('register', function () {
       }
     })
     .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'database-seeding' }, tag: 'architect.environment.test-env' }) // TODO: make mock for component version?
-    .getConstructedApiTests()
+    .getApiMocks()
     .stub(fs, 'move', sinon.stub())
     .command(['register', getMockComponentFilePath('database-seeding'), '-a', 'examples', '-e', 'test-env'])
     .it('registers an ephemeral component with an environment specified', ctx => {
@@ -193,7 +180,8 @@ describe('register', function () {
 
   new MockArchitectApi()
     .getAccountByName(mock_account_response)
-    .architectRegistryHeadRequest().registerComponentDigest({ callback:
+    .architectRegistryHeadRequest()
+    .registerComponentDigest({ callback:
       (body) => {
         expect(body.tag).to.eq('1.0.0');
         expect(body.config.name).to.eq('database-seeding');
@@ -202,48 +190,33 @@ describe('register', function () {
       }
     })
     .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'database-seeding' }, tag: '1.0.0' }) // TODO: make mock for component version?
-    .getConstructedApiTests()
+    .getApiMocks() // TODO: replace these with just something like .api_test since the mock helper returns this?
     .command(['register', getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('it does not call any docker commands if the image is provided', ctx => {
       expect(ctx.stderr).to.contain('Registering component database-seeding:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth()
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples`)
-      .reply(200, mock_account_response),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .post(/\/accounts\/.*\/components/, (body) => body)
-      .reply(200, {}),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples/components/database-seeding/versions/latest`)
-      .reply(200),
-    )
-    .stdout({ print })
-    .stderr({ print })
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'database-seeding' }, tag: 'latest' }) // TODO: make mock for component version?
+    .getApiMocks()
     .command(['register', getMockComponentFilePath('database-seeding'), '-a', 'examples'])
     .it('it defaults the tag to latest if not supplied', ctx => {
       expect(ctx.stderr).to.contain('Registering component database-seeding:latest with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth()
-    .nock(MOCK_API_HOST, api => api
-      .get('/accounts/examples')
-      .reply(403, {
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response, {
+      response: {
         message: 'Friendly error message from server',
-      }),
-    )
-    .stdout({ print })
-    .stderr({ print })
+      },
+      response_code: 403,
+    })
+    .getApiMocks()
     .command(['register', getMockComponentFilePath('hello-world'), '-a', 'examples'])
     .catch(err => {
       expect(process.exitCode).eq(1);
@@ -251,46 +224,30 @@ describe('register', function () {
     })
     .it('rejects with informative error message if account is unavailable');
 
-  mockArchitectAuth()
-    .stub(fs, 'move', sinon.stub())
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples`)
-      .reply(200, mock_account_response),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .post(/\/accounts\/.*\/components/, (body) => {
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest({ callback:
+      (body) => {
         expect(body.tag).to.eq('1.0.0');
         expect(body.config.name).to.eq('database-seeding');
         expect(body.config.services.app.image).to.eq('mock.registry.localhost/examples/database-seeding.services.app@some-digest');
         return body;
-      })
-      .reply(200, {}),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples/components/database-seeding/versions/1.0.0`)
-      .reply(200),
-    )
-    .stdout({ print })
-    .stderr({ print })
+      }
+    })
+    .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'database-seeding' }, tag: '1.0.0' }) // TODO: make mock for component version?
+    .getApiMocks()
+    .stub(fs, 'move', sinon.stub())
     .command(['register', getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('gives user feedback while running docker commands', ctx => {
       expect(ctx.stderr).to.contain('Registering component database-seeding:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .getApiMocks()
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub().throws(new Error('Some internal docker build exception')))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples`)
-      .reply(200, mock_account_response),
-    )
-    .stdout({ print })
-    .stderr({ print })
     .command(['register', getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .catch(err => {
       expect(process.exitCode).eq(1);
@@ -298,57 +255,27 @@ describe('register', function () {
     })
     .it('rejects with the original error message if docker buildx inspect fails');
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'database-seeding' }, tag: '1.0.0' }) // TODO: make mock for component version?
+    .getApiMocks()
     .stub(fs, 'move', sinon.stub())
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .get(`/accounts/examples`)
-      .reply(200, mock_account_response),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .post(/\/accounts\/.*\/components/, (body) => body)
-      .reply(200, {}),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples/components/database-seeding/versions/1.0.0`)
-      .reply(200),
-    )
-    .stdout({ print })
-    .stderr({ print })
     .command(['register', getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('gives user feedback for each component in the environment while running docker commands', ctx => {
       expect(ctx.stderr).to.contain('Registering component database-seeding:1.0.0 with Architect Cloud');
     });
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'react-app' }, tag: 'latest' }) // TODO: make mock for component version?
+    .getApiMocks()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples`)
-      .reply(200, mock_account_response),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .post(/\/accounts\/.*\/components/)
-      .reply(200, {}),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples/components/react-app/versions/latest`)
-      .reply(200),
-    )
-    .stdout({ print })
-    .stderr({ print })
     .command(['register', getMockComponentFilePath('react-app'), '--arg', 'NODE_ENV=dev', '-a', 'examples'])
     .it('override build arg specified in architect.yml', ctx => {
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
@@ -364,24 +291,13 @@ describe('register', function () {
       ]);
     });
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .getApiMocks()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples`)
-      .reply(200, mock_account_response),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .post(/\/accounts\/.*\/components/)
-      .reply(200, {}),
-    )
-    .stdout({ print })
-    .stderr({ print })
     .command(['register', getMockComponentFilePath('database-seeding'), '--arg', 'NODE_ENV=dev', '--arg', 'SSH_PUB_KEY="abc==\ntest.architect.io"', '-a', 'examples'])
     .it('set build arg not specified in architect.yml', ctx => {
       const compose = DockerBuildXUtils.dockerBuildX as sinon.SinonStub;
@@ -390,24 +306,13 @@ describe('register', function () {
       expect(compose.firstCall.args[0][7]).to.deep.equal('*.args.SSH_PUB_KEY="abc==\ntest.architect.io"');
     });
 
-  mockArchitectAuth()
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .get(/\/accounts\/examples/)
-      .reply(200, mock_account_response),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .post(/\/accounts\/.*\/components/)
-      .reply(200, {}),
-    )
-    .stdout({ print })
-    .stderr({ print })
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .registerComponentDigest()
+    .getApiMocks()
     .command(['register', '-a', 'examples', getMockComponentFilePath('react-app'), getMockComponentFilePath('database-seeding')])
     .it('register multiple apps at the same time with no tagged versions', ctx => {
       expect(ctx.stderr).to.contain('Registering component react-app:latest with Architect Cloud...... done\n');
@@ -415,24 +320,13 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth()
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .get(/\/accounts\/examples/)
-      .reply(200, mock_account_response),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .post(/\/accounts\/.*\/components/)
-      .reply(200, {}),
-    )
-    .stdout({ print })
-    .stderr({ print })
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .registerComponentDigest()
+    .getApiMocks()
     .command(['register', '-t', '1.0.0', '-a', 'examples', getMockComponentFilePath('react-app'), getMockComponentFilePath('database-seeding')])
     .it('register multiple apps at the same time with a shared tagged version', ctx => {
       expect(ctx.stderr).to.contain('Registering component react-app:1.0.0 with Architect Cloud...... done\n');
@@ -440,24 +334,13 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth()
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .get(/\/accounts\/examples/)
-      .reply(200, mock_account_response),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .post(/\/accounts\/.*\/components/)
-      .reply(200, {}),
-    )
-    .stdout({ print })
-    .stderr({ print })
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .registerComponentDigest()
+    .getApiMocks()
     .command(['register', getMockComponentFilePath('react-app'), getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('register multiple apps at the same time with inverse arg sequence', ctx => {
       expect(ctx.stderr).to.contain('Registering component react-app:1.0.0 with Architect Cloud...... done\n');
@@ -465,24 +348,13 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth()
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .get(/\/accounts\/examples/)
-      .reply(200, mock_account_response),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .post(/\/accounts\/.*\/components/)
-      .reply(200, {}),
-    )
-    .stdout({ print })
-    .stderr({ print })
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .registerComponentDigest()
+    .getApiMocks()
     .command(['register', getMockComponentFilePath('react-app'), '-t', '1.0.0', getMockComponentFilePath('database-seeding'), '-a', 'examples'])
     .it('register multiple apps at the same time with mixed arg sequence', ctx => {
       expect(ctx.stderr).to.contain('Registering component react-app:1.0.0 with Architect Cloud...... done\n');
@@ -490,27 +362,16 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .registerComponentDigest()
+    .getApiMocks()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .get(/\/accounts\/examples/)
-      .reply(200, mock_account_response),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .post(/\/accounts\/.*\/components/)
-      .reply(200, {}),
-    )
-    .stdout({ print })
-    .stderr({ print })
     .command(['register', getMockComponentFilePath('react-app'), '-t', '1.0.0', getMockComponentFilePath('database-seeding'), '--arg', 'NODE_ENV=dev', '-a', 'examples'])
     .it('register multiple apps at the same time with a shared build arg', ctx => {
       expect(ctx.stderr).to.contain('Registering component react-app:1.0.0 with Architect Cloud...... done\n');
@@ -522,27 +383,16 @@ describe('register', function () {
       expect(compose.secondCall.args[0][5]).to.deep.equal('*.args.NODE_ENV=dev');
     });
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .registerComponentDigest()
+    .getApiMocks()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .get(/\/accounts\/examples/)
-      .reply(200, mock_account_response),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .post(/\/accounts\/.*\/components/)
-      .reply(200, {}),
-    )
-    .stdout({ print })
-    .stderr({ print })
     .command(['register', '-a', 'examples', getMockComponentFilePath('react-app'), getMockComponentFilePath('react-app'), getMockComponentFilePath('database-seeding'), '--arg', 'NODE_ENV=dev'])
     .it('register multiple apps at the same time will only register unique component paths', ctx => {
       expect(ctx.stderr).to.contain('Registering component react-app:latest with Architect Cloud...... done\n');
@@ -555,27 +405,16 @@ describe('register', function () {
       expect(compose.thirdCall).null;
     });
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .registerComponentDigest()
+    .getApiMocks()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .get(/\/accounts\/examples/)
-      .reply(200, mock_account_response),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .post(/\/accounts\/.*\/components/)
-      .reply(200, {}),
-    )
-    .stdout({ print })
-    .stderr({ print })
     .command(['register', '-a', 'examples', getMockComponentFilePath('react-app'), `${getMockComponentContextPath('react-app')}/../../mocks/examples/react-app.architect.yml`, getMockComponentFilePath('database-seeding'), '--arg', 'NODE_ENV=dev'])
     .it('register multiple apps at the same time will only register only unique component paths if relative pathing is provided', ctx => {
       expect(ctx.stderr).to.contain('Registering component react-app:latest with Architect Cloud...... done\n');
@@ -588,27 +427,16 @@ describe('register', function () {
       expect(compose.thirdCall).null;
     });
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .registerComponentDigest()
+    .getApiMocks()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .get(/\/accounts\/examples/)
-      .reply(200, mock_account_response),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .post(/\/accounts\/.*\/components/)
-      .reply(200, {}),
-    )
-    .stdout({ print })
-    .stderr({ print })
     .command(['register', '-a', 'examples', getMockComponentFilePath('react-app'), getMockComponentFilePath('database-seeding'), '--arg', 'NODE_ENV=dev'])
     .it('register multiple apps at the same time will register and only use build args if applicable', ctx => {
       expect(ctx.stderr).to.contain('Registering component react-app:latest with Architect Cloud...... done\n');
@@ -619,27 +447,15 @@ describe('register', function () {
       expect(compose.firstCall.args[0][5]).to.deep.equal('*.args.NODE_ENV=dev');
     });
 
-  mockArchitectAuth()
-    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples`)
-      .reply(200, mock_architect_account_response),
-    )
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .post(/\/accounts\/.*\/components/)
-      .reply(200, {}),
-    )
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .getApiMocks()
     .stub(PluginManager, 'getPlugin', sinon.stub().returns({
       build: () => { },
     }))
-    .stdout({ print })
-    .stderr({ print })
+    .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .command(['register', 'test/mocks/buildpack/buildpack-architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('register with buildpack set to true override Dockerfile', ctx => {
       expect(ctx.stderr).to.contain('Registering component hello-world:1.0.0 with Architect Cloud...... done\n');
@@ -651,30 +467,18 @@ describe('register', function () {
       expect(compose.firstCall).null;
     });
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .getApiMocks()
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(BuildPackUtils, 'build', sinon.stub())
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples`)
-      .reply(200, mock_architect_account_response),
-    )
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .persist()
-      .post(/\/accounts\/.*\/components/)
-      .reply(200, {}),
-    )
     .stub(PluginManager, 'getPlugin', sinon.stub().returns({
       build: () => { },
     }))
     .stub(DockerHelper, 'composeVersion', sinon.stub().returns(true))
     .stub(DockerHelper, 'buildXVersion', sinon.stub().returns(true))
-    .stdout({ print })
-    .stderr({ print })
     .command(['register', 'test/mocks/buildpack/buildpack-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('register with buildpack and dockerfile services', ctx => {
       const buildpack = BuildPackUtils.build as sinon.SinonStub;
@@ -687,14 +491,10 @@ describe('register', function () {
       expect(compose.callCount).to.eq(1);
     });
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getAccountByName(mock_account_response)
+    .getApiMocks()
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples`)
-      .reply(200, mock_architect_account_response),
-    )
-    .stdout({ print })
-    .stderr({ print })
     .stub(DockerUtils, 'doesDockerfileExist', sinon.stub().callsFake(DockerUtils.doesDockerfileExist)) // override global stub
     .command(['register', 'test/mocks/register/nonexistence-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .catch(e => {
@@ -702,22 +502,12 @@ describe('register', function () {
     })
     .it('fail to register with a dockerfile that does not exist');
 
-  mockArchitectAuth()
+  new MockArchitectApi()
+    .getAccountByName({ name: 'my-account' }, { response: mock_architect_uppercase_account_response }) // TODO: make mock?
+    .architectRegistryHeadRequest()
+    .registerComponentDigest()
+    .getApiMocks()
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
-    .nock(MOCK_API_HOST, api => api
-      .get('/accounts/my-account')
-      .reply(200, mock_architect_uppercase_account_response),
-    )
-    .nock(MOCK_REGISTRY_HOST, api => api
-      .persist()
-      .head(/.*/)
-      .reply(200, '', { 'docker-content-digest': 'some-digest' }),
-    )
-    .nock(MOCK_API_HOST, api => api
-      .post(/\/accounts\/.*\/components/, (body) => body)
-      .reply(200))
-    .stdout({ print })
-    .stderr({ print })
     .command(['register', getMockComponentFilePath('hello-world'), '-t', '1.0.0', '-a', 'MY-ACCOUNT'])
     .it('register component to account with name consists of uppercase letters', ctx => {
       const convert_to_buildx_platforms = DockerBuildXUtils.convertToBuildxPlatforms as SinonStub;
