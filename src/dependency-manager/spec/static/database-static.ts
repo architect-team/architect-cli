@@ -34,6 +34,11 @@ export const SupportedDatabases: SupportedDatabaseType[] = [
           path: `/${DEFAULT_CREDENTIALS.database}`,
         },
       },
+      liveness_probe: {
+        command: `pg_isready -d ${DEFAULT_CREDENTIALS.database} -U ${DEFAULT_CREDENTIALS.username}`,
+        interval: '10s',
+        failure_threshold: 3,
+      },
     },
   },
   {
