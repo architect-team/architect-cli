@@ -7,6 +7,7 @@ import semver, { SemVer } from 'semver';
 import untildify from 'untildify';
 import { ArchitectError } from '../../dependency-manager/utils/errors';
 import Account from '../account/account.entity';
+import { Paginate } from '../types';
 import Cluster from './cluster.entity';
 
 export interface CreateClusterInput {
@@ -64,9 +65,13 @@ export default class ClusterUtils {
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
       // inquirer-autocomplete-prompt doesn't catch exceptions in source...
-      const { data } = await api.get(`/accounts/${account.id}/clusters`, { params: { limit: 1 } });
+      const { data } = await api.get<Paginate<Cluster>>(`/accounts/${account.id}/clusters`, { params: { limit: 1 } });
       if (!data.total) {
         throw new Error(`No configured clusters. Run 'architect cluster:create -a ${account.name}'.`);
+      }
+
+      if (data.total === 1) {
+        return data.rows[0];
       }
 
       const answers: { cluster: Cluster } = await inquirer.prompt([
@@ -76,8 +81,8 @@ export default class ClusterUtils {
           message: 'Select a cluster',
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
-            const { data } = await api.get(`/accounts/${account.id}/clusters`, { params: { q: input, limit: 10 } });
-            const clusters = data.rows as Cluster[];
+            const { data } = await api.get<Paginate<Cluster>>(`/accounts/${account.id}/clusters`, { params: { q: input, limit: 10 } });
+            const clusters = data.rows;
             return clusters.map((c) => ({ name: c.name, value: c }));
           },
           ciMessage: '--cluster flag is required in CI pipelines or by setting ARCHITECT_CLUSTER env',
@@ -88,18 +93,23 @@ export default class ClusterUtils {
     return cluster;
   }
 
-  private static async getClientVersion(kubeconfig_path: string): Promise<string> {
-    const { stdout } = await execa('kubectl', ['version', '--kubeconfig', kubeconfig_path, '--client', '--output', 'json']);
-    const { clientVersion } = JSON.parse(stdout);
-    return clientVersion.gitVersion;
+  private static async getServerVersion(kubeconfig_path: string): Promise<string | undefined> {
+    try {
+      const { stdout } = await execa('kubectl', ['version', '--kubeconfig', kubeconfig_path, '--output', 'json']);
+      const { serverVersion } = JSON.parse(stdout);
+      return serverVersion.gitVersion;
+    } catch {
+      //
+      return undefined;
+    }
   }
 
-  public static async checkClientVersion(kubeconfig: string): Promise<void> {
+  public static async checkServerVersion(kubeconfig: string): Promise<void> {
     const kubeconfig_path = untildify(kubeconfig);
-    const client_git_version = await this.getClientVersion(kubeconfig_path);
+    const client_git_version = await this.getServerVersion(kubeconfig_path);
     const client_semver = semver.coerce(client_git_version);
     if (!client_semver) {
-      throw new ArchitectError(`Failed to translate Kubernetes cluster version ${client_git_version}.`);
+      throw new ArchitectError('We are unable to read the version of your cluster.\nPlease make sure your cluster is reachable using kubectl before attempting to register it.\nIf you continue to experience issues please contact Architect support. https://support.architect.io/');
     }
 
     if (semver.lt(client_semver.version, MIN_CLUSTER_SEMVER.version)) {

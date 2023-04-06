@@ -12,11 +12,12 @@ import Cluster from '../../architect/cluster/cluster.entity';
 import ClusterUtils, { CreateClusterInput } from '../../architect/cluster/cluster.utils';
 import PipelineUtils from '../../architect/pipeline/pipeline.utils';
 import BaseCommand from '../../base-command';
+import { RequiresKubectl } from '../../common/kubectl/helper';
 import { AgentClusterUtils } from '../../common/utils/agent-cluster.utils';
 import { booleanString } from '../../common/utils/oclif';
 
 export default class ClusterCreate extends BaseCommand {
-  static aliases = ['clusters:register', 'cluster:create', 'clusters:create'];
+  static aliases = ['clusters:register', 'cluster:create'];
   static description = 'Register a new cluster with Architect Cloud';
   static examples = [
     'architect clusters:create --account=myaccount',
@@ -79,6 +80,7 @@ export default class ClusterCreate extends BaseCommand {
     return parsed;
   }
 
+  @RequiresKubectl()
   async run(): Promise<void> {
     await this.createCluster();
   }
@@ -146,7 +148,7 @@ export default class ClusterCreate extends BaseCommand {
     }
 
     const kube_contexts = await this.setupKubeContext(flags);
-    await ClusterUtils.checkClientVersion(flags.kubeconfig);
+    await ClusterUtils.checkServerVersion(flags.kubeconfig);
 
     try {
       const cluster_dto = {

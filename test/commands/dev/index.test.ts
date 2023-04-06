@@ -324,9 +324,11 @@ describe('local dev environment', function () {
         'ports': [
           '50000:3000',
         ],
-        'depends_on': [
-          seed_db_ref,
-        ],
+        depends_on: {
+          [seed_db_ref]: {
+            condition: 'service_started'
+          }
+        },
         'environment': {
           'DATABASE_HOST': seed_db_ref,
           'DATABASE_PORT': '5432',
@@ -1179,6 +1181,32 @@ describe('local dev environment', function () {
       })
       .stub(DeployUtils, 'readSecretsFile', () => {
         return {
+          'hello-world:latest@tenant-1': {
+            'hello_ingress': 'hello-app',
+          },
+        };
+      })
+      .command(['dev', '--secret-file', './examples/hello-world/secrets.yml', 'hello-world:latest@tenant-1', '--ssl=false'])
+      .it('Create a local dev with instance name, tag, and secret file', ctx => {
+        const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+        expect(runCompose.calledOnce).to.be.true;
+        const tenant_1_ref = resourceRefToNodeRef('hello-world.services.api@tenant-1');
+        const compose = runCompose.firstCall.args[0];
+        expect(Object.keys(compose.services)).includes(tenant_1_ref);
+        expect(compose.services[tenant_1_ref].labels || []).includes(`traefik.http.routers.${tenant_1_ref}-hello.rule=Host(\`hello-app.arc.localhost\`)`);
+      });
+
+    local_dev
+      .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+      .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+      // @ts-ignore
+      .stub(ComponentBuilder, 'buildSpecFromPath', (_, metadata) => {
+        const hello_json = yaml.load(getHelloComponentConfig()) as any;
+        hello_json.services.api.environment.SELF_URL = `\${{ services.api.interfaces.hello.ingress.url }}`;
+        return buildSpecFromYml(yaml.dump(hello_json), metadata);
+      })
+      .stub(DeployUtils, 'readSecretsFile', () => {
+        return {
           'hello-world@tenant-1': {
             'hello_ingress': 'hello-1',
           },
@@ -1438,4 +1466,86 @@ describe('local dev environment', function () {
       expect(e.message).contains(`--ssl=false`);
     })
     .it('Show helpful error msg if dev fails without internet connection.');
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+      return buildSpecFromYml(local_component_config_with_environment_secret);
+    })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account)
+      .persist())
+    .stub(SecretUtils, 'getSecrets', () => {
+      return [
+        {
+          key: 'a_required_key',
+          value: '123456789.123456789',
+          scope: '*',
+        },
+      ];
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', getMockComponentFilePath('hello-world'), '--secrets-env=env', '-a', 'examples', '--ssl=false'])
+    .it('Create a local dev with a number secret in an environment secret', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
+      expect(hello_world_environment.a_required_key).to.equal('123456789.123456789');
+    });
+
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+      return buildSpecFromYml(local_component_config_with_environment_secret);
+    })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account)
+      .persist())
+    .stub(SecretUtils, 'getSecrets', () => {
+      return [];
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', getMockComponentFilePath('hello-world'), '-s', 'a_required_key=123456789.123456789', '-a', 'examples', '--ssl=false'])
+    .it('Create a local dev with a number secret with many digits after decimal point', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
+      expect(hello_world_environment.a_required_key).to.equal('123456789.123456789');
+    });
+
+  test
+    .timeout(20000)
+    .env({ 'ARC_a_required_key': '123456789.123456789' })
+    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+      return buildSpecFromYml(local_component_config_with_environment_secret);
+    })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account)
+      .persist())
+    .stub(SecretUtils, 'getSecrets', () => {
+      return [];
+    })
+    .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['dev', getMockComponentFilePath('hello-world'), '-a', 'examples', '--ssl=false'])
+    .it('Create a local dev with an environment number secret', ctx => {
+      const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
+      expect(hello_world_environment.a_required_key).to.equal('123456789.123456789');
+    });
 });

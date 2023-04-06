@@ -93,7 +93,7 @@ export class UpProcessManager {
     // "SIGINT" we get on Windows isn't a real signal and isn't automatically passed to child processes,
     // so we don't have to worry about it.
     const compose_process = DockerComposeUtils.dockerCompose(compose_args,
-      { stdout: 'pipe', stdin: 'ignore', detached: !this.is_windows });
+      { stdout: 'pipe', stderr: 'pipe', stdin: 'ignore', detached: !this.is_windows });
 
     this.server = net.createServer();
     this.server.on('connection', (socket) => {
@@ -175,30 +175,34 @@ export class UpProcessManager {
     }
 
     const service_colors = new Map<string, chalk.Chalk>();
-    this.compose_process.stdout?.on('data', (data) => {
-      if (this.is_exiting) {
-        return;
-      }
-
-      for (const line of data.toString().split('\n')) {
-        const lineParts = line.split('|');
-        if (lineParts.length > 1) {
-          // At this point we can stop the process without leaving containers running.
-          this.can_safely_kill = true;
-          const service = (lineParts[0] as string).replace(`${this.project_name}-`, '');
-
-          lineParts.shift();
-          const newLine = lineParts.join('|');
-
-          if (!service_colors.get(service)) {
-            service_colors.set(service, chalk.rgb(rand(), rand(), rand()));
-          }
-
-          const color = service_colors.get(service) as chalk.Chalk;
-          console.log(color(service + '| ') + newLine);
+    const createHandleStream = (output_func: (message: string) => void) => {
+      return (data: any) => {
+        if (this.is_exiting) {
+          return;
         }
-      }
-    });
+
+        for (const line of data.toString().split('\n')) {
+          const lineParts = line.split('|');
+          if (lineParts.length > 1) {
+            // At this point we can stop the process without leaving containers running.
+            this.can_safely_kill = true;
+            const service = (lineParts[0] as string).replace(`${this.project_name}-`, '');
+
+            lineParts.shift();
+            const newLine = lineParts.join('|');
+
+            if (!service_colors.get(service)) {
+              service_colors.set(service, chalk.rgb(rand(), rand(), rand()));
+            }
+
+            const color = service_colors.get(service) as chalk.Chalk;
+            output_func(color(service + '| ') + newLine);
+          }
+        }
+      };
+    };
+    this.compose_process.stdout?.on('data', createHandleStream(console.log));
+    this.compose_process.stderr?.on('data', createHandleStream(console.warn));
   }
 
   async run(): Promise<void> {
@@ -414,7 +418,17 @@ export default class Dev extends BaseCommand {
       if (service.status !== 'enabled') return false;
       if (!service.serverStatus) return false;
       if (service.provider !== 'docker') return false;
-      return Object.values(service.serverStatus).includes('UP');
+
+      let healthy = false;
+      for (const key in service.serverStatus) {
+        // When a liveness probe is running, service.serverStatus[key] will be 'UP'
+        // but the key will be an empty string. The service isn't available via the traefik URL
+        // until the key is no longer ''.
+        if (key !== '' && service.serverStatus[key] === 'UP') {
+          healthy = true;
+        }
+      }
+      return healthy;
     });
     return healthy_services;
   }

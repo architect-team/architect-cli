@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { ArchitectError, Dictionary, ResourceSlugUtils, sortOnKeys } from '../../';
 import Account from '../account/account.entity';
+import { Paginate } from '../types';
 import Environment from './environment.entity';
 
 export interface Replica {
@@ -12,6 +13,7 @@ export interface Replica {
   resource_ref: string;
   created_at: string;
   display_name?: string;
+  ports: number[];
 }
 
 export class GetEnvironmentOptions {
@@ -57,9 +59,14 @@ export class EnvironmentUtils {
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
       // inquirer-autocomplete-prompt doesn't catch exceptions in source...
-      const { data } = await api.get(`/accounts/${account.id}/environments`, { params: { limit: 1 } });
+      const { data } = await api.get<Paginate<Environment>>(`/accounts/${account.id}/environments`, { params: { limit: 1 } });
+
       if (!data.total) {
         throw new Error(`No configured environments. Run 'architect environment:create -a ${account.name}'.`);
+      }
+
+      if (data.total === 1) {
+        return data.rows[0];
       }
 
       const answers: { environment: Environment } = await inquirer.prompt([
@@ -69,8 +76,8 @@ export class EnvironmentUtils {
           message: 'Select an environment',
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
-            const { data } = await api.get(`/accounts/${account.id}/environments`, { params: { q: input, limit: 10 } });
-            const environments = data.rows as Environment[];
+            const { data } = await api.get<Paginate<Environment>>(`/accounts/${account.id}/environments`, { params: { q: input, limit: 10 } });
+            const environments = data.rows;
             return environments.map((e) => ({ name: e.name, value: e }));
           },
           ciMessage: '--environment flag is required in CI pipelines or by setting ARCHITECT_ENVIRONMENT env',
@@ -81,7 +88,7 @@ export class EnvironmentUtils {
     return environment;
   }
 
-  static async getReplica(replicas: Replica[]): Promise<Replica> {
+  static async getReplica(replicas: Replica[], replica_index?: number): Promise<Replica> {
     if (replicas.length === 1) {
       return replicas[0];
     } else {
@@ -109,6 +116,7 @@ export class EnvironmentUtils {
                 value: sub_replicas,
               }));
             },
+            ciMessage: 'The resource arg is required in CI pipelines. Ex. my-component.services.my-api',
           },
         ]);
         filtered_replicas = answers.service;
@@ -121,6 +129,14 @@ export class EnvironmentUtils {
       filtered_replicas = filtered_replicas.sort((a, b) => {
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       });
+
+      if (replica_index !== undefined) {
+        if (!filtered_replicas[replica_index]) {
+          throw new ArchitectError(`Replica not found at index ${replica_index}`);
+        }
+
+        return filtered_replicas[replica_index];
+      }
 
       console.log(`Found ${filtered_replicas.length} replicas of service:`);
       const answers = await inquirer.prompt([
