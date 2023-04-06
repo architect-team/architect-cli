@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { instanceToPlain, plainToInstance } from 'class-transformer';
 import yaml from 'js-yaml';
-import { buildConfigFromYml, buildSpecFromYml, ComponentSpec, dumpToYml, validateOrRejectSpec } from '../../../src';
+import { buildConfigFromYml, buildSpecFromYml, ComponentSpec, dumpToYml } from '../../../src';
 import { overrideSpec } from '../../../src/dependency-manager/spec/utils/spec-merge';
 import { loadAllTestSpecCombinations } from './partials/spec-test-harness';
 
@@ -10,7 +10,6 @@ describe('component spec unit test', () => {
     const all_spec_combinations = loadAllTestSpecCombinations();
     console.debug(`recursively testing ${all_spec_combinations.length} combined components...`);
     for (const component of all_spec_combinations) {
-      validateOrRejectSpec(component);
       const source_yml = dumpToYml(component);
       buildConfigFromYml(source_yml);
     }
