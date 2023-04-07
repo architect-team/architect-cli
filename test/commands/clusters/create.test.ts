@@ -7,7 +7,7 @@ import ClusterUtils, { MIN_CLUSTER_SEMVER } from '../../../src/architect/cluster
 import PipelineUtils from '../../../src/architect/pipeline/pipeline.utils';
 import ClusterCreate from '../../../src/commands/clusters/create';
 import { AgentClusterUtils } from '../../../src/common/utils/agent-cluster.utils';
-import { MockArchitectApi } from '../../utils/mocks';
+import { MockArchitectApi, MOCK_API_HOST } from '../../utils/mocks';
 
 describe('cluster:create', function () {
   const account = {
@@ -30,16 +30,18 @@ describe('cluster:create', function () {
   })
 
   const create_test = () => {
-    return new MockArchitectApi({ mock_api_host: 'https://api.architect.io' }) // TODO: see about updating the host here
+    return new MockArchitectApi()
       .getAccount(account)
       .getClusters(account, clusters)
       .getTests()
       .stub(ClusterUtils, 'getServerVersion', sinon.stub().returns(MIN_CLUSTER_SEMVER.version))
       .stub(ClusterCreate.prototype, 'log', sinon.stub())
       .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
+      .stub(fs, 'existsSync', () => true)
       .stub(fs, 'readJSONSync', () => {
         return {
           log_level: 'debug',
+          api_host: MOCK_API_HOST,
         };
       })
       .stub(AppService, 'create', () => new AppService('', '1.0.0'))
@@ -137,16 +139,18 @@ describe('cluster:create', function () {
       expect(post_to_api.getCall(0).args[0].name === 'new_k8s_cluster');
     })
 
-  new MockArchitectApi({ mock_api_host: 'https://api.architect.io' }) // TODO: see about updating the host here
+  new MockArchitectApi()
     .getAccount(account)
     .getClusters(account, clusters)
     .getTests()
     .stub(ClusterUtils, 'getServerVersion', sinon.stub().returns('v1.0.0'))
     .stub(ClusterCreate.prototype, 'log', sinon.stub())
     .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
+    .stub(fs, 'existsSync', () => true)
     .stub(fs, 'readJSONSync', () => {
       return {
         log_level: 'debug',
+        api_host: MOCK_API_HOST,
       };
     })
     .stub(AppService, 'create', () => new AppService('', '1.0.0'))
