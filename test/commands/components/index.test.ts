@@ -44,7 +44,7 @@ describe('list components', () => {
 
   new MockArchitectApi()
     .getComponents(components)
-    .getApiMocks()
+    .getTests()
     .stub(Components.prototype, 'log', sinon.fake.returns(null))
     .stub(LocalizedTimestamp, 'default', sinon.stub().returns(date))
     .command(['components'])
@@ -55,7 +55,7 @@ describe('list components', () => {
 
   new MockArchitectApi()
     .getComponents([components[2]], { query: 'another' })
-    .getApiMocks()
+    .getTests()
     .stub(Components.prototype, 'log', sinon.fake.returns(null))
     .stub(LocalizedTimestamp, 'default', sinon.stub().returns(date))
     .command(['components', 'another'])

@@ -20,10 +20,10 @@ describe('environment:create', () => {
   const mock_url = `${MOCK_APP_HOST}/${mock_account.name}/environments/${mock_env.name}`;
 
   new MockArchitectApi()
-    .getAccountByName(mock_account)
+    .getAccount(mock_account)
     .getCluster(mock_account, mock_cluster)
     .createEnvironment(mock_account)
-    .getApiMocks()
+    .getTests()
     .command(['environment:create', mock_env.name, '-a', mock_account.name, '--cluster', mock_cluster.name])
     .it('should create an environment with the cluster flag', ctx => {
       expect(ctx.stdout).to.contain(`Environment created: ${mock_url}`);
@@ -31,10 +31,10 @@ describe('environment:create', () => {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account)
+    .getAccount(mock_account)
     .getClusters(mock_account, [mock_cluster], { limit: 1 })
     .createEnvironment(mock_account)
-    .getApiMocks()
+    .getTests()
     .command(['environment:create', mock_env.name, '-a', mock_account.name])
     .it('should create an environment without the cluster flag if there is only one cluster', ctx => {
       expect(ctx.stdout).to.contain(`Environment created: ${mock_url}`);
@@ -42,9 +42,9 @@ describe('environment:create', () => {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account)
+    .getAccount(mock_account)
     .getClusters(mock_account, [mock_cluster, mock_cluster], { limit: 1 })
-    .getApiMocks()
+    .getTests()
     .command(['environment:create', mock_env.name, '-a', mock_account.name])
     .catch(ctx => {
       expect(ctx.message).to.include('--cluster flag is required')
@@ -52,10 +52,10 @@ describe('environment:create', () => {
     .it('should create an environment without the cluster flag should fail in CI if there are multiple clusters');
 
   new MockArchitectApi()
-    .getAccountByName(mock_account)
+    .getAccount(mock_account)
     .getCluster(mock_account, mock_cluster)
     .createEnvironment(mock_account)
-    .getApiMocks()
+    .getTests()
     .env({ ARCHITECT_CLUSTER: mock_cluster.name })
     .command(['environment:create', mock_env.name, '-a', mock_account.name])
     .it('should create an environment with the cluster environment variable', ctx => {
@@ -64,10 +64,10 @@ describe('environment:create', () => {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account)
+    .getAccount(mock_account)
     .getCluster(mock_account, mock_cluster)
     .createEnvironment(mock_account, { response_code: 409 })
-    .getApiMocks()
+    .getTests()
     .env({ ARCHITECT_CLUSTER: mock_cluster.name })
     .command(['environment:create', mock_env.name, '-a', mock_account.name, '--strict'])
     .catch(err => {
@@ -76,10 +76,10 @@ describe('environment:create', () => {
     .it('should error when an environment name is already in use for an account and --strict is provided');
 
   new MockArchitectApi()
-    .getAccountByName(mock_account)
+    .getAccount(mock_account)
     .getCluster(mock_account, mock_cluster)
     .createEnvironment(mock_account, { response_code: 409 })
-    .getApiMocks()
+    .getTests()
     .env({ ARCHITECT_CLUSTER: mock_cluster.name })
     .command(['environment:create', mock_env.name, '-a', mock_account.name, '--strict=true'])
     .catch(err => {
@@ -88,10 +88,10 @@ describe('environment:create', () => {
     .it('should error when an environment name is already in use for an account and --strict is explicitly set to true');
 
   new MockArchitectApi()
-    .getAccountByName(mock_account)
+    .getAccount(mock_account)
     .getCluster(mock_account, mock_cluster)
     .createEnvironment(mock_account, { response_code: 409 })
-    .getApiMocks()
+    .getTests()
     .env({ ARCHITECT_CLUSTER: mock_cluster.name })
     .command(['environment:create', mock_env.name, '-a', mock_account.name, '--strict=false'])
     .it('should print warning when an environment name is already in use for an account and --strict is explicitly set to false', ctx => {
@@ -100,10 +100,10 @@ describe('environment:create', () => {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account)
+    .getAccount(mock_account)
     .getCluster(mock_account, mock_cluster)
     .createEnvironment(mock_account, { response_code: 409 })
-    .getApiMocks()
+    .getTests()
     .env({ ARCHITECT_CLUSTER: mock_cluster.name })
     .command(['environment:create', mock_env.name, '-a', mock_account.name])
     .it('should print warning when an environment name is already in use for an account and --strict is not provided', ctx => {
@@ -112,10 +112,10 @@ describe('environment:create', () => {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account)
+    .getAccount(mock_account)
     .getCluster(mock_account, mock_cluster)
     .createEnvironment(mock_account)
-    .getApiMocks()
+    .getTests()
     .command(['environment:create', mock_env.name, '-a', mock_account.name, '--platform', mock_cluster.name])
     .it('should create an environment with the platform flag, but with a deprecation warning', ctx => {
       expect(ctx.stderr).to.contain('Warning: The "platform" flag has been deprecated. Use "cluster" instead.');
@@ -123,10 +123,10 @@ describe('environment:create', () => {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account)
+    .getAccount(mock_account)
     .getCluster(mock_account, mock_cluster)
     .createEnvironment(mock_account)
-    .getApiMocks()
+    .getTests()
     .env({ ARCHITECT_PLATFORM: mock_cluster.name })
     .command(['environment:create', mock_env.name, '-a', mock_account.name])
     .it('should create an environment with the platform environment variable', ctx => {

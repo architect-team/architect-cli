@@ -5,7 +5,7 @@ import path from 'path';
 import sinon, { SinonSpy } from 'sinon';
 import untildify from 'untildify';
 import UserUtils from '../../../src/architect/user/user.utils';
-import { MockArchitectApi, MOCK_API_HOST } from '../../utils/mocks';
+import { MockArchitectApi } from '../../utils/mocks';
 
 describe('secrets', function () {
   const download_location = path.resolve(untildify('~/secrets.yml'));
@@ -85,9 +85,9 @@ describe('secrets', function () {
   ]
 
   new MockArchitectApi()
-    .getAccountByName(account)
+    .getAccount(account)
     .getAccountSecrets(account, account_secrets)
-    .getApiMocks()
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(fs, 'writeFileSync', sinon.spy())
     .command(['secrets', '-a', 'examples', download_location])
@@ -108,10 +108,10 @@ describe('secrets', function () {
     })
 
   new MockArchitectApi()
-    .getAccountByName(account)
+    .getAccount(account)
     .getCluster(account, cluster)
     .getClusterSecrets(cluster, cluster_secrets_w_inheritance, { inherited: true })
-    .getApiMocks()
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(fs, 'writeFileSync', sinon.spy())
     .command(['secrets', '-a', 'examples', '--cluster', 'my-cluster', download_location])
@@ -133,10 +133,10 @@ describe('secrets', function () {
     })
 
   new MockArchitectApi()
-    .getAccountByName(account)
+    .getAccount(account)
     .getCluster(account, cluster)
     .getClusterSecrets(cluster, [], { inherited: true })
-    .getApiMocks()
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(fs, 'writeFileSync', sinon.spy())
     .command(['secrets', '-a', 'examples', '--cluster', 'my-cluster', download_location])
@@ -145,10 +145,10 @@ describe('secrets', function () {
     })
 
   new MockArchitectApi()
-    .getAccountByName(account)
+    .getAccount(account)
     .getEnvironment(account, environment)
     .getEnvironmentSecrets(environment, environment_secrets_w_inheritance, { inherited: true })
-    .getApiMocks()
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(fs, 'writeFileSync', sinon.spy())
     .command(['secrets', '-a', 'examples', '-e', 'env', download_location])
@@ -170,10 +170,10 @@ describe('secrets', function () {
     })
 
   new MockArchitectApi()
-    .getAccountByName(account)
+    .getAccount(account)
     .getEnvironment(account, environment)
     .getEnvironmentSecrets(environment, [], { inherited: true })
-    .getApiMocks()
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(fs, 'writeFileSync', sinon.spy())
     .command(['secrets', '-a', 'examples', '-e', 'env', download_location])
@@ -182,8 +182,8 @@ describe('secrets', function () {
     })
 
   new MockArchitectApi()
-    .getAccountByName(account)
-    .getApiMocks()
+    .getAccount(account)
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => false)
     .command(['secrets', '-a', 'examples', download_location])
     .catch(ctx => {
@@ -192,7 +192,7 @@ describe('secrets', function () {
     .it('download account secrets failed due to permission');
 
   new MockArchitectApi()
-    .getApiMocks()
+    .getTests()
     .command(['secrets', '-a', 'examples', '--cluster', 'my-cluster', '-e', 'env', download_location])
     .catch(ctx => {
       expect(ctx.message).to.contain('Please provide either the cluster flag or the environment flag and not both.')

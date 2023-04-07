@@ -1,7 +1,7 @@
 import { expect, test } from '@oclif/test';
 import { Replica } from '../../src/architect/environment/environment.utils';
 import Exec from '../../src/commands/exec';
-import { MOCK_API_HOST } from '../utils/mocks';
+import { MockArchitectApi } from '../utils/mocks';
 
 describe('exec command', () => {
   const account = {
@@ -21,23 +21,11 @@ describe('exec command', () => {
     { ext_ref: 'ext-1', node_ref: 'node-ref-0', resource_ref: 'my-app.services.app', created_at: new Date().toUTCString(), ports: [8080] },
   ];
 
-  const defaults = test
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .get(new RegExp(`/environments/${environment.id}/replicas.*`))
-      .optionally(true)
-      .reply(200, replicas))
-    .nock(MOCK_API_HOST, api => api
-      .get(new RegExp(`/environments/${environment.id}/ws/exec.*`))
-      .optionally(true)
-      .reply(200));
-
-  defaults
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .getEnvironmentReplicas(environment, replicas)
+    .getTests()
     .stub(Exec.prototype, 'exec', () => { console.log('worked'); })
     .stdout()
     .command(['exec', '-a', account.name, '-e', environment.name, '--', 'ls', '-la'])
@@ -45,7 +33,11 @@ describe('exec command', () => {
       expect(ctx.stdout).to.equal('worked\n');
     });
 
-  defaults
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .getEnvironmentReplicas(environment, replicas)
+    .getTests()
     .stub(Exec.prototype, 'exec', () => { console.log('worked'); })
     .stdout()
     .command(['exec', '-a', account.name, '-e', environment.name, 'examples/react-app', '--', 'ls', '-la'])
@@ -53,7 +45,11 @@ describe('exec command', () => {
       expect(ctx.stdout).to.equal('worked\n');
     });
 
-  defaults
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .getEnvironmentReplicas(environment, replicas)
+    .getTests()
     .stub(Exec.prototype, 'exec', () => { console.log('worked'); })
     .stdout()
     .command(['exec', '-a', account.name, '-e', environment.name, '-r', '0', '--', 'ls', '-la'])
@@ -61,16 +57,11 @@ describe('exec command', () => {
       expect(ctx.stdout).to.equal('worked\n');
     });
 
-  test
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .get(new RegExp(`/environments/${environment.id}/replicas.*`))
-      .reply(200, multiple_replicas))
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .getEnvironmentReplicas(environment, multiple_replicas)
+    .getTests()
     .stdout()
     .command(['exec', '-a', account.name, '-e', environment.name, 'app', '-r', '2', '--', 'ls', '-la'])
     .catch(err => {

@@ -40,7 +40,7 @@ describe('list component versions', () => {
   new MockArchitectApi()
     .getComponent(component.account, component)
     .getComponentVersions(component, component_versions)
-    .getApiMocks()
+    .getTests()
     .stub(AccountUtils, 'getAccount', sinon.stub().returns(component.account))
     .stub(LocalizedTimestamp, 'default', sinon.stub().returns(date))
     .stub(ComponentVersions.prototype, 'log', sinon.fake.returns(null))

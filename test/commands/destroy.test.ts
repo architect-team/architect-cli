@@ -19,12 +19,12 @@ describe('destroy', function () {
   };
 
   new MockArchitectApi()
-    .getAccountByName(mock_account)
+    .getAccount(mock_account)
     .getEnvironment(mock_account, mock_env)
     .deleteEnvironmentInstances(mock_env, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
-    .getApiMocks()
+    .getTests()
     .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
     .command(['destroy', '-a', mock_account.name, '-e', mock_env.name, '--auto-approve'])
     .it('destroy completes', ctx => {
@@ -32,12 +32,12 @@ describe('destroy', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account)
+    .getAccount(mock_account)
     .getEnvironment(mock_account, mock_env)
     .deleteEnvironmentInstances(mock_env, mock_pipeline)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
-    .getApiMocks()
+    .getTests()
     .command(['destroy', '-a', mock_account.name, '-e', mock_env.name, '--auto_approve'])
     .it('destroy completes with a warning when using a deprecated flag', ctx => {
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated.');

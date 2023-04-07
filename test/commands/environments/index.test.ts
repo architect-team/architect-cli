@@ -42,7 +42,7 @@ describe('environments', () => {
 
   new MockArchitectApi()
     .getEnvironments()
-    .getApiMocks()
+    .getTests()
     .command(['environments'])
     .it('list environments', ctx => {
       expect(ctx.stdout).to.contain('You have not configured any environments');
@@ -50,7 +50,7 @@ describe('environments', () => {
 
   new MockArchitectApi()
     .getEnvironments([], { query: mock_account.name })
-    .getApiMocks()
+    .getTests()
     .command(['environments', mock_account.name])
     .it('list environments for account if none exist', ctx => {
       expect(ctx.stdout).to.contain('No environments found matching architect');
@@ -58,7 +58,7 @@ describe('environments', () => {
 
   new MockArchitectApi()
     .getEnvironments(mock_environments, { query: mock_account.name })
-    .getApiMocks()
+    .getTests()
     .stub(Environments.prototype, 'log', sinon.fake.returns(null))
     .command(['environments', mock_account.name])
     .it('list environments for account', ctx => {

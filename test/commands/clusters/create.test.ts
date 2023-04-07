@@ -31,9 +31,9 @@ describe('cluster:create', function () {
 
   const create_test = () => {
     return new MockArchitectApi({ mock_api_host: 'https://api.architect.io' }) // TODO: see about updating the host here
-      .getAccountByName(account)
+      .getAccount(account)
       .getClusters(account, clusters)
-      .getApiMocks()
+      .getTests()
       .stub(ClusterUtils, 'getServerVersion', sinon.stub().returns(MIN_CLUSTER_SEMVER.version))
       .stub(ClusterCreate.prototype, 'log', sinon.stub())
       .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
@@ -138,9 +138,9 @@ describe('cluster:create', function () {
     })
 
   new MockArchitectApi({ mock_api_host: 'https://api.architect.io' }) // TODO: see about updating the host here
-    .getAccountByName(account)
+    .getAccount(account)
     .getClusters(account, clusters)
-    .getApiMocks()
+    .getTests()
     .stub(ClusterUtils, 'getServerVersion', sinon.stub().returns('v1.0.0'))
     .stub(ClusterCreate.prototype, 'log', sinon.stub())
     .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)

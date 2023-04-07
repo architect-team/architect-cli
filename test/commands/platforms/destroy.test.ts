@@ -17,24 +17,24 @@ describe('environment:destroy', () => {
   }
 
   new MockArchitectApi()
-    .getAccountByName(mock_account)
+    .getAccount(mock_account)
     .getCluster(mock_account, mock_cluster)
     .getCluster(mock_account, mock_cluster)
     .deleteCluster(mock_cluster, mock_pipeline)
     .pollPipeline(mock_pipeline)
-    .getApiMocks()
+    .getTests()
     .command(['platforms:destroy', '-a', mock_account.name, mock_cluster.name, '--auto-approve'])
     .it('should generate destroy deployment', ctx => {
       expect(ctx.stdout).to.contain('Cluster deregistered\n')
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account)
+    .getAccount(mock_account)
     .getCluster(mock_account, mock_cluster)
     .getCluster(mock_account, mock_cluster)
     .deleteCluster(mock_cluster, mock_pipeline, { force: 1 })
     .pollPipeline(mock_pipeline)
-    .getApiMocks()
+    .getTests()
     .command(['platforms:destroy', '-a', mock_account.name, mock_cluster.name, '--auto-approve', '--force'])
     .it('should force apply destroy job', ctx => {
       expect(ctx.stdout).to.contain('Cluster deregistered\n')

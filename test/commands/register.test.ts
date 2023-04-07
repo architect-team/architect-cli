@@ -36,7 +36,7 @@ describe('register', function () {
   };
 
   new MockArchitectApi()
-    .getApiMocks()
+    .getTests()
     .stub(fs, 'move', sinon.stub())
     .stub(ComponentRegister, 'registerComponent', sinon.stub().returns({}))
     .command(['register', '-a', 'examples'])
@@ -46,7 +46,7 @@ describe('register', function () {
     .it('expect default project path to be ./architect.yml if not provided');
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
     .registerComponentDigest({ callback:
       (body) => {
@@ -55,7 +55,7 @@ describe('register', function () {
         return body;
       }
     })
-    .getApiMocks()
+    .getTests()
     .stub(ComponentRegister.prototype, 'uploadVolume', sinon.stub().returns({}))
     .command(['register', 'test/mocks/superset/architect.yml', '-a', 'examples'])
     .it('test file: replacement', ctx => {
@@ -63,10 +63,10 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
     .registerComponentDigest()
-    .getApiMocks()
+    .getTests()
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
     .command(['register', getMockComponentFilePath('hello-world'), '-t', '1.0.0', '--architecture', 'amd64', '--architecture', 'arm64v8', '--architecture', 'windows-amd64', '-a', 'examples'])
     .it('register component with architecture flag', ctx => {
@@ -77,8 +77,8 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
-    .getApiMocks()
+    .getAccount(mock_account_response)
+    .getTests()
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().throws(new Error('Some internal docker build exception')))
     .command(['register', getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '--architecture', 'incorrect', '-a', 'examples'])
     .catch(err => {
@@ -88,7 +88,7 @@ describe('register', function () {
     .it('register component with architecture flag failed');
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
     .registerComponentDigest({ reply:
       (uri: any, body: any, cb: any) => { // TODO: types
@@ -109,7 +109,7 @@ describe('register', function () {
       }
     })
     .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'superset' }, tag: '1.0.0' }) // TODO: make mock for component version?
-    .getApiMocks()
+    .getTests()
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
     .stub(fs, 'move', sinon.stub())
     .stub(ComponentRegister.prototype, 'uploadVolume', sinon.stub().returns({}))
@@ -134,32 +134,32 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
     .registerComponentDigest()
     .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'database-seeding' }, tag: '1.0.0' }) // TODO: make mock for component version?
-    .getApiMocks()
+    .getTests()
     .command(['register', getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('it reports to the user that the component was registered successfully', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response)
     .registerComponentDigest()
     .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'superset' }, tag: '1.0.0' }) // TODO: make mock for component version?
     .architectRegistryHeadRequest('/v2/examples/superset.services.stateless-app/manifests/1.0.0')
     .architectRegistryHeadRequest('/v2/examples/superset.services.stateful-api/manifests/1.0.0')
     .architectRegistryHeadRequest('/v2/examples/superset.services.stateful-frontend/manifests/1.0.0')
     .architectRegistryHeadRequest('/v2/examples/superset.tasks.curler-build/manifests/1.0.0')
-    .getApiMocks()
+    .getTests()
     .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('it reports to the user that the superset was registered successfully', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
     .getEnvironment(mock_account_response, { name: 'test-env'})
     .registerComponentDigest({ callback:
@@ -171,7 +171,7 @@ describe('register', function () {
       }
     })
     .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'database-seeding' }, tag: 'architect.environment.test-env' }) // TODO: make mock for component version?
-    .getApiMocks()
+    .getTests()
     .stub(fs, 'move', sinon.stub())
     .command(['register', getMockComponentFilePath('database-seeding'), '-a', 'examples', '-e', 'test-env'])
     .it('registers an ephemeral component with an environment specified', ctx => {
@@ -179,7 +179,7 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
     .registerComponentDigest({ callback:
       (body) => {
@@ -190,7 +190,7 @@ describe('register', function () {
       }
     })
     .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'database-seeding' }, tag: '1.0.0' }) // TODO: make mock for component version?
-    .getApiMocks() // TODO: replace these with just something like .api_test since the mock helper returns this?
+    .getTests() // TODO: replace these with just something like .api_test since the mock helper returns this?
     .command(['register', getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('it does not call any docker commands if the image is provided', ctx => {
       expect(ctx.stderr).to.contain('Registering component database-seeding:1.0.0 with Architect Cloud');
@@ -198,11 +198,11 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
     .registerComponentDigest()
     .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'database-seeding' }, tag: 'latest' }) // TODO: make mock for component version?
-    .getApiMocks()
+    .getTests()
     .command(['register', getMockComponentFilePath('database-seeding'), '-a', 'examples'])
     .it('it defaults the tag to latest if not supplied', ctx => {
       expect(ctx.stderr).to.contain('Registering component database-seeding:latest with Architect Cloud');
@@ -210,13 +210,13 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response, {
+    .getAccount(mock_account_response, {
       response: {
         message: 'Friendly error message from server',
       },
       response_code: 403,
     })
-    .getApiMocks()
+    .getTests()
     .command(['register', getMockComponentFilePath('hello-world'), '-a', 'examples'])
     .catch(err => {
       expect(process.exitCode).eq(1);
@@ -225,7 +225,7 @@ describe('register', function () {
     .it('rejects with informative error message if account is unavailable');
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
     .registerComponentDigest({ callback:
       (body) => {
@@ -236,7 +236,7 @@ describe('register', function () {
       }
     })
     .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'database-seeding' }, tag: '1.0.0' }) // TODO: make mock for component version?
-    .getApiMocks()
+    .getTests()
     .stub(fs, 'move', sinon.stub())
     .command(['register', getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('gives user feedback while running docker commands', ctx => {
@@ -245,8 +245,8 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
-    .getApiMocks()
+    .getAccount(mock_account_response)
+    .getTests()
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub().throws(new Error('Some internal docker build exception')))
     .command(['register', getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .catch(err => {
@@ -256,11 +256,11 @@ describe('register', function () {
     .it('rejects with the original error message if docker buildx inspect fails');
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
     .registerComponentDigest()
     .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'database-seeding' }, tag: '1.0.0' }) // TODO: make mock for component version?
-    .getApiMocks()
+    .getTests()
     .stub(fs, 'move', sinon.stub())
     .command(['register', getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('gives user feedback for each component in the environment while running docker commands', ctx => {
@@ -268,11 +268,11 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
     .registerComponentDigest()
     .getComponentVersionByTagAndAccountName(mock_account_response, { component: { name: 'react-app' }, tag: 'latest' }) // TODO: make mock for component version?
-    .getApiMocks()
+    .getTests()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -292,10 +292,10 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
     .registerComponentDigest()
-    .getApiMocks()
+    .getTests()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .command(['register', getMockComponentFilePath('database-seeding'), '--arg', 'NODE_ENV=dev', '--arg', 'SSH_PUB_KEY="abc==\ntest.architect.io"', '-a', 'examples'])
@@ -307,12 +307,11 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response, { times: 2 })
     .architectRegistryHeadRequest()
     .registerComponentDigest()
-    .registerComponentDigest()
-    .getApiMocks()
+    .registerComponentDigest() // TODO: times 2
+    .getTests()
     .command(['register', '-a', 'examples', getMockComponentFilePath('react-app'), getMockComponentFilePath('database-seeding')])
     .it('register multiple apps at the same time with no tagged versions', ctx => {
       expect(ctx.stderr).to.contain('Registering component react-app:latest with Architect Cloud...... done\n');
@@ -321,12 +320,11 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response, { times: 2 })
     .architectRegistryHeadRequest()
     .registerComponentDigest()
     .registerComponentDigest()
-    .getApiMocks()
+    .getTests()
     .command(['register', '-t', '1.0.0', '-a', 'examples', getMockComponentFilePath('react-app'), getMockComponentFilePath('database-seeding')])
     .it('register multiple apps at the same time with a shared tagged version', ctx => {
       expect(ctx.stderr).to.contain('Registering component react-app:1.0.0 with Architect Cloud...... done\n');
@@ -335,12 +333,11 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response, { times: 2 })
     .architectRegistryHeadRequest()
     .registerComponentDigest()
     .registerComponentDigest()
-    .getApiMocks()
+    .getTests()
     .command(['register', getMockComponentFilePath('react-app'), getMockComponentFilePath('database-seeding'), '-t', '1.0.0', '-a', 'examples'])
     .it('register multiple apps at the same time with inverse arg sequence', ctx => {
       expect(ctx.stderr).to.contain('Registering component react-app:1.0.0 with Architect Cloud...... done\n');
@@ -349,12 +346,11 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response, { times: 2 })
     .architectRegistryHeadRequest()
     .registerComponentDigest()
     .registerComponentDigest()
-    .getApiMocks()
+    .getTests()
     .command(['register', getMockComponentFilePath('react-app'), '-t', '1.0.0', getMockComponentFilePath('database-seeding'), '-a', 'examples'])
     .it('register multiple apps at the same time with mixed arg sequence', ctx => {
       expect(ctx.stderr).to.contain('Registering component react-app:1.0.0 with Architect Cloud...... done\n');
@@ -363,12 +359,11 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response, { times: 2 })
     .architectRegistryHeadRequest()
     .registerComponentDigest()
     .registerComponentDigest()
-    .getApiMocks()
+    .getTests()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -384,12 +379,11 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response, { times: 2 })
     .architectRegistryHeadRequest()
     .registerComponentDigest()
     .registerComponentDigest()
-    .getApiMocks()
+    .getTests()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -406,12 +400,11 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response, { times: 2 })
     .architectRegistryHeadRequest()
     .registerComponentDigest()
     .registerComponentDigest()
-    .getApiMocks()
+    .getTests()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -428,12 +421,11 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response, { times: 2 })
     .architectRegistryHeadRequest()
     .registerComponentDigest()
-    .registerComponentDigest()
-    .getApiMocks()
+    .registerComponentDigest() // TODO: add times
+    .getTests()
     .stub(fs, 'move', sinon.stub())
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
@@ -448,10 +440,10 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
     .registerComponentDigest()
-    .getApiMocks()
+    .getTests()
     .stub(PluginManager, 'getPlugin', sinon.stub().returns({
       build: () => { },
     }))
@@ -468,10 +460,10 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
+    .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
     .registerComponentDigest()
-    .getApiMocks()
+    .getTests()
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(BuildPackUtils, 'build', sinon.stub())
     .stub(PluginManager, 'getPlugin', sinon.stub().returns({
@@ -492,8 +484,8 @@ describe('register', function () {
     });
 
   new MockArchitectApi()
-    .getAccountByName(mock_account_response)
-    .getApiMocks()
+    .getAccount(mock_account_response)
+    .getTests()
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerUtils, 'doesDockerfileExist', sinon.stub().callsFake(DockerUtils.doesDockerfileExist)) // override global stub
     .command(['register', 'test/mocks/register/nonexistence-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
@@ -503,10 +495,10 @@ describe('register', function () {
     .it('fail to register with a dockerfile that does not exist');
 
   new MockArchitectApi()
-    .getAccountByName({ name: 'my-account' }, { response: mock_architect_uppercase_account_response }) // TODO: make mock?
+    .getAccount({ name: 'my-account' }, { response: mock_architect_uppercase_account_response }) // TODO: make mock?
     .architectRegistryHeadRequest()
     .registerComponentDigest()
-    .getApiMocks()
+    .getTests()
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
     .command(['register', getMockComponentFilePath('hello-world'), '-t', '1.0.0', '-a', 'MY-ACCOUNT'])
     .it('register component to account with name consists of uppercase letters', ctx => {

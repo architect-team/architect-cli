@@ -10,6 +10,7 @@ import ComponentVersion from '../../src/architect/component/component-version.en
 import { Component } from '../../src/architect/component/component.entity';
 import Deployment from '../../src/architect/deployment/deployment.entity';
 import Environment from '../../src/architect/environment/environment.entity';
+import { Replica } from '../../src/architect/environment/environment.utils';
 import Pipeline from '../../src/architect/pipeline/pipeline.entity';
 import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
 import { AccountSecret, ClusterSecret, EnvironmentSecret } from '../../src/architect/secret/secret.utils';
@@ -74,37 +75,47 @@ export const mockArchitectAuth = () =>
 
 // TODO: instead of "mocks not yet satisfied" when a mocked api call is missing, can we include a better error by modifying the test object?
 // TODO: add in the .times(2) to an options object to be able to remove duplicate api call mocks in single tests
+// TODO: potentially allow persist as an options property, but times should likely always be used instead
+
+interface TestOptions {
+  times?: number;
+}
+
 export class MockArchitectApi {
   private api_mocks;
   private readonly mock_api_host;
 
-  constructor(options?: {
+  constructor(options?: { // TOOD: include timeout in options
     print?: boolean,
     mock_api_host?: string,
+    timeout?: number,
   }) {
     this.api_mocks = mockArchitectAuth()
       .stdout({ print: !!options?.print })
-      .stderr({ print: !!options?.print });
+      .stderr({ print: !!options?.print })
+      .timeout(options?.timeout);
     this.mock_api_host = options?.mock_api_host || MOCK_API_HOST;
   }
 
-  getApiMocks() {
+  getTests() {
     return this.api_mocks;
   }
 
   // /accounts
-  getAccountByName(account: Partial<Account>, options?: { response_code?: number, response?: any }) { // TODO: don't set defaults in functions, use || ?
+  getAccount(account: Partial<Account>, options?: { response_code?: number, response?: any } & TestOptions) { // TODO: don't set defaults in functions, use || ?
+    // TODO: allow setting reply in other places as a callback or object
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.name}`)
-      .reply(options?.response_code || 200, options?.response || account)); // TODO: allow setting reply in other places as a callback or object
+      .times(options?.times || 1) // TODO: potentially create a wrapper for all nock calls so that .times and other things don't need to be used in all/random functions
+      .reply(options?.response_code || 200, options?.response || account));
     return this;
   }
 
   // /accounts/<account>/environments
-  getEnvironment(account: Partial<Account>, environment: Partial<Environment>, options?: { response_code: number }) {
+  getEnvironment(account: Partial<Account>, environment: RecursivePartial<Environment>, options?: { response_code?: number, response?: any }) { // TODO: response type
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(options?.response_code || 200, environment))
+      .reply(options?.response_code || 200, options?.response || environment))
     return this;
   }
 
@@ -117,7 +128,7 @@ export class MockArchitectApi {
 
   // /accounts/<account>/secrets/values
   getAccountSecrets(account: Partial<Account>, secrets: AccountSecret[]) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.id}/secrets/values`)
       .reply(200, secrets));
     return this;
@@ -181,6 +192,29 @@ export class MockArchitectApi {
     return this;
   }
 
+  // TODO: merge all generic options to a generic option interface
+  environmentExec(environment: RecursivePartial<Environment>, task_id: string, options?: { callback?: RequestBodyMatcher, response_code?: number, response?: any }) { // TODO: any
+    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+      .post(`/environments/${environment.id}/exec`, options?.callback || ((body) => body))
+      .reply(options?.response_code || 200, options?.response || task_id)
+    );
+    return this;
+  }
+
+  getEnvironmentReplicas(environment: Partial<Environment>, replicas: Replica[]) {
+    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+      .get(new RegExp(`/environments/${environment.id}/replicas.*`)) // TODO: get rid of .*
+      .reply(200, replicas))
+    return this;
+  }
+
+  // getEnvironmentWebsocket(environment: Partial<Environment>) {
+  //   this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+  //     .get(new RegExp(`/environments/${environment.id}/ws/exec.*`)) // TODO: get rid of .*? maybe keep for this one?
+  //     .reply(200));
+  //   return this;
+  // }
+
   // /accounts/<account>/clusters
   getCluster(account: Partial<Account>, cluster: Partial<Cluster>) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
@@ -208,7 +242,7 @@ export class MockArchitectApi {
       url = `${url}?force=${options.force}`; // TODO: make more generic? use with other similar cases?
     }
 
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .delete(url)
       .reply(200, pipeline))
     return this;
@@ -221,7 +255,7 @@ export class MockArchitectApi {
       url = `${url}?inherited=${options.inherited}`; // TODO: make more generic? use with other similar cases?
     }
 
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(url)
       .reply(200, secrets));
     return this;
@@ -234,7 +268,7 @@ export class MockArchitectApi {
       url = `${url}?inherited=${options.inherited}`; // TODO: make more generic? use with other similar cases?
     }
 
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(url)
       .reply(200, secrets));
     return this;
@@ -248,7 +282,7 @@ export class MockArchitectApi {
     return this;
   }
 
-  getComponentVersionByTag(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) { // TODO: add AndAccountId
+  getComponentVersionByTag(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) { // TODO: add AndAccountId?
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.id}/components/${component_version.component?.name}/versions/${component_version.tag}`)
       .reply(200, component_version))
@@ -274,7 +308,7 @@ export class MockArchitectApi {
   }
 
   getComponent(account: Partial<Account>, component: RecursivePartial<Component>) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.name}/components/${component.name}`)
       .reply(200, component));
     return this;
@@ -282,7 +316,7 @@ export class MockArchitectApi {
 
   // /components
   getComponents(components: RecursivePartial<Component>[], options?: { query?: string }) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/components?q=${options?.query || ''}`)
       .reply(200, { rows: components, count: components.length }));
     return this;
@@ -290,7 +324,7 @@ export class MockArchitectApi {
 
   // /components/<component>/
   getComponentVersions(component: RecursivePartial<Component>, component_versions: Partial<ComponentVersion>[]) {
-    this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/components/${component.component_id}/versions`)
       .reply(200, { rows: component_versions, count: component_versions.length }));
     return this;
