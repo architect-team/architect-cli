@@ -18,7 +18,7 @@ describe('destroy', function () {
     environment: mock_env
   };
 
-  new MockArchitectApi()
+  new MockArchitectApi({ timeout: 20000 })
     .getAccount(mock_account)
     .getEnvironment(mock_account, mock_env)
     .deleteEnvironmentInstances(mock_env, mock_pipeline)

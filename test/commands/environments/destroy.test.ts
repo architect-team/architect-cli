@@ -24,7 +24,7 @@ describe('environment:destroy', () => {
     name: 'failing-test-env',
   };
 
-  new MockArchitectApi()
+  new MockArchitectApi({ timeout: 20000 })
     .getEnvironment(mock_account, failing_mock_env, { response_code: 404 })
     .getTests()
     .stub(AccountUtils, 'getAccount', () => mock_account)
@@ -34,7 +34,7 @@ describe('environment:destroy', () => {
     })
     .it('should exit with error status when --strict is set explicitly to true');
 
-  new MockArchitectApi()
+  new MockArchitectApi({ timeout: 20000 })
     .getEnvironment(mock_account, failing_mock_env, { response_code: 404 })
     .getTests()
     .stub(AccountUtils, 'getAccount', () => mock_account)
@@ -44,7 +44,7 @@ describe('environment:destroy', () => {
     })
     .it('should exit with error status when --strict is passed without explicit mapping');
 
-  new MockArchitectApi()
+  new MockArchitectApi({ timeout: 20000 })
     .getTests()
     .stub(AccountUtils, 'getAccount', () => mock_account)
     .stub(EnvironmentUtils, 'getEnvironment', () => failing_mock_env)
@@ -53,7 +53,7 @@ describe('environment:destroy', () => {
       expect(ctx.stderr).to.contain(`Warning: No configured environments found matching ${failing_mock_env.name}.`);
     });
 
-  new MockArchitectApi()
+  new MockArchitectApi({ timeout: 20000 })
     .getTests()
     .stub(AccountUtils, 'getAccount', () => mock_account)
     .stub(EnvironmentUtils, 'getEnvironment', () => failing_mock_env)
@@ -62,7 +62,7 @@ describe('environment:destroy', () => {
       expect(ctx.stderr).contains(`Warning: No configured environments found matching ${failing_mock_env.name}.`);
     });
 
-  new MockArchitectApi()
+  new MockArchitectApi({ timeout: 20000 })
     .getEnvironment(mock_account, mock_env)
     .deleteEnvironment(mock_env, mock_pipeline, { force: 0 })
     .getTests()
@@ -74,7 +74,7 @@ describe('environment:destroy', () => {
       expect(ctx.stdout).to.contain('Environment deregistered\n');
     });
 
-  new MockArchitectApi()
+  new MockArchitectApi({ timeout: 20000 })
     .getEnvironment(mock_account, mock_env)
     .deleteEnvironment(mock_env, mock_pipeline, { force: 1 })
     .getTests()

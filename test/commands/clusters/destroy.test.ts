@@ -16,7 +16,7 @@ describe('clusters:destroy', () => {
     id: 'test-pipeline-id'
   }
 
-  new MockArchitectApi()
+  new MockArchitectApi({ timeout: 20000 })
     .getAccount(mock_account)
     .getCluster(mock_account, mock_cluster)
     .getCluster(mock_account, mock_cluster)
@@ -28,7 +28,7 @@ describe('clusters:destroy', () => {
       expect(ctx.stdout).to.contain('Cluster deregistered\n')
     });
 
-  new MockArchitectApi()
+  new MockArchitectApi({ timeout: 20000 })
     .getAccount(mock_account)
     .getCluster(mock_account, mock_cluster)
     .getCluster(mock_account, mock_cluster)

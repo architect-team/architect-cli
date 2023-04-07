@@ -43,7 +43,7 @@ describe('task:exec', async function () {
   new MockArchitectApi()
     .getAccount(mock_account)
     .getEnvironment(mock_account, mock_env)
-    .environmentExec(mock_env, mock_remote_task_id, { callback:
+    .environmentExec(mock_env, mock_remote_task_id, { body:
       (body) => {
         expect(body.component_account_name).to.eq(mock_account.name);
         expect(body.component_name).to.eq(mock_component.name);
@@ -60,7 +60,7 @@ describe('task:exec', async function () {
   new MockArchitectApi()
     .getAccount(mock_account)
     .getEnvironment(mock_account, mock_env)
-    .environmentExec(mock_env, mock_remote_task_id, { callback:
+    .environmentExec(mock_env, mock_remote_task_id, { body:
       (body) => {
         expect(body.component_account_name).to.eq(mock_account.name);
         expect(body.component_name).to.eq(mock_component.name);
@@ -77,7 +77,7 @@ describe('task:exec', async function () {
   new MockArchitectApi()
     .getAccount(mock_account)
     .getEnvironment(mock_account, mock_env)
-    .environmentExec(mock_env, mock_remote_task_id, { callback:
+    .environmentExec(mock_env, mock_remote_task_id, { body:
       (body) => {
         expect(body.component_account_name).to.eq(mock_account.name);
         expect(body.component_name).to.eq(mock_component.name);
@@ -109,7 +109,7 @@ describe('task:exec', async function () {
   new MockArchitectApi()
     .getAccount(mock_account)
     .getEnvironment(mock_account, mock_env)
-    .environmentExec(mock_env, mock_remote_task_id, { callback:
+    .environmentExec(mock_env, mock_remote_task_id, { body:
       (body) => {
         expect(body.component_account_name).to.eq(mock_account.name);
         expect(body.component_name).to.eq(bad_component_name);

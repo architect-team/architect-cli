@@ -331,7 +331,7 @@ describe('deployment secrets', function () {
   new MockArchitectApi()
     .getAccount(account)
     .getEnvironment(account, environment)
-    .deployComponent(environment, mock_pipeline, { callback:
+    .deployComponent(environment, mock_pipeline, { body:
       (body) => {
         expect(body.values['*'].app_replicas).to.eq(4);
         return body;
@@ -348,7 +348,7 @@ describe('deployment secrets', function () {
   new MockArchitectApi()
     .getAccount(account)
     .getEnvironment(account, environment)
-    .deployComponent(environment, mock_pipeline, { callback:
+    .deployComponent(environment, mock_pipeline, { body:
       (body) => {
         expect(body.values['*'].test_secret).to.eq('test');
         expect(body.values['*'].another_secret).to.eq('another_test');
@@ -366,7 +366,7 @@ describe('deployment secrets', function () {
   new MockArchitectApi()
     .getAccount(account)
     .getEnvironment(account, environment)
-    .deployComponent(environment, mock_pipeline, { callback:
+    .deployComponent(environment, mock_pipeline, { body:
       (body) => {
         expect(body.values['*'].another_required_key).to.eq('required_value');
         expect(body.values.echo.a_required_key).to.eq('some_value');
@@ -390,7 +390,7 @@ describe('deployment secrets', function () {
   new MockArchitectApi()
     .getAccount(account)
     .getEnvironment(account, environment)
-    .deployComponent(environment, mock_pipeline, { callback:
+    .deployComponent(environment, mock_pipeline, { body:
       (body) => {
         expect(body.values['*'].another_required_key).to.eq('required_value');
         expect(body.values['*'].a_required_key).to.eq('some_value');

@@ -75,7 +75,7 @@ describe('Scale', function () {
 
     new MockArchitectApi()
       .getAccount(account)
-      .getComponentVersionByTag(account, component_version)
+      .getComponentVersionByTagAndAccountId(account, component_version)
       .getEnvironment(account, environment)
       .updateEnvironmentScaling(environment, dto)
       .updateEnvironment(environment, dto)

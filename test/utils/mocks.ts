@@ -2,7 +2,7 @@ import { test } from '@oclif/test';
 import fs from 'fs-extra';
 import { RequestBodyMatcher } from 'nock/types';
 import path from 'path';
-import { Dictionary, RecursivePartial } from '../../src';
+import { RecursivePartial } from '../../src';
 import AuthClient from '../../src/app-config/auth';
 import Account from '../../src/architect/account/account.entity';
 import Cluster from '../../src/architect/cluster/cluster.entity';
@@ -10,7 +10,7 @@ import ComponentVersion from '../../src/architect/component/component-version.en
 import { Component } from '../../src/architect/component/component.entity';
 import Deployment from '../../src/architect/deployment/deployment.entity';
 import Environment from '../../src/architect/environment/environment.entity';
-import { Replica } from '../../src/architect/environment/environment.utils';
+import { CertManagerCertificate, Replica, ScaleServiceDto, UpdateEnvironmentDto } from '../../src/architect/environment/environment.utils';
 import Pipeline from '../../src/architect/pipeline/pipeline.entity';
 import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
 import { AccountSecret, ClusterSecret, EnvironmentSecret } from '../../src/architect/secret/secret.utils';
@@ -73,19 +73,18 @@ export const mockArchitectAuth = () =>
     .stub(DockerBuildXUtils, 'getBuilder', () => { })
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', () => { });
 
-// TODO: instead of "mocks not yet satisfied" when a mocked api call is missing, can we include a better error by modifying the test object?
-// TODO: add in the .times(2) to an options object to be able to remove duplicate api call mocks in single tests
-// TODO: potentially allow persist as an options property, but times should likely always be used instead
-
 interface TestOptions {
   times?: number;
-}
+  body?: RequestBodyMatcher;
+  response?: Function | object; // TODO: type? check in nock repo?
+  response_code?: number;
+};
 
 export class MockArchitectApi {
   private api_mocks;
   private readonly mock_api_host;
 
-  constructor(options?: { // TOOD: include timeout in options
+  constructor(options?: {
     print?: boolean,
     mock_api_host?: string,
     timeout?: number,
@@ -102,17 +101,16 @@ export class MockArchitectApi {
   }
 
   // /accounts
-  getAccount(account: Partial<Account>, options?: { response_code?: number, response?: any } & TestOptions) { // TODO: don't set defaults in functions, use || ?
-    // TODO: allow setting reply in other places as a callback or object
+  getAccount(account: Partial<Account>, options?: TestOptions) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.name}`)
-      .times(options?.times || 1) // TODO: potentially create a wrapper for all nock calls so that .times and other things don't need to be used in all/random functions
+      .times(options?.times || 1)
       .reply(options?.response_code || 200, options?.response || account));
     return this;
   }
 
   // /accounts/<account>/environments
-  getEnvironment(account: Partial<Account>, environment: RecursivePartial<Environment>, options?: { response_code?: number, response?: any }) { // TODO: response type
+  getEnvironment(account: Partial<Account>, environment: RecursivePartial<Environment>, options?: TestOptions) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.id}/environments/${environment.name}`)
       .reply(options?.response_code || 200, options?.response || environment))
@@ -142,36 +140,28 @@ export class MockArchitectApi {
     return this;
   }
 
-  updateEnvironment(environment: Partial<Environment>, dto: { replicas?: number, clear_scaling?: boolean, resource_slug: string }) {
+  updateEnvironment(environment: Partial<Environment>, dto: UpdateEnvironmentDto) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
-      .put(`/environments/${environment.id}`, dto)
+      .put(`/environments/${environment.id}`, dto as RequestBodyMatcher)
       .reply(200));
     return this;
   }
 
-  updateEnvironmentScaling(environment: Partial<Environment>, dto: { replicas: number, resource_slug: string }, options: { response_code?: number } = { response_code: 200 }) {
+  updateEnvironmentScaling(environment: Partial<Environment>, dto: ScaleServiceDto, options?: TestOptions) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
-      .put(`/environments/${environment.id}/scale`, dto)
-      .reply(options.response_code))
+      .put(`/environments/${environment.id}/scale`, dto as RequestBodyMatcher)
+      .reply(options?.response_code || 200))
     return this;
   }
 
-  // TODO: type? (any)
-  deployComponent(environment: Partial<Environment>, pipeline: RecursivePartial<Pipeline>, options?: { callback?: RequestBodyMatcher }) {
+  deployComponent(environment: Partial<Environment>, pipeline: RecursivePartial<Pipeline>, options?: TestOptions) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
-      .post(`/environments/${environment.id}/deploy`, options?.callback || ((body) => body))
+      .post(`/environments/${environment.id}/deploy`, options?.body)
       .reply(200, pipeline))
     return this;
   }
 
-  getEnvironmentCertificates(environment: Partial<Environment>, certificates: { // TODO: type
-      metadata: {
-        labels: Dictionary<string>;
-      },
-      spec: {
-        dnsNames: string[];
-      },
-    }[]) {
+  getEnvironmentCertificates(environment: Partial<Environment>, certificates: RecursivePartial<CertManagerCertificate>[]) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/environments/${environment.id}/certificates`)
       .reply(200, certificates))
@@ -187,15 +177,14 @@ export class MockArchitectApi {
 
   deleteEnvironment(environment: Partial<Environment>, pipeline: RecursivePartial<Pipeline>, options?: { force?: 0 | 1 }) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
-      .delete(`/environments/${environment.id}?force=${options?.force || 0}`)
+      .delete(`/environments/${environment.id}?force=${options?.force}`)
       .reply(200, pipeline));
     return this;
   }
 
-  // TODO: merge all generic options to a generic option interface
-  environmentExec(environment: RecursivePartial<Environment>, task_id: string, options?: { callback?: RequestBodyMatcher, response_code?: number, response?: any }) { // TODO: any
+  environmentExec(environment: RecursivePartial<Environment>, task_id: string, options?: TestOptions) {
     this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/exec`, options?.callback || ((body) => body))
+      .post(`/environments/${environment.id}/exec`, options?.body)
       .reply(options?.response_code || 200, options?.response || task_id)
     );
     return this;
@@ -203,17 +192,10 @@ export class MockArchitectApi {
 
   getEnvironmentReplicas(environment: Partial<Environment>, replicas: Replica[]) {
     this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
-      .get(new RegExp(`/environments/${environment.id}/replicas.*`)) // TODO: get rid of .*
+      .get(new RegExp(`/environments/${environment.id}/replicas`))
       .reply(200, replicas))
     return this;
   }
-
-  // getEnvironmentWebsocket(environment: Partial<Environment>) {
-  //   this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
-  //     .get(new RegExp(`/environments/${environment.id}/ws/exec.*`)) // TODO: get rid of .*? maybe keep for this one?
-  //     .reply(200));
-  //   return this;
-  // }
 
   // /accounts/<account>/clusters
   getCluster(account: Partial<Account>, cluster: Partial<Cluster>) {
@@ -224,65 +206,49 @@ export class MockArchitectApi {
   }
 
   getClusters(account: Partial<Account>, clusters: Partial<Cluster>[], options?: { limit?: number }) {
-    let url = `/accounts/${account.id}/clusters`;
-    if (options?.limit) {
-      url = `${url}?limit=${options.limit}`; // TODO: make more generic? use with other similar cases?
-    }
-
+    const force = options?.limit ? `?limit=${options.limit}` : '';
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
-      .get(url)
+      .get(`/accounts/${account.id}/clusters${force}`)
       .reply(200, { total: clusters.length, rows: clusters }));
     return this;
   }
 
   // /clusters
   deleteCluster(cluster: Partial<Cluster>, pipeline: Partial<Pipeline>, options?: { force?: 0 | 1 }) {
-    let url = `/clusters/${cluster.id}`;
-    if (options?.force) {
-      url = `${url}?force=${options.force}`; // TODO: make more generic? use with other similar cases?
-    }
-
+    const force = options?.force ? `?force=${options.force}` : '';
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
-      .delete(url)
+      .delete(`/clusters/${cluster.id}${force}`)
       .reply(200, pipeline))
     return this;
   }
 
   // /clusters/<cluster>/secrets/values
   getClusterSecrets(cluster: Partial<Cluster>, secrets: (Partial<ClusterSecret> | Partial<AccountSecret>)[], options?: { inherited?: boolean }) {
-    let url = `/clusters/${cluster.id}/secrets/values`;
-    if (options?.inherited) {
-      url = `${url}?inherited=${options.inherited}`; // TODO: make more generic? use with other similar cases?
-    }
-
+    const inherited = options?.inherited ? `?inherited=${options.inherited}` : '';
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
-      .get(url)
+      .get(`/clusters/${cluster.id}/secrets/values${inherited}`)
       .reply(200, secrets));
     return this;
   }
 
   // /environments/<environment>/secrets/values
   getEnvironmentSecrets(environment: Partial<Environment>, secrets: (Partial<EnvironmentSecret> | Partial<ClusterSecret> | Partial<AccountSecret>)[], options?: { inherited?: boolean }) {
-    let url = `/environments/${environment.id}/secrets/values`;
-    if (options?.inherited) {
-      url = `${url}?inherited=${options.inherited}`; // TODO: make more generic? use with other similar cases?
-    }
-
+    const inherited = options?.inherited ? `?inherited=${options.inherited}` : '';
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
-      .get(url)
+      .get(`/environments/${environment.id}/secrets/values${inherited}`)
       .reply(200, secrets));
     return this;
   }
 
   // /accounts/<account>/components
-  getLatestComponentDigest(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) { // TODO: attempt to not use Partial/RecursivePartial
+  getLatestComponentDigest(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.id}/components/${component_version.component?.name}`)
       .reply(200, component_version))
     return this;
   }
 
-  getComponentVersionByTag(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) { // TODO: add AndAccountId?
+  getComponentVersionByTagAndAccountId(account: Partial<Account>, component_version: RecursivePartial<ComponentVersion>) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.id}/components/${component_version.component?.name}/versions/${component_version.tag}`)
       .reply(200, component_version))
@@ -296,13 +262,11 @@ export class MockArchitectApi {
     return this;
   }
 
-  // TODO: better name for first callback and similar ones
-  // TODO: find type for reply callback
-  // TODO: generalize function arg types based on endpoint requirements
-  registerComponentDigest(options?: { callback?: RequestBodyMatcher, reply?: any }) {
+  registerComponentDigest(account: Partial<Account>, options?: TestOptions) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
-      .post(/\/accounts\/.*\/components/, options?.callback || ((body) => body))
-      .reply(200, options?.reply || {})
+      .post(`/accounts/${account.id}/components`, options?.body)
+      .times(options?.times || 1)
+      .reply(200, options?.response || {})
     )
     return this;
   }
@@ -349,7 +313,7 @@ export class MockArchitectApi {
   pollPipeline(pipeline: RecursivePartial<Pipeline>) {
     this.api_mocks = this.api_mocks.stub(PipelineUtils, 'pollPipeline', async () => pipeline);
     return this;
-  } // TODO: does this belong here?
+  }
 
   // Architect registry
   architectRegistryHeadRequest(endpoint: string | RegExp = /.*/) {
