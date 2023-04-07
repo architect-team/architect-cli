@@ -1,8 +1,7 @@
 import AdmZip from 'adm-zip';
 import axios from 'axios';
 import * as crypto from 'crypto';
-import * as fs from 'fs-extra';
-import { createWriteStream } from 'fs-extra';
+import fs from 'fs-extra';
 import { finished } from 'stream';
 import * as tar from 'tar';
 import { promisify } from 'util';
@@ -10,7 +9,7 @@ import { PluginArchitecture, PluginBinary, PluginBundleType, PluginPlatform } fr
 
 export default class PluginUtils {
   static async downloadFile(url: string, location: string, sha256: string): Promise<void> {
-    const writer = createWriteStream(location);
+    const writer = fs.createWriteStream(location);
     return axios({
       method: 'get',
       url: url,

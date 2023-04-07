@@ -1,5 +1,6 @@
 import { CliUx } from '@oclif/core';
 import chalk from 'chalk';
+import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import { ArchitectError } from '../../dependency-manager/utils/errors';
 
@@ -32,8 +33,6 @@ export default class PromptUtils {
    * https://github.com/SBoudrias/Inquirer.js/pull/891
    */
   public static disablePrompts(): void {
-    // eslint-disable-next-line unicorn/prefer-module
-    const inquirer = require('inquirer');
     process.stdout.isTTY = false;
 
     inquirer.prompt = async function (prompts: any) {
@@ -51,9 +50,9 @@ export default class PromptUtils {
         d[p.name] = p.default;
         return d;
       }, {});
-    };
+    } as any;
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    inquirer.prompt.registerPrompt = function () { };
+    inquirer.prompt.registerPrompt = function () { } as any;
   }
 
   /**
