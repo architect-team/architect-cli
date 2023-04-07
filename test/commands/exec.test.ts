@@ -8,17 +8,27 @@ describe('exec command', () => {
     name: 'examples',
     id: '1',
   };
+
   const environment = {
     name: 'test',
     id: '1',
   };
+
+  const component = {
+    name: 'react-app',
+  };
+
+  const service = {
+    name: 'app',
+  };
+
   const replicas: Replica[] = [
-    { ext_ref: 'ext-0', node_ref: 'node-ref-0', resource_ref: 'my-app.services.app', created_at: new Date().toUTCString(), ports: [8080] },
+    { ext_ref: 'ext-0', node_ref: 'node-ref-0', resource_ref: `${component.name}.services.${service}`, created_at: new Date().toUTCString(), ports: [8080] },
   ];
 
   const multiple_replicas: Replica[] = [
-    { ext_ref: 'ext-0', node_ref: 'node-ref-0', resource_ref: 'my-app.services.app', created_at: new Date().toUTCString(), ports: [8080] },
-    { ext_ref: 'ext-1', node_ref: 'node-ref-0', resource_ref: 'my-app.services.app', created_at: new Date().toUTCString(), ports: [8080] },
+    { ext_ref: 'ext-0', node_ref: 'node-ref-0', resource_ref: `${component.name}.services.${service}`, created_at: new Date().toUTCString(), ports: [8080] },
+    { ext_ref: 'ext-1', node_ref: 'node-ref-0', resource_ref: `${component.name}.services.${service}`, created_at: new Date().toUTCString(), ports: [8080] },
   ];
 
   new MockArchitectApi()
@@ -36,11 +46,11 @@ describe('exec command', () => {
   new MockArchitectApi()
     .getAccount(account)
     .getEnvironment(account, environment)
-    .getEnvironmentReplicas(environment, replicas)
+    .getEnvironmentReplicas(environment, replicas, component)
     .getTests()
     .stub(Exec.prototype, 'exec', () => { console.log('worked'); })
     .stdout()
-    .command(['exec', '-a', account.name, '-e', environment.name, 'examples/react-app', '--', 'ls', '-la'])
+    .command(['exec', '-a', account.name, '-e', environment.name, `${account.name}/${component.name}`, '--', 'ls', '-la'])
     .it('exec component and command with spaces', ctx => {
       expect(ctx.stdout).to.equal('worked\n');
     });
@@ -60,7 +70,7 @@ describe('exec command', () => {
   new MockArchitectApi()
     .getAccount(account)
     .getEnvironment(account, environment)
-    .getEnvironmentReplicas(environment, multiple_replicas)
+    .getEnvironmentReplicas(environment, multiple_replicas, service)
     .getTests()
     .stdout()
     .command(['exec', '-a', account.name, '-e', environment.name, 'app', '-r', '2', '--', 'ls', '-la'])

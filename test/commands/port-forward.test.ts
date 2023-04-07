@@ -9,17 +9,27 @@ describe('port-forward command', () => {
     name: 'examples',
     id: '1',
   };
+
   const environment = {
     name: 'test',
     id: '1',
   };
+
+  const component = {
+    name: 'react-app',
+  };
+
+  const service = {
+    name: 'app',
+  };
+
   const replicas: Replica[] = [
-    { ext_ref: 'ext-0', node_ref: 'node-ref-0', resource_ref: 'my-app.services.app', created_at: new Date().toUTCString(), ports: [8080] },
+    { ext_ref: 'ext-0', node_ref: 'node-ref-0', resource_ref: `${component.name}.services.${service.name}`, created_at: new Date().toUTCString(), ports: [8080] },
   ];
 
   const multiple_replicas: Replica[] = [
-    { ext_ref: 'ext-0', node_ref: 'node-ref-0', resource_ref: 'my-app.services.app', created_at: new Date().toUTCString(), ports: [8080] },
-    { ext_ref: 'ext-1', node_ref: 'node-ref-0', resource_ref: 'my-app.services.app', created_at: new Date().toUTCString(), ports: [8080] },
+    { ext_ref: 'ext-0', node_ref: 'node-ref-0', resource_ref: `${component.name}.services.${service.name}`, created_at: new Date().toUTCString(), ports: [8080] },
+    { ext_ref: 'ext-1', node_ref: 'node-ref-0', resource_ref: `${component.name}.services.${service.name}`, created_at: new Date().toUTCString(), ports: [8080] },
   ];
 
   new MockArchitectApi()
@@ -51,7 +61,7 @@ describe('port-forward command', () => {
     new MockArchitectApi()
     .getAccount(account)
     .getEnvironment(account, environment)
-    .getEnvironmentReplicas(environment, multiple_replicas)
+    .getEnvironmentReplicas(environment, multiple_replicas, service)
     .getTests()
     .stdout()
     .command(['port-forward', '-a', account.name, '-e', environment.name, 'app', '-r', '2'])

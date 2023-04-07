@@ -1,6 +1,6 @@
 import { test } from '@oclif/test';
 import fs from 'fs-extra';
-import { RequestBodyMatcher } from 'nock/types';
+import { ReplyBody, RequestBodyMatcher } from 'nock/types';
 import path from 'path';
 import { RecursivePartial } from '../../src';
 import AuthClient from '../../src/app-config/auth';
@@ -76,9 +76,12 @@ export const mockArchitectAuth = () =>
 interface TestOptions {
   times?: number;
   body?: RequestBodyMatcher;
-  response?: Function | object; // TODO: type? check in nock repo?
+  response?: ReplyBody | Promise<ReplyBody>;
   response_code?: number;
 };
+
+// https://github.com/nock/nock/blob/2edf34116a986ad4776b1ca97235504e5b9206b4/types/index.d.ts#L171
+export type ReplyCallback = (err: NodeJS.ErrnoException | null, result: ReplyBody) => void;
 
 export class MockArchitectApi {
   private api_mocks;
@@ -100,12 +103,19 @@ export class MockArchitectApi {
     return this.api_mocks;
   }
 
-  // /accounts
+  // /accounts/<account>
   getAccount(account: Partial<Account>, options?: TestOptions) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.name}`)
       .times(options?.times || 1)
       .reply(options?.response_code || 200, options?.response || account));
+    return this;
+  }
+
+  getAccountSecrets(account: Partial<Account>, secrets: AccountSecret[]) {
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
+      .get(`/accounts/${account.id}/secrets/values`)
+      .reply(200, secrets));
     return this;
   }
 
@@ -124,15 +134,7 @@ export class MockArchitectApi {
     return this;
   }
 
-  // /accounts/<account>/secrets/values
-  getAccountSecrets(account: Partial<Account>, secrets: AccountSecret[]) {
-    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
-      .get(`/accounts/${account.id}/secrets/values`)
-      .reply(200, secrets));
-    return this;
-  }
-
-  // /environments
+  // /environments/<environment>
   getEnvironments(environments?: Partial<Environment>[], options?: { query?: string }) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/environments?q=${options?.query || ''}`)
@@ -190,10 +192,19 @@ export class MockArchitectApi {
     return this;
   }
 
-  getEnvironmentReplicas(environment: Partial<Environment>, replicas: Replica[]) {
+  getEnvironmentReplicas(environment: Partial<Environment>, replicas: Replica[], component?: Partial<Component>) {
+    const component_name = component ? `?component_name=${component.name}` : '';
     this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
-      .get(new RegExp(`/environments/${environment.id}/replicas`))
+      .get(`/environments/${environment.id}/replicas${component_name}`)
       .reply(200, replicas))
+    return this;
+  }
+
+  getEnvironmentSecrets(environment: Partial<Environment>, secrets: (Partial<EnvironmentSecret> | Partial<ClusterSecret> | Partial<AccountSecret>)[], options?: { inherited?: boolean }) {
+    const inherited = options?.inherited ? `?inherited=${options.inherited}` : '';
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
+      .get(`/environments/${environment.id}/secrets/values${inherited}`)
+      .reply(200, secrets));
     return this;
   }
 
@@ -213,7 +224,7 @@ export class MockArchitectApi {
     return this;
   }
 
-  // /clusters
+  // /clusters/<cluster>
   deleteCluster(cluster: Partial<Cluster>, pipeline: Partial<Pipeline>, options?: { force?: 0 | 1 }) {
     const force = options?.force ? `?force=${options.force}` : '';
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
@@ -222,7 +233,6 @@ export class MockArchitectApi {
     return this;
   }
 
-  // /clusters/<cluster>/secrets/values
   getClusterSecrets(cluster: Partial<Cluster>, secrets: (Partial<ClusterSecret> | Partial<AccountSecret>)[], options?: { inherited?: boolean }) {
     const inherited = options?.inherited ? `?inherited=${options.inherited}` : '';
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
@@ -231,12 +241,19 @@ export class MockArchitectApi {
     return this;
   }
 
-  // /environments/<environment>/secrets/values
-  getEnvironmentSecrets(environment: Partial<Environment>, secrets: (Partial<EnvironmentSecret> | Partial<ClusterSecret> | Partial<AccountSecret>)[], options?: { inherited?: boolean }) {
-    const inherited = options?.inherited ? `?inherited=${options.inherited}` : '';
+  // /components
+  getComponents(components: RecursivePartial<Component>[], options?: { query?: string }) {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
-      .get(`/environments/${environment.id}/secrets/values${inherited}`)
-      .reply(200, secrets));
+      .get(`/components?q=${options?.query || ''}`)
+      .reply(200, { rows: components, count: components.length }));
+    return this;
+  }
+
+  // /components/<component>
+  getComponentVersions(component: RecursivePartial<Component>, component_versions: Partial<ComponentVersion>[]) {
+    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
+      .get(`/components/${component.component_id}/versions`)
+      .reply(200, { rows: component_versions, count: component_versions.length }));
     return this;
   }
 
@@ -275,22 +292,6 @@ export class MockArchitectApi {
     this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
       .get(`/accounts/${account.name}/components/${component.name}`)
       .reply(200, component));
-    return this;
-  }
-
-  // /components
-  getComponents(components: RecursivePartial<Component>[], options?: { query?: string }) {
-    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
-      .get(`/components?q=${options?.query || ''}`)
-      .reply(200, { rows: components, count: components.length }));
-    return this;
-  }
-
-  // /components/<component>/
-  getComponentVersions(component: RecursivePartial<Component>, component_versions: Partial<ComponentVersion>[]) {
-    this.api_mocks = this.api_mocks.nock(this.mock_api_host, api => api
-      .get(`/components/${component.component_id}/versions`)
-      .reply(200, { rows: component_versions, count: component_versions.length }));
     return this;
   }
 

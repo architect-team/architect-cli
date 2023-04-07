@@ -1395,7 +1395,7 @@ describe('local dev environment', function () {
     })
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
-    .nock('https://storage.googleapis.com', api => api.get('/architect-ci-ssl/fullchain.pem').reply(500)) // TODO: include with different url or not?
+    .nock('https://storage.googleapis.com', api => api.get('/architect-ci-ssl/fullchain.pem').reply(500))
     .nock('https://storage.googleapis.com', api => api.get('/architect-ci-ssl/privkey.pem').reply(500))
     .command(['dev', getMockComponentFilePath('hello-world')])
     .catch(e => {

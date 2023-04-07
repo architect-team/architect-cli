@@ -14,7 +14,8 @@ import { DockerHelper } from '../../src/common/docker/helper';
 import PluginManager from '../../src/common/plugins/plugin-manager';
 import BuildPackUtils from '../../src/common/utils/buildpack';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
-import { getMockComponentContextPath, getMockComponentFilePath, MockArchitectApi } from '../utils/mocks';
+import { getMockComponentContextPath, getMockComponentFilePath, MockArchitectApi, ReplyCallback } from '../utils/mocks';
+import { Body, ReplyBody } from 'nock/types';
 
 describe('register', function () {
   const mock_account_response = {
@@ -97,7 +98,7 @@ describe('register', function () {
     .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
     .registerComponentDigest(mock_account_response, { response:
-      (uri: any, body: any, cb: any) => { // TODO: types
+      (uri: string, body: Record<string, any>, cb: ReplyCallback) => {
         expect(validateSpec(body.config)).to.have.lengthOf(0);
         for (const [service_name, service] of Object.entries(body.config.services) as [string, ServiceSpec][]) {
           if (IF_EXPRESSION_REGEX.test(service_name)) {
