@@ -5,6 +5,7 @@ import { ServiceInterfaceConfig } from '../../dependency-manager/config/service-
 import { VolumeSpec } from '../../dependency-manager/spec/common-spec';
 import { ComponentSpec } from '../../dependency-manager/spec/component-spec';
 import { BuildSpec } from '../../dependency-manager/spec/resource-spec';
+import { SecretDefinitionSpec } from '../../dependency-manager/spec/secret-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../../dependency-manager/spec/service-spec';
 import { Slugs } from '../../dependency-manager/spec/utils/slugs';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
@@ -54,6 +55,7 @@ export class ComposeConverter {
     const architect_component: Partial<ComponentSpec> = {};
     architect_component.name = component_name;
     architect_component.services = {};
+    architect_component.secrets = {};
 
     for (const [service_name, service_data] of Object.entries(docker_compose.services || {})) {
       const architect_service = new ServiceSpec();
@@ -93,6 +95,7 @@ export class ComposeConverter {
       architect_component.services[service_name] = architect_service;
     }
 
+    architect_component.services = this.convertServicesInterpolations(architect_component.services);
     for (const service_config of Object.values(architect_component.services || {})) {
       for (const depends_on of (service_config.depends_on || [])) {
         service_config.environment = service_config.environment || {};
@@ -100,10 +103,35 @@ export class ComposeConverter {
           service_config.environment[`${depends_on.replace('-', '_').toUpperCase()}_URL`] = `\${{ services.${depends_on}.interfaces.main.url }}`;
         }
       }
+      const secrets = this.parseSecrets(JSON.stringify(service_config));
+      architect_component.secrets = { ...architect_component.secrets, ...secrets };
     }
 
     const architect_yml = yaml.dump(yaml.load(JSON.stringify(instanceToPlain(architect_component))));
     return { architect_yml, warnings };
+  }
+
+  private static convertServicesInterpolations(services: Dictionary<ServiceSpec>): Dictionary<ServiceSpec> {
+    // replace all interpolation syntax ${*} with architect's ${{ secrets.* }}
+    return JSON.parse(JSON.stringify(services), (_, value) => {
+      if (typeof value === 'string') {
+        return value.replace(/\${(?<key>.*?)}/g, '${{ secrets.$1 }}');
+      }
+      return value;
+    });
+  }
+
+  private static parseSecrets(str: string): Dictionary<SecretDefinitionSpec> {
+    const regex = /\${{ secrets\.(.*?) }}/g;
+    const matches = str.match(regex);
+    const secrets: Dictionary<SecretDefinitionSpec> = {};
+    if (matches) {
+      for (const match of matches) {
+        const secret = match.replace(regex, '$1');
+        secrets[secret] = { required: true };
+      }
+    }
+    return secrets;
   }
 
   private static convertBuild(compose_build: any): ComposeConversion {
@@ -116,8 +144,8 @@ export class ComposeConverter {
       if (Array.isArray(compose_build.args)) {
         for (const arg of compose_build.args) {
           if (!arg) {
- continue;
-}
+            continue;
+          }
           const [key, value] = arg.split('=');
           build.args[key] = value ? value.toString() : null;
         }

@@ -65,7 +65,7 @@ services:
       expect(writeFileSync.called).to.be.true;
 
       const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
-      expect(Object.keys(component_config.services || {})).deep.equal(['elasticsearch', 'logstash', 'kibana']);
+      expect(Object.keys(component_config.services || {})).deep.equal(['elasticsearch', 'logstash', 'kibana', 'db']);
     });
 
   mockInit()
@@ -440,6 +440,33 @@ services:
       expect(writeFileSync.called).to.be.true;
 
       expect(ctx.stdout).to.contain(`Label with value Path(\`/\`) could not be converted as it fails validation with regex ${Slugs.LabelValueSlugValidatorString}`);
+    });
+
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
+    .it(`converting interpolation of environment variables in image`, ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+
+      const component_object: any = yaml.load(writeFileSync.args[0][1]);
+      expect(component_object.services.db.image).eq('postgres:${{ secrets.POSTGRES_VERSION }}');
+      expect(component_object.secrets.POSTGRES_VERSION).deep.eq({ required: true });
+    });
+
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
+    .it(`converting interpolation of environment variables in environment`, ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+
+      const component_object: any = yaml.load(writeFileSync.args[0][1]);
+      expect(component_object.services.db.environment.POSTGRES_USER).eq('${{ secrets.DB_USER }}');
+      expect(component_object.services.db.environment.POSTGRES_PASSWORD).eq('${{ secrets.DB_PASSWORD }}');
+      expect(component_object.services.db.environment.POSTGRES_DB).eq('${{ secrets.DB_NAME }}');
+
+      expect(component_object.secrets.DB_USER).deep.eq({ required: true });
+      expect(component_object.secrets.DB_PASSWORD).deep.eq({ required: true });
+      expect(component_object.secrets.DB_NAME).deep.eq({ required: true });
     });
 
   mockInit()
