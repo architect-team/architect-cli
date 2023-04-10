@@ -114,12 +114,12 @@ export default class Dev extends BaseCommand {
     recursive: booleanString({
       char: 'r',
       default: true,
-      description: '[default: true] Toggle to automatically deploy all dependencies',
+      description: 'Toggle to automatically deploy all dependencies',
       sensitive: false,
     }),
     browser: booleanString({
       default: true,
-      description: '[default: true] Automatically open urls in the browser for local deployments',
+      description: 'Automatically open urls in the browser for local deployments',
       sensitive: false,
     }),
     port: Flags.integer({
@@ -170,12 +170,12 @@ export default class Dev extends BaseCommand {
       default: false,
     }),
     'wait-timeout': Flags.string({
-      description: '[default: 10m] Time to wait for services to be ready/healthy before detaching.',
+      description: 'Time to wait for services to be ready/healthy before detaching.',
       sensitive: false,
       default: '10m',
     }),
     debug: booleanString({
-      description: `[default: true] Turn debug mode on (true) or off (false)`,
+      description: `Turn debug mode on (true) or off (false)`,
       default: true,
       sensitive: false,
     }),
