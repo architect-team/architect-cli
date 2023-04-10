@@ -1,4 +1,4 @@
-import { expect } from '@oclif/test';
+import { expect, test } from '@oclif/test';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import sinon, { SinonSpy } from 'sinon';
@@ -169,12 +169,17 @@ describe('platform:create', function () {
     })
     .it('create cluster with older cluster version fails');
 
-  test
+  new MockArchitectApi()
+    .getAccount(account)
+    .getClusters(account, clusters)
+    .getTests()
     .stub(ClusterUtils, 'getServerVersion', sinon.stub().returns(MIN_CLUSTER_SEMVER.version))
     .stub(ClusterUtils, 'checkClusterNodes', sinon.stub().rejects(new Error('No nodes were detected for the Kubernetes cluster. Please add nodes to the cluster in order for your applications to run.')))
+    .stub(fs, 'existsSync', () => true)
     .stub(fs, 'readJSONSync', () => {
       return {
         log_level: 'debug',
+        api_host: MOCK_API_HOST,
       };
     })
     .stub(AppService, 'create', () => new AppService('', '1.0.0'))
@@ -185,12 +190,6 @@ describe('platform:create', function () {
       }
     })
     .stub(ClusterCreate.prototype, <any>'setContext', async () => { })
-    .nock('https://api.architect.io', api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock('https://api.architect.io', api => api
-      .get(`/accounts/${account.id}/clusters`)
-      .reply(200, clusters))
     .command(['platform:create', '-a', account.name, 'my-cluster'])
     .catch(e => {
       expect(e.message).contains('No nodes were detected for the Kubernetes cluster. Please add nodes to the cluster in order for your applications to run.');
