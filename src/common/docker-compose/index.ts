@@ -110,7 +110,6 @@ export class DockerComposeUtils {
       compose.services[gateway_node.ref] = {
         image: 'traefik:v2.9.8',
         command: [
-          '--ping',
           '--api.insecure=true',
           '--pilot.dashboard=false',
           // '--log.level=DEBUG',
@@ -142,13 +141,10 @@ export class DockerComposeUtils {
           // The Web UI(enabled by--api.insecure = true)
           `${gateway_admin_port}:8080`,
         ],
-        healthcheck: {
-          test: ['CMD', 'traefik', 'healthcheck', '--ping'],
-          interval: '10s',
-        },
         volumes: [
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
+        stop_grace_period: '0s',
         ...(ssl_cert && ssl_key ? {
           entrypoint: [
             '/bin/sh',
@@ -168,7 +164,6 @@ export class DockerComposeUtils {
             TRAEFIK_CERT: ssl_cert,
             TRAEFIK_KEY: ssl_key,
           },
-          stop_grace_period: '0s',
         } : {}),
       };
     }

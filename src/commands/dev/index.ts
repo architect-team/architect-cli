@@ -378,12 +378,6 @@ export default class Dev extends BaseCommand {
       console.log('SENDING SIGBREAK'); // TODO:TJ remove
     });
 
-    setTimeout(() => {
-      console.log('failed to exit'); // TODO:TJ remove
-      // eslint-disable-next-line no-process-exit
-      process.exit(1);
-    }, 30000);
-
     compose_process.on('exit', () => {
       if (!flags.detached) {
         fs.removeSync(compose_file);

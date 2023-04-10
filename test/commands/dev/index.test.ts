@@ -393,6 +393,7 @@ describe('local dev environment', function () {
         'volumes': [
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
+        stop_grace_period: '0s',
       },
     },
     'volumes': {},
@@ -453,6 +454,7 @@ describe('local dev environment', function () {
         'volumes': [
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
+        stop_grace_period: '0s',
       },
     },
     'volumes': {},
@@ -519,6 +521,7 @@ describe('local dev environment', function () {
         'volumes': [
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
+        stop_grace_period: '0s',
         'environment': {
           TRAEFIK_CONFIG: DockerComposeUtils.generateTlsConfig(),
           TRAEFIK_CERT: 'fake-cert',
@@ -583,7 +586,8 @@ describe('local dev environment', function () {
         ],
         "volumes": [
           "/var/run/docker.sock:/var/run/docker.sock:ro"
-        ]
+        ],
+        stop_grace_period: '0s',
       }
     },
     "volumes": {}
@@ -703,7 +707,8 @@ describe('local dev environment', function () {
         ],
         "volumes": [
           "/var/run/docker.sock:/var/run/docker.sock:ro"
-        ]
+        ],
+        stop_grace_period: '0s',
       }
     },
     "volumes": {}
@@ -735,6 +740,9 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'buildImage', sinon.stub().returns(['project_name', 'compose_file']))
     .stub(Dev.prototype, 'setupTraefikServiceMap', sinon.stub().returns({}))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
+    .stub(DockerComposeUtils, 'dockerCompose', sinon.stub().returns({
+      on: sinon.stub().returns(undefined),
+    }))
     .stub(fs, 'removeSync', sinon.stub().returns(null))
     .stub(process, 'exit', sinon.stub().returns(undefined))
     .stdout({ print })

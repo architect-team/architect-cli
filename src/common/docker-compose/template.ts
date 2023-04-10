@@ -60,6 +60,7 @@ export interface DockerService {
   extra_hosts?: string[];
   labels?: string[];
   healthcheck?: DockerComposeHealthCheck;
+  stop_grace_period?: string;
 }
 
 export default interface DockerComposeTemplate {
