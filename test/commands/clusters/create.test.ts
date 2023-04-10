@@ -35,6 +35,7 @@ describe('cluster:create', function () {
   const create_test = () => {
     return test
       .stub(ClusterUtils, 'getServerVersion', sinon.stub().returns(MIN_CLUSTER_SEMVER.version))
+      .stub(ClusterUtils, 'checkClusterNodes', sinon.stub().resolves())
       .stub(ClusterCreate.prototype, 'log', sinon.stub())
       .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
       .stub(fs, 'readJSONSync', () => {
@@ -145,6 +146,7 @@ describe('cluster:create', function () {
 
   test
     .stub(ClusterUtils, 'getServerVersion', sinon.stub().returns('v1.0.0'))
+    .stub(ClusterUtils, 'checkClusterNodes', sinon.stub().resolves())
     .stub(ClusterCreate.prototype, 'log', sinon.stub())
     .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
     .stub(fs, 'readJSONSync', () => {
@@ -171,4 +173,32 @@ describe('cluster:create', function () {
       expect(e.message).contains(`Currently, we only support Kubernetes clusters on version ${MIN_CLUSTER_SEMVER.version} or greater. Your cluster is currently on version 1.0.0`);
     })
     .it('create cluster with older cluster version fails');
+
+  test
+    .stub(ClusterUtils, 'getServerVersion', sinon.stub().returns(MIN_CLUSTER_SEMVER.version))
+    .stub(ClusterUtils, 'checkClusterNodes', sinon.stub().rejects(new Error('No nodes were detected for the Kubernetes cluster. Please add nodes to the cluster in order for your applications to run.')))
+    .stub(fs, 'readJSONSync', () => {
+      return {
+        log_level: 'debug',
+      };
+    })
+    .stub(AppService, 'create', () => new AppService('', '1.0.0'))
+    .stub(ClusterCreate.prototype, <any>'setupKubeContext', async () => {
+      return {
+        original_context: "original_context",
+        current_context: "current_context",
+      }
+    })
+    .stub(ClusterCreate.prototype, <any>'setContext', async () => { })
+    .nock('https://api.architect.io', api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account))
+    .nock('https://api.architect.io', api => api
+      .get(`/accounts/${account.id}/clusters`)
+      .reply(200, clusters))
+    .command(['cluster:create', '-a', account.name, 'my-cluster'])
+    .catch(e => {
+      expect(e.message).contains('No nodes were detected for the Kubernetes cluster. Please add nodes to the cluster in order for your applications to run.');
+    })
+    .it(`A cluster can't be registered if it has no nodes`);
 });

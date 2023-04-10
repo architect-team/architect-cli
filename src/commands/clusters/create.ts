@@ -149,6 +149,7 @@ export default class ClusterCreate extends BaseCommand {
 
     const kube_contexts = await this.setupKubeContext(flags);
     await ClusterUtils.checkServerVersion(flags.kubeconfig);
+    await ClusterUtils.checkClusterNodes(flags.kubeconfig);
 
     try {
       const cluster_dto = {
