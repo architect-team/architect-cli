@@ -15,6 +15,6 @@ module.exports = {
       `eslint --fix --max-warnings=0 ${filesToLint}`,
     ];
   },
-  '*.{js,ts,__parallel2__}': ['npm run check-circular'],
-  ...(process.env.NO_TEST ? {} : { '*.{js,ts,__parallel1__}': ['npm run test'] }),
+  '*.{js,ts,__parallel1__}': ['npm run check-circular'],
+  ...(process.env.NO_TEST ? {} : { '*.{js,ts,__parallel2__}': ['npm run test'] }),
 };
