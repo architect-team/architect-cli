@@ -1,4 +1,3 @@
-import { isNumberString } from 'class-validator';
 import deepmerge from 'deepmerge';
 import * as dotenv from 'dotenv';
 import * as dotenvExpand from 'dotenv-expand';
@@ -7,19 +6,16 @@ import yaml from 'js-yaml';
 import { ArchitectError, Dictionary } from '../../';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
 import { SecretSpecValue } from '../../dependency-manager/spec/secret-spec';
+import { parseEnvironmentVariable } from './secret/helper';
 
 export default class DeployUtils {
-  private static getExtraSecrets(secrets: string[] = []): Dictionary<string | number | undefined> {
-    const extra_secrets: { [s: string]: string | number | undefined } = {};
+  private static getExtraSecrets(secrets: string[] = []): Dictionary<string | number | null> {
+    const extra_secrets: { [s: string]: string | number | null } = {};
 
     for (const [secret_name, secret_value] of Object.entries(process.env || {})) {
       if (secret_name.startsWith('ARC_')) {
         const key = secret_name.substring(4);
-        let value: string | number | undefined = secret_value;
-        if (value && isNumberString(value)) {
-          value = Number.parseFloat(value);
-        }
-        extra_secrets[key] = value;
+        extra_secrets[key] = parseEnvironmentVariable(secret_value);
       }
     }
 
@@ -28,11 +24,7 @@ export default class DeployUtils {
       if (secret_split.length !== 2) {
         throw new ArchitectError(`Bad format for secret ${secret}. Please specify in the format --secret SECRET_NAME=SECRET_VALUE`, false);
       }
-      let value: string | number = secret_split[1];
-      if (isNumberString(value)) {
-        value = Number.parseFloat(value);
-      }
-      extra_secrets[secret_split[0]] = value;
+      extra_secrets[secret_split[0]] = parseEnvironmentVariable(secret_split[1]);
     }
 
     return extra_secrets;
