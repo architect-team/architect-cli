@@ -382,6 +382,7 @@ export default class Dev extends BaseCommand {
     });
 
     this.configureLogs(compose_process, project_name);
+
     DockerComposeUtils.watchContainersHealth(compose_file, project_name, () => {
       return is_exiting;
     });
