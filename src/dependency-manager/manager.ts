@@ -176,9 +176,9 @@ export default abstract class DependencyManager {
     }
     for (const [subdomain, values] of Object.entries(seen_subdomains)) {
       if (values.length > 1) {
-        const msg = `The subdomain ${subdomain} is claimed by multiple component interfaces:
+        const msg = `The component you are trying to deploy has the subdomain ${subdomain} that is claimed by multiple component interfaces:
           \n[${values.sort().join(', ')}]
-          \nPlease set services.<name>.interfaces.<name>.ingress.subdomain=<subdomain> or services.<name>.interfaces.<name>.ingress.path=<path> to avoid conflicts.`;
+          \nConsider changing the subdomain of the component you are trying to deploy.`;
         throw new ArchitectError(msg);
       }
     }
