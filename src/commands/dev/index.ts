@@ -81,7 +81,7 @@ export class UpProcessManager {
 
   /** Spawns a process running `docker compose up` */
   start(): ExecaChildProcess<string> {
-    const compose_args = ['-f', this.compose_file, '-p', this.project_name, 'up', '--remove-orphans', '--renew-anon-volumes', '--timeout', '0'];
+    const compose_args = ['-f', this.compose_file, '-p', this.project_name, 'up', '--remove-orphans', '--renew-anon-volumes', '-t', '0'];
     if (this.detached) {
       compose_args.push('-d');
     }
@@ -197,6 +197,8 @@ export class UpProcessManager {
 
             const color = service_colors.get(service) as chalk.Chalk;
             output_func(color(service + '| ') + newLine);
+          } else if (line) {
+            output_func(line);
           }
         }
       };
