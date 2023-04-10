@@ -6,6 +6,7 @@ import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
+import ms from 'ms';
 import opener from 'opener';
 import path from 'path';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
@@ -167,6 +168,12 @@ export default class Dev extends BaseCommand {
       char: 'd',
       sensitive: false,
       default: false,
+    }),
+    'wait-timeout': Flags.string({
+      description: '[default: 10m] Time to wait for services to be ready/healthy before detaching.',
+      sensitive: false,
+      default: '10m',
+      dependsOn: ['detached'],
     }),
     debug: booleanString({
       description: `[default: true] Turn debug mode on (true) or off (false)`,
@@ -360,7 +367,7 @@ export default class Dev extends BaseCommand {
         compose_args.push(
           '--wait',
           '--wait-timeout',
-          `${60 * 10}`, // TODO:TJ make this configurable?
+          `${ms(flags['wait-timeout']) / 1000}`,
         );
       } else {
         this.warn('WARNING: docker-compose version is less than 2.17.2. --detached will not wait for services to be ready.');
@@ -370,20 +377,13 @@ export default class Dev extends BaseCommand {
     const compose_process = DockerComposeUtils.dockerCompose(compose_args,
       { stdout: 'pipe', stderr: 'pipe', stdin: 'inherit' });
 
-    process.on('SIGINT', () => {
-      console.log('SENDING SIGINT'); // TODO:TJ remove
-    });
-
-    process.on('SIGBREAK', () => {
-      console.log('SENDING SIGBREAK'); // TODO:TJ remove
-    });
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    process.on('SIGINT', () => {});
 
     compose_process.on('exit', () => {
       if (!flags.detached) {
         fs.removeSync(compose_file);
       }
-      console.log('compose exiting!'); // TODO:TJ remove
-
       // eslint-disable-next-line no-process-exit
       process.exit(0);
     });
@@ -394,7 +394,6 @@ export default class Dev extends BaseCommand {
   }
 
   configureLogs(compose_process: ExecaChildProcess<string>, project_name: string): void {
-    // TODO:TJ convert to transform stream
     const service_colors = new Map<string, chalk.Chalk>();
     const createHandleStream = (output_func: (message: string) => void) => {
       return (data: any) => {
