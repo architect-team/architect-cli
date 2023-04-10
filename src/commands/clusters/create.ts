@@ -120,7 +120,7 @@ export default class ClusterCreate extends BaseCommand {
     const cluster_names = new Set(clusters.map(cluster => cluster.name.toLowerCase()));
 
     if (args.cluster && cluster_names.has(args.cluster)) {
-      console.log(chalk.red('A cluster already exists with the desired name please enter a new one.'));
+      console.log(chalk.red('A cluster already exists with the desired name. Please enter a new one.'));
       args.cluster = '';
     }
 

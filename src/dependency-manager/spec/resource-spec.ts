@@ -2,14 +2,11 @@ import { IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
 import { SecretSpecValue } from './secret-spec';
-import { AnyOf, ArrayOf, ExclusiveOrNeither, ExpressionOr, ExpressionOrString, OneOf, StringOrStringArray } from './utils/json-schema-annotations';
+import { AnyOf, ArrayOf, ExclusiveOrNeither, ExpressionOr, ExpressionOrString, StringOrStringArray } from './utils/json-schema-annotations';
 import { ResourceType, Slugs } from './utils/slugs';
 
 @JSONSchema({
   description: 'An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.',
-  errorMessage: {
-    not: 'Buildpack and Dockerfile cannot be used at the same time',
-  },
   ...ExclusiveOrNeither('buildpack', 'dockerfile'),
 })
 export class BuildSpec {
@@ -56,9 +53,6 @@ export class BuildSpec {
   target?: string;
 }
 
-@JSONSchema({
-  ...OneOf('build', 'image'),
-})
 export abstract class ResourceSpec {
   abstract get resource_type(): ResourceType;
 
