@@ -7,10 +7,7 @@ import ComponentRegister from '../../src/commands/register';
 import DeployUtils from '../../src/common/utils/deploy.utils';
 import * as ComponentBuilder from '../../src/dependency-manager/spec/utils/component-builder';
 import { app_host } from '../config.json';
-import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
-
-// set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = false;
+import { MockArchitectApi } from '../utils/mocks';
 
 const account = {
   id: 'test-account-id',
@@ -53,33 +50,27 @@ const mock_certificates = [
 ];
 
 describe('remote deploy environment', function () {
-  const remoteDeploy = mockArchitectAuth()
-    .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`)
-      .reply(200, mock_pipeline))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/environments/${environment.id}/certificates`)
-      .reply(200, mock_certificates))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/pipelines/${mock_pipeline.id}/approve`)
-      .reply(200, {}))
-    .stdout({ print })
-    .stderr({ print });
-
-  remoteDeploy
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline)
+    .getEnvironmentCertificates(environment, mock_certificates)
+    .approvePipeline(mock_pipeline)
+    .pollPipeline(mock_pipeline)
+    .getTests()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .it('Creates a remote deployment when env exists with env and account flags', ctx => {
       expect(ctx.stdout).to.contain('deployed');
     });
 
-  remoteDeploy
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline)
+    .getEnvironmentCertificates(environment, mock_certificates)
+    .approvePipeline(mock_pipeline)
+    .pollPipeline(mock_pipeline)
+    .getTests()
     .stub(ComponentRegister.prototype, 'run', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentBuilder, 'buildSpecFromPath', sinon.stub().returns(Promise.resolve()))
     .command(['deploy', '-e', environment.name, '-a', account.name, '--arg', 'NODE_ENV=production', '--auto-approve', 'test/mocks/superset/architect.yml'])
@@ -92,7 +83,14 @@ describe('remote deploy environment', function () {
       expect(ctx.stdout).to.contain('deployed');
     });
 
-  remoteDeploy
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline)
+    .getEnvironmentCertificates(environment, mock_certificates)
+    .approvePipeline(mock_pipeline)
+    .pollPipeline(mock_pipeline)
+    .getTests()
     .stub(ComponentRegister.prototype, 'run', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentBuilder, 'buildSpecFromPath', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentVersionSlugUtils.Validator, 'test', sinon.stub().returns(Promise.resolve()))
@@ -110,14 +108,28 @@ describe('remote deploy environment', function () {
       expect(ctx.stdout).to.contain('deployed');
     });
 
-  remoteDeploy
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline)
+    .getEnvironmentCertificates(environment, mock_certificates)
+    .approvePipeline(mock_pipeline)
+    .pollPipeline(mock_pipeline)
+    .getTests()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .it('Remote deployment outputs URLs from for the deployed component and not other components in the same environment', ctx => {
       expect(ctx.stdout).to.contain('app.test-env.examples.arc.test');
       expect(ctx.stdout).to.not.contain('app.doesnt.get.output');
     });
 
-  remoteDeploy
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline)
+    .getEnvironmentCertificates(environment, mock_certificates)
+    .approvePipeline(mock_pipeline)
+    .pollPipeline(mock_pipeline)
+    .getTests()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo'])
     .it('Remote deployment outputs URLs from for the deployed component with no tag and not other components in the same environment', ctx => {
       expect(ctx.stdout).to.contain('app.test-env.examples.arc.test');
@@ -125,7 +137,14 @@ describe('remote deploy environment', function () {
     });
 
   describe('instance deploys', function () {
-    remoteDeploy
+    new MockArchitectApi()
+      .getAccount(account)
+      .getEnvironment(account, environment)
+      .deployComponent(environment, mock_pipeline)
+      .getEnvironmentCertificates(environment, mock_certificates)
+      .approvePipeline(mock_pipeline)
+      .pollPipeline(mock_pipeline)
+      .getTests()
       .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest@tenant-1'])
       .it('Creates a remote deployment when env exists with env and account flags', ctx => {
         expect(ctx.stdout).to.contain('deployed');
@@ -134,34 +153,28 @@ describe('remote deploy environment', function () {
 });
 
 describe('auto-approve flag with underscore style still works', function () {
-  const remoteDeploy = mockArchitectAuth()
-    .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/environments/${environment.id}/certificates`)
-      .reply(200, mock_certificates))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`)
-      .reply(200, mock_pipeline))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/pipelines/${mock_pipeline.id}/approve`)
-      .reply(200, {}))
-    .stdout({ print })
-    .stderr({ print });
-
-  remoteDeploy
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline)
+    .getEnvironmentCertificates(environment, mock_certificates)
+    .approvePipeline(mock_pipeline)
+    .pollPipeline(mock_pipeline)
+    .getTests()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'echo:latest'])
     .it('works but also emits a deprecation warning', ctx => {
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated.');
       expect(ctx.stdout).to.contain('deployed');
     });
 
-  remoteDeploy
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline)
+    .getEnvironmentCertificates(environment, mock_certificates)
+    .approvePipeline(mock_pipeline)
+    .pollPipeline(mock_pipeline)
+    .getTests()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve=true', 'echo:latest'])
     .it('works but also emits a deprecation warning 2', ctx => {
       expect(ctx.stderr).to.contain('Warning: The "auto_approve" flag has been deprecated.');
@@ -179,18 +192,18 @@ describe('pollPipeline handles failed deployments', () => {
   };
   const failed_pipeline = {
     id: mock_pipeline.id,
-    failed_at: new Date(),
+    failed_at: (new Date()).toString(),
     environment,
     cluster: mock_cluster,
   };
   const aborted_deployment = {
     id: randomId(),
-    aborted_at: new Date(),
+    aborted_at: (new Date()).toString(),
     pipeline: failed_pipeline,
   };
   const failed_environment_deployment = {
     id: randomId(),
-    failed_at: new Date(),
+    failed_at: (new Date()).toString(),
     pipeline: {
       ...failed_pipeline,
       cluster: undefined,
@@ -202,34 +215,21 @@ describe('pollPipeline handles failed deployments', () => {
   };
   const failed_cluster_deployment = {
     id: randomId(),
-    failed_at: new Date(),
+    failed_at: (new Date()).toString(),
     pipeline: {
       ...failed_pipeline,
       environment: undefined,
     },
   };
 
-  const baseRemoteDeploy = mockArchitectAuth()
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline)
+    .approvePipeline(mock_pipeline)
+    .getPipelineDeployments(mock_pipeline, [aborted_deployment])
+    .getTests()
     .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ pipeline: failed_pipeline }))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`)
-      .reply(200, mock_pipeline))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/pipelines/${mock_pipeline.id}/approve`)
-      .reply(200, {}));
-
-  baseRemoteDeploy
-    .nock(MOCK_API_HOST, api => api
-      .get(`/pipelines/${mock_pipeline.id}/deployments`)
-      .reply(200, [aborted_deployment]))
-    .stdout({ print })
-    .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .catch(err => {
       const message = `Deployment ${aborted_deployment.id} was aborted. See the deployment log for more details:`;
@@ -239,12 +239,14 @@ describe('pollPipeline handles failed deployments', () => {
     })
     .it('when deployment is aborted it prints useful error with expected url');
 
-  baseRemoteDeploy
-    .nock(MOCK_API_HOST, api => api
-      .get(`/pipelines/${mock_pipeline.id}/deployments`)
-      .reply(200, [failed_environment_deployment]))
-    .stdout({ print })
-    .stderr({ print })
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline)
+    .approvePipeline(mock_pipeline)
+    .getPipelineDeployments(mock_pipeline, [failed_environment_deployment])
+    .getTests()
+    .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ pipeline: failed_pipeline }))
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .catch(err => {
       const message = `Pipeline ${mock_pipeline.id} failed because 1 deployment failed:`;
@@ -254,12 +256,14 @@ describe('pollPipeline handles failed deployments', () => {
     })
     .it('when environment deployment fails it prints useful error with expected url');
 
-  baseRemoteDeploy
-    .nock(MOCK_API_HOST, api => api
-      .get(`/pipelines/${mock_pipeline.id}/deployments`)
-      .reply(200, [failed_cluster_deployment]))
-    .stdout({ print })
-    .stderr({ print })
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline)
+    .approvePipeline(mock_pipeline)
+    .getPipelineDeployments(mock_pipeline, [failed_cluster_deployment])
+    .getTests()
+    .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ pipeline: failed_pipeline }))
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .catch(err => {
       const message = `Pipeline ${mock_pipeline.id} failed because 1 deployment failed:`;
@@ -269,12 +273,14 @@ describe('pollPipeline handles failed deployments', () => {
     })
     .it('when pipeline deployment fails it prints useful error with expected url');
 
-  baseRemoteDeploy
-    .nock(MOCK_API_HOST, api => api
-      .get(`/pipelines/${mock_pipeline.id}/deployments`)
-      .reply(200, [failed_environment_deployment, failed_environment_deployment_2]))
-    .stdout({ print })
-    .stderr({ print })
+    new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline)
+    .approvePipeline(mock_pipeline)
+    .getPipelineDeployments(mock_pipeline, [failed_environment_deployment, failed_environment_deployment_2])
+    .getTests()
+    .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ pipeline: failed_pipeline }))
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .catch(err => {
       const message = `Pipeline ${mock_pipeline.id} failed because 2 deployments failed:`;
@@ -285,11 +291,15 @@ describe('pollPipeline handles failed deployments', () => {
     })
     .it('when multiple pipeline deployments fail it prints useful error with expected urls');
 
-  baseRemoteDeploy
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline)
+    .approvePipeline(mock_pipeline)
+    .getTests()
+    .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ pipeline: failed_pipeline }))
     .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ poll_timeout: true }))
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
-    .stdout({ print })
-    .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .catch(err => {
       const expected_error = 'Timeout while polling the pipeline';
@@ -318,102 +328,83 @@ describe('deployment secrets', function () {
     }
   };
 
-  mockArchitectAuth()
-    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
-    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`, (body) => {
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline, { body:
+      (body) => {
         expect(body.values['*'].app_replicas).to.eq(4);
         return body;
-      })
-      .reply(200, mock_pipeline))
-    .stdout({ print })
-    .stderr({ print })
+      }
+    })
+    .getTests()
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
+    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
     .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--secret', 'app_replicas=4'])
     .it('a numeric secret is passed to the API as a number and not converted to a string', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
 
-  mockArchitectAuth()
-    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
-    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`, (body) => {
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline, { body:
+      (body) => {
         expect(body.values['*'].test_secret).to.eq('test');
         expect(body.values['*'].another_secret).to.eq('another_test');
         return body;
-      })
-      .reply(200, mock_pipeline))
-    .stdout({ print })
-    .stderr({ print })
+      }
+    })
+    .getTests()
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
+    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
     .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--secret', 'test_secret=test', '--secret', 'another_secret=another_test'])
     .it('passing multiple secrets inline', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
 
-  mockArchitectAuth()
-    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
-    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
-    .stub(DeployUtils, 'readSecretsFile', () => {
-      return wildcard_secrets;
-    })
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`, (body) => {
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline, { body:
+      (body) => {
         expect(body.values['*'].another_required_key).to.eq('required_value');
         expect(body.values.echo.a_required_key).to.eq('some_value');
         expect(body.values.echo.api_port).to.eq(3000);
         expect(body.values.echo.one_more_required_secret).to.eq('one_more_value');
         return body;
-      })
-      .reply(200, mock_pipeline))
-    .stdout({ print })
-    .stderr({ print })
+      }
+    })
+    .getTests()
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
+    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
+    .stub(DeployUtils, 'readSecretsFile', () => {
+      return wildcard_secrets;
+    })
     .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--secret-file', './examples/echo/secrets.yml'])
     .it('passing a secrets file', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
     });
 
-  mockArchitectAuth()
-    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
-    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
-    .stub(DeployUtils, 'readDotEnvSecretsFile', () => {
-      return dotenv_wildcard_secrets;
-    })
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .post(`/environments/${environment.id}/deploy`, (body) => {
+
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline, { body:
+      (body) => {
         expect(body.values['*'].another_required_key).to.eq('required_value');
         expect(body.values['*'].a_required_key).to.eq('some_value');
         expect(body.values['*'].api_port).to.eq(3000);
         expect(body.values['*'].one_more_required_secret).to.eq('one_more_value');
         return body;
-      })
-      .reply(200, mock_pipeline))
-    .stdout({ print })
-    .stderr({ print })
+      }
+    })
+    .getTests()
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
+    .stub(Deploy.prototype, 'approvePipeline', sinon.stub().returns(Promise.resolve()))
+    .stub(DeployUtils, 'readDotEnvSecretsFile', () => {
+      return dotenv_wildcard_secrets;
+    })
     .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--secret-file', './examples/echo/.env'])
     .it('passing a dotenv secrets file', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);

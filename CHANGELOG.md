@@ -1,3 +1,18 @@
+# [1.37.0](https://github.com/architect-team/architect-cli/compare/v1.36.2...v1.37.0) (2023-04-10)
+
+
+### Bug Fixes
+
+* **dev, deploy:** Better handling of numbers as environment variables ([#876](https://github.com/architect-team/architect-cli/issues/876)) ([611359f](https://github.com/architect-team/architect-cli/commit/611359fb65063a5b7e9e14475a4eb67e7a1e903b))
+* **docker-compose:** Better handling of build args during conversion ([d76eb53](https://github.com/architect-team/architect-cli/commit/d76eb53afbb5d93efc090abd382d5f78aecec9e6))
+* **docker:** Latest version of docker compose broke --timeout ([8c2e060](https://github.com/architect-team/architect-cli/commit/8c2e0604a4be82344ea89623a9889dd0280b5b60))
+* **readme:** Remove actual command from aliases so it appears in README ([#877](https://github.com/architect-team/architect-cli/issues/877)) ([194fd5a](https://github.com/architect-team/architect-cli/commit/194fd5a4c809cca4a51e3082c073231fbf730c01))
+
+
+### Features
+
+* **spec:** termination grace period ([#874](https://github.com/architect-team/architect-cli/issues/874)) ([10e3948](https://github.com/architect-team/architect-cli/commit/10e3948efd33391eb032357e53388fec21d35fa8))
+
 ## [1.36.2](https://github.com/architect-team/architect-cli/compare/v1.36.1...v1.36.2) (2023-03-31)
 
 

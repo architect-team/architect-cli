@@ -1,16 +1,13 @@
-import { expect, test } from '@oclif/test';
+import { expect } from '@oclif/test';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
 import sinon, { SinonSpy } from 'sinon';
 import untildify from 'untildify';
 import UserUtils from '../../../src/architect/user/user.utils';
-import { MOCK_API_HOST } from '../../utils/mocks';
+import { MockArchitectApi } from '../../utils/mocks';
 
 describe('secrets', function () {
-  // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-  const print = false;
-
   const download_location = path.resolve(untildify('~/secrets.yml'));
 
   const account = {
@@ -21,13 +18,13 @@ describe('secrets', function () {
   const environment = {
     id: 'ee475441-a499-4646-b553-7ce8dd476e92',
     name: 'env',
-    account: account
+    account,
   }
 
   const cluster = {
     id: '59db4eae-eb8a-4125-8834-7fb7b6208cbd',
     name: 'my-cluster',
-    account: account
+    account,
   }
 
   const account_secrets = [
@@ -35,13 +32,13 @@ describe('secrets', function () {
       scope: 'cloud/*',
       key: 'secret',
       value: 'secret-val',
-      account: account
+      account,
     },
     {
       scope: '*',
       key: 'acc-secret',
       value: 'acc-secret-val',
-      account: account
+      account,
     }
   ]
 
@@ -62,7 +59,7 @@ describe('secrets', function () {
       scope: '*',
       key: 'acc-secret',
       value: 'acc-secret-val',
-      account: account
+      account,
     }
   ]
 
@@ -71,7 +68,7 @@ describe('secrets', function () {
       scope: 'cloud/*',
       key: 'secret',
       value: 'environment-override',
-      environment: environment
+      environment,
     },
     {
       scope: '*',
@@ -83,23 +80,16 @@ describe('secrets', function () {
       scope: '*',
       key: 'acc-secret',
       value: 'acc-secret-val',
-      account: account
+      account,
     }
   ]
 
-  const defaults = test
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account))
-
-  defaults
+  new MockArchitectApi()
+    .getAccount(account)
+    .getAccountSecrets(account, account_secrets)
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(fs, 'writeFileSync', sinon.spy())
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/secrets/values`)
-      .reply(200, account_secrets))
-    .stdout({ print })
-    .stderr({ print })
     .command(['secrets', '-a', 'examples', download_location])
     .it('download account secrets successfully', async ctx => {
       const expected_account_secrets = {
@@ -117,17 +107,13 @@ describe('secrets', function () {
       expect(fs_spy.calledWith(download_location, yaml.dump(expected_account_secrets))).to.be.true;
     })
 
-  defaults
+  new MockArchitectApi()
+    .getAccount(account)
+    .getCluster(account, cluster)
+    .getClusterSecrets(cluster, cluster_secrets_w_inheritance, { inherited: true })
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(fs, 'writeFileSync', sinon.spy())
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/clusters/${cluster.name}`)
-      .reply(200, cluster))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/clusters/${cluster.id}/secrets/values?inherited=true`)
-      .reply(200, cluster_secrets_w_inheritance))
-    .stdout({ print })
-    .stderr({ print })
     .command(['secrets', '-a', 'examples', '--cluster', 'my-cluster', download_location])
     .it('download cluster secrets successfully', async ctx => {
       const expected_cluster_secrets = {
@@ -146,33 +132,25 @@ describe('secrets', function () {
       expect(fs_spy.calledWith(download_location, yaml.dump(expected_cluster_secrets))).to.be.true;
     })
 
-  defaults
+  new MockArchitectApi()
+    .getAccount(account)
+    .getCluster(account, cluster)
+    .getClusterSecrets(cluster, [], { inherited: true })
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(fs, 'writeFileSync', sinon.spy())
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/clusters/${cluster.name}`)
-      .reply(200, cluster))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/clusters/${cluster.id}/secrets/values?inherited=true`)
-      .reply(200, []))
-    .stdout({ print })
-    .stderr({ print })
     .command(['secrets', '-a', 'examples', '--cluster', 'my-cluster', download_location])
     .it('download cluster secrets failed when there are no secrets', ctx => {
       expect(ctx.stdout).to.contain('There are no secrets to download');
     })
 
-  defaults
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .getEnvironmentSecrets(environment, environment_secrets_w_inheritance, { inherited: true })
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(fs, 'writeFileSync', sinon.spy())
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/environments/${environment.id}/secrets/values?inherited=true`)
-      .reply(200, environment_secrets_w_inheritance))
-    .stdout({ print })
-    .stderr({ print })
     .command(['secrets', '-a', 'examples', '-e', 'env', download_location])
     .it('download environment secrets successfully', async ctx => {
       const expected_env_secrets = {
@@ -191,35 +169,30 @@ describe('secrets', function () {
       expect(fs_spy.calledWith(download_location, yaml.dump(expected_env_secrets))).to.be.true;
     })
 
-  defaults
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .getEnvironmentSecrets(environment, [], { inherited: true })
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(fs, 'writeFileSync', sinon.spy())
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/environments/${environment.name}`)
-      .reply(200, environment))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/environments/${environment.id}/secrets/values?inherited=true`)
-      .reply(200, []))
-    .stdout({ print })
-    .stderr({ print })
     .command(['secrets', '-a', 'examples', '-e', 'env', download_location])
     .it('download environment secrets failed when there are no secrets', ctx => {
       expect(ctx.stdout).to.contain('There are no secrets to download');
     })
 
-  defaults
+  new MockArchitectApi()
+    .getAccount(account)
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => false)
-    .stdout({ print })
-    .stderr({ print })
     .command(['secrets', '-a', 'examples', download_location])
     .catch(ctx => {
       expect(ctx.message).to.contain('You do not have permission to download secrets')
     })
     .it('download account secrets failed due to permission');
 
-  test
-    .stdout({ print })
-    .stderr({ print })
+  new MockArchitectApi()
+    .getTests()
     .command(['secrets', '-a', 'examples', '--cluster', 'my-cluster', '-e', 'env', download_location])
     .catch(ctx => {
       expect(ctx.message).to.contain('Please provide either the cluster flag or the environment flag and not both.')
