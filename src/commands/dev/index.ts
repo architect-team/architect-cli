@@ -381,20 +381,22 @@ export default class Dev extends BaseCommand {
       is_exiting = true;
     });
 
-    compose_process.on('exit', () => {
-      if (!flags.detached) {
-        fs.removeSync(compose_file);
-      }
-      // eslint-disable-next-line no-process-exit
-      process.exit(0);
-    });
-
     this.configureLogs(compose_process, project_name);
     DockerComposeUtils.watchContainersHealth(compose_file, project_name, () => {
       return is_exiting;
     });
 
-    await compose_process;
+    try {
+      await compose_process;
+    } finally {
+      if (!flags.detached) {
+        fs.removeSync(compose_file);
+      }
+
+      await this.finally();
+      // eslint-disable-next-line no-process-exit
+      process.exit(0); // Unclear why we need to force exit, but it might be related to us catching the SIGINT
+    }
   }
 
   configureLogs(compose_process: ExecaChildProcess<string>, project_name: string): void {
