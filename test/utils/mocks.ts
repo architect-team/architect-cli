@@ -6,7 +6,7 @@ import { RecursivePartial } from '../../src';
 import AuthClient from '../../src/app-config/auth';
 import Account from '../../src/architect/account/account.entity';
 import Cluster from '../../src/architect/cluster/cluster.entity';
-import ComponentVersion from '../../src/architect/component/component-version.entity';
+import { ComponentVersion } from '../../src/architect/component/component-version.entity';
 import { Component } from '../../src/architect/component/component.entity';
 import Deployment from '../../src/architect/deployment/deployment.entity';
 import Environment from '../../src/architect/environment/environment.entity';
@@ -190,17 +190,17 @@ export class MockArchitectApi {
   }
 
   getEnvironmentReplicas(environment: Partial<Environment>, replicas: Replica[], component?: Partial<Component>) {
-    const component_name = component ? `?component_name=${component.name}` : '';
+    const query = component ? `?component_name=${component.name}` : '';
     this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
-      .get(`/environments/${environment.id}/replicas${component_name}`)
+      .get(`/environments/${environment.id}/replicas${query}`)
       .reply(200, replicas))
     return this;
   }
 
   getEnvironmentSecrets(environment: Partial<Environment>, secrets: (Partial<EnvironmentSecret> | Partial<ClusterSecret> | Partial<AccountSecret>)[], options?: { inherited?: boolean }) {
-    const inherited = options?.inherited ? `?inherited=${options.inherited}` : '';
+    const query = options?.inherited ? `?inherited=${options.inherited}` : '';
     this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
-      .get(`/environments/${environment.id}/secrets/values${inherited}`)
+      .get(`/environments/${environment.id}/secrets/values${query}`)
       .reply(200, secrets));
     return this;
   }
@@ -214,26 +214,26 @@ export class MockArchitectApi {
   }
 
   getClusters(account: Partial<Account>, clusters: Partial<Cluster>[], options?: { limit?: number }) {
-    const force = options?.limit ? `?limit=${options.limit}` : '';
+    const query = options?.limit ? `?limit=${options.limit}` : '';
     this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.id}/clusters${force}`)
+      .get(`/accounts/${account.id}/clusters${query}`)
       .reply(200, { total: clusters.length, rows: clusters }));
     return this;
   }
 
   // /clusters/<cluster>
   deleteCluster(cluster: Partial<Cluster>, pipeline: Partial<Pipeline>, options?: { force?: 0 | 1 }) {
-    const force = options?.force ? `?force=${options.force}` : '';
+    const query = options?.force ? `?force=${options.force}` : '';
     this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
-      .delete(`/clusters/${cluster.id}${force}`)
+      .delete(`/clusters/${cluster.id}${query}`)
       .reply(200, pipeline))
     return this;
   }
 
   getClusterSecrets(cluster: Partial<Cluster>, secrets: (Partial<ClusterSecret> | Partial<AccountSecret>)[], options?: { inherited?: boolean }) {
-    const inherited = options?.inherited ? `?inherited=${options.inherited}` : '';
+    const query = options?.inherited ? `?inherited=${options.inherited}` : '';
     this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
-      .get(`/clusters/${cluster.id}/secrets/values${inherited}`)
+      .get(`/clusters/${cluster.id}/secrets/values${query}`)
       .reply(200, secrets));
     return this;
   }

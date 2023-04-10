@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
-import ComponentVersion from '../architect/component/component-version.entity';
+import { ComponentVersion } from '../architect/component/component-version.entity';
 import Environment from '../architect/environment/environment.entity';
 import { EnvironmentUtils, GetEnvironmentOptions, ScaleServiceDto, UpdateEnvironmentDto } from '../architect/environment/environment.utils';
 import BaseCommand from '../base-command';
