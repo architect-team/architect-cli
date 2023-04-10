@@ -1,4 +1,4 @@
-import { expect, test } from '@oclif/test';
+import { expect } from '@oclif/test';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import sinon, { SinonSpy } from 'sinon';
