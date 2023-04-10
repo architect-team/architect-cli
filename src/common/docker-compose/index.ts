@@ -663,7 +663,7 @@ export class DockerComposeUtils {
     await fs.writeFile(compose_file, compose);
   }
 
-  public static async watchContainersHealth(compose_file: string, environment_name: string, should_stop: () => boolean): Promise<boolean> {
+  public static async watchContainersHealth(compose_file: string, environment_name: string, should_stop: () => boolean): Promise<void> {
     // To better emulate kubernetes we will always restart a failed container.
     // Kubernetes has 3 modes for Restart. Always, OnFailure and Never. If a liveness probe exists
     // then we will assume a Never policy is not expected. In this instance OnFailure and Always mean pretty
@@ -681,14 +681,8 @@ export class DockerComposeUtils {
     const last_restart_map: Dictionary<number> = {};
     const last_health_failure_map: Dictionary<string> = {};
 
-    // If the last time this loop runs, a container was restarted, we may have to run `docker compose stop`
-    // because the restart can happen after the compose process was killed.
-    let restarted = false;
-
     while (!should_stop()) {
       try {
-        restarted = false;
-
         // Fetch latest container mapping to check for the latest status every iteration
         const container_map = await this.getLocalEnvironmentContainerMap();
         // Only verify container status a part of the environment
@@ -750,8 +744,6 @@ export class DockerComposeUtils {
             // loops execution.
             if (!should_stop()) {
               console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
-              // Even if the restart itself is interrupted, the restarted container can still be running.
-              restarted = true;
               try {
                 await restart(id);
               } catch (err) {
@@ -782,7 +774,5 @@ export class DockerComposeUtils {
         // just because the `watcher` failed.
       }
     }
-
-    return restarted;
   }
 }

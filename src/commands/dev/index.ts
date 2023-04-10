@@ -173,7 +173,6 @@ export default class Dev extends BaseCommand {
       description: '[default: 10m] Time to wait for services to be ready/healthy before detaching.',
       sensitive: false,
       default: '10m',
-      dependsOn: ['detached'],
     }),
     debug: booleanString({
       description: `[default: true] Turn debug mode on (true) or off (false)`,
@@ -377,8 +376,10 @@ export default class Dev extends BaseCommand {
     const compose_process = DockerComposeUtils.dockerCompose(compose_args,
       { stdout: 'pipe', stderr: 'pipe', stdin: 'inherit' });
 
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    process.on('SIGINT', () => {});
+    let is_exiting = false;
+    process.on('SIGINT', () => {
+      is_exiting = true;
+    });
 
     compose_process.on('exit', () => {
       if (!flags.detached) {
@@ -389,6 +390,9 @@ export default class Dev extends BaseCommand {
     });
 
     this.configureLogs(compose_process, project_name);
+    DockerComposeUtils.watchContainersHealth(compose_file, project_name, () => {
+      return is_exiting;
+    });
 
     await compose_process;
   }
