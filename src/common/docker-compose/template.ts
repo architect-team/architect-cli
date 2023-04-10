@@ -38,9 +38,9 @@ export interface DockerComposeDeploy {
 export interface DockerComposeHealthCheck {
   test: string[];
   interval: string;
-  timeout: string;
-  retries: number;
-  start_period: string;
+  timeout?: string;
+  retries?: number;
+  start_period?: string;
 }
 
 export interface DockerService {
