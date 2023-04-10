@@ -7,7 +7,7 @@ import { buildSpecFromYml, ComponentConfig, resourceRefToNodeRef } from '../../.
 import AppService from '../../../src/app-config/service';
 import AccountUtils from '../../../src/architect/account/account.utils';
 import SecretUtils from '../../../src/architect/secret/secret.utils';
-import Dev, { UpProcessManager } from '../../../src/commands/dev';
+import Dev from '../../../src/commands/dev';
 import { DockerUtils } from '../../../src/common/docker';
 import { DockerComposeUtils } from '../../../src/common/docker-compose';
 import DockerComposeTemplate from '../../../src/common/docker-compose/template';
@@ -390,6 +390,8 @@ describe('local dev environment', function () {
           '--providers.docker.allowEmptyServices=true',
           '--providers.docker.exposedByDefault=false',
           '--providers.docker.constraints=Label(`traefik.port`,`80`)',
+          '--entryPoints.web.forwardedHeaders.insecure=true',
+          '--entryPoints.web.proxyProtocol.insecure=true'
         ],
         ports: [
           '80:80',
@@ -398,6 +400,7 @@ describe('local dev environment', function () {
         volumes: [
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
+        stop_grace_period: '0s',
       },
     },
     volumes: {},
@@ -448,6 +451,8 @@ describe('local dev environment', function () {
           '--providers.docker.allowEmptyServices=true',
           '--providers.docker.exposedByDefault=false',
           '--providers.docker.constraints=Label(`traefik.port`,`80`)',
+          '--entryPoints.web.forwardedHeaders.insecure=true',
+          '--entryPoints.web.proxyProtocol.insecure=true'
         ],
         ports: [
           '80:80',
@@ -456,6 +461,7 @@ describe('local dev environment', function () {
         volumes: [
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
+        stop_grace_period: '0s',
       },
     },
     volumes: {},
@@ -506,6 +512,8 @@ describe('local dev environment', function () {
           '--providers.docker.allowEmptyServices=true',
           '--providers.docker.exposedByDefault=false',
           '--providers.docker.constraints=Label(`traefik.port`,`443`)',
+          '--entryPoints.web.forwardedHeaders.insecure=true',
+          '--entryPoints.web.proxyProtocol.insecure=true',
           '--serversTransport.insecureSkipVerify=true',
           '--entryPoints.web.http.redirections.entryPoint.scheme=https',
           '--entryPoints.web.http.redirections.entryPoint.permanent=true',
@@ -520,6 +528,7 @@ describe('local dev environment', function () {
         volumes: [
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
+        stop_grace_period: '0s',
         environment: {
           TRAEFIK_CONFIG: DockerComposeUtils.generateTlsConfig(),
           TRAEFIK_CERT: 'fake-cert',
@@ -575,6 +584,8 @@ describe('local dev environment', function () {
           "--providers.docker.allowEmptyServices=true",
           "--providers.docker.exposedByDefault=false",
           "--providers.docker.constraints=Label(`traefik.port`,`80`)",
+          '--entryPoints.web.forwardedHeaders.insecure=true',
+          '--entryPoints.web.proxyProtocol.insecure=true'
         ],
         ports: [
           "80:80",
@@ -582,7 +593,8 @@ describe('local dev environment', function () {
         ],
         volumes: [
           "/var/run/docker.sock:/var/run/docker.sock:ro"
-        ]
+        ],
+        stop_grace_period: '0s',
       }
     },
     volumes: {}
@@ -693,6 +705,8 @@ describe('local dev environment', function () {
           "--providers.docker.allowEmptyServices=true",
           "--providers.docker.exposedByDefault=false",
           "--providers.docker.constraints=Label(`traefik.port`,`80`)",
+          '--entryPoints.web.forwardedHeaders.insecure=true',
+          '--entryPoints.web.proxyProtocol.insecure=true'
         ],
         ports: [
           "80:80",
@@ -700,7 +714,8 @@ describe('local dev environment', function () {
         ],
         volumes: [
           "/var/run/docker.sock:/var/run/docker.sock:ro"
-        ]
+        ],
+        stop_grace_period: '0s',
       }
     },
     volumes: {}
@@ -730,7 +745,9 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'buildImage', sinon.stub().returns(['project_name', 'compose_file']))
     .stub(Dev.prototype, 'setupTraefikServiceMap', sinon.stub().returns({}))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .stub(UpProcessManager.prototype, 'run', sinon.stub().returns(undefined))
+    .stub(DockerComposeUtils, 'dockerCompose', sinon.stub().returns({
+      on: sinon.stub().returns(undefined),
+    }))
     .stub(fs, 'removeSync', sinon.stub().returns(null))
     .stub(process, 'exit', sinon.stub().returns(undefined))
     .command(['dev', getMockComponentFilePath('hello-world'), '-d', '--ssl=false'])
