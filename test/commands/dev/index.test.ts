@@ -7,7 +7,7 @@ import { buildSpecFromYml, ComponentConfig, resourceRefToNodeRef } from '../../.
 import AppService from '../../../src/app-config/service';
 import AccountUtils from '../../../src/architect/account/account.utils';
 import SecretUtils from '../../../src/architect/secret/secret.utils';
-import Dev, { UpProcessManager } from '../../../src/commands/dev';
+import Dev from '../../../src/commands/dev';
 import { DockerUtils } from '../../../src/common/docker';
 import { DockerComposeUtils } from '../../../src/common/docker-compose';
 import DockerComposeTemplate from '../../../src/common/docker-compose/template';
@@ -735,7 +735,6 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'buildImage', sinon.stub().returns(['project_name', 'compose_file']))
     .stub(Dev.prototype, 'setupTraefikServiceMap', sinon.stub().returns({}))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .stub(UpProcessManager.prototype, 'run', sinon.stub().returns(undefined))
     .stub(fs, 'removeSync', sinon.stub().returns(null))
     .stub(process, 'exit', sinon.stub().returns(undefined))
     .stdout({ print })
