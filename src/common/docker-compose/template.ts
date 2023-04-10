@@ -86,6 +86,7 @@ export interface DockerInspect {
     Status: string,
     Health: DockerInspectHealth,
     ExitCode: number
+    StartedAt: string;
   },
   Name: string,
   Config: {

@@ -390,10 +390,6 @@ export default class Dev extends BaseCommand {
     try {
       await compose_process;
     } finally {
-      if (!flags.detached) {
-        fs.removeSync(compose_file);
-      }
-
       await this.finally();
       // eslint-disable-next-line no-process-exit
       process.exit(0); // Unclear why we need to force exit, but it might be related to us catching the SIGINT

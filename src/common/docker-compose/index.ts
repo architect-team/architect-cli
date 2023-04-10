@@ -678,6 +678,8 @@ export class DockerComposeUtils {
       services_watched.add(service_ref);
     }
 
+    const start_time = Date.now();
+
     const last_health_failure_map: Dictionary<string> = {};
 
     while (!should_stop()) {
@@ -696,6 +698,10 @@ export class DockerComposeUtils {
 
           const { resource_type } = ResourceSlugUtils.parse(service_ref);
           if (resource_type !== 'services') continue;
+
+          if (start_time > new Date(container_state.State.StartedAt).getTime()) {
+            continue; // Skip containers that were started before the watch started
+          }
 
           const state = container_state.State.Status.toLowerCase();
           const health = container_state.State?.Health?.Status?.toLowerCase();
