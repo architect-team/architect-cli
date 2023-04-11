@@ -383,6 +383,7 @@ export default abstract class DependencyManager {
           path: interface_config.ingress?.path,
           url: this.generateUrl(ingress_ref),
           consumers: [],
+          private: interface_config.ingress?.private || false,
         };
       }
     }

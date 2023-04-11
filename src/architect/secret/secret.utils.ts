@@ -1,12 +1,26 @@
 import AppService from '../../app-config/service';
 import Account from '../account/account.entity';
+import Cluster from '../cluster/cluster.entity';
 import ClusterUtils from '../cluster/cluster.utils';
+import Environment from '../environment/environment.entity';
 import { EnvironmentUtils, GetEnvironmentOptions } from '../environment/environment.utils';
 
 export interface Secret {
   scope: string;
   key: string;
   value: string | number | boolean;
+}
+
+export interface AccountSecret extends Secret {
+  account: Account;
+}
+
+export interface ClusterSecret extends Secret {
+  cluster: Cluster;
+}
+
+export interface EnvironmentSecret extends Secret {
+  environment: Environment;
 }
 
 export interface SecretOptions {

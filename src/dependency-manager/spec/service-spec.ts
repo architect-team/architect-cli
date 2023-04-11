@@ -47,6 +47,13 @@ export class IngressSpec {
     description: 'IP addresses that are allowed to access the interface',
   })
   ip_whitelist?: string[];
+
+  @IsOptional()
+  @JSONSchema({
+    ...ExpressionOr({ type: 'boolean' }),
+    description: 'Marks the ingress as private behind Architect authentication',
+  })
+  private?: boolean | string;
 }
 
 @JSONSchema({

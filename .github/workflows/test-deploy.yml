@@ -28,8 +28,7 @@ jobs:
       - run: docker volume create volume-key
       - run: ./bin/dev link test/integration/hello-world/architect.yml
       - run: ./bin/dev link test/mocks/superset/deprecated.architect.yml
-      - run: ./bin/dev dev -e superset test/mocks/superset/architect.yml --browser=false -s param_unset=test -s world_text=Architect > ./tmp.txt 2>&1 &
-      - run: sh scripts/server_online.sh
+      - run: ./bin/dev dev -e superset test/mocks/superset/architect.yml --browser=false -s param_unset=test -s world_text=Architect --detached
       - name: Check that the app is accessible locally
         run: curl --fail -S -I https://hello.localhost.architect.sh
       - name: Check that the app returns the expected response

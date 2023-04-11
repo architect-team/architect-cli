@@ -10,7 +10,7 @@ import path from 'path';
 import untildify from 'untildify';
 import { ArchitectError, DependencyGraph, Dictionary, GatewayNode, IngressEdge, ResourceSlugUtils, ServiceNode, TaskNode } from '../../';
 import LocalPaths from '../../paths';
-import { docker, restart } from '../docker/cmd';
+import { docker } from '../docker/cmd';
 import { DockerHelper, RequiresDocker } from '../docker/helper';
 import BuildPackUtils from '../utils/buildpack';
 import PortUtil from '../utils/port';
@@ -121,6 +121,8 @@ export class DockerComposeUtils {
           '--providers.docker.allowEmptyServices=true',
           '--providers.docker.exposedByDefault=false',
           `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
+          `--entryPoints.web.forwardedHeaders.insecure=true`,
+          `--entryPoints.web.proxyProtocol.insecure=true`,
           ...(ssl_cert && ssl_key ? [
             // Ignore local certs being invalid on proxy
             `--serversTransport.insecureSkipVerify=true`,
@@ -142,6 +144,7 @@ export class DockerComposeUtils {
         volumes: [
           '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
+        stop_grace_period: '0s',
         ...(ssl_cert && ssl_key ? {
           entrypoint: [
             '/bin/sh',
@@ -660,7 +663,7 @@ export class DockerComposeUtils {
     await fs.writeFile(compose_file, compose);
   }
 
-  public static async watchContainersHealth(compose_file: string, environment_name: string, should_stop: () => boolean): Promise<boolean> {
+  public static async watchContainersHealth(compose_file: string, environment_name: string, should_stop: () => boolean): Promise<void> {
     // To better emulate kubernetes we will always restart a failed container.
     // Kubernetes has 3 modes for Restart. Always, OnFailure and Never. If a liveness probe exists
     // then we will assume a Never policy is not expected. In this instance OnFailure and Always mean pretty
@@ -675,25 +678,18 @@ export class DockerComposeUtils {
       services_watched.add(service_ref);
     }
 
-    const last_restart_map: Dictionary<number> = {};
-    const last_health_failure_map: Dictionary<string> = {};
+    const start_time = Date.now();
 
-    // If the last time this loop runs, a container was restarted, we may have to run `docker compose stop`
-    // because the restart can happen after the compose process was killed.
-    let restarted = false;
+    const last_health_failure_map: Dictionary<string> = {};
 
     while (!should_stop()) {
       try {
-        restarted = false;
-
         // Fetch latest container mapping to check for the latest status every iteration
         const container_map = await this.getLocalEnvironmentContainerMap();
         // Only verify container status a part of the environment
         const container_states = container_map[environment_name] || [];
 
         for (const container_state of container_states) {
-          const id = container_state.Id;
-          const full_service_name = container_state.Name.substring(1);  // Remove preceding '/'
           const service_ref = container_state.Config.Labels['architect.ref'];
 
           if (!services_watched.has(service_ref)) {
@@ -703,10 +699,14 @@ export class DockerComposeUtils {
           const { resource_type } = ResourceSlugUtils.parse(service_ref);
           if (resource_type !== 'services') continue;
 
+          if (start_time > new Date(container_state.State.StartedAt).getTime()) {
+            continue; // Skip containers that were started before the watch started
+          }
+
           const state = container_state.State.Status.toLowerCase();
           const health = container_state.State?.Health?.Status?.toLowerCase();
 
-          const bad_state = state !== 'running' && container_state.State.ExitCode !== 0;
+          const bad_state = state !== 'running' && container_state.State.ExitCode !== 0 && health !== 'starting';
           const bad_health = health === 'unhealthy';
 
           const failed_health_logs = container_state.State?.Health?.Log?.filter(log => log.ExitCode !== 0) || [];
@@ -724,44 +724,17 @@ export class DockerComposeUtils {
             }
           }
 
-          if (!last_restart_map[service_ref]) {
-            last_restart_map[service_ref] = Date.now();
-
-            // Docker compose will only exit containers when stopping an up
-            // If we had no service data and the container state is bad,
-            // these containers may be from an old instance and we
-            // are not yet in a bad state. If they are still bad after 5s, they
-            // will be restarted.
-            if (bad_state) {
-              continue;
-            }
-          }
-
-          if (bad_state || bad_health) {
-            last_restart_map[service_ref] = Date.now();
-
-            // Ensure the containers aren't terminating before we attempt to restart the container.
-            // If the dev command gets killed between the start of this loop and here, the restart will cause the
-            // containers to never stop and leave the command hanging.
-            // Note: It's possible this result has changed because we `await` another Docker command during this
-            // loops execution.
-            if (!should_stop()) {
-              console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
-              // Even if the restart itself is interrupted, the restarted container can still be running.
-              restarted = true;
-              try {
-                await restart(id);
-              } catch (err) {
-                console.log(chalk.red(`ERROR: ${service_ref} failed to restart.`));
-                continue;
-              }
-            }
-            // Docker compose will stop watching when there is a single container and it goes down.
-            // If all containers go down at the same time it will wait for the restart and just move on. So only need this
-            // for the case of 1 container with a health check.
-            if (container_states.length === 1) {
-              DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', environment_name, 'logs', full_service_name, '--follow', '--since', new Date(last_restart_map[service_ref]).toISOString()], { stdout: 'inherit' });
-            }
+          if ((bad_state || bad_health) &&
+              container_states.length > 1 && // Don't restart if there is only 1 container running because it will kill the main process
+              // Ensure the containers aren't terminating before we attempt to restart the container.
+              // If the dev command gets killed between the start of this loop and here, the restart will cause the
+              // containers to never stop and leave the command hanging.
+              // Note: It's possible this result has changed because we `await` another Docker command during this
+              // loops execution.
+              !should_stop()) {
+            console.log(chalk.red(`ERROR: ${service_ref} has encountered an error and is being restarted.`));
+            const compose_args = ['-f', compose_file, '-p', environment_name, 'restart', container_state.Config.Labels['com.docker.compose.service']];
+            await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' });
           }
         }
 
@@ -779,7 +752,5 @@ export class DockerComposeUtils {
         // just because the `watcher` failed.
       }
     }
-
-    return restarted;
   }
 }

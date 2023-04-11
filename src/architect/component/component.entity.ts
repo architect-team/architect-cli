@@ -6,4 +6,5 @@ export interface Component {
   updated_at: string;
   name: string;
   account: Account;
+  component_id: string;
 }
