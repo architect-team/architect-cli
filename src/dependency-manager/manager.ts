@@ -178,7 +178,7 @@ export default abstract class DependencyManager {
       if (values.length > 1) {
         const msg = `The component you are trying to deploy has the subdomain ${subdomain} that is claimed by multiple component interfaces:
           \n[${values.sort().join(', ')}].
-          \nConsider changing the subdomain of the component you are trying to deploy or clear the environment before deploying again.`;
+          \nTo resolve this issue, either change the subdomain in the architect.yml file for this component, or clear the environment before trying to deploy this component.`;
         throw new ArchitectError(msg);
       }
     }
