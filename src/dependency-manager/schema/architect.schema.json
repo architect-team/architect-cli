@@ -1257,6 +1257,9 @@
           "key"
         ]
       },
+      "errorMessage": {
+        "not": "Only one of host_path, key is allowed, or none should exist"
+      },
       "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
       "additionalProperties": false,
       "externalDocs": {
@@ -1343,6 +1346,9 @@
                   "host_path",
                   "key"
                 ]
+              },
+              "errorMessage": {
+                "not": "Only one of host_path, key is allowed, or none should exist"
               },
               "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
               "additionalProperties": false,
@@ -1454,15 +1460,15 @@
       },
       "type": "object",
       "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
-      "errorMessage": {
-        "not": "Buildpack and Dockerfile cannot be used at the same time"
-      },
       "not": {
         "type": "object",
         "required": [
           "buildpack",
           "dockerfile"
         ]
+      },
+      "errorMessage": {
+        "not": "Only one of buildpack, dockerfile is allowed, or none should exist"
       },
       "additionalProperties": false,
       "externalDocs": {
@@ -1570,15 +1576,15 @@
               },
               "type": "object",
               "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
-              "errorMessage": {
-                "not": "Buildpack and Dockerfile cannot be used at the same time"
-              },
               "not": {
                 "type": "object",
                 "required": [
                   "buildpack",
                   "dockerfile"
                 ]
+              },
+              "errorMessage": {
+                "not": "Only one of buildpack, dockerfile is allowed, or none should exist"
               },
               "additionalProperties": false,
               "externalDocs": {
@@ -1655,6 +1661,21 @@
             }
           ],
           "description": "IP addresses that are allowed to access the interface"
+        },
+        "private": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Marks the ingress as private behind Architect authentication"
         }
       },
       "type": "object",
@@ -1731,6 +1752,21 @@
                     }
                   ],
                   "description": "IP addresses that are allowed to access the interface"
+                },
+                "private": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Marks the ingress as private behind Architect authentication"
                 }
               },
               "type": "object",
@@ -2869,6 +2905,16 @@
       },
       "type": "object",
       "description": "A runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
+      "not": {
+        "type": "object",
+        "required": [
+          "build",
+          "image"
+        ]
+      },
+      "errorMessage": {
+        "not": "Only one of build, image is allowed, or none should exist"
+      },
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://docs.architect.io/reference/architect-yml#servicespec"
@@ -3291,6 +3337,16 @@
               },
               "type": "object",
               "description": "A runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
+              "not": {
+                "type": "object",
+                "required": [
+                  "build",
+                  "image"
+                ]
+              },
+              "errorMessage": {
+                "not": "Only one of build, image is allowed, or none should exist"
+              },
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://docs.architect.io/reference/architect-yml#servicespec"
@@ -3579,6 +3635,16 @@
       },
       "type": "object",
       "description": "A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, triggered jobs). Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
+      "not": {
+        "type": "object",
+        "required": [
+          "build",
+          "image"
+        ]
+      },
+      "errorMessage": {
+        "not": "Only one of build, image is allowed, or none should exist"
+      },
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://docs.architect.io/reference/architect-yml#taskspec"
@@ -3864,6 +3930,16 @@
               },
               "type": "object",
               "description": "A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, triggered jobs). Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
+              "not": {
+                "type": "object",
+                "required": [
+                  "build",
+                  "image"
+                ]
+              },
+              "errorMessage": {
+                "not": "Only one of build, image is allowed, or none should exist"
+              },
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://docs.architect.io/reference/architect-yml#taskspec"
@@ -5391,6 +5467,9 @@
           "key"
         ]
       },
+      "errorMessage": {
+        "not": "Only one of host_path, key is allowed, or none should exist"
+      },
       "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
       "additionalProperties": false,
       "externalDocs": {
@@ -5477,6 +5556,9 @@
                   "host_path",
                   "key"
                 ]
+              },
+              "errorMessage": {
+                "not": "Only one of host_path, key is allowed, or none should exist"
               },
               "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
               "additionalProperties": false,
@@ -5588,15 +5670,15 @@
       },
       "type": "object",
       "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
-      "errorMessage": {
-        "not": "Buildpack and Dockerfile cannot be used at the same time"
-      },
       "not": {
         "type": "object",
         "required": [
           "buildpack",
           "dockerfile"
         ]
+      },
+      "errorMessage": {
+        "not": "Only one of buildpack, dockerfile is allowed, or none should exist"
       },
       "additionalProperties": false,
       "externalDocs": {
@@ -5704,15 +5786,15 @@
               },
               "type": "object",
               "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
-              "errorMessage": {
-                "not": "Buildpack and Dockerfile cannot be used at the same time"
-              },
               "not": {
                 "type": "object",
                 "required": [
                   "buildpack",
                   "dockerfile"
                 ]
+              },
+              "errorMessage": {
+                "not": "Only one of buildpack, dockerfile is allowed, or none should exist"
               },
               "additionalProperties": false,
               "externalDocs": {
@@ -5789,6 +5871,21 @@
             }
           ],
           "description": "IP addresses that are allowed to access the interface"
+        },
+        "private": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Marks the ingress as private behind Architect authentication"
         }
       },
       "type": "object",
@@ -5865,6 +5962,21 @@
                     }
                   ],
                   "description": "IP addresses that are allowed to access the interface"
+                },
+                "private": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Marks the ingress as private behind Architect authentication"
                 }
               },
               "type": "object",
@@ -6916,6 +7028,16 @@
       },
       "type": "object",
       "description": "A runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
+      "not": {
+        "type": "object",
+        "required": [
+          "build",
+          "image"
+        ]
+      },
+      "errorMessage": {
+        "not": "Only one of build, image is allowed, or none should exist"
+      },
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://docs.architect.io/reference/architect-yml#servicespec"
@@ -7335,6 +7457,16 @@
               },
               "type": "object",
               "description": "A runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
+              "not": {
+                "type": "object",
+                "required": [
+                  "build",
+                  "image"
+                ]
+              },
+              "errorMessage": {
+                "not": "Only one of build, image is allowed, or none should exist"
+              },
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://docs.architect.io/reference/architect-yml#servicespec"
@@ -7620,6 +7752,16 @@
       },
       "type": "object",
       "description": "A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, triggered jobs). Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
+      "not": {
+        "type": "object",
+        "required": [
+          "build",
+          "image"
+        ]
+      },
+      "errorMessage": {
+        "not": "Only one of build, image is allowed, or none should exist"
+      },
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://docs.architect.io/reference/architect-yml#taskspec"
@@ -7902,6 +8044,16 @@
               },
               "type": "object",
               "description": "A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, triggered jobs). Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
+              "not": {
+                "type": "object",
+                "required": [
+                  "build",
+                  "image"
+                ]
+              },
+              "errorMessage": {
+                "not": "Only one of build, image is allowed, or none should exist"
+              },
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://docs.architect.io/reference/architect-yml#taskspec"

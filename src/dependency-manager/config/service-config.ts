@@ -16,6 +16,7 @@ export interface IngressConfig {
   path?: string;
   ip_whitelist?: string[];
   sticky?: boolean | string;
+  private: boolean;
 
   // Context
   consumers?: string[];
