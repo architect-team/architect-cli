@@ -171,14 +171,14 @@ export default class Deploy extends DeployCommand {
     }),
     'deletion-protection': booleanString({
       default: true,
-      description: '[default: true] Toggle for deletion protection on deployments',
+      description: 'Toggle for deletion protection on deployments',
       exclusive: ['local'],
       sensitive: false,
     }),
     recursive: booleanString({
       char: 'r',
       default: true,
-      description: '[default: true] Toggle to automatically deploy all dependencies',
+      description: 'Toggle to automatically deploy all dependencies',
       sensitive: false,
     }),
     refresh: booleanString({
@@ -189,7 +189,7 @@ export default class Deploy extends DeployCommand {
     }),
     browser: booleanString({
       default: true,
-      description: '[default: true] Automatically open urls in the browser for local deployments',
+      description: 'Automatically open urls in the browser for local deployments',
       sensitive: false,
     }),
     ...SHARED_REGISTER_FLAGS,

@@ -7,7 +7,16 @@ import { transformResourceSpec } from './resource-transform';
 
 export const transformInterfaceSpec = function (key: string, interface_spec: ServiceInterfaceSpec | string | number): ServiceInterfaceConfig {
   if (interface_spec instanceof Object) {
-    return interface_spec;
+    const interface_config: ServiceInterfaceConfig = interface_spec as Omit<ServiceInterfaceSpec, 'ingress'>;
+
+    if (interface_spec.ingress) {
+      interface_config.ingress = {
+        ...interface_spec.ingress,
+        private: Boolean(interface_spec.ingress.private) || false,
+      };
+    }
+
+    return interface_config;
   } else {
     return { port: interface_spec };
   }

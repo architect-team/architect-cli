@@ -21,6 +21,42 @@ export class GetEnvironmentOptions {
   strict? = true;
 }
 
+export interface ScaleServiceDto {
+  resource_slug?: string;
+  replicas?: number;
+}
+
+export interface UpdateEnvironmentDto extends ScaleServiceDto {
+  clear_scaling?: boolean;
+}
+
+export interface CertManagerCertificate {
+  // https://cert-manager.io/v1.7-docs/reference/api-docs/#cert-manager.io/v1.Certificate
+  apiVersion: 'cert-manager.io/v1';
+  kind: 'Certificate';
+  spec: {
+    dnsNames: string[];
+  };
+  metadata: {
+    creationTimestamp: string; // of the format 2022-11-11T15:45:09Z
+    labels: Dictionary<string>;
+  };
+  status: {
+    conditions: [
+      {
+        lastTransitionTime: string; // of the format 2022-11-11T15:45:09Z
+        message: string;
+        reason: string;
+        status: 'True' | 'False' | 'Unknown';
+        type: 'Ready' | 'Issuing';
+      },
+    ];
+    renewalTime: string; // of the format 2023-01-10T14:45:07Z
+    notBefore: string; // of the format 2023-01-10T14:45:07Z
+    notAfter: string; // of the format 2023-01-10T14:45:07Z
+  };
+}
+
 export class EnvironmentUtils {
   static flags = {
     environment: Flags.string({

@@ -2,28 +2,20 @@ import { expect } from '@oclif/test';
 import sinon from 'sinon';
 import SecretUtils from '../../../src/architect/secret/secret.utils';
 import UserUtils from '../../../src/architect/user/user.utils';
-import { mockArchitectAuth, MOCK_API_HOST } from '../../utils/mocks';
+import { MockArchitectApi } from '../../utils/mocks';
 
 describe('secrets', function () {
-  // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-  const print = false;
-
   const account = {
     id: "aa440d39-97d9-43c3-9f1a-a9a69adb2a41",
     name: "examples"
   }
 
-  const defaults = mockArchitectAuth()
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${account.name}`)
-      .reply(200, account));
-
-  defaults
+  new MockArchitectApi()
+    .getAccount(account)
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(SecretUtils, 'getSecrets', sinon.stub())
     .stub(SecretUtils, 'batchUpdateSecrets', sinon.stub())
-    .stdout({ print })
-    .stderr({ print })
     .command(['secrets:set', '-a', 'examples', './test/mocks/secrets/account-secrets.yml'])
     .it('upload account secrets successfully', ctx => {
       const batch_update = SecretUtils.batchUpdateSecrets as sinon.SinonStub;
@@ -31,12 +23,11 @@ describe('secrets', function () {
       expect(ctx.stdout).to.contain('Successfully uploaded secrets');
     })
 
-  defaults
-    .stub(UserUtils, 'isAdmin', async () => true)
+  new MockArchitectApi()
+    .getAccount(account)
+    .getTests()    .stub(UserUtils, 'isAdmin', async () => true)
     .stub(SecretUtils, 'getSecrets', sinon.stub())
     .stub(SecretUtils, 'batchUpdateSecrets', sinon.stub())
-    .stdout({ print })
-    .stderr({ print })
     .command(['secrets:set', '-a', 'examples', '--override', './test/mocks/secrets/account-secrets.yml'])
     .it('upload account secrets successfully with override', ctx => {
       const batch_update = SecretUtils.batchUpdateSecrets as sinon.SinonStub;
@@ -44,24 +35,23 @@ describe('secrets', function () {
       expect(ctx.stdout).to.contain('Successfully uploaded secrets');
     })
 
-  defaults
-    .stub(UserUtils, 'isAdmin', async () => true)
+  new MockArchitectApi()
+    .getAccount(account)
+    .getTests()    .stub(UserUtils, 'isAdmin', async () => true)
     .stub(SecretUtils, 'getSecrets', sinon.stub())
     .stub(SecretUtils, 'batchUpdateSecrets', sinon.stub())
-    .stdout({ print })
-    .stderr({ print })
     .command(['secrets:set', '-a', 'examples', '--cluster', 'my-cluster', '-e', 'env', './test/mocks/secrets/cluster-secrets.yml'])
     .catch(ctx => {
       expect(ctx.message).to.contain('Please provide either the cluster flag or the environment flag and not both.')
     })
     .it('upload secrets failed when both cluster and environment flags are set');
 
-  defaults
+  new MockArchitectApi()
+    .getAccount(account)
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(SecretUtils, 'getSecrets', sinon.stub())
     .stub(SecretUtils, 'batchUpdateSecrets', sinon.stub())
-    .stdout({ print })
-    .stderr({ print })
     .command(['secrets:set', '-a', 'examples', '--cluster', 'my-cluster', './test/mocks/secrets/cluster-secrets.yml'])
     .it('upload cluster secrets successfully', ctx => {
       const batch_update = SecretUtils.batchUpdateSecrets as sinon.SinonStub;
@@ -69,12 +59,12 @@ describe('secrets', function () {
       expect(ctx.stdout).to.contain('Successfully uploaded secrets');
     })
 
-  defaults
+  new MockArchitectApi()
+    .getAccount(account)
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(SecretUtils, 'getSecrets', sinon.stub())
     .stub(SecretUtils, 'batchUpdateSecrets', sinon.stub())
-    .stdout({ print })
-    .stderr({ print })
     .command(['secrets:set', '-a', 'examples', '-e', 'env', './test/mocks/secrets/environment-secrets.yml'])
     .it('upload environment secrets successfully', ctx => {
       const batch_update = SecretUtils.batchUpdateSecrets as sinon.SinonStub;
@@ -82,12 +72,12 @@ describe('secrets', function () {
       expect(ctx.stdout).to.contain('Successfully uploaded secrets');
     })
 
-  defaults
+  new MockArchitectApi()
+    .getAccount(account)
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => true)
     .stub(SecretUtils, 'getSecrets', sinon.stub())
     .stub(SecretUtils, 'batchUpdateSecrets', sinon.stub())
-    .stdout({ print })
-    .stderr({ print })
     .command(['secrets:set', '-a', 'examples', '-e', 'env', '--override', './test/mocks/secrets/environment-secrets.yml'])
     .it('upload environment secrets successfully with override', ctx => {
       const batch_update = SecretUtils.batchUpdateSecrets as sinon.SinonStub;
@@ -95,10 +85,10 @@ describe('secrets', function () {
       expect(ctx.stdout).to.contain('Successfully uploaded secrets');
     })
 
-  defaults
+  new MockArchitectApi()
+    .getAccount(account)
+    .getTests()
     .stub(UserUtils, 'isAdmin', async () => false)
-    .stdout({ print })
-    .stderr({ print })
     .command(['secrets:set', '-a', 'examples', './test/mocks/secrets/account-secrets.yml'])
     .catch(ctx => {
       expect(ctx.message).to.contain('You do not have permission to upload secrets')
