@@ -1,2 +1,3 @@
 hello:
+  image: heroku/nodejs-hello-world
   entrypoint: bin/web
