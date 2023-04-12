@@ -6,7 +6,7 @@ import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
-import net from 'net';
+import ms from 'ms';
 import opener from 'opener';
 import path from 'path';
 import { ArchitectError, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, Dictionary } from '../../';
@@ -17,13 +17,12 @@ import { default as BaseCommand } from '../../base-command';
 import LocalDependencyManager, { ComponentConfigOpts } from '../../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../common/docker-compose';
 import DockerComposeTemplate from '../../common/docker-compose/template';
-import { RequiresDocker } from '../../common/docker/helper';
+import { DockerHelper, RequiresDocker } from '../../common/docker/helper';
 import BuildPackUtils from '../../common/utils/buildpack';
 import DeployUtils from '../../common/utils/deploy.utils';
 import { booleanString } from '../../common/utils/oclif';
 import PortUtil from '../../common/utils/port';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
-import LocalPaths from '../../paths';
 
 type TraefikHttpService = {
   name: string;
@@ -31,11 +30,6 @@ type TraefikHttpService = {
   serverStatus?: Dictionary<string>;
   provider: string;
 };
-
-const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/);
-
-const rand = () => Math.floor(Math.random() * 255);
-const onlyUnique = <T>(value: T, index: number, self: T[]) => self.indexOf(value) === index;
 
 /**
  * Converts a regular filepath into a path that is valid for a Windows socket
@@ -50,199 +44,9 @@ export function socketPath(path: string): string {
   return path;
 }
 
-/**
- * Handles the logic for managing the `docker compose up` process.
- *
- * Gracefully stops running containers when the process is interrupted, and
- * stops containers when the underlying process returns with an error.
- */
-export class UpProcessManager {
-  compose_file: string;
-  server?: net.Server;
-  socket: string;
-  project_name: string;
-  detached: boolean;
-  is_windows: boolean;
+const HOST_REGEX = new RegExp(/Host\(`(.*?)`\)/);
 
-  compose_process?: ExecaChildProcess<string>;
-  is_exiting: boolean;
-  can_safely_kill: boolean;
-
-  constructor(compose_file: string, socket: string, project_name: string, detached: boolean) {
-    this.compose_file = compose_file;
-    this.socket = socket;
-    this.project_name = project_name;
-    this.detached = detached;
-
-    this.is_windows = process.platform === 'win32';
-    this.is_exiting = false;
-    this.can_safely_kill = false;
-  }
-
-  /** Spawns a process running `docker compose up` */
-  start(): ExecaChildProcess<string> {
-    const compose_args = ['-f', this.compose_file, '-p', this.project_name, 'up', '--remove-orphans', '--renew-anon-volumes', '--timeout', '0'];
-    if (this.detached) {
-      compose_args.push('-d');
-    }
-
-    // `detached: true` is set for non-windows platforms so that the SIGINT isn't automatically sent to
-    // the `docker compose` process. Signals are automatically sent to the entire process group, but we want to
-    // handle SIGINT in a special way in `handleInterrupt`.
-    // On Windows (cmd, powershell), signals don't exist and running in detached mode opens a new window. The
-    // "SIGINT" we get on Windows isn't a real signal and isn't automatically passed to child processes,
-    // so we don't have to worry about it.
-    const compose_process = DockerComposeUtils.dockerCompose(compose_args,
-      { stdout: 'pipe', stderr: 'pipe', stdin: 'ignore', detached: !this.is_windows });
-
-    this.server = net.createServer();
-    this.server.on('connection', (socket) => {
-      socket.on('data', (d) => {
-        if (d.toString('utf-8') === 'stop') {
-          this.handleInterrupt();
-        }
-      });
-    });
-
-    let recreated_socket = false;
-    this.server.on('error', (e: any) => {
-      if (e.code === 'EADDRINUSE' && this.server && !recreated_socket) {
-        recreated_socket = true;
-        // Socket already exists (likely from a previous run that didnt get cleaned up properly)
-        // Remove it and listen again creating a new socket.
-        fs.rmSync(this.socket);
-        this.server.listen(this.socket);
-      } else {
-        throw e;
-      }
-    });
-
-    this.server.listen(this.socket);
-
-    return compose_process;
-  }
-
-  /** Spawns a process running `docker compose stop`  */
-  async stop(): Promise<void> {
-    await DockerComposeUtils.dockerCompose(['-f', this.compose_file, '-p', this.project_name, 'stop'], { detached: !this.is_windows });
-  }
-
-  /** Sends the SIGINT signal to the running `docker compose up` process. */
-  interrupt(): void {
-    if (!this.compose_process) {
-      throw new Error('Must call run() first');
-    }
-    process.kill(-this.compose_process.pid, 'SIGINT');
-  }
-
-  configureInterrupts(): void {
-    process.on('SIGINT', () => {
-      this.handleInterrupt();
-    });
-
-    // This is what happens with Ctrl+Break on Windows. Treat it like a Ctrl+C, otherwise
-    // the user can kill `architect dev` in a "normal" way without the containers stopping.
-    process.on('SIGBREAK', () => {
-      this.handleInterrupt();
-    });
-  }
-
-  async handleInterrupt(): Promise<void> {
-    // If a user SIGINT's between when docker compose outputs "Attaching to ..." and starts printing logs,
-    // the containers will not be stopped and `docker compose stop` won't yet work.
-    // We stop SIGINT from doing anything until we know for sure we can stop gracefully.
-    if (this.is_exiting || !this.can_safely_kill) {
-      return;
-    }
-    this.is_exiting = true;
-    console.log('Gracefully stopping..... Please Wait.....');
-    // On non-windows, we can just interrupt the compose process. On windows, we need to run 'stop' to
-    // ensure the containers are stopped.
-    if (this.is_windows) {
-      this.stop();
-    } else {
-      this.interrupt();
-    }
-  }
-
-  /**
-   * Handles printing logs from the attached docker images.
-   * Stops printing logs once `handleInterrupt` is called and containers are being stopped.
-   */
-  configureLogs(): void {
-    if (!this.compose_process) {
-      throw new Error('Must call run() first');
-    }
-
-    const service_colors = new Map<string, chalk.Chalk>();
-    const createHandleStream = (output_func: (message: string) => void) => {
-      return (data: any) => {
-        if (this.is_exiting) {
-          return;
-        }
-
-        for (const line of data.toString().split('\n')) {
-          const lineParts = line.split('|');
-          if (lineParts.length > 1) {
-            // At this point we can stop the process without leaving containers running.
-            this.can_safely_kill = true;
-            const service = (lineParts[0] as string).replace(`${this.project_name}-`, '');
-
-            lineParts.shift();
-            const newLine = lineParts.join('|');
-
-            if (!service_colors.get(service)) {
-              service_colors.set(service, chalk.rgb(rand(), rand(), rand()));
-            }
-
-            const color = service_colors.get(service) as chalk.Chalk;
-            output_func(color(service + '| ') + newLine);
-          }
-        }
-      };
-    };
-    this.compose_process.stdout?.on('data', createHandleStream(console.log));
-    this.compose_process.stderr?.on('data', createHandleStream(console.warn));
-  }
-
-  async run(): Promise<void> {
-    this.compose_process = this.start();
-
-    this.configureInterrupts();
-    this.configureLogs();
-
-    const container_health = DockerComposeUtils.watchContainersHealth(this.compose_file, this.project_name, () => {
-      return this.is_exiting;
-    });
-
-    try {
-      await this.compose_process;
-    } catch (ex) {
-      if (!this.is_exiting) {
-        // Always call `docker compose stop` here - the process died so there's nothing to kill,
-        // need to call `docker compose stop` to clean up any remaining running containers.
-        console.error(chalk.red(ex));
-        console.log(chalk.red('\nError detected - Stopping running containers...'));
-        this.is_exiting = true;
-        await this.stop();
-      }
-    } finally {
-      if (this.server) {
-        this.server.close();
-      }
-      // Mark that we're exiting - in the case that the compose procesas is stopped by the `architect stop` command,
-      // this won't be set, but we do need it to be true so watchContainersHealth exits as desired
-      this.is_exiting = true;
-      // If the process is interrupted or dies of some other means _right after_ a container was restarted,
-      // we can end up in a state where that singular container is still running and the others have been stopped.
-      // This checks for that case and will call `docker compose stop` if it happened to ensure the container is taken down.
-      const restarted = await container_health;
-      if (restarted) {
-        await this.stop();
-      }
-    }
-  }
-}
+const rand = () => Math.floor(Math.random() * 255);
 
 export default class Dev extends BaseCommand {
   async auth_required(): Promise<boolean> {
@@ -310,12 +114,12 @@ export default class Dev extends BaseCommand {
     recursive: booleanString({
       char: 'r',
       default: true,
-      description: '[default: true] Toggle to automatically deploy all dependencies',
+      description: 'Toggle to automatically deploy all dependencies',
       sensitive: false,
     }),
     browser: booleanString({
       default: true,
-      description: '[default: true] Automatically open urls in the browser for local deployments',
+      description: 'Automatically open urls in the browser for local deployments',
       sensitive: false,
     }),
     port: Flags.integer({
@@ -365,8 +169,13 @@ export default class Dev extends BaseCommand {
       sensitive: false,
       default: false,
     }),
+    'wait-timeout': Flags.string({
+      description: 'Time to wait for services to be ready/healthy before detaching.',
+      sensitive: false,
+      default: '10m',
+    }),
     debug: booleanString({
-      description: `[default: true] Turn debug mode on (true) or off (false)`,
+      description: `Turn debug mode on (true) or off (false)`,
       default: true,
       sensitive: false,
     }),
@@ -528,7 +337,6 @@ export default class Dev extends BaseCommand {
   async runCompose(compose: DockerComposeTemplate, default_project_name: string, gateway_port: number, gateway_admin_port: number): Promise<void> {
     const { flags } = await this.parse(Dev);
     const [project_name, compose_file] = await this.buildImage(compose, default_project_name);
-    const socket = socketPath(path.join(this.app.config.getConfigDir(), LocalPaths.LOCAL_DEPLOY_PATH, project_name));
 
     this.app.posthog.capture({
       event: 'cli.command.update',
@@ -551,12 +359,69 @@ export default class Dev extends BaseCommand {
       this.pollTraefik(gateway_admin_port, traefik_service_map);
     }
 
-    await new UpProcessManager(compose_file, socket, project_name, flags.detached).run();
-    if (!flags.detached) {
-      fs.removeSync(compose_file);
+    const compose_args = ['-f', compose_file, '-p', project_name, 'up', '--remove-orphans', '--renew-anon-volumes', '-t', '0'];
+    if (flags.detached) {
+      compose_args.push('--detach');
+      if (DockerHelper.composeVersion('>=2.17.2')) {
+        compose_args.push(
+          '--wait',
+          '--wait-timeout',
+          `${ms(flags['wait-timeout']) / 1000}`,
+        );
+      } else {
+        this.warn('WARNING: docker-compose version is less than 2.17.2. --detached will not wait for services to be ready.');
+      }
     }
-    // eslint-disable-next-line no-process-exit
-    process.exit();
+
+    const compose_process = DockerComposeUtils.dockerCompose(compose_args,
+      { stdout: 'pipe', stderr: 'pipe', stdin: 'inherit' });
+
+    let is_exiting = false;
+    process.on('SIGINT', () => {
+      is_exiting = true;
+    });
+
+    this.configureLogs(compose_process, project_name);
+
+    DockerComposeUtils.watchContainersHealth(compose_file, project_name, () => {
+      return is_exiting;
+    });
+
+    try {
+      await compose_process;
+    } finally {
+      await this.finally();
+      // eslint-disable-next-line no-process-exit
+      process.exit(0); // Unclear why we need to force exit, but it might be related to us catching the SIGINT
+    }
+  }
+
+  configureLogs(compose_process: ExecaChildProcess<string>, project_name: string): void {
+    const service_colors = new Map<string, chalk.Chalk>();
+    const createHandleStream = (output_func: (message: string) => void) => {
+      return (data: any) => {
+        for (const line of data.toString().split('\n')) {
+          const lineParts = line.split('|');
+          if (lineParts.length > 1) {
+            const service = (lineParts[0] as string).replace(`${project_name}-`, '');
+
+            lineParts.shift();
+            const newLine = lineParts.join('|');
+
+            if (!service_colors.get(service)) {
+              service_colors.set(service, chalk.rgb(rand(), rand(), rand()));
+            }
+
+            const color = service_colors.get(service) as chalk.Chalk;
+            output_func(color(service + '| ') + newLine);
+          } else if (line) {
+            output_func(line);
+          }
+        }
+      };
+    };
+    compose_process.stdout?.on('data', createHandleStream(console.log));
+    compose_process.stderr?.on('data', createHandleStream(console.warn));
   }
 
   private async getAvailablePort(port: number): Promise<number> {

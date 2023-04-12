@@ -16,7 +16,3 @@ export const docker = async (args: string[], opts = { stdout: true }, execa_opts
   }
   return cmd;
 };
-
-export const restart = async (container_id: string): Promise<void> => {
-  return docker(['restart', container_id]);
-};

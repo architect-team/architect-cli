@@ -116,4 +116,15 @@ export default class ClusterUtils {
       throw new ArchitectError(`Currently, we only support Kubernetes clusters on version ${MIN_CLUSTER_SEMVER.version} or greater. Your cluster is currently on version ${client_semver.version} which is below the minimum required version. Please upgrade your cluster before registering it with Architect.`);
     }
   }
+
+  public static async checkClusterNodes(kubeconfig_path: string): Promise<void> {
+    const set_kubeconfig = ['--kubeconfig', untildify(kubeconfig_path)];
+    const { stderr } = await execa('kubectl', [
+      ...set_kubeconfig,
+      'get', 'nodes',
+    ]);
+    if (stderr === 'No resources found') {
+      throw new Error('No nodes were detected for the Kubernetes cluster. Please add nodes to the cluster in order for your applications to run.');
+    }
+  }
 }
