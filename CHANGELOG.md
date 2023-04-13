@@ -1,3 +1,19 @@
+# [1.38.0](https://github.com/architect-team/architect-cli/compare/v1.37.0...v1.38.0) (2023-04-12)
+
+
+### Bug Fixes
+
+* **revert:** Revert changes to spec involving build/image ([11a2e36](https://github.com/architect-team/architect-cli/commit/11a2e3632ffeebe55683f679cb709c6d6aa8e55a))
+* **spec:** Update spec to make sure build and image can not be specified at the same time. ([b08f29f](https://github.com/architect-team/architect-cli/commit/b08f29f88b4956bcde8454619a654c0f800165a7))
+* **tests:** fix test conflicts ([#889](https://github.com/architect-team/architect-cli/issues/889)) ([e79e845](https://github.com/architect-team/architect-cli/commit/e79e8454faa30ea4ab828401d8ea485761f9d6ec))
+* **tests:** Test deduplication refactor ([de1f1e2](https://github.com/architect-team/architect-cli/commit/de1f1e2c33d79236da4429ec23e659ff6c1b2ccf))
+
+
+### Features
+
+* **cluster:** Make sure nodes exist before allowing a cluster to be registered ([ccdbb7d](https://github.com/architect-team/architect-cli/commit/ccdbb7d7b392145c3ce2d40f1e71b727bf105637))
+* **spec:** Add support for making an ingress private in spec ([#880](https://github.com/architect-team/architect-cli/issues/880)) ([f3dc92a](https://github.com/architect-team/architect-cli/commit/f3dc92a98f11536fba65ee26256b70f7ee0fe129))
+
 # [1.37.0](https://github.com/architect-team/architect-cli/compare/v1.36.2...v1.37.0) (2023-04-10)
 
 
