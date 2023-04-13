@@ -124,9 +124,6 @@ export const ExclusiveOrNeither = (...properties: string[]): DecoratorSchema => 
       type: 'object',
       required: [...properties],
     },
-    errorMessage: {
-      not: `Only one of ${properties.join(', ')} is allowed, or none should exist`,
-    },
   } as DecoratorSchema;
 };
 

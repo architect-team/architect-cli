@@ -1,3 +1,4 @@
 hello:
+  image: heroku/nodejs-hello-world
   description: Hello world test service
   language: javascript
