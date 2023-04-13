@@ -55,7 +55,6 @@ export class ComposeConverter {
     const architect_component: Partial<ComponentSpec> = {};
     architect_component.name = component_name;
     architect_component.services = {};
-    architect_component.secrets = {};
 
     for (const [service_name, service_data] of Object.entries(docker_compose.services || {})) {
       const architect_service = new ServiceSpec();
@@ -95,7 +94,12 @@ export class ComposeConverter {
       architect_component.services[service_name] = architect_service;
     }
 
-    architect_component.services = this.convertServicesInterpolations(architect_component.services);
+    const { services, secrets } = this.convertServicesInterpolations(architect_component.services);
+    architect_component.services = services;
+    if (Object.keys(secrets).length > 0) {
+      architect_component.secrets = this.sortSecrets(secrets);
+    }
+
     for (const service_config of Object.values(architect_component.services || {})) {
       for (const depends_on of (service_config.depends_on || [])) {
         service_config.environment = service_config.environment || {};
@@ -103,35 +107,55 @@ export class ComposeConverter {
           service_config.environment[`${depends_on.replace('-', '_').toUpperCase()}_URL`] = `\${{ services.${depends_on}.interfaces.main.url }}`;
         }
       }
-      const secrets = this.parseSecrets(JSON.stringify(service_config));
-      architect_component.secrets = { ...architect_component.secrets, ...secrets };
     }
 
     const architect_yml = yaml.dump(yaml.load(JSON.stringify(instanceToPlain(architect_component))));
     return { architect_yml, warnings };
   }
 
-  private static convertServicesInterpolations(services: Dictionary<ServiceSpec>): Dictionary<ServiceSpec> {
-    // replace all interpolation syntax ${*} with architect's ${{ secrets.* }}
-    return JSON.parse(JSON.stringify(services), (_, value) => {
-      if (typeof value === 'string') {
-        return value.replace(/\${(?<key>.*?)}/g, '${{ secrets.$1 }}');
-      }
-      return value;
-    });
-  }
-
-  private static parseSecrets(str: string): Dictionary<SecretDefinitionSpec> {
-    const regex = /\${{ secrets\.(.*?) }}/g;
-    const matches = str.match(regex);
+  private static parseSecrets(pattern: RegExp, str: string, use_default: boolean): { service_spec: Dictionary<ServiceSpec>, secrets: Dictionary<SecretDefinitionSpec> } {
     const secrets: Dictionary<SecretDefinitionSpec> = {};
+    const matches = str.match(pattern);
     if (matches) {
       for (const match of matches) {
-        const secret = match.replace(regex, '$1');
-        secrets[secret] = { required: true };
+        let secret;
+        if (use_default) {
+          secret = { default: match.replace(pattern, '$2') };
+        } else {
+          secret = { required: false };
+        }
+        const secret_key = match.replace(pattern, '$1');
+        secrets[secret_key] = secret;
       }
     }
-    return secrets;
+    return {
+      service_spec: JSON.parse(str.replace(pattern, '${{ secrets.$1 }}')),
+      secrets,
+    };
+  }
+
+  private static sortSecrets(secrets: Dictionary<SecretDefinitionSpec>) {
+    const sortedKeys = Object.keys(secrets).sort();
+    const sorted_secrets: Dictionary<SecretDefinitionSpec> = {};
+    for (const key of sortedKeys) {
+      sorted_secrets[key] = secrets[key];
+    }
+    return sorted_secrets;
+  }
+
+  private static convertServicesInterpolations(services: Dictionary<ServiceSpec>): { services: Dictionary<ServiceSpec>, secrets: Dictionary<SecretDefinitionSpec> } {
+    const pattern1 = /\${([^:}]+)}/g;  // ${VARIABLE}
+    const pattern2 = /\$(\w+)/g;  // $VARIABLE
+    const pattern3 = /\${([^:{}]+):-([^\n?{}]*)}/g;  // ${VARIABLE:-default}
+
+    let all_secrets: Dictionary<SecretDefinitionSpec> = {};
+    for (const pattern of [pattern1, pattern2, pattern3]) {
+      const use_default = pattern === pattern3;
+      const { service_spec, secrets } = this.parseSecrets(pattern, JSON.stringify(services), use_default);
+      services = service_spec;
+      all_secrets = { ...all_secrets, ...secrets };
+    }
+    return { services, secrets: all_secrets };
   }
 
   private static convertBuild(compose_build: any): ComposeConversion {
