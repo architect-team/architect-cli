@@ -464,7 +464,7 @@ services:
       expect(component_object.services.db.environment.POSTGRES_PASSWORD).eq('${{ secrets.DB_PASSWORD }}');
       expect(component_object.services.db.environment.POSTGRES_DB).eq('${{ secrets.DB_NAME }}');
 
-      expect(component_object.secrets.DB_USER).deep.eq({ required: false });
+      expect(component_object.secrets.DB_USER).deep.eq({ required: true });
       expect(component_object.secrets.DB_PASSWORD).deep.eq({ required: false });
       expect(component_object.secrets.DB_NAME).deep.eq({ default: 'my-db' });
     });

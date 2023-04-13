@@ -113,7 +113,7 @@ export class ComposeConverter {
     return { architect_yml, warnings };
   }
 
-  private static parseSecrets(pattern: RegExp, str: string, use_default: boolean): { service_spec: Dictionary<ServiceSpec>, secrets: Dictionary<SecretDefinitionSpec> } {
+  private static parseSecrets(pattern: RegExp, str: string, use_default: boolean, required: boolean): { service_spec: Dictionary<ServiceSpec>, secrets: Dictionary<SecretDefinitionSpec> } {
     const secrets: Dictionary<SecretDefinitionSpec> = {};
     const matches = str.match(pattern);
     if (matches) {
@@ -121,6 +121,8 @@ export class ComposeConverter {
         let secret;
         if (use_default) {
           secret = { default: match.replace(pattern, '$2') };
+        } else if (required) {
+          secret = { required: true };
         } else {
           secret = { required: false };
         }
@@ -147,11 +149,13 @@ export class ComposeConverter {
     const pattern1 = /\${([^:}]+)}/g;  // ${VARIABLE}
     const pattern2 = /\$(\w+)/g;  // $VARIABLE
     const pattern3 = /\${([^:{}]+):-([^\n?{}]*)}/g;  // ${VARIABLE:-default}
+    const pattern4 = /\${([^:{}]+):\?([^\n?{}]*)}/g;  // ${VARIABLE:?err}
 
     let all_secrets: Dictionary<SecretDefinitionSpec> = {};
-    for (const pattern of [pattern1, pattern2, pattern3]) {
+    for (const pattern of [pattern1, pattern2, pattern3, pattern4]) {
       const use_default = pattern === pattern3;
-      const { service_spec, secrets } = this.parseSecrets(pattern, JSON.stringify(services), use_default);
+      const required = pattern === pattern4;
+      const { service_spec, secrets } = this.parseSecrets(pattern, JSON.stringify(services), use_default, required);
       services = service_spec;
       all_secrets = { ...all_secrets, ...secrets };
     }
