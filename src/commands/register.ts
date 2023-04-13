@@ -9,7 +9,7 @@ import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
-import { ArchitectError, buildNodeRef, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, DependencyGraphMutable, Dictionary, dumpToYml, resourceRefToNodeRef, ServiceNode, ServiceSpec, Slugs, TaskNode, validateInterpolation, VolumeSpec } from '../';
+import { ArchitectError, buildNodeRef, buildSpecFromPath, ComponentSlugUtils, ComponentSpec, DependencyGraphMutable, DependencySpec, Dictionary, dumpToYml, resourceRefToNodeRef, ServiceNode, ServiceSpec, Slugs, TaskNode, validateInterpolation, VolumeSpec } from '../';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
@@ -442,7 +442,7 @@ export default class ComponentRegister extends BaseCommand {
     return flags.environment ? `${ENV_TAG_PREFIX}${flags.environment}` : flags.tag;
   }
 
-  private async generateDependenciesWarnings(component_dependencies: Dictionary<string>, account_name: string) {
+  private async generateDependenciesWarnings(component_dependencies: Dictionary<string | DependencySpec>, account_name: string) {
     const dependency_arr: string[] = [];
     for (const [component_name, tag] of Object.entries(component_dependencies)) {
       dependency_arr.push(`${component_name}:${tag}`);

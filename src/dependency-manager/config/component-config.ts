@@ -1,4 +1,4 @@
-import { ComponentInstanceMetadata, ComponentSpec } from '../spec/component-spec';
+import { ComponentInstanceMetadata, ComponentSpec, DependencySpec } from '../spec/component-spec';
 import { SecretSpecValue } from '../spec/secret-spec';
 import { ComponentSlugUtils, ParsedResourceSlug, ResourceSlugUtils, ResourceType, Slugs } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
@@ -35,7 +35,7 @@ export interface ComponentConfig {
   services: Dictionary<ServiceConfig>;
   databases: Dictionary<DatabaseConfig>;
   tasks: Dictionary<TaskConfig>;
-  dependencies: Dictionary<string>;
+  dependencies: Dictionary<string | DependencySpec>;
 
   artifact_image?: string;
 }
