@@ -3,6 +3,7 @@ import { Dictionary } from '../utils/dictionary';
 import { LivenessProbeConfig, VolumeConfig } from './common-config';
 import { ResourceConfig } from './resource-config';
 
+// Custom ingress TLS
 export interface IngressTlsConfig {
   crt: string;
   key: string;
