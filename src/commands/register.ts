@@ -444,8 +444,14 @@ export default class ComponentRegister extends BaseCommand {
 
   private async generateDependenciesWarnings(component_dependencies: Dictionary<string | DependencySpec>, account_name: string) {
     const dependency_arr: string[] = [];
-    for (const [component_name, tag] of Object.entries(component_dependencies)) {
-      dependency_arr.push(`${component_name}:${tag}`);
+    for (const [component_name, tag_or_object] of Object.entries(component_dependencies)) {
+      if (typeof tag_or_object === 'string') {
+        dependency_arr.push(`${component_name}:${tag_or_object}`);
+      } else if (tag_or_object.tag) {
+        dependency_arr.push(`${component_name}:${tag_or_object.tag}`);
+      } else {
+        dependency_arr.push(`${component_name}:latest`);
+      }
     }
     const dependencies: Dictionary<{ component: boolean, component_and_version: boolean }> = (await this.app.api.get(`accounts/${account_name}/components-tags`, { params: { components: dependency_arr } })).data;
 

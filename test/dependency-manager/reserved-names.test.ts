@@ -316,7 +316,7 @@ describe('components with reserved_name field set', function () {
         services: {
           api: {
             interfaces: {
-              main: 8080
+              main: 8080,
             },
             environment: {
               CONCOURSE_ADDR: '${{ dependencies.ci.interfaces.web.url }}'
@@ -324,9 +324,9 @@ describe('components with reserved_name field set', function () {
           }
         },
         dependencies: {
-          'ci': '6.2'
+          'ci': {},
         },
-        interfaces: {}
+        interfaces: {},
       };
 
       const concourse_component_config = {
@@ -388,7 +388,7 @@ describe('components with reserved_name field set', function () {
       expect(worker_node.config.environment.CONCOURSE_TSA_HOST).eq(web_ref);
       expect(worker_node.config.name).to.eq('worker');
       expect(worker_node.ref).to.eq(reserved_name);
-      expect(worker_node.config.metadata.tag).to.eq('6.2');
+      expect(worker_node.config.metadata.tag).to.eq('latest');
       expect(worker_node.config.metadata.ref).to.eq('ci.services.worker');
     });
 
