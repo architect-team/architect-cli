@@ -9,6 +9,7 @@ export interface IngressTlsConfig {
   ca?: string;
 }
 
+// Custom ingress TLS
 export interface IngressConfig {
   enabled?: boolean;
   subdomain?: string;
