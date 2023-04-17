@@ -7,7 +7,7 @@ import { Dictionary } from '../utils/dictionary';
 import { LivenessProbeSpec, VolumeSpec } from './common-spec';
 import { ResourceSpec } from './resource-spec';
 import { transformObject } from './transform/common-transform';
-import { AnyOf, ExclusiveOr, ExclusiveOrNeither, ExpressionOr, ExpressionOrString, RequiredOr } from './utils/json-schema-annotations';
+import { AnyOf, ExclusiveOr, ExpressionOr, ExpressionOrString, RequiredOr } from './utils/json-schema-annotations';
 import { ResourceType, Slugs } from './utils/slugs';
 
 @JSONSchema({
@@ -197,7 +197,6 @@ export class ServiceInterfaceSpec {
 
 @JSONSchema({
   description: 'A runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.',
-  ...ExclusiveOrNeither('build', 'image'),
 })
 export class ServiceSpec extends ResourceSpec {
   get resource_type(): ResourceType {
