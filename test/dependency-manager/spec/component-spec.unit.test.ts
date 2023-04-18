@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { instanceToPlain, plainToInstance } from 'class-transformer';
 import yaml from 'js-yaml';
-import { buildConfigFromYml, buildSpecFromYml, ComponentSpec, dumpToYml } from '../../../src';
+import { buildConfigFromYml, buildSpecFromYml, ComponentSpec, dumpToYml, parseSourceYml } from '../../../src';
 import { overrideSpec } from '../../../src/dependency-manager/spec/utils/spec-merge';
 import { loadAllTestSpecCombinations } from './partials/spec-test-harness';
 
@@ -14,6 +14,21 @@ describe('component spec unit test', () => {
       buildConfigFromYml(source_yml);
     }
   }).timeout(20000);
+
+  it('yaml precision', () => {
+    const long_num = '123456789.123456789';
+    const yml = `
+      float: 100.55
+      float_string: '${long_num}'
+      float_safe: ${long_num}
+    `;
+
+    const res = parseSourceYml(yml) as { float: number; float_string: string; float_safe: string };
+
+    expect(res.float).to.equal(100.55);
+    expect(res.float_string).to.equal(long_num);
+    expect(res.float_safe).to.equal(long_num);
+  })
 
   it('component spec overrides', () => {
     const yml = `
