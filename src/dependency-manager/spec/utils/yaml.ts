@@ -3,6 +3,7 @@ import yaml from 'js-yaml';
 let schema: yaml.Schema | undefined;
 export function getYamlSchema(): yaml.Schema {
   if (!schema) {
+    // Ref: https://github.com/nodeca/js-yaml/blob/2b5620ed8f03ba0df319fe7710f6d7fd44811742/test/issues/0614.js#L10
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const options = Object.assign({}, yaml.types.float.options) as yaml.TypeConstructorOptions;
