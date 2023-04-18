@@ -5,6 +5,7 @@ import { ServiceInterfaceConfig } from '../../dependency-manager/config/service-
 import { VolumeSpec } from '../../dependency-manager/spec/common-spec';
 import { ComponentSpec } from '../../dependency-manager/spec/component-spec';
 import { BuildSpec } from '../../dependency-manager/spec/resource-spec';
+import { SecretDefinitionSpec } from '../../dependency-manager/spec/secret-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../../dependency-manager/spec/service-spec';
 import { Slugs } from '../../dependency-manager/spec/utils/slugs';
 import { Dictionary } from '../../dependency-manager/utils/dictionary';
@@ -93,6 +94,12 @@ export class ComposeConverter {
       architect_component.services[service_name] = architect_service;
     }
 
+    const { services, secrets } = this.convertServicesInterpolations(architect_component.services);
+    architect_component.services = services;
+    if (Object.keys(secrets).length > 0) {
+      architect_component.secrets = secrets;
+    }
+
     for (const service_config of Object.values(architect_component.services || {})) {
       for (const depends_on of (service_config.depends_on || [])) {
         service_config.environment = service_config.environment || {};
@@ -106,6 +113,47 @@ export class ComposeConverter {
     return { architect_yml, warnings };
   }
 
+  private static parseSecrets(pattern: RegExp, services: Dictionary<ServiceSpec>, use_default: boolean, required: boolean): { service_spec: Dictionary<ServiceSpec>, secrets: Dictionary<SecretDefinitionSpec> } {
+    const services_str = JSON.stringify(services);
+    const secrets: Dictionary<SecretDefinitionSpec> = {};
+    const matches = services_str.match(pattern);
+    if (matches) {
+      for (const match of matches) {
+        let secret;
+        if (use_default) {
+          secret = { default: match.replace(pattern, '$2') };
+        } else if (required) {
+          secret = { required: true };
+        } else {
+          secret = { required: false };
+        }
+        const secret_key = match.replace(pattern, '$1');
+        secrets[secret_key] = secret;
+      }
+    }
+    return {
+      service_spec: JSON.parse(services_str.replace(pattern, '${{ secrets.$1 }}')),
+      secrets,
+    };
+  }
+
+  private static convertServicesInterpolations(services: Dictionary<ServiceSpec>): { services: Dictionary<ServiceSpec>, secrets: Dictionary<SecretDefinitionSpec> } {
+    const pattern1 = /\${([^:}]+)}/g;  // ${VARIABLE}
+    const pattern2 = /\$(\w+)/g;  // $VARIABLE
+    const pattern3 = /\${([^:{}]+):-([^\n?{}]*)}/g;  // ${VARIABLE:-default}
+    const pattern4 = /\${([^:{}]+):\?([^\n?{}]*)}/g;  // ${VARIABLE:?err}
+
+    let all_secrets: Dictionary<SecretDefinitionSpec> = {};
+    for (const pattern of [pattern1, pattern2, pattern3, pattern4]) {
+      const use_default = pattern === pattern3;
+      const required = pattern === pattern4;
+      const { service_spec, secrets } = this.parseSecrets(pattern, services, use_default, required);
+      services = service_spec;
+      all_secrets = { ...all_secrets, ...secrets };
+    }
+    return { services, secrets: all_secrets };
+  }
+
   private static convertBuild(compose_build: any): ComposeConversion {
     const warnings: string[] = [];
     const build: BuildSpec = {};
@@ -116,8 +164,8 @@ export class ComposeConverter {
       if (Array.isArray(compose_build.args)) {
         for (const arg of compose_build.args) {
           if (!arg) {
- continue;
-}
+            continue;
+          }
           const [key, value] = arg.split('=');
           build.args[key] = value ? value.toString() : null;
         }

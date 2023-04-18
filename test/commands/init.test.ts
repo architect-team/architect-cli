@@ -65,7 +65,7 @@ services:
       expect(writeFileSync.called).to.be.true;
 
       const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
-      expect(Object.keys(component_config.services || {})).deep.equal(['elasticsearch', 'logstash', 'kibana']);
+      expect(Object.keys(component_config.services || {})).deep.equal(['elasticsearch', 'logstash', 'kibana', 'db']);
     });
 
   mockInit()
@@ -75,7 +75,7 @@ services:
       expect(writeFileSync.called).to.be.true;
       expect(writeFileSync.args[0][0]).eq('test-directory/architect.yml');
       const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
-      expect(component_config.services.logstash.build!.args!.ELK_VERSION).eq('$ELK_VERSION');
+      expect(component_config.services.logstash.build!.args!.ELK_VERSION).eq('${{ secrets.ELK_VERSION }}');
       expect(component_config.services.logstash.build!.args!.INT_ARG).eq('1');
       expect(component_config.services.logstash.build!.args!.BOOL_ARG).eq('true');
       expect(component_config.services.logstash.build!.args!.EMPTY_ARG).eq('null');
@@ -157,7 +157,7 @@ services:
       expect(writeFileSync.called).to.be.true;
 
       const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
-      expect(component_config.services.elasticsearch.build!.args!.ELK_VERSION).eq('$ELK_VERSION');
+      expect(component_config.services.elasticsearch.build!.args!.ELK_VERSION).eq('${{ secrets.ELK_VERSION }}');
       expect(component_config.services.elasticsearch.build!.args!.INT_ARG).eq('1');
       expect(component_config.services.elasticsearch.build!.args!.BOOL_ARG).eq('true');
       expect(component_config.services.elasticsearch.build!.args!.EMPTY_ARG).eq('null');
@@ -440,6 +440,33 @@ services:
       expect(writeFileSync.called).to.be.true;
 
       expect(ctx.stdout).to.contain(`Label with value Path(\`/\`) could not be converted as it fails validation with regex ${Slugs.LabelValueSlugValidatorString}`);
+    });
+
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
+    .it(`converting interpolation of environment variables in image`, ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+
+      const component_object: any = yaml.load(writeFileSync.args[0][1]);
+      expect(component_object.services.db.image).eq('postgres:${{ secrets.POSTGRES_VERSION }}');
+      expect(component_object.secrets.POSTGRES_VERSION).deep.eq({ required: false });
+    });
+
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, 'test-component'])
+    .it(`converting differnt syntax of environment variable interpolations in environment`, ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+
+      const component_object: any = yaml.load(writeFileSync.args[0][1]);
+      expect(component_object.services.db.environment.POSTGRES_USER).eq('${{ secrets.DB_USER }}');
+      expect(component_object.services.db.environment.POSTGRES_PASSWORD).eq('${{ secrets.DB_PASSWORD }}');
+      expect(component_object.services.db.environment.POSTGRES_DB).eq('${{ secrets.DB_NAME }}');
+
+      expect(component_object.secrets.DB_USER).deep.eq({ required: true });
+      expect(component_object.secrets.DB_PASSWORD).deep.eq({ required: false });
+      expect(component_object.secrets.DB_NAME).deep.eq({ default: 'my-db' });
     });
 
   mockInit()
