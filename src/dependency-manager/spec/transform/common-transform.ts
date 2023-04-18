@@ -2,7 +2,6 @@ import { ClassConstructor, plainToInstance, TransformFnParams } from 'class-tran
 import stringArgv from 'string-argv';
 import { LivenessProbeConfig, VolumeConfig } from '../../config/common-config';
 import { LivenessProbeSpec, VolumeSpec } from '../common-spec';
-import { DependencySpec } from '../component-spec';
 
 export const transformLivenessProbeSpecCommand = function (command: string[] | string | undefined): string[] | undefined {
   if (!command) {
@@ -48,7 +47,7 @@ export const transformVolumeSpec = (key: string, volume: VolumeSpec | string): V
   }
 };
 
-export const transformDependencySpec = (cls: ClassConstructor<DependencySpec>): (params: TransformFnParams) => any => {
+export const transformDependencySpec = (cls: ClassConstructor<any>): (params: TransformFnParams) => any => {
   return ({ value }) => {
     for (const [k, v] of Object.entries(value)) {
       value[k] = v instanceof Object ? plainToInstance(cls, v) : { tag: v };
