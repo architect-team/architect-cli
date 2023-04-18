@@ -35,7 +35,7 @@ export interface ComponentConfig {
   services: Dictionary<ServiceConfig>;
   databases: Dictionary<DatabaseConfig>;
   tasks: Dictionary<TaskConfig>;
-  dependencies: Dictionary<string | DependencySpec>;
+  dependencies: Dictionary<DependencySpec>;
 
   artifact_image?: string;
 }

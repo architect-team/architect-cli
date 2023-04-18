@@ -72,13 +72,24 @@ describe('dependencies', () => {
   });
 
   describe('dependency validation', () => {
+    it('spec with no dependency block has empty object', async () => {
+      const component_config = `
+        name: component
+      `;
+
+      const spec = buildSpecFromYml(component_config);
+      expect(spec.dependencies).to.be.undefined;
+    });
+
     it('dependencies with no tag are valid', async () => {
       const component_config = `
         name: component
         dependencies:
           server: {}
       `;
-      buildSpecFromYml(component_config);
+
+      const spec = buildSpecFromYml(component_config);
+      expect(spec.dependencies).to.deep.equal({ server: {} });
     });
 
     it('dependencies with string tag are still valid', async () => {
@@ -87,7 +98,9 @@ describe('dependencies', () => {
         dependencies:
           server: im-a-tag
       `;
-      buildSpecFromYml(component_config);
+
+      const spec = buildSpecFromYml(component_config);
+      expect(spec.dependencies).to.deep.equal({ server: { tag: 'im-a-tag' } });
     });
 
     it('dependencies with invalid string tag are still invalid', async () => {
@@ -110,7 +123,8 @@ describe('dependencies', () => {
             tag: im-a-tag
       `;
 
-      buildSpecFromYml(component_config);
+      const spec = buildSpecFromYml(component_config);
+      expect(spec.dependencies).to.deep.equal({ server: { tag: 'im-a-tag' } });
     });
 
     it('dependencies with invalid tag as dictionary key is invalid', async () => {

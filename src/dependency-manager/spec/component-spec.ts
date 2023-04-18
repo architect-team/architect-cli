@@ -8,7 +8,7 @@ import { ResourceSpec } from './resource-spec';
 import { SecretDefinitionSpec, SecretSpecValue } from './secret-spec';
 import { IngressSpec, ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
-import { transformObject } from './transform/common-transform';
+import { transformDependencySpec, transformObject } from './transform/common-transform';
 import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString } from './utils/json-schema-annotations';
 import { ComponentSlugUtils, Slugs } from './utils/slugs';
 
@@ -259,8 +259,8 @@ export class ComponentSpec {
 
     description: 'A key-value set of dependencies with an empty value. Reference each dependency by component name (e.g. `cloud: {}`)',
   })
-  @Transform(transformObject(DependencySpec))
-  dependencies?: Dictionary<string | DependencySpec>;
+  @Transform(transformDependencySpec(DependencySpec))
+  dependencies?: Dictionary<DependencySpec>;
 
   @IsOptional()
   @JSONSchema({
