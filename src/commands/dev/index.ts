@@ -58,7 +58,7 @@ export default class Dev extends BaseCommand {
   static examples = [
     'architect dev ./mycomponent/architect.yml',
     'architect dev ./mycomponent/architect.yml -a myaccount --secrets-env=myenvironment',
-    'architect dev --port=81 --browser=false --debug=true --secret-file=./mycomponent/mysecrets.yml ./mycomponent/architect.yml',
+    'architect dev --port=1234 --browser=false --debug=true --secret-file=./mycomponent/mysecrets.yml ./mycomponent/architect.yml',
   ];
 
   static flags = {
@@ -123,8 +123,10 @@ export default class Dev extends BaseCommand {
       sensitive: false,
     }),
     port: Flags.integer({
-      description: '[default: 443] Port for the gateway',
+      description: 'Port for the gateway. Defaults to 443, or 80 if --ssl=false. When specified, must be between 1024 and 65535.',
       sensitive: false,
+      min: 1024,
+      max: 65535,
     }),
     // Used for proxy from deploy to dev. These will be removed once --local is deprecated
     local: booleanString({
@@ -432,10 +434,11 @@ export default class Dev extends BaseCommand {
           name: 'port',
           message: `Trying to listen on port ${port}, but something is already using it. What port would you like us to run the API gateway on (you can use the '--port' flag to skip this message in the future)?`,
           validate: (value) => {
-            if (new RegExp('^[1-9]+\\d*$').test(value)) {
-              return true;
+            const port = Number.parseInt(value);
+            if (Number.isNaN(port) || port < 1024 || port > 65535) {
+              return `Port must be positive number between 1024 and 65535.`;
             }
-            return `Port can only be positive number.`;
+            return true;
           },
         },
       ]);
