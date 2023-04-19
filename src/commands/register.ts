@@ -317,6 +317,18 @@ export default class ComponentRegister extends BaseCommand {
     }
 
     console.timeEnd('Time');
+    this.generateDeprecateWarnings(new_spec);
+  }
+
+  private generateDeprecateWarnings(component_spec: ComponentSpec) {
+    if (component_spec.services) {
+      for (const service of Object.values(component_spec.services)) {
+        if (service.liveness_probe && (service.liveness_probe.path || service.liveness_probe.port)) {
+          this.log(chalk.yellow(`Deprecated warnings: The liveness probe 'path' and 'port' will no longer be supported starting October of 2023. We recommend that you update your configuration to use the 'command' option https://docs.architect.io/reference/release-notes.`));
+          return;
+        }
+      }
+    }
   }
 
   private async setImageRef(composes: Composes, graph: Readonly<DependencyGraphMutable>): Promise<ImageRefOutput> {
