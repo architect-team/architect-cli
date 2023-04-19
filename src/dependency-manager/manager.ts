@@ -176,9 +176,9 @@ export default abstract class DependencyManager {
     }
     for (const [subdomain, values] of Object.entries(seen_subdomains)) {
       if (values.length > 1) {
-        const msg = `The subdomain ${subdomain} is claimed by multiple component interfaces:
-          \n[${values.sort().join(', ')}]
-          \nPlease set services.<name>.interfaces.<name>.ingress.subdomain=<subdomain> or services.<name>.interfaces.<name>.ingress.path=<path> to avoid conflicts.`;
+        const msg = `The component you are trying to deploy has the subdomain ${subdomain} that is claimed by multiple component interfaces:
+          \n[${values.sort().join(', ')}].
+          \nTo resolve this issue, either change the subdomain in the architect.yml file for this component, or clear the environment before trying to deploy this component.`;
         throw new ArchitectError(msg);
       }
     }
@@ -383,6 +383,7 @@ export default abstract class DependencyManager {
           path: interface_config.ingress?.path,
           url: this.generateUrl(ingress_ref),
           consumers: [],
+          private: interface_config.ingress?.private || false,
         };
       }
     }

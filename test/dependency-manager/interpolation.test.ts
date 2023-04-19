@@ -1328,6 +1328,7 @@ describe('interpolation spec v1', () => {
         port: 8080,
         ingress: {
           subdomain: 'test',
+          private: false
         }
       },
       main: {
@@ -1376,13 +1377,15 @@ describe('interpolation spec v1', () => {
       api: {
         port: 8080,
         ingress: {
-          ip_whitelist: ['127.0.0.1']
+          ip_whitelist: ['127.0.0.1'],
+          private: false
         }
       },
       api2: {
         port: 8080,
         ingress: {
-          ip_whitelist: ['127.0.0.1/32']
+          ip_whitelist: ['127.0.0.1/32'],
+          private: false
         }
       },
       main: {
@@ -1433,13 +1436,15 @@ describe('interpolation spec v1', () => {
       api: {
         port: 8080,
         ingress: {
-          ip_whitelist: ['1.2.3.4']
+          ip_whitelist: ['1.2.3.4'],
+          private: false
         }
       },
       api2: {
         port: 8080,
         ingress: {
-          ip_whitelist: ['127.0.0.1/32']
+          ip_whitelist: ['127.0.0.1/32'],
+          private: false
         }
       },
       main: {

@@ -38,6 +38,8 @@ secrets:
   connection_string:
     required: false
   param_unset:
+  frontend_private:
+    default: false
 
 dependencies:
   hello-world: latest
@@ -202,6 +204,13 @@ services:
         port: 8081
         ingress:
           subdomain: stateful
+          private: ${{ secrets.frontend_private }}
+      admin:
+        port: 8081
+        ingress:
+          subdomain: stateful
+          path: /admin
+          private: true
     environment:
       API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
     entrypoint:

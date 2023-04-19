@@ -1655,6 +1655,21 @@
             }
           ],
           "description": "IP addresses that are allowed to access the interface"
+        },
+        "private": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Marks the ingress as private behind Architect authentication"
         }
       },
       "type": "object",
@@ -1731,6 +1746,21 @@
                     }
                   ],
                   "description": "IP addresses that are allowed to access the interface"
+                },
+                "private": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Marks the ingress as private behind Architect authentication"
                 }
               },
               "type": "object",
@@ -5789,6 +5819,21 @@
             }
           ],
           "description": "IP addresses that are allowed to access the interface"
+        },
+        "private": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ],
+          "description": "Marks the ingress as private behind Architect authentication"
         }
       },
       "type": "object",
@@ -5865,6 +5910,21 @@
                     }
                   ],
                   "description": "IP addresses that are allowed to access the interface"
+                },
+                "private": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Marks the ingress as private behind Architect authentication"
                 }
               },
               "type": "object",

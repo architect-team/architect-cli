@@ -26,7 +26,7 @@ export default class PortForward extends BaseCommand {
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
     address: Flags.string({
-      description: `[default: localhost] Addresses to listen on. Only accepts IP addresses or localhost as a value.`,
+      description: `Addresses to listen on. Only accepts IP addresses or localhost as a value.`,
       sensitive: false,
       default: 'localhost',
     }),

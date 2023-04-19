@@ -17,7 +17,7 @@ import { AgentClusterUtils } from '../../common/utils/agent-cluster.utils';
 import { booleanString } from '../../common/utils/oclif';
 
 export default class ClusterCreate extends BaseCommand {
-  static aliases = ['clusters:register', 'cluster:create', 'clusters:create'];
+  static aliases = ['clusters:register', 'cluster:create'];
   static description = 'Register a new cluster with Architect Cloud';
   static examples = [
     'architect clusters:create --account=myaccount',
@@ -149,6 +149,7 @@ export default class ClusterCreate extends BaseCommand {
 
     const kube_contexts = await this.setupKubeContext(flags);
     await ClusterUtils.checkServerVersion(flags.kubeconfig);
+    await ClusterUtils.checkClusterNodes(flags.kubeconfig);
 
     try {
       const cluster_dto = {

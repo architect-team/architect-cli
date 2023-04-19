@@ -39,9 +39,9 @@ export interface DockerComposeDeploy {
 export interface DockerComposeHealthCheck {
   test: string[];
   interval: string;
-  timeout: string;
-  retries: number;
-  start_period: string;
+  timeout?: string;
+  retries?: number;
+  start_period?: string;
 }
 
 export interface DockerService {
@@ -61,6 +61,7 @@ export interface DockerService {
   extra_hosts?: string[];
   labels?: string[];
   healthcheck?: DockerComposeHealthCheck;
+  stop_grace_period?: string;
 }
 
 export default interface DockerComposeTemplate {
@@ -86,6 +87,7 @@ export interface DockerInspect {
     Status: string,
     Health: DockerInspectHealth,
     ExitCode: number
+    StartedAt: string;
   },
   Name: string,
   Config: {
