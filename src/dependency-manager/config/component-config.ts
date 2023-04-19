@@ -1,4 +1,4 @@
-import { ComponentInstanceMetadata, ComponentSpec, DependencySpec } from '../spec/component-spec';
+import { ComponentInstanceMetadata, ComponentSpec } from '../spec/component-spec';
 import { SecretSpecValue } from '../spec/secret-spec';
 import { ComponentSlugUtils, ParsedResourceSlug, ResourceSlugUtils, ResourceType, Slugs } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
@@ -19,6 +19,10 @@ export interface OutputDefinitionConfig {
   value: boolean | number | string | null;
 }
 
+export interface DependencyConfig {
+  tag?: string;
+}
+
 export interface ComponentConfig {
   name: string;
 
@@ -35,7 +39,7 @@ export interface ComponentConfig {
   services: Dictionary<ServiceConfig>;
   databases: Dictionary<DatabaseConfig>;
   tasks: Dictionary<TaskConfig>;
-  dependencies: Dictionary<DependencySpec>;
+  dependencies: Dictionary<DependencyConfig>;
 
   artifact_image?: string;
 }

@@ -441,11 +441,13 @@ export default class ComponentRegister extends BaseCommand {
     return flags.environment ? `${ENV_TAG_PREFIX}${flags.environment}` : flags.tag;
   }
 
-  private async generateDependenciesWarnings(component_dependencies: Dictionary<DependencySpec>, account_name: string) {
+  private async generateDependenciesWarnings(component_dependencies: Dictionary<string | DependencySpec>, account_name: string) {
     const dependency_arr: string[] = [];
-    for (const [component_name, dep_spec] of Object.entries(component_dependencies)) {
-      if (dep_spec.tag) {
-        dependency_arr.push(`${component_name}:${dep_spec.tag}`);
+    for (const [component_name, tag_or_object] of Object.entries(component_dependencies)) {
+      if (typeof tag_or_object === 'string') {
+        dependency_arr.push(`${component_name}:${tag_or_object}`);
+      } else if (tag_or_object.tag) {
+        dependency_arr.push(`${component_name}:${tag_or_object.tag}`);
       } else {
         dependency_arr.push(`${component_name}:latest`);
       }

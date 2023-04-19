@@ -47,15 +47,6 @@ export const transformVolumeSpec = (key: string, volume: VolumeSpec | string): V
   }
 };
 
-export const transformDependencySpec = (cls: ClassConstructor<any>): (params: TransformFnParams) => any => {
-  return ({ value }) => {
-    for (const [k, v] of Object.entries(value)) {
-      value[k] = v instanceof Object ? plainToInstance(cls, v) : { tag: v };
-    }
-    return value;
-  };
-};
-
 export const transformObject = (cls: ClassConstructor<any>): (params: TransformFnParams) => any => {
   return ({ value }) => {
     for (const [k, v] of Object.entries(value)) {
