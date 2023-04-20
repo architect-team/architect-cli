@@ -131,6 +131,13 @@ services:
     healthcheck:
       test: 'curl google.com'
 
+  db:
+    image: "postgres:${POSTGRES_VERSION}"
+    environment:
+      POSTGRES_USER: ${DB_USER:?err}
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      POSTGRES_DB: ${DB_NAME:-my-db}
+
 networks:
   elk:
     driver: bridge
