@@ -8,9 +8,11 @@ import { ParsedYaml } from '../../utils/types';
 import { ComponentInstanceMetadata, ComponentSpec } from '../component-spec';
 import { transformComponentSpec } from '../transform/component-transform';
 import { validateOrRejectSpec } from './spec-validator';
+import { getYamlSchema } from './yaml';
 
 export const parseSourceYml = (source_yml: string): ParsedYaml => {
-  return yaml.load(source_yml);
+  const schema = getYamlSchema();
+  return yaml.load(source_yml, { schema });
 };
 
 const getComponentFilePath = (spec_path: string): string => {

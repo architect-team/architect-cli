@@ -17,6 +17,8 @@ import { default as BaseCommand } from '../../base-command';
 import LocalDependencyManager, { ComponentConfigOpts } from '../../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../common/docker-compose';
 import DockerComposeTemplate from '../../common/docker-compose/template';
+import { DOCKER_COMPONENT_LABEL, DOCKER_IMAGE_LABEL } from '../../common/docker/buildx.utils';
+import { docker } from '../../common/docker/cmd';
 import { DockerHelper, RequiresDocker } from '../../common/docker/helper';
 import BuildPackUtils from '../../common/utils/buildpack';
 import DeployUtils from '../../common/utils/deploy.utils';
@@ -58,7 +60,7 @@ export default class Dev extends BaseCommand {
   static examples = [
     'architect dev ./mycomponent/architect.yml',
     'architect dev ./mycomponent/architect.yml -a myaccount --secrets-env=myenvironment',
-    'architect dev --port=81 --browser=false --debug=true --secret-file=./mycomponent/mysecrets.yml ./mycomponent/architect.yml',
+    'architect dev --port=1234 --browser=false --debug=true --secret-file=./mycomponent/mysecrets.yml ./mycomponent/architect.yml',
   ];
 
   static flags = {
@@ -123,8 +125,9 @@ export default class Dev extends BaseCommand {
       sensitive: false,
     }),
     port: Flags.integer({
-      description: '[default: 443] Port for the gateway',
+      description: 'Port for the gateway. Defaults to 443, or 80 if --ssl=false. Allowed port numbers are 80, 443, or any port between 1024 and 66535.',
       sensitive: false,
+      max: 65535,
     }),
     // Used for proxy from deploy to dev. These will be removed once --local is deprecated
     local: booleanString({
@@ -217,6 +220,52 @@ export default class Dev extends BaseCommand {
     parsed.flags = DeployUtils.parseFlags(parsed.flags);
 
     return parsed;
+  }
+
+  /**
+   * Cleanup architect-created images and layers that are no longer in use to prevent
+   * old images from wasting space on disk.
+   */
+  async pruneImages(compose: DockerComposeTemplate): Promise<void> {
+    // Remove build cache layers with our label that are older than 7 days
+    await docker(['builder', 'prune', '--filter', `label=${DOCKER_IMAGE_LABEL}`, '--filter', `unused-for=${7 * 24}h`, '-af'], { stdout: false });
+    // Remove images that are untagged and created by previous `architect dev` runs
+    await docker(['image', 'prune', '--filter', `label=${DOCKER_IMAGE_LABEL}`, `--filter`, 'dangling=true', '-f'], { stdout: false });
+
+    // Find the set of services and name of all components being deployed. Any image that is labelled with the name
+    // of a component being run but uses a Repository name that no longer matches any service names can be
+    // removed. This can happen when changing the name of a service in the architect.yml.
+    const services = new Set();
+    const components = [];
+    for (const [service_name, service] of Object.entries(compose.services)) {
+      services.add(service_name);
+      for (const label of service.build?.labels || []) {
+        if (label.startsWith(`${DOCKER_COMPONENT_LABEL}=`)) {
+          components.push(label.split('=')[1]);
+        }
+      }
+    }
+
+    for (const component_name of components) {
+      const built_image_result = await docker(['image', 'list',
+        '--filter', `label=${DOCKER_IMAGE_LABEL}`,
+        '--filter', `label=${DOCKER_COMPONENT_LABEL}=${component_name}`,
+        '--format', '{{json .}}'],
+        { stdout: false });
+      const built_images = built_image_result.stdout.split('\n').map((res: string) => JSON.parse(res));
+
+      // Add images ids for this component with a name that no longer matches a deployed service name
+      const images_to_delete: string[] = [];
+      for (const image of built_images) {
+        if (!services.has(image.Repository)) {
+          images_to_delete.push(image.ID);
+        }
+      }
+
+      if (images_to_delete.length > 0) {
+        await docker(['image', 'rm', '-f', ...images_to_delete], { stdout: false });
+      }
+    }
   }
 
   async healthyTraefikServices(admin_port: number, timeout: number): Promise<TraefikHttpService[]> {
@@ -349,6 +398,13 @@ export default class Dev extends BaseCommand {
     this.log('Building containers...', chalk.green('done'));
     this.log('');
 
+    try {
+      this.pruneImages(compose);
+    } catch {
+      // If we exit out of the application too soon the pruning process may fail
+      // this error can be ignored.
+    }
+
     const traefik_service_map = this.setupTraefikServiceMap(compose, gateway_port, flags.ssl);
 
     this.log('');
@@ -432,15 +488,16 @@ export default class Dev extends BaseCommand {
           name: 'port',
           message: `Trying to listen on port ${port}, but something is already using it. What port would you like us to run the API gateway on (you can use the '--port' flag to skip this message in the future)?`,
           validate: (value) => {
-            if (new RegExp('^[1-9]+\\d*$').test(value)) {
-              return true;
+            const port = Number.parseInt(value);
+            if (!this.isValidPort(port)) {
+              return 'Port must be 80, 443, or any port between 1024 and 66535.';
             }
-            return `Port can only be positive number.`;
+            return true;
           },
         },
       ]);
 
-      port = answers.port;
+      port = Number.parseInt(answers.port);
     }
     return port;
   }
@@ -530,6 +587,19 @@ $ architect dev -e new_env_name_here .`));
     return env_secrets;
   }
 
+  /**
+   * Only allowed ports for architect dev are 1024-65535, or 80/443 (default http/https ports)
+   * This is to prevent users from choosing a well-known port that browers won't allow connections
+   * to (e.g. port 95 or 101).
+   */
+  private isValidPort(port: number): boolean {
+    if (Number.isNaN(port)) {
+      return false;
+    }
+
+    return (port >= 1024 && port <= 65535) || port === 443 || port === 80;
+  }
+
   private async runLocal() {
     const { args, flags } = await this.parse(Dev);
 
@@ -537,6 +607,9 @@ $ architect dev -e new_env_name_here .`));
     await this.failIfEnvironmentExists(environment);
 
     flags.port = await this.getAvailablePort(flags.port || (flags.ssl ? 443 : 80));
+    if (!this.isValidPort(flags.port)) {
+      throw new Error('Invalid port number. Port must be 80, 443, or any port between 1024 and 66535.');
+    }
 
     if (flags.ssl) {
       await this.downloadSSLCerts();

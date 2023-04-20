@@ -3,10 +3,9 @@ import { OutputFlags } from '@oclif/core/lib/interfaces';
 import chalk from 'chalk';
 import fs from 'fs';
 import inquirer from 'inquirer';
-import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
-import { validateOrRejectSpec } from '../';
+import { parseSourceYml, validateOrRejectSpec } from '../';
 import ProjectUtils from '../architect/project/project.utils';
 import BaseCommand from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
@@ -113,7 +112,7 @@ export abstract class InitCommand extends BaseCommand {
     }
 
     try {
-      validateOrRejectSpec(yaml.load(architect_yml));
+      validateOrRejectSpec(parseSourceYml(architect_yml));
     } catch (err: any) {
       this.error(chalk.red(`${err}\nYour docker compose file at ${from_path} was unable to be converted to an Architect component. If you think this is a bug, please submit an issue at https://github.com/architect-team/architect-cli/issues.`));
     }

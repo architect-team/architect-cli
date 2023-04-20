@@ -1,7 +1,7 @@
 {
   "name": "@architect-io/cli",
   "description": "Command-line interface for Architect.io",
-  "version": "1.39.0-arc-custom-ingress-tls-3.1",
+  "version": "1.39.0-rc.4",
   "author": "Architect.io",
   "bin": {
     "architect": "./bin/run"
