@@ -296,7 +296,7 @@ export default class Deploy extends DeployCommand {
       const deployed_component_name_with_tag = `${cert_component_name}:${data.metadata.labels['architect.io/component-tag']}`;
       const label_set = new Set<string>([deployed_component_name_with_tag, cert_component_name]);
       if ((new Set([...component_names].filter(n => label_set.has(n)))).size > 0) {
-        for (const dns_name of data.spec.dnsNames) {
+        for (const dns_name of data.dns_names) {
           if (!dns_name.startsWith('env--')) {
             available_urls.add(`https://${dns_name}`);
           }
