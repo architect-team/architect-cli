@@ -322,7 +322,7 @@ export default class Deploy extends DeployCommand {
     for (const deployment of deployments) {
       for (const service of Object.values(deployment.component_version.config.services || {})) {
         if (service.liveness_probe && (service.liveness_probe.path || service.liveness_probe.port)) {
-          this.log(chalk.yellow(`Deprecated warnings: The liveness probe 'path' and 'port' will no longer be supported starting October of 2023. We recommend that you update your configuration to use the 'command' option https://docs.architect.io/reference/release-notes.`));
+          this.log(chalk.yellow(`Deprecation warning: The liveness probe 'path' and 'port' will no longer be supported starting August of 2023. We recommend that you update your configuration to use the 'command' option https://docs.architect.io/reference/release-notes.`));
           return;
         }
       }

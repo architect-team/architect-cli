@@ -451,7 +451,7 @@ describe('liveness_probe deprecation warning', function () {
     .getTests()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .it('warn when liveness_probe path and port are found in deployments', ctx => {
-      expect(ctx.stdout).to.contain(`Deprecated warnings: The liveness probe 'path' and 'port' will no longer be supported`);
+      expect(ctx.stdout).to.contain(`Deprecation warning: The liveness probe 'path' and 'port' will no longer be supported`);
       expect(ctx.stdout).to.contain('deployed');
     });
 });

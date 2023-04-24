@@ -513,7 +513,7 @@ describe('register', function () {
     .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
     .command(['register', 'test/mocks/deprecations/liveness-probe-path-port.architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('warn when register component with liveness_probe path and port', ctx => {
-      expect(ctx.stdout).to.contain(`Deprecated warnings: The liveness probe 'path' and 'port' will no longer be supported`);
+      expect(ctx.stdout).to.contain(`Deprecation warning: The liveness probe 'path' and 'port' will no longer be supported`);
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 });
