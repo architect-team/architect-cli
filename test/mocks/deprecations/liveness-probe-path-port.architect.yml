@@ -1,0 +1,27 @@
+name: hello-world
+description: A simple hello-world component that returns "Hello World!" on every request.
+homepage: https://github.com/architect-team/architect-cli/tree/main/examples/hello-world
+keywords:
+  - hello-world
+  - nodejs
+  - architect
+  - examples
+
+secrets:
+  world_text:
+    default: World
+
+services:
+  api:
+    build:
+      context: ../../integration/hello-world
+    interfaces:
+      main:
+        port: 8080
+        ingress:
+          subdomain: hello
+    environment:
+      WORLD_TEXT: ${{ secrets.world_text }}
+    liveness_probe:
+      port: 3000
+      path: /
