@@ -3,7 +3,6 @@ import chalk from 'chalk';
 import fs from 'fs';
 import inquirer from 'inquirer';
 import AccountUtils from '../architect/account/account.utils';
-import Deployment from '../architect/deployment/deployment.entity';
 import { EnvironmentUtils, GetEnvironmentOptions } from '../architect/environment/environment.utils';
 import Pipeline from '../architect/pipeline/pipeline.entity';
 import PipelineUtils from '../architect/pipeline/pipeline.utils';
@@ -309,22 +308,6 @@ export default class Deploy extends DeployCommand {
       this.log('Deployed services are now available at the following URLs:\n');
       for (const url of available_urls) {
         this.log(`\t${url}`);
-      }
-    }
-
-    // Warnings for the deprecation of liveness_probe path and port
-    const response = await this.app.api.get(`/pipelines/${pipeline.id}/deployments`);
-    const deployments: Deployment[] = response.data;
-    this.generateDeprecateWarnings(deployments);
-  }
-
-  private generateDeprecateWarnings(deployments: Deployment[]) {
-    for (const deployment of deployments) {
-      for (const service of Object.values(deployment.component_version.config.services || {})) {
-        if (service.liveness_probe && (service.liveness_probe.path || service.liveness_probe.port)) {
-          this.log(chalk.yellow(`Deprecation warning: The liveness probe 'path' and 'port' will no longer be supported starting August of 2023. We recommend that you update your configuration to use the 'command' option https://docs.architect.io/reference/release-notes.`));
-          return;
-        }
       }
     }
   }
