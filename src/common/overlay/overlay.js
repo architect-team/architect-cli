@@ -1,3 +1,7 @@
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text);
+}
+
 function appendHTML() {
   // Don't inject the overlay if it already exists
   const overlay = document.querySelector('#architect-overlay');
@@ -59,7 +63,7 @@ function appendHTML() {
 
     #architect-overlay .dropdown-button svg {
       fill: #55cb64;
-      width: 40px;
+      width: 35px;
     }
 
     #architect-overlay:hover .dropdown-button {
@@ -76,10 +80,10 @@ function appendHTML() {
   wrapper.id = 'architect-overlay';
   wrapper.innerHTML = `
     <div class="dropdown-content">
-      <a href="#">Logs</a>
-      <a href="#">Exec</a>
-      <a href="#">Restart</a>
-
+      <a href="#" onclick="copyToClipboard('architect logs')">Logs (CLI)</a>
+      <a href="#" onclick="copyToClipboard('architect exec')">Exec (CLI)</a>
+      <a href="#" onclick="copyToClipboard('architect dev:restart')">Restart (CLI)</a>
+      <a href="https://docs.architect.io" target="_blank">Docs</a>
       <a href="https://www.architect.io" target="_blank">Deployed with Architect</a>
     </div>
     <div class="dropdown-button">

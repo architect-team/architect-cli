@@ -74,7 +74,7 @@ export class DockerComposeUtils {
   // eslint-disable-next-line complexity
   public static async generate(graph: DependencyGraph, options?: GenerateOptions): Promise<DockerComposeTemplate> {
     if (!options) {
-      options = { gateway_admin_port: 8080, overlay_port: 60001, external_addr: 'arc.localhost' };
+      options = { gateway_admin_port: 8080, external_addr: 'arc.localhost' };
     }
     const { gateway_admin_port, overlay_port, external_addr, ssl_cert, ssl_key } = options;
 
@@ -143,9 +143,11 @@ export class DockerComposeUtils {
         labels: [
           `traefik.enable=true`,
           `traefik.port=${gateway_port}`,
-          // TODO:TJ `traefik.http.middlewares.rewritebody.plugin.rewritebody.lastModified=true`,
+          ...overlay_port ? [
+            // TODO:TJ `traefik.http.middlewares.rewritebody.plugin.rewritebody.lastModified=true`,
           `traefik.http.middlewares.rewritebody.plugin.rewritebody.rewrites.regex=World`, // TODO:TJ </head>
           `traefik.http.middlewares.rewritebody.plugin.rewritebody.rewrites.replacement=World<script async type="text/javascript"  src="http://localhost:${overlay_port}"></script>`,
+          ] : [],
         ],
         ports: [
           // The HTTP(S) port
@@ -431,7 +433,7 @@ export class DockerComposeUtils {
         if (ssl_cert && ssl_key) {
           service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`, `traefik.http.routers.${traefik_service}.tls=true`);
         }
-        if (!service_to.labels.includes(`traefik.http.routers.${traefik_service}.middlewares=rewritebody@docker`)) {
+        if (overlay_port && !service_to.labels.includes(`traefik.http.routers.${traefik_service}.middlewares=rewritebody@docker`)) {
           service_to.labels.push(`traefik.http.routers.${traefik_service}.middlewares=rewritebody@docker`);
         }
 
