@@ -87,11 +87,11 @@ Architect.appendHTML = function () {
       filter: brightness(125%);
     }
 
-    .tooltip {
+    #architect-overlay .tooltip {
       position: relative;
     }
 
-    .tooltip .tooltiptext {
+    #architect-overlay .tooltip .tooltiptext {
       visibility: hidden;
       width: 260px;
       background-color: #555;
@@ -107,11 +107,11 @@ Architect.appendHTML = function () {
       right: 105%;
     }
 
-    .tooltip:hover .tooltiptext {
+    #architect-overlay .tooltip:hover .tooltiptext {
       visibility: visible;
     }
 
-    .tooltip .tooltiptext::after {
+    #architect-overlay .tooltip .tooltiptext::after {
       content: " ";
       position: absolute;
       top: 50%;
