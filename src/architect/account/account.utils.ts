@@ -90,10 +90,19 @@ export default class AccountUtils {
           message: options?.account_message || 'Select an account',
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
-            const { data } = await app.api.get<Paginate<Account>>('/accounts', { params: { q: input, limit: 10 } });
-            const accounts = data.rows;
-            if (options?.ask_local_account && can_run_local) {
-              accounts.unshift(this.getLocalAccount());
+            let accounts: Account[] = [];
+            try {
+              const { data } = await app.api.get<Paginate<Account>>('/accounts', { params: { q: input, limit: 10 } });
+              accounts = data.rows;
+              if (options?.ask_local_account && can_run_local) {
+                accounts.unshift(this.getLocalAccount());
+              }
+            } catch (e) {
+              if (can_run_local) {
+                // If a user has an invalid or expired token, prompt them to log in again but allow access to local accounts
+                console.log(chalk.yellow('In order to access remote accounts you can login by running `architect login`'));
+                accounts.push(this.getLocalAccount());
+              }
             }
             return accounts.map((a) => ({ name: a.name, value: a }));
           },
