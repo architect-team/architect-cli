@@ -21,6 +21,7 @@ import DockerComposeTemplate, { DockerInspect, DockerService, DockerServiceBuild
 type GenerateOptions = {
   external_addr?: string;
   gateway_admin_port?: number;
+  overlay_port?: number;
   ssl_cert?: string;
   ssl_key?: string;
   getImage?: (ref: string) => string;
@@ -73,9 +74,9 @@ export class DockerComposeUtils {
   // eslint-disable-next-line complexity
   public static async generate(graph: DependencyGraph, options?: GenerateOptions): Promise<DockerComposeTemplate> {
     if (!options) {
-      options = { gateway_admin_port: 8080, external_addr: 'arc.localhost' };
+      options = { gateway_admin_port: 8080, overlay_port: 60001, external_addr: 'arc.localhost' };
     }
-    const { gateway_admin_port, external_addr, ssl_cert, ssl_key } = options;
+    const { gateway_admin_port, overlay_port, external_addr, ssl_cert, ssl_key } = options;
 
     const compose: DockerComposeTemplate = {
       version: '3',
@@ -144,7 +145,7 @@ export class DockerComposeUtils {
           `traefik.port=${gateway_port}`,
           // TODO:TJ `traefik.http.middlewares.rewritebody.plugin.rewritebody.lastModified=true`,
           `traefik.http.middlewares.rewritebody.plugin.rewritebody.rewrites.regex=World`, // TODO:TJ </head>
-          `traefik.http.middlewares.rewritebody.plugin.rewritebody.rewrites.replacement=World<script async type="text/javascript"  src="http://localhost:60001"></script>`,
+          `traefik.http.middlewares.rewritebody.plugin.rewritebody.rewrites.replacement=World<script async type="text/javascript"  src="http://localhost:${overlay_port}"></script>`,
         ],
         ports: [
           // The HTTP(S) port

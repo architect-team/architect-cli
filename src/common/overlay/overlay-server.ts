@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import http from 'http';
 
 export class OverlayServer {
-  listen(): void {
+  listen(port: number): void {
     const server = http.createServer(function (req, res) {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -15,6 +15,6 @@ export class OverlayServer {
       res.end(file);
     });
 
-    server.listen(60001); // TODO:TJ
+    server.listen(port);
   }
 }

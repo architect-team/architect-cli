@@ -384,7 +384,8 @@ export default class Dev extends BaseCommand {
     return [project_name, compose_file];
   }
 
-  async runCompose(compose: DockerComposeTemplate, default_project_name: string, gateway_port: number, gateway_admin_port: number): Promise<void> {
+  // eslint-disable-next-line max-params
+  async runCompose(compose: DockerComposeTemplate, default_project_name: string, gateway_port: number, gateway_admin_port: number, overlay_port: number): Promise<void> {
     const { flags } = await this.parse(Dev);
     const [project_name, compose_file] = await this.buildImage(compose, default_project_name);
 
@@ -444,7 +445,7 @@ export default class Dev extends BaseCommand {
       return is_exiting;
     });
 
-    new OverlayServer().listen();
+    new OverlayServer().listen(overlay_port);
 
     try {
       await compose_process;
@@ -684,14 +685,16 @@ $ architect dev -e new_env_name_here .`));
 
     const graph = await dependency_manager.getGraph(component_specs, component_secrets);
     const gateway_admin_port = await PortUtil.getAvailablePort(8080);
+    const overlay_port = await PortUtil.getAvailablePort(60001);
     const compose = await DockerComposeUtils.generate(graph, {
       external_addr: flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address,
       gateway_admin_port,
+      overlay_port,
       ssl_cert: flags.ssl ? this.readSSLCert('fullchain.pem') : undefined,
       ssl_key: flags.ssl ? this.readSSLCert('privkey.pem') : undefined,
     });
     await BuildPackUtils.buildGraph(this.app.config.getPluginDirectory(), graph);
-    await this.runCompose(compose, environment, flags.port, gateway_admin_port);
+    await this.runCompose(compose, environment, flags.port, gateway_admin_port, overlay_port);
   }
 
   @RequiresDocker({ compose: true })
