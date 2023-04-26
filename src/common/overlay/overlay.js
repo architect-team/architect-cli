@@ -26,6 +26,10 @@ Architect.appendHTML = function () {
     return;
   }
 
+  const script = document.querySelector('#architect-script');
+  const environment = script.dataset.environment;
+  const service = script.dataset.service;
+
   var styles = document.createElement('style');
   styles.innerHTML = `
     #architect-overlay {
@@ -125,14 +129,14 @@ Architect.appendHTML = function () {
   wrapper.innerHTML = `
     <div class="dropdown-content">
       <div class="tooltip">
-        <a href="#" onclick="Architect.copyToClipboard(this, 'architect logs')" onmouseout="Architect.outFunc(this)" style="border-top-left-radius: 5px;">
+        <a href="#" onclick="Architect.copyToClipboard(this, 'architect logs -e ${environment} ${service}')" onmouseout="Architect.outFunc(this)" style="border-top-left-radius: 5px;">
           <span class="tooltiptext">View the logs from the CLI</span>
           Logs
         </a>
       </div>
 
       <div class="tooltip">
-        <a href="#" onclick="Architect.copyToClipboard(this, 'architect exec')" onmouseout="Architect.outFunc(this)">
+        <a href="#" onclick="Architect.copyToClipboard(this, 'architect exec -e ${environment} ${service} -- ls')" onmouseout="Architect.outFunc(this)">
           <span class="tooltiptext">Execute a command from the CLI</span>
           Exec
         </a>
@@ -140,7 +144,7 @@ Architect.appendHTML = function () {
       </div>
 
       <div class="tooltip">
-        <a href="#" onclick="Architect.copyToClipboard(this, 'architect dev:restart')" onmouseout="Architect.outFunc(this)">
+        <a href="#" onclick="Architect.copyToClipboard(this, 'architect dev:restart -e ${environment} ${service}')" onmouseout="Architect.outFunc(this)">
           <span class="tooltiptext">Restart this service from the CLI</span>
           Restart
         </a>

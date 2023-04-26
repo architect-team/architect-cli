@@ -697,6 +697,7 @@ $ architect dev -e new_env_name_here .`));
       external_addr: flags.ssl ? this.app.config.external_https_address : this.app.config.external_http_address,
       gateway_admin_port,
       overlay_port,
+      environment,
       ssl_cert: flags.ssl ? this.readSSLCert('fullchain.pem') : undefined,
       ssl_key: flags.ssl ? this.readSSLCert('privkey.pem') : undefined,
     });
