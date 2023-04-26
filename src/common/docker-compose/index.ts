@@ -124,6 +124,9 @@ export class DockerComposeUtils {
           `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
           `--entryPoints.web.forwardedHeaders.insecure=true`,
           `--entryPoints.web.proxyProtocol.insecure=true`,
+          // Plugins
+          `--experimental.plugins.rewritebody.modulename=github.com/packruler/rewrite-body`,
+          `--experimental.plugins.rewritebody.version=v1.1.0`,
           ...(ssl_cert && ssl_key ? [
             // Ignore local certs being invalid on proxy
             `--serversTransport.insecureSkipVerify=true`,
@@ -135,6 +138,13 @@ export class DockerComposeUtils {
             '--providers.file.watch=false',
             `--providers.file.fileName=/etc/traefik.yaml`,
           ] : []),
+        ],
+        labels: [
+          `traefik.enable=true`,
+          `traefik.port=${gateway_port}`,
+          // TODO:TJ `traefik.http.middlewares.rewritebody.plugin.rewritebody.lastModified=true`,
+          `traefik.http.middlewares.rewritebody.plugin.rewritebody.rewrites.regex=World`, // TODO:TJ </head>
+          `traefik.http.middlewares.rewritebody.plugin.rewritebody.rewrites.replacement=World<script async type="text/javascript"  src="http://localhost:60001"></script>`,
         ],
         ports: [
           // The HTTP(S) port
@@ -419,6 +429,9 @@ export class DockerComposeUtils {
         }
         if (ssl_cert && ssl_key) {
           service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`, `traefik.http.routers.${traefik_service}.tls=true`);
+        }
+        if (!service_to.labels.includes(`traefik.http.routers.${traefik_service}.middlewares=rewritebody@docker`)) {
+          service_to.labels.push(`traefik.http.routers.${traefik_service}.middlewares=rewritebody@docker`);
         }
 
         if (node_to_interface.protocol && node_to_interface.protocol !== 'http') {

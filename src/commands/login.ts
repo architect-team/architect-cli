@@ -1,5 +1,6 @@
 import { Flags } from '@oclif/core';
 import chalk from 'chalk';
+import inquirer from 'inquirer';
 import opener from 'opener';
 import { AuthorizationCode } from 'simple-oauth2';
 import AuthClient from '../app-config/auth';
@@ -7,7 +8,6 @@ import BaseCommand from '../base-command';
 import { RequiresDocker } from '../common/docker/helper';
 import PortUtil from '../common/utils/port';
 import PromptUtils from '../common/utils/prompt-utils';
-import inquirer = require('inquirer');
 import { ArchitectError } from '../dependency-manager/utils/errors';
 
 export default class Login extends BaseCommand {

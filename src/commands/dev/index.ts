@@ -20,6 +20,7 @@ import DockerComposeTemplate from '../../common/docker-compose/template';
 import { DOCKER_COMPONENT_LABEL, DOCKER_IMAGE_LABEL } from '../../common/docker/buildx.utils';
 import { docker } from '../../common/docker/cmd';
 import { DockerHelper, RequiresDocker } from '../../common/docker/helper';
+import { OverlayServer } from '../../common/overlay/overlay-server';
 import BuildPackUtils from '../../common/utils/buildpack';
 import DeployUtils from '../../common/utils/deploy.utils';
 import { booleanString } from '../../common/utils/oclif';
@@ -442,6 +443,8 @@ export default class Dev extends BaseCommand {
     DockerComposeUtils.watchContainersHealth(compose_file, project_name, () => {
       return is_exiting;
     });
+
+    new OverlayServer().listen();
 
     try {
       await compose_process;
