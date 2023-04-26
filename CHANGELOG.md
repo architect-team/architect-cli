@@ -1,3 +1,21 @@
+# [1.39.0](https://github.com/architect-team/architect-cli/compare/v1.38.0...v1.39.0) (2023-04-26)
+
+
+### Bug Fixes
+
+* **dev:** Require dev port selected is 80, 443, or between 1024-65535  ([#895](https://github.com/architect-team/architect-cli/issues/895)) ([c35a27b](https://github.com/architect-team/architect-cli/commit/c35a27ba8f6cb2a33a040cd162e821201a309832))
+* **error:** Provide better error messages when you have conflicting subdomains ([3d8b2e1](https://github.com/architect-team/architect-cli/commit/3d8b2e1547e6eecb78124d1117ecfd2dc581293e))
+* **exec:** Catch error when trying to hit accounts endpoint and fallback to allowing user to select a local env ([#897](https://github.com/architect-team/architect-cli/issues/897)) ([8cd0732](https://github.com/architect-team/architect-cli/commit/8cd073255c9c6533a3a7f29187dbd852c9f7bb4c))
+* **revert:** Revert deprecation warnings for liveness_probe keys ([cc7653d](https://github.com/architect-team/architect-cli/commit/cc7653d50a0fcced030b72aff346a737d3e738d5))
+* **spec:** Add safe float type to avoid precision loss on yaml.load ([#894](https://github.com/architect-team/architect-cli/issues/894)) ([e14e0cd](https://github.com/architect-team/architect-cli/commit/e14e0cdfda04ee2817c1789933583a762ded2d86))
+
+
+### Features
+
+* **dev:** Automatic cache cleanup ([#857](https://github.com/architect-team/architect-cli/issues/857)) ([8b46457](https://github.com/architect-team/architect-cli/commit/8b464574e4c212446374aee0f6f7f30198eaf84b))
+* **init:** Handle Docker Compose environment variable interpolation formats ([#881](https://github.com/architect-team/architect-cli/issues/881)) ([6c30882](https://github.com/architect-team/architect-cli/commit/6c30882e6492bc8f53b962a5149cec7aabacc292))
+* **spec:** deprecate liveness_probe port and path keys ([#896](https://github.com/architect-team/architect-cli/issues/896)) ([9e2104c](https://github.com/architect-team/architect-cli/commit/9e2104ce278d184a9092175c33cd086f322272fe))
+
 # [1.38.0](https://github.com/architect-team/architect-cli/compare/v1.37.0...v1.38.0) (2023-04-12)
 
 
