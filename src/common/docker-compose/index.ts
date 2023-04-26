@@ -428,9 +428,9 @@ export class DockerComposeUtils {
 
         if (overlay_port) {
           service_to.labels.push(
-            `traefik.http.middlewares.rewritebody.plugin.rewritebody.lastModified=true`,
-            `traefik.http.middlewares.${traefik_service}-rewritebody.plugin.rewritebody.rewrites.regex=World`, // TODO:TJ </head>
-            `traefik.http.middlewares.${traefik_service}-rewritebody.plugin.rewritebody.rewrites.replacement=World<script id="architect-script" async type="text/javascript" src="http://localhost:${overlay_port}" data-environment="${environment}" data-service="${node_to.config.metadata.ref}"></script>`,
+            `traefik.http.middlewares.${traefik_service}-rewritebody.plugin.rewritebody.lastModified=true`,
+            `traefik.http.middlewares.${traefik_service}-rewritebody.plugin.rewritebody.rewrites.regex=</head>`,
+            `traefik.http.middlewares.${traefik_service}-rewritebody.plugin.rewritebody.rewrites.replacement=<script id="architect-script" async type="text/javascript" src="http://localhost:${overlay_port}" data-environment="${environment}" data-service="${node_to.config.metadata.ref}"></script></head>`,
             `traefik.http.routers.${traefik_service}.middlewares=${traefik_service}-rewritebody@docker`,
           );
         }
