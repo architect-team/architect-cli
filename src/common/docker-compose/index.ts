@@ -24,7 +24,7 @@ type GenerateOptions = {
   overlay_port?: number;
   ssl_cert?: string;
   ssl_key?: string;
-  environment: string;
+  environment?: string;
   getImage?: (ref: string) => string;
 };
 
@@ -126,9 +126,11 @@ export class DockerComposeUtils {
           `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
           `--entryPoints.web.forwardedHeaders.insecure=true`,
           `--entryPoints.web.proxyProtocol.insecure=true`,
+          ...overlay_port ? [
           // Plugins
           `--experimental.plugins.rewritebody.modulename=github.com/packruler/rewrite-body`,
           `--experimental.plugins.rewritebody.version=v1.1.0`,
+          ] : [],
           ...(ssl_cert && ssl_key ? [
             // Ignore local certs being invalid on proxy
             `--serversTransport.insecureSkipVerify=true`,
