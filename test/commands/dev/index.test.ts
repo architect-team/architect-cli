@@ -737,7 +737,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--ssl=false', '--overlay=false'])
     .it('Create a local dev with a component and an interface', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -758,7 +758,7 @@ describe('local dev environment', function () {
     }))
     .stub(fs, 'removeSync', sinon.stub().returns(null))
     .stub(process, 'exit', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '-d', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '-d', '--ssl=false', '--overlay=false'])
     .it(`Run a component locally in detached mode and check that the compose file doesn't get deleted`, ctx => {
       expect(ctx.stdout).to.contain('Starting containers...');
 
@@ -776,7 +776,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', getMockComponentFilePath('hello-world'), '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--ssl=false', '--overlay=false'])
     .catch(err => {
       expect(err.message).to.include('Environment name already in use.');
     })
@@ -793,7 +793,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns('fake-cert'))
-    .command(['dev', getMockComponentFilePath('hello-world')])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--overlay=false'])
     .it('Create a local dev with a component and an interface with ssl', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -811,7 +811,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--ssl=false', '--overlay=false'])
     .it('Sticky label added for sticky interfaces', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -834,7 +834,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('database-seeding'), '-s', 'AUTO_DDL=seed', '--secret', 'DB_NAME=test-db', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('database-seeding'), '-s', 'AUTO_DDL=seed', '--secret', 'DB_NAME=test-db', '--ssl=false', '--overlay=false'])
     .it('Create a local dev with a component, secrets, and an interface', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -852,7 +852,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '--secret-file', './examples/hello-world/.env', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--secret-file', './examples/hello-world/.env', '--ssl=false', '--overlay=false'])
     .it('Create a local dev with a basic component and a basic .env secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -874,7 +874,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false', '--overlay=false'])
     .it('Create a local dev with a basic component and a basic secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -897,7 +897,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '-v', './examples/hello-world/secrets.yml', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '-v', './examples/hello-world/secrets.yml', '--ssl=false', '--overlay=false'])
     .it('Create a local dev with a basic component and a basic secrets file using deprecated values flag', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -919,7 +919,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false', '--overlay=false'])
     .it('Create a local dev with a basic component and a wildcard secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -939,7 +939,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false', '--overlay=false'])
     .it('Create a local dev with a basic component and a stacked secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -961,7 +961,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '-a', 'examples', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '-a', 'examples', '--ssl=false', '--overlay=false'])
     .it('Create a local dev with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -983,7 +983,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '-r', '-a', 'examples', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '-r', '-a', 'examples', '--ssl=false', '--overlay=false'])
     .it('Create a local recursive dev with a basic component, a dependency, and a secrets file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -1006,7 +1006,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--secret-file', './examples/hello-world/secrets.yml', '--ssl=false', '--overlay=false'])
     .it('Dollar signs are escaped for environment variables in local compose devments', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -1026,7 +1026,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '-i', 'test:hello', '--secrets-env=env', '-a', 'examples', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '-i', 'test:hello', '--secrets-env=env', '-a', 'examples', '--ssl=false', '--overlay=false'])
     .it('Create a local dev with a basic component and an environment secret', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -1049,7 +1049,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '-i', 'test:hello', '--secret-file', './examples/hello-world/secrets.yml', '--secrets-env=env', '-a', 'examples', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '-i', 'test:hello', '--secret-file', './examples/hello-world/secrets.yml', '--secrets-env=env', '-a', 'examples', '--ssl=false', '--overlay=false'])
     .it('Create a local dev with a basic component, a secret file, and an overwritten environment secret', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -1067,7 +1067,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '-i', 'test:hello', '--secrets-env=non-existent-env', '-a', 'examples', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '-i', 'test:hello', '--secrets-env=non-existent-env', '-a', 'examples', '--ssl=false', '--overlay=false'])
     .catch(err => {
       expect(process.exitCode).eq(1);
       expect(`${err}`).to.contain(`Could not find entity of type "Environment"`);
@@ -1090,7 +1090,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', getMockComponentFilePath('hello-world'), '-i', 'test:hello', '--secrets-env=env', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '-i', 'test:hello', '--secrets-env=env', '--ssl=false', '--overlay=false'])
     .it('Get an account if not provided to pull secrets from an environment', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -1108,7 +1108,7 @@ describe('local dev environment', function () {
       .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
       .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
       .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'hello-world': getMockComponentFilePath('hello-world') }))
-      .command(['dev', 'hello-world:latest', '--ssl=false'])
+      .command(['dev', 'hello-world:latest', '--ssl=false', '--overlay=false'])
       .it('Create a local dev with a component and an interface', ctx => {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true;
@@ -1132,7 +1132,7 @@ describe('local dev environment', function () {
     local_dev
       .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
       .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-      .command(['dev', 'hello-world@tenant-1', '--ssl=false'])
+      .command(['dev', 'hello-world@tenant-1', '--ssl=false', '--overlay=false'])
       .it('Create a local dev with instance id and no tag', ctx => {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true;
@@ -1142,7 +1142,7 @@ describe('local dev environment', function () {
     local_dev
       .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
       .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-      .command(['dev', 'hello-world:latest@tenant-1', '--ssl=false'])
+      .command(['dev', 'hello-world:latest@tenant-1', '--ssl=false', '--overlay=false'])
       .it('Create a local dev with instance name and tag', ctx => {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true;
@@ -1165,7 +1165,7 @@ describe('local dev environment', function () {
           },
         };
       })
-      .command(['dev', '--secret-file', './examples/hello-world/secrets.yml', 'hello-world:latest@tenant-1', '--ssl=false'])
+      .command(['dev', '--secret-file', './examples/hello-world/secrets.yml', 'hello-world:latest@tenant-1', '--ssl=false', '--overlay=false'])
       .it('Create a local dev with instance name, tag, and secret file', ctx => {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true;
@@ -1194,7 +1194,7 @@ describe('local dev environment', function () {
           },
         };
       })
-      .command(['dev', '--secret-file', './examples/hello-world/secrets.yml', 'hello-world@tenant-1', 'hello-world@tenant-2', '--ssl=false'])
+      .command(['dev', '--secret-file', './examples/hello-world/secrets.yml', 'hello-world@tenant-1', 'hello-world@tenant-2', '--ssl=false', '--overlay=false'])
       .it('Create a local dev with multiple instances of the same component', ctx => {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true;
@@ -1260,7 +1260,7 @@ describe('local dev environment', function () {
       .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
       .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
       .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-      .command(['dev', 'app', '--ssl=false'])
+      .command(['dev', 'app', '--ssl=false', '--overlay=false'])
       .it('Dev component with dependency with ingresses', ctx => {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true;
@@ -1280,7 +1280,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--ssl=false', '--overlay=false'])
     .it('Command with an operator is converted correctly to the docker compose file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const compose = runCompose.firstCall.args[0];
@@ -1305,7 +1305,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns('fake-cert'))
-    .command(['dev', getMockComponentFilePath('hello-world')])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--overlay=false'])
     .it('Path/port healthcheck converted to http path', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const compose = runCompose.firstCall.args[0];
@@ -1335,7 +1335,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--ssl=false', '--overlay=false'])
     .catch(err => {
       expect(err.message).to.include('non_existent_path');
       expect(err.message).to.include('used for the build context of service api does not exist.');
@@ -1354,7 +1354,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'readSSLCert', sinon.stub().returns('fake-cert'))
-    .command(['dev', getMockComponentFilePath('hello-world')])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--overlay=false'])
     .catch(err => {
       expect(err.message).to.include('For help getting started take a look at our documentation here: https://docs.architect.io/reference/architect-yml');
     })
@@ -1371,7 +1371,7 @@ describe('local dev environment', function () {
     .stub(PluginManager, 'getPlugin', sinon.stub().returns({
       build: () => { },
     }))
-    .command(['dev', './test/mocks/buildpack/buildpack-architect.yml', '--ssl=false'])
+    .command(['dev', './test/mocks/buildpack/buildpack-architect.yml', '--ssl=false', '--overlay=false'])
     .it('Dev component with buildpack', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
@@ -1391,7 +1391,7 @@ describe('local dev environment', function () {
     }))
     .stub(DockerHelper, 'composeVersion', sinon.stub().returns(true))
     .stub(DockerHelper, 'buildXVersion', sinon.stub().returns(true))
-    .command(['dev', './test/mocks/buildpack/buildpack-dockerfile-architect.yml', '--ssl=false'])
+    .command(['dev', './test/mocks/buildpack/buildpack-dockerfile-architect.yml', '--ssl=false', '--overlay=false'])
     .it('Dev component with buildpack and dockerfile services', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -1407,7 +1407,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', './test/mocks/register/nonexistence-dockerfile-architect.yml', '--ssl=false'])
+    .command(['dev', './test/mocks/register/nonexistence-dockerfile-architect.yml', '--ssl=false', '--overlay=false'])
     .catch(e => {
       expect(e.message).contains(`${path.resolve('./test/integration/hello-world/nonexistent-dockerfile')} does not exist. Please verify the correct context and/or dockerfile were given.`);
     })
@@ -1422,7 +1422,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .nock('https://storage.googleapis.com', api => api.get('/architect-ci-ssl/fullchain.pem').reply(500))
     .nock('https://storage.googleapis.com', api => api.get('/architect-ci-ssl/privkey.pem').reply(500))
-    .command(['dev', getMockComponentFilePath('hello-world')])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--overlay=false'])
     .catch(e => {
       expect(e.message).contains(`--ssl=false`);
     })
@@ -1446,7 +1446,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '--secrets-env=env', '-a', 'examples', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '--secrets-env=env', '-a', 'examples', '--ssl=false', '--overlay=false'])
     .it('Create a local dev with a number secret in an environment secret', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -1466,7 +1466,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '-s', 'a_required_key=123456789.123456789', '-a', 'examples', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '-s', 'a_required_key=123456789.123456789', '-a', 'examples', '--ssl=false', '--overlay=false'])
     .it('Create a local dev with a number secret with many digits after decimal point', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -1487,7 +1487,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'failIfEnvironmentExists', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stub(Dev.prototype, 'downloadSSLCerts', sinon.stub().returns(undefined))
-    .command(['dev', getMockComponentFilePath('hello-world'), '-a', 'examples', '--ssl=false'])
+    .command(['dev', getMockComponentFilePath('hello-world'), '-a', 'examples', '--ssl=false', '--overlay=false'])
     .it('Create a local dev with an environment number secret', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;

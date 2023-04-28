@@ -16,13 +16,14 @@ services:
     build:
       context: .
     interfaces:
-      main: 8080
+      main:
+        port: 8080
+        ingress:
+          subdomain: hello
+      private:
+        port: 8080
+        ingress:
+          subdomain: hello-private
+          private: true
     environment:
       WORLD_TEXT: ${{ secrets.world_text }}
-
-interfaces:
-  hello:
-    description: Connects to the hello-world service to return "Hello World!" on-demand
-    url: ${{ services.api.interfaces.main.url }}
-    ingress:
-      subdomain: hello
