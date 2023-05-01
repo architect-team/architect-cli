@@ -289,7 +289,7 @@ export default abstract class DependencyManager {
       ...secrets_dict,
     };
 
-    if (options.interpolate && options.validate) {
+    if ((options.interpolate || options.interpolate_build_args) && options.validate) {
       secrets.validateComponentSpec(component_spec);
     }
 
@@ -299,6 +299,13 @@ export default abstract class DependencyManager {
 
       // Replace conditionals
       component_spec = interpolateObject(component_spec, context, { keys: true, values: false, file: component_spec.metadata.file });
+    } else if (options.interpolate_build_args) {
+      // Only interpolate the build args block - used when registering a component to interpolate secret values.
+      for (const service of Object.values(component_spec.services || {})) {
+        if (service.build && service.build.args) {
+          service.build.args = interpolateObject(service.build.args, context, { keys: false, values: true, file: component_spec.metadata.file });
+        }
+      }
     }
 
     const component_config = transformComponentSpec(component_spec);
