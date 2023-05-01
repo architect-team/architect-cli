@@ -233,6 +233,17 @@ export default class Deploy extends DeployCommand {
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
+    const has_cluster_deployment = await DeployUtils.hasClusterDeployment(this.app, environment.cluster);
+    if (!has_cluster_deployment) {
+      const confirmation_answers = await inquirer.prompt([{
+        type: 'confirm',
+        name: 'continue_deployment',
+        message: `We detected the application 'API Gateway' is not installed on your cluster '${environment.cluster.name}' which may lead to deployment failure. Would you like to continue your deployment?`,
+      }]);
+      if (!confirmation_answers.continue_deployment) {
+        this.exit(0);
+      }
+    }
 
     const component_names: Set<string> = new Set<string>();
     for (const component of components) {
