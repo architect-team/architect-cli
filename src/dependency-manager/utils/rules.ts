@@ -34,13 +34,13 @@ class BuildInterpolationRule extends InterpolationRule {
    * Returns true if the interpolation is inside of a build block
    * and the interpolation is not a secret value.
    */
-  protected checkPathAndKey(path: string, key: string) {
+  protected checkPathAndKey(path: string, key?: string) {
     const split = path.split('.').filter(path => !path.startsWith('${{'));
     const is_build_block = (split[0] === 'services' || split[0] === 'tasks') && split[2] === 'build';
-    if (is_build_block) {
+    if (is_build_block && key) {
       return !key.startsWith('secrets');
     }
-    return false;
+    return is_build_block;
   }
 
   check(context_map: ContextMap, context_key: string): string | undefined {
@@ -55,7 +55,7 @@ class BuildInterpolationRule extends InterpolationRule {
     }
 
     // Check if the interpolation is around a build block
-    const maybe_child_key = Object.keys(context_map._obj_map).find(key => key.startsWith(`${context_map._path}.`) && this.checkKey(key));
+    const maybe_child_key = Object.keys(context_map._obj_map).find(key => key.startsWith(`${context_map._path}.`) && this.checkPathAndKey(key));
     if (maybe_child_key) {
       return `Cannot use \${{ ${context_key} }} around a build block. The build block is immutable. Use architect dev --arg KEY=VALUE or use secrets for build args.`;
     }
