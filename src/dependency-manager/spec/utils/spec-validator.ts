@@ -354,6 +354,50 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
   return component_spec;
 };
 
+const getDependencyName = (interpolation: string): string => {
+  const regex = /dependencies\.([^.[\]]+)/;
+  const match = interpolation.match(regex);
+  return match ? match[1] : '';
+};
+
+const findInterpolationErrors = (errors: ValidationError[], component_spec: ComponentSpec) => {
+  const context_map = buildContextMap(component_spec);
+  const service_interface_config = new Set(['host', 'port', 'protocol', 'username', 'password', 'url', 'path']);
+
+  const interpolation_errors: ValidationError[] = [];
+  for (const error of errors) {
+    let interpolation_str = error.value;
+    const is_dependency_url = interpolation_str.startsWith('dependencies');
+    if (is_dependency_url) {
+      const dependency_name = getDependencyName(interpolation_str);
+      if (!(dependency_name in context_map.dependencies)) {
+        interpolation_errors.push(error);
+      }
+    } else {
+      const parts = interpolation_str.split('.');
+      const last_element = parts[parts.length - 1];
+      const is_service_url = interpolation_str.startsWith('services') && service_interface_config.has(last_element);
+      const is_database_url = interpolation_str.startsWith('databases') && interpolation_str.endsWith('url');
+      if (is_service_url || is_database_url) {
+        interpolation_str = interpolation_str.substring(0, interpolation_str.lastIndexOf('.'));
+      }
+      if (!context_map[interpolation_str]) {
+        interpolation_errors.push(error);
+      }
+    }
+  }
+  return interpolation_errors;
+};
+
+const extractInterpolationErrors = (errors: ValidationError[]) => {
+  // Regular expression for architect variables such as architect.environment and architect.build.tag
+  const architect_regex = /architect\./;
+
+  // Regular expression for environment variables such as environment.ingresses.hello-world.hello.url
+  const architect_environment_regex = /environment\./;
+  return errors.filter(error => error.message.startsWith(RequiredInterpolationRule.PREFIX) && !architect_regex.test(error.value) && !architect_environment_regex.test(error.value));
+};
+
 export const validateInterpolation = (component_spec: ComponentSpec): void => {
   const { errors } = interpolateObject(component_spec, {}, {
     keys: true,
@@ -362,8 +406,11 @@ export const validateInterpolation = (component_spec: ComponentSpec): void => {
   });
 
   const filtered_errors = errors.filter(error => !error.message.startsWith(RequiredInterpolationRule.PREFIX));
+  let interpolation_errors = extractInterpolationErrors(errors);
+  interpolation_errors = findInterpolationErrors(interpolation_errors, component_spec);
+  const all_errors = [...filtered_errors, ...interpolation_errors];
 
-  if (filtered_errors.length > 0) {
-    throw new ValidationErrors(filtered_errors, component_spec.metadata.file);
+  if (all_errors.length > 0) {
+    throw new ValidationErrors(all_errors, component_spec.metadata.file);
   }
 };

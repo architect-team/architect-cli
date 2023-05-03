@@ -188,5 +188,44 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
       validateInterpolation(component_spec)
     });
+
+    it('fail when using interpolation where path does not exist', () => {
+      const component_config = `
+        name: hello-world
+        services:
+          api:
+            build:
+              context: .
+            environment:
+              DB_ADDR: \${{ services.database.interfaces.main.url }}
+        `;
+
+      const component_spec = buildSpecFromYml(component_config);
+
+      expect(() => {
+        validateInterpolation(component_spec);
+      }).to.be.throws(ValidationErrors);
+    });
+
+    it('fail when secret does not exist', () => {
+      const component_config = `
+        name: hello-world
+        secrets:
+          world_text:
+            default: World
+        services:
+          api:
+            build:
+              context: .
+            environment:
+              WORLD_TEXT: \${{ secrets.notfound }}
+        `;
+
+      const component_spec = buildSpecFromYml(component_config);
+
+      expect(() => {
+        validateInterpolation(component_spec);
+      }).to.be.throws(ValidationErrors);
+    });
   });
 });

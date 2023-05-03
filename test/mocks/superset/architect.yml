@@ -161,7 +161,7 @@ services:
     interfaces:
       http: 8080
     environment:
-      BACKUP_DB_ADDR: ${{ databases.api-db.connection_string }}
+      BACKUP_DB_ADDR: ${{ databases.api-db2.connection_string }}
       DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ secrets.db_name }}
       DB_USER: ${{ secrets.db_user }}
       DB_PASS: ${{ secrets.db_pass }}
