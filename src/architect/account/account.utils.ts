@@ -39,6 +39,10 @@ export default class AccountUtils {
   }
 
   static async getAccount(app: AppService, account_name?: string, options?: { account_message?: string, ask_local_account?: boolean }): Promise<Account> {
+    if (account_name === 'dev') {
+      return this.getLocalAccount();
+    }
+
     const config_account = app.config.defaultAccount();
     // Set the account name from the config only if an account name wasn't set as cli flag
     if (config_account && !account_name && !options?.ask_local_account) {
