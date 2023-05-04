@@ -370,7 +370,7 @@ const findInterpolationErrors = (errors: ValidationError[], component_spec: Comp
     const is_dependency_url = interpolation_str.startsWith('dependencies');
     if (is_dependency_url) {
       const dependency_name = getDependencyName(interpolation_str);
-      if (!(dependency_name in context_map.dependencies)) {
+      if (!context_map.dependencies || !(dependency_name in context_map.dependencies)) {
         interpolation_errors.push(error);
       }
     } else {
