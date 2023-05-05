@@ -43,8 +43,9 @@ export default class EnvironmentCreate extends BaseCommand {
     }),
     flag: Flags.string({
       multiple: true,
-      default: [],
       sensitive: false,
+      options: ['zero-trust'],
+      description: 'zero-trust: Create the environment with zero-trust network policies.',
     }),
   };
 
@@ -81,7 +82,7 @@ export default class EnvironmentCreate extends BaseCommand {
     const cluster = await ClusterUtils.getCluster(this.app.api, account, flags.cluster || flags.platform);
 
     const flags_map: Dictionary<boolean> = {};
-    for (const flag of flags.flag) {
+    for (const flag of flags.flag || []) {
       flags_map[flag] = true;
     }
 
