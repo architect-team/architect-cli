@@ -236,14 +236,7 @@ export default class Deploy extends DeployCommand {
     const has_cluster_deployment = await DeployUtils.hasClusterDeployment(this.app, environment.cluster);
     if (!has_cluster_deployment) {
       const cluster_apps_url = `${this.app.config.app_host}/${environment.cluster.account.name}/clusters/${environment.cluster.name}/apps`;
-      const confirmation_answers = await inquirer.prompt([{
-        type: 'confirm',
-        name: 'continue_deployment',
-        message: `We detected that required applications aren't installed in your cluster which will lead to deployment failure. Please install the applications at ${cluster_apps_url} before attempting to deploy.`,
-      }]);
-      if (!confirmation_answers.continue_deployment) {
-        this.exit(0);
-      }
+      this.log(chalk.yellow(`We detected that required applications aren't installed in your cluster and this deployment will not succeed. Please cancel the deployment and install the "API Gateway" and "Service Mesh" at ${cluster_apps_url} before attempting to deploy.`));
     }
 
     const component_names: Set<string> = new Set<string>();
