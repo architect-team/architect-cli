@@ -106,7 +106,7 @@ export default class DeployUtils {
   static async hasClusterDeployment(app: AppService, cluster: Cluster): Promise<boolean> {
     if (cluster && !cluster.properties.is_shared && !cluster.properties.is_managed) {
       const cluster_deployment: Deployment = (await app.api.get(`clusters/${cluster.id}/apps`)).data;
-      return !(cluster_deployment && cluster_deployment.action === 'delete');
+      return Boolean(cluster_deployment) && cluster_deployment.action !== 'delete';
     }
     return true;
   }
