@@ -9,6 +9,7 @@ export default interface Deployment {
   failed_at?: string;
   aborted_at?: string;
   type: string;
+  action: string;
   metadata: {
     instance_name?: string;
   }
