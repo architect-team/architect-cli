@@ -6,6 +6,9 @@ import { ValidationError, ValidationErrors } from './errors';
 import { ArchitectParser } from './parser';
 import { matches } from './regex';
 import { CONTEXT_KEY_DELIMITER } from './rules';
+import { ComponentSpec } from '../spec/component-spec';
+import { ArchitectContext, DependencyContext, ServiceContext } from '../config/component-context';
+import { IngressConfig, ServiceInterfaceConfig } from '../config/service-config';
 
 export const replaceBrackets = (value: string): string => {
   return value.replace(/\[/g, '.').replace(/["'\\\]|]/g, '');
@@ -23,8 +26,52 @@ export const replaceInterpolationBrackets = (value: string): string => {
   return res;
 };
 
-export const buildContextMap = (context: any): any => {
+/*
+  Create mock dependencies for dependencies.<dependency-name>.services.*.interfaces.*.<ingress-config-prop>
+*/
+const createMockDependencies = (component_spec: ComponentSpec) => {
+  const dependencies: Dictionary<DependencyContext> = {};
+  for (const dep_name of Object.keys(component_spec.dependencies || {})) {
+    const mock_service_interface_config: ServiceInterfaceConfig = {
+      host: '',
+      port: '',
+      protocol: '',
+      username: '',
+      password: '',
+      url: '',
+      sticky: '',
+      path: '',
+      ingress: { private: false } as IngressConfig,
+    };
+    const mock_service_context: ServiceContext = {
+      interfaces: { '*': mock_service_interface_config },
+      environment: {},
+    };
+
+    const dependency_context = {
+      name: dep_name,
+      dependencies: {},
+      secrets: {},
+      outputs: {},
+      databases: {},
+      services: { '*': mock_service_context },
+      tasks: {},
+      architect: {} as ArchitectContext,
+    };
+    dependencies[dep_name] = {
+      services: dependency_context.services || {},
+      outputs: dependency_context.outputs || {},
+    };
+  }
+  return dependencies;
+};
+
+export const buildContextMap = (context: any, use_mock_dependencies?: boolean): any => {
   const context_map: Dictionary<any> = {};
+  if (use_mock_dependencies) {
+    context.dependencies = createMockDependencies(context);
+  }
+
   const queue = [['', context]];
   while (queue.length > 0) {
     const [prefix, c] = queue.shift()!;

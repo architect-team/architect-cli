@@ -21,6 +21,7 @@ import { validateOrRejectSpec } from './spec/utils/spec-validator';
 import { Dictionary, transformDictionary } from './utils/dictionary';
 import { ArchitectError } from './utils/errors';
 import { interpolateObjectLoose, interpolateObjectOrReject, replaceInterpolationBrackets } from './utils/interpolation';
+import { IngressConfig, ServiceConfig, ServiceInterfaceConfig } from './config/service-config';
 
 export default abstract class DependencyManager {
   account?: string;
@@ -395,6 +396,7 @@ export default abstract class DependencyManager {
     options = {
       interpolate: true,
       validate: true,
+      build_dependency_nodes: false,
       ...options,
     };
 
@@ -530,6 +532,53 @@ export default abstract class DependencyManager {
       graph.validated = true;
     }
 
+    if (options.build_dependency_nodes) {
+      for (const component_spec of evaluated_component_specs) {
+        for (const dependency_name of Object.keys(component_spec.dependencies || {})) {
+          // create mock dependency node for dependencies validation
+          const mock_service_ingress_config: IngressConfig = {
+            enabled: false,
+            subdomain: '',
+            path: '',
+            ip_whitelist: [],
+            sticky: '',
+            private: false,
+            consumers: [],
+            dns_zone: '',
+            host: '',
+            port: '',
+            protocol: '',
+            username: '',
+            password: '',
+            url: '',
+          };
+          const mock_service_interface_config: ServiceInterfaceConfig = {
+            host: '',
+            port: '',
+            protocol: '',
+            username: '',
+            password: '',
+            url: '',
+            sticky: '',
+            path: '',
+            ingress: mock_service_ingress_config,
+          };
+          const mock_dependency_node = {
+            __type: '',
+            config: {} as ServiceConfig,
+            ref: `${dependency_name}--*`,
+            component_ref: dependency_name,
+            service_name: '*',
+            interfaces: { '*': mock_service_interface_config },
+            ingresses: { '*': mock_service_ingress_config },
+            ports: [],
+            is_external: false,
+            instance_id: '',
+          };
+          graph.addNode(mock_dependency_node);
+        }
+      }
+    }
     return Object.freeze(graph);
   }
 }
