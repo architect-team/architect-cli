@@ -10,4 +10,11 @@ export default interface Cluster {
   type: string;
   account: Account;
   token: Token;
+  properties: {
+    is_shared?: boolean;
+    is_managed?: boolean;
+    is_local?: boolean;
+    host?: string;
+    traefik_version: string;
+  };
 }
