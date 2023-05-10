@@ -1,6 +1,6 @@
 import { expect } from '@oclif/test';
 import sinon, { SinonSpy } from 'sinon';
-import { ComponentVersionSlugUtils } from '../../src';
+import { ComponentVersionSlugUtils, LivenessProbeConfig, RecursivePartial } from '../../src';
 import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
 import Deploy from '../../src/commands/deploy';
 import ComponentRegister from '../../src/commands/register';
@@ -49,6 +49,26 @@ const mock_certificates = [
   },
 ];
 
+const mock_liveness_probe: RecursivePartial<LivenessProbeConfig> = {
+  port: 3000,
+  path: '/',
+};
+
+const mock_deployments = [
+  {
+    component_version: {
+      config: {
+        name: 'hello-world',
+        services: {
+          app: {
+            liveness_probe: mock_liveness_probe,
+          },
+        },
+      },
+    },
+  },
+];
+
 describe('remote deploy environment', function () {
   new MockArchitectApi()
     .getAccount(account)
@@ -57,6 +77,7 @@ describe('remote deploy environment', function () {
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
+    .getPipelineDeployments(mock_pipeline, [])
     .getTests()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .it('Creates a remote deployment when env exists with env and account flags', ctx => {
@@ -70,6 +91,7 @@ describe('remote deploy environment', function () {
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
+    .getPipelineDeployments(mock_pipeline, [])
     .getTests()
     .stub(ComponentRegister.prototype, 'run', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentBuilder, 'buildSpecFromPath', sinon.stub().returns(Promise.resolve()))
@@ -90,6 +112,7 @@ describe('remote deploy environment', function () {
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
+    .getPipelineDeployments(mock_pipeline, [])
     .getTests()
     .stub(ComponentRegister.prototype, 'run', sinon.stub().returns(Promise.resolve()))
     .stub(ComponentBuilder, 'buildSpecFromPath', sinon.stub().returns(Promise.resolve()))
@@ -115,6 +138,7 @@ describe('remote deploy environment', function () {
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
+    .getPipelineDeployments(mock_pipeline, [])
     .getTests()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
     .it('Remote deployment outputs URLs from for the deployed component and not other components in the same environment', ctx => {
@@ -129,6 +153,7 @@ describe('remote deploy environment', function () {
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
+    .getPipelineDeployments(mock_pipeline, [])
     .getTests()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo'])
     .it('Remote deployment outputs URLs from for the deployed component with no tag and not other components in the same environment', ctx => {
@@ -144,6 +169,7 @@ describe('remote deploy environment', function () {
       .getEnvironmentCertificates(environment, mock_certificates)
       .approvePipeline(mock_pipeline)
       .pollPipeline(mock_pipeline)
+      .getPipelineDeployments(mock_pipeline, [])
       .getTests()
       .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest@tenant-1'])
       .it('Creates a remote deployment when env exists with env and account flags', ctx => {
@@ -160,6 +186,7 @@ describe('auto-approve flag with underscore style still works', function () {
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
+    .getPipelineDeployments(mock_pipeline, [])
     .getTests()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'echo:latest'])
     .it('works but also emits a deprecation warning', ctx => {
@@ -174,6 +201,7 @@ describe('auto-approve flag with underscore style still works', function () {
     .getEnvironmentCertificates(environment, mock_certificates)
     .approvePipeline(mock_pipeline)
     .pollPipeline(mock_pipeline)
+    .getPipelineDeployments(mock_pipeline, [])
     .getTests()
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve=true', 'echo:latest'])
     .it('works but also emits a deprecation warning 2', ctx => {
@@ -408,5 +436,22 @@ describe('deployment secrets', function () {
     .command(['deploy', '-e', environment.name, '-a', account.name, 'echo:latest', '--secret-file', './examples/echo/.env'])
     .it('passing a dotenv secrets file', ctx => {
       expect((Deploy.prototype.approvePipeline as SinonSpy).getCalls().length).to.equal(1);
+    });
+});
+
+describe('liveness_probe deprecation warning', function () {
+  new MockArchitectApi()
+    .getAccount(account)
+    .getEnvironment(account, environment)
+    .deployComponent(environment, mock_pipeline)
+    .getEnvironmentCertificates(environment, mock_certificates)
+    .approvePipeline(mock_pipeline)
+    .pollPipeline(mock_pipeline)
+    .getPipelineDeployments(mock_pipeline, mock_deployments)
+    .getTests()
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'echo:latest'])
+    .it('warn when liveness_probe path and port are found in deployments', ctx => {
+      expect(ctx.stdout).to.contain(`Deprecation warning: The liveness probe 'path' and 'port' will no longer be supported`);
+      expect(ctx.stdout).to.contain('deployed');
     });
 });
