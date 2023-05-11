@@ -13,7 +13,7 @@ export default interface Deployment {
   metadata: {
     instance_name?: string;
   }
-  component_version: {
+  component_version?: {
     name: string;
     tag: string;
     component: {
