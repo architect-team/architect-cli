@@ -278,6 +278,7 @@ export default class ComponentRegister extends BaseCommand {
         continue;
       }
       delete service.debug; // we don't need to compare the debug block for remotely-deployed components
+      delete service.build; // build block data isn't relevant to remotely-deployed components
       if (service instanceof ServiceSpec && service.enabled !== undefined && !service.enabled) {
         continue;
       }
