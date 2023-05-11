@@ -29,7 +29,7 @@ export default class AppService {
   constructor(config_dir: string, version: string) {
     this.config = new AppConfig(config_dir);
     this.version = version;
-    const config_file = path.join(config_dir, LocalPaths.CLI_CONFIG_FILENAME);
+    const config_file = path.join(config_dir, process.env.ARCHITECT_CONFIG || LocalPaths.CLI_CONFIG_FILENAME);
     if (fs.existsSync(config_file)) {
       const payload = fs.readJSONSync(config_file);
       this.config = new AppConfig(config_dir, payload);

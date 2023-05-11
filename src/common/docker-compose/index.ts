@@ -21,8 +21,10 @@ import DockerComposeTemplate, { DockerInspect, DockerService, DockerServiceBuild
 type GenerateOptions = {
   external_addr?: string;
   gateway_admin_port?: number;
+  overlay_port?: number;
   ssl_cert?: string;
   ssl_key?: string;
+  environment?: string;
   getImage?: (ref: string) => string;
 };
 
@@ -73,9 +75,9 @@ export class DockerComposeUtils {
   // eslint-disable-next-line complexity
   public static async generate(graph: DependencyGraph, options?: GenerateOptions): Promise<DockerComposeTemplate> {
     if (!options) {
-      options = { gateway_admin_port: 8080, external_addr: 'arc.localhost' };
+      options = { gateway_admin_port: 8080, environment: 'architect', external_addr: 'arc.localhost' };
     }
-    const { gateway_admin_port, external_addr, ssl_cert, ssl_key } = options;
+    const { gateway_admin_port, overlay_port, environment, external_addr, ssl_cert, ssl_key } = options;
 
     const compose: DockerComposeTemplate = {
       version: '3',
@@ -124,6 +126,11 @@ export class DockerComposeUtils {
           `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
           `--entryPoints.web.forwardedHeaders.insecure=true`,
           `--entryPoints.web.proxyProtocol.insecure=true`,
+          ...overlay_port ? [
+          // Plugins
+          `--experimental.plugins.rewritebody.modulename=github.com/packruler/rewrite-body`,
+          `--experimental.plugins.rewritebody.version=v1.1.0`,
+          ] : [],
           ...(ssl_cert && ssl_key ? [
             // Ignore local certs being invalid on proxy
             `--serversTransport.insecureSkipVerify=true`,
@@ -419,6 +426,15 @@ export class DockerComposeUtils {
         }
         if (ssl_cert && ssl_key) {
           service_to.labels.push(`traefik.http.routers.${traefik_service}.entrypoints=web`, `traefik.http.routers.${traefik_service}.tls=true`);
+        }
+
+        if (overlay_port) {
+          service_to.labels.push(
+            `traefik.http.middlewares.${traefik_service}-rewritebody.plugin.rewritebody.lastModified=true`,
+            `traefik.http.middlewares.${traefik_service}-rewritebody.plugin.rewritebody.rewrites.regex=</head>`,
+            `traefik.http.middlewares.${traefik_service}-rewritebody.plugin.rewritebody.rewrites.replacement=<script id="architect-script" async type="text/javascript" src="http://localhost:${overlay_port}" data-environment="${environment}" data-service="${node_to.config.metadata.ref}"></script></head>`,
+            `traefik.http.routers.${traefik_service}.middlewares=${traefik_service}-rewritebody@docker`,
+          );
         }
 
         if (node_to_interface.protocol && node_to_interface.protocol !== 'http') {
