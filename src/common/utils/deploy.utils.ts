@@ -6,6 +6,9 @@ import { ArchitectError, Dictionary, parseSourceYml } from '../../';
 import { SecretsDict } from '../../dependency-manager/secrets/type';
 import { SecretSpecValue } from '../../dependency-manager/spec/secret-spec';
 import { parseEnvironmentVariable } from './secret/helper';
+import Cluster from '../../architect/cluster/cluster.entity';
+import AppService from '../../app-config/service';
+import Deployment from '../../architect/deployment/deployment.entity';
 
 export default class DeployUtils {
   private static getExtraSecrets(secrets: string[] = []): Dictionary<string | number | null> {
@@ -98,5 +101,13 @@ export default class DeployUtils {
       interfaces_map[key] = value || key;
     }
     return interfaces_map;
+  }
+
+  static async hasClusterDeployment(app: AppService, cluster: Cluster): Promise<boolean> {
+    if (cluster && !cluster.properties.is_shared && !cluster.properties.is_managed) {
+      const cluster_deployment: Deployment = (await app.api.get(`clusters/${cluster.id}/apps`)).data;
+      return cluster_deployment && cluster_deployment.action !== 'delete';
+    }
+    return true;
   }
 }

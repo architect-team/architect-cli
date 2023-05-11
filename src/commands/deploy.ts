@@ -233,6 +233,11 @@ export default class Deploy extends DeployCommand {
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const get_environment_options: GetEnvironmentOptions = { environment_name: flags.environment };
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, get_environment_options);
+    const has_cluster_deployment = await DeployUtils.hasClusterDeployment(this.app, environment.cluster);
+    if (!has_cluster_deployment) {
+      const cluster_apps_url = `${this.app.config.app_host}/${environment.cluster.account.name}/clusters/${environment.cluster.name}/apps`;
+      this.log(chalk.yellow(`We detected that required applications aren't installed in your cluster and this deployment will not succeed. Please cancel the deployment and install the "API Gateway" and "Service Mesh" at ${cluster_apps_url} before attempting to deploy.`));
+    }
 
     const component_names: Set<string> = new Set<string>();
     for (const component of components) {
