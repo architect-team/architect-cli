@@ -1,7 +1,7 @@
 import { CliUx, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { Slugs } from '../../';
+import { Dictionary, Slugs } from '../../';
 import AccountUtils from '../../architect/account/account.utils';
 import ClusterUtils from '../../architect/cluster/cluster.utils';
 import BaseCommand from '../../base-command';
@@ -12,6 +12,7 @@ interface CreateEnvironmentDto {
   description?: string;
   cluster_id: string;
   ttl?: string;
+  flags: Dictionary<boolean>;
 }
 
 export default class EnvironmentCreate extends BaseCommand {
@@ -38,6 +39,12 @@ export default class EnvironmentCreate extends BaseCommand {
     ttl: Flags.string({
       description: 'The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m',
       sensitive: false,
+    }),
+    flag: Flags.string({
+      multiple: true,
+      sensitive: false,
+      options: ['zero-trust'],
+      description: 'zero-trust: Create the environment with zero-trust network policies.',
     }),
   };
 
@@ -73,12 +80,18 @@ export default class EnvironmentCreate extends BaseCommand {
     const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the environment with' });
     const cluster = await ClusterUtils.getCluster(this.app.api, account, flags.cluster || flags.platform);
 
+    const flags_map: Dictionary<boolean> = {};
+    for (const flag of flags.flag || []) {
+      flags_map[flag] = true;
+    }
+
     CliUx.ux.action.start(chalk.blue('Registering environment with Architect'));
 
     const dto: CreateEnvironmentDto = {
       name: environment_name,
       description: flags.description,
       cluster_id: cluster.id,
+      flags: flags_map,
     };
     if (flags.ttl) {
       dto.ttl = flags.ttl;
@@ -92,8 +105,6 @@ export default class EnvironmentCreate extends BaseCommand {
       },
     });
 
-    const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment_name}`;
-
     CliUx.ux.action.stop();
 
     if (_environment_already_exists) {
@@ -101,6 +112,7 @@ export default class EnvironmentCreate extends BaseCommand {
       return;
     }
 
+    const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment_name}`;
     this.log(chalk.green(`Environment created: ${environment_url}`));
   }
 }
