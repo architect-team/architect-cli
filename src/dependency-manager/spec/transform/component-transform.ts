@@ -1,6 +1,6 @@
-import { ComponentConfig, OutputDefinitionConfig, SecretDefinitionConfig } from '../../config/component-config';
+import { ComponentConfig, DependencyConfig, OutputDefinitionConfig, SecretDefinitionConfig } from '../../config/component-config';
 import { transformDictionary } from '../../utils/dictionary';
-import { ComponentSpec, OutputDefinitionSpec } from '../component-spec';
+import { ComponentSpec, DependencySpec, OutputDefinitionSpec } from '../component-spec';
 import { SecretDefinitionSpec, SecretSpecValue } from '../secret-spec';
 import { Slugs } from '../utils/slugs';
 import { transformDatabaseSpec, transformDatabaseSpecToServiceSpec } from './database-transform';
@@ -50,12 +50,22 @@ export const transformOutputDefinitionSpec = (key: string, output_spec: string |
   }
 };
 
+export const transformDependencies = (key: string, dependency_spec: string | DependencySpec): DependencyConfig => {
+  if (typeof dependency_spec === 'string') {
+    return {
+      tag: dependency_spec,
+    };
+  } else {
+    return dependency_spec;
+  }
+};
+
 export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => {
   const secrets = transformDictionary(transformSecretDefinitionSpec, spec.secrets);
   const outputs = transformDictionary(transformOutputDefinitionSpec, spec.outputs);
   const services = transformDictionary(transformServiceSpec, spec.services, spec.metadata);
   const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.metadata);
-  const dependencies = spec.dependencies || {};
+  const dependencies = transformDictionary(transformDependencies, spec.dependencies);
   const service_databases = transformDictionary(transformDatabaseSpecToServiceSpec, spec.databases, spec.metadata);
   const databases = transformDictionary(transformDatabaseSpec, spec.databases, spec.metadata);
   for (const [key, value] of Object.entries(service_databases)) {

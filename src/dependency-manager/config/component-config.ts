@@ -19,6 +19,10 @@ export interface OutputDefinitionConfig {
   value: boolean | number | string | null;
 }
 
+export interface DependencyConfig {
+  tag?: string;
+}
+
 export interface ComponentConfig {
   name: string;
 
@@ -35,7 +39,7 @@ export interface ComponentConfig {
   services: Dictionary<ServiceConfig>;
   databases: Dictionary<DatabaseConfig>;
   tasks: Dictionary<TaskConfig>;
-  dependencies: Dictionary<string>;
+  dependencies: Dictionary<DependencyConfig>;
 
   artifact_image?: string;
 }

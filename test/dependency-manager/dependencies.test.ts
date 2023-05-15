@@ -1,11 +1,10 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
-import { resourceRefToNodeRef, ServiceNode } from '../../src';
+import { buildConfigFromYml, buildSpecFromYml, resourceRefToNodeRef, ServiceNode, ValidationErrors } from '../../src';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 
 describe('dependencies', () => {
-
   it('circular dependencies', async () => {
     const cloud_config = `
       name: cloud
@@ -49,11 +48,11 @@ describe('dependencies', () => {
     });
     const manager = new LocalDependencyManager(axios.create(), 'architect', {
       'cloud': '/stack/cloud/architect.yml',
-      'server': '/stack/server/architect.yml'
+      'server': '/stack/server/architect.yml',
     });
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('cloud:latest'),
-      await manager.loadComponentSpec('server:latest')
+      await manager.loadComponentSpec('server:latest'),
     ]);
 
     const app_ref = resourceRefToNodeRef('cloud.services.app');
@@ -62,13 +61,145 @@ describe('dependencies', () => {
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(app.config.environment).to.deep.equal({
       SERVER_ADDR: `http://${server_ref}:8080`,
-      SERVER_EXT_ADDR: `http://server.arc.localhost`
-    })
+      SERVER_EXT_ADDR: `http://server.arc.localhost`,
+    });
 
     const server = graph.getNodeByRef(server_ref) as ServiceNode;
     expect(server.config.environment).to.deep.equal({
       CLOUD_ADDR: `http://${app_ref}:8080`,
-      CLOUD_EXT_ADDR: `http://app.arc.localhost`
-    })
+      CLOUD_EXT_ADDR: `http://app.arc.localhost`,
+    });
+  });
+
+  describe('dependency validation', () => {
+    it('spec with no dependency block has empty object', async () => {
+      const component_config = `
+        name: component
+      `;
+
+      const spec = buildSpecFromYml(component_config);
+      expect(spec.dependencies).to.be.undefined;
+    });
+
+    it('dependencies with no tag are valid', async () => {
+      const component_config = `
+        name: component
+        dependencies:
+          server: {}
+      `;
+
+      const spec = buildSpecFromYml(component_config);
+      expect(spec.dependencies).to.deep.equal({ server: {} });
+    });
+
+    it('dependencies with string tag are still valid', async () => {
+      const component_config = `
+        name: component
+        dependencies:
+          server: im-a-tag
+      `;
+
+      const spec = buildSpecFromYml(component_config);
+      expect(spec.dependencies).to.deep.equal({ server: 'im-a-tag' });
+    });
+
+    it('dependencies with invalid string tag are still invalid', async () => {
+      const component_config = `
+        name: component
+        dependencies:
+          server: im-an-invalid-tag!
+      `;
+
+      expect(() => {
+        buildSpecFromYml(component_config);
+      }).to.throw(ValidationErrors);
+    });
+
+    it('dependencies with tag as dictionary key is valid', async () => {
+      const component_config = `
+        name: component
+        dependencies:
+          server:
+            tag: im-a-tag
+      `;
+
+      const spec = buildSpecFromYml(component_config);
+      expect(spec.dependencies).to.deep.equal({ server: { tag: 'im-a-tag' } });
+    });
+
+    it('dependencies with invalid tag as dictionary key is invalid', async () => {
+      const component_config = `
+        name: component
+        dependencies:
+          server:
+            tag: im-an-invalid-tag!
+      `;
+
+      expect(() => {
+        buildSpecFromYml(component_config);
+      }).to.throw(ValidationErrors);
+    });
+
+    it('dependencies with invalid keys are invalid', async () => {
+      const component_config = `
+        name: component
+        dependencies:
+          server:
+            foo: bar
+            baz: bingo
+      `;
+
+      expect(() => {
+        buildSpecFromYml(component_config);
+      }).to.throw(ValidationErrors);
+    });
+
+    it('dependencies with valid and invalid keys are invalid', async () => {
+      const component_config = `
+        name: component
+        dependencies:
+          server:
+            foo: bar
+            tag: im-a-tag
+      `;
+
+      expect(() => {
+        buildSpecFromYml(component_config);
+      }).to.throw(ValidationErrors);
+    });
+
+    it('dependencies with string tag are transformed properly', async () => {
+      const component_config = `
+        name: component
+        dependencies:
+          server: im-a-string-tag
+      `;
+
+      const config = buildConfigFromYml(component_config);
+      expect(config.dependencies).to.deep.equal({ server: { tag: 'im-a-string-tag' } });
+    });
+
+    it('dependencies with no tag are transformed properly', async () => {
+      const component_config = `
+        name: component
+        dependencies:
+          server: {}
+      `;
+
+      const config = buildConfigFromYml(component_config);
+      expect(config.dependencies).to.deep.equal({ server: {} });
+    });
+
+    it('dependencies with tag object are transformed properly', async () => {
+      const component_config = `
+        name: component
+        dependencies:
+          server:
+            tag: im-an-object-tag
+      `;
+
+      const config = buildConfigFromYml(component_config);
+      expect(config.dependencies).to.deep.equal({ server: { tag: 'im-an-object-tag' } });
+    });
   });
 });
