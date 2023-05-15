@@ -451,7 +451,7 @@ export default class Dev extends BaseCommand {
     });
 
     if (overlay_port) {
-      new OverlayServer().listen(overlay_port);
+      new OverlayServer(this.app, this.config, default_project_name, DockerComposeUtils.getLocalServiceNames(compose_file)).listen(overlay_port);
     }
 
     try {

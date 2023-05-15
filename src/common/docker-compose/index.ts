@@ -28,6 +28,16 @@ type GenerateOptions = {
   getImage?: (ref: string) => string;
 };
 
+type ServiceValue = {
+  name: string;
+  display_name: string;
+}
+
+export type ServiceKey = {
+  name: string;
+  value: ServiceValue;
+};
+
 export class DockerComposeUtils {
   // used to namespace docker-compose projects so multiple deployments can happen to local
   public static DEFAULT_PROJECT = 'architect';
@@ -432,7 +442,7 @@ export class DockerComposeUtils {
           service_to.labels.push(
             `traefik.http.middlewares.${traefik_service}-rewritebody.plugin.rewritebody.lastModified=true`,
             `traefik.http.middlewares.${traefik_service}-rewritebody.plugin.rewritebody.rewrites.regex=</head>`,
-            `traefik.http.middlewares.${traefik_service}-rewritebody.plugin.rewritebody.rewrites.replacement=<script id="architect-script" async type="text/javascript" src="http://localhost:${overlay_port}" data-environment="${environment}" data-service="${node_to.config.metadata.ref}"></script></head>`,
+            `traefik.http.middlewares.${traefik_service}-rewritebody.plugin.rewritebody.rewrites.replacement=<script id="architect-script" async type="text/javascript" src="http://localhost:${overlay_port}/overlay.js" data-overlay-url="http://localhost:${overlay_port}" data-environment="${environment}" data-service="${node_to.config.metadata.ref}"></script></head>`,
             `traefik.http.routers.${traefik_service}.middlewares=${traefik_service}-rewritebody@docker`,
           );
         }
@@ -632,18 +642,23 @@ export class DockerComposeUtils {
     return answers.environment;
   }
 
-  public static async getLocalServiceForEnvironment(compose_file: string, service_name?: string): Promise<{ display_name: string, name: string }> {
-    // docker-compose -f and -p don't work in tandem
-    const compose = yaml.load(fs.readFileSync(compose_file).toString()) as DockerComposeTemplate;
+  public static getLocalServiceNames(compose_file: string): ServiceKey[] {
+     // docker-compose -f and -p don't work in tandem
+     const compose = yaml.load(fs.readFileSync(compose_file).toString()) as DockerComposeTemplate;
 
-    const services: { name: string, value: { display_name: string, name: string } }[] = [];
+    const services: ServiceKey[] = [];
     for (const [service_name, service] of Object.entries(compose.services)) {
       const display_name = service.labels?.find((label) => label.startsWith('architect.ref='))?.split('=')[1];
       if (!display_name) continue;
       services.push({ name: display_name, value: { name: service_name, display_name } });
     }
 
-    const answers: { service: { display_name: string, name: string } } = await inquirer.prompt([
+    return services;
+  }
+
+  public static async getLocalServiceForEnvironment(compose_file: string, service_name?: string): Promise<ServiceValue> {
+    const services = DockerComposeUtils.getLocalServiceNames(compose_file);
+    const answers: { service: ServiceValue } = await inquirer.prompt([
       {
         when: !service_name,
         type: 'autocomplete',
@@ -655,7 +670,7 @@ export class DockerComposeUtils {
       },
     ]);
 
-    let selected_service;
+    let selected_service: ServiceValue | undefined;
     if (service_name) {
       selected_service = services.find((service) => service.name === service_name)?.value;
       if (!selected_service) {

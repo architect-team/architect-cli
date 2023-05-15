@@ -12,6 +12,10 @@ Architect.copyToClipboard = function (element, text) {
   tooltipText.innerHTML = 'Copied to clipboard!';
 };
 
+Architect.run = function (url) {
+  fetch(url).then(res => console.log('Success')).catch(err => console.log('Failed'));
+};
+
 Architect.outFunc = function (element) {
   const tooltipText = element.querySelector('.tooltiptext');
   if (tooltipText.dataset.text) {
@@ -29,6 +33,7 @@ Architect.appendHTML = function () {
   const script = document.querySelector('#architect-script');
   const environment = script.dataset.environment;
   const service = script.dataset.service;
+  const overlay_url = script.dataset.overlayUrl;
 
   var styles = document.createElement('style');
   styles.innerHTML = `
@@ -129,8 +134,15 @@ Architect.appendHTML = function () {
   wrapper.innerHTML = `
     <div class="dropdown-content">
       <div class="tooltip">
-        <a href="#" onclick="Architect.copyToClipboard(this, 'architect logs -e ${environment} ${service}')" onmouseout="Architect.outFunc(this)" style="border-top-left-radius: 5px;">
-          <span class="tooltiptext">View the logs from the CLI</span>
+        <a href="#" onclick="Architect.run('${overlay_url}/restart/${service}')">
+          <span class="tooltiptext">Restart this service</span>
+          Restart
+        </a>
+      </div>
+
+      <div class="tooltip">
+        <a href="${overlay_url}/logs/${service}" target="_blank" style="border-top-left-radius: 5px;">
+          <span class="tooltiptext">View the logs</span>
           Logs
         </a>
       </div>
@@ -139,14 +151,6 @@ Architect.appendHTML = function () {
         <a href="#" onclick="Architect.copyToClipboard(this, 'architect exec -e ${environment} ${service} -- ls')" onmouseout="Architect.outFunc(this)">
           <span class="tooltiptext">Execute a command from the CLI</span>
           Exec
-        </a>
-
-      </div>
-
-      <div class="tooltip">
-        <a href="#" onclick="Architect.copyToClipboard(this, 'architect dev:restart -e ${environment} ${service}')" onmouseout="Architect.outFunc(this)">
-          <span class="tooltiptext">Restart this service from the CLI</span>
-          Restart
         </a>
       </div>
 
