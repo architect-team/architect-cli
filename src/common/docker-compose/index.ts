@@ -31,7 +31,7 @@ type GenerateOptions = {
 type ServiceValue = {
   name: string;
   display_name: string;
-}
+};
 
 export type ServiceKey = {
   name: string;

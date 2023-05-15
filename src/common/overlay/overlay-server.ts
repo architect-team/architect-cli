@@ -98,7 +98,7 @@ export class OverlayServer {
 
     server.on('error', err => console.log(err));
 
-    console.log(`Starting overlay server on port: ${port}`);
+    console.log(`Starting overlay server: http://localhost:${port}`);
     server.listen(port);
   }
 
@@ -130,12 +130,13 @@ export class OverlayServer {
 
 /**
  * Remove ansi characters from a string.
- * Pulled from https://github.com/chalk/strip-ansi
+ * Pulled from https://github.com/chalk/strip-ansi - TODO replace with actual dependency
+ * if we're going to hijack logs the way we currently are.
  */
 function stripAnsi(string: string) {
   const pattern = [
 		'[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
-		'(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))'
+		'(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))',
 	].join('|');
 	return string.replace(new RegExp(pattern, 'g'), '');
 }
