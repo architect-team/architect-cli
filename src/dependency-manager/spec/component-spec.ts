@@ -32,6 +32,19 @@ export interface ComponentInstanceMetadata {
 }
 
 @JSONSchema({
+  description: 'An empty object that optionally supports specifying a tag for backwards compatibility.',
+})
+export class DependencySpec {
+  @IsOptional()
+  @JSONSchema({
+    type: 'string',
+    pattern: Slugs.ComponentTagValidator.source,
+    deprecated: true,
+  })
+  tag?: string;
+}
+
+@JSONSchema({
   description: 'Component Interfaces are the primary means by which components advertise their resolvable addresses to others. Interfaces are the only means by which other components can communicate with your component.',
 })
 export class ComponentInterfaceSpec {
@@ -234,19 +247,20 @@ export class ComponentSpec {
     type: 'object',
 
     patternProperties: {
-      [ComponentSlugUtils.Validator.source]: {
+      [ComponentSlugUtils.Validator.source]: AnyOf({
         type: 'string',
         pattern: Slugs.ComponentTagValidator.source,
-      },
+      }, DependencySpec),
     },
 
     errorMessage: {
       additionalProperties: ComponentSlugUtils.Description,
     },
 
-    description: 'A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)',
+    description: 'A key-value set of dependencies with an empty value. Reference each dependency by component name (e.g. `cloud: {}`)',
   })
-  dependencies?: Dictionary<string>;
+  @Transform(transformObject(DependencySpec))
+  dependencies?: Dictionary<string | DependencySpec>;
 
   @IsOptional()
   @JSONSchema({

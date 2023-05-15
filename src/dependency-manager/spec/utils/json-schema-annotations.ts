@@ -23,6 +23,8 @@ export const AnyOf = (...args: any): DecoratorSchema => {
       anyOf.push({
         $ref: `${REF_PREFIX}${arg.name}`,
       });
+    } else if (typeof arg === 'object' && 'type' in arg && 'pattern' in arg) {
+      anyOf.push(arg);
     } else {
       console.error(arg);
       throw new Error('Illegal arg for JsonSchema in AnyOf. You must specify either a primitive string or a Type.');
