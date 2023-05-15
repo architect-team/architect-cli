@@ -1,6 +1,6 @@
 import { instanceToInstance } from 'class-transformer';
 import deepmerge from 'deepmerge';
-import { EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../spec/utils/interpolation';
+import { ARCHITECT_EXPRESSION_REGEX, DEPENDENCY_EXPRESSION_REGEX, DEPRECATED_DEPENDENCY_EXPRESSION_REGEX, ENVIRONMENT_EXPRESSION_REGEX, EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { Dictionary } from './dictionary';
 import { ValidationError, ValidationErrors } from './errors';
 import { ArchitectParser } from './parser';
@@ -94,6 +94,7 @@ export interface InterpolateObjectOptions {
   keys?: boolean;
   values?: boolean;
   file?: { path: string, contents: string };
+  relax_validation?: boolean;
 }
 
 const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
@@ -110,6 +111,7 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
   const options = {
     keys: false,
     values: true,
+    relax_validation: false,
     ..._options,
   };
 
@@ -146,8 +148,18 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
             error.invalid_key = true;
           }
         } else if (options.values && typeof value === 'string') {
-          const parsed_value = parser.parseString(value, context_map);
-          el[key] = parsed_value;
+          let updated_value = value;
+          const special_case = DEPRECATED_DEPENDENCY_EXPRESSION_REGEX.test(value) || ENVIRONMENT_EXPRESSION_REGEX.test(value) || ARCHITECT_EXPRESSION_REGEX.test(value);
+          if (options.relax_validation && special_case) {
+            el[key] = updated_value;
+          } else if (options.relax_validation && DEPENDENCY_EXPRESSION_REGEX.test(value)) {
+            updated_value = value.replace(/(services\.)[^.]+(\.interfaces\.)([^.]+)/g, '$1ø$2ø');
+            const parsed_value = parser.parseString(updated_value, context_map);
+            el[key] = parsed_value;
+          } else {
+            const parsed_value = parser.parseString(value, context_map);
+            el[key] = parsed_value;
+          }
         } else {
           el[key] = value;
           if (value instanceof Object) {

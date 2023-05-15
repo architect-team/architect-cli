@@ -1,51 +1,7 @@
 import { expect } from 'chai';
-import { buildSpecFromYml, DependencyEdge, DependencyGraphMutable, DependencyNode, ServiceNode, TaskNode, validateInterpolation, ValidationErrors } from '../../src';
+import { buildSpecFromYml, validateInterpolation, ValidationErrors } from '../../src';
 
 describe('interpolation-validation', () => {
-  const mock_graph: Readonly<DependencyGraphMutable> = {
-    nodes: [
-      {
-        instance_id: '',
-        __type: 'service',
-        ref: 'hello-world--api',
-        component_ref: 'hello-world',
-        service_name: 'api',
-        artifact_image: undefined,
-      } as ServiceNode,
-    ],
-    edges: [],
-    validated: false,
-    nodes_map: {} as Map<string, DependencyNode>,
-    edges_map: {} as Map<string, DependencyEdge>,
-    addNode: function (node: DependencyNode): DependencyNode {
-      throw new Error('Function not implemented.');
-    },
-    removeNodeByRef: function (ref: string): void {
-      throw new Error('Function not implemented.');
-    },
-    removeEdgeByRef: function (edge_ref: string): void {
-      throw new Error('Function not implemented.');
-    },
-    addEdge: function (edge: DependencyEdge): DependencyEdge {
-      throw new Error('Function not implemented.');
-    },
-    getNodeByRef: function (ref: string): DependencyNode {
-      throw new Error('Function not implemented.');
-    },
-    getDownstreamNodes: function (node: DependencyNode): DependencyNode[] {
-      throw new Error('Function not implemented.');
-    },
-    removeNode: function (node_ref: string, cleanup_dangling: boolean): void {
-      throw new Error('Function not implemented.');
-    },
-    getUpstreamNodes: function (node: DependencyNode): DependencyNode[] {
-      throw new Error('Function not implemented.');
-    },
-    getDependsOn: function (current_node: ServiceNode | TaskNode): (ServiceNode | TaskNode)[] {
-      throw new Error('Function not implemented.');
-    },
-  };
-
   describe('validate build block', () => {
     it('cannot use secret in build block', () => {
       const component_config = `
@@ -62,7 +18,7 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        validateInterpolation(component_spec, {} as Readonly<DependencyGraphMutable>);
+        validateInterpolation(component_spec);
       }).to.be.throws(ValidationErrors);
     });
 
@@ -80,7 +36,7 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        validateInterpolation(component_spec, {} as Readonly<DependencyGraphMutable>);
+        validateInterpolation(component_spec);
       }).to.be.throws(ValidationErrors);
     });
 
@@ -98,7 +54,7 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        validateInterpolation(component_spec, {} as Readonly<DependencyGraphMutable>);
+        validateInterpolation(component_spec);
       }).to.be.throws(ValidationErrors);
     });
 
@@ -116,7 +72,7 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        validateInterpolation(component_spec, {} as Readonly<DependencyGraphMutable>);
+        validateInterpolation(component_spec);
       }).to.be.throws(ValidationErrors);
     });
 
@@ -133,7 +89,7 @@ describe('interpolation-validation', () => {
         `;
 
         const component_spec = buildSpecFromYml(component_config);
-        validateInterpolation(component_spec, mock_graph);
+        validateInterpolation(component_spec);
       });
 
       it('can use conditional around build block if local', () => {
@@ -148,7 +104,7 @@ describe('interpolation-validation', () => {
         `;
 
         const component_spec = buildSpecFromYml(component_config);
-        validateInterpolation(component_spec, mock_graph);
+        validateInterpolation(component_spec);
       });
 
       it('can use conditional around service block with build block if local', () => {
@@ -163,7 +119,7 @@ describe('interpolation-validation', () => {
         `;
 
         const component_spec = buildSpecFromYml(component_config);
-        validateInterpolation(component_spec, mock_graph);
+        validateInterpolation(component_spec);
       });
     });
 
@@ -180,7 +136,7 @@ describe('interpolation-validation', () => {
 
       const component_spec = buildSpecFromYml(component_config);
       expect(() => {
-        validateInterpolation(component_spec, {} as Readonly<DependencyGraphMutable>);
+        validateInterpolation(component_spec);
       }).to.be.throws(ValidationErrors);
     });
 
@@ -196,7 +152,7 @@ describe('interpolation-validation', () => {
 
       const component_spec = buildSpecFromYml(component_config);
       expect(() => {
-        validateInterpolation(component_spec, {} as Readonly<DependencyGraphMutable>);
+        validateInterpolation(component_spec);
       }).to.be.throws(ValidationErrors);
     });
 
@@ -213,7 +169,7 @@ describe('interpolation-validation', () => {
         `;
 
       const component_spec = buildSpecFromYml(component_config);
-      validateInterpolation(component_spec, {} as Readonly<DependencyGraphMutable>);
+      validateInterpolation(component_spec);
     });
 
     it('can still use conditional without build block', () => {
@@ -227,46 +183,7 @@ describe('interpolation-validation', () => {
         `;
 
       const component_spec = buildSpecFromYml(component_config);
-      validateInterpolation(component_spec, {} as Readonly<DependencyGraphMutable>);
-    });
-
-    it('fail when using interpolation where path does not exist', () => {
-      const component_config = `
-        name: hello-world
-        services:
-          api:
-            build:
-              context: .
-            environment:
-              DB_ADDR: \${{ services.database.interfaces.main.url }}
-        `;
-
-      const component_spec = buildSpecFromYml(component_config);
-
-      expect(() => {
-        validateInterpolation(component_spec, mock_graph);
-      }).to.be.throws(ValidationErrors);
-    });
-
-    it('fail when secret does not exist', () => {
-      const component_config = `
-        name: hello-world
-        secrets:
-          world_text:
-            default: World
-        services:
-          api:
-            build:
-              context: .
-            environment:
-              WORLD_TEXT: \${{ secrets.notfound }}
-        `;
-
-      const component_spec = buildSpecFromYml(component_config);
-
-      expect(() => {
-        validateInterpolation(component_spec, {} as Readonly<DependencyGraphMutable>);
-      }).to.be.throws(ValidationErrors);
+      validateInterpolation(component_spec);
     });
   });
 });

@@ -174,6 +174,8 @@ export default class ComponentRegister extends BaseCommand {
       throw new Error('Component Config must have a name');
     }
 
+    validateInterpolation(component_spec, true);
+
     const { component_name } = ComponentSlugUtils.parse(component_spec.name);
 
     let account_name;
@@ -195,8 +197,7 @@ export default class ComponentRegister extends BaseCommand {
     const dependency_manager = new LocalDependencyManager(this.app.api, selected_account.name);
     dependency_manager.environment = 'production';
 
-    const graph = await dependency_manager.getGraph([instanceToInstance(component_spec)], undefined, { interpolate: true, validate: false, build_dependency_nodes: true });
-    validateInterpolation(component_spec, graph);
+    const graph = await dependency_manager.getGraph([instanceToInstance(component_spec)], undefined, { interpolate: true, validate: true, relax_validation: true });
 
     // Tmp fix to register host overrides
     for (const node of graph.nodes.filter(n => n instanceof ServiceNode) as ServiceNode[]) {

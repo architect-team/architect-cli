@@ -356,22 +356,6 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
   return component_spec;
 };
 
-const extractServiceName = (interpolation: string, type: string): string => {
-  const regex = new RegExp(`${type}\\.([^.[\\]]+)`);
-  const match = interpolation.match(regex);
-  return match ? match[1] : '';
-};
-
-const isDependencyInterpolation = (interpolation_str: string): boolean => {
-  const regex = new RegExp(`^dependencies.[^.]+.(?:services.[^.]+.){0,1}(?:interfaces|ingresses).[^.]+.(?:host|port|protocol|username|password|url|sticky|path|ingress.(?:private|url))$`);
-  return regex.test(interpolation_str);
-};
-
-const isDatabasesInterpolation = (interpolation_str: string): boolean => {
-  const regex = new RegExp(`^databases.[^.]+.(?:connection_string|url)$`);
-  return regex.test(interpolation_str);
-};
-
 const checkInterpolationPath = (queue: any, child: any): boolean => {
   let key = queue.shift();
   const keys = Object.keys(child);
@@ -388,100 +372,16 @@ const checkInterpolationPath = (queue: any, child: any): boolean => {
   }
 };
 
-const findInterpolationErrors = (errors: ValidationError[], component_spec: ComponentSpec, graph: Readonly<DependencyGraphMutable>) => {
-  const service_interface_config = new Set(['host', 'port', 'protocol', 'username', 'password', 'url', 'path']);
-  const context_map = buildContextMap(component_spec);
-
-  const interpolation_errors: ValidationError[] = [];
-  for (const error of errors) {
-    const interpolation_str = error.value;
-    const is_secret_interpolation = interpolation_str.startsWith('secrets');
-
-    if (is_secret_interpolation) {
-      if (!context_map[interpolation_str]) {
-        interpolation_errors.push(error);
-      }
-    } else if (isDependencyInterpolation(interpolation_str)) {
-      const dependency_name = extractServiceName(interpolation_str, 'dependencies');
-      const node = graph.nodes_map.get(`${dependency_name}--*`);
-
-      let path_exist;
-      if (node) {
-        const splitted_interpolation_path = interpolation_str.split('.');
-        let splitted_path;
-        const type = splitted_interpolation_path[2];
-        if (type === 'services') {
-          splitted_path = splitted_interpolation_path.slice(4);
-        } else if (type === 'ingresses' || type === 'interfaces') {
-          splitted_path = splitted_interpolation_path.slice(2);
-        } else {
-          splitted_path = splitted_interpolation_path;
-        }
-
-        path_exist = checkInterpolationPath(splitted_path, node);
-      }
-      if (!node || !path_exist) {
-        interpolation_errors.push(error);
-      }
-    } else {
-      const splitted_interpolation_path = interpolation_str.split('.');
-      const last_element = splitted_interpolation_path[splitted_interpolation_path.length - 1];
-      const is_service_url = interpolation_str.startsWith('services') && service_interface_config.has(last_element);
-      const is_database_url = isDatabasesInterpolation(interpolation_str);
-
-      let service_name = '';
-      if (is_database_url) {
-        service_name = extractServiceName(interpolation_str, 'databases');
-        const node = graph.nodes.find(node => node instanceof ServiceNode && node.service_name === `${service_name}-db`);
-        if (!node) {
-          interpolation_errors.push(error);
-        }
-        continue;
-      } else if (is_service_url) {
-        service_name = extractServiceName(interpolation_str, 'services');
-        if (!service_name) {
-          interpolation_errors.push(error);
-          continue;
-        }
-        const node = graph.nodes.find(node => node instanceof ServiceNode && node.service_name === service_name);
-        let path_exist;
-        if (node) {
-          splitted_interpolation_path.pop();
-          path_exist = checkInterpolationPath(splitted_interpolation_path.slice(2), node);
-        }
-        if (!node || !path_exist) {
-          interpolation_errors.push(error);
-        }
-      } else {
-        interpolation_errors.push(error);
-      }
-    }
-  }
-  return interpolation_errors;
-};
-
-const extractInterpolationErrors = (errors: ValidationError[]) => {
-  // Regular expression for architect variables such as architect.environment and architect.build.tag
-  const architect_regex = /architect\./;
-
-  // Regular expression for environment variables such as environment.ingresses.hello-world.hello.url
-  const architect_environment_regex = /environment\./;
-  return errors.filter(error => error.message.startsWith(RequiredInterpolationRule.PREFIX) && !architect_regex.test(error.value) && !architect_environment_regex.test(error.value));
-};
-
-export const validateInterpolation = (component_spec: ComponentSpec, graph: Readonly<DependencyGraphMutable>): void => {
+export const validateInterpolation = (component_spec: ComponentSpec, relax_validation?: boolean): void => {
   const { errors } = interpolateObject(component_spec, {}, {
     keys: true,
     values: true,
     file: component_spec.metadata.file,
+    relax_validation: relax_validation,
   });
 
   const filtered_errors = errors.filter(error => !error.message.startsWith(RequiredInterpolationRule.PREFIX));
-  let interpolation_errors = extractInterpolationErrors(errors);
-  interpolation_errors = findInterpolationErrors(interpolation_errors, component_spec, graph);
-  const all_errors = [...filtered_errors, ...interpolation_errors];
-
-  if (all_errors.length > 0) {
-    throw new ValidationErrors(all_errors, component_spec.metadata.file);
+  if (filtered_errors.length > 0) {
+    throw new ValidationErrors(filtered_errors, component_spec.metadata.file);
   }
 };
