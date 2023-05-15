@@ -506,6 +506,8 @@ export default class Dev extends BaseCommand {
             const port = Number.parseInt(value);
             if (!port || port <= 0 || port > 65535) {
               return 'Port must be a positive number below 65536.';
+            } else if (RESTRICTED_PORTS.has(port)) {
+              return 'Port is restricted by browsers, please choose another port number.';
             }
             return true;
           },
