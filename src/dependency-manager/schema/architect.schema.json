@@ -241,14 +241,21 @@
       "type": "object",
       "patternProperties": {
         "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
-          "type": "string",
-          "pattern": "^[\\w][\\w\\.-]{0,127}$"
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[\\w][\\w\\.-]{0,127}$"
+            },
+            {
+              "$ref": "#/definitions/DependencySpec"
+            }
+          ]
         }
       },
       "errorMessage": {
         "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
       },
-      "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
+      "description": "A key-value set of dependencies with an empty value. Reference each dependency by component name (e.g. `cloud: {}`)",
       "additionalProperties": false
     },
     "interfaces": {
@@ -555,14 +562,21 @@
               "type": "object",
               "patternProperties": {
                 "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
-                  "type": "string",
-                  "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                    },
+                    {
+                      "$ref": "#/definitions/DependencySpec"
+                    }
+                  ]
                 }
               },
               "errorMessage": {
                 "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
               },
-              "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
+              "description": "A key-value set of dependencies with an empty value. Reference each dependency by component name (e.g. `cloud: {}`)",
               "additionalProperties": false
             },
             "interfaces": {
@@ -3950,6 +3964,43 @@
         }
       }
     },
+    "DependencySpec": {
+      "properties": {
+        "tag": {
+          "type": "string",
+          "pattern": "^[\\w][\\w\\.-]{0,127}$",
+          "deprecated": true
+        }
+      },
+      "type": "object",
+      "description": "An empty object that optionally supports specifying a tag for backwards compatibility.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#dependencyspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "tag": {
+                  "type": "string",
+                  "pattern": "^[\\w][\\w\\.-]{0,127}$",
+                  "deprecated": true
+                }
+              },
+              "type": "object",
+              "description": "An empty object that optionally supports specifying a tag for backwards compatibility.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#dependencyspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
     "ComponentInterfaceSpec": {
       "properties": {
         "ingress": {
@@ -4472,14 +4523,21 @@
           "type": "object",
           "patternProperties": {
             "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
-              "type": "string",
-              "pattern": "^[\\w][\\w\\.-]{0,127}$"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                },
+                {
+                  "$ref": "#/definitions/DependencySpec"
+                }
+              ]
             }
           },
           "errorMessage": {
             "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
-          "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
+          "description": "A key-value set of dependencies with an empty value. Reference each dependency by component name (e.g. `cloud: {}`)",
           "additionalProperties": false
         },
         "interfaces": {
@@ -4786,14 +4844,21 @@
                   "type": "object",
                   "patternProperties": {
                     "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
-                      "type": "string",
-                      "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                        },
+                        {
+                          "$ref": "#/definitions/DependencySpec"
+                        }
+                      ]
                     }
                   },
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
-                  "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
+                  "description": "A key-value set of dependencies with an empty value. Reference each dependency by component name (e.g. `cloud: {}`)",
                   "additionalProperties": false
                 },
                 "interfaces": {
@@ -8064,6 +8129,43 @@
         }
       }
     },
+    "_DebugDependencySpec": {
+      "properties": {
+        "tag": {
+          "type": "string",
+          "pattern": "^[\\w][\\w\\.-]{0,127}$",
+          "deprecated": true
+        }
+      },
+      "type": "object",
+      "description": "An empty object that optionally supports specifying a tag for backwards compatibility.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://docs.architect.io/reference/architect-yml#dependencyspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "tag": {
+                  "type": "string",
+                  "pattern": "^[\\w][\\w\\.-]{0,127}$",
+                  "deprecated": true
+                }
+              },
+              "type": "object",
+              "description": "An empty object that optionally supports specifying a tag for backwards compatibility.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://docs.architect.io/reference/architect-yml#dependencyspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
     "_DebugComponentInterfaceSpec": {
       "properties": {
         "ingress": {
@@ -8574,14 +8676,21 @@
           "type": "object",
           "patternProperties": {
             "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
-              "type": "string",
-              "pattern": "^[\\w][\\w\\.-]{0,127}$"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                },
+                {
+                  "$ref": "#/definitions/_DebugDependencySpec"
+                }
+              ]
             }
           },
           "errorMessage": {
             "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
           },
-          "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
+          "description": "A key-value set of dependencies with an empty value. Reference each dependency by component name (e.g. `cloud: {}`)",
           "additionalProperties": false
         },
         "interfaces": {
@@ -8885,14 +8994,21 @@
                   "type": "object",
                   "patternProperties": {
                     "^(?:(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-)\\/)?(?<component_name>(?!-)(?!.{0,32}--)[a-z0-9-]{1,32}(?<!-))(?:@(?<instance_name>[\\w][\\w\\.-]{0,127}))?$": {
-                      "type": "string",
-                      "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                        },
+                        {
+                          "$ref": "#/definitions/_DebugDependencySpec"
+                        }
+                      ]
                     }
                   },
                   "errorMessage": {
                     "additionalProperties": "must contain only lower alphanumeric and single hyphens in the middle; max length 32"
                   },
-                  "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest`)",
+                  "description": "A key-value set of dependencies with an empty value. Reference each dependency by component name (e.g. `cloud: {}`)",
                   "additionalProperties": false
                 },
                 "interfaces": {
