@@ -38,7 +38,8 @@ jobs:
 
   test_remote:
     name: Superset remote deployment
-    if: github.base_ref == 'main'
+    # TODO: Uncomment
+    # if: github.base_ref == 'main'
     env:
       ACCOUNT_NAME: architect-ci
       ENVIRONMENT_NAME: example-environment
