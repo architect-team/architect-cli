@@ -34,6 +34,7 @@ const mock_certificates = [
       },
     },
     dns_names: ['env--foobar', 'app.test-env.examples.arc.test'],
+    service_dns_names: ['env--foobar', 'app.test-env.examples.arc.test'],
   }, {
     metadata: {
       labels: {
@@ -42,6 +43,7 @@ const mock_certificates = [
       },
     },
     dns_names: ['env--foobar', 'app.doesnt.get.output'],
+    service_dns_names: ['env--foobar'],
   },
 ];
 

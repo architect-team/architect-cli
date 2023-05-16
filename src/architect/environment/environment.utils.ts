@@ -32,6 +32,7 @@ export interface UpdateEnvironmentDto extends ScaleServiceDto {
 
 export interface ParsedCertificate {
   dns_names: string[];
+  service_dns_names: string[];
   expiration_date: string; // of the format 2023-04-19T00:46:08.000Z
   renewal_time: string; // of the format 2023-04-19T00:46:08.000Z
   status: 'Ready' | 'Issuing' | 'Failed';
