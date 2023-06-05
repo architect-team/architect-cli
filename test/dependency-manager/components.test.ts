@@ -304,7 +304,7 @@ describe('components spec v1', function () {
           },
         },
         dependencies: {
-          'ci': '6.2',
+          'ci': {},
         },
         interfaces: {},
       };
@@ -367,7 +367,7 @@ describe('components spec v1', function () {
       const worker_node = graph.getNodeByRef(worker_ref) as ServiceNode;
       expect(worker_node.config.environment.CONCOURSE_TSA_HOST).eq(web_ref);
       expect(worker_node.config.name).to.eq('worker');
-      expect(worker_node.config.metadata.tag).to.eq('6.2');
+      expect(worker_node.config.metadata.tag).to.eq('latest');
       expect(worker_node.config.metadata.ref).to.eq('ci.services.worker');
     });
 

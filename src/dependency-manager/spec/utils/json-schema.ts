@@ -78,11 +78,10 @@ export const findDefinition = (pointer: string, schema: SchemaObject): SchemaObj
  * @param obj
  */
 const recursivelyReplaceDebugRefs = (obj: SchemaObject) => {
+  if (!obj || typeof obj !== 'object') {
+    return;
+  }
   for (const k of Object.keys(obj)) {
-    if (!obj || typeof obj !== 'object') {
-      return;
-    }
-
     if (k === '$ref') {
       obj[k] = `${REF_PREFIX}${DEBUG_PREFIX}${obj[k].replace(REF_PREFIX, '')}`;
     }

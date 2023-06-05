@@ -15,7 +15,6 @@ import PluginManager from '../../src/common/plugins/plugin-manager';
 import BuildPackUtils from '../../src/common/utils/buildpack';
 import { IF_EXPRESSION_REGEX } from '../../src/dependency-manager/spec/utils/interpolation';
 import { getMockComponentContextPath, getMockComponentFilePath, MockArchitectApi, ReplyCallback } from '../utils/mocks';
-import { Body, ReplyBody } from 'nock/types';
 
 describe('register', function () {
   const mock_account_response = {
@@ -503,6 +502,18 @@ describe('register', function () {
     .it('register component to account with name consists of uppercase letters', ctx => {
       const convert_to_buildx_platforms = DockerBuildXUtils.convertToBuildxPlatforms as SinonStub;
       expect(convert_to_buildx_platforms.calledOnce).true;
+      expect(ctx.stdout).to.contain('Successfully registered component');
+    });
+
+  new MockArchitectApi()
+    .getAccount(mock_account_response)
+    .architectRegistryHeadRequest()
+    .registerComponentDigest(mock_account_response)
+    .getTests()
+    .stub(DockerBuildXUtils, 'convertToBuildxPlatforms', sinon.stub().returns([]))
+    .command(['register', 'test/mocks/deprecations/liveness-probe-path-port.architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .it('warn when register component with liveness_probe path and port', ctx => {
+      expect(ctx.stdout).to.contain(`Deprecation warning: The liveness probe 'path' and 'port' will no longer be supported`);
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 });

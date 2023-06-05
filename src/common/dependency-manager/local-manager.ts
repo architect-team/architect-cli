@@ -122,8 +122,8 @@ export default class LocalDependencyManager extends DependencyManager {
       const component_spec = await this.loadComponentSpec(component_ref, undefined, debug);
       component_specs.push(component_spec);
 
-      for (const [dep_name, dep_tag] of Object.entries(component_spec.dependencies || {})) {
-        component_refs_queue.push(`${dep_name}:${dep_tag}`);
+      for (const dep_name of Object.keys(component_spec.dependencies || {})) {
+        component_refs_queue.push(`${dep_name}`);
       }
     }
     return component_specs;
