@@ -110,16 +110,20 @@ export default abstract class BaseCommand extends Command {
   }
 
   async finally(err?: Error): Promise<any> {
-    await this.sentry.endSentryTransaction(err);
+    try {
+      await this.sentry.endSentryTransaction(err);
 
-    this.app.posthog.capture({
-      event: 'cli.command.complete',
-      properties: {
-        command_id: (this.constructor as any).id,
-        error: err?.message,
-      },
-    });
-    await this.app.posthog.shutdownAsync();
+      this.app.posthog.capture({
+        event: 'cli.command.complete',
+        properties: {
+          command_id: (this.constructor as any).id,
+          error: err?.message,
+        },
+      });
+      await this.app.posthog.shutdownAsync();
+    } catch (_) {
+      // This just means we lose some telemetry and we do not want to affect users
+    }
 
     // Oclif supers go as the return
     return super.finally(err);
