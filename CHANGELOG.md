@@ -1,3 +1,18 @@
+# [1.41.0](https://github.com/architect-team/architect-cli/compare/v1.40.0...v1.41.0) (2023-06-05)
+
+
+### Bug Fixes
+
+* **base:** Make sure telemetry does not interfere with CLI ([#913](https://github.com/architect-team/architect-cli/issues/913)) ([b92cc8e](https://github.com/architect-team/architect-cli/commit/b92cc8eb202136dbdc9d1cac88b4a1cd9fc54cbd))
+* **ports:** Use a list of restricted ports instead of allowing ports ([121d0b8](https://github.com/architect-team/architect-cli/commit/121d0b8bab2a76fd14096ff7b63d04761814bef6))
+* **warning:** Add a warning for livenessprobe to let users know that path and port will be deprecated soon ([8bb5dc4](https://github.com/architect-team/architect-cli/commit/8bb5dc45f695d8ccbe8bfa12866a4bbd5055ae1b))
+
+
+### Features
+
+* **environment:** Add --flag=zero-trust to env:create ([#906](https://github.com/architect-team/architect-cli/issues/906)) ([f3ef7b9](https://github.com/architect-team/architect-cli/commit/f3ef7b9935785a2f2d45bb5286bd380078cb60b7))
+* **spec:** Dependencies without tags ([#893](https://github.com/architect-team/architect-cli/issues/893)) ([015a3a9](https://github.com/architect-team/architect-cli/commit/015a3a9e97d5051e3dfd68a244d18038224d23e8))
+
 # [1.40.0](https://github.com/architect-team/architect-cli/compare/v1.39.0...v1.40.0) (2023-05-11)
 
 
