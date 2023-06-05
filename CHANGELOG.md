@@ -1,3 +1,18 @@
+# [1.40.0](https://github.com/architect-team/architect-cli/compare/v1.39.0...v1.40.0) (2023-05-11)
+
+
+### Bug Fixes
+
+* **dev:** Fix build overlay ([#901](https://github.com/architect-team/architect-cli/issues/901)) ([9e5e748](https://github.com/architect-team/architect-cli/commit/9e5e74852ec8b228e23fa7d945199b3ae8fa07b8))
+* **register:** Remove the build block when a component is regsitered ([a3897a5](https://github.com/architect-team/architect-cli/commit/a3897a58b11b5641f6aff90da28a427a9992c083))
+
+
+### Features
+
+* **deployment:** Warn for deleted cluster deployment ([#902](https://github.com/architect-team/architect-cli/issues/902)) ([b5bf8d4](https://github.com/architect-team/architect-cli/commit/b5bf8d427bec7a6120de7856e6f99b458a53e89b))
+* **dev:** Dev overlay adding architect command + docs shortcuts ([#900](https://github.com/architect-team/architect-cli/issues/900)) ([8ff760e](https://github.com/architect-team/architect-cli/commit/8ff760e2aae32f05a8ba91376e8c1941be5c4309))
+* **exec:** Allow the account flag to be used with local exec ([b060a2b](https://github.com/architect-team/architect-cli/commit/b060a2b7d9a066c0f9e7e88d2551d932970eedc8))
+
 # [1.39.0](https://github.com/architect-team/architect-cli/compare/v1.38.0...v1.39.0) (2023-04-26)
 
 
