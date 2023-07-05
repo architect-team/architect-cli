@@ -142,25 +142,6 @@ export default class Deploy extends DeployCommand {
       deprecated: true,
       hidden: true,
     }),
-    'secret-file': Flags.string({
-      description: 'Path of secrets file',
-      multiple: true,
-      default: [],
-    }),
-    secrets: Flags.string({
-      description: `Please use --secret-file.`,
-      multiple: true,
-      hidden: true,
-      deprecated: {
-        to: 'secret-file',
-      },
-    }),
-    secret: Flags.string({
-      char: 's',
-      description: 'An individual secret key and value in the form SECRET_KEY=SECRET_VALUE',
-      multiple: true,
-      default: [],
-    }),
     values: Flags.string({
       char: 'v',
       hidden: true,

@@ -25,6 +25,7 @@ import PluginManager from '../common/plugins/plugin-manager';
 import BuildPackUtils from '../common/utils/buildpack';
 import { transformVolumeSpec } from '../dependency-manager/spec/transform/common-transform';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
+import DeployUtils from '../common/utils/deploy.utils';
 
 tmp.setGracefulCleanup();
 
@@ -45,6 +46,25 @@ export const SHARED_REGISTER_FLAGS = {
   'cache-directory': Flags.string({
     description: 'Directory to write build cache to. Do not use in Github Actions: https://docs.architect.io/deployments/automated-previews/#caching-between-workflow-runs',
     sensitive: false,
+  }),
+  'secret-file': Flags.string({
+    description: 'Path of secrets file',
+    multiple: true,
+    default: [],
+  }),
+  secrets: Flags.string({
+    description: `Please use --secret-file.`,
+    multiple: true,
+    hidden: true,
+    deprecated: {
+      to: 'secret-file',
+    },
+  }),
+  secret: Flags.string({
+    char: 's',
+    description: 'An individual secret key and value in the form SECRET_KEY=SECRET_VALUE',
+    multiple: true,
+    default: [],
   }),
 };
 
@@ -197,7 +217,21 @@ export default class ComponentRegister extends BaseCommand {
     const dependency_manager = new LocalDependencyManager(this.app.api, selected_account.name);
     dependency_manager.environment = 'production';
 
-    const graph = await dependency_manager.getGraph([instanceToInstance(component_spec)], undefined, { interpolate: false, validate: false });
+    const all_secret_file_values = [...(flags['secret-file'] || []), ...(flags.secrets || [])];
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secret, all_secret_file_values);
+
+    // Default graph options
+    const graph_options = { interpolate: false, validate: false, interpolate_build_args: false };
+    // If the spec contains a service that has build args, set validate/interpolate_build_args
+    // so that secrets are validated and enforce any required secrets are provided via --secret-file.
+    for (const service of Object.values(component_spec.services || {})) {
+      if (service.build && service.build.args) {
+        graph_options.validate = true;
+        graph_options.interpolate_build_args = true;
+      }
+    }
+
+    const graph = await dependency_manager.getGraph([instanceToInstance(component_spec)], component_secrets, graph_options);
     // Tmp fix to register host overrides
     for (const node of graph.nodes.filter(n => n instanceof ServiceNode) as ServiceNode[]) {
       for (const interface_config of Object.values(node.interfaces)) {

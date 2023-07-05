@@ -67,6 +67,10 @@ export default class DeployUtils {
     return flags;
   }
 
+  /**
+   * Combine secrets from the secret flag, a secret file, and optionally an existing SecretsDict
+   * into a single SecretsDict.
+   */
   static getComponentSecrets(individual_secrets: string[], secrets_file: string[], env_secrets?: SecretsDict): SecretsDict {
     let component_secrets: SecretsDict = env_secrets ? env_secrets : {};
 

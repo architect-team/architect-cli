@@ -40,6 +40,8 @@ secrets:
   param_unset:
   frontend_private:
     default: false
+  build_arg_secret:
+    default: secret-build-arg
 
 dependencies:
   hello-world: latest
@@ -153,6 +155,7 @@ services:
       args:
         build_arg_string: arg_value
         build_arg_unset:
+        build_arg_secret: ${{ secrets.build_arg_secret }}
       # target: production # TODO: re-enable when we move the example app to the test directory
       # ${{ if architect.environment == 'local' }}:
       #   target: dev

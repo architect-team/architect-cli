@@ -59,11 +59,11 @@ describe('register', function () {
         const text_file = fs.readFileSync('test/mocks/superset/filedata.txt');
         expect(body.config.services['stateful-api'].environment.FILE_DATA).to.eq(text_file.toString().trim());
         return body;
-      }
+      },
     })
     .getTests()
     .stub(ComponentRegister.prototype, 'uploadVolume', sinon.stub().returns({}))
-    .command(['register', 'test/mocks/superset/architect.yml', '-a', 'examples'])
+    .command(['register', 'test/mocks/superset/architect.yml', '-a', 'examples', '-s', 'param_unset=foo'])
     .it('test file: replacement', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
@@ -119,7 +119,7 @@ describe('register', function () {
     .stub(DockerComposeUtils, 'writeCompose', sinon.stub())
     .stub(fs, 'move', sinon.stub())
     .stub(ComponentRegister.prototype, 'uploadVolume', sinon.stub().returns({}))
-    .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples', '-s', 'param_unset=foo'])
     .it('register superset', async ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
       /*
@@ -159,7 +159,7 @@ describe('register', function () {
     .architectRegistryHeadRequest('/v2/examples/superset.services.stateful-frontend/manifests/1.0.0')
     .architectRegistryHeadRequest('/v2/examples/superset.tasks.curler-build/manifests/1.0.0')
     .getTests()
-    .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', 'test/mocks/superset/architect.yml', '-t', '1.0.0', '-a', 'examples', '-s', 'param_unset=foo'])
     .it('it reports to the user that the superset was registered successfully', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
@@ -167,7 +167,7 @@ describe('register', function () {
   new MockArchitectApi()
     .getAccount(mock_account_response)
     .architectRegistryHeadRequest()
-    .getEnvironment(mock_account_response, { name: 'test-env'})
+    .getEnvironment(mock_account_response, { name: 'test-env' })
     .registerComponentDigest(mock_account_response, { body:
       (body) => {
         expect(body.tag).to.eq('architect.environment.test-env');
@@ -446,7 +446,7 @@ describe('register', function () {
       build: () => { },
     }))
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
-    .command(['register', 'test/mocks/buildpack/buildpack-architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', 'test/mocks/buildpack/buildpack-architect.yml', '-t', '1.0.0', '-a', 'examples', '-s', 'param_unset=foo'])
     .it('register with buildpack set to true override Dockerfile', ctx => {
       expect(ctx.stderr).to.contain('Registering component hello-world:1.0.0 with Architect Cloud...... done\n');
       expect(ctx.stdout).to.contain('Successfully registered component');
@@ -469,7 +469,7 @@ describe('register', function () {
     }))
     .stub(DockerHelper, 'composeVersion', sinon.stub().returns(true))
     .stub(DockerHelper, 'buildXVersion', sinon.stub().returns(true))
-    .command(['register', 'test/mocks/buildpack/buildpack-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', 'test/mocks/buildpack/buildpack-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples', '-s', 'param_unset=foo'])
     .it('register with buildpack and dockerfile services', ctx => {
       const buildpack = BuildPackUtils.build as sinon.SinonStub;
       expect(buildpack.args.toString()).to.equal(`${path.normalize('test/plugins')},hello-world--buildpack-api,,${path.join(path.resolve('test/integration'), './hello-world/')}`);
@@ -486,7 +486,7 @@ describe('register', function () {
     .getTests()
     .stub(DockerBuildXUtils, 'dockerBuildX', sinon.stub())
     .stub(DockerUtils, 'doesDockerfileExist', sinon.stub().callsFake(DockerUtils.doesDockerfileExist)) // override global stub
-    .command(['register', 'test/mocks/register/nonexistence-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples'])
+    .command(['register', 'test/mocks/register/nonexistence-dockerfile-architect.yml', '-t', '1.0.0', '-a', 'examples', '-s', 'param_unset=foo'])
     .catch(e => {
       expect(e.message).contains(`${path.resolve('./test/integration/hello-world/nonexistent-dockerfile')} does not exist. Please verify the correct context and/or dockerfile were given.`);
     })

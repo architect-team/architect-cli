@@ -111,6 +111,10 @@ export class Secrets {
     }
   }
 
+  /**
+   * Validates that all required secrets are provided. If any required secrets are missing,
+   * raises a ValidationErrors error.
+   */
   validateComponentSpec(component_spec: ComponentSpec): void {
     const secrets_dict = this.getSecretsForComponentSpec(component_spec, true);
 
