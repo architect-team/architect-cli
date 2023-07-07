@@ -1,3 +1,10 @@
+# [1.42.0](https://github.com/architect-team/architect-cli/compare/v1.41.0...v1.42.0) (2023-07-07)
+
+
+### Features
+
+* **ssl:** Add support for custom SSL certs ([4bc13ca](https://github.com/architect-team/architect-cli/commit/4bc13cab3506f262c47cc586d98f36f6e612029f))
+
 # [1.41.0](https://github.com/architect-team/architect-cli/compare/v1.40.0...v1.41.0) (2023-06-05)
 
 
