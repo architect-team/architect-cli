@@ -30,30 +30,14 @@ export interface UpdateEnvironmentDto extends ScaleServiceDto {
   clear_scaling?: boolean;
 }
 
-export interface CertManagerCertificate {
-  // https://cert-manager.io/v1.7-docs/reference/api-docs/#cert-manager.io/v1.Certificate
-  apiVersion: 'cert-manager.io/v1';
-  kind: 'Certificate';
-  spec: {
-    dnsNames: string[];
-  };
+export interface ParsedCertificate {
+  dns_names: string[];
+  service_dns_names: string[];
+  expiration_date: string; // of the format 2023-04-19T00:46:08.000Z
+  renewal_time: string; // of the format 2023-04-19T00:46:08.000Z
+  status: 'Ready' | 'Issuing' | 'Failed';
   metadata: {
-    creationTimestamp: string; // of the format 2022-11-11T15:45:09Z
     labels: Dictionary<string>;
-  };
-  status: {
-    conditions: [
-      {
-        lastTransitionTime: string; // of the format 2022-11-11T15:45:09Z
-        message: string;
-        reason: string;
-        status: 'True' | 'False' | 'Unknown';
-        type: 'Ready' | 'Issuing';
-      },
-    ];
-    renewalTime: string; // of the format 2023-01-10T14:45:07Z
-    notBefore: string; // of the format 2023-01-10T14:45:07Z
-    notAfter: string; // of the format 2023-01-10T14:45:07Z
   };
 }
 

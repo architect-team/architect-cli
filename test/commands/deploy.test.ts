@@ -33,9 +33,8 @@ const mock_certificates = [
         'architect.io/component-tag': 'latest',
       },
     },
-    spec: {
-      dnsNames: ['env--foobar', 'app.test-env.examples.arc.test'],
-    },
+    dns_names: ['env--foobar', 'app.test-env.examples.arc.test'],
+    service_dns_names: ['env--foobar', 'app.test-env.examples.arc.test'],
   }, {
     metadata: {
       labels: {
@@ -43,9 +42,8 @@ const mock_certificates = [
         'architect.io/component-tag': 'not-latestlatest',
       },
     },
-    spec: {
-      dnsNames: ['env--foobar', 'app.doesnt.get.output'],
-    },
+    dns_names: ['env--foobar', 'app.doesnt.get.output'],
+    service_dns_names: ['env--foobar'],
   },
 ];
 

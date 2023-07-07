@@ -3,9 +3,17 @@ import { Dictionary } from '../utils/dictionary';
 import { LivenessProbeConfig, VolumeConfig } from './common-config';
 import { ResourceConfig } from './resource-config';
 
+// Custom ingress TLS
+export interface IngressTlsConfig {
+  crt: string;
+  key: string;
+  ca?: string;
+}
+
 export interface IngressConfig {
   enabled?: boolean;
   subdomain?: string;
+  tls?: IngressTlsConfig;
   path?: string;
   ip_whitelist?: string[];
   sticky?: boolean | string;

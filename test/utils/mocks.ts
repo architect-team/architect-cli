@@ -10,7 +10,7 @@ import { ComponentVersion } from '../../src/architect/component/component-versio
 import { Component } from '../../src/architect/component/component.entity';
 import Deployment from '../../src/architect/deployment/deployment.entity';
 import Environment from '../../src/architect/environment/environment.entity';
-import { CertManagerCertificate, Replica, ScaleServiceDto, UpdateEnvironmentDto } from '../../src/architect/environment/environment.utils';
+import { ParsedCertificate, Replica, ScaleServiceDto, UpdateEnvironmentDto } from '../../src/architect/environment/environment.utils';
 import Pipeline from '../../src/architect/pipeline/pipeline.entity';
 import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
 import { AccountSecret, ClusterSecret, EnvironmentSecret } from '../../src/architect/secret/secret.utils';
@@ -160,10 +160,10 @@ export class MockArchitectApi {
     return this;
   }
 
-  getEnvironmentCertificates(environment: Partial<Environment>, certificates: RecursivePartial<CertManagerCertificate>[]) {
+  getEnvironmentCertificates(environment: Partial<Environment>, certificates: RecursivePartial<ParsedCertificate>[]) {
     this.api_mocks = this.api_mocks.nock(MOCK_API_HOST, api => api
       .get(`/environments/${environment.id}/certificates`)
-      .reply(200, certificates))
+      .reply(200, certificates));
     return this;
   }
 
