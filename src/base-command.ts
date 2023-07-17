@@ -1,5 +1,4 @@
 import { Command, Config, Interfaces } from '@oclif/core';
-import '@sentry/tracing';
 import chalk from 'chalk';
 import { Memoize } from 'typescript-memoize';
 import { Dictionary, ValidationErrors } from '.';
