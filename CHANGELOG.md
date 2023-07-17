@@ -1,3 +1,10 @@
+## [1.42.1](https://github.com/architect-team/architect-cli/compare/v1.42.0...v1.42.1) (2023-07-17)
+
+
+### Bug Fixes
+
+* **metrics:** Update sentry tracing module ([f07ae7d](https://github.com/architect-team/architect-cli/commit/f07ae7d959a03bae90ed08104462f6332244c7ce))
+
 # [1.42.0](https://github.com/architect-team/architect-cli/compare/v1.41.0...v1.42.0) (2023-07-07)
 
 
