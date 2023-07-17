@@ -49,6 +49,7 @@ export default class SentryService {
           }),
           new ExtraErrorData(),
           new Transaction(),
+          ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
         ],
         beforeSend(event: any) {
           if (event.req?.data?.token) {
