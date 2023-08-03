@@ -247,6 +247,13 @@
               "pattern": "^[\\w][\\w\\.-]{0,127}$"
             },
             {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            },
+            {
               "$ref": "#/definitions/DependencySpec"
             }
           ]
@@ -566,6 +573,13 @@
                     {
                       "type": "string",
                       "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
                     },
                     {
                       "$ref": "#/definitions/DependencySpec"
@@ -4688,6 +4702,13 @@
                   "pattern": "^[\\w][\\w\\.-]{0,127}$"
                 },
                 {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                  }
+                },
+                {
                   "$ref": "#/definitions/DependencySpec"
                 }
               ]
@@ -5007,6 +5028,13 @@
                         {
                           "type": "string",
                           "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                        },
+                        {
+                          "type": "string",
+                          "pattern": "\\${{\\s*(.*?)\\s*}}",
+                          "errorMessage": {
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                          }
                         },
                         {
                           "$ref": "#/definitions/DependencySpec"
@@ -8992,6 +9020,13 @@
                   "pattern": "^[\\w][\\w\\.-]{0,127}$"
                 },
                 {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                  }
+                },
+                {
                   "$ref": "#/definitions/_DebugDependencySpec"
                 }
               ]
@@ -9308,6 +9343,13 @@
                         {
                           "type": "string",
                           "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                        },
+                        {
+                          "type": "string",
+                          "pattern": "\\${{\\s*(.*?)\\s*}}",
+                          "errorMessage": {
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                          }
                         },
                         {
                           "$ref": "#/definitions/_DebugDependencySpec"

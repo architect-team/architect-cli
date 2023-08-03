@@ -1,7 +1,7 @@
 {
   "name": "@architect-io/cli",
   "description": "Command-line interface for Architect.io",
-  "version": "1.42.1",
+  "version": "1.43.0-arc-tag-secrets.1",
   "author": "Architect.io",
   "bin": {
     "architect": "./bin/run"
