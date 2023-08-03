@@ -39,7 +39,9 @@ export class DependencySpec {
   @IsOptional()
   @JSONSchema({
     type: 'string',
-    ...ExpressionOr({ type: 'string', pattern: Slugs.ComponentTagValidator.source }),
+    ...ExpressionOr({
+      type: 'string', pattern: Slugs.ComponentTagValidator.source,
+    }),
     deprecated: true,
   })
   tag?: string;
