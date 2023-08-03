@@ -258,7 +258,7 @@ An empty object that optionally supports specifying a tag for backwards compatib
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | ~~`tag`~~ | string |  | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D%24">Regex</a>Deprecated |
+ | ~~`tag`~~ | string \| [Expression](https://docs.architect.io/reference/contexts) |  | Deprecated |
 
 
 ## OutputDefinitionSpec

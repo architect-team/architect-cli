@@ -9,6 +9,7 @@ import { SecretDefinitionSpec, SecretSpecValue } from './secret-spec';
 import { IngressSpec, ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
 import { transformObject } from './transform/common-transform';
+import { EXPRESSION_REGEX } from './utils/interpolation';
 import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString } from './utils/json-schema-annotations';
 import { ComponentSlugUtils, Slugs } from './utils/slugs';
 
@@ -38,7 +39,7 @@ export class DependencySpec {
   @IsOptional()
   @JSONSchema({
     type: 'string',
-    pattern: Slugs.ComponentTagValidator.source,
+    ...ExpressionOr({ type: 'string', pattern: Slugs.ComponentTagValidator.source }),
     deprecated: true,
   })
   tag?: string;
@@ -250,6 +251,13 @@ export class ComponentSpec {
       [ComponentSlugUtils.Validator.source]: AnyOf({
         type: 'string',
         pattern: Slugs.ComponentTagValidator.source,
+      }, {
+        type: 'string',
+        pattern: EXPRESSION_REGEX.source,
+        errorMessage: {
+          // __arc__ is replaced later to avoid json pointer issues with ajv
+          pattern: 'must be an interpolation ref ex. $__arc__{{ secrets.example }}',
+        },
       }, DependencySpec),
     },
 
