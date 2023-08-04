@@ -15,9 +15,13 @@ secrets:
     description: |
       Applied as an environment variable to each service in the component
       (oneof: ['error', 'warning', 'debug', 'info', 'trace'])
+  hello_world_tag:
+    default: latest
+    description: |
+      The tag of the hello-world service to use as a dependency
 
 dependencies:
-  hello-world: latest
+  hello-world: ${{ secrets.hello_world_tag }}
 
 services:
   stateless-app:
