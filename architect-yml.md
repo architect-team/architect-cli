@@ -258,7 +258,7 @@ An empty object that optionally supports specifying a tag for backwards compatib
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | ~~`tag`~~ | string \| [Expression](https://docs.architect.io/reference/contexts) |  | Deprecated |
+ | `tag` | string \| [Expression](https://docs.architect.io/reference/contexts) |  |  |
 
 
 ## OutputDefinitionSpec

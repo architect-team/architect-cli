@@ -4116,11 +4116,11 @@
     "DependencySpec": {
       "properties": {
         "tag": {
-          "type": "string",
           "anyOf": [
             {
               "type": "string",
-              "pattern": "^[\\w][\\w\\.-]{0,127}$"
+              "pattern": "^[\\w][\\w\\.-]{0,127}$",
+              "deprecated": true
             },
             {
               "type": "string",
@@ -4129,8 +4129,7 @@
                 "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
-          ],
-          "deprecated": true
+          ]
         }
       },
       "type": "object",
@@ -4145,11 +4144,11 @@
             {
               "properties": {
                 "tag": {
-                  "type": "string",
                   "anyOf": [
                     {
                       "type": "string",
-                      "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                      "pattern": "^[\\w][\\w\\.-]{0,127}$",
+                      "deprecated": true
                     },
                     {
                       "type": "string",
@@ -4158,8 +4157,7 @@
                         "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
-                  ],
-                  "deprecated": true
+                  ]
                 }
               },
               "type": "object",
@@ -8446,11 +8444,11 @@
     "_DebugDependencySpec": {
       "properties": {
         "tag": {
-          "type": "string",
           "anyOf": [
             {
               "type": "string",
-              "pattern": "^[\\w][\\w\\.-]{0,127}$"
+              "pattern": "^[\\w][\\w\\.-]{0,127}$",
+              "deprecated": true
             },
             {
               "type": "string",
@@ -8459,8 +8457,7 @@
                 "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
               }
             }
-          ],
-          "deprecated": true
+          ]
         }
       },
       "type": "object",
@@ -8475,11 +8472,11 @@
             {
               "properties": {
                 "tag": {
-                  "type": "string",
                   "anyOf": [
                     {
                       "type": "string",
-                      "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                      "pattern": "^[\\w][\\w\\.-]{0,127}$",
+                      "deprecated": true
                     },
                     {
                       "type": "string",
@@ -8488,8 +8485,7 @@
                         "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
                       }
                     }
-                  ],
-                  "deprecated": true
+                  ]
                 }
               },
               "type": "object",
