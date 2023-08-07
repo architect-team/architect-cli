@@ -634,8 +634,9 @@ $ architect dev -e new_env_name_here .`));
       // Load architect.yml if passed
       if (!ComponentVersionSlugUtils.Validator.test(config_or_component) && !ComponentSlugUtils.Validator.test(config_or_component)) {
         const res = buildSpecFromPath(config_or_component);
-        linked_components[res.name] = config_or_component;
-        component_version = res.name;
+        const { component_name } = ComponentSlugUtils.parse(res.name);
+        linked_components[component_name] = config_or_component;
+        component_version = component_name;
       }
       component_versions.push(component_version);
     }
