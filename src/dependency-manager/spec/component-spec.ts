@@ -36,11 +36,13 @@ export interface ComponentInstanceMetadata {
 })
 export class DependencySpec {
   @IsOptional()
-  @JSONSchema({
-    type: 'string',
-    pattern: Slugs.ComponentTagValidator.source,
-    deprecated: true,
-  })
+  @JSONSchema(
+    ExpressionOr({
+      type: 'string',
+      pattern: Slugs.ComponentTagValidator.source,
+      deprecated: true,
+    }),
+  )
   tag?: string;
 }
 
