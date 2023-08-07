@@ -1448,6 +1448,56 @@ services:
     expect(process.exitCode).eq(1);
   });
 
+  it('tags are allowed to be secrets for dependencies', async () => {
+    const component_config = `
+      name: component
+      secrets:
+        dependency_tag: latest
+      dependencies:
+        dependency: \${{ secrets.dependency_tag }}
+      services:
+        app:
+          interfaces:
+            main:
+              port: 8080
+          environment:
+            API_URL: \${{ dependencies.dependency.interfaces.api.url }}
+      interfaces:
+        app:
+          url: \${{ services.app.interfaces.main.url }}
+          ingress:
+            subdomain: app
+    `;
+
+    const dependency_config = `
+      name: dependency
+      services:
+        api:
+          interfaces:
+            api:
+              port: 443
+              protocol: tcp
+      interfaces:
+        api: \${{ services.api.interfaces.api.url }}
+    `;
+
+    buildSpecFromYml(component_config);
+
+    mock_fs({
+      '/component.yml': component_config,
+      '/dependency.yml': dependency_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'component': '/component.yml',
+      'dependency': '/dependency.yml',
+    });
+
+    await manager.getGraph([
+      await manager.loadComponentSpec('component:latest'),
+      await manager.loadComponentSpec('dependency:latest'),
+    ]);
+  });
+
   it('valid dependency tcp protocol that is not exposed through gateway', async () => {
     const component_config = `
       name: component

@@ -1111,8 +1111,10 @@ describe('interpolation spec v1', () => {
   it('dependency interpolation from secrets.yml', async () => {
     const component_config = `
     name: hello-world
+    secrets:
+      test_dependency: latest
     dependencies:
-      dependency: latest
+      dependency: \${{ secrets.test_dependency }}
     interfaces:
       api: \${{ services.api.interfaces.api.url }}
     services:
