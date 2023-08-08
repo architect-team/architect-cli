@@ -24,7 +24,7 @@ import OrasPlugin from '../common/plugins/oras-plugin';
 import PluginManager from '../common/plugins/plugin-manager';
 import BuildPackUtils from '../common/utils/buildpack';
 import { transformVolumeSpec } from '../dependency-manager/spec/transform/common-transform';
-import { IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
+import { EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../dependency-manager/spec/utils/interpolation';
 
 tmp.setGracefulCleanup();
 
@@ -456,16 +456,24 @@ export default class ComponentRegister extends BaseCommand {
 
   private async generateDependenciesWarnings(component_dependencies: Dictionary<string | DependencySpec>, account_name: string) {
     const dependency_arr: string[] = [];
+    const dependency_secret_tags: string[] = [];
     for (const [component_name, tag_or_object] of Object.entries(component_dependencies)) {
+      let tag = '';
       if (typeof tag_or_object === 'string') {
-        dependency_arr.push(`${component_name}:${tag_or_object}`);
+        tag = tag_or_object;
       } else if (tag_or_object.tag) {
-        dependency_arr.push(`${component_name}:${tag_or_object.tag}`);
+        tag = tag_or_object.tag;
       } else {
-        dependency_arr.push(`${component_name}:latest`);
+        tag = 'latest';
+      }
+      const full_name = `${component_name}:${tag}`;
+      if (EXPRESSION_REGEX.test(tag)) {
+        dependency_secret_tags.push(full_name);
+      } else {
+        dependency_arr.push(full_name);
       }
     }
-    const dependencies: Dictionary<{ component: boolean, component_and_version: boolean }> = (await this.app.api.get(`accounts/${account_name}/components-tags`, { params: { components: dependency_arr } })).data;
+    const dependencies: Dictionary<{ component: boolean, component_and_version: boolean }> = dependency_arr.length === 0 ? {} : (await this.app.api.get(`accounts/${account_name}/components-tags`, { params: { components: dependency_arr } })).data;
 
     const component_warnings: string[] = [];
     const tag_warnings: string[] = [];
@@ -474,6 +482,13 @@ export default class ComponentRegister extends BaseCommand {
         component_warnings.push(component_name);
       } else if (valid.component && !valid.component_and_version) {
         tag_warnings.push(component_name);
+      }
+    }
+
+    if (dependency_secret_tags.length > 0) {
+      this.log(chalk.yellow(`\nThe following dependencies have tags that contain secrets. We are unable to know if the component exists until deploy time. Please make sure the component tags exist before attempting to deploy.`));
+      for (const dependency of dependency_secret_tags) {
+        this.log(chalk.yellow(`  - ${dependency}`));
       }
     }
 

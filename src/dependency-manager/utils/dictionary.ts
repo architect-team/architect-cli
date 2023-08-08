@@ -8,7 +8,6 @@ export const transformDictionary = <T, U>(transform: (key: string, value: T, ...
   if (!input) {
     return {};
   }
-
   const output: Dictionary<U> = {};
   for (const [key, value] of Object.entries(input)) {
     if (IF_EXPRESSION_REGEX.test(key)) {

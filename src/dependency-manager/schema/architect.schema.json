@@ -247,6 +247,13 @@
               "pattern": "^[\\w][\\w\\.-]{0,127}$"
             },
             {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            },
+            {
               "$ref": "#/definitions/DependencySpec"
             }
           ]
@@ -566,6 +573,13 @@
                     {
                       "type": "string",
                       "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
                     },
                     {
                       "$ref": "#/definitions/DependencySpec"
@@ -4102,9 +4116,20 @@
     "DependencySpec": {
       "properties": {
         "tag": {
-          "type": "string",
-          "pattern": "^[\\w][\\w\\.-]{0,127}$",
-          "deprecated": true
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[\\w][\\w\\.-]{0,127}$",
+              "deprecated": true
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ]
         }
       },
       "type": "object",
@@ -4119,9 +4144,20 @@
             {
               "properties": {
                 "tag": {
-                  "type": "string",
-                  "pattern": "^[\\w][\\w\\.-]{0,127}$",
-                  "deprecated": true
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[\\w][\\w\\.-]{0,127}$",
+                      "deprecated": true
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ]
                 }
               },
               "type": "object",
@@ -4664,6 +4700,13 @@
                   "pattern": "^[\\w][\\w\\.-]{0,127}$"
                 },
                 {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                  }
+                },
+                {
                   "$ref": "#/definitions/DependencySpec"
                 }
               ]
@@ -4983,6 +5026,13 @@
                         {
                           "type": "string",
                           "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                        },
+                        {
+                          "type": "string",
+                          "pattern": "\\${{\\s*(.*?)\\s*}}",
+                          "errorMessage": {
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                          }
                         },
                         {
                           "$ref": "#/definitions/DependencySpec"
@@ -8394,9 +8444,20 @@
     "_DebugDependencySpec": {
       "properties": {
         "tag": {
-          "type": "string",
-          "pattern": "^[\\w][\\w\\.-]{0,127}$",
-          "deprecated": true
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[\\w][\\w\\.-]{0,127}$",
+              "deprecated": true
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+              }
+            }
+          ]
         }
       },
       "type": "object",
@@ -8411,9 +8472,20 @@
             {
               "properties": {
                 "tag": {
-                  "type": "string",
-                  "pattern": "^[\\w][\\w\\.-]{0,127}$",
-                  "deprecated": true
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[\\w][\\w\\.-]{0,127}$",
+                      "deprecated": true
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                      }
+                    }
+                  ]
                 }
               },
               "type": "object",
@@ -8944,6 +9016,13 @@
                   "pattern": "^[\\w][\\w\\.-]{0,127}$"
                 },
                 {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                  }
+                },
+                {
                   "$ref": "#/definitions/_DebugDependencySpec"
                 }
               ]
@@ -9260,6 +9339,13 @@
                         {
                           "type": "string",
                           "pattern": "^[\\w][\\w\\.-]{0,127}$"
+                        },
+                        {
+                          "type": "string",
+                          "pattern": "\\${{\\s*(.*?)\\s*}}",
+                          "errorMessage": {
+                            "pattern": "must be an interpolation ref ex. $__arc__{{ secrets.example }}"
+                          }
                         },
                         {
                           "$ref": "#/definitions/_DebugDependencySpec"
