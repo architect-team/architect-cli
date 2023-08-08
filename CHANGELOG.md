@@ -1,3 +1,18 @@
+# [1.43.0](https://github.com/architect-team/architect-cli/compare/v1.42.1...v1.43.0) (2023-08-08)
+
+
+### Bug Fixes
+
+* **dev:** Fix bug when running dev with a component that still has an account name in the name ([b32d2d8](https://github.com/architect-team/architect-cli/commit/b32d2d8e0d66c173e85a430db3d80963469daa25))
+* **register:** Fix issue with register command when using secrets for tags ([5b22857](https://github.com/architect-team/architect-cli/commit/5b2285755fb5305ce421c6c7660eef369523ad2f))
+* **spec:** Fix issue where new secret tag validation is not working correctly ([84cbcc3](https://github.com/architect-team/architect-cli/commit/84cbcc3eab46a28c9ec083df56ecc6c5d2a92812))
+
+
+### Features
+
+* **secrets:** Add support for using secrets as a dependency tag ([cf822f6](https://github.com/architect-team/architect-cli/commit/cf822f6941c7a40922de387d09979d0cc7f147b1))
+* **secrets:** Allow secrets to be used as tags ([#919](https://github.com/architect-team/architect-cli/issues/919)) ([171aee1](https://github.com/architect-team/architect-cli/commit/171aee188f2edba17f991c40fa84ea9bb4bd4501))
+
 ## [1.42.1](https://github.com/architect-team/architect-cli/compare/v1.42.0...v1.42.1) (2023-07-17)
 
 
