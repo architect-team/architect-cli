@@ -1499,6 +1499,7 @@ describe('interpolation spec v1', () => {
     });
   });
 
+  
   it('interpolate component outputs', async () => {
     const publisher_config = `
     name: publisher
