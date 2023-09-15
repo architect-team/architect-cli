@@ -15,7 +15,7 @@ export interface IngressConfig {
   subdomain?: string;
   tls?: IngressTlsConfig;
   path?: string;
-  ip_whitelist?: string[];
+  ip_whitelist?: string[] | string;
   sticky?: boolean | string;
   private: boolean;
 
