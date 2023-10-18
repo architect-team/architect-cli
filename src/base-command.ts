@@ -27,10 +27,12 @@ export default abstract class BaseCommand extends Command {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   debug(...args: any[]): void {
+    console.log('****BASE COMMAND DEBUG');
     return super.debug(...args);
   }
 
   async init(): Promise<void> {
+    console.log('****BASE COMMAND INIT');
     await this.app.auth.init();
 
     if (await this.auth_required()) {
@@ -109,6 +111,7 @@ export default abstract class BaseCommand extends Command {
   }
 
   async finally(err?: Error): Promise<any> {
+    console.log('****BASE COMMAND FINALLY');
     try {
       await this.sentry.endSentryTransaction(err);
 
@@ -129,6 +132,7 @@ export default abstract class BaseCommand extends Command {
   }
 
   async catch(error: any): Promise<void> {
+    console.log('****BASE COMMAND CATCH');
     if (error.oclif && error.oclif.exit === 0) return;
 
     try {
