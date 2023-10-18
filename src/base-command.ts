@@ -7,11 +7,11 @@ import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
 import { isBooleanStringFlag } from './common/utils/oclif';
-import SentryService from './sentry';
+// import SentryService from './sentry';
 
 export default abstract class BaseCommand extends Command {
   app: AppService;
-  sentry: SentryService;
+  // sentry: SentryService;
 
   async auth_required(): Promise<boolean> {
     return true;
@@ -20,7 +20,7 @@ export default abstract class BaseCommand extends Command {
   constructor(argv: string[], config: Config) {
     super(argv, config);
     this.app = AppService.create(this.config.configDir, this.config.userAgent.split(/\/|\s/g)[2]);
-    this.sentry = new SentryService(this);
+    // this.sentry = new SentryService(this);
   }
 
   // override debug being a protected method on the oclif Command class
@@ -50,7 +50,7 @@ export default abstract class BaseCommand extends Command {
       }
     }
     this.warnIfCommandDeprecated();
-    await this.sentry.startSentryTransaction();
+    // await this.sentry.startSentryTransaction();
     // this.app.posthog.capture({
     //   event: 'cli.command.start',
     //   properties: {
@@ -111,7 +111,7 @@ export default abstract class BaseCommand extends Command {
 
   async finally(err?: Error): Promise<any> {
     try {
-      await this.sentry.endSentryTransaction(err);
+      // await this.sentry.endSentryTransaction(err);
 
       // this.app.posthog.capture({
       //   event: 'cli.command.complete',
