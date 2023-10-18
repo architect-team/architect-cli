@@ -11,14 +11,14 @@ import LoginRequiredError from '../common/errors/login-required';
 import LocalPaths from '../paths';
 import AuthClient from './auth';
 import AppConfig from './config';
-import { PostHogCli } from './posthog';
+// import { PostHogCli } from './posthog';
 
 export default class AppService {
   config: AppConfig;
   auth: AuthClient;
   linkedComponents: Dictionary<string> = {};
   _api: AxiosInstance;
-  posthog: PostHogCli;
+  // posthog: PostHogCli;
   version: string;
   errorContext?: Error;
 
@@ -60,31 +60,31 @@ export default class AppService {
         login: async () => {
           const user = await this.checkLogin();
 
-          this.posthog.identify({
-            distinctId: user.id,
-            properties: {
-              name: user.name,
-              email: user.email,
-            },
-          });
+          // this.posthog.identify({
+          //   distinctId: user.id,
+          //   properties: {
+          //     name: user.name,
+          //     email: user.email,
+          //   },
+          // });
 
-          // https://posthog.com/docs/integrate/server/node#alias
-          this.posthog.alias({
-            distinctId: user.id,
-            alias: this.posthog.getPersistedProperty('anonymous_id'),
-          });
+          // // https://posthog.com/docs/integrate/server/node#alias
+          // this.posthog.alias({
+          //   distinctId: user.id,
+          //   alias: this.posthog.getPersistedProperty('anonymous_id'),
+          // });
         },
       },
     });
 
     this.linkedComponents = this.loadLinkedComponents(config_dir);
 
-    this.posthog = new PostHogCli(this.config.posthog_api_key, {
-      host: this.config.posthog_api_host,
-      enable: !isCi && !this.config.analytics_disabled,
-      persistence: 'file',
-      propertiesFile: path.join(config_dir, LocalPaths.POSTHOG_PROPERTIES),
-    });
+    // this.posthog = new PostHogCli(this.config.posthog_api_key, {
+    //   host: this.config.posthog_api_host,
+    //   enable: !isCi && !this.config.analytics_disabled,
+    //   persistence: 'file',
+    //   propertiesFile: path.join(config_dir, LocalPaths.POSTHOG_PROPERTIES),
+    // });
   }
 
   private loadLinkedComponents(config_dir: string) {
