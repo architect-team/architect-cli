@@ -51,12 +51,12 @@ export default abstract class BaseCommand extends Command {
     }
     this.warnIfCommandDeprecated();
     // await this.sentry.startSentryTransaction();
-    // this.app.posthog.capture({
-    //   event: 'cli.command.start',
-    //   properties: {
-    //     command_id: (this.constructor as any).id,
-    //   },
-    // });
+    this.app.posthog.capture({
+      event: 'cli.command.start',
+      properties: {
+        command_id: (this.constructor as any).id,
+      },
+    });
   }
 
   @Memoize()
@@ -112,14 +112,14 @@ export default abstract class BaseCommand extends Command {
     try {
       // await this.sentry.endSentryTransaction(err);
 
-      // this.app.posthog.capture({
-      //   event: 'cli.command.complete',
-      //   properties: {
-      //     command_id: (this.constructor as any).id,
-      //     error: err?.message,
-      //   },
-      // });
-      // await this.app.posthog.shutdownAsync();
+      this.app.posthog.capture({
+        event: 'cli.command.complete',
+        properties: {
+          command_id: (this.constructor as any).id,
+          error: err?.message,
+        },
+      });
+      await this.app.posthog.shutdownAsync();
     } catch (_) {
       // This just means we lose some telemetry and we do not want to affect users
     }
