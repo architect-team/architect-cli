@@ -1,7 +1,7 @@
 {
   "name": "@architect-io/cli",
   "description": "Command-line interface for Architect.io",
-  "version": "1.43.1-arc-remove-posthog.4",
+  "version": "1.43.1-arc-remove-posthog.5",
   "author": "Architect.io",
   "bin": {
     "architect": "./bin/run"
