@@ -57,7 +57,6 @@ export default abstract class BaseCommand extends Command {
     //     command_id: (this.constructor as any).id,
     //   },
     // });
-    //
   }
 
   @Memoize()
