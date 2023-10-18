@@ -23,6 +23,7 @@ export default class SentryService {
   }
 
   private async ignoreTryCatch(fn: () => Promise<void>, debug_message: string) {
+    console.log('****SENTRY IGNORE TRY CATCH');
     try {
       await fn();
     } catch {
@@ -31,12 +32,13 @@ export default class SentryService {
   }
 
   initSentry(): void {
+    console.log('****INIT SENTRY');
     this.ignoreTryCatch(async () => {
       Sentry.init({
-        enabled: process.env.TEST !== '1' && process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== ENVIRONMENT.PREVIEW,
+        enabled: true, // TODO: restore: process.env.TEST !== '1' && process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== ENVIRONMENT.PREVIEW,
         dsn: CLI_SENTRY_DSN,
         debug: true, // TODO: restore: false
-        environment: process.env?.NODE_ENV ?? 'production',
+        environment: 'staging', // TODO: restore process.env?.NODE_ENV ?? 'production',
         release: process.env?.npm_package_version,
         tracesSampleRate: 1.0,
         attachStacktrace: true,
@@ -52,12 +54,14 @@ export default class SentryService {
           ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
         ],
         beforeSend(event: any) {
+          console.log('****SENTRY BEFORE SEND');
           if (event.req?.data?.token) {
             event.req.data.token = '*'.repeat(20);
           }
           return event;
         },
         beforeBreadcrumb(breadcrumb: any) {
+          console.log('****SENTRY BEFORE BREADCRUMB');
           if (breadcrumb.category === 'console') {
             breadcrumb.message = PromptUtils.stripAsciiColorCodes(breadcrumb.message);
           }
@@ -68,6 +72,7 @@ export default class SentryService {
   }
 
   private async getUser(): Promise<User | undefined> {
+    console.log('****SENTRY GET USER');
     try {
       const user = await this.command.app.checkLogin();
       if (user) {
@@ -79,6 +84,7 @@ export default class SentryService {
   }
 
   async startSentryTransaction(): Promise<void> {
+    console.log('****START SENTRY TRANSACTION');
     this.ignoreTryCatch(async () => {
       this.file_out = this.command.app.config.environment !== ENVIRONMENT.TEST && this.command.app.config.environment !== ENVIRONMENT.PREVIEW;
       this.sentry_history_file_path = path.join(this.command.app.config?.getConfigDir(), LocalPaths.SENTRY_FILENAME);
@@ -144,6 +150,7 @@ export default class SentryService {
   }
 
   async updateSentryTransaction(error?: any): Promise<void> {
+    console.log('****UPDATE SENTRY TRANSACTION');
     try {
       // Only query for docker containers if there is an error to improve performance of cmds
       const updated_docker_info = error ? await this.getRunningDockerContainers() : [];
@@ -153,7 +160,7 @@ export default class SentryService {
         error.stack = PromptUtils.stripAsciiColorCodes(error.stack);
       }
 
-      const sentry_session_metadata = await {
+      const sentry_session_metadata = {
         docker_info: updated_docker_info,
         linked_components: this.command.app.linkedComponents,
         command: this.command.constructor.name,
@@ -187,6 +194,7 @@ export default class SentryService {
   }
 
   async endSentryTransaction(error?: any): Promise<void> {
+    console.log('****END SENTRY TRANSACTION');
     await this.ignoreTryCatch(async () => {
       if (this.command.app.config.environment === ENVIRONMENT.TEST) {
         Sentry.close(0);
