@@ -35,7 +35,7 @@ export default class SentryService {
       Sentry.init({
         enabled: process.env.TEST !== '1' && process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== ENVIRONMENT.PREVIEW,
         dsn: CLI_SENTRY_DSN,
-        debug: false,
+        debug: true, // TODO: restore: false
         environment: process.env?.NODE_ENV ?? 'production',
         release: process.env?.npm_package_version,
         tracesSampleRate: 1.0,
