@@ -9,6 +9,7 @@ import { ResourceSpec } from './resource-spec';
 import { transformObject } from './transform/common-transform';
 import { AnyOf, ExclusiveOr, ExclusiveOrNeither, ExpressionOr, ExpressionOrString, RequiredOr } from './utils/json-schema-annotations';
 import { ResourceType, Slugs } from './utils/slugs';
+import { EXPRESSION_REGEX } from './utils/interpolation';
 
 @JSONSchema({
   description: 'Configuration for custom certificate.',
@@ -69,15 +70,22 @@ export class IngressSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...ExpressionOr({
+    anyOf: [{
       type: 'array',
       items: {
         anyOf: [{ type: 'string', format: 'cidrv4' }, { type: 'string', pattern: '\\${{\\s*secrets\\.[\\w-]+\\s*}}' }],
       },
-    }),
+    }, {
+      type: 'string',
+      pattern: `${EXPRESSION_REGEX.source}|${/(?:\d{1,3}\.){3}\d{1,3}(?:\/\d\d?)?,?/g.source}`,
+      errorMessage: {
+        // __arc__ is replaced later to avoid json pointer issues with ajv
+        pattern: 'must be an interpolation ref ex. $__arc__{{ secrets.example }}, or a comma-delimited list of cidr/ip addresses ex 8.8.8.8,8.8.4.4/24',
+      },
+    }],
     description: 'IP addresses that are allowed to access the interface',
   })
-  ip_whitelist?: string[];
+  ip_whitelist?: string | string[];
 
   @IsOptional()
   @JSONSchema({

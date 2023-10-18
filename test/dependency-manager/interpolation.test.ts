@@ -1455,6 +1455,50 @@ describe('interpolation spec v1', () => {
     });
   });
 
+  it('interpolate interfaces ingress whitelist with a single, comma delimited string', async () => {
+    const component_config = `
+    name: hello-world
+    secrets:
+      ip_whitelist:
+        required: true
+    interfaces:
+      api:
+        url: \${{ services.api.interfaces.main.url }}
+        ingress:
+          ip_whitelist: \${{ secrets.ip_whitelist }}
+    services:
+      api:
+        interfaces:
+          main: 8080
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), 'architect', {
+      'hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentSpecs('hello-world'),
+      { '*': { ip_whitelist: '1.2.3.4,8.8.8.8,8.8.4.4/24' } }
+    );
+    const api_ref = resourceRefToNodeRef('hello-world.services.api');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.interfaces).to.deep.eq({
+      api: {
+        port: 8080,
+        ingress: {
+          ip_whitelist: '1.2.3.4,8.8.8.8,8.8.4.4/24',
+          private: false
+        }
+      },
+      main: {
+        port: 8080
+      }
+    });
+  });
+
   it('interpolate component outputs', async () => {
     const publisher_config = `
     name: publisher
