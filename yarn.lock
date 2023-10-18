@@ -1196,7 +1196,7 @@
     "@sentry/utils" "7.58.1"
     tslib "^2.4.1 || ^1.9.3"
 
-"@sentry/integrations@^7.58.1":
+"@sentry/integrations@7.58.1":
   version "7.58.1"
   resolved "https://registry.yarnpkg.com/@sentry/integrations/-/integrations-7.58.1.tgz#da033779e244cbed56598f94382a9e1da2e50371"
   integrity sha512-fKZV/QDPM7rIZhaJpFwgxD4rzWLtRuag7cOWfvHCsezJnhXEF8u45sBak/VWmSr8SbcvJAIJSZbWYi0N91hNHQ==
@@ -1206,7 +1206,7 @@
     localforage "^1.8.1"
     tslib "^2.4.1 || ^1.9.3"
 
-"@sentry/node@^7.58.1":
+"@sentry/node@7.58.1":
   version "7.58.1"
   resolved "https://registry.yarnpkg.com/@sentry/node/-/node-7.58.1.tgz#fc48b8f6ddfa0402cfdec3706cf162df60052b32"
   integrity sha512-XsSu0xg5SYcltMbatnRBcIZw9pXwGJoGbYDLuPhhuqBz2mnQ0mQ9Try9dn/agDU7KZzT0IyA1qkPXk0NkMe3rw==
@@ -9243,7 +9243,7 @@ tslib@2.3.1, tslib@^2, tslib@^2.1.0:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.3.1.tgz#e8a335add5ceae51aa261d32a490158ef042ef01"
   integrity sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==
 
-tslib@^1.8.1, tslib@^1.9.0, tslib@^1.9.3, "tslib@^2.4.1 || ^1.9.3":
+tslib@^1.8.1, tslib@^1.9.0, tslib@^1.9.3:
   version "1.14.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
   integrity sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==
@@ -9252,6 +9252,11 @@ tslib@^2.3.1, tslib@^2.4.0, tslib@^2.4.1:
   version "2.4.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.4.1.tgz#0d0bfbaac2880b91e22df0768e55be9753a5b17e"
   integrity sha512-tGyy4dAjRIEwI7BzsB0lynWgOpfqjUdq91XXAlIWD2OwKBH7oCl/GZG/HT4BOHrTlPMOASlMQ7veyTqpmRcrNA==
+
+"tslib@^2.4.1 || ^1.9.3":
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.6.0.tgz#b295854684dbda164e181d259a22cd779dcd7bc3"
+  integrity sha512-7At1WUettjcSRHXCyYtTselblcHl9PJFFVKiCAy/bY97+BPZXSQ2wbq0P9s8tK2G7dFQfNnlJnPAiArVBVBsfA==
 
 tsutils@^3.21.0:
   version "3.21.0"
