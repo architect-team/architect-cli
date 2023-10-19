@@ -1,15 +1,3 @@
-# [1.44.0](https://github.com/architect-team/architect-cli/compare/v1.43.0...v1.44.0) (2023-10-19)
-
-
-### Bug Fixes
-
-* **deps:** pinning sentry to a stable version ([#924](https://github.com/architect-team/architect-cli/issues/924)) ([5becc15](https://github.com/architect-team/architect-cli/commit/5becc153d905451e4b3fb61d92c01c5ab29ba406))
-
-
-### Features
-
-* **spec:** allowing an ip whitelist to be submitted as a comma-delimited string of ips/cidrs ([#923](https://github.com/architect-team/architect-cli/issues/923)) ([7436f28](https://github.com/architect-team/architect-cli/commit/7436f28bb00c4c21095343eb0b1a9e9dd65b273b))
-
 # [1.43.0](https://github.com/architect-team/architect-cli/compare/v1.42.1...v1.43.0) (2023-08-08)
 
 
