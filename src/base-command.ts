@@ -164,6 +164,7 @@ export default abstract class BaseCommand extends Command {
     } catch {
       this.debug('Unable to add more context to error message');
     }
+
     // Oclif supers go as the return
     return super.catch(error);
   }
