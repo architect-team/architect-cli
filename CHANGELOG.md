@@ -1,3 +1,10 @@
+## [1.44.1](https://github.com/architect-team/architect-cli/compare/v1.44.0...v1.44.1) (2023-10-19)
+
+
+### Bug Fixes
+
+* **test:** reverting test change ([#929](https://github.com/architect-team/architect-cli/issues/929)) ([b9f81be](https://github.com/architect-team/architect-cli/commit/b9f81beb93433dce2e1a9f34d49036ccd2fcb452))
+
 # [1.43.0](https://github.com/architect-team/architect-cli/compare/v1.42.1...v1.43.0) (2023-08-08)
 
 
