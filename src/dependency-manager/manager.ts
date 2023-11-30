@@ -1,6 +1,6 @@
 import { instanceToPlain, plainToInstance, serialize } from 'class-transformer';
 import { buildNodeRef, ComponentConfig } from './config/component-config';
-import { ArchitectContext, ComponentContext, DatabaseContext } from './config/component-context';
+import { ArchitectContext, ComponentContext, DatabaseContext, ServiceContext } from './config/component-context';
 import { DeprecatedInterfacesSpec } from './deprecated-spec/interfaces';
 import { DependencyGraph, DependencyGraphMutable } from './graph';
 import { IngressEdge } from './graph/edge/ingress';
@@ -21,6 +21,8 @@ import { validateOrRejectSpec } from './spec/utils/spec-validator';
 import { Dictionary, transformDictionary } from './utils/dictionary';
 import { ArchitectError } from './utils/errors';
 import { interpolateObjectLoose, interpolateObjectOrReject, replaceInterpolationBrackets } from './utils/interpolation';
+import { IngressConfig, ServiceConfig, ServiceInterfaceConfig } from './config/service-config';
+import { SecretDefinitionSpec, SecretSpecValue } from './spec/secret-spec';
 
 export default abstract class DependencyManager {
   account?: string;
@@ -395,6 +397,7 @@ export default abstract class DependencyManager {
     options = {
       interpolate: true,
       validate: true,
+      relax_validation: false,
       ...options,
     };
 
@@ -412,6 +415,14 @@ export default abstract class DependencyManager {
 
     const evaluated_component_specs: ComponentSpec[] = [];
     for (const raw_component_spec of component_specs) {
+      if (options.relax_validation && raw_component_spec.secrets) {
+        // Assign dummy value to unset secrets
+        for (const [key, secret] of Object.entries(raw_component_spec.secrets as Dictionary<SecretSpecValue | SecretDefinitionSpec>)) {
+          if (!secret) {
+            raw_component_spec.secrets[key] = { default: '-999' };
+          }
+        }
+      }
       const { component_spec, context } = await this.getComponentSpecContext(graph, raw_component_spec, secrets, options);
 
       if (options.interpolate) {
@@ -486,12 +497,67 @@ export default abstract class DependencyManager {
         context.dependencies = {};
         for (const dep_name of Object.keys(component_spec.dependencies || {})) {
           const dependency_context = context_map[dep_name];
-          if (!dependency_context) continue;
+          if (!dependency_context && !options.relax_validation) {
+            continue;
+          }
 
-          context.dependencies[dep_name] = {
-            services: dependency_context.services || {},
-            outputs: dependency_context.outputs || {},
-          };
+          if (options.relax_validation) {
+            // Mock dependency node for validation
+            const mock_service_ingress_config: IngressConfig = {
+              enabled: false,
+              subdomain: '',
+              path: '',
+              ip_whitelist: [],
+              sticky: '',
+              private: false,
+              consumers: [],
+              dns_zone: '',
+              host: '',
+              port: '',
+              protocol: '',
+              username: '',
+              password: '',
+              url: '',
+            };
+            const mock_service_interface_config: ServiceInterfaceConfig = {
+              host: '',
+              port: '',
+              protocol: '',
+              username: '',
+              password: '',
+              url: '',
+              sticky: '',
+              path: '',
+              ingress: mock_service_ingress_config,
+            };
+            const mock_dependency_node = {
+              __type: '',
+              config: {} as ServiceConfig,
+              ref: `${dep_name}--ø`,
+              component_ref: dep_name,
+              service_name: 'ø',
+              interfaces: { 'ø': mock_service_interface_config },
+              ingresses: { 'ø': mock_service_ingress_config },
+              ports: [],
+              is_external: false,
+              instance_id: '',
+            };
+            graph.addNode(mock_dependency_node);
+
+            const service_context: ServiceContext = {
+              environment: {},
+              interfaces: { 'ø': mock_service_interface_config },
+            };
+            context.dependencies[dep_name] = {
+              services: { 'ø': service_context },
+              outputs: {},
+            };
+          } else {
+            context.dependencies[dep_name] = {
+              services: dependency_context.services || {},
+              outputs: dependency_context.outputs || {},
+            };
+          }
         }
       }
 
@@ -506,7 +572,7 @@ export default abstract class DependencyManager {
       const context = context_map[component_spec.metadata.ref];
 
       if (options.interpolate) {
-        component_spec = interpolateObject(component_spec, context, { keys: false, values: true, file: component_spec.metadata.file });
+        component_spec = interpolateObject(component_spec, context, { keys: false, values: true, file: component_spec.metadata.file, relax_validation: options.relax_validation });
         component_spec.metadata.interpolated = true;
       }
 
@@ -529,7 +595,6 @@ export default abstract class DependencyManager {
       this.validateGraph(graph);
       graph.validated = true;
     }
-
     return Object.freeze(graph);
   }
 }

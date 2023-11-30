@@ -16,6 +16,8 @@ import { ComponentInstanceMetadata, ComponentSpec } from '../component-spec';
 import { ServiceInterfaceSpec } from '../service-spec';
 import { findDefinition, getArchitectJSONSchema } from './json-schema';
 import { Slugs } from './slugs';
+import { DependencyGraphMutable } from '../../graph';
+import { ServiceNode } from '../../graph/node/service';
 
 export type AjvError = ErrorObject[] | null | undefined;
 
@@ -354,15 +356,31 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
   return component_spec;
 };
 
-export const validateInterpolation = (component_spec: ComponentSpec): void => {
+const checkInterpolationPath = (queue: any, child: any): boolean => {
+  let key = queue.shift();
+  const keys = Object.keys(child);
+  const star = keys.includes('*');
+  if (star || child[key]) {
+    key = star ? '*' : key;
+    if (queue.length > 0 && typeof child[key] === 'object') {
+      return checkInterpolationPath(queue, child[key]);
+    } else {
+      return true;
+    }
+  } else {
+    return keys.includes(key);
+  }
+};
+
+export const validateInterpolation = (component_spec: ComponentSpec, relax_validation?: boolean): void => {
   const { errors } = interpolateObject(component_spec, {}, {
     keys: true,
     values: true,
     file: component_spec.metadata.file,
+    relax_validation: relax_validation,
   });
 
   const filtered_errors = errors.filter(error => !error.message.startsWith(RequiredInterpolationRule.PREFIX));
-
   if (filtered_errors.length > 0) {
     throw new ValidationErrors(filtered_errors, component_spec.metadata.file);
   }

@@ -2,9 +2,6 @@ import { expect } from 'chai';
 import { buildSpecFromYml, validateInterpolation, ValidationErrors } from '../../src';
 
 describe('interpolation-validation', () => {
-
-  const context = {}
-
   describe('validate build block', () => {
     it('cannot use secret in build block', () => {
       const component_config = `
@@ -21,7 +18,7 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        validateInterpolation(component_spec)
+        validateInterpolation(component_spec);
       }).to.be.throws(ValidationErrors);
     });
 
@@ -39,7 +36,7 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        validateInterpolation(component_spec)
+        validateInterpolation(component_spec);
       }).to.be.throws(ValidationErrors);
     });
 
@@ -57,7 +54,7 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        validateInterpolation(component_spec)
+        validateInterpolation(component_spec);
       }).to.be.throws(ValidationErrors);
     });
 
@@ -75,7 +72,7 @@ describe('interpolation-validation', () => {
       const component_spec = buildSpecFromYml(component_config)
 
       expect(() => {
-        validateInterpolation(component_spec)
+        validateInterpolation(component_spec);
       }).to.be.throws(ValidationErrors);
     });
 
@@ -89,10 +86,10 @@ describe('interpolation-validation', () => {
               args:
                 \${{ if architect.environment == 'local' }}:
                   ENV: local
-        `
+        `;
 
-        const component_spec = buildSpecFromYml(component_config)
-        validateInterpolation(component_spec)
+        const component_spec = buildSpecFromYml(component_config);
+        validateInterpolation(component_spec);
       });
 
       it('can use conditional around build block if local', () => {
@@ -104,10 +101,10 @@ describe('interpolation-validation', () => {
               build:
                 args:
                   ENV: local
-        `
+        `;
 
-        const component_spec = buildSpecFromYml(component_config)
-        validateInterpolation(component_spec)
+        const component_spec = buildSpecFromYml(component_config);
+        validateInterpolation(component_spec);
       });
 
       it('can use conditional around service block with build block if local', () => {
@@ -119,10 +116,10 @@ describe('interpolation-validation', () => {
               build:
                 args:
                   ENV: local
-        `
+        `;
 
-        const component_spec = buildSpecFromYml(component_config)
-        validateInterpolation(component_spec)
+        const component_spec = buildSpecFromYml(component_config);
+        validateInterpolation(component_spec);
       });
     });
 
@@ -135,11 +132,11 @@ describe('interpolation-validation', () => {
               args:
                 \${{ if architect.build.tag == 'latest' }}:
                   ENV: prod
-        `
+        `;
 
-      const component_spec = buildSpecFromYml(component_config)
+      const component_spec = buildSpecFromYml(component_config);
       expect(() => {
-        validateInterpolation(component_spec)
+        validateInterpolation(component_spec);
       }).to.be.throws(ValidationErrors);
     });
 
@@ -151,11 +148,11 @@ describe('interpolation-validation', () => {
             build:
               args:
                 TAG: \${{ architect.build.tag }}
-        `
+        `;
 
-      const component_spec = buildSpecFromYml(component_config)
+      const component_spec = buildSpecFromYml(component_config);
       expect(() => {
-        validateInterpolation(component_spec)
+        validateInterpolation(component_spec);
       }).to.be.throws(ValidationErrors);
     });
 
@@ -169,10 +166,10 @@ describe('interpolation-validation', () => {
           api:
             environment:
               TEST: \${{ secrets.test }}
-        `
+        `;
 
-      const component_spec = buildSpecFromYml(component_config)
-      validateInterpolation(component_spec)
+      const component_spec = buildSpecFromYml(component_config);
+      validateInterpolation(component_spec);
     });
 
     it('can still use conditional without build block', () => {
@@ -183,10 +180,10 @@ describe('interpolation-validation', () => {
             \${{ if architect.environment == 'local' }}:
               environment:
                 TEST: test
-        `
+        `;
 
-      const component_spec = buildSpecFromYml(component_config)
-      validateInterpolation(component_spec)
+      const component_spec = buildSpecFromYml(component_config);
+      validateInterpolation(component_spec);
     });
   });
 });

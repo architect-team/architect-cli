@@ -1,11 +1,14 @@
 import { instanceToInstance } from 'class-transformer';
 import deepmerge from 'deepmerge';
-import { EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../spec/utils/interpolation';
+import { ARCHITECT_EXPRESSION_REGEX, DEPENDENCY_EXPRESSION_REGEX, DEPRECATED_DEPENDENCY_EXPRESSION_REGEX, ENVIRONMENT_EXPRESSION_REGEX, EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { Dictionary } from './dictionary';
 import { ValidationError, ValidationErrors } from './errors';
 import { ArchitectParser } from './parser';
 import { matches } from './regex';
 import { CONTEXT_KEY_DELIMITER } from './rules';
+import { ComponentSpec } from '../spec/component-spec';
+import { ArchitectContext, DependencyContext, ServiceContext } from '../config/component-context';
+import { IngressConfig, ServiceInterfaceConfig } from '../config/service-config';
 
 export const replaceBrackets = (value: string): string => {
   return value.replace(/\[/g, '.').replace(/["'\\\]|]/g, '');
@@ -23,8 +26,52 @@ export const replaceInterpolationBrackets = (value: string): string => {
   return res;
 };
 
-export const buildContextMap = (context: any): any => {
+/*
+  Create mock dependencies for dependencies.<dependency-name>.services.*.interfaces.*.<ingress-config-prop>
+*/
+const createMockDependencies = (component_spec: ComponentSpec) => {
+  const dependencies: Dictionary<DependencyContext> = {};
+  for (const dep_name of Object.keys(component_spec.dependencies || {})) {
+    const mock_service_interface_config: ServiceInterfaceConfig = {
+      host: '',
+      port: '',
+      protocol: '',
+      username: '',
+      password: '',
+      url: '',
+      sticky: '',
+      path: '',
+      ingress: { private: false } as IngressConfig,
+    };
+    const mock_service_context: ServiceContext = {
+      interfaces: { '*': mock_service_interface_config },
+      environment: {},
+    };
+
+    const dependency_context = {
+      name: dep_name,
+      dependencies: {},
+      secrets: {},
+      outputs: {},
+      databases: {},
+      services: { '*': mock_service_context },
+      tasks: {},
+      architect: {} as ArchitectContext,
+    };
+    dependencies[dep_name] = {
+      services: dependency_context.services || {},
+      outputs: dependency_context.outputs || {},
+    };
+  }
+  return dependencies;
+};
+
+export const buildContextMap = (context: any, use_mock_dependencies?: boolean): any => {
   const context_map: Dictionary<any> = {};
+  if (use_mock_dependencies) {
+    context.dependencies = createMockDependencies(context);
+  }
+
   const queue = [['', context]];
   while (queue.length > 0) {
     const [prefix, c] = queue.shift()!;
@@ -47,6 +94,7 @@ export interface InterpolateObjectOptions {
   keys?: boolean;
   values?: boolean;
   file?: { path: string, contents: string };
+  relax_validation?: boolean;
 }
 
 const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
@@ -63,6 +111,7 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
   const options = {
     keys: false,
     values: true,
+    relax_validation: false,
     ..._options,
   };
 
@@ -99,8 +148,18 @@ export const interpolateObject = <T>(obj: T, context: any, _options?: Interpolat
             error.invalid_key = true;
           }
         } else if (options.values && typeof value === 'string') {
-          const parsed_value = parser.parseString(value, context_map);
-          el[key] = parsed_value;
+          let updated_value = value;
+          const special_case = DEPRECATED_DEPENDENCY_EXPRESSION_REGEX.test(value) || ENVIRONMENT_EXPRESSION_REGEX.test(value) || ARCHITECT_EXPRESSION_REGEX.test(value);
+          if (options.relax_validation && special_case) {
+            el[key] = updated_value;
+          } else if (options.relax_validation && DEPENDENCY_EXPRESSION_REGEX.test(value)) {
+            updated_value = value.replace(/(services\.)[^.]+(\.interfaces\.)([^.]+)/g, '$1ø$2ø');
+            const parsed_value = parser.parseString(updated_value, context_map);
+            el[key] = parsed_value;
+          } else {
+            const parsed_value = parser.parseString(value, context_map);
+            el[key] = parsed_value;
+          }
         } else {
           el[key] = value;
           if (value instanceof Object) {
